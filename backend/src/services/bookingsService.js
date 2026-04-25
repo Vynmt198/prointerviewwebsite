@@ -156,10 +156,14 @@ export async function createBooking(userId, body) {
     date: dateNormalized,
     timeSlot: timeNormalized,
     status: { $in: ["pending", "confirmed", "in_progress"] },
-  })
-    .select("_id")
-    .lean();
+  });
+
   if (dup) {
+    // Nếu là chính user này đang đặt lại khung giờ cũ (ví dụ: quay lại trang Checkout hoặc tải lại)
+    // và booking cũ vẫn đang ở trạng thái chờ thanh toán
+    if (String(dup.userId) === uid && dup.status === "pending" && dup.paymentStatus === "pending") {
+      return { ok: true, booking: toPublicBooking(dup, mentor) };
+    }
     return { ok: false, status: 409, error: "Khung giờ này đã được đặt. Chọn giờ khác." };
   }
 
@@ -469,4 +473,29 @@ export async function rescheduleMyBooking(userId, rawId, body) {
 
   const mentor = await Mentor.findById(booking.mentorId).lean();
   return { ok: true, booking: toPublicBooking(booking, mentor) };
+}
+
+export async function getMentorBookedSlots(mentorKey) {
+  if (!isMongoReady()) return { ok: false, status: 503, error: MONGO_ERR };
+  
+  const or = [{ publicId: mentorKey }];
+  if (mongoose.isValidObjectId(mentorKey)) or.push({ _id: mentorKey });
+
+  const mentor = await Mentor.findOne({ $or: or }).select("_id").lean();
+  if (!mentor) return { ok: false, status: 404, error: "Không tìm thấy mentor." };
+
+  const rows = await Booking.find({
+    mentorId: mentor._id,
+    status: { $in: ["pending", "confirmed", "in_progress"] },
+  })
+    .select("date timeSlot")
+    .lean();
+
+  const booked = {};
+  for (const r of rows) {
+    if (!booked[r.date]) booked[r.date] = [];
+    booked[r.date].push(r.timeSlot);
+  }
+
+  return { ok: true, booked };
 }

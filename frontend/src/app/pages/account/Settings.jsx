@@ -11,6 +11,7 @@ import {
   UserCircle,
   Trash2 as Trash,
   Key,
+  Monitor,
   ChevronRight,
   ArrowRight
 } from "lucide-react";

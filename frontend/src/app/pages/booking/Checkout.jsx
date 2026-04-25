@@ -28,6 +28,7 @@ import { activatePlanRequest } from "../../utils/plansApi";
 import { fetchMentor } from "../../utils/mentorApi";
 import { saveBooking, genMeetLink } from "../../utils/bookings";
 import { createBooking } from "../../utils/bookingsApi";
+import { initiatePayment } from "../../utils/paymentsApi";
 
 /* ─── Plan meta ─────────────────────────────────────────── */
 
@@ -317,19 +318,76 @@ export function Checkout() {
     billing,
   ]);
 
-  const handlePay = () => {
+  const handlePay = async () => {
+    if (!isLoggedIn()) {
+      setCardError("");
+      const q = searchParams.toString();
+      navigate(`/login?redirect=${encodeURIComponent(`/checkout?${q}`)}`);
+      return;
+    }
+
     if (isBooking) {
-      if (!isLoggedIn()) {
-        setCardError("");
-        const q = searchParams.toString();
-        navigate(`/login?redirect=${encodeURIComponent(`/checkout?${q}`)}`);
-        return;
-      }
       if (!bookingMentor || !bookingDate || !bookingTime) {
         setCardError("Thiếu thông tin đặt lịch. Hãy quay lại bước đặt lịch với mentor.");
         return;
       }
     }
+
+    if (method === "vnpay") {
+       setAppStep("processing");
+       setCardError("");
+
+       let bId = null;
+       // Nếu là booking, tạo bản ghi booking trước với trạng thái pending
+       if (isBooking) {
+         try {
+           const apiRes = await createBooking({
+             mentorId: bookingMentor.id,
+             date: bookingDate,
+             timeSlot: bookingTime,
+             sessionType: "mock_interview",
+             position: bookingPosition,
+             note: bookingNote,
+             cvFile: bookingCvFile || "",
+             jdFile: bookingJdFile || "",
+             price: bookingPrice,
+             durationMinutes: 60,
+             meetingLink: meetLink,
+             orderNum,
+             paymentStatus: "pending",
+             paymentMethod: "vnpay",
+           });
+           if (apiRes.success && apiRes.booking?.id) {
+             bId = apiRes.booking.id;
+           } else {
+             setAppStep("checkout");
+             setCardError(apiRes.error || "Không thể tạo lịch hẹn.");
+             return;
+           }
+         } catch (e) {
+           setAppStep("checkout");
+           setCardError("Lỗi hệ thống khi tạo lịch hẹn.");
+           return;
+         }
+       }
+
+       const payload = {
+         type: isBooking ? "booking" : "subscription",
+         provider: "vnpay",
+         amount: total - discount,
+         ...(isBooking ? { bookingId: bId } : { planKey: planKey })
+       };
+
+       const res = await initiatePayment(payload);
+       if (res.success && res.payUrl) {
+         window.location.href = res.payUrl;
+       } else {
+         setAppStep("checkout");
+         setCardError(res.error || "Không thể khởi tạo thanh toán VNPay.");
+       }
+       return;
+    }
+
     if (method === "visa" && !savedCard) {
       if (cardNum.replace(/\s/g, "").length < 16) return setCardError("Số thẻ không hợp lệ");
       if (!cardName.trim()) return setCardError("Vui lòng nhập tên chủ thẻ");

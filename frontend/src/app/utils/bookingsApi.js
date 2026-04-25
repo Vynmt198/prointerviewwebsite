@@ -87,3 +87,15 @@ export async function rescheduleBooking(id, body) {
   if (!id) return { success: false, error: "Thiếu id." };
   return authedSend("PATCH", `/api/bookings/${encodeURIComponent(id)}/reschedule`, body ?? {});
 }
+
+export async function fetchBookedSlots(mentorId) {
+  if (!mentorId) return { success: false, error: "Thiếu mentorId." };
+  try {
+    const res = await fetch(`${import.meta.env.VITE_API_URL}/api/bookings/mentor/${encodeURIComponent(mentorId)}/booked-slots`);
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok) return { success: false, error: body.error || "Lỗi tải lịch bận." };
+    return { success: true, booked: body.booked ?? {} };
+  } catch {
+    return { success: false, error: "Không kết nối được backend." };
+  }
+}

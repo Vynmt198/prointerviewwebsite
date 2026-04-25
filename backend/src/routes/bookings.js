@@ -14,3 +14,4 @@ bookingsRouter.patch("/:id/notes", authJwt, requireMentor, BookingsController.up
 bookingsRouter.patch("/:id/reschedule", authJwt, BookingsController.reschedule);
 bookingsRouter.get("/:id", authJwt, BookingsController.getById);
 bookingsRouter.delete("/:id", authJwt, BookingsController.cancel);
+bookingsRouter.get("/mentor/:id/booked-slots", BookingsController.getBookedSlots);

@@ -20,3 +20,13 @@ CORS_ORIGIN=http://localhost:5173
 JWT_SECRET=1111122222333334511111222223333345
 JWT_EXPIRES_IN=7d
 GOOGLE_CLIENT_ID=643387745996-q8o819kbc3ib1l4t9v52vmnhiu85q1nc.apps.googleusercontent.com
+
+# --- Apps ---
+FRONTEND_URL=http://localhost:5173
+
+# --- VNPay (Sandbox) ---
+VNP_TMN_CODE=E7UNI75A
+VNP_HASH_SECRET=780KVULHOXF9TZNADR19NZ8NPGDR94S6
+VNP_URL=https://sandbox.vnpayment.vn/paymentv2/vpcpay.html
+VNP_RETURN_URL=http://localhost:5173
+VNP_API_URL=https://sandbox.vnpayment.vn/merchant_webapi/api/transaction

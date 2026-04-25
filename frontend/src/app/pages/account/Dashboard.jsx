@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router";
-import { motion } from "motion/react";
+import { motion, AnimatePresence } from "motion/react";
 import {
   XAxis,
   YAxis,
@@ -25,14 +25,104 @@ import {
   Target,
   Trophy,
   Sparkles,
+  XCircle,
 } from "lucide-react";
 import { getUser, getPlans, isLoggedIn } from "../../utils/auth";
 import { getCVAnalysisHistory, getStoredInterviewHistory } from "../../utils/history";
+import { toast } from "sonner";
 import { getAllBookings, parseDateMs } from "../../utils/bookings";
-import { listBookings } from "../../utils/bookingsApi";
+import { listBookings, cancelBooking } from "../../utils/bookingsApi";
 import { fetchDashboardStats } from "../../utils/dashboardApi";
 import { apiBookingToLocal } from "../../utils/bookingMappers";
 import { PROGRESS_DATA, SKILLS_DATA } from "../../data/mockData";
+
+// Modal Hủy Lịch Hẹn
+function CancellationModal({ booking, onClose, onConfirm }) {
+  const [reason, setReason] = useState("");
+  const [customReason, setCustomReason] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const reasons = [
+    "Trùng lịch đột xuất",
+    "Muốn đổi Mentor khác",
+    "Không còn nhu cầu",
+    "Khác"
+  ];
+
+  const handleConfirm = async () => {
+    const finalReason = reason === "Khác" ? customReason : reason;
+    if (!finalReason) {
+      toast.error("Vui lòng chọn hoặc nhập lý do hủy.");
+      return;
+    }
+    setLoading(true);
+    await onConfirm(booking.backendId, finalReason);
+    setLoading(false);
+  };
+
+  if (!booking) return null;
+
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/80 backdrop-blur-md">
+      <motion.div 
+        initial={{ opacity: 0, scale: 0.9, y: 20 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        className="glass-card w-full max-w-md p-8 sm:p-10 border-white/20 shadow-[0_32px_100px_rgba(0,0,0,0.8)]"
+      >
+        <h3 className="text-xl font-black text-white mb-2 uppercase tracking-tight">Hủy lịch hẹn</h3>
+        <p className="text-sm text-white/50 mb-8 font-medium">Buổi hẹn với <span className="text-secondary font-bold">{booking.mentorName}</span> vào {booking.date} lúc {booking.time} sẽ bị hủy.</p>
+        
+        <div className="space-y-3 mb-8">
+          <p className="text-[10px] font-black text-white/30 uppercase tracking-[0.2em] mb-4">Lý do của bạn</p>
+          {reasons.map((r) => (
+            <button
+              key={r}
+              onClick={() => setReason(r)}
+              className={`w-full p-4 rounded-2xl text-left text-xs font-bold transition-all border ${
+                reason === r 
+                  ? "bg-secondary/20 border-secondary text-secondary" 
+                  : "bg-white/5 border-white/5 text-white/60 hover:bg-white/10"
+              }`}
+            >
+              {r}
+            </button>
+          ))}
+          
+          <AnimatePresence>
+            {reason === "Khác" && (
+              <motion.textarea
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 80 }}
+                exit={{ opacity: 0, height: 0 }}
+                value={customReason}
+                onChange={(e) => setCustomReason(e.target.value)}
+                placeholder="Nhập lý do cụ thể..."
+                className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-xs text-white placeholder:text-white/20 focus:outline-none focus:border-secondary transition-all resize-none mt-2"
+              />
+            )}
+          </AnimatePresence>
+        </div>
+
+        <div className="flex gap-4">
+          <button
+            onClick={onClose}
+            className="flex-1 h-12 rounded-2xl bg-white/5 text-white/60 font-black text-[10px] uppercase tracking-widest hover:bg-white/10 transition-all"
+          >
+            Đóng
+          </button>
+          <button
+            onClick={handleConfirm}
+            disabled={loading}
+            className="flex-2 px-8 h-12 rounded-2xl bg-red-500/20 border border-red-500/30 text-red-400 font-black text-[10px] uppercase tracking-widest hover:bg-red-500 hover:text-white transition-all disabled:opacity-50"
+          >
+            {loading ? "Đang xử lý..." : "Xác nhận Hủy"}
+          </button>
+        </div>
+      </motion.div>
+    </div>
+  );
+}
+
 
 export function Dashboard() {
   const navigate = useNavigate();
@@ -46,73 +136,84 @@ export function Dashboard() {
   const [interviewHistory, setInterviewHistory] = useState(() => getStoredInterviewHistory());
   const [cvHistory, setCvHistory] = useState(() => getCVAnalysisHistory());
   const [upcomingSessions, setUpcomingSessions] = useState([]);
+  const [cancellingBooking, setCancellingBooking] = useState(null);
   const [serverStats, setServerStats] = useState(null);
   const [statsFetched, setStatsFetched] = useState(false);
 
-  useEffect(() => {
-    const load = async () => {
-      setPlans(getPlans());
-      setInterviewHistory(getStoredInterviewHistory());
-      setCvHistory(getCVAnalysisHistory());
-      const all = getAllBookings();
-      const now = Date.now();
-      const skipStatus = new Set(["cancelled", "completed", "no_show", "done"]);
-      const upcomingFromLocal = all.filter((b) => {
-        if (b.status === "rescheduled" || b.status === "cancelled" || b.status === "done") return false;
-        if (skipStatus.has(b.status)) return false;
-        const [d, m, y] = b.date.split("/").map(Number);
-        const [h] = b.time.split(":").map(Number);
-        const ts = new Date(y, m - 1, d, h).getTime();
-        return ts >= now - 3600_000;
-      });
+  const loadData = async () => {
+    setPlans(getPlans());
+    setInterviewHistory(getStoredInterviewHistory());
+    setCvHistory(getCVAnalysisHistory());
+    const all = getAllBookings();
+    const now = Date.now();
+    const skipStatus = new Set(["cancelled", "completed", "no_show", "done"]);
+    const upcomingFromLocal = all.filter((b) => {
+      if (b.status === "rescheduled" || b.status === "cancelled" || b.status === "done") return false;
+      if (skipStatus.has(b.status)) return false;
+      const [d, m, y] = b.date.split("/").map(Number);
+      const [h] = b.time.split(":").map(Number);
+      const ts = new Date(y, m - 1, d, h).getTime();
+      return ts >= now - 3600_000;
+    });
 
-      if (!isLoggedIn()) {
-        setServerStats(null);
-        setStatsFetched(false);
-        setUpcomingSessions(upcomingFromLocal);
-        return;
-      }
+    if (!isLoggedIn()) {
+      setServerStats(null);
+      setStatsFetched(false);
+      setUpcomingSessions(upcomingFromLocal);
+      return;
+    }
 
-      const [statsRes, listRes] = await Promise.all([fetchDashboardStats(), listBookings()]);
-      setServerStats(statsRes.success ? statsRes.stats : null);
-      setStatsFetched(true);
+    const [statsRes, listRes] = await Promise.all([fetchDashboardStats(), listBookings()]);
+    setServerStats(statsRes.success ? statsRes.stats : null);
+    setStatsFetched(true);
 
-      const mergeKey = (b) => String(b?.backendId || b?.paymentRef || b?.orderNum || "");
-      const map = new Map();
-      if (listRes.success && Array.isArray(listRes.bookings)) {
-        const apiRows = listRes.bookings
-          .map(apiBookingToLocal)
-          .filter((b) => b && !skipStatus.has(b.status));
-        for (const b of apiRows) {
-          const k = mergeKey(b);
-          if (k) map.set(k, b);
-        }
-      }
-      for (const b of upcomingFromLocal) {
+    const mergeKey = (b) => String(b?.backendId || b?.paymentRef || b?.orderNum || "");
+    const map = new Map();
+    if (listRes.success && Array.isArray(listRes.bookings)) {
+      const apiRows = listRes.bookings
+        .map(apiBookingToLocal)
+        .filter((b) => b && !skipStatus.has(b.status));
+      for (const b of apiRows) {
         const k = mergeKey(b);
-        if (k && !map.has(k)) map.set(k, b);
+        if (k) map.set(k, b);
       }
-      const merged = Array.from(map.values()).sort((a, b) => {
-        const ta = parseDateMs(a.date, a.time);
-        const tb = parseDateMs(b.date, b.time);
-        const aFuture = ta >= now;
-        const bFuture = tb >= now;
-        if (aFuture && bFuture) return ta - tb;
-        if (!aFuture && !bFuture) return tb - ta;
-        return aFuture ? -1 : 1;
-      });
-      const upcoming = merged.filter((b) => {
-        if (b.status === "rescheduled" || b.status === "cancelled" || b.status === "done") return false;
-        if (skipStatus.has(b.status)) return false;
-        const ta = parseDateMs(b.date, b.time);
-        return ta >= now - 3600_000;
-      });
-      setUpcomingSessions(upcoming);
-    };
-    void load();
-    window.addEventListener("focus", load);
-    return () => window.removeEventListener("focus", load);
+    }
+    for (const b of upcomingFromLocal) {
+      const k = mergeKey(b);
+      if (k && !map.has(k)) map.set(k, b);
+    }
+    const merged = Array.from(map.values()).sort((a, b) => {
+      const ta = parseDateMs(a.date, a.time);
+      const tb = parseDateMs(b.date, b.time);
+      const aFuture = ta >= now;
+      const bFuture = tb >= now;
+      if (aFuture && bFuture) return ta - tb;
+      if (!aFuture && !bFuture) return tb - ta;
+      return aFuture ? -1 : 1;
+    });
+    const upcoming = merged.filter((b) => {
+      // Chỉ hiển thị những lịch đã thanh toán thành công (confirmed) theo yêu cầu của bạn
+      return b.status === "confirmed";
+    });
+    setUpcomingSessions(upcoming);
+  };
+
+  useEffect(() => {
+    void loadData();
+    window.addEventListener("focus", loadData);
+    return () => window.removeEventListener("focus", loadData);
   }, []);
+
+  const handleCancelConfirm = async (id, reason) => {
+    const res = await cancelBooking(id, { reason });
+    if (res.success) {
+      toast.success("Đã hủy lịch hẹn thành công.");
+      setCancellingBooking(null);
+      loadData(); // Tải lại dữ liệu sau khi hủy
+    } else {
+      toast.error(res.error || "Không thể hủy lịch.");
+    }
+  };
 
   const useServerStats = statsFetched && serverStats != null;
   const totalInterviews = useServerStats ? serverStats.interviewSessionsCompleted : interviewHistory.length;
@@ -500,33 +601,102 @@ export function Dashboard() {
                </div>
             </div>
 
-            <div className="glass-card p-10">
-               <h3 className="text-sm font-black text-white uppercase tracking-[0.2em] flex items-center gap-2 mb-10">
-                  <Calendar size={16} className="text-secondary" /> Lịch trình hành trình
-               </h3>
-               <div className="space-y-8 relative">
-                 <div className="absolute left-[7px] top-2 bottom-6 w-[2px] bg-gradient-to-b from-secondary to-transparent opacity-10"></div>
+            <div className="glass-card p-10 bg-gradient-to-br from-white/[0.05] to-transparent border-white/10">
+               <div className="flex items-center justify-between mb-10">
+                  <h3 className="text-sm font-black text-white uppercase tracking-[0.2em] flex items-center gap-3">
+                     <div className="w-8 h-8 rounded-xl bg-secondary/20 flex items-center justify-center text-secondary">
+                        <Calendar size={18} />
+                     </div>
+                     Lịch trình hành trình
+                  </h3>
+                  {upcomingSessions.length > 0 && (
+                    <span className="text-[10px] font-black text-secondary uppercase bg-secondary/10 px-3 py-1 rounded-full border border-secondary/20">
+                       {upcomingSessions.length} Buổi hẹn sắp tới
+                    </span>
+                  )}
+               </div>
+
+               <div className="space-y-6 relative">
                  {upcomingSessions.length === 0 ? (
-                    <div className="py-12 text-center border-2 border-dashed border-white/10 rounded-[32px] bg-white/[0.02]">
-                       <p className="text-zinc-500 text-[10px] font-black uppercase tracking-widest leading-loose">Sẵn sàng vận hành<br/><span className="text-zinc-700">Chưa có lịch hẹn</span></p>
+                    <div className="py-16 text-center border-2 border-dashed border-white/5 rounded-[40px] bg-white/[0.01]">
+                       <div className="w-16 h-16 bg-white/[0.03] rounded-full flex items-center justify-center mx-auto mb-6 opacity-20">
+                          <Calendar size={32} />
+                       </div>
+                       <p className="text-zinc-500 text-[10px] font-black uppercase tracking-[0.3em] leading-loose">
+                          Sẵn sàng vận hành<br/>
+                          <span className="text-zinc-700 italic font-medium">Chưa có lịch hẹn nào được ghi nhận</span>
+                       </p>
                     </div>
-                 ) : upcomingSessions.slice(0, 2).map((s, i) => (
-                    <div key={i} className="flex gap-6 group relative">
-                       <div className="relative z-10 w-4 h-4 rounded-full bg-[#0E0922] border-2 border-secondary group-hover:border-primary-fixed transition-colors flex items-center justify-center">
-                          <div className="w-1.5 h-1.5 rounded-full bg-secondary group-hover:bg-primary-fixed transition-colors"></div>
+                 ) : upcomingSessions.slice(0, 3).map((s, i) => (
+                    <div key={i} className="group relative p-6 rounded-[32px] bg-white/[0.03] border border-white/5 hover:bg-white/[0.06] hover:border-white/10 transition-all duration-500">
+                       <div className="flex gap-5 items-center">
+                          {/* Avatar Mentor */}
+                          <div className="relative shrink-0">
+                             <div className="w-14 h-14 rounded-2xl overflow-hidden border-2 border-white/10 group-hover:border-secondary/40 transition-colors bg-[#140a22] flex items-center justify-center">
+                                {s.mentorAvatar ? (
+                                   <img src={s.mentorAvatar} alt={s.mentorName} className="w-full h-full object-cover" />
+                                ) : (
+                                   <span className="text-xl font-black text-white/20">{s.mentorName[0]}</span>
+                                )}
+                             </div>
+                             {s.status === "confirmed" && (
+                                <div className="absolute -top-1 -right-1 w-4 h-4 bg-emerald-500 rounded-full border-2 border-[#0E0922] shadow-[0_0_10px_rgba(16,185,129,0.5)]" />
+                             )}
+                          </div>
+
+                          <div className="flex-1 min-w-0">
+                             <div className="flex items-center justify-between mb-1">
+                                <p className="text-[10px] font-black text-secondary tracking-wider uppercase">{s.date} • {s.time}</p>
+                                <span className={`text-[8px] font-black px-2 py-0.5 rounded-md uppercase border ${
+                                   s.status === "confirmed" ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" : "bg-amber-500/10 text-amber-500 border-amber-500/20"
+                                }`}>
+                                   {s.status === "confirmed" ? "Đã Thanh toán" : "Chờ xử lý"}
+                                </span>
+                             </div>
+                             <h4 className="text-base font-black text-white truncate pr-4">{s.mentorName}</h4>
+                             <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-tight mt-1 truncate opacity-60">
+                                {s.sessionType === "mock_interview" ? "Phỏng vấn giả định" : "Tư vấn lộ trình"}
+                             </p>
+                          </div>
                        </div>
-                       <div>
-                          <p className="text-[10px] font-black text-primary-fixed mb-1">{s.date} — {s.time}</p>
-                          <h4 className="text-base font-black text-white group-hover:text-primary-fixed transition-colors tracking-tight">{s.mentorName}</h4>
-                          <p className="text-[10px] text-zinc-500 mt-1 italic">Buổi định hướng chuyên môn</p>
-                       </div>
+                       
+                       {s.status === "confirmed" && (
+                         <div className="mt-6 pt-5 border-t border-white/5 flex gap-3">
+                            <button className="flex-1 h-12 rounded-2xl bg-secondary text-black font-black text-[10px] uppercase tracking-widest hover:scale-[1.02] active:scale-[0.98] transition-all shadow-[0_10px_30px_rgba(232,121,249,0.2)]">
+                               Vào phòng phỏng vấn
+                            </button>
+                            <button 
+                              onClick={() => setCancellingBooking(s)}
+                              className="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-white/40 hover:bg-red-500/10 hover:border-red-500/20 hover:text-red-400 transition-all"
+                              title="Hủy lịch hẹn"
+                            >
+                               <XCircle size={18} />
+                            </button>
+                         </div>
+                       )}
                     </div>
                  ))}
                </div>
+               
+               {upcomingSessions.length > 3 && (
+                 <button className="w-full mt-8 py-3 text-[9px] font-black text-white/30 uppercase tracking-[0.2em] hover:text-white transition-colors">
+                    Xem tất cả lịch hẹn ({upcomingSessions.length})
+                 </button>
+               )}
             </div>
           </aside>
         </div>
       </main>
+
+      <AnimatePresence>
+        {cancellingBooking && (
+          <CancellationModal 
+            booking={cancellingBooking}
+            onClose={() => setCancellingBooking(null)}
+            onConfirm={handleCancelConfirm}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }

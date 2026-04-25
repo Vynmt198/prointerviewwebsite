@@ -22,6 +22,7 @@ import {
   X,
 } from "lucide-react";
 import { fetchMentor } from "../../utils/mentorApi";
+import { fetchBookedSlots } from "../../utils/bookingsApi";
 import { getSuggestedBookingData, getCVAnalysisHistory } from "../../utils/history";
 
 /* ── Calendar data ─────────────────────────────────── */
@@ -58,22 +59,14 @@ const TIME_GROUPS = [
   { label: "Buổi tối", icon: Moon, slots: ["19:00", "20:00", "21:00"] },
 ];
 
-const BOOKED = {
-  "01/03": ["09:00", "15:00"],
-  "02/03": ["10:00", "14:00", "19:00"],
-  "03/03": ["08:00", "16:00"],
-  "06/03": ["09:00", "10:00", "20:00"],
-  "07/03": ["14:00"],
-  "09/03": ["11:00", "15:00", "21:00"],
-  "10/03": ["08:00", "09:00", "17:00"],
-  "12/03": ["10:00", "20:00"],
-};
+
 
 export function Booking() {
   const navigate = useNavigate();
   const { id } = useParams();
   const [mentor, setMentor] = useState(null);
   const [mentorLoading, setMentorLoading] = useState(true);
+  const [bookedSlots, setBookedSlots] = useState({});
 
   useEffect(() => {
     if (!id) {
@@ -82,9 +75,16 @@ export function Booking() {
       return;
     }
     setMentorLoading(true);
-    fetchMentor(id)
-      .then((m) => setMentor(m))
-      .finally(() => setMentorLoading(false));
+    
+    Promise.all([
+      fetchMentor(id),
+      fetchBookedSlots(id)
+    ]).then(([m, slotsRes]) => {
+      setMentor(m);
+      if (slotsRes.success) {
+        setBookedSlots(slotsRes.booked);
+      }
+    }).finally(() => setMentorLoading(false));
   }, [id]);
 
   const [step, setStep] = useState(1);
@@ -129,7 +129,7 @@ export function Booking() {
   };
 
   const isSlotBooked = (time) =>
-    selectedDay ? (BOOKED[selectedDay] ?? []).includes(time) : false;
+    selectedDay ? (bookedSlots[selectedDay] ?? []).includes(time) : false;
 
   const availableSlotCount = selectedDay
     ? TIME_GROUPS.flatMap((g) => g.slots).filter((t) => !isSlotBooked(t)).length
@@ -253,7 +253,7 @@ export function Booking() {
                     <div className="grid grid-cols-7 gap-2">
                       {week.days.map((d) => {
                         const isSelected = selectedDay === d.date;
-                        const bookedCount = (BOOKED[d.date] ?? []).length;
+                        const bookedCount = (bookedSlots[d.date] ?? []).length;
                         const freeSlots = TIME_GROUPS.flatMap((g) => g.slots).length - bookedCount;
                         return (
                           <button

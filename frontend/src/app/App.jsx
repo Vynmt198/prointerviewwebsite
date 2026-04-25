@@ -11,6 +11,14 @@ export default function App() {
   const [sessionChecked, setSessionChecked] = useState(false);
 
   useEffect(() => {
+    // VNPay FIX: Nếu thấy tham số vnp_ ở URL gốc (trước dấu #), chuyển hướng vào router nội bộ
+    if (window.location.search.includes("vnp_ResponseCode")) {
+      const search = window.location.search;
+      // Chuyển params vào sau dấu # để HashRouter nhận diện được
+      window.location.href = window.location.origin + window.location.pathname + "#/payment-return" + search;
+      return;
+    }
+
     restoreSession()
       .catch((err) => console.log("restoreSession error:", err))
       .finally(() => setSessionChecked(true));

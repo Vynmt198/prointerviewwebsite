@@ -108,4 +108,16 @@ export class BookingsController {
       next(err);
     }
   }
+
+  static async getBookedSlots(req, res, next) {
+    try {
+      const result = await bookingsService.getMentorBookedSlots(req.params.id);
+      if (!result.ok) {
+        return res.status(result.status).json({ success: false, error: result.error });
+      }
+      res.json({ success: true, booked: result.booked });
+    } catch (err) {
+      next(err);
+    }
+  }
 }

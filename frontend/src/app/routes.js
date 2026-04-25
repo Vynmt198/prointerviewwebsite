@@ -17,6 +17,9 @@ import { Booking } from "./pages/booking/Booking";
 import { SessionDetail } from "./pages/booking/SessionDetail";
 import { Profile } from "./pages/account/Profile";
 import { Settings } from "./pages/account/Settings";
+import { PaymentReturn } from "./pages/payment/PaymentReturn";
+import { SuccessPage } from "./pages/payment/SuccessPage";
+import { FailurePage } from "./pages/payment/FailurePage";
 import { AvatarDemo } from "./pages/interview/AvatarDemo";
 import { MentorReview } from "./pages/booking/MentorReview";
 import { MentorDashboard } from "./pages/mentor/MentorDashboard";
@@ -62,6 +65,9 @@ export const router = createHashRouter([
   { path: "/register", Component: Register },
   { path: "/checkout", Component: Checkout },
   { path: "/pricing", Component: Pricing },
+  { path: "/payment-return", Component: PaymentReturn },
+  { path: "/payment-success", Component: SuccessPage },
+  { path: "/payment-failure", Component: FailurePage },
   { path: "/avatar-demo", Component: AvatarDemo },
   // Course learning — full-screen, no sidebar
   { path: "/courses/:id/learn", Component: CourseLearning },
