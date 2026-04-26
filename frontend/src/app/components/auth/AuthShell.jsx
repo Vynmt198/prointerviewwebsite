@@ -7,26 +7,26 @@ import { Zap as Lightning } from "lucide-react";
  * Nền đồng bộ Dashboard: gradient + blob/shimmer + lưới 32px toàn viewport.
  */
 const PI = {
-  pageGradient: "linear-gradient(165deg, #0a0618 0%, #07060e 45%, #12081f 100%)",
+  pageGradient: "#ffffff",
   purple: "#6E35E8",
   lilac: "#9B6DFF",
   lime: "#c4ff47",
   limeDark: "#8fbc24",
   limeSoft: "rgba(196,255,71,0.16)",
-  /** Khối form — glass mềm, ít “gắt” hơn */
+  /** Khối form — light glass trên nền trắng */
   glass: {
-    background: "linear-gradient(165deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.025) 50%, rgba(110,53,232,0.04) 100%)",
-    border: "1px solid rgba(255,255,255,0.1)",
+    background: "rgba(255,255,255,0.85)",
+    border: "1px solid rgba(110,53,232,0.12)",
     backdropFilter: "blur(20px) saturate(1.08)",
     WebkitBackdropFilter: "blur(20px) saturate(1.08)",
     boxShadow:
-      "0 20px 50px rgba(0,0,0,0.32), 0 0 0 1px rgba(196, 255, 71, 0.07) inset, 0 0 48px -16px rgba(110, 53, 232, 0.12)",
+      "0 20px 50px rgba(110,53,232,0.10), 0 0 0 1px rgba(110,53,232,0.06) inset",
   },
 };
 
 /** Ô input dark — cùng vibe form trên Home */
 export const AUTH_INPUT_CLASS =
-  "w-full px-5 py-3.5 rounded-2xl font-medium text-white placeholder:text-white/40 outline-none transition-all border border-white/12 bg-white/[0.05] hover:bg-white/[0.07] focus:border-[#c4ff47]/45 focus:ring-2 focus:ring-[#c4ff47]/18";
+  "w-full px-5 py-3.5 rounded-2xl font-medium text-gray-800 placeholder:text-gray-400 outline-none transition-all border border-gray-200 bg-white hover:bg-gray-50 focus:border-[#6E35E8]/50 focus:ring-2 focus:ring-[#6E35E8]/15";
 
 /** Nút chính & Google: cùng full width, cùng bo góc, chiều dọc py-4 (không kéo cao). */
 export const AUTH_CTA_FRAME_CLASS =
@@ -37,11 +37,11 @@ export function AuthShell({ children, aside, footerNote }) {
 
   return (
     <div
-      className="min-h-screen flex flex-col relative overflow-x-hidden text-white font-sans selection:bg-[rgba(196,255,71,0.28)] selection:text-white"
+      className="min-h-screen flex flex-col relative overflow-x-hidden font-sans selection:bg-[rgba(110,53,232,0.15)] selection:text-gray-900"
       style={{
         fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif",
         background: PI.pageGradient,
-        color: "#fff",
+        color: "#1a1a1a",
       }}
     >
       <style>{`
@@ -53,22 +53,26 @@ export function AuthShell({ children, aside, footerNote }) {
       `}</style>
       {/* Blob + shimmer — cùng stack như Dashboard / Home */}
       <div
-        className="fixed inset-0 pointer-events-none -z-10 opacity-90"
+        className="fixed inset-0 pointer-events-none -z-10"
         style={{ animation: "auth-shimmer-bg 14s ease-in-out infinite" }}
         aria-hidden
       >
-        <div className="absolute top-[-20%] right-[-10%] h-[70vh] w-[70vh] rounded-full bg-gradient-to-bl from-fuchsia-600/35 via-violet-600/20 to-transparent blur-[100px]" />
-        <div className="absolute bottom-[-25%] left-[-15%] h-[85vh] w-[85vh] rounded-full bg-gradient-to-tr from-[#c4ff47]/18 via-cyan-500/10 to-fuchsia-500/20 blur-[110px]" />
-        <div className="absolute top-1/2 left-1/2 h-[50vh] w-[50vh] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#6E35E8]/12 blur-[90px]" />
-        <div className="absolute top-[30%] right-[5%] h-[40vh] w-[40vh] rounded-full bg-[#c4ff47]/10 blur-[80px]" />
+        {/* Top-right: vùng loang tím đậm chính */}
+        <div className="absolute top-[-20%] right-[-10%] h-[80vh] w-[80vh] rounded-full blur-[80px]" style={{ background: "radial-gradient(circle, rgba(110,53,232,0.55) 0%, rgba(139,77,255,0.35) 45%, transparent 72%)" }} />
+        {/* Bottom-left: loang tím lan rộng */}
+        <div className="absolute bottom-[-15%] left-[-10%] h-[70vh] w-[70vh] rounded-full blur-[100px]" style={{ background: "radial-gradient(circle, rgba(88,28,200,0.45) 0%, rgba(110,53,232,0.25) 50%, transparent 72%)" }} />
+        {/* Center: glow tím nhẹ giữa trang */}
+        <div className="absolute top-[40%] left-[30%] h-[50vh] w-[50vh] rounded-full blur-[90px]" style={{ background: "radial-gradient(circle, rgba(110,53,232,0.22) 0%, transparent 65%)" }} />
+        {/* Right mid: accent nhỏ hơn */}
+        <div className="absolute top-[20%] right-[5%] h-[35vh] w-[35vh] rounded-full blur-[60px]" style={{ background: "radial-gradient(circle, rgba(139,77,255,0.45) 0%, transparent 65%)" }} />
       </div>
 
-      {/* Lưới ô vuông — full viewport, xuyên qua header kính mờ */}
+      {/* Lưới ô vuông nhẹ — on light bg */}
       <div
-        className="pointer-events-none fixed inset-0 z-[1] opacity-[0.09]"
+        className="pointer-events-none fixed inset-0 z-[1] opacity-[0.035]"
         style={{
           backgroundImage:
-            "linear-gradient(rgba(255,255,255,0.55) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.45) 1px, transparent 1px)",
+            "linear-gradient(rgba(110,53,232,0.8) 1px, transparent 1px), linear-gradient(90deg, rgba(110,53,232,0.8) 1px, transparent 1px)",
           backgroundSize: "32px 32px",
         }}
         aria-hidden
@@ -76,12 +80,13 @@ export function AuthShell({ children, aside, footerNote }) {
 
       {/* Cùng chiều cao / logo / padding với nav Home.jsx (h-16, w-8 icon, px-5) */}
       <header
-        className="relative z-10 w-full border-b border-white/[0.08]"
+        className="relative z-10 w-full border-b"
         style={{
-          background: "rgba(7, 6, 14, 0.72)",
+          background: "rgba(255,255,255,0.80)",
           backdropFilter: "blur(16px) saturate(1.1)",
           WebkitBackdropFilter: "blur(16px) saturate(1.1)",
-          boxShadow: "0 1px 0 rgba(255,255,255,0.05), 0 8px 32px -8px rgba(0,0,0,0.4)",
+          borderColor: "rgba(110,53,232,0.12)",
+          boxShadow: "0 1px 0 rgba(110,53,232,0.06), 0 8px 32px -8px rgba(110,53,232,0.08)",
         }}
       >
         <div className="mx-auto flex h-16 w-full max-w-[min(100%,calc(64rem+2.5cm))] items-center justify-between gap-6 px-5">
@@ -99,8 +104,8 @@ export function AuthShell({ children, aside, footerNote }) {
               <Lightning className="h-4 w-4 text-white" />
             </div>
             <span
-              className="font-bold leading-none text-white"
-              style={{ fontSize: "1.05rem", letterSpacing: "-0.02em" }}
+              className="font-bold leading-none"
+              style={{ fontSize: "1.05rem", letterSpacing: "-0.02em", color: "#1a1a1a" }}
             >
               ProInterview
             </span>

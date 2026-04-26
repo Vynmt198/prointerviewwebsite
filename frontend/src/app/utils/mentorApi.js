@@ -38,3 +38,26 @@ export async function fetchMentor(id) {
   if (data.success && data.mentor) return data.mentor;
   return null;
 }
+/**
+ * Đăng ký làm mentor mới — POST /api/mentors/apply
+ */
+export async function applyAsMentor(data) {
+  try {
+    const res = await fetch(apiUrl("/api/mentors/apply"), {
+      method: "POST",
+      headers: {
+        ...jsonHeaders,
+        Authorization: `Bearer ${localStorage.getItem("prointerview_access_token")}`,
+      },
+      body: JSON.stringify(data),
+    });
+    const result = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      return { success: false, error: result.error || `Lỗi ${res.status}` };
+    }
+    return { success: true, message: result.message };
+  } catch (err) {
+    console.error("applyAsMentor error:", err);
+    return { success: false, error: "Không kết nối được server." };
+  }
+}

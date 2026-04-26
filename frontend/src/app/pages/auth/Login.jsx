@@ -1,263 +1,312 @@
 import React, { useState } from "react";
 import { useNavigate, useSearchParams, Link } from "react-router";
 import {
-  AlertCircle as WarningCircle,
+  Eye,
+  EyeOff as EyeSlash,
   Check,
+  AlertCircle as WarningCircle,
   Info,
-  Sparkles,
   Zap as Lightning,
+  Brain,
+  Mic as Microphone,
+  Star,
 } from "lucide-react";
-import { loginUser, getUser, getPostLoginPath } from "../../utils/auth";
-import { AuthShell, AUTH_INPUT_CLASS, AUTH_CTA_FRAME_CLASS } from "../../components/auth/AuthShell";
+import {
+  loginUser,
+  getUser,
+  getPostLoginPath,
+  getBrandClickPath,
+} from "../../utils/auth";
 import { GoogleSignInBlock } from "../../components/auth/GoogleSignInBlock";
+
+const INPUT_CLS =
+  "w-full px-4 py-3.5 rounded-xl border border-gray-200 text-base outline-none transition-all " +
+  "focus:border-[#6E35E8] focus:ring-2 focus:ring-[#6E35E8]/15 text-gray-900 placeholder-gray-400 " +
+  "bg-white hover:bg-gray-50/50";
+
+const TESTIMONIALS = [
+  {
+    avatar: "PA",
+    gradFrom: "#6E35E8",
+    gradTo: "#9B6DFF",
+    quote: "Sau 3 buổi mock interview với AI, mình tự tin hơn hẳn và nhận được offer từ Shopee chỉ sau 2 tuần luyện tập.",
+    name: "Phạm Anh Tuấn",
+    role: "Software Engineer @ Shopee",
+    tag: "Đã nhận offer ✨",
+    tagColor: "#6E35E8",
+  },
+  {
+    avatar: "NH",
+    gradFrom: "#ec4899",
+    gradTo: "#f43f5e",
+    quote: "Điểm STAR của mình tăng từ 2.4 lên 4.1 sau 3 tuần. Phân tích CV/JD cực kỳ chi tiết và hữu ích.",
+    name: "Nguyễn Thị Hoa",
+    role: "Marketing @ Unilever",
+    tag: "Tăng STAR +70% 📈",
+    tagColor: "#FF8C42",
+  },
+];
 
 export function Login() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPass, setShowPass] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const isRegistered = searchParams.get("registered") === "1";
+  const t = TESTIMONIALS[0];
 
   const handleLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError("");
-
     const result = await loginUser(email.trim(), typeof password === "string" ? password.trim() : password);
     setLoading(false);
-
-    if (!result.success) {
-      setError(result.error);
-      return;
-    }
-
+    if (!result.success) { setError(result.error); return; }
     const user = getUser();
     navigate(getPostLoginPath(user, searchParams.get("redirect")));
   };
 
-  const aside = (
-    <div className="relative flex h-full flex-col justify-start pl-4 pt-8 sm:pt-10 lg:pl-6">
-      <div
-        className="mb-5 inline-flex w-fit items-center gap-2 rounded-full border px-4 py-2 text-xs font-bold"
-        style={{
-          background: "linear-gradient(135deg, rgba(110,53,232,0.22), rgba(196,255,71,0.08))",
-          borderColor: "rgba(196, 255, 71, 0.35)",
-          color: "#e8f5c8",
-          boxShadow: "0 0 24px rgba(196,255,71,0.1)",
-        }}
-      >
-        <Sparkles className="w-3.5 h-3.5 text-[#c4ff47]" />
-        Cùng nền với trang chủ
-      </div>
-      <h2 className="mb-5 text-4xl font-black leading-[1.1] tracking-tight text-white sm:text-5xl">
-        Chào bạn,
-        <br />
-        <span
-          className="bg-clip-text text-transparent"
-          style={{
-            backgroundImage: "linear-gradient(135deg, #c4ff47 0%, #6E35E8 100%)",
-          }}
-        >
-          vào luyện thôi
-        </span>
-      </h2>
-      <p className="mb-5 max-w-md text-lg font-medium leading-relaxed text-zinc-300">
-        AI phỏng vấn, mentor 1:1, so khớp CV/JD — trải nghiệm đồng bộ với trang chủ.
-      </p>
-      <div className="flex flex-wrap gap-3">
-        {["Phỏng vấn AI", "CV & JD", "Mentor"].map((tag, i) => (
-          <span
-            key={tag}
-            className="px-4 py-2 rounded-full text-sm font-bold border"
-            style={{
-              background:
-                i === 0
-                  ? "rgba(196,255,71,0.1)"
-                  : i === 1
-                    ? "rgba(255,255,255,0.06)"
-                    : "rgba(110,53,232,0.12)",
-              borderColor:
-                i === 0
-                  ? "rgba(196, 255, 71, 0.4)"
-                  : i === 1
-                    ? "rgba(196, 255, 71, 0.35)"
-                    : "rgba(167, 139, 250, 0.35)",
-              color: i === 0 ? "#e8ffc4" : "rgba(255,255,255,0.9)",
-            }}
-          >
-            {tag}
-          </span>
-        ))}
-      </div>
-      <div
-        className="mt-7 max-w-md rounded-3xl p-6"
-        style={{
-          background: "linear-gradient(180deg, rgba(255,255,255,0.07), rgba(255,255,255,0.03))",
-          border: "1px solid rgba(255,255,255,0.12)",
-          boxShadow:
-            "0 12px 40px rgba(0,0,0,0.3), 0 0 0 1px rgba(196, 255, 71, 0.08) inset",
-          backdropFilter: "blur(14px)",
-        }}
-      >
-        <div className="flex gap-1 mb-3 text-lg">
-          <span style={{ color: "#c4ff47" }}>★★</span>
-          <span style={{ color: "#FF8C42" }}>★</span>
-          <span style={{ color: "#c4ff47" }}>★★</span>
-        </div>
-        <p className="font-semibold leading-relaxed italic text-[15px] text-white/80">
-          &ldquo;ProInterview đã giúp mình tự tin hơn — phỏng vấn thử rất sát thực tế.&rdquo;
-        </p>
-        <p className="mt-4 text-sm font-bold text-zinc-400">— Học viên</p>
-      </div>
-    </div>
-  );
+  const handleFieldChange = (setter) => (e) => {
+    setter(e.target.value);
+    if (error) setError("");
+  };
 
   const errorIsGoogleEnvHint = Boolean(
     error && /VITE_GOOGLE|Google chưa được bật|thiếu.*CLIENT_ID/i.test(error),
   );
 
   return (
-    <AuthShell
-      aside={aside}
-      footerNote={
-        <Link
-          to="/register"
-          className="hidden items-center gap-1.5 rounded-full border border-white/15 px-4 py-2 text-sm font-semibold text-white/75 transition-colors hover:border-white/25 hover:bg-white/8 hover:text-white sm:inline-flex"
-        >
-          Chưa có tài khoản?{" "}
-          <span className="text-[#c4ff47] drop-shadow-[0_0_8px_rgba(196,255,71,0.35)]">Đăng ký</span>
-        </Link>
-      }
+    <div
+      className="h-screen overflow-hidden flex"
+      style={{ fontFamily: "'Lexend', 'Plus Jakarta Sans', system-ui, sans-serif" }}
     >
-      <div className="flex items-center gap-2 mb-2">
-        <Lightning className="w-5 h-5" style={{ color: "#c4ff47" }} />
-        <span className="text-xs font-bold uppercase tracking-widest text-zinc-400">Đăng nhập</span>
-      </div>
-      <h1 className="text-3xl font-black tracking-tight mb-2 text-white">Chào mừng trở lại</h1>
-      <p className="font-medium mb-8 text-zinc-300">Đăng nhập để tiếp tục hành trình của bạn.</p>
+      {/* ── LEFT: Form ─────────────────────────────────────── */}
+      <div className="flex-1 flex flex-col h-full bg-white">
 
-      {isRegistered && (
+        {/* Top bar */}
         <div
-          className="flex items-start gap-3 rounded-2xl px-4 py-3 mb-6 border"
-          style={{
-            background: "rgba(196, 255, 71,0.1)",
-            borderColor: "rgba(196, 255, 71,0.35)",
-          }}
+          className="flex-shrink-0 flex items-center justify-between px-10 py-4 border-b"
+          style={{ borderColor: "rgba(110,53,232,0.1)" }}
         >
-          <Check className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: "#c4ff47" }} />
-          <p className="text-sm font-semibold" style={{ color: "#d4f573" }}>
-            Đăng ký thành công — vui lòng đăng nhập.
+          <button onClick={() => navigate(getBrandClickPath())} className="flex items-center gap-2.5 group">
+            <div
+              className="w-8 h-8 rounded-xl flex items-center justify-center shadow-md transition-transform group-hover:scale-105"
+              style={{ background: "linear-gradient(135deg, #6E35E8, #9B6DFF)" }}
+            >
+              <Lightning className="w-4 h-4 text-white" />
+            </div>
+            <span className="font-bold text-gray-900" style={{ fontSize: "1.05rem", letterSpacing: "-0.02em" }}>
+              ProInterview
+            </span>
+          </button>
+          <p className="text-sm text-gray-500">
+            Chưa có tài khoản?{" "}
+            <Link to="/register" className="font-semibold hover:underline" style={{ color: "#6E35E8" }}>
+              Đăng ký
+            </Link>
           </p>
         </div>
-      )}
 
-      {error && (
-        <div
-          className={`mb-6 flex items-start gap-3 rounded-2xl border px-4 py-3.5 ${
-            errorIsGoogleEnvHint
-              ? "border-amber-400/25 bg-amber-950/35 text-amber-50"
-              : "border-red-400/20 bg-red-950/30 text-red-100"
-          }`}
-        >
-          {errorIsGoogleEnvHint ? (
-            <Info className="mt-0.5 h-5 w-5 flex-shrink-0 text-amber-300/90" strokeWidth={2} />
-          ) : (
-            <WarningCircle className="mt-0.5 h-5 w-5 flex-shrink-0 text-red-300/90" />
-          )}
-          <p className="text-sm font-medium leading-relaxed opacity-95">{error}</p>
-        </div>
-      )}
+        {/* Form — centered */}
+        <div className="flex-1 flex items-center justify-center px-10 overflow-hidden">
+          <div className="w-full max-w-sm">
 
-      <form onSubmit={handleLogin} className="space-y-5">
-        <div>
-          <label htmlFor="email" className="block text-xs font-bold mb-2 ml-1 text-zinc-400">
-            Địa chỉ email
-          </label>
-          <input
-            id="email"
-            type="email"
-            autoComplete="email"
-            placeholder="ban@congty.com"
-            value={email}
-            onChange={(e) => {
-              setEmail(e.target.value);
-              if (error) setError("");
-            }}
-            required
-            className={AUTH_INPUT_CLASS}
-          />
-        </div>
-        <div>
-          <div className="flex justify-between items-center mb-2 ml-1">
-            <label htmlFor="password" className="text-xs font-bold text-zinc-400">
-              Mật khẩu
-            </label>
-            <span className="text-xs font-bold cursor-not-allowed text-zinc-500">Quên mật khẩu?</span>
+            <h1 className="text-gray-900 mb-1"
+              style={{ fontSize: "1.875rem", fontWeight: 750, letterSpacing: "-0.025em" }}>
+              Đăng nhập
+            </h1>
+            <p className="text-gray-500 text-sm mb-6">Chào mừng trở lại! Hãy tiếp tục luyện tập.</p>
+
+            {/* Success banner */}
+            {isRegistered && (
+              <div className="flex items-start gap-3 rounded-2xl px-4 py-3 mb-5 border"
+                style={{ background: "rgba(110,53,232,0.06)", borderColor: "rgba(110,53,232,0.2)" }}>
+                <Check className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: "#6E35E8" }} />
+                <div>
+                  <p className="text-sm font-semibold" style={{ color: "#6E35E8" }}>Đăng ký thành công! 🎉</p>
+                  <p className="text-xs text-gray-500 mt-0.5">Vui lòng đăng nhập để tiếp tục sử dụng ProInterview.</p>
+                </div>
+              </div>
+            )}
+
+            {/* Error banner */}
+            {error && (
+              <div className={`mb-5 flex items-start gap-3 rounded-2xl border px-4 py-3 text-sm ${
+                errorIsGoogleEnvHint
+                  ? "border-amber-400/25 bg-amber-50 text-amber-800"
+                  : "border-red-300/40 bg-red-50 text-red-700"
+              }`}>
+                {errorIsGoogleEnvHint
+                  ? <Info className="mt-0.5 h-4 w-4 flex-shrink-0 text-amber-500" strokeWidth={2} />
+                  : <WarningCircle className="mt-0.5 h-4 w-4 flex-shrink-0 text-red-400" />}
+                <p className="font-medium">{error}</p>
+              </div>
+            )}
+
+            <form onSubmit={handleLogin} className="space-y-4">
+              {/* Email */}
+              <div>
+                <label htmlFor="login-email" className="block text-sm font-semibold text-gray-700 mb-1.5">Email</label>
+                <input
+                  id="login-email" type="email" autoComplete="email"
+                  placeholder="email@example.com"
+                  value={email} onChange={handleFieldChange(setEmail)}
+                  required className={INPUT_CLS}
+                />
+              </div>
+
+              {/* Password */}
+              <div>
+                <div className="flex justify-between items-center mb-1.5">
+                  <label htmlFor="login-password" className="text-sm font-semibold text-gray-700">Mật khẩu</label>
+                  <button type="button" className="text-sm font-medium text-gray-400 cursor-not-allowed">
+                    Quên mật khẩu?
+                  </button>
+                </div>
+                <div className="relative">
+                  <input
+                    id="login-password" type={showPass ? "text" : "password"}
+                    autoComplete="current-password" placeholder="••••••••"
+                    value={password} onChange={handleFieldChange(setPassword)}
+                    required className={`${INPUT_CLS} pr-12`}
+                  />
+                  <button type="button" onClick={() => setShowPass(!showPass)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                    aria-label={showPass ? "Ẩn mật khẩu" : "Hiện mật khẩu"}>
+                    {showPass ? <EyeSlash className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  </button>
+                </div>
+              </div>
+
+              {/* Submit */}
+              <button type="submit" disabled={loading}
+                className="w-full py-3.5 rounded-xl font-bold text-base text-white transition-all hover:brightness-110 active:scale-[0.98] disabled:opacity-60"
+                style={{
+                  background: "linear-gradient(135deg, #6E35E8, #9B6DFF)",
+                  boxShadow: "0 4px 20px rgba(110,53,232,0.3)",
+                }}>
+                {loading
+                  ? <span className="flex items-center justify-center gap-2">
+                      <span className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                      Đang đăng nhập...
+                    </span>
+                  : "Đăng nhập"}
+              </button>
+            </form>
+
+            <p className="mt-4 text-center text-sm text-gray-500">
+              Chưa có tài khoản?{" "}
+              <Link to="/register" className="font-semibold hover:underline" style={{ color: "#6E35E8" }}>
+                Đăng ký miễn phí →
+              </Link>
+            </p>
+
+            {/* Divider */}
+            <div className="flex items-center gap-3 my-5">
+              <div className="flex-1 h-px bg-gray-100" />
+              <span className="text-xs text-gray-400 font-medium">hoặc</span>
+              <div className="flex-1 h-px bg-gray-100" />
+            </div>
+
+            <GoogleSignInBlock onError={setError} />
+
+            <p className="mt-5 text-center text-xs text-gray-400 leading-relaxed">
+              Bằng cách đăng nhập, bạn đồng ý với{" "}
+              <a href="#" className="font-semibold text-[#6E35E8] hover:underline">Điều khoản dịch vụ</a>
+              {" "}và{" "}
+              <a href="#" className="font-semibold text-[#6E35E8] hover:underline">Chính sách bảo mật</a>.
+            </p>
           </div>
-          <input
-            id="password"
-            type="password"
-            autoComplete="current-password"
-            placeholder="••••••••"
-            value={password}
-            onChange={(e) => {
-              setPassword(e.target.value);
-              if (error) setError("");
-            }}
-            required
-            className={AUTH_INPUT_CLASS}
-          />
+        </div>
+      </div>
+
+      {/* ── RIGHT: Visual panel ─────────────────────────────── */}
+      <div
+        className="hidden lg:flex flex-col flex-1 h-full relative overflow-hidden"
+        style={{ background: "linear-gradient(150deg, #F3EEFF 0%, #EEF4FF 40%, #FFF5EC 100%)" }}
+      >
+        {/* Blobs */}
+        <div className="absolute -top-20 -right-20 w-96 h-96 rounded-full opacity-30 blur-3xl pointer-events-none"
+          style={{ background: "radial-gradient(circle, #6E35E8 0%, transparent 70%)" }} />
+        <div className="absolute -bottom-20 -left-20 w-80 h-80 rounded-full opacity-20 blur-3xl pointer-events-none"
+          style={{ background: "radial-gradient(circle, #FFB800 0%, transparent 70%)" }} />
+
+        {/* Rating badge */}
+        <div className="absolute top-8 right-8">
+          <div className="flex items-center gap-2 bg-white rounded-2xl px-4 py-2.5 shadow-lg"
+            style={{ border: "1px solid rgba(110,53,232,0.1)" }}>
+            <div className="flex gap-0.5">
+              {[1,2,3,4,5].map((i) => <Star key={i} className="w-3.5 h-3.5 fill-current" style={{ color: "#f59e0b" }} />)}
+            </div>
+            <span className="text-gray-700 font-black text-sm">4.8</span>
+            <span className="text-gray-400 text-xs">/ 5.0</span>
+          </div>
         </div>
 
-        <button
-          type="submit"
-          disabled={loading}
-          className={`${AUTH_CTA_FRAME_CLASS} font-black text-base transition-all active:scale-[0.98] disabled:opacity-60 text-[#0a0814]`}
-          style={{
-            background: "linear-gradient(135deg, #c4ff47, #8fbc24)",
-            boxShadow: "0 8px 28px rgba(196, 255, 71,0.22)",
-            border: "none",
-          }}
-        >
-          {loading ? (
-            <span className="flex items-center justify-center gap-2">
-              <span className="w-5 h-5 border-2 border-black/20 border-t-black/70 rounded-full animate-spin" />
-              Đang đăng nhập...
-            </span>
-          ) : (
-            "Đăng nhập"
-          )}
-        </button>
-      </form>
+        {/* Center content */}
+        <div className="flex-1 flex flex-col items-center justify-center px-10 relative z-10">
 
-      <div className="relative my-8 flex items-center" role="separator" aria-label="Hoặc">
-        <div
-          className="h-px flex-1 bg-gradient-to-r from-transparent via-white/[0.14] to-transparent"
-          aria-hidden
-        />
-        <span className="mx-4 shrink-0 rounded-full border border-white/10 bg-white/[0.05] px-3.5 py-1.5 text-[10px] font-bold uppercase tracking-[0.22em] text-zinc-400">
-          hoặc
-        </span>
-        <div
-          className="h-px flex-1 bg-gradient-to-l from-transparent via-white/[0.14] to-transparent"
-          aria-hidden
-        />
-      </div>
-      <div className="mt-4">
-        <GoogleSignInBlock onError={setError} />
-      </div>
+          {/* Testimonial card */}
+          <div className="bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl mb-4"
+            style={{ border: "1px solid rgba(110,53,232,0.08)" }}>
+            <div className="text-4xl leading-none mb-3" style={{ color: "#9B6DFF", fontFamily: "Georgia, serif" }}>"</div>
+            <p className="text-gray-700 text-sm leading-relaxed font-medium mb-5">{t.quote}</p>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-black shrink-0"
+                style={{ background: `linear-gradient(135deg, ${t.gradFrom}, ${t.gradTo})` }}>
+                {t.avatar}
+              </div>
+              <div>
+                <p className="font-black text-gray-900 text-sm">{t.name}</p>
+                <p className="text-xs text-gray-400">{t.role}</p>
+              </div>
+            </div>
+          </div>
 
-      <p className="mt-8 text-center text-sm font-semibold text-zinc-300">
-        Chưa có tài khoản?{" "}
-        <Link
-          to="/register"
-          className="font-black text-[#c4ff47] hover:text-[#e8ffc4] hover:underline underline-offset-4 drop-shadow-[0_0_10px_rgba(196,255,71,0.25)]"
-        >
-          Đăng ký ngay
-        </Link>
-      </p>
-    </AuthShell>
+          {/* Tag bubble */}
+          <div className="self-end mr-4 mb-8">
+            <div className="rounded-2xl px-4 py-2 text-white text-sm font-bold shadow-lg"
+              style={{ background: `linear-gradient(135deg, ${t.tagColor}, ${t.tagColor}cc)` }}>
+              {t.tag}
+            </div>
+          </div>
+
+          {/* Stats */}
+          <p className="text-gray-700 mb-5 font-bold text-center" style={{ fontSize: "1.2rem", letterSpacing: "-0.02em" }}>
+            Tham gia cùng <span style={{ color: "#6E35E8" }}>10,000+</span> ứng viên<br />
+            đã thành công với ProInterview
+          </p>
+          <div className="flex gap-8">
+            {[
+              { Icon: Brain,       value: "24/7",  label: "Phỏng vấn AI thử" },
+              { Icon: Microphone,  value: "500+",  label: "Mentor thực tế" },
+              { Icon: Check,       value: "85%",   label: "Tỷ lệ nhận việc" },
+            ].map(({ Icon, value, label }) => (
+              <div key={value} className="text-center">
+                <div className="w-11 h-11 rounded-2xl flex items-center justify-center mx-auto mb-2"
+                  style={{ background: "rgba(110,53,232,0.08)", border: "1px solid rgba(110,53,232,0.12)" }}>
+                  <Icon className="w-5 h-5" style={{ color: "#6E35E8" }} />
+                </div>
+                <p className="text-sm font-black text-gray-900">{value}</p>
+                <p className="text-xs text-gray-400 leading-tight">{label}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Bottom */}
+        <div className="flex-shrink-0 px-10 pb-6 relative z-10 text-center">
+          <p className="text-xs text-gray-400">
+            Chưa có tài khoản?{" "}
+            <Link to="/register" className="font-semibold hover:underline" style={{ color: "#6E35E8" }}>
+              Tạo tài khoản miễn phí →
+            </Link>
+          </p>
+        </div>
+      </div>
+    </div>
   );
 }

@@ -727,7 +727,7 @@ export function Home() {
               <span className="h-1 w-10 rounded-full bg-gradient-to-r from-[#c4ff47] to-emerald-400" />
             </div>
             <h2 className="text-4xl md:text-6xl text-white mb-4 leading-[1.1] py-2 cute-heading font-headline tracking-tighter">
-              Quy trình tinh gọn,<br/>
+              Quy trình tinh gọn,<br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#c4ff47] via-fuchsia-300 to-violet-300">kết quả đột phá</span>
             </h2>
             <p className="text-zinc-400 text-lg max-w-2xl mx-auto leading-relaxed">
@@ -739,47 +739,44 @@ export function Home() {
             {STEPS.map((s, i) => (
               <div
                 key={i}
-                className={`glass-card group p-6 sm:p-8 relative overflow-hidden transition-[border-color,box-shadow] duration-300 ${
-                  i === 1
+                className={`glass-card group p-6 sm:p-8 relative overflow-hidden transition-[border-color,box-shadow] duration-300 ${i === 1
                     ? "border-[#c4ff47]/35 shadow-[0_0_0_1px_rgba(196,255,71,0.12)_inset]"
                     : i === 2
                       ? "border-violet-400/35 shadow-[0_0_0_1px_rgba(167,139,250,0.15)_inset]"
                       : "border-white/[0.12]"
-                }`}
+                  }`}
               >
                 <div className="relative z-[1]">
-                {/* Hàng nhãn cố định — tránh absolute đè lên icon */}
-                <div className="mb-3 min-h-[30px] flex items-center justify-start">
-                  {(i === 1 || i === 2) && (
-                    <span
-                      className={`inline-flex px-2 py-1 text-[10px] sm:text-[11px] font-bold tracking-wide rounded-md border ${
-                        i === 1
-                          ? "border-[#c4ff47]/55 bg-[#c4ff47]/18 text-[#e8ffc4] shadow-[0_0_14px_rgba(196,255,71,0.22)]"
-                          : "border-violet-400/55 bg-violet-950/95 text-violet-50 shadow-[0_0_14px_rgba(139,92,246,0.28)]"
+                  {/* Hàng nhãn cố định — tránh absolute đè lên icon */}
+                  <div className="mb-3 min-h-[30px] flex items-center justify-start">
+                    {(i === 1 || i === 2) && (
+                      <span
+                        className={`inline-flex px-2 py-1 text-[10px] sm:text-[11px] font-bold tracking-wide rounded-md border ${i === 1
+                            ? "border-[#c4ff47]/55 bg-[#c4ff47]/18 text-[#e8ffc4] shadow-[0_0_14px_rgba(196,255,71,0.22)]"
+                            : "border-violet-400/55 bg-violet-950/95 text-violet-50 shadow-[0_0_14px_rgba(139,92,246,0.28)]"
+                          }`}
+                      >
+                        {i === 1 ? "Nổi bật" : "Gợi ý mentor"}
+                      </span>
+                    )}
+                  </div>
+                  <div className="absolute top-0 right-0 p-4 opacity-[0.06] group-hover:opacity-[0.14] transition-opacity pointer-events-none">
+                    <span className="text-6xl font-black italic text-white">{s.step}</span>
+                  </div>
+
+                  <div
+                    className={`relative w-14 h-14 rounded-2xl flex items-center justify-center mb-8 transition-all duration-500 shadow-xl float-icon parallax-layer ${i % 2 === 0
+                        ? "bg-[#c4ff47] text-[#0a0a0c] shadow-[0_0_24px_rgba(196,255,71,0.25)]"
+                        : "bg-white/5 text-[#c4ff47] border border-white/10 group-hover:bg-[#c4ff47]/15 group-hover:border-[#c4ff47]/35"
                       }`}
-                    >
-                      {i === 1 ? "Nổi bật" : "Gợi ý mentor"}
-                    </span>
-                  )}
-                </div>
-                <div className="absolute top-0 right-0 p-4 opacity-[0.06] group-hover:opacity-[0.14] transition-opacity pointer-events-none">
-                  <span className="text-6xl font-black italic text-white">{s.step}</span>
-                </div>
+                  >
+                    <s.icon className="h-7 w-7" />
+                  </div>
 
-                <div
-                  className={`relative w-14 h-14 rounded-2xl flex items-center justify-center mb-8 transition-all duration-500 shadow-xl float-icon parallax-layer ${
-                    i % 2 === 0
-                      ? "bg-[#c4ff47] text-[#0a0a0c] shadow-[0_0_24px_rgba(196,255,71,0.25)]"
-                      : "bg-white/5 text-[#c4ff47] border border-white/10 group-hover:bg-[#c4ff47]/15 group-hover:border-[#c4ff47]/35"
-                  }`}
-                >
-                  <s.icon className="h-7 w-7" />
-                </div>
-
-                <h3 className="text-xl font-bold mb-3 text-white parallax-layer font-headline tracking-tight">{s.title}</h3>
-                <p className="text-white/45 text-sm leading-relaxed">
-                  {s.desc}
-                </p>
+                  <h3 className="text-xl font-bold mb-3 text-white parallax-layer font-headline tracking-tight">{s.title}</h3>
+                  <p className="text-white/45 text-sm leading-relaxed">
+                    {s.desc}
+                  </p>
                 </div>
               </div>
             ))}
@@ -787,7 +784,7 @@ export function Home() {
 
           {/* CTA Section */}
           <div className="mt-16 flex flex-col items-center">
-            <button 
+            <button
               onClick={() => handleFeatureClick("/dashboard")}
               className="group relative bg-primary-fixed text-on-primary-fixed px-12 py-5 rounded-full font-black text-xl tracking-tight uppercase transition-all duration-500 hover:scale-105 active:scale-95 shadow-[0_20px_50px_rgba(196,255,71,0.22)]"
             >
@@ -825,80 +822,80 @@ export function Home() {
             {/* Left copy */}
             <div className="glass-card p-6 sm:p-8 lg:p-10">
               <div className="relative z-[1]">
-              <div className="mb-5 h-1 w-10 rounded-full bg-gradient-to-r from-[#c4ff47] to-fuchsia-400" aria-hidden />
-              <span
-                className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold mb-6 border border-violet-400/30 bg-violet-500/10 text-violet-200"
-              >
-                <Microphone
-                  className="w-3.5 h-3.5"
-                />
-                Phòng phỏng vấn ảo
-              </span>
-              <h2
-                className="text-white mb-5 leading-tight cute-heading"
-                style={{
-                  fontSize: "clamp(1.875rem, 4vw, 2.5rem)",
-                }}
-              >
-                Trải nghiệm phỏng vấn{" "}
-                <span style={{ color: "#c4ff47" }}>
-                  như thật
+                <div className="mb-5 h-1 w-10 rounded-full bg-gradient-to-r from-[#c4ff47] to-fuchsia-400" aria-hidden />
+                <span
+                  className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold mb-6 border border-violet-400/30 bg-violet-500/10 text-violet-200"
+                >
+                  <Microphone
+                    className="w-3.5 h-3.5"
+                  />
+                  Phòng phỏng vấn ảo
                 </span>
-              </h2>
-              <p
-                className="mb-8 leading-relaxed"
-                style={{
-                  color: "rgba(255,255,255,0.45)",
-                  fontSize: "1.05rem",
-                }}
-              >
-                Phòng phỏng vấn ảo với AI phỏng vấn viên, phản
-                hồi trực quan khi bạn đang nói, và đánh giá chi
-                tiết từng câu trả lời theo mô hình STAR.
-              </p>
+                <h2
+                  className="text-white mb-5 leading-tight cute-heading"
+                  style={{
+                    fontSize: "clamp(1.875rem, 4vw, 2.5rem)",
+                  }}
+                >
+                  Trải nghiệm phỏng vấn{" "}
+                  <span style={{ color: "#c4ff47" }}>
+                    như thật
+                  </span>
+                </h2>
+                <p
+                  className="mb-8 leading-relaxed"
+                  style={{
+                    color: "rgba(255,255,255,0.45)",
+                    fontSize: "1.05rem",
+                  }}
+                >
+                  Phòng phỏng vấn ảo với AI phỏng vấn viên, phản
+                  hồi trực quan khi bạn đang nói, và đánh giá chi
+                  tiết từng câu trả lời theo mô hình STAR.
+                </p>
 
-              <ul className="space-y-3.5 mb-10">
-                {[
-                  "AI hỏi 5 câu hỏi cá nhân hóa theo JD",
-                  "Nhận diện giọng nói tự động",
-                  "Phản hồi tức thì sau mỗi câu trả lời",
-                  "Phân tích chi tiết theo mô hình STAR",
-                ].map((item, i) => (
-                  <li
-                    key={i}
-                    className="flex items-center gap-3"
-                    style={{ color: "rgba(255,255,255,0.7)" }}
-                  >
-                    <div
-                      className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0"
-                      style={{
-                        background: "rgba(196, 255, 71,0.15)",
-                      }}
+                <ul className="space-y-3.5 mb-10">
+                  {[
+                    "AI hỏi 5 câu hỏi cá nhân hóa theo JD",
+                    "Nhận diện giọng nói tự động",
+                    "Phản hồi tức thì sau mỗi câu trả lời",
+                    "Phân tích chi tiết theo mô hình STAR",
+                  ].map((item, i) => (
+                    <li
+                      key={i}
+                      className="flex items-center gap-3"
+                      style={{ color: "rgba(255,255,255,0.7)" }}
                     >
-                      <Check
-                        className="w-3 h-3"
-                        style={{ color: "#c4ff47" }}
-                      />
-                    </div>
-                    <span className="text-sm">{item}</span>
-                  </li>
-                ))}
-              </ul>
+                      <div
+                        className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0"
+                        style={{
+                          background: "rgba(196, 255, 71,0.15)",
+                        }}
+                      >
+                        <Check
+                          className="w-3 h-3"
+                          style={{ color: "#c4ff47" }}
+                        />
+                      </div>
+                      <span className="text-sm">{item}</span>
+                    </li>
+                  ))}
+                </ul>
 
-              <button
-                type="button"
-                onClick={() => navigateToInterview(navigate)}
-                className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-semibold transition-all hover:brightness-110 hover:-translate-y-0.5"
-                style={{
-                  background:
-                    "linear-gradient(135deg, #c4ff47, #8fbc24)",
-                  color: "#1a1a1a",
-                  boxShadow: "0 0 28px rgba(196, 255, 71,0.25)",
-                }}
-              >
-                Thử ngay miễn phí
-                <ArrowRight className="w-4 h-4" />
-              </button>
+                <button
+                  type="button"
+                  onClick={() => navigateToInterview(navigate)}
+                  className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-semibold transition-all hover:brightness-110 hover:-translate-y-0.5"
+                  style={{
+                    background:
+                      "linear-gradient(135deg, #c4ff47, #8fbc24)",
+                    color: "#1a1a1a",
+                    boxShadow: "0 0 28px rgba(196, 255, 71,0.25)",
+                  }}
+                >
+                  Thử ngay miễn phí
+                  <ArrowRight className="w-4 h-4" />
+                </button>
               </div>
             </div>
 
@@ -913,181 +910,181 @@ export function Home() {
                 aria-hidden
               />
               <div className="glass-card p-1 sm:p-1.5 rounded-[28px]">
-              <div
-                className="relative rounded-[24px] overflow-hidden border border-white/[0.08] bg-[#07060e]/95"
-                style={{
-                  boxShadow: "0 24px 64px rgba(0,0,0,0.5), 0 0 0 1px rgba(196,255,71,0.08) inset",
-                }}
-              >
-                {/* Window chrome */}
                 <div
-                  className="flex items-center justify-between px-5 py-3.5"
+                  className="relative rounded-[24px] overflow-hidden border border-white/[0.08] bg-[#07060e]/95"
                   style={{
-                    background: "#0A0816",
-                    borderBottom:
-                      "1px solid rgba(255,255,255,0.07)",
+                    boxShadow: "0 24px 64px rgba(0,0,0,0.5), 0 0 0 1px rgba(196,255,71,0.08) inset",
                   }}
                 >
-                  <div className="flex gap-1.5">
-                    <div
-                      className="w-3 h-3 rounded-full"
-                      style={{ background: "#FF5F57" }}
-                    />
-                    <div
-                      className="w-3 h-3 rounded-full"
-                      style={{ background: "#FEBC2E" }}
-                    />
-                    <div
-                      className="w-3 h-3 rounded-full"
-                      style={{ background: "#28C840" }}
-                    />
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div
-                      className="w-2 h-2 rounded-full"
-                      style={{
-                        background: "rgba(110, 53, 232,0.6)",
-                      }}
-                    />
-                    <span
-                      className="text-xs"
-                      style={{
-                        color: "rgba(255,255,255,0.35)",
-                      }}
-                    >
-                      ProInterview — Phỏng vấn AI
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <div
-                      className="w-2 h-2 rounded-full animate-pulse"
-                      style={{ background: "#FF5F57" }}
-                    />
-                    <span
-                      className="text-xs"
-                      style={{ color: "#FF5F57" }}
-                    >
-                      Đang ghi
-                    </span>
-                  </div>
-                </div>
-
-                {/* Interview screen content */}
-                <div className="relative" style={{ aspectRatio: "16/10", background: "#0A0816" }}>
-                  {/* HR Video */}
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <video
-                      autoPlay
-                      loop
-                      muted
-                      playsInline
-                      className="w-full h-full object-cover"
-                      style={{ opacity: 0.95 }}
-                    >
-                      <source
-                        src="https://res.cloudinary.com/dee4bvivu/video/upload/v1774336640/Female_delxmy.mp4"
-                        type="video/mp4"
-                      />
-                    </video>
-                  </div>
-
-                  {/* Overlay UI */}
-                  <div className="absolute inset-0 pointer-events-none">
-                    {/* Top bar with timer and info */}
-                    <div className="absolute top-0 left-0 right-0 p-4 flex items-center justify-between"
-                      style={{
-                        background: "linear-gradient(to bottom, rgba(18,11,46,0.92), transparent)"
-                      }}
-                    >
-                      <div className="flex items-center gap-2">
-                        <div
-                          className="w-2 h-2 rounded-full animate-pulse"
-                          style={{ background: "#FF5F57" }}
-                        />
-                        <span className="text-white text-xs font-semibold">
-                          Đang phỏng vấn
-                        </span>
-                      </div>
+                  {/* Window chrome */}
+                  <div
+                    className="flex items-center justify-between px-5 py-3.5"
+                    style={{
+                      background: "#0A0816",
+                      borderBottom:
+                        "1px solid rgba(255,255,255,0.07)",
+                    }}
+                  >
+                    <div className="flex gap-1.5">
                       <div
-                        className="px-3 py-1.5 rounded-lg text-xs font-semibold"
+                        className="w-3 h-3 rounded-full"
+                        style={{ background: "#FF5F57" }}
+                      />
+                      <div
+                        className="w-3 h-3 rounded-full"
+                        style={{ background: "#FEBC2E" }}
+                      />
+                      <div
+                        className="w-3 h-3 rounded-full"
+                        style={{ background: "#28C840" }}
+                      />
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div
+                        className="w-2 h-2 rounded-full"
                         style={{
-                          background: "rgba(110, 53, 232,0.25)",
-                          border: "1px solid rgba(110, 53, 232,0.4)",
-                          color: "#B89DFF"
+                          background: "rgba(110, 53, 232,0.6)",
+                        }}
+                      />
+                      <span
+                        className="text-xs"
+                        style={{
+                          color: "rgba(255,255,255,0.35)",
                         }}
                       >
-                        03:24 / 15:00
-                      </div>
+                        ProInterview — Phỏng vấn AI
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <div
+                        className="w-2 h-2 rounded-full animate-pulse"
+                        style={{ background: "#FF5F57" }}
+                      />
+                      <span
+                        className="text-xs"
+                        style={{ color: "#FF5F57" }}
+                      >
+                        Đang ghi
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Interview screen content */}
+                  <div className="relative" style={{ aspectRatio: "16/10", background: "#0A0816" }}>
+                    {/* HR Video */}
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <video
+                        autoPlay
+                        loop
+                        muted
+                        playsInline
+                        className="w-full h-full object-cover"
+                        style={{ opacity: 0.95 }}
+                      >
+                        <source
+                          src="https://res.cloudinary.com/dee4bvivu/video/upload/v1774336640/Female_delxmy.mp4"
+                          type="video/mp4"
+                        />
+                      </video>
                     </div>
 
-                    {/* Current question display */}
-                    <div className="absolute bottom-0 left-0 right-0 p-5"
-                      style={{
-                        background: "linear-gradient(to top, rgba(18,11,46,0.95), transparent)"
-                      }}
-                    >
-                      <div
-                        className="p-4 rounded-xl"
+                    {/* Overlay UI */}
+                    <div className="absolute inset-0 pointer-events-none">
+                      {/* Top bar with timer and info */}
+                      <div className="absolute top-0 left-0 right-0 p-4 flex items-center justify-between"
                         style={{
-                          background: "rgba(110, 53, 232,0.15)",
-                          border: "1px solid rgba(110, 53, 232,0.35)",
-                          backdropFilter: "blur(12px)"
+                          background: "linear-gradient(to bottom, rgba(18,11,46,0.92), transparent)"
                         }}
                       >
-                        <div className="flex items-start gap-3">
+                        <div className="flex items-center gap-2">
                           <div
-                            className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
-                            style={{
-                              background: "linear-gradient(135deg, #6E35E8, #9B6DFF)",
-                            }}
-                          >
-                            <Sparkle
-                              className="w-4 h-4 text-white"
-                            />
-                          </div>
-                          <div className="flex-1">
-                            <p className="text-white/50 text-xs mb-1.5 font-semibold">
-                              Câu hỏi 2/5
-                            </p>
-                            <p className="text-white text-sm leading-relaxed">
-                              Hãy kể về một lần bạn phải giải quyết xung đột trong nhóm. Bạn đã xử lý như thế nào?
-                            </p>
-                          </div>
+                            className="w-2 h-2 rounded-full animate-pulse"
+                            style={{ background: "#FF5F57" }}
+                          />
+                          <span className="text-white text-xs font-semibold">
+                            Đang phỏng vấn
+                          </span>
+                        </div>
+                        <div
+                          className="px-3 py-1.5 rounded-lg text-xs font-semibold"
+                          style={{
+                            background: "rgba(110, 53, 232,0.25)",
+                            border: "1px solid rgba(110, 53, 232,0.4)",
+                            color: "#B89DFF"
+                          }}
+                        >
+                          03:24 / 15:00
                         </div>
                       </div>
 
-                      {/* Quick stats */}
-                      <div className="grid grid-cols-3 gap-2 mt-3">
-                        {[
-                          { icon: Microphone, label: "Đang nghe", color: "#c4ff47" },
-                          { icon: Brain, label: "Phân tích STAR", color: "#6E35E8" },
-                          { icon: ChartBar, label: "Điểm: 3.8/5", color: "#FFB800" },
-                        ].map((item, i) => (
-                          <div
-                            key={i}
-                            className="flex items-center gap-2 px-2.5 py-2 rounded-lg"
-                            style={{
-                              background: "rgba(255,255,255,0.06)",
-                              border: "1px solid rgba(255,255,255,0.08)"
-                            }}
-                          >
-                            <item.icon
-                              className="w-3.5 h-3.5 flex-shrink-0"
-                              style={{ color: item.color }}
-                            />
-                            <span
-                              className="text-xs font-medium"
-                              style={{ color: "rgba(255,255,255,0.6)" }}
+                      {/* Current question display */}
+                      <div className="absolute bottom-0 left-0 right-0 p-5"
+                        style={{
+                          background: "linear-gradient(to top, rgba(18,11,46,0.95), transparent)"
+                        }}
+                      >
+                        <div
+                          className="p-4 rounded-xl"
+                          style={{
+                            background: "rgba(110, 53, 232,0.15)",
+                            border: "1px solid rgba(110, 53, 232,0.35)",
+                            backdropFilter: "blur(12px)"
+                          }}
+                        >
+                          <div className="flex items-start gap-3">
+                            <div
+                              className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+                              style={{
+                                background: "linear-gradient(135deg, #6E35E8, #9B6DFF)",
+                              }}
                             >
-                              {item.label}
-                            </span>
+                              <Sparkle
+                                className="w-4 h-4 text-white"
+                              />
+                            </div>
+                            <div className="flex-1">
+                              <p className="text-white/50 text-xs mb-1.5 font-semibold">
+                                Câu hỏi 2/5
+                              </p>
+                              <p className="text-white text-sm leading-relaxed">
+                                Hãy kể về một lần bạn phải giải quyết xung đột trong nhóm. Bạn đã xử lý như thế nào?
+                              </p>
+                            </div>
                           </div>
-                        ))}
+                        </div>
+
+                        {/* Quick stats */}
+                        <div className="grid grid-cols-3 gap-2 mt-3">
+                          {[
+                            { icon: Microphone, label: "Đang nghe", color: "#c4ff47" },
+                            { icon: Brain, label: "Phân tích STAR", color: "#6E35E8" },
+                            { icon: ChartBar, label: "Điểm: 3.8/5", color: "#FFB800" },
+                          ].map((item, i) => (
+                            <div
+                              key={i}
+                              className="flex items-center gap-2 px-2.5 py-2 rounded-lg"
+                              style={{
+                                background: "rgba(255,255,255,0.06)",
+                                border: "1px solid rgba(255,255,255,0.08)"
+                              }}
+                            >
+                              <item.icon
+                                className="w-3.5 h-3.5 flex-shrink-0"
+                                style={{ color: item.color }}
+                              />
+                              <span
+                                className="text-xs font-medium"
+                                style={{ color: "rgba(255,255,255,0.6)" }}
+                              >
+                                {item.label}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
-              </div>
               </div>
             </div>
           </div>
@@ -1110,7 +1107,7 @@ export function Home() {
                 Nền tảng học
               </span>
               <h2 className="text-4xl md:text-6xl font-black tracking-tighter leading-[0.95] text-white mb-6">
-                Học từ chuyên gia,<br/>
+                Học từ chuyên gia,<br />
                 <span className="text-primary-fixed">sửa lỗi ngay.</span>
               </h2>
               <p className="text-lg text-zinc-400 leading-relaxed max-w-xl">
@@ -1120,12 +1117,12 @@ export function Home() {
             <div className="w-full md:w-1/3 flex justify-end">
               <div className="glass-card !rounded-full px-2 py-1.5 flex items-center gap-3 min-w-0 max-w-full">
                 <div className="relative z-[1] flex items-center gap-3 w-full">
-                <div className="flex -space-x-3 px-2">
-                  {[1, 2, 3].map(i => (
-                    <img key={i} src={`https://i.pravatar.cc/100?img=${i+10}`} alt="Student" className="w-8 h-8 rounded-full border-2 border-white/15 object-cover" />
-                  ))}
-                </div>
-                <span className="pr-4 pl-1 text-[11px] font-bold text-[#c4ff47]">10k+ Học viên</span>
+                  <div className="flex -space-x-3 px-2">
+                    {[1, 2, 3].map(i => (
+                      <img key={i} src={`https://i.pravatar.cc/100?img=${i + 10}`} alt="Student" className="w-8 h-8 rounded-full border-2 border-white/15 object-cover" />
+                    ))}
+                  </div>
+                  <span className="pr-4 pl-1 text-[11px] font-bold text-[#c4ff47]">10k+ Học viên</span>
                 </div>
               </div>
             </div>
@@ -1141,70 +1138,70 @@ export function Home() {
                 className="group glass-card overflow-hidden cursor-pointer !rounded-[28px]"
               >
                 <div className="relative z-[1]">
-                {/* Thumbnail */}
-                <div className="relative h-48 overflow-hidden">
-                  <img
-                    src={course.thumbnail}
-                    alt={course.title}
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-                  
-                  <div className="absolute top-4 left-4 flex gap-2">
-                    <span className="bg-secondary/90 backdrop-blur-md text-white px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">
-                      {course.category}
-                    </span>
-                    <span className="bg-black/60 backdrop-blur-md text-white px-3 py-1 rounded-full text-[10px] font-medium flex items-center gap-1.5">
-                      <span className="material-symbols-outlined text-sm">schedule</span>
-                      {Math.floor(course.duration / 60)}h {course.duration % 60}m
-                    </span>
-                  </div>
-                  {idx === 0 && (
-                    <span className="absolute top-4 right-4 px-2.5 py-1 text-[10px] font-black tracking-wide uppercase sticker-badge text-primary-fixed">
-                      New
-                    </span>
-                  )}
-                  
-                  <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-500 scale-90 group-hover:scale-100">
-                    <div className="w-14 h-14 rounded-full bg-primary-fixed/90 flex items-center justify-center shadow-2xl shadow-primary-fixed/30 transform transition-transform border border-white/20 float-icon-delay parallax-layer">
-                      <PlayCircle className="w-7 h-7 text-on-primary-fixed translate-x-0.5" />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="p-7">
-                  <h3 className="text-xl font-bold mb-5 text-white group-hover:text-primary-fixed transition-colors leading-tight line-clamp-2 parallax-layer">
-                    {course.title}
-                  </h3>
-                  
-                  <div className="flex items-center gap-3 mb-6">
+                  {/* Thumbnail */}
+                  <div className="relative h-48 overflow-hidden">
                     <img
-                      src={course.mentorAvatar}
-                      alt={course.mentorName}
-                      className="w-10 h-10 rounded-xl object-cover border border-white/10"
+                      src={course.thumbnail}
+                      alt={course.title}
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                     />
-                    <div>
-                      <p className="text-sm font-bold text-white">{course.mentorName}</p>
-                      <span className="text-[9px] uppercase tracking-[0.15em] font-black text-zinc-400">
-                        Mentor duyệt
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+
+                    <div className="absolute top-4 left-4 flex gap-2">
+                      <span className="bg-secondary/90 backdrop-blur-md text-white px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">
+                        {course.category}
+                      </span>
+                      <span className="bg-black/60 backdrop-blur-md text-white px-3 py-1 rounded-full text-[10px] font-medium flex items-center gap-1.5">
+                        <span className="material-symbols-outlined text-sm">schedule</span>
+                        {Math.floor(course.duration / 60)}h {course.duration % 60}m
                       </span>
                     </div>
+                    {idx === 0 && (
+                      <span className="absolute top-4 right-4 px-2.5 py-1 text-[10px] font-black tracking-wide uppercase sticker-badge text-primary-fixed">
+                        New
+                      </span>
+                    )}
+
+                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-500 scale-90 group-hover:scale-100">
+                      <div className="w-14 h-14 rounded-full bg-primary-fixed/90 flex items-center justify-center shadow-2xl shadow-primary-fixed/30 transform transition-transform border border-white/20 float-icon-delay parallax-layer">
+                        <PlayCircle className="w-7 h-7 text-on-primary-fixed translate-x-0.5" />
+                      </div>
+                    </div>
                   </div>
 
-                  <div className="flex items-center justify-between pt-4 border-t border-white/10">
-                    <div className="flex items-center gap-2">
-                      <span className="material-symbols-outlined text-primary-fixed text-lg" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
-                      <span className="font-bold text-white text-sm">{course.rating}</span>
-                      <span className="text-white/35 text-xs">({(course.reviewsCount || 0) + 700})</span>
+                  <div className="p-7">
+                    <h3 className="text-xl font-bold mb-5 text-white group-hover:text-primary-fixed transition-colors leading-tight line-clamp-2 parallax-layer">
+                      {course.title}
+                    </h3>
+
+                    <div className="flex items-center gap-3 mb-6">
+                      <img
+                        src={course.mentorAvatar}
+                        alt={course.mentorName}
+                        className="w-10 h-10 rounded-xl object-cover border border-white/10"
+                      />
+                      <div>
+                        <p className="text-sm font-bold text-white">{course.mentorName}</p>
+                        <span className="text-[9px] uppercase tracking-[0.15em] font-black text-zinc-400">
+                          Mentor duyệt
+                        </span>
+                      </div>
                     </div>
-                    <div className="text-lg font-black text-primary-fixed">
-                      {new Intl.NumberFormat("vi-VN", {
-                        style: "currency",
-                        currency: "VND",
-                      }).format(course.price)}
+
+                    <div className="flex items-center justify-between pt-4 border-t border-white/10">
+                      <div className="flex items-center gap-2">
+                        <span className="material-symbols-outlined text-primary-fixed text-lg" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
+                        <span className="font-bold text-white text-sm">{course.rating}</span>
+                        <span className="text-white/35 text-xs">({(course.reviewsCount || 0) + 700})</span>
+                      </div>
+                      <div className="text-lg font-black text-primary-fixed">
+                        {new Intl.NumberFormat("vi-VN", {
+                          style: "currency",
+                          currency: "VND",
+                        }).format(course.price)}
+                      </div>
                     </div>
                   </div>
-                </div>
                 </div>
               </div>
             ))}
@@ -1268,58 +1265,58 @@ export function Home() {
 
           <div className="grid md:grid-cols-3 gap-6">
             {TESTIMONIALS.map((t, i) => (
-            <div
+              <div
                 key={i}
-              className="glass-card p-6 sm:p-7 !rounded-[28px]"
+                className="glass-card p-6 sm:p-7 !rounded-[28px]"
               >
                 <div className="relative z-[1]">
-                {/* Stars */}
-                <div className="flex gap-1 mb-4">
-                  {[...Array(t.stars)].map((_, j) => (
-                    <Star
-                      key={j}
-                      className="w-4 h-4"
-                      fill="#FFB800"
-                      style={{ color: "#FFB800" }}
-                    />
-                  ))}
-                  <span
-                    className="ml-auto text-xs px-2 py-0.5 rounded-full font-medium"
-                    style={{
-                      background: "rgba(196, 255, 71,0.12)",
-                      color: "#c4ff47",
-                      border: "1px solid rgba(196, 255, 71,0.2)",
-                    }}
-                  >
-                    {t.tag}
-                  </span>
-                </div>
-                <p
-                  className="text-sm leading-relaxed mb-6"
-                  style={{ color: "rgba(255,255,255,0.55)" }}
-                >
-                  "{t.text}"
-                </p>
-                <div className="flex items-center gap-3">
-                  <div
-                    className={`w-9 h-9 rounded-full bg-gradient-to-br ${t.grad} flex items-center justify-center text-white text-xs font-bold flex-shrink-0 float-icon-slow`}
-                  >
-                    {t.avatar}
-                  </div>
-                  <div>
-                    <p className="text-white text-sm font-semibold">
-                      {t.name}
-                    </p>
-                    <p
-                      className="text-xs"
+                  {/* Stars */}
+                  <div className="flex gap-1 mb-4">
+                    {[...Array(t.stars)].map((_, j) => (
+                      <Star
+                        key={j}
+                        className="w-4 h-4"
+                        fill="#FFB800"
+                        style={{ color: "#FFB800" }}
+                      />
+                    ))}
+                    <span
+                      className="ml-auto text-xs px-2 py-0.5 rounded-full font-medium"
                       style={{
-                        color: "rgba(255,255,255,0.35)",
+                        background: "rgba(196, 255, 71,0.12)",
+                        color: "#c4ff47",
+                        border: "1px solid rgba(196, 255, 71,0.2)",
                       }}
                     >
-                      {t.role}
-                    </p>
+                      {t.tag}
+                    </span>
                   </div>
-                </div>
+                  <p
+                    className="text-sm leading-relaxed mb-6"
+                    style={{ color: "rgba(255,255,255,0.55)" }}
+                  >
+                    "{t.text}"
+                  </p>
+                  <div className="flex items-center gap-3">
+                    <div
+                      className={`w-9 h-9 rounded-full bg-gradient-to-br ${t.grad} flex items-center justify-center text-white text-xs font-bold flex-shrink-0 float-icon-slow`}
+                    >
+                      {t.avatar}
+                    </div>
+                    <div>
+                      <p className="text-white text-sm font-semibold">
+                        {t.name}
+                      </p>
+                      <p
+                        className="text-xs"
+                        style={{
+                          color: "rgba(255,255,255,0.35)",
+                        }}
+                      >
+                        {t.role}
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </div>
             ))}
@@ -1328,8 +1325,8 @@ export function Home() {
       </section>
 
       {/* ═══ PRICING SECTION ═════════════════════════════════════ */}
-      <section 
-        id="pricing" 
+      <section
+        id="pricing"
         className="min-h-screen flex flex-col justify-center py-24 relative overflow-hidden bg-transparent border-t border-white/[0.06]"
       >
         <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-24 w-[600px] h-[300px] bg-[#c4ff47]/[0.08] blur-[120px] rounded-full pointer-events-none" aria-hidden />
@@ -1355,28 +1352,28 @@ export function Home() {
             {/* Free Tier */}
             <div className="glass-card p-8 !rounded-[28px] flex flex-col h-full group">
               <div className="relative z-[1] flex flex-col flex-1">
-              <div className="mb-6">
-                <h3 className="font-headline font-bold text-lg mb-1 text-white">Cơ bản (Free)</h3>
-                <div className="flex items-baseline gap-1">
-                  <span className="text-3xl font-black font-headline text-white">0đ</span>
-                  <span className="text-zinc-500 text-xs">/tháng</span>
+                <div className="mb-6">
+                  <h3 className="font-headline font-bold text-lg mb-1 text-white">Cơ bản (Free)</h3>
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-3xl font-black font-headline text-white">0đ</span>
+                    <span className="text-zinc-500 text-xs">/tháng</span>
+                  </div>
                 </div>
-              </div>
-              <ul className="space-y-3 mb-8 flex-grow">
-                {["2 buổi AI Interview thử nghiệm", "3 lần phân tích CV/JD", "10 câu hỏi mẫu theo ngành"].map((f, i) => (
-                  <li key={i} className="flex items-start gap-2 text-sm text-zinc-300">
-                    <CheckCircle2 className="size-4 shrink-0 text-secondary" />
-                    {f}
-                  </li>
-                ))}
-              </ul>
-              <button
-                type="button"
-                onClick={() => requireLoginNavigate(navigate, "/dashboard")}
-                className="w-full py-3 rounded-full border border-white/10 text-white font-bold text-sm hover:bg-white/5 transition-all mt-auto"
-              >
-                Bắt đầu ngay
-              </button>
+                <ul className="space-y-3 mb-8 flex-grow">
+                  {["2 buổi AI Interview thử nghiệm", "3 lần phân tích CV/JD", "10 câu hỏi mẫu theo ngành"].map((f, i) => (
+                    <li key={i} className="flex items-start gap-2 text-sm text-zinc-300">
+                      <CheckCircle2 className="size-4 shrink-0 text-secondary" />
+                      {f}
+                    </li>
+                  ))}
+                </ul>
+                <button
+                  type="button"
+                  onClick={() => requireLoginNavigate(navigate, "/dashboard")}
+                  className="w-full py-3 rounded-full border border-white/10 text-white font-bold text-sm hover:bg-white/5 transition-all mt-auto"
+                >
+                  Bắt đầu ngay
+                </button>
               </div>
             </div>
 
@@ -1386,66 +1383,66 @@ export function Home() {
                 PHỔ BIẾN NHẤT
               </div>
               <div className="relative z-[1] flex flex-col flex-1 pt-2">
-              <div className="mb-6">
-                <h3 className="font-headline font-bold text-lg mb-1 text-white">Chuyên nghiệp (Pro)</h3>
-                <div className="flex items-baseline gap-1">
-                  <span className="text-3xl font-black font-headline text-white">79.000đ</span>
-                  <span className="text-zinc-400 text-xs">/tháng</span>
+                <div className="mb-6">
+                  <h3 className="font-headline font-bold text-lg mb-1 text-white">Chuyên nghiệp (Pro)</h3>
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-3xl font-black font-headline text-white">79.000đ</span>
+                    <span className="text-zinc-400 text-xs">/tháng</span>
+                  </div>
                 </div>
-              </div>
-              <ul className="space-y-3 mb-8 flex-grow">
-                {["10 buổi AI Interview/tháng", "Nhận diện giọng nói AI", "20 lần phân tích CV/JD", "Phản hồi chi tiết từng câu"].map((f, i) => (
-                  <li key={i} className="flex items-start gap-2 text-sm font-bold text-white">
-                    <CheckCircle2 className="size-4 shrink-0 text-primary-fixed" />
-                    {f}
-                  </li>
-                ))}
-              </ul>
-              <button
-                type="button"
-                onClick={() =>
-                  requireLoginNavigate(
-                    navigate,
-                    "/checkout?plan=starterPro&billing=monthly&planPrice=79000",
-                  )
-                }
-                className="w-full py-3 rounded-full bg-primary-fixed text-on-primary-fixed font-black text-sm shadow-[0px_0px_20px_rgba(191,255,0,0.3)] hover:brightness-110 transition-all mt-auto"
-              >
-                Nâng cấp Pro
-              </button>
+                <ul className="space-y-3 mb-8 flex-grow">
+                  {["10 buổi AI Interview/tháng", "Nhận diện giọng nói AI", "20 lần phân tích CV/JD", "Phản hồi chi tiết từng câu"].map((f, i) => (
+                    <li key={i} className="flex items-start gap-2 text-sm font-bold text-white">
+                      <CheckCircle2 className="size-4 shrink-0 text-primary-fixed" />
+                      {f}
+                    </li>
+                  ))}
+                </ul>
+                <button
+                  type="button"
+                  onClick={() =>
+                    requireLoginNavigate(
+                      navigate,
+                      "/checkout?plan=starterPro&billing=monthly&planPrice=79000",
+                    )
+                  }
+                  className="w-full py-3 rounded-full bg-primary-fixed text-on-primary-fixed font-black text-sm shadow-[0px_0px_20px_rgba(191,255,0,0.3)] hover:brightness-110 transition-all mt-auto"
+                >
+                  Nâng cấp Pro
+                </button>
               </div>
             </div>
 
             {/* Elite Tier */}
             <div className="glass-card p-8 !rounded-[28px] flex flex-col h-full border border-secondary/40 group !overflow-visible">
               <div className="relative z-[1] flex flex-col flex-1">
-              <div className="mb-6">
-                <h3 className="font-headline font-bold text-lg mb-1 text-secondary-fixed">Thượng hạng (Elite)</h3>
-                <div className="flex items-baseline gap-1">
-                  <span className="text-3xl font-black font-headline text-white">99.000đ</span>
-                  <span className="text-zinc-500 text-xs">/tháng</span>
+                <div className="mb-6">
+                  <h3 className="font-headline font-bold text-lg mb-1 text-secondary-fixed">Thượng hạng (Elite)</h3>
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-3xl font-black font-headline text-white">99.000đ</span>
+                    <span className="text-zinc-500 text-xs">/tháng</span>
+                  </div>
                 </div>
-              </div>
-              <ul className="space-y-3 mb-8 flex-grow">
-                {["AI Interview KHÔNG GIỚI HẠN", "Phân tích hành vi & tư thế", "Nhận diện giọng nói Turbo", "Hỗ trợ ưu tiên 24/7"].map((f, i) => (
-                  <li key={i} className="flex items-start gap-2 text-sm font-bold text-white">
-                    <ShieldCheck className="size-4 shrink-0 text-secondary-fixed" />
-                    {f}
-                  </li>
-                ))}
-              </ul>
-              <button
-                type="button"
-                onClick={() =>
-                  requireLoginNavigate(
-                    navigate,
-                    "/checkout?plan=elitePro&billing=monthly&planPrice=99000",
-                  )
-                }
-                className="w-full py-3 rounded-full border border-secondary/50 text-secondary-fixed font-bold text-sm hover:bg-secondary/10 transition-all mt-auto"
-              >
-                Nâng cấp Elite
-              </button>
+                <ul className="space-y-3 mb-8 flex-grow">
+                  {["AI Interview KHÔNG GIỚI HẠN", "Phân tích hành vi & tư thế", "Nhận diện giọng nói Turbo", "Hỗ trợ ưu tiên 24/7"].map((f, i) => (
+                    <li key={i} className="flex items-start gap-2 text-sm font-bold text-white">
+                      <ShieldCheck className="size-4 shrink-0 text-secondary-fixed" />
+                      {f}
+                    </li>
+                  ))}
+                </ul>
+                <button
+                  type="button"
+                  onClick={() =>
+                    requireLoginNavigate(
+                      navigate,
+                      "/checkout?plan=elitePro&billing=monthly&planPrice=99000",
+                    )
+                  }
+                  className="w-full py-3 rounded-full border border-secondary/50 text-secondary-fixed font-bold text-sm hover:bg-secondary/10 transition-all mt-auto"
+                >
+                  Nâng cấp Elite
+                </button>
               </div>
             </div>
           </div>
@@ -1453,17 +1450,17 @@ export function Home() {
           {/* CTA Section */}
           <div className="mt-14 glass-card p-8 sm:p-10 !rounded-[28px] text-center relative overflow-hidden">
             <div className="relative z-[1]">
-            <h2 className="text-3xl font-headline font-black mb-4 text-white">Bạn vẫn còn băn khoăn?</h2>
-            <p className="text-zinc-400 mb-8 max-w-xl mx-auto">Thử gói Free để trải nghiệm sức mạnh của AI. Không cần thẻ tín dụng.</p>
-            <div className="flex flex-col md:flex-row items-center justify-center gap-6">
-              <button
-                type="button"
-                onClick={() => requireLoginNavigate(navigate, "/dashboard")}
-                className="bg-primary-fixed text-on-primary-fixed font-black px-10 py-3 rounded-full hover:scale-105 transition-all shadow-[0_0_28px_rgba(196,255,71,0.25)]"
-              >
-                Bắt đầu miễn phí
-              </button>
-            </div>
+              <h2 className="text-3xl font-headline font-black mb-4 text-white">Bạn vẫn còn băn khoăn?</h2>
+              <p className="text-zinc-400 mb-8 max-w-xl mx-auto">Thử gói Free để trải nghiệm sức mạnh của AI. Không cần thẻ tín dụng.</p>
+              <div className="flex flex-col md:flex-row items-center justify-center gap-6">
+                <button
+                  type="button"
+                  onClick={() => requireLoginNavigate(navigate, "/dashboard")}
+                  className="bg-primary-fixed text-on-primary-fixed font-black px-10 py-3 rounded-full hover:scale-105 transition-all shadow-[0_0_28px_rgba(196,255,71,0.25)]"
+                >
+                  Bắt đầu miễn phí
+                </button>
+              </div>
             </div>
           </div>
         </div>
