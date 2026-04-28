@@ -1,4 +1,5 @@
 import { apiUrl } from "./api";
+import { authFetch, hasAuthCredentials } from "./auth";
 
 const jsonHeaders = {
   Accept: "application/json",
@@ -38,6 +39,20 @@ export async function fetchMentor(id) {
   if (data.success && data.mentor) return data.mentor;
   return null;
 }
+
+export async function fetchMentorAvailability(id) {
+  const res = await fetch(apiUrl(`/api/mentors/${encodeURIComponent(id)}/availability`), {
+    headers: jsonHeaders,
+  });
+  if (res.status === 404) return null;
+  if (!res.ok) {
+    console.error(`fetchMentorAvailability: HTTP ${res.status}`);
+    return null;
+  }
+  const data = await res.json().catch(() => ({}));
+  if (data.success && data.availability) return data.availability;
+  return null;
+}
 /**
  * Đăng ký làm mentor mới — POST /api/mentors/apply
  */
@@ -58,6 +73,24 @@ export async function applyAsMentor(data) {
     return { success: true, message: result.message };
   } catch (err) {
     console.error("applyAsMentor error:", err);
+    return { success: false, error: "Không kết nối được server." };
+  }
+}
+
+export async function updateMyMentorAvailability(payload) {
+  if (!hasAuthCredentials()) return { success: false, error: "Chưa đăng nhập." };
+  try {
+    const res = await authFetch("/api/mentors/me/availability", {
+      method: "PATCH",
+      headers: {
+        ...jsonHeaders,
+      },
+      body: JSON.stringify(payload ?? {}),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) return { success: false, error: data.error || `Lỗi ${res.status}` };
+    return { success: true, availability: data.availability };
+  } catch {
     return { success: false, error: "Không kết nối được server." };
   }
 }

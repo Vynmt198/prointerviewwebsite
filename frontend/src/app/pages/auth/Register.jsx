@@ -6,13 +6,13 @@ import {
   Check,
   AlertCircle as WarningCircle,
   Info,
-  Zap as Lightning,
   Brain,
   Star,
   ShieldCheck,
 } from "lucide-react";
 import { registerUser, getBrandClickPath } from "../../utils/auth";
 import { GoogleSignInBlock } from "../../components/auth/GoogleSignInBlock";
+import { BrandLogo } from "../../components/brand/BrandLogo";
 
 const PERKS = [
   "3 buổi phỏng vấn AI miễn phí ngay sau đăng ký",
@@ -86,23 +86,15 @@ export function Register() {
       style={{ fontFamily: "'Lexend', 'Plus Jakarta Sans', system-ui, sans-serif" }}
     >
       {/* ── LEFT ───────────────────────────────────────────── */}
-      <div className="flex-1 flex flex-col h-full bg-white">
+      <div className="flex-1 flex flex-col h-full bg-[#fcfaff]">
 
         {/* Top bar */}
         <div
-          className="flex-shrink-0 flex items-center justify-between px-10 py-4 border-b"
+          className="flex-shrink-0 flex items-center justify-between px-10 h-20 border-b relative"
           style={{ borderColor: "rgba(110,53,232,0.1)" }}
         >
           <button onClick={() => navigate(getBrandClickPath())} className="flex items-center gap-2.5 group">
-            <div
-              className="w-8 h-8 rounded-xl flex items-center justify-center shadow-md transition-transform group-hover:scale-105"
-              style={{ background: "linear-gradient(135deg, #6E35E8, #9B6DFF)" }}
-            >
-              <Lightning className="w-4 h-4 text-white" />
-            </div>
-            <span className="font-bold text-gray-900" style={{ fontSize: "1.05rem", letterSpacing: "-0.02em" }}>
-              ProInterview
-            </span>
+            <BrandLogo />
           </button>
           <p className="text-sm text-gray-500">
             Đã có tài khoản?{" "}
@@ -120,17 +112,16 @@ export function Register() {
               style={{ fontSize: "1.875rem", fontWeight: 750, letterSpacing: "-0.025em" }}>
               Tạo tài khoản
             </h1>
-            <p className="text-gray-500 text-sm mb-6">
+            <p className="text-gray-500 text-sm mb-3">
               Miễn phí · Không cần thẻ tín dụng · 3 buổi AI ngay lập tức
             </p>
 
             {/* Error */}
             {error && (
-              <div className={`mb-4 flex items-start gap-3 rounded-2xl border px-4 py-3 text-sm ${
-                errorIsGoogleEnvHint
+              <div className={`mb-4 flex items-start gap-3 rounded-2xl border px-4 py-3 text-sm ${errorIsGoogleEnvHint
                   ? "border-amber-400/25 bg-amber-50 text-amber-800"
                   : "border-red-300/40 bg-red-50 text-red-700"
-              }`}>
+                }`}>
                 {errorIsGoogleEnvHint
                   ? <Info className="mt-0.5 h-4 w-4 flex-shrink-0 text-amber-500" strokeWidth={2} />
                   : <WarningCircle className="mt-0.5 h-4 w-4 flex-shrink-0 text-red-400" />}
@@ -138,7 +129,7 @@ export function Register() {
               </div>
             )}
 
-            <form onSubmit={handleRegister} className="space-y-4">
+            <form onSubmit={handleRegister} className="space-y-2.5">
               {/* Name */}
               <div>
                 <label htmlFor="reg-name" className="block text-sm font-semibold text-gray-700 mb-1.5">Họ và tên</label>
@@ -219,15 +210,15 @@ export function Register() {
                 }}>
                 {loading
                   ? <span className="flex items-center justify-center gap-2">
-                      <span className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
-                      Đang tạo tài khoản...
-                    </span>
+                    <span className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                    Đang tạo tài khoản...
+                  </span>
                   : "Tạo tài khoản miễn phí"}
               </button>
             </form>
 
             {/* Divider */}
-            <div className="flex items-center gap-3 my-5">
+            <div className="flex items-center gap-3 my-4">
               <div className="flex-1 h-px bg-gray-100" />
               <span className="text-xs text-gray-400 font-medium">hoặc</span>
               <div className="flex-1 h-px bg-gray-100" />
@@ -324,13 +315,13 @@ export function Register() {
             </p>
             <div className="flex items-center justify-center gap-2">
               <div className="flex -space-x-2">
-                {[["#6E35E8","N"],["#ec4899","T"],["#3b82f6","A"],["#f97316","M"]].map(([bg, l], i) => (
+                {[["#6E35E8", "N"], ["#ec4899", "T"], ["#3b82f6", "A"], ["#f97316", "M"]].map(([bg, l], i) => (
                   <div key={i} className="w-8 h-8 rounded-full border-2 border-white flex items-center justify-center text-white text-xs font-bold"
                     style={{ background: bg }}>{l}</div>
                 ))}
               </div>
               <div className="flex gap-0.5 ml-1">
-                {[1,2,3,4,5].map((i) => <Star key={i} className="w-3.5 h-3.5 fill-current" style={{ color: "#FFB800" }} />)}
+                {[1, 2, 3, 4, 5].map((i) => <Star key={i} className="w-3.5 h-3.5 fill-current" style={{ color: "#FFB800" }} />)}
               </div>
               <span className="text-gray-600 text-sm font-semibold">4.8</span>
             </div>

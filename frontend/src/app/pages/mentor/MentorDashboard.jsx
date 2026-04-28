@@ -33,6 +33,52 @@ import {
   WEEKLY_STATS,
 } from "../../data/mentorMockData";
 import { MentorPageShell } from "../../components/mentor/MentorPageShell";
+import { listMentorBookings } from "../../utils/bookingsApi";
+
+const DEFAULT_AVATAR = "https://i.pravatar.cc/120?img=12";
+
+function parseBookingDateTime(dateStr, timeStr = "00:00") {
+  const raw = String(dateStr || "").trim();
+  if (!raw) return null;
+  const parts = raw.split("/").map((p) => Number(p));
+  if (parts.length < 2 || !Number.isFinite(parts[0]) || !Number.isFinite(parts[1])) return null;
+  const day = parts[0];
+  const month = parts[1];
+  const year = parts.length >= 3 && Number.isFinite(parts[2]) ? parts[2] : new Date().getFullYear();
+  const [hour, minute] = String(timeStr || "00:00").split(":").map((p) => Number(p));
+  if (!Number.isFinite(hour) || !Number.isFinite(minute)) return null;
+  const dt = new Date(year, month - 1, day, hour, minute, 0, 0);
+  if (Number.isNaN(dt.getTime())) return null;
+  return dt;
+}
+
+function formatMeetingDate(dateStr, timeStr) {
+  const dt = parseBookingDateTime(dateStr, timeStr);
+  if (!dt) return "";
+  return dt.toLocaleDateString("vi-VN");
+}
+
+function toMentorMeeting(booking) {
+  return {
+    id: booking.id,
+    status: booking.status || "",
+    mentee: {
+      name: booking.customerName || "Học viên",
+      avatar: booking.customerAvatar || DEFAULT_AVATAR,
+      level: "Mentee",
+    },
+    position: booking.sessionType || "Mentoring session",
+    company: booking.customerEmail || "ProInterview",
+    scheduledTime: booking.timeSlot || "--:--",
+    scheduledDate: booking.date || "",
+    meetingType: booking.sessionType || "mock-interview",
+    starScores: { situation: 0, task: 0, action: 0, result: 0 },
+    overallScore: 0,
+    feedback: "",
+    strengths: [],
+    improvements: [],
+  };
+}
 
 /* ── Mentee Progress Modal ────────────────────────────────────────────────── */
 function MenteeProgressModal({
@@ -245,6 +291,7 @@ export function MentorDashboard() {
   const navigate = useNavigate();
   const user = getUser();
   const [selectedMeeting, setSelectedMeeting] = useState(null);
+  const [mentorBookings, setMentorBookings] = useState([]);
 
   useEffect(() => {
     if (!user || user.role !== "mentor") {
@@ -252,9 +299,29 @@ export function MentorDashboard() {
     }
   }, []);
 
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      const result = await listMentorBookings();
+      if (!active || !result.success) return;
+      const rows = Array.isArray(result.bookings) ? result.bookings : [];
+      setMentorBookings(rows.map(toMentorMeeting));
+    })();
+    return () => {
+      active = false;
+    };
+  }, []);
+
   if (!user || user.role !== "mentor") return null;
 
-  const upcomingMeetings = UPCOMING_MENTOR_MEETINGS.slice(0, 3);
+  const now = Date.now();
+  const apiUpcoming = mentorBookings.filter((m) => {
+    const statusOk = ["pending", "confirmed", "in_progress"].includes(String(m.status || "").toLowerCase());
+    if (!statusOk) return false;
+    const dt = parseBookingDateTime(m.scheduledDate, m.scheduledTime);
+    return dt && dt.getTime() > now;
+  });
+  const upcomingMeetings = (apiUpcoming.length ? apiUpcoming : UPCOMING_MENTOR_MEETINGS).slice(0, 3);
   const recentCompleted = COMPLETED_MENTOR_MEETINGS.slice(0, 5);
   const stats = MENTOR_DASHBOARD_STATS;
 
@@ -347,7 +414,9 @@ export function MentorDashboard() {
                          <div className="flex items-center gap-10">
                             <div className="text-right hidden sm:block">
                                <p className="text-xs font-black text-white">{meeting.scheduledTime}</p>
-                               <p className="text-[10px] font-bold uppercase tracking-widest text-white/40">{new Date(meeting.scheduledDate).toLocaleDateString("vi-VN")}</p>
+                               <p className="text-[10px] font-bold uppercase tracking-widest text-white/40">
+                                 {formatMeetingDate(meeting.scheduledDate, meeting.scheduledTime)}
+                               </p>
                             </div>
                             <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-primary-fixed opacity-0 group-hover:opacity-100 transition-all">
                                <ArrowRight size={18} />

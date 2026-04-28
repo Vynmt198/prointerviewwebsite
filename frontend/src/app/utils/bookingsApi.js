@@ -73,6 +73,12 @@ export async function listBookings() {
   return { success: true, bookings: r.bookings ?? [] };
 }
 
+export async function listMentorBookings() {
+  const r = await authedGet("/api/bookings/mentor/list");
+  if (!r.success) return r;
+  return { success: true, bookings: r.bookings ?? [] };
+}
+
 export async function fetchBookingById(id) {
   if (!id) return { success: false, error: "Thiếu id." };
   return authedGet(`/api/bookings/${encodeURIComponent(id)}`);

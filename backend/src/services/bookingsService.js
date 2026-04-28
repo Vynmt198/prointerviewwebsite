@@ -27,6 +27,75 @@ export function normalizeBookingDate(raw) {
   return tail;
 }
 
+function parseBookingDateTime(dateRaw, timeRaw) {
+  const dateNorm = normalizeBookingDate(dateRaw);
+  const parts = dateNorm.split("/").map((p) => Number(p));
+  if (parts.length < 2 || !Number.isFinite(parts[0]) || !Number.isFinite(parts[1])) return null;
+  const day = parts[0];
+  const month = parts[1];
+  const year = parts.length >= 3 && Number.isFinite(parts[2]) ? parts[2] : new Date().getFullYear();
+  const [hour, minute] = String(timeRaw || "00:00").split(":").map((p) => Number(p));
+  if (!Number.isFinite(hour) || !Number.isFinite(minute)) return null;
+  return new Date(year, month - 1, day, hour, minute, 0, 0);
+}
+
+function parseDateParts(dateRaw) {
+  const norm = normalizeBookingDate(dateRaw);
+  const parts = norm.split("/").map((p) => Number(p));
+  if (parts.length < 2 || !Number.isFinite(parts[0]) || !Number.isFinite(parts[1])) return null;
+  return {
+    day: parts[0],
+    month: parts[1],
+    year: parts.length >= 3 && Number.isFinite(parts[2]) ? parts[2] : new Date().getFullYear(),
+  };
+}
+
+function toIsoDate(dateRaw) {
+  const p = parseDateParts(dateRaw);
+  if (!p) return "";
+  return `${String(p.year).padStart(4, "0")}-${String(p.month).padStart(2, "0")}-${String(p.day).padStart(2, "0")}`;
+}
+
+function normalizeDateKey(raw, fallbackYear) {
+  const s = String(raw || "").trim();
+  if (!s) return "";
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+  const parts = s.split("/").map((p) => Number(p));
+  if (parts.length >= 2 && Number.isFinite(parts[0]) && Number.isFinite(parts[1])) {
+    const year = parts.length >= 3 && Number.isFinite(parts[2]) ? parts[2] : fallbackYear;
+    return `${String(year).padStart(4, "0")}-${String(parts[1]).padStart(2, "0")}-${String(parts[0]).padStart(2, "0")}`;
+  }
+  return "";
+}
+
+function getMentorSlotsForDate(mentor, dateRaw) {
+  const iso = toIsoDate(dateRaw);
+  if (!iso) return null;
+  const year = Number(iso.slice(0, 4));
+
+  const blocked = Array.isArray(mentor?.blockedDates) ? mentor.blockedDates : [];
+  const blockedSet = new Set(blocked.map((d) => normalizeDateKey(d, year)).filter(Boolean));
+  if (blockedSet.has(iso)) return [];
+
+  const availableSlots = mentor?.availableSlots && typeof mentor.availableSlots === "object" ? mentor.availableSlots : {};
+  const entries = Object.entries(availableSlots);
+  const explicit = entries.find(([k]) => normalizeDateKey(k, year) === iso);
+  if (explicit) {
+    return Array.isArray(explicit[1]) ? explicit[1].map((x) => String(x).trim()).filter(Boolean) : [];
+  }
+
+  const recurring = Array.isArray(mentor?.recurringSchedule) ? mentor.recurringSchedule : [];
+  if (recurring.length) {
+    const [y, m, d] = iso.split("-").map(Number);
+    const jsDay = new Date(y, m - 1, d).getDay(); // 0=Sun
+    const mentorDay = (jsDay + 6) % 7; // 0=Mon
+    const row = recurring.find((r) => Number(r?.dayOfWeek) === mentorDay);
+    return row && Array.isArray(row.slots) ? row.slots.map((x) => String(x).trim()).filter(Boolean) : [];
+  }
+
+  return null;
+}
+
 function buildNotes(body) {
   const direct = typeof body.notes === "string" ? body.notes.trim() : "";
   if (direct) return direct.slice(0, 8000);
@@ -116,6 +185,22 @@ export async function createBooking(userId, body) {
     return { ok: false, status: 400, error: "Thiếu date." };
   }
   const dateNormalized = normalizeBookingDate(rawDate);
+  const allowedSlots = getMentorSlotsForDate(mentor, dateNormalized);
+  if (Array.isArray(allowedSlots)) {
+    if (allowedSlots.length === 0) {
+      return { ok: false, status: 400, error: "Mentor không mở lịch cho ngày này." };
+    }
+    if (!allowedSlots.includes(timeNormalized)) {
+      return { ok: false, status: 400, error: "Khung giờ này không nằm trong lịch mentor mở." };
+    }
+  }
+  const requestedAt = parseBookingDateTime(dateNormalized, timeNormalized);
+  if (!requestedAt || Number.isNaN(requestedAt.getTime())) {
+    return { ok: false, status: 400, error: "Ngày/giờ đặt lịch không hợp lệ." };
+  }
+  if (requestedAt.getTime() <= Date.now()) {
+    return { ok: false, status: 400, error: "Không thể đặt lịch trong quá khứ." };
+  }
 
   let sessionType = typeof body.sessionType === "string" ? body.sessionType.trim() : "mock_interview";
   if (!SESSION_TYPES.has(sessionType)) sessionType = "mock_interview";
@@ -237,6 +322,7 @@ export function toPublicBooking(doc, mentorLean) {
     userId: cust ? String(cust._id) : String(b.userId),
     customerName: cust?.name ?? "",
     customerEmail: cust?.email ?? "",
+    customerAvatar: cust?.avatar ?? "",
     mentorId: mentorPublicId,
     mentorName: m?.name ?? "",
     mentorTitle: m?.title ?? "",
@@ -442,6 +528,23 @@ export async function rescheduleMyBooking(userId, rawId, body) {
   const newDateNorm = normalizeBookingDate(newDateRaw);
   const [th, tm] = newTime.split(":").map(Number);
   const newSlot = `${String(th).padStart(2, "0")}:${String(tm || 0).padStart(2, "0")}`;
+  const mentorDoc = await Mentor.findById(booking.mentorId).select("availableSlots recurringSchedule blockedDates").lean();
+  const allowedSlots = getMentorSlotsForDate(mentorDoc, newDateNorm);
+  if (Array.isArray(allowedSlots)) {
+    if (allowedSlots.length === 0) {
+      return { ok: false, status: 400, error: "Mentor không mở lịch cho ngày này." };
+    }
+    if (!allowedSlots.includes(newSlot)) {
+      return { ok: false, status: 400, error: "Khung giờ mới không nằm trong lịch mentor mở." };
+    }
+  }
+  const rescheduleAt = parseBookingDateTime(newDateNorm, newSlot);
+  if (!rescheduleAt || Number.isNaN(rescheduleAt.getTime())) {
+    return { ok: false, status: 400, error: "Ngày/giờ đổi lịch không hợp lệ." };
+  }
+  if (rescheduleAt.getTime() <= Date.now()) {
+    return { ok: false, status: 400, error: "Không thể đổi lịch sang thời điểm trong quá khứ." };
+  }
 
   const dup = await Booking.findOne({
     mentorId: booking.mentorId,
