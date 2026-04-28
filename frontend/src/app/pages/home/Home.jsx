@@ -33,14 +33,15 @@ import { COURSES_DATA } from "../../data/coursesData";
 import { navigateToInterview, requireLoginNavigate } from "../../utils/authGate";
 import { Footer } from "../../components/layout/Footer";
 import { RecommendedJourney } from "../../components/home/RecommendedJourney";
+import { BrandLogo } from "../../components/brand/BrandLogo";
 
 /* ─── Data ──────────────────────────────────────────────── */
 const FEATURES = [
   {
     icon: FileText,
-    accentClass: "from-[#c4ff47] to-[#8fbc24]",
+    accentClass: "from-[#B4F500] to-[#8fbc24]",
     bgClass: "bg-lime-50 dark:bg-lime-950/30",
-    dotColor: "#c4ff47",
+    dotColor: "#B4F500",
     borderHover: "rgba(196, 255, 71,0.5)",
     bgHover: "rgba(196, 255, 71,0.07)",
     title: "Phân tích CV/JD",
@@ -151,21 +152,19 @@ const STATS = [
   { value: "10,000+", label: "Ứng viên đã luyện tập" },
   { value: "500+", label: "Mentor chuyên nghiệp" },
   { value: "85%", label: "Tỷ lệ được nhận việc" },
-  { value: "4.8/5", label: "Điểm đánh giá" },
+  { value: "4.8/5", label: "Điểm hài lòng" },
 ];
-
 const NAV_LINKS = [
   { label: "Tính năng", href: "#features" },
   { label: "Khóa học", href: "#courses" },
-  { label: "Đánh giá", href: "#testimonials" },
+  { label: "Đánh giá", href: "#mentors" },
   { label: "Bảng giá", href: "#pricing" },
 ];
 
-/* ─── Component ─────────────────────────────────────────── */
 export function Home() {
-  const navigate = useNavigate();
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const navigate = useNavigate();
 
   const handleFeatureClick = (route) => requireLoginNavigate(navigate, route);
 
@@ -194,13 +193,25 @@ export function Home() {
 
   return (
     <div
-      className="min-h-screen text-white selection:bg-[rgba(196,255,71,0.28)] selection:text-white font-sans overflow-x-hidden relative"
+      className="min-h-screen selection:bg-[#B4F500]/30 selection:text-white font-sans overflow-x-hidden relative"
       style={{
-        background: "linear-gradient(165deg, #0a0618 0%, #07060e 45%, #12081f 100%)",
+        background: "#020202",
         color: "#fff",
       }}
     >
       <style>{`
+        /* Lưới ô vuông cực nét từ ảnh mẫu */
+        .premium-grid {
+          position: fixed;
+          inset: 0;
+          z-index: -5;
+          background-image: 
+            linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+          background-size: 64px 64px;
+          pointer-events: none;
+        }
+        
         .cute-glass {
           background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.03));
           border: 1px solid rgba(255,255,255,0.1);
@@ -385,35 +396,21 @@ export function Home() {
         }
       `}</style>
 
-      {/* Nền blob + shimmer — giống Dashboard */}
-      <div
-        className="fixed inset-0 pointer-events-none -z-10 opacity-90"
-        style={{ animation: "shimmer-bg 14s ease-in-out infinite" }}
-        aria-hidden
-      >
-        <div className="absolute top-[-20%] right-[-10%] h-[70vh] w-[70vh] rounded-full bg-gradient-to-bl from-fuchsia-600/35 via-violet-600/20 to-transparent blur-[100px]" />
-        <div className="absolute bottom-[-25%] left-[-15%] h-[85vh] w-[85vh] rounded-full bg-gradient-to-tr from-[#c4ff47]/18 via-cyan-500/10 to-fuchsia-500/20 blur-[110px]" />
-        <div className="absolute top-1/2 left-1/2 h-[50vh] w-[50vh] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#6E35E8]/12 blur-[90px]" />
-        <div className="absolute top-[30%] right-[5%] h-[40vh] w-[40vh] rounded-full bg-[#c4ff47]/10 blur-[80px]" />
-      </div>
+
+
 
       {/* ═══ NAVBAR ════════════════════════════════════════ */}
       <nav
         className="fixed top-0 left-0 right-0 z-50 transition-all duration-300"
         style={{
           background: scrolled
-            ? "rgba(18, 11, 46, 0.9)"
-            : "rgba(7, 6, 14, 0.72)",
-          backdropFilter: scrolled ? "blur(20px) saturate(1.15)" : "blur(16px) saturate(1.1)",
-          WebkitBackdropFilter: scrolled
-            ? "blur(20px) saturate(1.15)"
-            : "blur(16px) saturate(1.1)",
+            ? "rgba(7, 6, 14, 0.88)"
+            : "transparent",
+          backdropFilter: scrolled ? "blur(16px)" : "none",
+          WebkitBackdropFilter: scrolled ? "blur(16px)" : "none",
           borderBottom: scrolled
-            ? "1px solid rgba(255,255,255,0.12)"
-            : "1px solid rgba(255,255,255,0.08)",
-          boxShadow: scrolled
-            ? "0 1px 0 rgba(255,255,255,0.06), 0 -1px 24px -8px rgba(196, 255, 71, 0.06) inset, 0 12px 40px -12px rgba(0,0,0,0.45)"
-            : "0 1px 0 rgba(255,255,255,0.05), 0 8px 32px -8px rgba(0,0,0,0.4)",
+            ? "1px solid rgba(255,255,255,0.06)"
+            : "none",
         }}
       >
         <div className="max-w-7xl mx-auto px-5 h-16 flex items-center gap-6">
@@ -424,33 +421,16 @@ export function Home() {
               window.scrollTo({ top: 0, behavior: "smooth" })
             }
           >
-            <div
-              className="w-8 h-8 rounded-xl flex items-center justify-center shadow-lg"
-              style={{
-                background:
-                  "linear-gradient(135deg, #6E35E8, #9B6DFF)",
-              }}
-            >
-              <Sparkle className="w-4 h-4 text-white float-icon" />
-            </div>
-            <span
-              className="text-white font-bold"
-              style={{
-                fontSize: "1.05rem",
-                letterSpacing: "-0.02em",
-              }}
-            >
-              ProInterview
-            </span>
+            <BrandLogo />
           </div>
 
           {/* Desktop nav links */}
-          <div className="hidden md:flex items-center gap-1 ml-4">
+          <div className="hidden md:flex items-center gap-1 ml-12">
             {NAV_LINKS.map((l) => (
               <a
                 key={l.label}
                 href={l.href}
-                className="px-4 py-2 rounded-full text-sm font-semibold text-white/65 hover:text-white transition-all cursor-pointer border border-transparent hover:border-white/10 hover:bg-white/6"
+                className="px-3 py-2 rounded-full text-sm font-semibold text-white/70 hover:text-white transition-all cursor-pointer border border-transparent hover:border-white/10 hover:bg-white/8 whitespace-nowrap"
                 onClick={(e) => {
                   e.preventDefault();
                   document
@@ -469,31 +449,30 @@ export function Home() {
             <button
               type="button"
               onClick={() => navigateToInterview(navigate)}
-              className="hidden sm:inline-flex items-center gap-1.5 px-5 py-2 rounded-full text-sm font-extrabold transition-all hover:brightness-110 active:scale-95 shadow-[0_8px_20px_rgba(196, 255, 71,0.22)]"
+              className="hidden sm:inline-flex items-center gap-1.5 px-5 py-2 rounded-xl text-sm font-bold transition-all hover:brightness-110 active:scale-95 shadow-[0_0_24px_rgba(180,245,0,0.3)] whitespace-nowrap"
               style={{
                 background:
-                  "linear-gradient(135deg, #c4ff47, #8fbc24)",
+                  "linear-gradient(135deg, #B4F500, #80C800)",
                 color: "#120B2E",
-                boxShadow: "0 0 24px rgba(196, 255, 71,0.35)",
               }}
             >
-              <Lightning className="w-3.5 h-3.5 text-[#120B2E]" />
+              <Lightning className="w-4 h-4 text-[#120B2E]" fill="currentColor" />
               Trải nghiệm thử
             </button>
 
             {/* Auth buttons */}
             <button
               onClick={() => navigate("/login")}
-              className="hidden sm:inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium text-white/75 hover:text-white hover:bg-white/8 transition-colors"
+              className="hidden sm:inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold text-white/80 hover:text-white hover:bg-white/10 transition-colors whitespace-nowrap"
             >
-              <SignIn className="w-3.5 h-3.5" />
+              <SignIn className="w-4 h-4" />
               Đăng nhập
             </button>
             <button
               onClick={() => navigate("/register")}
-              className="hidden sm:inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold border border-white/15 text-white hover:bg-white/8 hover:border-white/25 transition-colors"
+              className="hidden sm:inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-bold border border-white/20 text-white hover:bg-white/10 hover:border-white/30 transition-colors whitespace-nowrap"
             >
-              <UserPlus className="w-3.5 h-3.5" />
+              <UserPlus className="w-4 h-4" />
               Đăng ký
             </button>
 
@@ -559,7 +538,7 @@ export function Home() {
                   className="flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold"
                   style={{
                     background:
-                      "linear-gradient(135deg, #c4ff47, #8fbc24)",
+                      "linear-gradient(135deg, #B4F500, #8fbc24)",
                     color: "#120B2E",
                   }}
                 >
@@ -572,17 +551,15 @@ export function Home() {
         )}
       </nav>
 
-      {/* ═══ HERO — layout vibe Dashboard (lưới + glass stats) ═══ */}
-      <section className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden px-5 pt-20 border-b border-white/[0.07]">
-        {/* Lưới 32px giống header Dashboard */}
+      {/* ═══ HERO ═══════════════════════════════════════════ */}
+      <section className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden px-5 pt-20">
+        {/* BG gradient mesh */}
         <div
-          className="absolute inset-0 opacity-[0.11]"
+          className="absolute inset-0"
           style={{
-            backgroundImage:
-              "linear-gradient(rgba(255,255,255,0.55) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.45) 1px, transparent 1px)",
-            backgroundSize: "32px 32px",
+            background:
+              "radial-gradient(ellipse 80% 60% at 80% -10%, rgba(110,53,232,0.45) 0%, transparent 70%), radial-gradient(ellipse 60% 40% at 80% 80%, rgba(180,245,0,0.08) 0%, transparent 60%), #020202",
           }}
-          aria-hidden
         />
         {/* Noise grain */}
         <div
@@ -592,6 +569,16 @@ export function Home() {
               "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E\")",
             backgroundRepeat: "repeat",
             backgroundSize: "200px",
+          }}
+          aria-hidden
+        />
+        {/* Grid overlay từ snippet mẫu */}
+        <div
+          className="absolute inset-0 opacity-[0.04]"
+          style={{
+            backgroundImage:
+              "linear-gradient(rgba(255,255,255,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.5) 1px, transparent 1px)",
+            backgroundSize: "80px 80px",
           }}
           aria-hidden
         />
@@ -617,16 +604,22 @@ export function Home() {
               fontSize: "clamp(2rem, 5.5vw, 3.5rem)",
             }}
           >
-            <span className="bg-gradient-to-r from-white via-fuchsia-100 to-zinc-300 bg-clip-text text-transparent">
+            <span className="text-white">
               Phỏng vấn{" "}
             </span>
             <span
-              className="hero-title-animated hero-orbit-text bg-gradient-to-r from-[#c4ff47] via-fuchsia-300 to-violet-300 bg-clip-text text-transparent"
-              style={{ padding: "0.1em 0" }}
+              className="hero-title-animated hero-orbit-text"
+              style={{ 
+                background: "linear-gradient(135deg, #B4F500 0%, #6E35E8 100%)",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+                backgroundClip: "text",
+                padding: "0.1em 0" 
+              }}
             >
               1:1 với AI
             </span>
-            <span className="text-white/90"> qua mô phỏng hội thoại thông minh</span>
+            <span className="text-white"> qua mô phỏng hội thoại thông minh</span>
           </h1>
 
           {/* Sub */}
@@ -647,7 +640,7 @@ export function Home() {
               className="inline-flex items-center justify-center gap-2.5 px-8 py-4 rounded-full font-black transition-all hover:brightness-110 active:scale-[0.98] hover:-translate-y-0.5"
               style={{
                 background:
-                  "linear-gradient(135deg, #c4ff47, #8fbc24)",
+                  "linear-gradient(135deg, #B4F500, #8fbc24)",
                 color: "#1a1a1a",
                 fontSize: "0.9375rem",
                 boxShadow:
@@ -715,20 +708,21 @@ export function Home() {
       {/* ═══ HOW IT WORKS ════════════════════════════════════ */}
       <section
         id="features"
-        className="relative min-h-screen flex flex-col justify-center py-12 bg-transparent overflow-hidden border-t border-white/[0.06]"
+        className="relative min-h-screen flex flex-col justify-center py-12 overflow-hidden border-t border-white/[0.06]"
+        style={{ background: "#080808" }}
       >
         {/* Nền phẳng (xen kẽ với section có lưới) */}
-        <div className="absolute top-0 left-0 w-[500px] h-[500px] bg-[#c4ff47]/[0.07] blur-[120px] rounded-full -translate-x-1/2 -translate-y-1/2" aria-hidden />
+        <div className="absolute top-0 left-0 w-[500px] h-[500px] bg-[#B4F500]/[0.07] blur-[120px] rounded-full -translate-x-1/2 -translate-y-1/2" aria-hidden />
         <div className="absolute bottom-0 right-0 w-[500px] h-[500px] bg-[#6E35E8]/10 blur-[120px] rounded-full translate-x-1/2 translate-y-1/2" aria-hidden />
 
         <div className="max-w-7xl mx-auto px-6 relative z-10 w-full py-8">
           <div className="text-center mb-14">
             <div className="flex justify-center mb-5">
-              <span className="h-1 w-10 rounded-full bg-gradient-to-r from-[#c4ff47] to-emerald-400" />
+              <span className="h-1 w-10 rounded-full bg-gradient-to-r from-[#B4F500] to-emerald-400" />
             </div>
             <h2 className="text-4xl md:text-6xl text-white mb-4 leading-[1.1] py-2 cute-heading font-headline tracking-tighter">
               Quy trình tinh gọn,<br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#c4ff47] via-fuchsia-300 to-violet-300">kết quả đột phá</span>
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#B4F500] via-fuchsia-300 to-violet-300">kết quả đột phá</span>
             </h2>
             <p className="text-zinc-400 text-lg max-w-2xl mx-auto leading-relaxed">
               Sẵn sàng chinh phục mọi nhà tuyển dụng với lộ trình chuẩn bị được cá nhân hóa bởi trí tuệ nhân tạo.
@@ -740,10 +734,10 @@ export function Home() {
               <div
                 key={i}
                 className={`glass-card group p-6 sm:p-8 relative overflow-hidden transition-[border-color,box-shadow] duration-300 ${i === 1
-                    ? "border-[#c4ff47]/35 shadow-[0_0_0_1px_rgba(196,255,71,0.12)_inset]"
-                    : i === 2
-                      ? "border-violet-400/35 shadow-[0_0_0_1px_rgba(167,139,250,0.15)_inset]"
-                      : "border-white/[0.12]"
+                  ? "border-[#B4F500]/35 shadow-[0_0_0_1px_rgba(196,255,71,0.12)_inset]"
+                  : i === 2
+                    ? "border-violet-400/35 shadow-[0_0_0_1px_rgba(167,139,250,0.15)_inset]"
+                    : "border-white/[0.12]"
                   }`}
               >
                 <div className="relative z-[1]">
@@ -752,8 +746,8 @@ export function Home() {
                     {(i === 1 || i === 2) && (
                       <span
                         className={`inline-flex px-2 py-1 text-[10px] sm:text-[11px] font-bold tracking-wide rounded-md border ${i === 1
-                            ? "border-[#c4ff47]/55 bg-[#c4ff47]/18 text-[#e8ffc4] shadow-[0_0_14px_rgba(196,255,71,0.22)]"
-                            : "border-violet-400/55 bg-violet-950/95 text-violet-50 shadow-[0_0_14px_rgba(139,92,246,0.28)]"
+                          ? "border-[#B4F500]/55 bg-[#B4F500]/18 text-[#e8ffc4] shadow-[0_0_14px_rgba(196,255,71,0.22)]"
+                          : "border-violet-400/55 bg-violet-950/95 text-violet-50 shadow-[0_0_14px_rgba(139,92,246,0.28)]"
                           }`}
                       >
                         {i === 1 ? "Nổi bật" : "Gợi ý mentor"}
@@ -766,8 +760,8 @@ export function Home() {
 
                   <div
                     className={`relative w-14 h-14 rounded-2xl flex items-center justify-center mb-8 transition-all duration-500 shadow-xl float-icon parallax-layer ${i % 2 === 0
-                        ? "bg-[#c4ff47] text-[#0a0a0c] shadow-[0_0_24px_rgba(196,255,71,0.25)]"
-                        : "bg-white/5 text-[#c4ff47] border border-white/10 group-hover:bg-[#c4ff47]/15 group-hover:border-[#c4ff47]/35"
+                      ? "bg-[#B4F500] text-[#0a0a0c] shadow-[0_0_24px_rgba(196,255,71,0.25)]"
+                      : "bg-white/5 text-[#B4F500] border border-white/10 group-hover:bg-[#B4F500]/15 group-hover:border-[#B4F500]/35"
                       }`}
                   >
                     <s.icon className="h-7 w-7" />
@@ -822,7 +816,7 @@ export function Home() {
             {/* Left copy */}
             <div className="glass-card p-6 sm:p-8 lg:p-10">
               <div className="relative z-[1]">
-                <div className="mb-5 h-1 w-10 rounded-full bg-gradient-to-r from-[#c4ff47] to-fuchsia-400" aria-hidden />
+                <div className="mb-5 h-1 w-10 rounded-full bg-gradient-to-r from-[#B4F500] to-fuchsia-400" aria-hidden />
                 <span
                   className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold mb-6 border border-violet-400/30 bg-violet-500/10 text-violet-200"
                 >
@@ -838,7 +832,7 @@ export function Home() {
                   }}
                 >
                   Trải nghiệm phỏng vấn{" "}
-                  <span style={{ color: "#c4ff47" }}>
+                  <span style={{ color: "#B4F500" }}>
                     như thật
                   </span>
                 </h2>
@@ -874,7 +868,7 @@ export function Home() {
                       >
                         <Check
                           className="w-3 h-3"
-                          style={{ color: "#c4ff47" }}
+                          style={{ color: "#B4F500" }}
                         />
                       </div>
                       <span className="text-sm">{item}</span>
@@ -888,7 +882,7 @@ export function Home() {
                   className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-semibold transition-all hover:brightness-110 hover:-translate-y-0.5"
                   style={{
                     background:
-                      "linear-gradient(135deg, #c4ff47, #8fbc24)",
+                      "linear-gradient(135deg, #B4F500, #8fbc24)",
                     color: "#1a1a1a",
                     boxShadow: "0 0 28px rgba(196, 255, 71,0.25)",
                   }}
@@ -1056,7 +1050,7 @@ export function Home() {
                         {/* Quick stats */}
                         <div className="grid grid-cols-3 gap-2 mt-3">
                           {[
-                            { icon: Microphone, label: "Đang nghe", color: "#c4ff47" },
+                            { icon: Microphone, label: "Đang nghe", color: "#B4F500" },
                             { icon: Brain, label: "Phân tích STAR", color: "#6E35E8" },
                             { icon: ChartBar, label: "Điểm: 3.8/5", color: "#FFB800" },
                           ].map((item, i) => (
@@ -1094,16 +1088,17 @@ export function Home() {
       {/* ═══ COURSES SECTION ═════════════════════════════════ */}
       <section
         id="courses"
-        className="relative min-h-screen flex flex-col justify-center py-20 bg-transparent overflow-hidden border-t border-white/[0.06]"
+        className="relative min-h-screen flex flex-col justify-center py-20 overflow-hidden border-t border-white/[0.06]"
+        style={{ background: "#080808" }}
       >
-        <div className="absolute top-0 right-[-100px] w-[500px] h-[500px] bg-[#c4ff47]/[0.06] blur-[130px] rounded-full" aria-hidden />
+        <div className="absolute top-0 right-[-100px] w-[500px] h-[500px] bg-[#B4F500]/[0.06] blur-[130px] rounded-full" aria-hidden />
         <div className="absolute bottom-[-100px] left-[-100px] w-[600px] h-[600px] bg-[#6E35E8]/12 blur-[150px] rounded-full" aria-hidden />
 
         <div className="max-w-7xl mx-auto px-6 relative z-10 w-full py-12">
           <div className="flex flex-col md:flex-row items-end gap-10 mb-12">
             <div className="md:w-2/3">
-              <div className="h-1 w-10 rounded-full bg-gradient-to-r from-[#c4ff47] to-emerald-400 mb-4" aria-hidden />
-              <span className="font-bold uppercase tracking-[0.2em] text-[10px] mb-3 block text-[#c4ff47] drop-shadow-[0_0_12px_rgba(196,255,71,0.25)]">
+              <div className="h-1 w-10 rounded-full bg-gradient-to-r from-[#B4F500] to-emerald-400 mb-4" aria-hidden />
+              <span className="font-bold uppercase tracking-[0.2em] text-[10px] mb-3 block text-[#B4F500] drop-shadow-[0_0_12px_rgba(196,255,71,0.25)]">
                 Nền tảng học
               </span>
               <h2 className="text-4xl md:text-6xl font-black tracking-tighter leading-[0.95] text-white mb-6">
@@ -1122,7 +1117,7 @@ export function Home() {
                       <img key={i} src={`https://i.pravatar.cc/100?img=${i + 10}`} alt="Student" className="w-8 h-8 rounded-full border-2 border-white/15 object-cover" />
                     ))}
                   </div>
-                  <span className="pr-4 pl-1 text-[11px] font-bold text-[#c4ff47]">10k+ Học viên</span>
+                  <span className="pr-4 pl-1 text-[11px] font-bold text-[#B4F500]">10k+ Học viên</span>
                 </div>
               </div>
             </div>
@@ -1211,7 +1206,7 @@ export function Home() {
             <button
               type="button"
               onClick={() => requireLoginNavigate(navigate, "/courses")}
-              className="px-10 py-3.5 rounded-full border border-white/15 text-white font-bold hover:bg-white/[0.06] hover:border-[#c4ff47]/35 transition-all text-sm"
+              className="px-10 py-3.5 rounded-full border border-white/15 text-white font-bold hover:bg-white/[0.06] hover:border-[#B4F500]/35 transition-all text-sm"
             >
               Xem tất cả khóa học
             </button>
@@ -1223,8 +1218,9 @@ export function Home() {
 
       {/* ═══ TESTIMONIALS ═══════════════════════════════════ */}
       <section
-        id="testimonials"
-        className="min-h-screen flex flex-col justify-center relative overflow-hidden bg-transparent border-t border-white/[0.07]"
+        id="mentors"
+        className="min-h-screen flex flex-col justify-center relative overflow-hidden border-t border-white/[0.07]"
+        style={{ background: "#020202" }}
       >
         <div
           className="pointer-events-none absolute inset-0 opacity-[0.05]"
@@ -1235,12 +1231,12 @@ export function Home() {
           }}
           aria-hidden
         />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-[#c4ff47]/[0.04] blur-[150px] rounded-full opacity-60 pointer-events-none" aria-hidden />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-[#B4F500]/[0.04] blur-[150px] rounded-full opacity-60 pointer-events-none" aria-hidden />
 
         <div className="max-w-7xl mx-auto px-5 relative z-10">
           <div className="text-center mb-16">
             <div className="flex justify-center mb-5">
-              <span className="h-1 w-10 rounded-full bg-gradient-to-r from-[#c4ff47] to-violet-400" />
+              <span className="h-1 w-10 rounded-full bg-gradient-to-r from-[#B4F500] to-violet-400" />
             </div>
             <h2
               className="text-white mb-4 cute-heading"
@@ -1252,7 +1248,7 @@ export function Home() {
               <span
                 style={{
                   background:
-                    "linear-gradient(135deg, #6E35E8, #c4ff47)",
+                    "linear-gradient(135deg, #6E35E8, #B4F500)",
                   WebkitBackgroundClip: "text",
                   WebkitTextFillColor: "transparent",
                   backgroundClip: "text",
@@ -1284,7 +1280,7 @@ export function Home() {
                       className="ml-auto text-xs px-2 py-0.5 rounded-full font-medium"
                       style={{
                         background: "rgba(196, 255, 71,0.12)",
-                        color: "#c4ff47",
+                        color: "#B4F500",
                         border: "1px solid rgba(196, 255, 71,0.2)",
                       }}
                     >
@@ -1329,15 +1325,15 @@ export function Home() {
         id="pricing"
         className="min-h-screen flex flex-col justify-center py-24 relative overflow-hidden bg-transparent border-t border-white/[0.06]"
       >
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-24 w-[600px] h-[300px] bg-[#c4ff47]/[0.08] blur-[120px] rounded-full pointer-events-none" aria-hidden />
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-24 w-[600px] h-[300px] bg-[#B4F500]/[0.08] blur-[120px] rounded-full pointer-events-none" aria-hidden />
 
         <div className="max-w-7xl mx-auto px-6 relative z-10 w-full py-12">
           <header className="text-center mb-10">
             <div className="flex justify-center mb-4">
-              <span className="h-1 w-10 rounded-full bg-gradient-to-r from-[#c4ff47] to-emerald-400" />
+              <span className="h-1 w-10 rounded-full bg-gradient-to-r from-[#B4F500] to-emerald-400" />
             </div>
-            <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#c4ff47]/12 border border-[#c4ff47]/35 text-[#e8ffc4] text-[10px] font-black tracking-widest uppercase mb-4 shadow-[0_0_20px_rgba(196,255,71,0.12)]">
-              <Sparkles className="size-3 text-[#c4ff47]" />
+            <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#B4F500]/12 border border-[#B4F500]/35 text-[#e8ffc4] text-[10px] font-black tracking-widest uppercase mb-4 shadow-[0_0_20px_rgba(196,255,71,0.12)]">
+              <Sparkles className="size-3 text-[#B4F500]" />
               Đầu tư cho tương lai
             </span>
             <h2 className="text-3xl md:text-5xl font-black font-headline tracking-tighter mb-3 leading-tight text-white">

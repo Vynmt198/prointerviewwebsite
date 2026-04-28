@@ -6,7 +6,6 @@ import {
   Check,
   AlertCircle as WarningCircle,
   Info,
-  Zap as Lightning,
   Brain,
   Mic as Microphone,
   Star,
@@ -18,6 +17,7 @@ import {
   getBrandClickPath,
 } from "../../utils/auth";
 import { GoogleSignInBlock } from "../../components/auth/GoogleSignInBlock";
+import { BrandLogo } from "../../components/brand/BrandLogo";
 
 const INPUT_CLS =
   "w-full px-4 py-3.5 rounded-xl border border-gray-200 text-base outline-none transition-all " +
@@ -84,23 +84,15 @@ export function Login() {
       style={{ fontFamily: "'Lexend', 'Plus Jakarta Sans', system-ui, sans-serif" }}
     >
       {/* ── LEFT: Form ─────────────────────────────────────── */}
-      <div className="flex-1 flex flex-col h-full bg-white">
+      <div className="flex-1 flex flex-col h-full bg-[#fcfaff]">
 
         {/* Top bar */}
         <div
-          className="flex-shrink-0 flex items-center justify-between px-10 py-4 border-b"
+          className="flex-shrink-0 flex items-center justify-between px-10 h-20 border-b relative"
           style={{ borderColor: "rgba(110,53,232,0.1)" }}
         >
           <button onClick={() => navigate(getBrandClickPath())} className="flex items-center gap-2.5 group">
-            <div
-              className="w-8 h-8 rounded-xl flex items-center justify-center shadow-md transition-transform group-hover:scale-105"
-              style={{ background: "linear-gradient(135deg, #6E35E8, #9B6DFF)" }}
-            >
-              <Lightning className="w-4 h-4 text-white" />
-            </div>
-            <span className="font-bold text-gray-900" style={{ fontSize: "1.05rem", letterSpacing: "-0.02em" }}>
-              ProInterview
-            </span>
+            <BrandLogo />
           </button>
           <p className="text-sm text-gray-500">
             Chưa có tài khoản?{" "}
@@ -118,7 +110,7 @@ export function Login() {
               style={{ fontSize: "1.875rem", fontWeight: 750, letterSpacing: "-0.025em" }}>
               Đăng nhập
             </h1>
-            <p className="text-gray-500 text-sm mb-6">Chào mừng trở lại! Hãy tiếp tục luyện tập.</p>
+            <p className="text-gray-500 text-sm mb-4">Chào mừng trở lại! Hãy tiếp tục luyện tập.</p>
 
             {/* Success banner */}
             {isRegistered && (
@@ -134,11 +126,10 @@ export function Login() {
 
             {/* Error banner */}
             {error && (
-              <div className={`mb-5 flex items-start gap-3 rounded-2xl border px-4 py-3 text-sm ${
-                errorIsGoogleEnvHint
+              <div className={`mb-5 flex items-start gap-3 rounded-2xl border px-4 py-3 text-sm ${errorIsGoogleEnvHint
                   ? "border-amber-400/25 bg-amber-50 text-amber-800"
                   : "border-red-300/40 bg-red-50 text-red-700"
-              }`}>
+                }`}>
                 {errorIsGoogleEnvHint
                   ? <Info className="mt-0.5 h-4 w-4 flex-shrink-0 text-amber-500" strokeWidth={2} />
                   : <WarningCircle className="mt-0.5 h-4 w-4 flex-shrink-0 text-red-400" />}
@@ -146,7 +137,7 @@ export function Login() {
               </div>
             )}
 
-            <form onSubmit={handleLogin} className="space-y-4">
+            <form onSubmit={handleLogin} className="space-y-3">
               {/* Email */}
               <div>
                 <label htmlFor="login-email" className="block text-sm font-semibold text-gray-700 mb-1.5">Email</label>
@@ -190,9 +181,9 @@ export function Login() {
                 }}>
                 {loading
                   ? <span className="flex items-center justify-center gap-2">
-                      <span className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
-                      Đang đăng nhập...
-                    </span>
+                    <span className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                    Đang đăng nhập...
+                  </span>
                   : "Đăng nhập"}
               </button>
             </form>
@@ -239,7 +230,7 @@ export function Login() {
           <div className="flex items-center gap-2 bg-white rounded-2xl px-4 py-2.5 shadow-lg"
             style={{ border: "1px solid rgba(110,53,232,0.1)" }}>
             <div className="flex gap-0.5">
-              {[1,2,3,4,5].map((i) => <Star key={i} className="w-3.5 h-3.5 fill-current" style={{ color: "#f59e0b" }} />)}
+              {[1, 2, 3, 4, 5].map((i) => <Star key={i} className="w-3.5 h-3.5 fill-current" style={{ color: "#f59e0b" }} />)}
             </div>
             <span className="text-gray-700 font-black text-sm">4.8</span>
             <span className="text-gray-400 text-xs">/ 5.0</span>
@@ -281,9 +272,9 @@ export function Login() {
           </p>
           <div className="flex gap-8">
             {[
-              { Icon: Brain,       value: "24/7",  label: "Phỏng vấn AI thử" },
-              { Icon: Microphone,  value: "500+",  label: "Mentor thực tế" },
-              { Icon: Check,       value: "85%",   label: "Tỷ lệ nhận việc" },
+              { Icon: Brain, value: "24/7", label: "Phỏng vấn AI thử" },
+              { Icon: Microphone, value: "500+", label: "Mentor thực tế" },
+              { Icon: Check, value: "85%", label: "Tỷ lệ nhận việc" },
             ].map(({ Icon, value, label }) => (
               <div key={value} className="text-center">
                 <div className="w-11 h-11 rounded-2xl flex items-center justify-center mx-auto mb-2"

@@ -23,6 +23,37 @@ import {
 import { getUser } from "../../utils/auth";
 import { UPCOMING_MENTOR_MEETINGS } from "../../data/mentorMockData";
 import { MentorPageShell } from "../../components/mentor/MentorPageShell";
+import { listMentorBookings } from "../../utils/bookingsApi";
+import { fetchMentorAvailability, updateMyMentorAvailability } from "../../utils/mentorApi";
+
+const DEFAULT_AVATAR = "https://i.pravatar.cc/120?img=22";
+
+function toMeetingItem(booking) {
+  return {
+    id: booking.id,
+    status: booking.status || "",
+    date: booking.date || "",
+    scheduledTime: booking.timeSlot || "--:--",
+    position: booking.sessionType || "Mentoring session",
+    mentee: {
+      name: booking.customerName || "Học viên",
+      avatar: booking.customerAvatar || DEFAULT_AVATAR,
+    },
+  };
+}
+
+function bookingOnDate(bookingDate, selectedDate) {
+  const normalized = String(bookingDate || "").trim();
+  if (!normalized) return false;
+  const parts = normalized.split("/");
+  if (parts.length < 2) return false;
+  const d = Number(parts[0]);
+  const m = Number(parts[1]);
+  const y = parts.length >= 3 ? Number(parts[2]) : null;
+  if (!Number.isFinite(d) || !Number.isFinite(m)) return false;
+  if (y && y !== selectedDate.getFullYear()) return false;
+  return d === selectedDate.getDate() && m === selectedDate.getMonth() + 1;
+}
 
 const MENTOR_SCHEDULE_EXTRA_CSS = `
         .calendar-cell {
@@ -55,12 +86,112 @@ const MENTOR_SCHEDULE_EXTRA_CSS = `
 `;
 
 /* ── Manage Availability Modal ────────────────────────────────────────── */
-function AvailabilityModal({ onClose }) {
-  const [workingHours, setWorkingHours] = useState([
-    { day: "Thứ 2", slots: ["09:00 - 11:00", "14:00 - 17:00"] },
-    { day: "Thứ 3", slots: ["09:00 - 11:00"] },
-    { day: "Thứ 4", slots: ["14:00 - 17:00", "19:00 - 21:00"] },
-  ]);
+const DAY_ROWS = [
+  { key: 0, label: "Thứ 2" },
+  { key: 1, label: "Thứ 3" },
+  { key: 2, label: "Thứ 4" },
+  { key: 3, label: "Thứ 5" },
+  { key: 4, label: "Thứ 6" },
+  { key: 5, label: "Thứ 7" },
+  { key: 6, label: "Chủ nhật" },
+];
+
+const SLOT_OPTIONS = Array.from({ length: 16 }, (_, i) => {
+  const hour = i + 7; // 07:00 -> 22:00
+  return `${String(hour).padStart(2, "0")}:00`;
+});
+
+function toOneHourRange(start) {
+  const [h, m] = String(start || "09:00").split(":").map(Number);
+  const safeH = Number.isFinite(h) ? h : 9;
+  const safeM = Number.isFinite(m) ? m : 0;
+  const end = `${String(Math.min(safeH + 1, 23)).padStart(2, "0")}:${String(safeM).padStart(2, "0")}`;
+  return `${String(safeH).padStart(2, "0")}:${String(safeM).padStart(2, "0")} - ${end}`;
+}
+
+function toRowSlots(slots = []) {
+  return slots
+    .filter(Boolean)
+    .map((s) => {
+      const [h, m] = String(s).split(":").map(Number);
+      const endHour = Math.min((Number.isFinite(h) ? h : 0) + 1, 23);
+      const end = `${String(endHour).padStart(2, "0")}:${String(Number.isFinite(m) ? m : 0).padStart(2, "0")}`;
+      return `${s} - ${end}`;
+    });
+}
+
+function toStartSlots(rangeSlots = []) {
+  return rangeSlots
+    .map((s) => String(s).split("-")[0]?.trim())
+    .filter((v) => /^\d{2}:\d{2}$/.test(v));
+}
+
+function AvailabilityModal({ onClose, availability, onSaved }) {
+  const [workingHours, setWorkingHours] = useState(() => {
+    const recurring = Array.isArray(availability?.recurringSchedule) ? availability.recurringSchedule : [];
+    const rows = recurring
+      .filter((r) => Number.isFinite(Number(r?.dayOfWeek)))
+      .map((r) => ({
+        dayOfWeek: Number(r.dayOfWeek),
+        day: DAY_ROWS.find((d) => d.key === Number(r.dayOfWeek))?.label || `Thứ ${Number(r.dayOfWeek) + 2}`,
+        slots: toRowSlots(Array.isArray(r.slots) ? r.slots : []),
+      }));
+    return rows.length
+      ? rows.sort((a, b) => a.dayOfWeek - b.dayOfWeek)
+      : [
+          { dayOfWeek: 0, day: "Thứ 2", slots: ["09:00 - 11:00", "14:00 - 16:00"] },
+          { dayOfWeek: 2, day: "Thứ 4", slots: ["14:00 - 16:00"] },
+        ];
+  });
+  const [saving, setSaving] = useState(false);
+  const [newSlotDay, setNewSlotDay] = useState(0);
+  const [newSlotRange, setNewSlotRange] = useState(toOneHourRange("09:00"));
+
+  const addSlot = (dayOfWeek, value) => {
+    const [h, m] = value.split(":").map(Number);
+    const end = `${String(Math.min(h + 1, 23)).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+    const range = `${value} - ${end}`;
+    setWorkingHours((prev) =>
+      (prev.some((row) => row.dayOfWeek === dayOfWeek)
+        ? prev.map((row) => {
+            if (row.dayOfWeek !== dayOfWeek) return row;
+            if (row.slots.includes(range)) return row;
+            const nextSlots = [...row.slots, range].sort((a, b) => a.localeCompare(b));
+            return { ...row, slots: nextSlots };
+          })
+        : [
+            ...prev,
+            {
+              dayOfWeek,
+              day: DAY_ROWS.find((d) => d.key === dayOfWeek)?.label || "Thứ 2",
+              slots: [range],
+            },
+          ])
+        .sort((a, b) => a.dayOfWeek - b.dayOfWeek),
+    );
+  };
+
+  const removeSlot = (dayOfWeek, slot) => {
+    setWorkingHours((prev) =>
+      prev
+        .map((row) => (row.dayOfWeek === dayOfWeek ? { ...row, slots: row.slots.filter((s) => s !== slot) } : row))
+        .filter((row) => row.slots.length > 0)
+        .sort((a, b) => a.dayOfWeek - b.dayOfWeek),
+    );
+  };
+
+  const handleSave = async () => {
+    setSaving(true);
+    const recurringSchedule = workingHours
+      .map((row) => ({ dayOfWeek: row.dayOfWeek, slots: toStartSlots(row.slots) }))
+      .filter((row) => row.slots.length > 0)
+      .sort((a, b) => a.dayOfWeek - b.dayOfWeek);
+    const result = await updateMyMentorAvailability({ recurringSchedule });
+    setSaving(false);
+    if (!result.success) return;
+    onSaved?.(result.availability);
+    onClose();
+  };
 
   return (
     <motion.div
@@ -105,15 +236,45 @@ function AvailabilityModal({ onClose }) {
                    <div className="flex-1 flex flex-wrap gap-2">
                       {row.slots.map((s, i) => (
                         <div key={i} className="px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-[10px] font-black uppercase tracking-widest text-zinc-400 flex items-center gap-2 group/slot">
-                           {s} <X size={12} className="cursor-pointer hover:text-red-500" />
+                           {s} <X size={12} className="cursor-pointer hover:text-red-500" onClick={() => removeSlot(row.dayOfWeek, s)} />
                         </div>
                       ))}
-                      <button className="px-4 py-2 rounded-xl bg-primary-fixed/10 border border-primary-fixed/20 text-primary-fixed text-[10px] font-black uppercase tracking-widest hover:bg-primary-fixed/20 transition-all flex items-center gap-2">
-                         <Plus size={12} /> Thêm slot
-                      </button>
                    </div>
                 </div>
               ))}
+              <div className="w-full rounded-2xl border border-dashed border-white/20 p-4 flex flex-col md:flex-row md:items-center gap-3">
+                <select
+                  value={newSlotDay}
+                  onChange={(e) => setNewSlotDay(Number(e.target.value))}
+                  className="px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-[11px] font-bold text-white outline-none"
+                >
+                  {DAY_ROWS.map((d) => (
+                    <option key={d.key} value={d.key} className="bg-[#161321] text-white">
+                      {d.label}
+                    </option>
+                  ))}
+                </select>
+                <div className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Từ giờ</div>
+                <select
+                  value={newSlotRange}
+                  onChange={(e) => setNewSlotRange(e.target.value)}
+                  className="px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-[11px] font-bold text-white outline-none"
+                >
+                  {SLOT_OPTIONS.map((start) => {
+                    const range = toOneHourRange(start);
+                    return (
+                    <option key={range} value={range} className="bg-[#161321] text-white">
+                      {range}
+                    </option>
+                  )})}
+                </select>
+                <button
+                  onClick={() => addSlot(newSlotDay, String(newSlotRange).split("-")[0].trim())}
+                  className="md:ml-auto px-4 py-2 rounded-xl bg-primary-fixed/10 border border-primary-fixed/20 text-primary-fixed text-[10px] font-black uppercase tracking-widest hover:bg-primary-fixed/20 transition-all flex items-center justify-center gap-2"
+                >
+                  <Plus size={12} /> Thêm slot rảnh
+                </button>
+              </div>
            </div>
         </div>
 
@@ -121,7 +282,9 @@ function AvailabilityModal({ onClose }) {
            <p className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest px-4">Lưu ý: Thay đổi sẽ áp dụng từ tuần kế tiếp</p>
            <div className="flex gap-4">
               <button onClick={onClose} className="px-8 py-3 rounded-2xl bg-white/5 border border-white/10 text-[10px] font-black uppercase tracking-widest text-zinc-500 hover:text-white transition-all">Hủy</button>
-              <button onClick={onClose} className="px-8 py-3 rounded-2xl bg-primary-fixed text-black text-[10px] font-black uppercase tracking-widest shadow-xl">Lưu cấu hình</button>
+              <button disabled={saving} onClick={handleSave} className="px-8 py-3 rounded-2xl bg-primary-fixed text-black text-[10px] font-black uppercase tracking-widest shadow-xl disabled:opacity-60">
+                {saving ? "Đang lưu..." : "Lưu cấu hình"}
+              </button>
            </div>
         </div>
       </motion.div>
@@ -136,12 +299,40 @@ export function MentorSchedule() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [showAvailability, setShowAvailability] = useState(false);
+  const [mentorMeetings, setMentorMeetings] = useState([]);
+  const [availability, setAvailability] = useState(null);
 
   useEffect(() => {
     if (!user || user.role !== "mentor") {
       navigate("/");
     }
   }, []);
+
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      const result = await listMentorBookings();
+      if (!active || !result.success) return;
+      const rows = Array.isArray(result.bookings) ? result.bookings : [];
+      setMentorMeetings(rows.map(toMeetingItem));
+    })();
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      if (!user?.id) return;
+      const data = await fetchMentorAvailability(user.id);
+      if (!active) return;
+      if (data) setAvailability(data);
+    })();
+    return () => {
+      active = false;
+    };
+  }, [user?.id]);
 
   if (!user || user.role !== "mentor") return null;
 
@@ -169,6 +360,10 @@ export function MentorSchedule() {
   });
 
   const finalDays = [...calendarDays, ...paddingDays];
+  const activeStatuses = new Set(["pending", "confirmed", "in_progress"]);
+  const apiMeetings = mentorMeetings.filter((m) => activeStatuses.has(String(m.status || "").toLowerCase()));
+  const sourceMeetings = apiMeetings.length ? apiMeetings : UPCOMING_MENTOR_MEETINGS;
+  const selectedDayMeetings = sourceMeetings.filter((m) => bookingOnDate(m.date, selectedDate) || bookingOnDate(m.scheduledDate, selectedDate));
 
   return (
     <MentorPageShell bottomPad="pb-32" extraStyles={MENTOR_SCHEDULE_EXTRA_CSS}>
@@ -216,7 +411,7 @@ export function MentorSchedule() {
                  {finalDays.map((cell, i) => {
                    const isSelected = selectedDate.toDateString() === cell.date.toDateString();
                    const isToday = new Date().toDateString() === cell.date.toDateString();
-                   const hasMeetings = Math.random() > 0.7; // Mock for dots
+                   const hasMeetings = sourceMeetings.some((m) => bookingOnDate(m.date, cell.date) || bookingOnDate(m.scheduledDate, cell.date));
                    return (
                      <div 
                         key={i} 
@@ -248,8 +443,8 @@ export function MentorSchedule() {
                  </div>
 
                  <div className="space-y-4">
-                    {UPCOMING_MENTOR_MEETINGS.slice(0, 4).map((meeting, i) => (
-                      <div key={i} className="group relative p-6 rounded-[32px] bg-white/[0.02] border border-white/5 hover:bg-white/[0.05] transition-all cursor-pointer overflow-hidden">
+                    {(selectedDayMeetings.length ? selectedDayMeetings : UPCOMING_MENTOR_MEETINGS.slice(0, 4)).map((meeting, i) => (
+                      <div key={meeting.id || i} className="group relative p-6 rounded-[32px] bg-white/[0.02] border border-white/5 hover:bg-white/[0.05] transition-all cursor-pointer overflow-hidden">
                          <div className="absolute top-0 left-0 w-1.5 h-full bg-primary-fixed scale-y-0 group-hover:scale-y-100 transition-transform origin-top" />
                          <div className="flex items-center gap-4 mb-4">
                             <img src={meeting.mentee.avatar} className="w-10 h-10 rounded-2xl object-cover ring-2 ring-white/5" />
@@ -277,7 +472,13 @@ export function MentorSchedule() {
       </div>
 
       <AnimatePresence>
-        {showAvailability && <AvailabilityModal onClose={() => setShowAvailability(false)} />}
+        {showAvailability && (
+          <AvailabilityModal
+            availability={availability}
+            onSaved={setAvailability}
+            onClose={() => setShowAvailability(false)}
+          />
+        )}
       </AnimatePresence>
     </MentorPageShell>
   );
