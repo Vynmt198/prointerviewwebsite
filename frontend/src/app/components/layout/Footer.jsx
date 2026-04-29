@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router";
 import {
-  Sparkles as Sparkle,
   MessageCircle as ChatCircleDots,
   Phone,
   Mail as EnvelopeSimple,
@@ -10,6 +9,7 @@ import {
   Heart,
   ShieldCheck,
 } from "lucide-react";
+import { BrandLogo } from "../brand/BrandLogo";
 
 /* ── Social icon SVGs ── */
 function FacebookIcon({ className, style }) {
@@ -64,10 +64,9 @@ const NAV_LINKS = {
 };
 
 const SOCIAL_LINKS = [
-  { name: "Facebook",  href: "https://www.facebook.com/janetns.198/",           icon: FacebookIcon,  color: "#1877F2", bgLight: "rgba(24,119,242,0.08)",  bgDark: "rgba(24,119,242,0.1)"  },
+  { name: "Facebook",  href: "https://www.facebook.com/ProInterviewAI",         icon: FacebookIcon,  color: "#1877F2", bgLight: "rgba(24,119,242,0.08)",  bgDark: "rgba(24,119,242,0.1)"  },
   { name: "TikTok",   href: "https://www.tiktok.com/@prointerview",             icon: TiktokIcon,    color: "#010101", bgLight: "rgba(0,0,0,0.06)",       bgDark: "rgba(0,0,0,0.07)"      },
-  { name: "YouTube",  href: "https://www.youtube.com/@prointerview",            icon: YoutubeIcon,   color: "#FF0000", bgLight: "rgba(255,0,0,0.07)",     bgDark: "rgba(255,0,0,0.08)"    },
-  { name: "LinkedIn", href: "https://www.linkedin.com/company/prointerview",    icon: LinkedinIcon,  color: "#0A66C2", bgLight: "rgba(10,102,194,0.08)",  bgDark: "rgba(10,102,194,0.1)"  },
+  { name: "LinkedIn", href: "https://www.linkedin.com/company/prointerviewai/", icon: LinkedinIcon,  color: "#0A66C2", bgLight: "rgba(10,102,194,0.08)",  bgDark: "rgba(10,102,194,0.1)"  },
 ];
 
 const SUPPORT_ITEMS = [
@@ -149,27 +148,8 @@ function FooterDark() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-12 lg:gap-10">
           {/* Brand */}
           <div className="lg:col-span-2">
-            <div className="flex items-center gap-3 mb-5">
-              <div 
-                className="w-11 h-11 rounded-2xl flex items-center justify-center"
-                style={{ 
-                  background: "linear-gradient(135deg,#6E35E8,#9B6DFF)", 
-                  boxShadow: "0 8px 24px rgba(110, 53, 232,0.5)" 
-                }}
-              >
-                <Sparkle className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <span className="text-white font-extrabold" style={{ fontSize: "1.3rem", letterSpacing: "-0.03em" }}>ProInterview</span>
-                  <span 
-                    className="text-xs font-extrabold px-2 py-1 rounded-lg" 
-                    style={{ background: "linear-gradient(135deg, #c4ff47, #8fbc24)", color: "#120B2E" }}
-                  >
-                    MVP
-                  </span>
-                </div>
-              </div>
+            <div className="flex items-center gap-3 mb-2 -mt-5">
+              <BrandLogo />
             </div>
             <p className="text-white/65 text-sm leading-relaxed mb-6" style={{ maxWidth: 320 }}>
               Nền tảng luyện phỏng vấn AI thông minh hàng đầu Việt Nam — giúp bạn tự tin chinh phục mọi cơ hội nghề nghiệp.

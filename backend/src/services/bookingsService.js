@@ -493,6 +493,26 @@ export async function cancelMyBooking(userId, rawId, body) {
     return { ok: false, status: 400, error: "Không thể hủy booking ở trạng thái này." };
   }
 
+  const sessionAt = parseBookingDateTime(booking.date, booking.timeSlot);
+  const hoursUntilStart = sessionAt instanceof Date ? (sessionAt.getTime() - Date.now()) / 3_600_000 : Number.POSITIVE_INFINITY;
+  let feePercent = 0;
+  if (!Number.isFinite(hoursUntilStart) || hoursUntilStart <= 2) {
+    feePercent = 100;
+  } else if (hoursUntilStart <= 24) {
+    feePercent = 50;
+  }
+
+  // Chỉ cập nhật trạng thái thanh toán khi booking đã thanh toán.
+  if (booking.paymentStatus === "paid" || booking.paymentStatus === "partial_refund" || booking.paymentStatus === "refunded") {
+    if (feePercent >= 100) {
+      booking.paymentStatus = "paid";
+    } else if (feePercent >= 50) {
+      booking.paymentStatus = "partial_refund";
+    } else {
+      booking.paymentStatus = "refunded";
+    }
+  }
+
   booking.status = "cancelled";
   booking.cancelledBy = "user";
   booking.cancelReason = reason || "Người dùng hủy";
@@ -500,7 +520,15 @@ export async function cancelMyBooking(userId, rawId, body) {
   await booking.save();
 
   const mentor = await Mentor.findById(booking.mentorId).lean();
-  return { ok: true, booking: toPublicBooking(booking, mentor) };
+  return {
+    ok: true,
+    booking: toPublicBooking(booking, mentor),
+    cancellationPolicy: {
+      hoursUntilStart: Number.isFinite(hoursUntilStart) ? Number(hoursUntilStart.toFixed(2)) : null,
+      feePercent,
+      refundPercent: Math.max(0, 100 - feePercent),
+    },
+  };
 }
 
 export async function rescheduleMyBooking(userId, rawId, body) {

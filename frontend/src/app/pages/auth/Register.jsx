@@ -9,6 +9,7 @@ import {
   Brain,
   Star,
   ShieldCheck,
+  Sparkles,
 } from "lucide-react";
 import { registerUser, getBrandClickPath } from "../../utils/auth";
 import { GoogleSignInBlock } from "../../components/auth/GoogleSignInBlock";
@@ -36,6 +37,15 @@ const INPUT_CLS =
   "w-full px-4 py-3.5 rounded-xl border border-gray-200 text-base outline-none transition-all " +
   "focus:border-[#6E35E8] focus:ring-2 focus:ring-[#6E35E8]/15 text-gray-900 placeholder-gray-400 " +
   "bg-white hover:bg-gray-50/50";
+const AUTH_STICKS = [
+  { x: 5, y: 9, size: 18, color: "#5B21B6", glow: "rgba(91,33,182,0.34)", opacity: 0.62 },
+  { x: 72, y: 8, size: 16, color: "#9EDB00", glow: "rgba(158,219,0,0.42)", opacity: 0.56 },
+  { x: 6, y: 88, size: 20, color: "#5B21B6", glow: "rgba(91,33,182,0.36)", opacity: 0.58 },
+  { x: 58, y: 10, size: 30, color: "#9EDB00", glow: "rgba(158,219,0,0.52)", opacity: 0.66 },
+  { x: 52, y: 34, size: 18, color: "#5B21B6", glow: "rgba(91,33,182,0.32)", opacity: 0.52 },
+  { x: 96, y: 8, size: 44, color: "#9EDB00", glow: "rgba(158,219,0,0.56)", opacity: 0.7 },
+  { x: 96, y: 90, size: 22, color: "#5B21B6", glow: "rgba(91,33,182,0.36)", opacity: 0.58 },
+];
 
 export function Register() {
   const navigate = useNavigate();
@@ -82,11 +92,28 @@ export function Register() {
 
   return (
     <div
-      className="h-screen overflow-hidden flex"
+      className="h-screen overflow-hidden flex relative"
       style={{ fontFamily: "'Lexend', 'Plus Jakarta Sans', system-ui, sans-serif" }}
     >
       {/* ── LEFT ───────────────────────────────────────────── */}
       <div className="flex-1 flex flex-col h-full bg-[#fcfaff]">
+        <div className="pointer-events-none absolute inset-0 z-20">
+          {AUTH_STICKS.map((s, i) => (
+            <Sparkles
+              key={`register-stick-${i}`}
+              className="absolute hidden md:block"
+              style={{
+                left: `${s.x}%`,
+                top: `${s.y}%`,
+                width: `${s.size}px`,
+                height: `${s.size}px`,
+                color: s.color,
+                opacity: s.opacity,
+                filter: `drop-shadow(0 0 8px ${s.glow})`,
+              }}
+            />
+          ))}
+        </div>
 
         {/* Top bar */}
         <div
@@ -105,14 +132,14 @@ export function Register() {
         </div>
 
         {/* Form — centered within panel */}
-        <div className="flex-1 flex items-center justify-center px-10 overflow-hidden">
+        <div className="flex-1 flex items-center justify-center px-10 overflow-y-auto py-4">
           <div className="w-full max-w-sm">
 
             <h1 className="text-gray-900 mb-1"
               style={{ fontSize: "1.875rem", fontWeight: 750, letterSpacing: "-0.025em" }}>
               Tạo tài khoản
             </h1>
-            <p className="text-gray-500 text-sm mb-3">
+            <p className="text-gray-500 text-sm mb-2">
               Miễn phí · Không cần thẻ tín dụng · 3 buổi AI ngay lập tức
             </p>
 
@@ -129,7 +156,7 @@ export function Register() {
               </div>
             )}
 
-            <form onSubmit={handleRegister} className="space-y-2.5">
+            <form onSubmit={handleRegister} className="space-y-2">
               {/* Name */}
               <div>
                 <label htmlFor="reg-name" className="block text-sm font-semibold text-gray-700 mb-1.5">Họ và tên</label>
@@ -218,7 +245,7 @@ export function Register() {
             </form>
 
             {/* Divider */}
-            <div className="flex items-center gap-3 my-4">
+            <div className="flex items-center gap-3 my-3">
               <div className="flex-1 h-px bg-gray-100" />
               <span className="text-xs text-gray-400 font-medium">hoặc</span>
               <div className="flex-1 h-px bg-gray-100" />
@@ -227,11 +254,11 @@ export function Register() {
             <GoogleSignInBlock onError={setError} />
 
             {/* Privacy */}
-            <div className="mt-5 rounded-xl p-3.5 flex gap-3"
+            <div className="mt-3 rounded-xl p-3 flex gap-3"
               style={{ background: "rgba(110,53,232,0.04)", border: "1px solid rgba(110,53,232,0.1)" }}>
               <ShieldCheck className="w-4 h-4 flex-shrink-0 text-[#6E35E8] mt-0.5" strokeWidth={2} />
               <div>
-                <p className="text-xs font-bold text-gray-700 mb-1.5">Cam kết bảo vệ dữ liệu</p>
+                <p className="text-[13px] font-bold text-gray-700 mb-1.5">Cam kết bảo vệ dữ liệu</p>
                 <div className="grid grid-cols-2 gap-x-4 gap-y-1">
                   {["Mã hóa dữ liệu an toàn", "Không chia sẻ bên thứ ba", "Xóa tài khoản bất cứ lúc", "Tuân thủ GDPR"].map((t) => (
                     <div key={t} className="flex items-center gap-1.5 text-xs text-gray-500">
@@ -328,14 +355,7 @@ export function Register() {
           </div>
         </div>
 
-        <div className="flex-shrink-0 px-10 pb-6 relative z-10 text-center">
-          <p className="text-xs text-gray-400">
-            Đã có tài khoản?{" "}
-            <Link to="/login" className="font-semibold hover:underline" style={{ color: "#6E35E8" }}>
-              Đăng nhập tại đây →
-            </Link>
-          </p>
-        </div>
+        <div className="flex-shrink-0 px-10 pb-6 relative z-10 text-center" />
       </div>
     </div>
   );
