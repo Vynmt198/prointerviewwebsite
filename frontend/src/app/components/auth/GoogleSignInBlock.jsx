@@ -65,9 +65,10 @@ export function GoogleSignInBlock({ onError }) {
             type: "standard",
             theme: "outline",
             size: "large",
-            text: "signin_with",
-            shape: "rectangular",
+            text: "continue_with",
+            shape: "pill",
             width: 360,
+            locale: "vi",
           });
         }
         initialized.current = true;
@@ -87,7 +88,7 @@ export function GoogleSignInBlock({ onError }) {
           onClick={() =>
             onError?.("Đăng nhập Google chưa được bật (thiếu VITE_GOOGLE_CLIENT_ID). Vui lòng dùng email và mật khẩu.")
           }
-          className="w-full flex items-center justify-center gap-3 py-3.5 px-4 rounded-xl border text-base font-semibold text-gray-700 transition-all"
+          className="w-full flex items-center justify-center gap-3 py-3.5 px-4 rounded-full border text-base font-semibold text-gray-700 transition-all"
           style={{ background: "#fff", borderColor: "#E5E7EB" }}
         >
           Đăng nhập với Google

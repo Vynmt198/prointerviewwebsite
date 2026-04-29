@@ -36,6 +36,36 @@ import { fetchDashboardStats } from "../../utils/dashboardApi";
 import { apiBookingToLocal } from "../../utils/bookingMappers";
 import { PROGRESS_DATA, SKILLS_DATA } from "../../data/mockData";
 
+function getCancellationPolicy(dateStr, timeStr) {
+  const [d, m, y] = String(dateStr || "").split("/").map(Number);
+  const [hh, mm] = String(timeStr || "").split(":").map(Number);
+  const startAt = new Date(y, (m || 1) - 1, d || 1, hh || 0, mm || 0, 0, 0);
+  if (!Number.isFinite(startAt.getTime())) {
+    return { feePercent: 100, refundPercent: 0 };
+  }
+  const hoursUntil = (startAt.getTime() - Date.now()) / 3_600_000;
+  if (hoursUntil <= 2) return { feePercent: 100, refundPercent: 0 };
+  if (hoursUntil <= 24) return { feePercent: 50, refundPercent: 50 };
+  return { feePercent: 0, refundPercent: 100 };
+}
+
+function getTimeUntilSessionLabel(dateStr, timeStr) {
+  const [d, m, y] = String(dateStr || "").split("/").map(Number);
+  const [hh, mm] = String(timeStr || "").split(":").map(Number);
+  const startAt = new Date(y, (m || 1) - 1, d || 1, hh || 0, mm || 0, 0, 0);
+  if (!Number.isFinite(startAt.getTime())) return "";
+
+  const diffMs = startAt.getTime() - Date.now();
+  if (diffMs <= 0) return "Đến giờ";
+
+  const totalMin = Math.floor(diffMs / 60000);
+  const h = Math.floor(totalMin / 60);
+  const min = totalMin % 60;
+  if (h <= 0) return `Còn ${min}m`;
+  if (min === 0) return `Còn ${h}h`;
+  return `Còn ${h}h ${min}m`;
+}
+
 // Modal Hủy Lịch Hẹn
 function CancellationModal({ booking, onClose, onConfirm }) {
   const [reason, setReason] = useState("");
@@ -61,27 +91,40 @@ function CancellationModal({ booking, onClose, onConfirm }) {
   };
 
   if (!booking) return null;
+  const policy = getCancellationPolicy(booking.date, booking.time);
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/80 backdrop-blur-md">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/45 backdrop-blur-sm">
       <motion.div 
         initial={{ opacity: 0, scale: 0.9, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
-        className="glass-card w-full max-w-md p-8 sm:p-10 border-white/20 shadow-[0_32px_100px_rgba(0,0,0,0.8)]"
+        className="w-full max-w-md rounded-[28px] bg-white border border-slate-200 p-6 sm:p-7 shadow-[0_28px_80px_rgba(15,23,42,0.22)]"
       >
-        <h3 className="text-xl font-black text-white mb-2 uppercase tracking-tight">Hủy lịch hẹn</h3>
-        <p className="text-sm text-white/50 mb-8 font-medium">Buổi hẹn với <span className="text-secondary font-bold">{booking.mentorName}</span> vào {booking.date} lúc {booking.time} sẽ bị hủy.</p>
+        <h3 className="text-xl font-black text-slate-900 mb-2 uppercase tracking-tight">Hủy lịch hẹn</h3>
+        <p className="text-sm text-slate-600 mb-6 font-medium leading-relaxed">
+          Buổi hẹn với <span className="text-violet-700 font-bold">{booking.mentorName}</span> vào {booking.date} lúc {booking.time} sẽ bị hủy.
+        </p>
+        <div className="mb-5 rounded-2xl border border-red-300 bg-red-50 px-4 py-3">
+          <p className="text-[11px] font-black uppercase tracking-[0.14em] text-red-600">Cảnh báo</p>
+          <p className="mt-1 text-sm font-semibold text-red-700">
+            {policy.feePercent === 100
+              ? "Hủy trong vòng 2 giờ trước lịch hẹn: mất 100% phí đã thanh toán (không hoàn tiền)."
+              : policy.feePercent === 50
+                ? "Hủy trong vòng 24 giờ trước lịch hẹn: mất 50% phí đã thanh toán."
+                : "Hủy trước 24 giờ: được hoàn lại 100% phí đã thanh toán."}
+          </p>
+        </div>
         
-        <div className="space-y-3 mb-8">
-          <p className="text-[10px] font-black text-white/30 uppercase tracking-[0.2em] mb-4">Lý do của bạn</p>
+        <div className="space-y-3 mb-6">
+          <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-3">Lý do của bạn</p>
           {reasons.map((r) => (
             <button
               key={r}
               onClick={() => setReason(r)}
               className={`w-full p-4 rounded-2xl text-left text-xs font-bold transition-all border ${
                 reason === r 
-                  ? "bg-secondary/20 border-secondary text-secondary" 
-                  : "bg-white/5 border-white/5 text-white/60 hover:bg-white/10"
+                  ? "bg-violet-50 border-violet-300 text-violet-700" 
+                  : "bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100"
               }`}
             >
               {r}
@@ -97,7 +140,7 @@ function CancellationModal({ booking, onClose, onConfirm }) {
                 value={customReason}
                 onChange={(e) => setCustomReason(e.target.value)}
                 placeholder="Nhập lý do cụ thể..."
-                className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-xs text-white placeholder:text-white/20 focus:outline-none focus:border-secondary transition-all resize-none mt-2"
+                className="w-full bg-white border border-slate-200 rounded-2xl p-4 text-xs text-slate-700 placeholder:text-slate-400 focus:outline-none focus:border-violet-300 transition-all resize-none mt-2"
               />
             )}
           </AnimatePresence>
@@ -106,14 +149,14 @@ function CancellationModal({ booking, onClose, onConfirm }) {
         <div className="flex gap-4">
           <button
             onClick={onClose}
-            className="flex-1 h-12 rounded-2xl bg-white/5 text-white/60 font-black text-[10px] uppercase tracking-widest hover:bg-white/10 transition-all"
+            className="flex-1 h-12 rounded-2xl bg-slate-100 text-slate-600 font-black text-[10px] uppercase tracking-widest hover:bg-slate-200 transition-all"
           >
             Đóng
           </button>
           <button
             onClick={handleConfirm}
             disabled={loading}
-            className="flex-2 px-8 h-12 rounded-2xl bg-red-500/20 border border-red-500/30 text-red-400 font-black text-[10px] uppercase tracking-widest hover:bg-red-500 hover:text-white transition-all disabled:opacity-50"
+            className="flex-2 px-8 h-12 rounded-2xl bg-red-500 text-white font-black text-[10px] uppercase tracking-widest hover:bg-red-600 transition-all disabled:opacity-50"
           >
             {loading ? "Đang xử lý..." : "Xác nhận Hủy"}
           </button>
@@ -226,7 +269,14 @@ export function Dashboard() {
   const handleCancelConfirm = async (id, reason) => {
     const res = await cancelBooking(id, { reason });
     if (res.success) {
-      toast.success("Đã hủy lịch hẹn thành công.");
+      const fee = Number(res.cancellationPolicy?.feePercent ?? 0);
+      if (fee >= 100) {
+        toast.success("Đã hủy lịch. Phí giữ lại: 100%.");
+      } else if (fee >= 50) {
+        toast.success("Đã hủy lịch. Phí giữ lại: 50%.");
+      } else {
+        toast.success("Đã hủy lịch. Hoàn phí 100%.");
+      }
       setCancellingBooking(null);
       loadData(); // Tải lại dữ liệu sau khi hủy
     } else {
@@ -278,33 +328,25 @@ export function Dashboard() {
   };
 
   return (
-    <div className="pi-page-dashboard-bg relative min-h-screen overflow-x-hidden pb-20 font-sans text-white selection:bg-[rgba(196,255,71,0.28)] selection:text-white">
+    <div className="relative min-h-screen overflow-x-hidden pb-20 font-sans text-slate-900 selection:bg-[rgba(124,58,237,0.18)] selection:text-slate-900 bg-slate-50">
       <style>{`
         .glass-card {
-           background: linear-gradient(145deg, rgba(255,255,255,0.07) 0%, rgba(255,255,255,0.02) 100%);
-           backdrop-filter: blur(48px);
-           border-radius: 28px;
-           border: 1px solid rgba(255, 255, 255, 0.1);
-           transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.35s ease, box-shadow 0.45s ease;
+           background: #ffffff;
+           backdrop-filter: none;
+           border-radius: 20px;
+           border: 1px solid rgba(148, 163, 184, 0.28);
+           transition: transform 0.3s ease, border-color 0.25s ease, box-shadow 0.3s ease;
            position: relative;
            overflow: hidden;
+           box-shadow: 0 8px 18px rgba(15, 23, 42, 0.06);
         }
         .glass-card::before {
-           content: '';
-           position: absolute;
-           inset: 0;
-           background: linear-gradient(125deg, rgba(236,72,153,0.08) 0%, transparent 42%, rgba(196, 255, 71,0.06) 100%);
-           pointer-events: none;
-           opacity: 0.85;
+           content: none;
         }
         .glass-card:hover {
-           border-color: rgba(196, 255, 71, 0.42);
-           transform: translateY(-6px) rotate(-0.3deg);
-           box-shadow:
-             0 24px 48px rgba(0,0,0,0.45),
-             0 0 0 1px rgba(196, 255, 71, 0.12) inset,
-             0 0 48px -6px rgba(196, 255, 71, 0.28),
-             0 0 36px -10px rgba(167, 139, 250, 0.22);
+           border-color: rgba(99, 102, 241, 0.32);
+           transform: translateY(-2px);
+           box-shadow: 0 12px 24px rgba(15, 23, 42, 0.1);
         }
         .glow-halo {
            position: relative;
@@ -313,14 +355,7 @@ export function Dashboard() {
            justify-content: center;
         }
         .glow-halo::after {
-           content: '';
-           position: absolute;
-           width: 150%;
-           height: 150%;
-           background: radial-gradient(circle, rgba(232,121,249,0.35) 0%, rgba(110,53,232,0.15) 40%, transparent 70%);
-           border-radius: 50%;
-           z-index: -1;
-           animation: pulse-halo 3.2s ease-in-out infinite;
+           content: none;
         }
         @keyframes pulse-halo {
            0%, 100% { transform: scale(1); opacity: 0.55; }
@@ -343,9 +378,9 @@ export function Dashboard() {
           width: 8px;
           height: 8px;
           border-radius: 50%;
-          background: linear-gradient(135deg, #f472b6, #c4ff47);
-          box-shadow: 0 0 14px rgba(244, 114, 182, 0.75), 0 0 22px rgba(196, 255, 71, 0.45);
-          animation: pulse-halo 2s ease-in-out infinite;
+          background: #64748b;
+          box-shadow: none;
+          animation: none;
         }
         .sticker-badge {
           transform: rotate(-2deg);
@@ -353,276 +388,62 @@ export function Dashboard() {
         }
       `}</style>
 
-      <div
-        className="fixed inset-0 pointer-events-none -z-10 opacity-90"
-        style={{ animation: "shimmer-bg 14s ease-in-out infinite" }}
-      >
-        <div className="absolute top-[-20%] right-[-10%] h-[70vh] w-[70vh] rounded-full bg-gradient-to-bl from-fuchsia-600/35 via-violet-600/20 to-transparent blur-[100px]" />
-        <div className="absolute bottom-[-25%] left-[-15%] h-[85vh] w-[85vh] rounded-full bg-gradient-to-tr from-[#c4ff47]/18 via-cyan-500/10 to-fuchsia-500/20 blur-[110px]" />
-        <div className="absolute top-1/2 left-1/2 h-[50vh] w-[50vh] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#6E35E8]/12 blur-[90px]" />
-        <div className="absolute top-[30%] right-[5%] h-[40vh] w-[40vh] rounded-full bg-[#c4ff47]/10 blur-[80px]" />
-      </div>
+      <div className="fixed inset-0 pointer-events-none -z-10 bg-slate-50" />
 
-      <header className="relative pt-14 pb-14 border-b border-white/[0.07]">
+      <header className="relative pt-3 pb-4">
         <div
-          className="absolute inset-0 opacity-[0.11]"
+          className="absolute inset-0 opacity-[0.03]"
           style={{
             backgroundImage:
               "linear-gradient(rgba(255,255,255,0.55) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.45) 1px,transparent 1px)",
-            backgroundSize: "32px 32px",
+            backgroundSize: "44px 44px",
           }}
         />
-        <div className="max-w-7xl mx-auto px-6 sm:px-8 relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-10">
+        <div className="max-w-7xl mx-auto px-6 sm:px-8">
+          <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-5 rounded-[28px] border border-slate-200 bg-white/80 backdrop-blur-sm px-5 sm:px-6 py-4 sm:py-5 shadow-[0_12px_24px_rgba(15,23,42,0.06)]">
           <motion.div
             initial={{ opacity: 0, x: -24 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ type: "spring", stiffness: 120, damping: 18 }}
-            className="flex items-center gap-6 sm:gap-8"
+            className="flex items-center gap-4 sm:gap-6"
           >
-            <div className="relative group" style={{ animation: "float-y 5s ease-in-out infinite" }}>
-              <div className="absolute -inset-1 rounded-[36px] bg-gradient-to-br from-fuchsia-500 via-violet-600 to-[#c4ff47] opacity-60 blur-md group-hover:opacity-90 transition-opacity" />
-              <div className="relative flex h-[5.5rem] w-[5.5rem] items-center justify-center overflow-hidden rounded-[28px] border-2 border-white/25 bg-[#140a22] text-3xl font-black text-white shadow-2xl ring-2 ring-fuchsia-500/25 sm:h-24 sm:w-24 sm:text-4xl">
-                <div className="absolute inset-0 bg-gradient-to-br from-fuchsia-500/20 via-transparent to-lime-400/15" />
-                <Sparkles className="absolute top-2 right-2 w-4 h-4 text-[#c4ff47] opacity-80" strokeWidth={2.2} />
+            <div className="relative group">
+              <div className="relative flex h-[4.6rem] w-[4.6rem] items-center justify-center overflow-hidden rounded-[20px] border border-violet-200 bg-violet-600 text-2xl font-black text-white shadow-md sm:h-20 sm:w-20 sm:text-3xl">
+                <Sparkles className="absolute top-2 right-2 w-4 h-4 text-lime-300 opacity-80" strokeWidth={2.2} />
                 <span className="relative z-10 tracking-tight">{initials}</span>
               </div>
             </div>
             <div>
-              <h1 className="text-4xl sm:text-5xl md:text-6xl font-black tracking-tighter leading-[1.05]">
-                <span className="bg-gradient-to-r from-white via-fuchsia-100 to-zinc-300 bg-clip-text text-transparent">
-                  Yo,{" "}
-                </span>
-                <span className="bg-gradient-to-r from-[#c4ff47] via-fuchsia-300 to-violet-300 bg-clip-text text-transparent">
-                  {fullName.split(" ").slice(-1)[0]}
-                </span>
-                <span className="text-white">!</span>
+              <h1 className="text-3xl sm:text-4xl font-black tracking-tight leading-[1.08]">
+                <span className="text-slate-900">Chào, </span>
+                <span className="text-indigo-600">{fullName.split(" ").slice(-1)[0]}</span>
+                <span className="text-slate-900">!</span>
               </h1>
-              <p className="mt-2 text-sm font-semibold text-white/45 max-w-md">
-                Dashboard của bạn — chỗ xem streak, skill và nhảy vào luyện tập một cách… không nhàm chán.
+              <p className="mt-1 text-sm font-semibold text-slate-600 max-w-md">
+                Sẵn sàng chinh phục mục tiêu phỏng vấn hôm nay?
               </p>
             </div>
           </motion.div>
 
-          <motion.div
-            initial={{ opacity: 0, y: 16, scale: 0.96 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            transition={{ type: "spring", stiffness: 100, damping: 16, delay: 0.08 }}
-            className="flex flex-col sm:flex-row items-stretch gap-2 p-2 rounded-[26px] bg-gradient-to-br from-white/[0.08] to-white/[0.02] border border-white/15 backdrop-blur-xl shadow-[0_20px_50px_rgba(0,0,0,0.35)]"
-          >
-            <div className="px-6 sm:px-8 py-4 sm:py-5 rounded-[20px] bg-gradient-to-br from-[#1a0a2e]/95 to-[#0f0520]/95 border border-fuchsia-500/25 flex items-center gap-4 min-w-0">
-              <div className="w-11 h-11 shrink-0 rounded-2xl bg-gradient-to-br from-amber-400/30 to-orange-500/20 border border-amber-400/35 flex items-center justify-center text-amber-300 shadow-[0_0_20px_rgba(251,191,36,0.25)]">
-                <Trophy size={22} strokeWidth={2} />
-              </div>
-              <div className="text-left min-w-0">
-                <p className="text-[9px] font-black text-fuchsia-300/90 uppercase tracking-widest mb-0.5">Rank</p>
-                <p className="text-base sm:text-lg font-black text-white tracking-tight uppercase truncate">
-                  Elite flex
-                </p>
-              </div>
+          <div className="w-full max-w-[330px] rounded-[22px] bg-white border border-lime-200 p-4.5 shadow-[0_10px_20px_rgba(15,23,42,0.08)]">
+            <p className="text-[10px] font-black uppercase tracking-[0.14em] text-slate-500">Learning streak</p>
+            <p className="mt-1.5 text-[2rem] font-black text-slate-900">12 Days</p>
+            <p className="text-xs text-slate-500 mt-1">Giữ nhịp luyện tập liên tục</p>
+            <div className="mt-4 h-2 rounded-full bg-slate-100 overflow-hidden">
+              <div className="h-full w-3/4 bg-gradient-to-r from-lime-300 to-violet-400" />
             </div>
-            <div className="px-6 sm:px-8 py-4 sm:py-5 rounded-[20px] flex items-center gap-4 border border-white/10 bg-white/[0.04]">
-              <div className="w-11 h-11 shrink-0 rounded-2xl bg-gradient-to-br from-orange-500/40 to-rose-500/25 border border-orange-400/40 flex items-center justify-center text-orange-200">
-                <Flame size={22} strokeWidth={2} />
-              </div>
-              <div className="text-left">
-                <p className="text-[9px] font-black text-zinc-400 uppercase tracking-widest mb-0.5">Streak</p>
-                <p className="text-base sm:text-lg font-black text-white tracking-tight">05 ngày học</p>
-              </div>
-            </div>
-          </motion.div>
+            <p className="text-xs text-slate-500 mt-2">Còn 3 ngày để đạt mốc mới.</p>
+          </div>
+        </div>
         </div>
       </header>
 
-      <main className="relative z-10 p-6 sm:p-8 max-w-7xl mx-auto mt-8 sm:mt-12">
+      <main className="relative z-10 p-6 sm:p-8 max-w-7xl mx-auto mt-0">
         <div className="grid grid-cols-12 gap-8 lg:gap-10">
           <div className="col-span-12 lg:col-span-8 space-y-10 lg:space-y-12">
-            <div className="space-y-3">
-              <p className="text-[11px] font-bold text-white/50 px-1">Số liệu từ lịch sử trên máy bạn.</p>
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-                <LushMetric
-                  label="Phiên phỏng vấn AI"
-                  value={totalInterviews}
-                  icon={Mic}
-                  accent="violet"
-                  color="#a78bfa"
-                  caption="Số buổi PV thử với AI đã hoàn thành và được lưu."
-                />
-                <LushMetric
-                  label="Điểm trung bình"
-                  value={avgStar}
-                  icon={Target}
-                  accent="lime"
-                  color="#c4ff47"
-                  caption="TB điểm AI chấm (≈0–5) qua các phiên đã lưu."
-                />
-                <LushMetric
-                  label="Lượt phân tích CV"
-                  value={totalCVAnalyses}
-                  icon={FileText}
-                  accent="cyan"
-                  color="#22d3ee"
-                  caption="Số lần chạy phân tích CV so với JD."
-                />
-                <LushMetric
-                  label="Khớp JD (cao nhất)"
-                  value={totalCVAnalyses === 0 ? "—" : `${bestMatch}%`}
-                  icon={BrainCircuit}
-                  accent="sunset"
-                  color="#fb923c"
-                  caption="% khớp JD cao nhất trong các lần phân tích; chưa có lượt → “—”."
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 gap-8">
-               {/* ── HIỆU SUẤT HOẠT ĐỘNG (Nâng cấp Chú thích & Trục) — luôn ô trên / radar dưới ── */}
-               <div className="glass-card p-8 sm:p-10 group flex flex-col justify-between">
-                  <div className="mb-6">
-                     <div className="flex items-center gap-3 mb-1 flex-wrap">
-                        <span className="h-1 w-10 rounded-full bg-gradient-to-r from-[#c4ff47] to-emerald-400" />
-                        <h3 className="text-lg sm:text-xl font-black text-white font-headline tracking-tight">
-                           Hiệu suất luyện —{" "}
-                           <span className="bg-gradient-to-r from-fuchsia-300 to-violet-200 bg-clip-text text-transparent">
-                              đồ thị cũng phải đẹp
-                           </span>
-                        </h3>
-                     </div>
-                     <p className="text-[11px] font-semibold text-white/40 pl-[52px]">Điểm theo thời gian (flex chart era)</p>
-                  </div>
-                  <div className="h-64 w-full">
-                     <ResponsiveContainer width="100%" height="100%">
-                       <AreaChart data={PROGRESS_DATA} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                         <defs>
-                            <linearGradient id="lushGradient" x1="0" y1="0" x2="0" y2="1">
-                              <stop offset="5%" stopColor="#c4ff47" stopOpacity={0.25} />
-                              <stop offset="95%" stopColor="#6E35E8" stopOpacity={0} />
-                            </linearGradient>
-                         </defs>
-                         <CartesianGrid strokeDasharray="8 8" vertical={false} stroke="rgba(255,255,255,0.05)" />
-                         <XAxis 
-                            dataKey="date" 
-                            axisLine={false} 
-                            tickLine={false} 
-                            tick={{ fill: "rgba(255,255,255,0.3)", fontSize: 9, fontWeight: 700 }}
-                            dy={10}
-                         />
-                         <YAxis 
-                            domain={[0, 5]} 
-                            axisLine={false} 
-                            tickLine={false} 
-                            tick={{ fill: "rgba(255,255,255,0.3)", fontSize: 10, fontWeight: 700 }}
-                         />
-                         <Tooltip content={<CustomTooltip />} />
-                         <Area 
-                            name="Điểm đánh giá" 
-                            type="monotone" 
-                            dataKey="score" 
-                            stroke="#c4ff47" 
-                            strokeWidth={4} 
-                            fillOpacity={1} 
-                            fill="url(#lushGradient)" 
-                            animationDuration={2000} 
-                         />
-                       </AreaChart>
-                     </ResponsiveContainer>
-                  </div>
-                  <div className="mt-8 pt-6 border-t border-white/5 flex items-center justify-center gap-6">
-                     <div className="flex items-center gap-2">
-                        <div className="w-2.5 h-2.5 rounded-full bg-primary-fixed shadow-[0_0_8px_#c4ff47]"></div>
-                        <span className="text-[9px] font-black text-zinc-400 uppercase tracking-[0.2em]">Điểm kỹ năng (0-5)</span>
-                     </div>
-                     <div className="flex items-center gap-2">
-                        <div className="w-2.5 h-2.5 rounded-full bg-zinc-800"></div>
-                        <span className="text-[9px] font-black text-zinc-500 uppercase tracking-[0.2em]">Mốc thời gian</span>
-                     </div>
-                  </div>
-               </div>
-
-               {/* ── MA TRẬN NĂNG LỰC ── */}
-               <div className="glass-card p-8 sm:p-10 bg-gradient-to-br from-fuchsia-500/[0.07] via-transparent to-violet-600/[0.06] relative group">
-                  <div className="absolute top-3 right-3 p-3 opacity-[0.12] group-hover:opacity-25 transition-opacity text-fuchsia-300">
-                     <BrainCircuit size={44} strokeWidth={1.5} />
-                  </div>
-                  <div className="flex items-center gap-3 mb-6 flex-wrap">
-                     <span className="h-1 w-10 rounded-full bg-gradient-to-r from-fuchsia-400 to-violet-500" />
-                     <h3 className="text-lg sm:text-xl font-black text-white font-headline tracking-tight">
-                        Skill radar —{" "}
-                        <span className="text-fuchsia-200/90">không chỉ số</span>
-                     </h3>
-                  </div>
-                  <div className="h-64 w-full flex items-center justify-center">
-                     <ResponsiveContainer width="100%" height="100%">
-                       <RadarChart cx="50%" cy="50%" outerRadius="75%" data={localizedSkillsData}>
-                         <PolarGrid stroke="rgba(255,255,255,0.1)" />
-                         <PolarAngleAxis dataKey="skill" tick={{ fill: "#a1a1aa", fontSize: 9, fontWeight: 900 }} />
-                         <Radar name="Skill" dataKey="value" stroke="#c4ff47" fill="#c4ff47" fillOpacity={0.25} dot={{ r: 4, fill: "#c4ff47", stroke: "#0E0922", strokeWidth: 2 }} />
-                       </RadarChart>
-                     </ResponsiveContainer>
-                  </div>
-               </div>
-            </div>
-
-            {/* INSIGHTS (Removed AI Advice as requested) */}
-            <div className="glass-card p-10 border-white/5 bg-white/[0.02]">
-               <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-                  <div className="space-y-4">
-                     <h4 className="text-[10px] font-black text-secondary tracking-widest uppercase flex items-center gap-2">
-                        <div className="w-1 h-3 bg-secondary"></div> Thế mạnh hiện tại
-                     </h4>
-                     <ul className="space-y-3">
-                        <li className="flex items-center gap-3 text-sm font-bold text-white group hover:text-secondary transition-colors cursor-default">
-                           <div className="w-1.5 h-1.5 rounded-full bg-secondary"></div> Clarity (Mạch lạc)
-                        </li>
-                        <li className="flex items-center gap-3 text-sm font-bold text-white group hover:text-secondary transition-colors cursor-default">
-                           <div className="w-1.5 h-1.5 rounded-full bg-secondary"></div> Relevance (Độ liên quan)
-                        </li>
-                     </ul>
-                  </div>
-                  <div className="space-y-4">
-                     <h4 className="text-[10px] font-black text-primary-fixed tracking-widest uppercase flex items-center gap-2">
-                        <div className="w-1 h-3 bg-primary-fixed"></div> Điểm cần cải thiện
-                     </h4>
-                     <ul className="space-y-3">
-                        <li className="flex items-center gap-3 text-sm font-bold text-white group hover:text-primary-fixed transition-colors cursor-default">
-                           <div className="w-1.5 h-1.5 rounded-full bg-primary-fixed"></div> Cấu trúc câu chuyện còn lỏng
-                        </li>
-                        <li className="flex items-center gap-3 text-sm font-bold text-white group hover:text-primary-fixed transition-colors cursor-default">
-                           <div className="w-1.5 h-1.5 rounded-full bg-primary-fixed"></div> Giao tiếc ánh mắt / nhịp nói
-                        </li>
-                     </ul>
-                  </div>
-               </div>
-            </div>
-          </div>
-
-          <aside className="col-span-12 lg:col-span-4 space-y-8 lg:space-y-10">
-            <div className="space-y-5">
-               <div className="flex items-center gap-2.5 mb-1">
-                  <div className="tech-dot" />
-                  <span className="text-[10px] font-black uppercase tracking-[0.22em] bg-gradient-to-r from-fuchsia-200/90 to-lime-200/80 bg-clip-text text-transparent">
-                     Quick actions — nhích là tới
-                  </span>
-               </div>
-               
-               <LushActionTile
-                  title="Phỏng vấn AI"
-                  desc="Vào phòng, nói thật, nhận feedback gắt nhưng có tâm."
-                  onClick={() => navigate("/interview")}
-                  icon={Zap}
-                  accent="#c084fc"
-                  accent2="#6E35E8"
-                  isLarge={true}
-               />
-               
-               <div className="grid grid-cols-2 gap-4">
-                  <LushActionTile title="CV × JD" desc="So khớp & gợi ý chỉnh CV." onClick={() => navigate("/cv-analysis")} icon={FileText} accent="#22d3ee" />
-                  <LushActionTile title="Book mentor" desc="Slot 1-1 với người trong nghề." onClick={() => navigate("/mentors")} icon={Calendar} accent="#c4ff47" />
-               </div>
-            </div>
-
-            <div className="glass-card p-10 bg-gradient-to-br from-white/[0.05] to-transparent border-white/10">
+            <div className="glass-card p-10 bg-gradient-to-br from-white to-slate-50 border-slate-200">
                <div className="flex items-center justify-between mb-10">
-                  <h3 className="text-sm font-black text-white uppercase tracking-[0.2em] flex items-center gap-3">
+                  <h3 className="text-sm font-black text-slate-900 uppercase tracking-[0.14em] flex items-center gap-3">
                      <div className="w-8 h-8 rounded-xl bg-secondary/20 flex items-center justify-center text-secondary">
                         <Calendar size={18} />
                      </div>
@@ -637,8 +458,8 @@ export function Dashboard() {
 
                <div className="space-y-6 relative">
                  {upcomingSessions.length === 0 ? (
-                    <div className="py-16 text-center border-2 border-dashed border-white/5 rounded-[40px] bg-white/[0.01]">
-                       <div className="w-16 h-16 bg-white/[0.03] rounded-full flex items-center justify-center mx-auto mb-6 opacity-20">
+                    <div className="py-16 text-center border-2 border-dashed border-slate-200 rounded-[40px] bg-slate-50/70">
+                       <div className="w-16 h-16 bg-slate-200 rounded-full flex items-center justify-center mx-auto mb-6 opacity-80">
                           <Calendar size={32} />
                        </div>
                        <p className="text-zinc-500 text-[10px] font-black uppercase tracking-[0.3em] leading-loose">
@@ -647,15 +468,14 @@ export function Dashboard() {
                        </p>
                     </div>
                  ) : upcomingSessions.slice(0, 3).map((s, i) => (
-                    <div key={i} className="group relative p-6 rounded-[32px] bg-white/[0.03] border border-white/5 hover:bg-white/[0.06] hover:border-white/10 transition-all duration-500">
+                    <div key={i} className="group relative p-6 rounded-[32px] bg-white border border-slate-200 hover:bg-slate-50 hover:border-slate-300 transition-all duration-500">
                        <div className="flex gap-5 items-center">
-                          {/* Avatar Mentor */}
                           <div className="relative shrink-0">
-                             <div className="w-14 h-14 rounded-2xl overflow-hidden border-2 border-white/10 group-hover:border-secondary/40 transition-colors bg-[#140a22] flex items-center justify-center">
+                             <div className="w-14 h-14 rounded-2xl overflow-hidden border-2 border-slate-200 group-hover:border-secondary/40 transition-colors bg-white flex items-center justify-center">
                                 {s.mentorAvatar ? (
                                    <img src={s.mentorAvatar} alt={s.mentorName} className="w-full h-full object-cover" />
                                 ) : (
-                                   <span className="text-xl font-black text-white/20">{s.mentorName[0]}</span>
+                                   <span className="text-xl font-black text-slate-400">{s.mentorName[0]}</span>
                                 )}
                              </div>
                              {s.status === "confirmed" && (
@@ -675,7 +495,10 @@ export function Dashboard() {
                                   );
                                 })()}
                              </div>
-                             <h4 className="text-base font-black text-white truncate pr-4">{s.mentorName}</h4>
+                             <p className="text-[10px] font-bold text-violet-600 mb-1.5">
+                               {getTimeUntilSessionLabel(s.date, s.time)}
+                             </p>
+                             <h4 className="text-base font-black text-slate-900 truncate pr-4">{s.mentorName}</h4>
                              <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-tight mt-1 truncate opacity-60">
                                 {s.sessionType === "mock_interview" ? "Phỏng vấn giả định" : "Tư vấn lộ trình"}
                              </p>
@@ -683,14 +506,14 @@ export function Dashboard() {
                        </div>
                        
                        {s.status === "confirmed" && (
-                         <div className="mt-6 pt-5 border-t border-white/5 flex gap-3">
+                         <div className="mt-6 pt-5 border-t border-slate-200 flex gap-3">
                             <button className="flex-1 h-12 rounded-2xl bg-secondary text-black font-black text-[10px] uppercase tracking-widest hover:scale-[1.02] active:scale-[0.98] transition-all shadow-[0_10px_30px_rgba(232,121,249,0.2)]">
                                Vào phòng phỏng vấn
                             </button>
                             <button 
                               onClick={() => setCancellingBooking(s)}
-                              className="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-white/40 hover:bg-red-500/10 hover:border-red-500/20 hover:text-red-400 transition-all"
-                              title="Hủy lịch hẹn"
+                              className="w-12 h-12 rounded-2xl bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-400 hover:bg-red-500/10 hover:border-red-500/20 hover:text-red-400 transition-all"
+                              title="Hủy lịch hẹn (không hoàn tiền)"
                             >
                                <XCircle size={18} />
                             </button>
@@ -701,10 +524,121 @@ export function Dashboard() {
                </div>
                
                {upcomingSessions.length > 3 && (
-                 <button className="w-full mt-8 py-3 text-[9px] font-black text-white/30 uppercase tracking-[0.2em] hover:text-white transition-colors">
+                 <button className="w-full mt-8 py-3 text-[10px] font-black text-slate-500 uppercase tracking-[0.1em] hover:text-slate-800 transition-colors">
                     Xem tất cả lịch hẹn ({upcomingSessions.length})
                  </button>
                )}
+            </div>
+
+            <div className="space-y-3">
+              <p className="text-[11px] font-black text-slate-700 px-1">Số liệu từ lịch sử trên máy bạn.</p>
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+                <LushMetric
+                  label="Phiên phỏng vấn AI"
+                  value={totalInterviews}
+                  icon={Mic}
+                  accent="violet"
+                  color="#a78bfa"
+                  caption="Số buổi PV thử với AI đã hoàn thành và được lưu."
+                />
+                <LushMetric
+                  label="Điểm trung bình"
+                  value={avgStar}
+                  icon={Target}
+                  accent="lime"
+                  color="#84cc16"
+                  caption="TB điểm AI chấm (≈0–5) qua các phiên đã lưu."
+                />
+                <LushMetric
+                  label="Lượt phân tích CV"
+                  value={totalCVAnalyses}
+                  icon={FileText}
+                  accent="cyan"
+                  color="#06b6d4"
+                  caption="Số lần chạy phân tích CV so với JD."
+                />
+                <LushMetric
+                  label="Khớp JD (cao nhất)"
+                  value={totalCVAnalyses === 0 ? "—" : `${bestMatch}%`}
+                  icon={BrainCircuit}
+                  accent="sunset"
+                  color="#f97316"
+                  caption="% khớp JD cao nhất trong các lần phân tích; chưa có lượt → “—”."
+                />
+              </div>
+            </div>
+
+            {/* INSIGHTS (Removed AI Advice as requested) */}
+            <div className="glass-card p-10 border-slate-200 bg-white">
+               <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                  <div className="space-y-4">
+                     <h4 className="text-[10px] font-black text-secondary tracking-widest uppercase flex items-center gap-2">
+                        <div className="w-1 h-3 bg-secondary"></div> Thế mạnh hiện tại
+                     </h4>
+                     <ul className="space-y-3">
+                        <li className="flex items-center gap-3 text-sm font-bold text-slate-800 group hover:text-secondary transition-colors cursor-default">
+                           <div className="w-1.5 h-1.5 rounded-full bg-secondary"></div> Clarity (Mạch lạc)
+                        </li>
+                        <li className="flex items-center gap-3 text-sm font-bold text-slate-800 group hover:text-secondary transition-colors cursor-default">
+                           <div className="w-1.5 h-1.5 rounded-full bg-secondary"></div> Relevance (Độ liên quan)
+                        </li>
+                     </ul>
+                  </div>
+                  <div className="space-y-4">
+                     <h4 className="text-[10px] font-black text-primary-fixed tracking-widest uppercase flex items-center gap-2">
+                        <div className="w-1 h-3 bg-primary-fixed"></div> Điểm cần cải thiện
+                     </h4>
+                     <ul className="space-y-3">
+                        <li className="flex items-center gap-3 text-sm font-bold text-slate-800 group hover:text-primary-fixed transition-colors cursor-default">
+                           <div className="w-1.5 h-1.5 rounded-full bg-primary-fixed"></div> Cấu trúc câu chuyện còn lỏng
+                        </li>
+                        <li className="flex items-center gap-3 text-sm font-bold text-slate-800 group hover:text-primary-fixed transition-colors cursor-default">
+                           <div className="w-1.5 h-1.5 rounded-full bg-primary-fixed"></div> Giao tiếc ánh mắt / nhịp nói
+                        </li>
+                     </ul>
+                  </div>
+               </div>
+            </div>
+          </div>
+
+          <aside className="col-span-12 lg:col-span-4 space-y-8 lg:space-y-10">
+            <div className="space-y-5">
+               <div className="flex items-center gap-2.5 mb-1">
+                  <div className="tech-dot" />
+                  <span className="text-xs font-bold uppercase tracking-[0.08em] text-slate-600">
+                     Quick actions
+                  </span>
+               </div>
+               
+               <button
+                  type="button"
+                  onClick={() => navigate("/interview")}
+                  className="text-left rounded-[30px] text-white p-7 sm:p-8 shadow-[0_18px_45px_rgba(124,58,237,0.3)] transition-transform hover:-translate-y-0.5 active:scale-[0.99]"
+                  style={{ background: "#6f35ff" }}
+               >
+                  <div
+                    className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-[0.14em]"
+                    style={{ background: "rgba(255,255,255,0.2)", color: "#ffffff" }}
+                  >
+                    Live session available
+                  </div>
+                  <h3 className="mt-4 text-3xl font-black tracking-tight">Phỏng vấn với AI</h3>
+                  <p className="mt-2 text-white/95 text-base max-w-md">
+                    Luyện với coach AI theo ngữ cảnh thực tế. Nhận feedback ngay và điểm kỹ thuật cho từng câu trả lời.
+                  </p>
+                  <span
+                    className="mt-6 inline-flex items-center gap-2 px-5 py-3 rounded-full font-black text-sm"
+                    style={{ background: "#bfff3f", color: "#0f172a" }}
+                  >
+                    Bắt đầu phiên
+                    <ArrowRight size={16} />
+                  </span>
+               </button>
+               
+               <div className="grid grid-cols-2 gap-4">
+                  <LushActionTile title="CV × JD" desc="So khớp & gợi ý chỉnh CV." onClick={() => navigate("/cv-analysis")} icon={FileText} accent="#22d3ee" />
+                  <LushActionTile title="Book mentor" desc="Slot 1-1 với người trong nghề." onClick={() => navigate("/mentors")} icon={Calendar} accent="#c4ff47" />
+               </div>
             </div>
           </aside>
         </div>
@@ -749,11 +683,11 @@ function LushMetric({ label, value, icon: Icon, accent, color, caption }) {
             <Icon size={24} strokeWidth={2.2} />
           </div>
         </div>
-        <p className="text-[9px] font-black text-zinc-500 uppercase tracking-[0.2em] mb-1 w-full leading-snug">{label}</p>
+        <p className="text-[11px] font-black text-slate-500 uppercase tracking-[0.08em] mb-1 w-full leading-snug">{label}</p>
         <h4
-          className="text-2xl sm:text-3xl font-black tracking-tighter transition-all group-hover:scale-[1.02] w-full"
+          className="text-2xl sm:text-3xl font-black tracking-tighter transition-all group-hover:scale-[1.02] w-full text-slate-900"
           style={{
-            backgroundImage: `linear-gradient(135deg, #fff 0%, ${color} 160%)`,
+            backgroundImage: `linear-gradient(135deg, #0f172a 0%, ${color} 140%)`,
             WebkitBackgroundClip: "text",
             WebkitTextFillColor: "transparent",
             backgroundClip: "text",
@@ -763,7 +697,7 @@ function LushMetric({ label, value, icon: Icon, accent, color, caption }) {
         </h4>
       </div>
       {caption ? (
-        <p className="mt-4 pt-3 border-t border-white/[0.08] text-[11px] sm:text-[12px] leading-relaxed text-white/50 font-medium">
+        <p className="mt-4 pt-3 border-t border-slate-200 text-xs sm:text-sm leading-relaxed text-slate-600 font-medium">
           {caption}
         </p>
       ) : null}
@@ -778,22 +712,16 @@ function LushActionTile({ title, desc, onClick, icon: Icon, accent, accent2, isL
       type="button"
       onClick={onClick}
       whileTap={{ scale: 0.97 }}
-      className={`glass-card text-left group relative border-white/15 active:scale-[0.98] ${isLarge ? "p-10 sm:p-12" : "p-7 sm:p-8"}`}
+      className={`glass-card text-left group relative border-slate-300 active:scale-[0.98] ${isLarge ? "p-10 sm:p-12" : "p-7 sm:p-8"}`}
       style={{
         borderColor: `${accent}55`,
-        boxShadow: isLarge ? `0 0 0 1px ${borderGlow}22, 0 20px 40px rgba(0,0,0,0.35)` : undefined,
+        boxShadow: isLarge ? `0 0 0 1px ${borderGlow}22, 0 12px 24px rgba(15,23,42,0.08)` : undefined,
       }}
     >
       <div
-        className="absolute -right-10 -top-10 w-36 h-36 blur-3xl rounded-full opacity-20 group-hover:opacity-45 transition-all duration-700"
-        style={{
-          background: accent2 ? `linear-gradient(135deg, ${accent}, ${accent2})` : accent,
-        }}
-      />
-      <div
         className={`rounded-2xl border flex items-center justify-center group-hover:scale-110 group-hover:-rotate-2 transition-all duration-500 shadow-lg ${isLarge ? "w-16 h-16 mb-8" : "w-12 h-12 mb-5"}`}
         style={{
-          background: `linear-gradient(145deg, ${accent}35, rgba(255,255,255,0.06))`,
+          background: `linear-gradient(145deg, ${accent}28, rgba(255,255,255,0.92))`,
           borderColor: `${accent}50`,
           color: accent,
         }}
@@ -804,19 +732,20 @@ function LushActionTile({ title, desc, onClick, icon: Icon, accent, accent2, isL
         <h4
           className={`font-black flex items-center gap-2 sm:gap-3 leading-tight transition-colors ${isLarge ? "text-xl sm:text-2xl mb-3" : "text-sm mb-2"}`}
         >
-          <span className="bg-gradient-to-r from-white to-white/80 bg-clip-text text-transparent group-hover:from-fuchsia-100 group-hover:to-lime-100 transition-all">
+          <span className="bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent group-hover:from-indigo-700 group-hover:to-violet-700 transition-all">
             {title}
           </span>
-          <ArrowRight
-            size={isLarge ? 22 : 16}
-            className="opacity-0 -translate-x-3 group-hover:opacity-100 group-hover:translate-x-0 transition-all shrink-0 text-[#c4ff47]"
-          />
         </h4>
         <p
-          className={`text-zinc-400 font-semibold leading-relaxed group-hover:text-zinc-300 transition-colors ${isLarge ? "text-sm" : "text-[10px] sm:text-[11px] line-clamp-2"}`}
+          className={`text-slate-600 font-semibold leading-relaxed group-hover:text-slate-700 transition-colors ${isLarge ? "text-sm" : "text-[11px] sm:text-xs line-clamp-2"}`}
         >
           {desc}
         </p>
+        {isLarge && (
+          <p className="mt-4 text-xs font-black uppercase tracking-[0.1em] text-indigo-600 group-hover:translate-x-1 transition-transform">
+            Bắt đầu phiên -&gt;
+          </p>
+        )}
       </div>
     </motion.button>
   );

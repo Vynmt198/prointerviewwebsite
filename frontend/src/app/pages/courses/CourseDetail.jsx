@@ -37,6 +37,7 @@ import { fetchCourseById, submitReview } from "../../utils/courseApi";
 import { enrollmentApi } from "../../utils/enrollmentApi";
 import { getUser } from "../../utils/auth";
 import { toast } from "sonner";
+import { requireLoginNavigate } from "../../utils/authGate";
 
 
 import {
@@ -571,6 +572,14 @@ export function CourseDetail() {
     fetchCourseById(id).then((res) => {
       if (res.success) {
         const c = res.course;
+        const allLessons = (c.modules || []).flatMap((module) =>
+          (module.lessons || []).map((lesson) => ({
+            id: lesson._id,
+            title: lesson.title,
+            duration: lesson.durationMinutes || 0,
+            isPreview: !!lesson.isFree,
+          })),
+        );
         setCourse({
           id: c._id,
           title: c.title,
@@ -590,8 +599,8 @@ export function CourseDetail() {
           duration: c.totalDurationMinutes || 120,
           lessonsCount: c.totalLessons || 0,
           price: c.price || 0,
-          lessons: c.modules?.[0]?.lessons || [],
-          learningOutcomes: c.learningOutcomes || [],
+          lessons: allLessons,
+          learningOutcomes: c.whatYoullLearn || [],
           requirements: c.requirements || [],
           targetAudience: c.targetAudience || [],
           tags: c.tags || [],
@@ -614,11 +623,16 @@ export function CourseDetail() {
   }, [id]);
 
   const handleEnroll = async () => {
+    if (!id) return;
     const res = await enrollmentApi.enroll(id);
     if (res.success) {
       setEnrolled(true);
       toast.success("Đăng ký khóa học thành công!");
     } else {
+      if (res.error === "Chưa đăng nhập.") {
+        requireLoginNavigate(navigate, `/courses/${id}`);
+        return;
+      }
       toast.error(res.error || "Không thể đăng ký khóa học.");
     }
   };

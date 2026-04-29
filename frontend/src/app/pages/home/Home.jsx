@@ -32,6 +32,7 @@ import {
 import { COURSES_DATA } from "../../data/coursesData";
 import { navigateToInterview, requireLoginNavigate } from "../../utils/authGate";
 import { Footer } from "../../components/layout/Footer";
+import { TopNavShell } from "../../components/layout/TopNavShell";
 import { RecommendedJourney } from "../../components/home/RecommendedJourney";
 import { BrandLogo } from "../../components/brand/BrandLogo";
 
@@ -167,6 +168,24 @@ export function Home() {
   const navigate = useNavigate();
 
   const handleFeatureClick = (route) => requireLoginNavigate(navigate, route);
+  const renderSectionSticks = (sticks) => (
+    <div className="pointer-events-none absolute inset-0 z-[1] hidden lg:block" aria-hidden>
+      {sticks.map((s, idx) => (
+        <Sparkles
+          key={`section-stick-${idx}`}
+          className="absolute text-slate-400"
+          style={{
+            left: `${s.x}%`,
+            top: `${s.y}%`,
+            width: `${s.size}px`,
+            height: `${s.size}px`,
+            opacity: s.opacity,
+            filter: "drop-shadow(0 0 8px rgba(148,163,184,0.24))",
+          }}
+        />
+      ))}
+    </div>
+  );
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
@@ -394,25 +413,17 @@ export function Home() {
             0 0 48px -6px rgba(196, 255, 71, 0.28),
             0 0 36px -10px rgba(167, 139, 250, 0.22);
         }
+        .section-ambient {
+          position: absolute;
+          border-radius: 999px;
+          pointer-events: none;
+          filter: blur(120px);
+          opacity: 0.85;
+        }
       `}</style>
 
-
-
-
       {/* ═══ NAVBAR ════════════════════════════════════════ */}
-      <nav
-        className="fixed top-0 left-0 right-0 z-50 transition-all duration-300"
-        style={{
-          background: scrolled
-            ? "rgba(7, 6, 14, 0.88)"
-            : "transparent",
-          backdropFilter: scrolled ? "blur(16px)" : "none",
-          WebkitBackdropFilter: scrolled ? "blur(16px)" : "none",
-          borderBottom: scrolled
-            ? "1px solid rgba(255,255,255,0.06)"
-            : "none",
-        }}
-      >
+      <TopNavShell variant="dark" scrolled={scrolled}>
         <div className="max-w-7xl mx-auto px-5 h-16 flex items-center gap-6">
           {/* Logo */}
           <div
@@ -549,17 +560,48 @@ export function Home() {
             </div>
           </div>
         )}
-      </nav>
+      </TopNavShell>
 
       {/* ═══ HERO ═══════════════════════════════════════════ */}
       <section className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden px-5 pt-20">
+        {renderSectionSticks([
+          { x: 18, y: 18, size: 36, opacity: 0.52 },
+          { x: 82, y: 22, size: 48, opacity: 0.6 },
+          { x: 14, y: 68, size: 32, opacity: 0.46 },
+          { x: 86, y: 72, size: 36, opacity: 0.5 },
+        ])}
         {/* BG gradient mesh */}
         <div
           className="absolute inset-0"
           style={{
             background:
-              "radial-gradient(ellipse 80% 60% at 80% -10%, rgba(110,53,232,0.45) 0%, transparent 70%), radial-gradient(ellipse 60% 40% at 80% 80%, rgba(180,245,0,0.08) 0%, transparent 60%), #020202",
+              "radial-gradient(ellipse 82% 64% at 84% -12%, rgba(110,53,232,0.48) 0%, transparent 72%), radial-gradient(ellipse 70% 45% at 82% 82%, rgba(180,245,0,0.14) 0%, transparent 64%), radial-gradient(ellipse 58% 40% at 30% 30%, rgba(196,255,71,0.08) 0%, transparent 72%), #04050a",
           }}
+        />
+        {/* Ambient glows để nền hero bớt tối */}
+        <div
+          className="absolute top-[30%] left-1/2 -translate-x-1/2 w-[680px] h-[360px] rounded-full blur-[120px] pointer-events-none"
+          style={{
+            background:
+              "radial-gradient(circle, rgba(180,245,0,0.18) 0%, rgba(110,53,232,0.12) 52%, transparent 78%)",
+          }}
+          aria-hidden
+        />
+        <div
+          className="absolute top-0 left-0 right-0 h-[160px] pointer-events-none"
+          style={{
+            background:
+              "linear-gradient(to bottom, rgba(4,5,10,0.98) 0%, rgba(4,5,10,0.86) 40%, rgba(4,5,10,0) 100%)",
+          }}
+          aria-hidden
+        />
+        <div
+          className="absolute top-[18%] right-[8%] w-[420px] h-[420px] rounded-full blur-[120px] pointer-events-none"
+          style={{
+            background:
+              "radial-gradient(circle, rgba(167,139,250,0.24) 0%, rgba(167,139,250,0.08) 48%, transparent 78%)",
+          }}
+          aria-hidden
         />
         {/* Noise grain */}
         <div
@@ -711,6 +753,13 @@ export function Home() {
         className="relative min-h-screen flex flex-col justify-center py-12 overflow-hidden border-t border-white/[0.06]"
         style={{ background: "#080808" }}
       >
+        <div className="section-ambient w-[520px] h-[520px] -top-36 -left-24 bg-[#B4F500]/[0.12]" aria-hidden />
+        <div className="section-ambient w-[560px] h-[560px] top-[38%] right-[-180px] bg-[#6E35E8]/[0.18]" aria-hidden />
+        {renderSectionSticks([
+          { x: 10, y: 16, size: 34, opacity: 0.45 },
+          { x: 88, y: 20, size: 40, opacity: 0.55 },
+          { x: 82, y: 78, size: 32, opacity: 0.44 },
+        ])}
         {/* Nền phẳng (xen kẽ với section có lưới) */}
         <div className="absolute top-0 left-0 w-[500px] h-[500px] bg-[#B4F500]/[0.07] blur-[120px] rounded-full -translate-x-1/2 -translate-y-1/2" aria-hidden />
         <div className="absolute bottom-0 right-0 w-[500px] h-[500px] bg-[#6E35E8]/10 blur-[120px] rounded-full translate-x-1/2 translate-y-1/2" aria-hidden />
@@ -802,6 +851,13 @@ export function Home() {
           overflow: "hidden",
         }}
       >
+        <div className="section-ambient w-[480px] h-[480px] -top-24 left-[-140px] bg-[#6E35E8]/[0.14]" aria-hidden />
+        <div className="section-ambient w-[460px] h-[460px] bottom-[-140px] right-[0] bg-[#B4F500]/[0.1]" aria-hidden />
+        {renderSectionSticks([
+          { x: 14, y: 24, size: 32, opacity: 0.42 },
+          { x: 91, y: 16, size: 42, opacity: 0.56 },
+          { x: 88, y: 72, size: 34, opacity: 0.46 },
+        ])}
         <div
           className="pointer-events-none absolute inset-0 opacity-[0.05]"
           style={{
@@ -1091,6 +1147,14 @@ export function Home() {
         className="relative min-h-screen flex flex-col justify-center py-20 overflow-hidden border-t border-white/[0.06]"
         style={{ background: "#080808" }}
       >
+        <div className="section-ambient w-[620px] h-[620px] -top-44 right-[-180px] bg-[#6E35E8]/[0.18]" aria-hidden />
+        <div className="section-ambient w-[540px] h-[540px] bottom-[-200px] left-[-160px] bg-[#B4F500]/[0.12]" aria-hidden />
+        {renderSectionSticks([
+          { x: 12, y: 14, size: 34, opacity: 0.44 },
+          { x: 90, y: 26, size: 46, opacity: 0.58 },
+          { x: 8, y: 76, size: 30, opacity: 0.4 },
+          { x: 84, y: 84, size: 36, opacity: 0.5 },
+        ])}
         <div className="absolute top-0 right-[-100px] w-[500px] h-[500px] bg-[#B4F500]/[0.06] blur-[130px] rounded-full" aria-hidden />
         <div className="absolute bottom-[-100px] left-[-100px] w-[600px] h-[600px] bg-[#6E35E8]/12 blur-[150px] rounded-full" aria-hidden />
 
@@ -1219,9 +1283,16 @@ export function Home() {
       {/* ═══ TESTIMONIALS ═══════════════════════════════════ */}
       <section
         id="mentors"
-        className="min-h-screen flex flex-col justify-center relative overflow-hidden border-t border-white/[0.07]"
+        className="min-h-screen relative overflow-hidden border-t border-white/[0.07]"
         style={{ background: "#020202" }}
       >
+        <div className="section-ambient w-[560px] h-[560px] top-[6%] left-[-180px] bg-[#B4F500]/[0.1]" aria-hidden />
+        <div className="section-ambient w-[620px] h-[620px] bottom-[-220px] right-[-120px] bg-[#6E35E8]/[0.2]" aria-hidden />
+        {renderSectionSticks([
+          { x: 10, y: 20, size: 36, opacity: 0.5 },
+          { x: 86, y: 18, size: 42, opacity: 0.54 },
+          { x: 16, y: 80, size: 30, opacity: 0.38 },
+        ])}
         <div
           className="pointer-events-none absolute inset-0 opacity-[0.05]"
           style={{
@@ -1233,89 +1304,103 @@ export function Home() {
         />
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-[#B4F500]/[0.04] blur-[150px] rounded-full opacity-60 pointer-events-none" aria-hidden />
 
-        <div className="max-w-7xl mx-auto px-5 relative z-10">
-          <div className="text-center mb-16">
-            <div className="flex justify-center mb-5">
-              <span className="h-1 w-10 rounded-full bg-gradient-to-r from-[#B4F500] to-violet-400" />
-            </div>
-            <h2
-              className="text-white mb-4 cute-heading"
-              style={{
-                fontSize: "clamp(1.875rem, 4vw, 2.5rem)",
-              }}
-            >
-              Người dùng nói gì về{" "}
-              <span
-                style={{
-                  background:
-                    "linear-gradient(135deg, #6E35E8, #B4F500)",
-                  WebkitBackgroundClip: "text",
-                  WebkitTextFillColor: "transparent",
-                  backgroundClip: "text",
-                }}
-              >
-                ProInterview
-              </span>
-            </h2>
-          </div>
+        <div className="max-w-7xl mx-auto px-5 lg:px-8 py-20 lg:py-24 relative z-10">
+          <div className="grid lg:grid-cols-12 gap-10 lg:gap-8 items-center lg:translate-y-5">
+            <div className="lg:col-span-5">
+              <h2 className="text-white mb-6 cute-heading text-3xl md:text-5xl leading-[1.08]">
+                Người dùng nói gì về{" "}
+                <span
+                  style={{
+                    background: "linear-gradient(135deg, #6E35E8, #B4F500)",
+                    WebkitBackgroundClip: "text",
+                    WebkitTextFillColor: "transparent",
+                    backgroundClip: "text",
+                  }}
+                >
+                  ProInterview
+                </span>
+              </h2>
+              <p className="text-zinc-300/80 text-base md:text-lg leading-relaxed max-w-xl">
+                Kết hợp AI thông minh và mạng lưới Mentor thực chiến để giúp bạn bứt tốc qua mọi vòng phỏng vấn.
+                Đây là phản hồi thật từ học viên đã nhận offer.
+              </p>
 
-          <div className="grid md:grid-cols-3 gap-6">
-            {TESTIMONIALS.map((t, i) => (
-              <div
-                key={i}
-                className="glass-card p-6 sm:p-7 !rounded-[28px]"
-              >
-                <div className="relative z-[1]">
-                  {/* Stars */}
-                  <div className="flex gap-1 mb-4">
-                    {[...Array(t.stars)].map((_, j) => (
-                      <Star
-                        key={j}
-                        className="w-4 h-4"
-                        fill="#FFB800"
-                        style={{ color: "#FFB800" }}
-                      />
-                    ))}
-                    <span
-                      className="ml-auto text-xs px-2 py-0.5 rounded-full font-medium"
-                      style={{
-                        background: "rgba(196, 255, 71,0.12)",
-                        color: "#B4F500",
-                        border: "1px solid rgba(196, 255, 71,0.2)",
-                      }}
-                    >
-                      {t.tag}
-                    </span>
-                  </div>
-                  <p
-                    className="text-sm leading-relaxed mb-6"
-                    style={{ color: "rgba(255,255,255,0.55)" }}
-                  >
-                    "{t.text}"
-                  </p>
-                  <div className="flex items-center gap-3">
+              <div className="mt-8 flex items-center gap-4">
+                <div className="flex -space-x-3">
+                  {TESTIMONIALS.map((t) => (
                     <div
-                      className={`w-9 h-9 rounded-full bg-gradient-to-br ${t.grad} flex items-center justify-center text-white text-xs font-bold flex-shrink-0 float-icon-slow`}
+                      key={`avatar-${t.name}`}
+                      className={`w-10 h-10 rounded-full bg-gradient-to-br ${t.grad} border-2 border-[#020202] flex items-center justify-center text-[11px] font-black text-white`}
                     >
                       {t.avatar}
                     </div>
-                    <div>
-                      <p className="text-white text-sm font-semibold">
-                        {t.name}
-                      </p>
-                      <p
-                        className="text-xs"
-                        style={{
-                          color: "rgba(255,255,255,0.35)",
-                        }}
-                      >
-                        {t.role}
-                      </p>
-                    </div>
-                  </div>
+                  ))}
+                </div>
+                <p className="text-sm text-zinc-300">
+                  <span className="text-[#B4F500] font-black">500+</span> ứng viên đã thành công
+                </p>
+              </div>
+            </div>
+
+            <div className="lg:col-span-7">
+              <div className="flex justify-center mb-2 -mt-3">
+                <div className="scale-[1.62] origin-center">
+                  <BrandLogo />
                 </div>
               </div>
-            ))}
+              <div className="mb-4">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#B4F500]/12 border border-[#B4F500]/35 text-[10px] uppercase tracking-[0.2em] text-[#e8ffc4] font-black shadow-[0_0_24px_rgba(196,255,71,0.18)]">
+                  <Sparkles className="size-3 text-[#B4F500]" />
+                  Bình luận nổi bật
+                </div>
+              </div>
+              <div
+                className="relative overflow-hidden"
+                style={{
+                  maskImage: "linear-gradient(to right, transparent 0%, black 12%, black 88%, transparent 100%)",
+                  WebkitMaskImage: "linear-gradient(to right, transparent 0%, black 12%, black 88%, transparent 100%)",
+                }}
+              >
+                <div className="space-y-4">
+                  <div className="flex flex-col sm:flex-row gap-4 sm:gap-5 sm:-translate-x-6">
+                    {TESTIMONIALS.map((t) => (
+                      <div key={`row1-${t.name}`} className="min-w-0 sm:min-w-[230px] flex-1 bg-white/[0.08] border border-white/20 rounded-2xl p-4 backdrop-blur-sm shadow-[0_12px_35px_rgba(0,0,0,0.35)]">
+                        <div className="flex items-center gap-2 mb-2">
+                          <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${t.grad} flex items-center justify-center`}>
+                            <CheckCircle2 className="size-4 text-white" />
+                          </div>
+                          <p className="text-[10px] uppercase tracking-widest text-[#B4F500] font-black">{t.tag}</p>
+                        </div>
+                        <p className="text-sm text-zinc-200 line-clamp-2">"{t.text}"</p>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row gap-4 sm:gap-5 sm:translate-x-8">
+                    {TESTIMONIALS.map((t) => (
+                      <div key={`row2-${t.role}`} className="min-w-0 sm:min-w-[230px] flex-1 bg-white/[0.08] border border-white/20 rounded-2xl p-4 backdrop-blur-sm shadow-[0_12px_35px_rgba(0,0,0,0.35)]">
+                        <div className="flex gap-1 mb-2">
+                          {[...Array(t.stars)].map((_, j) => (
+                            <Star key={`${t.name}-s-${j}`} className="size-3.5 text-yellow-400 fill-yellow-400" />
+                          ))}
+                        </div>
+                        <p className="text-sm text-zinc-200 line-clamp-2 mb-2">"{t.text}"</p>
+                        <p className="text-[11px] text-zinc-400 font-semibold">{t.name}</p>
+                      </div>
+                    ))}
+                  </div>
+
+                </div>
+                <div className="pointer-events-none absolute inset-y-0 left-0 w-14 bg-gradient-to-r from-[#020202] via-[#020202]/70 to-transparent blur-md" />
+                <div className="pointer-events-none absolute inset-y-0 right-0 w-14 bg-gradient-to-l from-[#020202] via-[#020202]/70 to-transparent blur-md" />
+              </div>
+              <div className="hidden lg:block absolute right-4 top-14 opacity-30">
+                <Sparkle className="size-10 text-[#B4F500]" />
+              </div>
+              <div className="hidden lg:block absolute right-24 bottom-10 opacity-25">
+                <Sparkles className="size-12 text-violet-400" />
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -1325,6 +1410,13 @@ export function Home() {
         id="pricing"
         className="min-h-screen flex flex-col justify-center py-24 relative overflow-hidden bg-transparent border-t border-white/[0.06]"
       >
+        <div className="section-ambient w-[620px] h-[620px] -top-44 left-[-180px] bg-[#6E35E8]/[0.16]" aria-hidden />
+        <div className="section-ambient w-[560px] h-[560px] bottom-[-180px] right-[-160px] bg-[#B4F500]/[0.12]" aria-hidden />
+        {renderSectionSticks([
+          { x: 12, y: 16, size: 34, opacity: 0.44 },
+          { x: 90, y: 22, size: 44, opacity: 0.58 },
+          { x: 86, y: 78, size: 36, opacity: 0.48 },
+        ])}
         <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-24 w-[600px] h-[300px] bg-[#B4F500]/[0.08] blur-[120px] rounded-full pointer-events-none" aria-hidden />
 
         <div className="max-w-7xl mx-auto px-6 relative z-10 w-full py-12">

@@ -9,6 +9,7 @@ import {
   Brain,
   Mic as Microphone,
   Star,
+  Sparkles,
 } from "lucide-react";
 import {
   loginUser,
@@ -46,6 +47,15 @@ const TESTIMONIALS = [
     tagColor: "#FF8C42",
   },
 ];
+const AUTH_STICKS = [
+  { x: 5, y: 9, size: 18, color: "#5B21B6", glow: "rgba(91,33,182,0.34)", opacity: 0.62 },
+  { x: 72, y: 8, size: 16, color: "#9EDB00", glow: "rgba(158,219,0,0.42)", opacity: 0.56 },
+  { x: 6, y: 88, size: 20, color: "#5B21B6", glow: "rgba(91,33,182,0.36)", opacity: 0.58 },
+  { x: 58, y: 10, size: 30, color: "#9EDB00", glow: "rgba(158,219,0,0.52)", opacity: 0.66 },
+  { x: 52, y: 34, size: 18, color: "#5B21B6", glow: "rgba(91,33,182,0.32)", opacity: 0.52 },
+  { x: 96, y: 8, size: 44, color: "#9EDB00", glow: "rgba(158,219,0,0.56)", opacity: 0.7 },
+  { x: 96, y: 90, size: 22, color: "#5B21B6", glow: "rgba(91,33,182,0.36)", opacity: 0.58 },
+];
 
 export function Login() {
   const navigate = useNavigate();
@@ -80,11 +90,28 @@ export function Login() {
 
   return (
     <div
-      className="h-screen overflow-hidden flex"
+      className="h-screen overflow-hidden flex relative"
       style={{ fontFamily: "'Lexend', 'Plus Jakarta Sans', system-ui, sans-serif" }}
     >
       {/* ── LEFT: Form ─────────────────────────────────────── */}
       <div className="flex-1 flex flex-col h-full bg-[#fcfaff]">
+        <div className="pointer-events-none absolute inset-0 z-20">
+          {AUTH_STICKS.map((s, i) => (
+            <Sparkles
+              key={`login-stick-${i}`}
+              className="absolute hidden md:block"
+              style={{
+                left: `${s.x}%`,
+                top: `${s.y}%`,
+                width: `${s.size}px`,
+                height: `${s.size}px`,
+                color: s.color,
+                opacity: s.opacity,
+                filter: `drop-shadow(0 0 8px ${s.glow})`,
+              }}
+            />
+          ))}
+        </div>
 
         {/* Top bar */}
         <div
@@ -174,7 +201,7 @@ export function Login() {
 
               {/* Submit */}
               <button type="submit" disabled={loading}
-                className="w-full py-3.5 rounded-xl font-bold text-base text-white transition-all hover:brightness-110 active:scale-[0.98] disabled:opacity-60"
+                className="w-full py-3.5 rounded-full font-bold text-base text-white transition-all hover:brightness-110 active:scale-[0.98] disabled:opacity-60"
                 style={{
                   background: "linear-gradient(135deg, #6E35E8, #9B6DFF)",
                   boxShadow: "0 4px 20px rgba(110,53,232,0.3)",
@@ -187,13 +214,6 @@ export function Login() {
                   : "Đăng nhập"}
               </button>
             </form>
-
-            <p className="mt-4 text-center text-sm text-gray-500">
-              Chưa có tài khoản?{" "}
-              <Link to="/register" className="font-semibold hover:underline" style={{ color: "#6E35E8" }}>
-                Đăng ký miễn phí →
-              </Link>
-            </p>
 
             {/* Divider */}
             <div className="flex items-center gap-3 my-5">
@@ -215,8 +235,8 @@ export function Login() {
       </div>
 
       {/* ── RIGHT: Visual panel ─────────────────────────────── */}
-      <div
-        className="hidden lg:flex flex-col flex-1 h-full relative overflow-hidden"
+        <div
+          className="hidden lg:flex flex-col flex-1 h-full relative overflow-hidden"
         style={{ background: "linear-gradient(150deg, #F3EEFF 0%, #EEF4FF 40%, #FFF5EC 100%)" }}
       >
         {/* Blobs */}
@@ -289,14 +309,7 @@ export function Login() {
         </div>
 
         {/* Bottom */}
-        <div className="flex-shrink-0 px-10 pb-6 relative z-10 text-center">
-          <p className="text-xs text-gray-400">
-            Chưa có tài khoản?{" "}
-            <Link to="/register" className="font-semibold hover:underline" style={{ color: "#6E35E8" }}>
-              Tạo tài khoản miễn phí →
-            </Link>
-          </p>
-        </div>
+        <div className="flex-shrink-0 px-10 pb-6 relative z-10 text-center" />
       </div>
     </div>
   );
