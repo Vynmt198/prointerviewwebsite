@@ -7,6 +7,7 @@ import { EnrollmentController } from "../controllers/enrollmentController.js";
 export const coursesRouter = Router();
 
 coursesRouter.get("/", CoursesController.list);
+coursesRouter.get("/me", authJwt, requireMentor, CoursesController.listMine);
 coursesRouter.get("/:id", CoursesController.getById);
 coursesRouter.get("/:id/lessons/:lessonId", authJwt, CoursesController.getLessonContent);
 

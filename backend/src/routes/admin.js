@@ -16,3 +16,6 @@ adminRouter.get("/users", AdminController.getAllUsers);
 adminRouter.patch("/users/:id/status", AdminController.toggleUserStatus);
 
 adminRouter.get("/bookings", AdminController.getAllBookings);
+adminRouter.get("/courses/pending", AdminController.getPendingCourses);
+adminRouter.patch("/courses/:id/approve", AdminController.approveCourse);
+adminRouter.patch("/courses/:id/reject", AdminController.rejectCourse);

@@ -34,6 +34,69 @@ export async function fetchCourseById(id) {
   }
 }
 
+export async function fetchMyMentorCourses() {
+  if (!hasAuthCredentials()) return { success: false, error: "Chưa đăng nhập.", courses: [] };
+  try {
+    const res = await authFetch("/api/courses/me", {
+      method: "GET",
+      headers: { ...jsonHeaders },
+    });
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok) return { success: false, error: body.error || `Lỗi ${res.status}`, courses: [] };
+    return { success: true, courses: body.courses || [] };
+  } catch {
+    return { success: false, error: "Không kết nối được backend.", courses: [] };
+  }
+}
+
+export async function createCourseDraft(payload) {
+  if (!hasAuthCredentials()) return { success: false, error: "Chưa đăng nhập." };
+  try {
+    const res = await authFetch("/api/courses", {
+      method: "POST",
+      headers: { ...jsonHeaders },
+      body: JSON.stringify(payload),
+    });
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok) return { success: false, error: body.error || `Lỗi ${res.status}` };
+    return { success: true, course: body.course };
+  } catch {
+    return { success: false, error: "Không kết nối được backend." };
+  }
+}
+
+export async function updateCourseDraft(id, payload) {
+  if (!hasAuthCredentials()) return { success: false, error: "Chưa đăng nhập." };
+  try {
+    const res = await authFetch(`/api/courses/${encodeURIComponent(id)}`, {
+      method: "PUT",
+      headers: { ...jsonHeaders },
+      body: JSON.stringify(payload),
+    });
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok) return { success: false, error: body.error || `Lỗi ${res.status}` };
+    return { success: true, course: body.course };
+  } catch {
+    return { success: false, error: "Không kết nối được backend." };
+  }
+}
+
+export async function publishCourse(id, payload) {
+  if (!hasAuthCredentials()) return { success: false, error: "Chưa đăng nhập." };
+  try {
+    const res = await authFetch(`/api/courses/${encodeURIComponent(id)}/publish`, {
+      method: "PATCH",
+      headers: { ...jsonHeaders },
+      body: payload ? JSON.stringify(payload) : undefined,
+    });
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok) return { success: false, error: body.error || `Lỗi ${res.status}` };
+    return { success: true, course: body.course };
+  } catch {
+    return { success: false, error: "Không kết nối được backend." };
+  }
+}
+
 /** Danh sách review theo mentor — khớp `GET /api/mentors/:id/reviews` (publicId hoặc _id). */
 export async function fetchCourseReviews(mentorId) {
   try {

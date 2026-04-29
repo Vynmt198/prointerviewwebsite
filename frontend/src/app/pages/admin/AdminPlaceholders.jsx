@@ -1,6 +1,8 @@
 import React from "react";
 import { useParams, Link } from "react-router";
 import { AdminPanel } from "./AdminPanel.jsx";
+import { useEffect, useState } from "react";
+import { adminApi } from "../../utils/adminApi.js";
 
 export function AdminUsers() {
   return (
@@ -133,11 +135,91 @@ export function AdminContentVideos() {
 }
 
 export function AdminContentCourses() {
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [busyId, setBusyId] = useState("");
+
+  const loadPending = async () => {
+    setLoading(true);
+    const res = await adminApi.getPendingCourses();
+    if (res.success) setItems(res.courses || []);
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    loadPending();
+  }, []);
+
+  const handleApprove = async (id) => {
+    setBusyId(id);
+    const res = await adminApi.approveCourse(id);
+    setBusyId("");
+    if (!res.success) return;
+    await loadPending();
+  };
+
+  const handleReject = async (id) => {
+    setBusyId(id);
+    const res = await adminApi.rejectCourse(id);
+    setBusyId("");
+    if (!res.success) return;
+    await loadPending();
+  };
+
   return (
     <AdminPanel
       title="Nội dung — Khóa học"
-      description="Danh sách course, approve/reject bản mentor tạo, thống kê enrollment."
-    />
+      description="Duyệt khóa học mentor gửi lên: approve để xuất bản, reject để trả lại bản nháp."
+    >
+      <div className="space-y-4">
+        {loading && <p className="text-sm text-zinc-400">Đang tải danh sách chờ duyệt...</p>}
+        {!loading && items.length === 0 && (
+          <p className="text-sm text-zinc-400">Hiện không có khóa học nào đang chờ duyệt.</p>
+        )}
+        {items.map((course) => {
+          const mentorName = course?.mentorId?.userId?.name || "Mentor";
+          const topic = Array.isArray(course.topics) && course.topics.length ? course.topics[0] : "Other";
+          const totalLessons = Number(course.totalLessons || 0);
+          const busy = busyId === course._id;
+          return (
+            <div
+              key={course._id}
+              className="rounded-2xl border border-white/10 bg-white/[0.03] p-5"
+            >
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <p className="text-lg font-black text-white">{course.title}</p>
+                  <p className="mt-1 text-xs text-zinc-400">
+                    Mentor: {mentorName} · Topic: {topic} · Lessons: {totalLessons}
+                  </p>
+                  <p className="mt-2 text-sm text-zinc-300 line-clamp-2">
+                    {course.description || "(Không có mô tả)"}
+                  </p>
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    disabled={busy}
+                    onClick={() => handleReject(course._id)}
+                    className="rounded-xl border border-red-400/25 bg-red-500/10 px-4 py-2 text-xs font-black uppercase tracking-wider text-red-200 disabled:opacity-50"
+                  >
+                    {busy ? "..." : "Từ chối"}
+                  </button>
+                  <button
+                    type="button"
+                    disabled={busy}
+                    onClick={() => handleApprove(course._id)}
+                    className="rounded-xl border border-emerald-400/25 bg-emerald-500/10 px-4 py-2 text-xs font-black uppercase tracking-wider text-emerald-200 disabled:opacity-50"
+                  >
+                    {busy ? "..." : "Duyệt"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </AdminPanel>
   );
 }
 

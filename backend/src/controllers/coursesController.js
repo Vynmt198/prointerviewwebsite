@@ -2,11 +2,62 @@ import { Course } from "../models/Course.js";
 import { Enrollment } from "../models/Enrollment.js";
 import { Mentor } from "../models/Mentor.js";
 
+function normalizeCoursePayload(body = {}) {
+  const chapters = Array.isArray(body.chapters) ? body.chapters : [];
+  const modules = chapters.map((ch, idx) => ({
+    title: String(ch.title || `Chương ${idx + 1}`).trim(),
+    order: idx + 1,
+    lessons: (Array.isArray(ch.lessons) ? ch.lessons : []).map((lesson, lidx) => ({
+      title: String(lesson.title || `Bài ${lidx + 1}`).trim(),
+      type: "video",
+      videoUrl: String(lesson.videoUrl || lesson.videoFileName || "").trim(),
+      durationMinutes: Number(lesson.duration || lesson.durationMinutes || 0),
+      order: lidx + 1,
+      isFree: Boolean(lesson.isPreview || lesson.isFree),
+    })),
+  }));
+
+  const tags =
+    typeof body.tags === "string"
+      ? body.tags.split(",").map((t) => t.trim()).filter(Boolean)
+      : Array.isArray(body.tags)
+        ? body.tags.map((t) => String(t).trim()).filter(Boolean)
+        : [];
+
+  const whatYoullLearn = Array.isArray(body.whatYoullLearn)
+    ? body.whatYoullLearn.map((s) => String(s).trim()).filter(Boolean)
+    : Array.isArray(body.outcomes)
+      ? body.outcomes.map((s) => String(s).trim()).filter(Boolean)
+      : [];
+
+  const topicMap = {
+    "behavioral-interview": "Behavioral",
+    "technical-interview": "Technical",
+    "career-development": "Other",
+  };
+  const topic = topicMap[String(body.category || "").trim()] || "Other";
+
+  return {
+    title: String(body.title || "").trim(),
+    description: String(body.description || "").trim(),
+    thumbnail: String(body.thumbnail || "").trim(),
+    level: ["basic", "intermediate", "advanced"].includes(String(body.level))
+      ? String(body.level)
+      : "basic",
+    price: Number(body.price || 0),
+    isFree: Number(body.price || 0) <= 0,
+    tags,
+    topics: [topic],
+    whatYoullLearn,
+    modules,
+  };
+}
+
 export const CoursesController = {
   /** Danh sách khóa học */
   list: async (req, res) => {
     try {
-      const courses = await Course.find({ status: "published" })
+      const courses = await Course.find({ status: { $in: ["published", "pending_update"] } })
         .populate({
           path: "mentorId",
           select: "userId stats",
@@ -36,6 +87,18 @@ export const CoursesController = {
       res.json({ success: true, course });
     } catch (error) {
       res.status(500).json({ success: false, error: error.message });
+    }
+  },
+
+  /** Danh sách khóa học của mentor hiện tại */
+  listMine: async (req, res) => {
+    try {
+      const mentor = await Mentor.findOne({ userId: req.userId }).select("_id").lean();
+      if (!mentor) return res.status(403).json({ success: false, error: "Tài khoản chưa là mentor." });
+      const courses = await Course.find({ mentorId: mentor._id }).sort({ updatedAt: -1 }).lean();
+      return res.json({ success: true, courses });
+    } catch (error) {
+      return res.status(500).json({ success: false, error: error.message });
     }
   },
 
@@ -83,8 +146,13 @@ export const CoursesController = {
       const mentor = await Mentor.findOne({ userId });
       if (!mentor) return res.status(403).json({ success: false, error: "Tài khoản chưa được thiết lập hồ sơ Mentor" });
 
+      const payload = normalizeCoursePayload(req.body ?? {});
+      if (!payload.title) {
+        return res.status(400).json({ success: false, error: "Thiếu tiêu đề khóa học." });
+      }
+
       const course = await Course.create({
-        ...req.body,
+        ...payload,
         mentorId: mentor._id,
         status: "draft"
       });
@@ -108,14 +176,15 @@ export const CoursesController = {
         return res.status(403).json({ success: false, error: "Bạn không có quyền chỉnh sửa khóa học này" });
       }
 
-      const updated = await Course.findByIdAndUpdate(id, req.body, { new: true });
+      const payload = normalizeCoursePayload(req.body ?? {});
+      const updated = await Course.findByIdAndUpdate(id, payload, { new: true });
       res.json({ success: true, course: updated });
     } catch (error) {
       res.status(500).json({ success: false, error: error.message });
     }
   },
 
-  /** Xuất bản khóa học */
+  /** Mentor gửi khóa học chờ admin duyệt */
   publish: async (req, res) => {
     try {
       const { id } = req.params;
@@ -128,11 +197,37 @@ export const CoursesController = {
         return res.status(403).json({ success: false, error: "Bạn không có quyền thực hiện thao tác này" });
       }
 
-      course.status = "published";
-      course.publishedAt = new Date();
+      // Published -> lưu bản chỉnh sửa vào pendingUpdate, không làm khóa public biến mất.
+      if (course.status === "published" || course.status === "pending_update") {
+        const pendingPayload = normalizeCoursePayload(req.body ?? {});
+        if (!pendingPayload.title || !pendingPayload.modules?.length) {
+          return res.status(400).json({
+            success: false,
+            error: "Bản cập nhật chưa đủ thông tin để gửi duyệt.",
+          });
+        }
+        course.pendingUpdate = pendingPayload;
+        course.status = "pending_update";
+        await course.save();
+        return res.json({
+          success: true,
+          course,
+          message: "Đã gửi bản cập nhật khóa học để admin duyệt.",
+        });
+      }
+
+      // Draft -> gửi duyệt khóa mới.
+      if (!course.title || !course.modules?.length) {
+        return res.status(400).json({
+          success: false,
+          error: "Khóa học chưa đủ thông tin để đăng (thiếu tiêu đề hoặc nội dung bài học).",
+        });
+      }
+      course.status = "pending_review";
+      course.publishedAt = null;
       await course.save();
 
-      res.json({ success: true, course });
+      return res.json({ success: true, course, message: "Đã gửi khóa học để admin duyệt." });
     } catch (error) {
       res.status(500).json({ success: false, error: error.message });
     }

@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 const User = mongoose.model("User");
 const Mentor = mongoose.model("Mentor");
 const Booking = mongoose.model("Booking");
+const Course = mongoose.model("Course");
 
 export const AdminController = {
   // Lấy danh sách toàn bộ mentor (chỉ hiện những người vẫn còn role mentor ở bảng User)
@@ -85,6 +86,72 @@ export const AdminController = {
         .populate("userId", "name email")
         .sort({ createdAt: -1 });
       res.json({ success: true, bookings });
+    } catch (error) {
+      res.status(500).json({ success: false, error: error.message });
+    }
+  },
+
+  // Danh sách khóa học chờ duyệt
+  getPendingCourses: async (_req, res) => {
+    try {
+      const courses = await Course.find({ status: { $in: ["pending_review", "pending_update"] } })
+        .populate({
+          path: "mentorId",
+          select: "userId",
+          populate: { path: "userId", select: "name email avatar" },
+        })
+        .sort({ updatedAt: -1 });
+      res.json({ success: true, courses });
+    } catch (error) {
+      res.status(500).json({ success: false, error: error.message });
+    }
+  },
+
+  // Duyệt khóa học
+  approveCourse: async (req, res) => {
+    try {
+      const { id } = req.params;
+      const course = await Course.findById(id);
+      if (!course) return res.status(404).json({ success: false, error: "Không tìm thấy khóa học" });
+      if (course.status === "pending_update" && course.pendingUpdate) {
+        const next = course.pendingUpdate;
+        course.title = next.title ?? course.title;
+        course.description = next.description ?? course.description;
+        course.thumbnail = next.thumbnail ?? course.thumbnail;
+        course.level = next.level ?? course.level;
+        course.price = Number.isFinite(Number(next.price)) ? Number(next.price) : course.price;
+        course.isFree = typeof next.isFree === "boolean" ? next.isFree : course.isFree;
+        course.tags = Array.isArray(next.tags) ? next.tags : course.tags;
+        course.topics = Array.isArray(next.topics) ? next.topics : course.topics;
+        course.whatYoullLearn = Array.isArray(next.whatYoullLearn) ? next.whatYoullLearn : course.whatYoullLearn;
+        course.modules = Array.isArray(next.modules) ? next.modules : course.modules;
+      }
+      course.pendingUpdate = null;
+      course.status = "published";
+      course.publishedAt = new Date();
+      await course.save();
+      res.json({ success: true, course });
+    } catch (error) {
+      res.status(500).json({ success: false, error: error.message });
+    }
+  },
+
+  // Từ chối khóa học: trả lại nháp để mentor sửa
+  rejectCourse: async (req, res) => {
+    try {
+      const { id } = req.params;
+      const course = await Course.findById(id);
+      if (!course) return res.status(404).json({ success: false, error: "Không tìm thấy khóa học" });
+      if (course.status === "pending_update") {
+        // Giữ khóa hiện tại vẫn public, chỉ bỏ bản cập nhật đang chờ.
+        course.pendingUpdate = null;
+        course.status = "published";
+      } else {
+        // pending_review (khóa mới) -> trả lại nháp.
+        course.status = "draft";
+      }
+      await course.save();
+      res.json({ success: true, course });
     } catch (error) {
       res.status(500).json({ success: false, error: error.message });
     }

@@ -36,4 +36,13 @@ export const adminApi = {
       body: JSON.stringify({ isActive }),
     }),
   getBookings: () => authedFetch("/api/admin/bookings"),
+  getPendingCourses: () => authedFetch("/api/admin/courses/pending"),
+  approveCourse: (id) =>
+    authedFetch(`/api/admin/courses/${id}/approve`, {
+      method: "PATCH",
+    }),
+  rejectCourse: (id) =>
+    authedFetch(`/api/admin/courses/${id}/reject`, {
+      method: "PATCH",
+    }),
 };

@@ -58,7 +58,9 @@ const courseSchema = new Schema(
       totalRevenue: { type: Number, default: 0 },
     },
 
-    status: { type: String, enum: ["draft", "published", "archived"], default: "draft" },
+    status: { type: String, enum: ["draft", "pending_review", "pending_update", "published", "archived"], default: "draft" },
+    /** Bản chỉnh sửa chờ admin duyệt khi khóa đang published. */
+    pendingUpdate: { type: Schema.Types.Mixed, default: null },
     publishedAt: { type: Date },
     totalLessons: { type: Number, default: 0 },
     totalDurationMinutes: { type: Number, default: 0 },
@@ -71,7 +73,7 @@ courseSchema.index({ status: 1, level: 1 });
 courseSchema.index({ tags: 1 });
 courseSchema.index({ "modules.lessons._id": 1 });
 
-courseSchema.pre("save", function (next) {
+courseSchema.pre("save", function () {
   if (this.isModified("modules")) {
     let count = 0;
     let duration = 0;
@@ -86,7 +88,6 @@ courseSchema.pre("save", function (next) {
     this.totalLessons = count;
     this.totalDurationMinutes = duration;
   }
-  next();
 });
 
 export const Course = mongoose.models.Course ?? mongoose.model("Course", courseSchema);
