@@ -111,6 +111,27 @@ export async function logoutUser(userId) {
   return { ok: true };
 }
 
+/** Xóa tài khoản hiện tại + vô hiệu toàn bộ phiên. */
+export async function deleteMeUser(userId) {
+  const uid = String(userId ?? "").trim();
+  if (!mongoose.isValidObjectId(uid)) {
+    return { ok: false, status: 401, error: "Phiên đăng nhập không hợp lệ." };
+  }
+
+  const deleted = await User.findByIdAndDelete(uid);
+  if (!deleted) {
+    return { ok: false, status: 404, error: "Tài khoản không tồn tại." };
+  }
+
+  // Dọn hồ sơ mentor nếu user từng là mentor.
+  const Mentor = mongoose.models.Mentor;
+  if (Mentor) {
+    await Mentor.deleteOne({ userId: uid });
+  }
+
+  return { ok: true };
+}
+
 export async function refreshAccessToken(rawRefresh, req) {
   const raw = typeof rawRefresh === "string" ? rawRefresh.trim() : "";
   const idx = raw.indexOf(":");

@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { PayoutRequest } from "../models/PayoutRequest.js";
 const User = mongoose.model("User");
 const Mentor = mongoose.model("Mentor");
 const Booking = mongoose.model("Booking");
@@ -179,5 +180,82 @@ export const AdminController = {
     } catch (error) {
       res.status(500).json({ success: false, error: error.message });
     }
-  }
+  },
+
+  getPayoutRequests: async (_req, res) => {
+    try {
+      const payouts = await PayoutRequest.find()
+        .populate({
+          path: "mentorId",
+          select: "name userId",
+          populate: { path: "userId", select: "name email" },
+        })
+        .sort({ createdAt: -1 })
+        .limit(200)
+        .lean();
+      res.json({ success: true, payouts });
+    } catch (error) {
+      res.status(500).json({ success: false, error: error.message });
+    }
+  },
+
+  approvePayoutRequest: async (req, res) => {
+    try {
+      const { id } = req.params;
+      const payout = await PayoutRequest.findById(id);
+      if (!payout) return res.status(404).json({ success: false, error: "Không tìm thấy yêu cầu rút tiền." });
+      if (payout.status !== "pending") {
+        return res.status(400).json({ success: false, error: "Yêu cầu đã được xử lý trước đó." });
+      }
+
+      payout.status = "approved";
+      payout.reviewedAt = new Date();
+      payout.reviewedBy = req.userId || null;
+      payout.note = String(req.body?.note || "").trim();
+      await payout.save();
+
+      await Mentor.updateOne(
+        { _id: payout.mentorId },
+        {
+          $inc: { "finance.pendingBalance": -Number(payout.amount || 0) },
+        },
+      );
+
+      res.json({ success: true, payout });
+    } catch (error) {
+      res.status(500).json({ success: false, error: error.message });
+    }
+  },
+
+  rejectPayoutRequest: async (req, res) => {
+    try {
+      const { id } = req.params;
+      const reason = String(req.body?.reason || "").trim();
+      const payout = await PayoutRequest.findById(id);
+      if (!payout) return res.status(404).json({ success: false, error: "Không tìm thấy yêu cầu rút tiền." });
+      if (payout.status !== "pending") {
+        return res.status(400).json({ success: false, error: "Yêu cầu đã được xử lý trước đó." });
+      }
+
+      payout.status = "rejected";
+      payout.reviewedAt = new Date();
+      payout.reviewedBy = req.userId || null;
+      payout.rejectReason = reason;
+      await payout.save();
+
+      await Mentor.updateOne(
+        { _id: payout.mentorId },
+        {
+          $inc: {
+            "finance.availableBalance": Number(payout.amount || 0),
+            "finance.pendingBalance": -Number(payout.amount || 0),
+          },
+        },
+      );
+
+      res.json({ success: true, payout });
+    } catch (error) {
+      res.status(500).json({ success: false, error: error.message });
+    }
+  },
 };

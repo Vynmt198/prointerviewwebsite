@@ -21,6 +21,8 @@ import {
 import { motion, AnimatePresence } from "motion/react";
 import { getUser } from "../../utils/auth";
 import { MentorPageShell } from "../../components/mentor/MentorPageShell";
+import { fetchMentorPeerReviews, submitMentorPeerReview } from "../../utils/mentorApi";
+import { toast } from "sonner";
 
 const MENTOR_PEER_REVIEW_INPUT_CSS = `
         .input-glass {
@@ -34,34 +36,87 @@ const MENTOR_PEER_REVIEW_INPUT_CSS = `
         .input-glass:focus { border-color: #c4ff47; background: rgba(255, 255, 255, 0.06); outline: none; }
 `;
 
-const MOCK_COURSES_FOR_REVIEW = [
-   { id: 1, title: "Làm chủ STAR Method trong phỏng vấn hành vi", mentor: "Nguyễn Tuấn Anh", category: "Interview Skills", status: "pending", rating: 0, participants: 120, cover: "https://images.unsplash.com/photo-1573497619292-0b2f5c8e030b?auto=format&fit=crop&q=80&w=400" },
-   { id: 2, title: "Technical Interview: Data Structures & Algorithms chuyên sâu", mentor: "Trần Minh Châu", category: "Technical", status: "reviewed", rating: 4.8, participants: 85, cover: "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&q=80&w=400" },
-   { id: 3, title: "Kỹ năng đàm phán lương dành cho Senior Dev", mentor: "Lê Văn Nam", category: "Salary Negotiation", status: "pending", rating: 0, participants: 45, cover: "https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&q=80&w=400" },
-   { id: 4, title: "Xây dựng Personal Brand cho Freelancer", mentor: "Phạm Hồng Nhung", category: "Soft Skills", status: "pending", rating: 0, participants: 62, cover: "https://images.unsplash.com/photo-1551434678-e076c223a692?auto=format&fit=crop&q=80&w=400" },
-];
-
 export function MentorPeerReview() {
    const navigate = useNavigate();
    const user = getUser();
    const [filter, setFilter] = useState("all");
    const [search, setSearch] = useState("");
    const [category, setCategory] = useState("all");
+   const [coursesForReview, setCoursesForReview] = useState([]);
+   const [selectedCourse, setSelectedCourse] = useState(null);
+   const [submitting, setSubmitting] = useState(false);
+   const [reviewForm, setReviewForm] = useState({
+      contentRating: 5,
+      qualityRating: 5,
+      priceValueRating: 5,
+      feedback: "",
+   });
 
    useEffect(() => {
       if (!user || user.role !== "mentor") {
          navigate("/");
+         return;
       }
+      fetchMentorPeerReviews().then((res) => {
+         if (!res.success || !Array.isArray(res.items)) {
+            setCoursesForReview([]);
+            return;
+         }
+         const mapped = res.items.map((item) => ({
+            ...item,
+            cover:
+               item.cover ||
+               "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&q=80&w=400",
+         }));
+         setCoursesForReview(mapped);
+      });
    }, []);
 
    if (!user || user.role !== "mentor") return null;
 
-   const filtered = MOCK_COURSES_FOR_REVIEW.filter(c => {
+   const filtered = coursesForReview.filter(c => {
       const matchesFilter = filter === "all" || c.status === filter;
       const matchesSearch = c.title.toLowerCase().includes(search.toLowerCase()) || c.mentor.toLowerCase().includes(search.toLowerCase());
       const matchesCategory = category === "all" || c.category === category;
       return matchesFilter && matchesSearch && matchesCategory;
    });
+   const pendingCount = coursesForReview.filter((c) => c.status === "pending").length;
+   const reviewedCount = coursesForReview.filter((c) => c.status === "reviewed").length;
+   const highScoreCount = coursesForReview.filter((c) => c.status === "reviewed" && Number(c.rating) >= 4.5).length;
+   const reviewedRows = coursesForReview.filter((c) => c.status === "reviewed" && Number(c.rating) > 0);
+   const avgRating = reviewedRows.length
+      ? (reviewedRows.reduce((sum, c) => sum + Number(c.rating || 0), 0) / reviewedRows.length).toFixed(1)
+      : "0.0";
+   const categories = ["all", ...Array.from(new Set(coursesForReview.map((c) => c.category).filter(Boolean)))];
+
+   const startReview = (course) => {
+      if (course.status === "reviewed") {
+         toast.info("Khóa học này đã được bạn đánh giá rồi.");
+         return;
+      }
+      setSelectedCourse(course);
+      setReviewForm({ contentRating: 5, qualityRating: 5, priceValueRating: 5, feedback: "" });
+   };
+
+   const submitReview = async () => {
+      if (!selectedCourse?.id) return;
+      setSubmitting(true);
+      const res = await submitMentorPeerReview(selectedCourse.id, reviewForm);
+      setSubmitting(false);
+      if (!res.success) {
+         toast.error(res.error || "Không gửi được đánh giá.");
+         return;
+      }
+      setCoursesForReview((prev) =>
+         prev.map((item) =>
+            item.id === selectedCourse.id
+               ? { ...item, status: "reviewed", rating: Number(res.review?.rating || item.rating || 0) }
+               : item,
+         ),
+      );
+      toast.success("Đã gửi đánh giá chéo.");
+      setSelectedCourse(null);
+   };
 
    return (
       <MentorPageShell bottomPad="pb-32" extraStyles={MENTOR_PEER_REVIEW_INPUT_CSS}>
@@ -77,16 +132,17 @@ export function MentorPeerReview() {
                   </p>
                </div>
                <button onClick={() => navigate("/mentor/dashboard")} className="px-8 py-4 rounded-3xl bg-white/5 border border-white/10 text-xs font-black uppercase tracking-widest hover:bg-white/10 transition-all flex items-center gap-2">
+                  <ArrowLeft size={14} /> Về dashboard
                </button>
             </div>
 
             {/* Global Stats Bar */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-16">
                {[
-                  { label: "Cần đánh giá", value: 4, icon: Clock, color: "#6E35E8" },
-                  { label: "Đã hoàn thành", value: 1, icon: CheckCircle2, color: "#c4ff47" },
-                  { label: "Review điểm cao", value: 3, icon: TrendingUp, color: "#secondary" },
-                  { label: "Rating trung bình", value: "5.0", icon: Star, color: "#f59e0b" }
+                  { label: "Cần đánh giá", value: pendingCount, icon: Clock, color: "#6E35E8" },
+                  { label: "Đã hoàn thành", value: reviewedCount, icon: CheckCircle2, color: "#c4ff47" },
+                  { label: "Review điểm cao", value: highScoreCount, icon: TrendingUp, color: "#secondary" },
+                  { label: "Rating trung bình", value: avgRating, icon: Star, color: "#f59e0b" }
                ].map((stat, i) => (
                   <div key={i} className="glass-card p-8 group">
                      <div className="flex items-center justify-between mb-6">
@@ -147,7 +203,7 @@ export function MentorPeerReview() {
                </div>
 
                <div className="flex flex-wrap gap-3">
-                  {["all", "Interview Skills", "Technical", "Salary Negotiation", "Soft Skills"].map((cat) => (
+                  {categories.map((cat) => (
                      <button
                         key={cat}
                         onClick={() => setCategory(cat)}
@@ -194,16 +250,105 @@ export function MentorPeerReview() {
                                     </div>
                                  )}
                               </div>
-                              <button className="flex items-center gap-2 text-[10px] font-black text-white uppercase tracking-widest hover:text-primary-fixed transition-all group/btn">
-                                 Bắt đầu đánh giá <ChevronRight size={14} className="group-hover/btn:translate-x-1 transition-transform" />
+                              <button
+                                 onClick={() => startReview(course)}
+                                 className="flex items-center gap-2 text-[10px] font-black text-white uppercase tracking-widest hover:text-primary-fixed transition-all group/btn"
+                              >
+                                 {course.status === "reviewed" ? "Đã đánh giá" : "Bắt đầu đánh giá"} <ChevronRight size={14} className="group-hover/btn:translate-x-1 transition-transform" />
                               </button>
                            </div>
                         </div>
                      </div>
                   ))}
                </div>
+               {!coursesForReview.length && (
+                  <div className="mt-6 rounded-2xl border border-white/10 bg-white/[0.03] p-6 text-center">
+                     <p className="text-sm font-semibold text-zinc-300">Hiện chưa có khóa học nào khả dụng để đánh giá chéo.</p>
+                  </div>
+               )}
             </div>
          </div>
+         <AnimatePresence>
+            {selectedCourse && (
+               <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="fixed inset-0 z-50 flex items-center justify-center p-6 backdrop-blur-2xl bg-black/60"
+                  onClick={() => setSelectedCourse(null)}
+               >
+                  <motion.div
+                     initial={{ scale: 0.96, y: 20, opacity: 0 }}
+                     animate={{ scale: 1, y: 0, opacity: 1 }}
+                     exit={{ scale: 0.96, y: 20, opacity: 0 }}
+                     className="glass-card w-full max-w-xl p-8"
+                     onClick={(e) => e.stopPropagation()}
+                  >
+                     <h3 className="text-2xl font-black text-white tracking-tight mb-2">Đánh giá chéo khóa học</h3>
+                     <p className="text-sm text-zinc-400 mb-6">{selectedCourse.title}</p>
+                     <div className="mb-6 rounded-2xl border border-white/10 bg-white/[0.03] p-4 space-y-3">
+                        <p className="text-xs text-zinc-300 line-clamp-3">
+                           {selectedCourse.description || "Chưa có mô tả chi tiết cho khóa học này."}
+                        </p>
+                        <div className="flex flex-wrap items-center gap-3 text-[10px] uppercase tracking-widest font-black text-zinc-500">
+                           <span className="px-2 py-1 rounded-lg border border-white/10 bg-white/5">{selectedCourse.level || "N/A"}</span>
+                           <span>{selectedCourse.isFree ? "Miễn phí" : `${Number(selectedCourse.price || 0).toLocaleString("vi-VN")} ₫`}</span>
+                           <span>{Number(selectedCourse.lessonCount || 0)} bài học</span>
+                        </div>
+                        <button
+                           onClick={() => navigate(`/courses/${selectedCourse.id}`)}
+                           className="inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-primary-fixed hover:opacity-80"
+                        >
+                           <BookOpen size={14} /> Xem chi tiết khóa học
+                        </button>
+                     </div>
+                     <div className="space-y-4">
+                        {[
+                           ["contentRating", "Nội dung"],
+                           ["qualityRating", "Chất lượng"],
+                           ["priceValueRating", "Giá trị / Chi phí"],
+                        ].map(([field, label]) => (
+                           <div key={field} className="flex items-center justify-between gap-4">
+                              <span className="text-sm font-semibold text-zinc-300">{label}</span>
+                              <select
+                                 value={reviewForm[field]}
+                                 onChange={(e) => setReviewForm((prev) => ({ ...prev, [field]: Number(e.target.value) }))}
+                                 className="bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm font-bold text-white"
+                              >
+                                 {[1, 2, 3, 4, 5].map((n) => (
+                                    <option key={n} value={n} className="bg-[#121212]">
+                                       {n} / 5
+                                    </option>
+                                 ))}
+                              </select>
+                           </div>
+                        ))}
+                        <textarea
+                           value={reviewForm.feedback}
+                           onChange={(e) => setReviewForm((prev) => ({ ...prev, feedback: e.target.value }))}
+                           placeholder="Nhận xét chi tiết (không bắt buộc)"
+                           className="w-full min-h-28 bg-white/5 border border-white/10 rounded-2xl p-4 text-sm text-white outline-none focus:border-primary-fixed"
+                        />
+                     </div>
+                     <div className="mt-7 grid grid-cols-2 gap-3">
+                        <button
+                           onClick={() => setSelectedCourse(null)}
+                           className="py-3 rounded-xl bg-white/5 border border-white/10 text-[10px] font-black uppercase tracking-widest text-white"
+                        >
+                           Hủy
+                        </button>
+                        <button
+                           onClick={submitReview}
+                           disabled={submitting}
+                           className="py-3 rounded-xl bg-primary-fixed text-black text-[10px] font-black uppercase tracking-widest disabled:opacity-50"
+                        >
+                           {submitting ? "Đang gửi..." : "Gửi đánh giá"}
+                        </button>
+                     </div>
+                  </motion.div>
+               </motion.div>
+            )}
+         </AnimatePresence>
       </MentorPageShell>
    );
 }

@@ -84,6 +84,11 @@ export async function fetchBookingById(id) {
   return authedGet(`/api/bookings/${encodeURIComponent(id)}`);
 }
 
+export async function fetchMentorBookingById(id) {
+  if (!id) return { success: false, error: "Thiếu id." };
+  return authedGet(`/api/bookings/mentor/${encodeURIComponent(id)}`);
+}
+
 export async function cancelBooking(id, body = {}) {
   if (!id) return { success: false, error: "Thiếu id." };
   return authedSend("DELETE", `/api/bookings/${encodeURIComponent(id)}`, body);
@@ -92,6 +97,16 @@ export async function cancelBooking(id, body = {}) {
 export async function rescheduleBooking(id, body) {
   if (!id) return { success: false, error: "Thiếu id." };
   return authedSend("PATCH", `/api/bookings/${encodeURIComponent(id)}/reschedule`, body ?? {});
+}
+
+export async function mentorRescheduleBooking(id, body) {
+  if (!id) return { success: false, error: "Thiếu id." };
+  return authedSend("PATCH", `/api/bookings/mentor/${encodeURIComponent(id)}/reschedule`, body ?? {});
+}
+
+export async function mentorCancelBooking(id, body = {}) {
+  if (!id) return { success: false, error: "Thiếu id." };
+  return authedSend("PATCH", `/api/bookings/mentor/${encodeURIComponent(id)}/cancel`, body);
 }
 
 export async function fetchBookedSlots(mentorId) {

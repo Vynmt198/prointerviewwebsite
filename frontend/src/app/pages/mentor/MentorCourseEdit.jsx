@@ -50,6 +50,7 @@ import {
    fetchCourseById,
    createCourseDraft,
    publishCourse,
+   updateCourseDraft,
 } from "../../utils/courseApi";
 import { MentorPageShell } from "../../components/mentor/MentorPageShell";
 import { toast } from "sonner";
@@ -150,17 +151,28 @@ function ReviewsTab({ mentorAvatar, mentorName }) {
    );
 }
 
-function LessonsTab({ lessons }) {
-   const [editList, setEditList] = useState(
-      (lessons || []).map((lesson) => ({
-         ...lesson,
-         duration: Number(lesson.duration || 10),
-         isPreview: Boolean(lesson.isPreview),
-         videoFileName: lesson.videoFileName || "",
-      })),
-   );
+function LessonsTab({ lessons, onLessonsChange }) {
+   const [editList, setEditList] = useState([]);
    const [editingId, setEditingId] = useState(null);
    const [draftTitle, setDraftTitle] = useState("");
+
+   useEffect(() => {
+      setEditList(
+         (lessons || []).map((lesson) => ({
+            ...lesson,
+            duration: Number(lesson.duration || 10),
+            isPreview: Boolean(lesson.isPreview),
+            videoFileName: lesson.videoFileName || "",
+         })),
+      );
+   }, [lessons]);
+
+   const commit = (updater) =>
+      setEditList((prev) => {
+         const next = typeof updater === "function" ? updater(prev) : updater;
+         onLessonsChange?.(next);
+         return next;
+      });
 
    const handleAddLesson = () => {
       const nextIndex = editList.length + 1;
@@ -172,7 +184,7 @@ function LessonsTab({ lessons }) {
          videoFileName: "",
       };
       // Thêm lên đầu danh sách để người dùng thấy ngay lập tức.
-      setEditList((prev) => [newLesson, ...prev]);
+      commit((prev) => [newLesson, ...prev]);
       setEditingId(newLesson.id);
       setDraftTitle(newLesson.title);
    };
@@ -185,13 +197,13 @@ function LessonsTab({ lessons }) {
    const saveEdit = (lessonId) => {
       const t = draftTitle.trim();
       if (!t) return;
-      setEditList((prev) => prev.map((lesson) => (lesson.id === lessonId ? { ...lesson, title: t } : lesson)));
+      commit((prev) => prev.map((lesson) => (lesson.id === lessonId ? { ...lesson, title: t } : lesson)));
       setEditingId(null);
       setDraftTitle("");
    };
 
    const removeLessonItem = (lessonId) => {
-      setEditList((prev) => prev.filter((lesson) => lesson.id !== lessonId));
+      commit((prev) => prev.filter((lesson) => lesson.id !== lessonId));
       if (editingId === lessonId) {
          setEditingId(null);
          setDraftTitle("");
@@ -199,7 +211,7 @@ function LessonsTab({ lessons }) {
    };
 
    const updateLessonDuration = (lessonId, value) => {
-      setEditList((prev) =>
+      commit((prev) =>
          prev.map((lesson) =>
             lesson.id === lessonId ? { ...lesson, duration: Math.max(1, Number(value || 1)) } : lesson,
          ),
@@ -207,13 +219,13 @@ function LessonsTab({ lessons }) {
    };
 
    const toggleLessonPreview = (lessonId) => {
-      setEditList((prev) =>
+      commit((prev) =>
          prev.map((lesson) => (lesson.id === lessonId ? { ...lesson, isPreview: !lesson.isPreview } : lesson)),
       );
    };
 
    const setLessonVideo = (lessonId, fileName) => {
-      setEditList((prev) =>
+      commit((prev) =>
          prev.map((lesson) => (lesson.id === lessonId ? { ...lesson, videoFileName: fileName } : lesson)),
       );
    };
@@ -467,6 +479,13 @@ function buildCoursePayloadFromForm(form, chapters, thumbnailFileName) {
          })),
       })),
    };
+}
+
+function mapTopicToCategory(topics = []) {
+   const first = String(Array.isArray(topics) ? topics[0] || "" : "").toLowerCase();
+   if (first === "behavioral") return "behavioral-interview";
+   if (first === "technical") return "technical-interview";
+   return "career-development";
 }
 
 function CreateCourseForm({ navigate }) {
@@ -979,6 +998,7 @@ export function MentorCourseEdit() {
    const isCreateMode = id === "new";
    const [course, setCourse] = useState(null);
    const [loading, setLoading] = useState(!isCreateMode);
+   const [editableLessons, setEditableLessons] = useState([]);
 
    useEffect(() => {
       if (isCreateMode) return;
@@ -1011,6 +1031,7 @@ export function MentorCourseEdit() {
             lessons: mappedLessons,
             raw: c,
          });
+         setEditableLessons(mappedLessons);
          setLoading(false);
       });
    }, [id, isCreateMode]);
@@ -1018,7 +1039,7 @@ export function MentorCourseEdit() {
    if (isCreateMode) {
       return <CreateCourseForm navigate={navigate} />;
    }
-   const lessons = course?.lessons || [];
+   const lessons = editableLessons.length ? editableLessons : course?.lessons || [];
    const lessonStats = generateLessonStats(lessons.length);
 
    if (loading) {
@@ -1103,7 +1124,7 @@ export function MentorCourseEdit() {
                   exit={{ opacity: 0, y: -20 }}
                   transition={{ duration: 0.4 }}
                >
-                  {activeTab === "lessons" && <LessonsTab lessons={lessons} />}
+                  {activeTab === "lessons" && <LessonsTab lessons={lessons} onLessonsChange={setEditableLessons} />}
                   {activeTab === "students" && <StudentsTab students={MOCK_STUDENTS} />}
                   {activeTab === "qa" && <QATab qa={MOCK_QA} />}
                   {activeTab === "reviews" && <ReviewsTab mentorAvatar={course.mentorAvatar} mentorName={course.mentorName} />}
@@ -1122,26 +1143,33 @@ export function MentorCourseEdit() {
                <div className="flex gap-4">
                   <button
                      onClick={async () => {
+                        const chapters = [
+                           {
+                              title: "Chương 1",
+                              lessons: lessons.map((l) => ({
+                                 title: l.title,
+                                 duration: Number(l.duration || 0),
+                                 isPreview: Boolean(l.isPreview),
+                                 videoUrl: l.videoFileName || "",
+                              })),
+                           },
+                        ];
                         const payload = {
                            title: course.raw?.title || course.title,
                            description: course.raw?.description || "",
-                           category: "behavioral-interview",
+                           category: mapTopicToCategory(course.raw?.topics),
                            level: course.raw?.level || "basic",
                            price: course.raw?.price || 0,
                            outcomes: course.raw?.whatYoullLearn || [],
                            tags: course.raw?.tags || [],
                            thumbnail: course.raw?.thumbnail || "",
-                           chapters:
-                              course.raw?.modules?.map((m) => ({
-                                 title: m.title,
-                                 lessons: (m.lessons || []).map((l) => ({
-                                    title: l.title,
-                                    duration: l.durationMinutes || 0,
-                                    isPreview: l.isFree,
-                                    videoUrl: l.videoUrl || "",
-                                 })),
-                              })) || [],
+                           chapters,
                         };
+                        const saved = await updateCourseDraft(course.id, payload);
+                        if (!saved.success) {
+                           toast.error(saved.error || "Không thể lưu thay đổi trước khi gửi duyệt.");
+                           return;
+                        }
                         const pub = await publishCourse(course.id, payload);
                         if (!pub.success) {
                            toast.error(pub.error || "Không thể gửi bản cập nhật.");

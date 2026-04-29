@@ -4,7 +4,6 @@ import {
    Plus,
    Search,
    Filter,
-   MoreVertical,
    Users,
    Star,
    ArrowLeft,
@@ -39,12 +38,13 @@ const MENTOR_COURSE_MGMT_INPUT_CSS = `
         .input-glass:focus { border-color: #c4ff47; background: rgba(255, 255, 255, 0.06); outline: none; }
 `;
 
-const MOCK_MY_COURSES = [
-   { id: 1, title: "Làm chủ STAR Method trong phỏng vấn hành vi", status: "published", students: 1240, rating: 4.9, earnings: 420000000, cover: "https://images.unsplash.com/photo-1573497619292-0b2f5c8e030b?auto=format&fit=crop&q=80&w=600", level: "Intermediate" },
-   { id: 2, title: "Technical Interview: Data Structures & Algorithms cơ bản", status: "published", students: 450, rating: 4.7, earnings: 135000000, cover: "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&q=80&w=600", level: "Intermediate" },
-   { id: 3, title: "Soft Skills trong môi trường làm việc đa văn hóa", status: "published", students: 20, rating: 4.8, earnings: 49000000, cover: "https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&q=80&w=600", level: "Advanced" },
-   { id: 4, title: "Xây dựng tư duy Product Thinking cho Developer", status: "draft", students: 0, rating: 0, earnings: 0, cover: "https://images.unsplash.com/photo-1551434678-e076c223a692?auto=format&fit=crop&q=80&w=600", level: "Expert" },
-];
+function formatCompactNumber(value) {
+   const n = Number(value) || 0;
+   if (n >= 1_000_000_000) return `${(n / 1_000_000_000).toFixed(1)}B`;
+   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
+   if (n >= 1_000) return `${(n / 1_000).toFixed(1)}k`;
+   return String(n);
+}
 
 export function MentorCourseManagement() {
    const navigate = useNavigate();
@@ -89,6 +89,13 @@ export function MentorCourseManagement() {
       const matchesSearch = c.title.toLowerCase().includes(search.toLowerCase());
       return matchesTab && matchesSearch;
    });
+   const totalCourses = myCourses.length;
+   const totalStudents = myCourses.reduce((sum, c) => sum + (Number(c.students) || 0), 0);
+   const totalRevenue = myCourses.reduce((sum, c) => sum + (Number(c.earnings) || 0), 0);
+   const ratedCourses = myCourses.filter((c) => Number(c.rating) > 0);
+   const avgRating = ratedCourses.length
+      ? (ratedCourses.reduce((sum, c) => sum + Number(c.rating), 0) / ratedCourses.length).toFixed(1)
+      : "0.0";
 
    return (
       <MentorPageShell bottomPad="pb-32" extraStyles={MENTOR_COURSE_MGMT_INPUT_CSS}>
@@ -115,10 +122,10 @@ export function MentorCourseManagement() {
             {/* Course Analytics Bar */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-20">
                {[
-                  { label: "Tổng khóa học", value: 4, icon: BookOpen, color: "#6E35E8" },
-                  { label: "Tổng học viên", value: "1.7k", icon: Users, color: "#c4ff47" },
-                  { label: "Rating trung bình", value: 4.8, icon: Star, color: "#f59e0b" },
-                  { label: "Doanh thu tạm tính", value: "604M", icon: CircleDollarSign, color: "#secondary" }
+                  { label: "Tổng khóa học", value: totalCourses, icon: BookOpen, color: "#6E35E8" },
+                  { label: "Tổng học viên", value: formatCompactNumber(totalStudents), icon: Users, color: "#c4ff47" },
+                  { label: "Rating trung bình", value: avgRating, icon: Star, color: "#f59e0b" },
+                  { label: "Doanh thu tạm tính", value: formatCompactNumber(totalRevenue), icon: CircleDollarSign, color: "#secondary" }
                ].map((stat, i) => (
                   <div key={i} className="glass-card p-10 group overflow-hidden">
                      <div className="relative z-10">
@@ -196,11 +203,6 @@ export function MentorCourseManagement() {
                                  {course.level}
                               </span>
                            </div>
-                           <div className="absolute top-6 right-6">
-                              <button className="w-10 h-10 rounded-xl bg-black/40 backdrop-blur-md flex items-center justify-center text-white border border-white/10 hover:bg-black/60 transition-all">
-                                 <MoreVertical size={18} />
-                              </button>
-                           </div>
                         </div>
                         <div className="p-8 flex-1 flex flex-col">
                            <h4 className="text-xl font-black text-white tracking-tighter mb-4 group-hover:text-primary-fixed transition-colors leading-tight">
@@ -229,7 +231,11 @@ export function MentorCourseManagement() {
                                  <Edit3 size={14} /> Chỉnh sửa
                               </button>
                               <button
-                                 className="w-14 py-4 rounded-2xl bg-white/5 border border-white/10 text-[10px] font-black uppercase tracking-widest hover:text-primary-fixed hover:bg-white/10 transition-all flex items-center justify-center">
+                                 onClick={() => course.status === "published" && navigate(`/courses/${course.id}`)}
+                                 title={course.status === "published" ? "Xem trang khóa học" : "Chỉ xem được khi khóa học đã đăng"}
+                                 className="w-14 py-4 rounded-2xl bg-white/5 border border-white/10 text-[10px] font-black uppercase tracking-widest hover:text-primary-fixed hover:bg-white/10 transition-all flex items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed"
+                                 disabled={course.status !== "published"}
+                              >
                                  <ExternalLink size={16} />
                               </button>
                            </div>

@@ -45,7 +45,7 @@ export function createApp() {
     res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
     next();
   });
-
+  
   app.get("/", (_req, res) => {
     res.json({
       message: "ProInterview backend is running",
@@ -62,6 +62,9 @@ export function createApp() {
       notifications: "/api/notifications",
       admin: "/api/admin",
       enrollments: "/api/enrollments",
+      cv: "/api/cv",
+      interviews: "/api/interviews",
+      upload: "/api/upload",
     });
   });
 

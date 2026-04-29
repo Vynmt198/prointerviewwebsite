@@ -29,7 +29,7 @@ import {
   History
 } from "lucide-react";
 import { getPlans, getUser, updateUser, logout, getInitials } from "../../utils/auth";
-import { applyAsMentor } from "../../utils/mentorApi";
+import { applyAsMentor, fetchMyMentorProfile, updateMyMentorProfile } from "../../utils/mentorApi";
 
 const ACHIEVEMENTS = [
   { icon: Lightning, label: "5 ngày streak", color: "from-amber-400 to-orange-500", earned: true },
@@ -75,6 +75,7 @@ export function Profile() {
     field: user?.field || "",
   });
   const [saveMsg, setSaveMsg] = useState(null);
+  const [mentorProfile, setMentorProfile] = useState(null);
   const [showMentorModal, setShowMentorModal] = useState(false);
   const [applying, setApplying] = useState(false);
   const [mentorForm, setMentorForm] = useState({
@@ -87,13 +88,16 @@ export function Profile() {
     portfolioLink: "",
     linkedinProfile: "",
     targetRate: "", // Proposed price per session
+    fields: "",
+    responseTime: "",
+    timezone: "Asia/Ho_Chi_Minh",
   });
 
   const initials = getInitials(form.name || "U");
   const isMentor = user?.role === "mentor";
 
   const handleSave = async () => {
-    await updateUser({
+    const userRes = await updateUser({
       name: form.name,
       email: form.email,
       phone: form.phone,
@@ -101,6 +105,31 @@ export function Profile() {
       school: form.school,
       field: form.field,
     });
+    if (!userRes?.success) return;
+
+    if (isMentor) {
+      const mentorRes = await updateMyMentorProfile({
+        title: mentorForm.title,
+        company: mentorForm.company,
+        bio: mentorForm.bio,
+        experienceYears: mentorForm.yearsOfExperience,
+        specialties: mentorForm.skills
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean),
+        fields: mentorForm.fields
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean),
+        linkedinUrl: mentorForm.linkedinProfile,
+        pricePerHour: mentorForm.targetRate,
+        responseTime: mentorForm.responseTime,
+        timezone: mentorForm.timezone,
+      });
+      if (!mentorRes?.success) return;
+      if (mentorRes.mentor) setMentorProfile(mentorRes.mentor);
+    }
+
     setEditing(false);
     setSaveMsg("saved");
     setTimeout(() => setSaveMsg(null), 2500);
@@ -206,6 +235,29 @@ export function Profile() {
     window.addEventListener("focus", refresh);
     return () => window.removeEventListener("focus", refresh);
   }, []);
+
+  React.useEffect(() => {
+    if (!isMentor) return;
+    fetchMyMentorProfile().then((res) => {
+      if (!res?.success || !res.mentor) return;
+      const m = res.mentor;
+      setMentorProfile(m);
+      setMentorForm((prev) => ({
+        ...prev,
+        title: m.title || "",
+        company: m.company || "",
+        yearsOfExperience: String(m.experienceYears ?? ""),
+        bio: m.bio || "",
+        skills: Array.isArray(m.specialties) ? m.specialties.join(", ") : "",
+        careerHistory: Array.isArray(m.companies) ? m.companies.join(", ") : "",
+        linkedinProfile: m.linkedinUrl || "",
+        targetRate: String(m.pricePerHour ?? ""),
+        fields: Array.isArray(m.fields) ? m.fields.join(", ") : "",
+        responseTime: m.responseTime || "",
+        timezone: m.timezone || "Asia/Ho_Chi_Minh",
+      }));
+    });
+  }, [isMentor]);
 
   return (
     <div className="pi-page-dashboard-bg relative min-h-screen overflow-x-hidden pb-20 font-sans text-white selection:bg-[rgba(196,255,71,0.28)] selection:text-white">
@@ -432,6 +484,58 @@ export function Profile() {
                   ))}
                </div>
             </div>
+
+            {isMentor && (
+              <div className="glass-card p-10">
+                <div className="flex items-center justify-between mb-10">
+                  <h2 className="font-headline flex items-center gap-3 text-xl font-black tracking-tight text-white sm:text-2xl">
+                    <Briefcase size={20} className="text-primary-fixed" strokeWidth={2} /> Hồ sơ mentor
+                  </h2>
+                </div>
+                <div className="grid md:grid-cols-2 gap-8">
+                  {[
+                    { label: "Chức danh mentor", key: "title" },
+                    { label: "Công ty", key: "company" },
+                    { label: "Năm kinh nghiệm", key: "yearsOfExperience", type: "number" },
+                    { label: "Mức phí / giờ (VNĐ)", key: "targetRate", type: "number" },
+                    { label: "Lĩnh vực mentor", key: "fields" },
+                    { label: "Kỹ năng (cách nhau dấu phẩy)", key: "skills" },
+                    { label: "LinkedIn", key: "linkedinProfile" },
+                    { label: "Phản hồi trung bình", key: "responseTime" },
+                    { label: "Múi giờ", key: "timezone" },
+                  ].map((field) => (
+                    <div key={field.key} className="space-y-3">
+                      <label className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/45">{field.label}</label>
+                      <input
+                        disabled={!editing}
+                        type={field.type || "text"}
+                        className="input-glass w-full"
+                        value={mentorForm[field.key] || ""}
+                        onChange={(e) => setMentorForm({ ...mentorForm, [field.key]: e.target.value })}
+                        placeholder={editing ? `Nhập ${field.label.toLowerCase()}...` : "Dữ liệu trống"}
+                      />
+                    </div>
+                  ))}
+                  <div className="md:col-span-2 space-y-3">
+                    <label className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/45">Tiểu sử mentor</label>
+                    <textarea
+                      disabled={!editing}
+                      rows={4}
+                      className="input-glass w-full resize-none"
+                      value={mentorForm.bio}
+                      onChange={(e) => setMentorForm({ ...mentorForm, bio: e.target.value })}
+                      placeholder={editing ? "Nhập giới thiệu ngắn về mentor..." : "Dữ liệu trống"}
+                    />
+                  </div>
+                </div>
+                {mentorProfile?.finance?.bankAccount?.bankName && (
+                  <p className="mt-6 text-xs text-white/45">
+                    Tài khoản nhận tiền hiện tại: {mentorProfile.finance.bankAccount.bankName} - ****
+                    {String(mentorProfile.finance.bankAccount.accountNumber || "").slice(-4)}
+                  </p>
+                )}
+              </div>
+            )}
 
             {!isMentor && (
               <>

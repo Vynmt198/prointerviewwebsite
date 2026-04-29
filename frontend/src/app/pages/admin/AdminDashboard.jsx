@@ -39,11 +39,14 @@ export function AdminDashboard() {
 
   return (
     <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
-      <div>
+      <div className="admin-glass-card px-8 py-8">
         <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.22em] text-primary-fixed">
           ProInterview Command Center
         </p>
-        <h1 className="text-4xl font-black tracking-tighter text-white sm:text-5xl">Bảng quản trị <span className="text-primary-fixed">Hệ thống</span></h1>
+        <h1 className="text-5xl font-black tracking-tighter text-white sm:text-6xl">
+          Xin chào, <span className="text-primary-fixed">Admin!</span>
+        </h1>
+        <p className="mt-3 text-sm text-white/55">Trung tâm điều hành toàn bộ hệ thống ProInterview.</p>
       </div>
 
       {/* Quick Stats Grid */}
@@ -73,7 +76,7 @@ export function AdminDashboard() {
           <Link
             key={to}
             to={to}
-            className="group glass-card p-6 transition-all hover:border-primary-fixed/40 hover:bg-white/[0.08]"
+            className="group admin-glass-card p-6 transition-all hover:border-primary-fixed/40 hover:bg-white/[0.08]"
           >
             <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl border border-white/10 bg-white/5 text-white group-hover:bg-primary-fixed group-hover:text-black transition-all">
               <Icon size={24} strokeWidth={2} />
@@ -91,7 +94,7 @@ export function AdminDashboard() {
 
 function StatCard({ label, value, icon: Icon, color }) {
   return (
-    <div className="glass-card p-8 flex items-center justify-between group">
+    <div className="admin-glass-card p-8 flex items-center justify-between group">
       <div>
         <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-2">{label}</p>
         <h3 className="text-4xl font-black text-white tracking-tighter group-hover:scale-110 transition-transform origin-left">{value}</h3>

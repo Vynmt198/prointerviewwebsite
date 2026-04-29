@@ -35,6 +35,7 @@ import {
 } from "lucide-react";
 import { fetchCourseById, submitReview } from "../../utils/courseApi";
 import { enrollmentApi } from "../../utils/enrollmentApi";
+import { getUser } from "../../utils/auth";
 import { toast } from "sonner";
 
 
@@ -563,6 +564,7 @@ export function CourseDetail() {
   const [showAllLessons, setShowAllLessons] = useState(false);
   const [enrolled, setEnrolled] = useState(false); 
   const [wishlisted, setWishlisted] = useState(false);
+  const currentUser = getUser();
 
   useEffect(() => {
     if (!id) return;
@@ -577,6 +579,7 @@ export function CourseDetail() {
           category: c.topics?.[0] || "Kỹ năng khác",
           level: c.level === "basic" ? "Beginner" : c.level === "intermediate" ? "Intermediate" : "Advanced",
           mentorId: c.mentorId?._id,
+          mentorUserId: c.mentorId?.userId?._id || "",
           mentorName: c.mentorId?.userId?.name || "Khuất danh",
           mentorAvatar: c.mentorId?.userId?.avatar || "https://api.dicebear.com/7.x/avataaars/svg?seed=Lucky",
           mentorTitle: c.mentorId?.userId?.desiredPosition || "Chuyên gia",
@@ -649,6 +652,10 @@ export function CourseDetail() {
   const relatedCourses = []; // Tạm thời để trống hoặc lấy từ danh sách nếu có
   const levelColor = getLevelColor(course.level);
   const displayedLessons = showAllLessons ? (course.lessons || []) : (course.lessons || []).slice(0, 5);
+  const isMentorViewer = currentUser?.role === "mentor";
+  const isOwnerMentor = isMentorViewer && String(currentUser?.id || "") === String(course.mentorUserId || "");
+  const canTakeStudentActions = !isMentorViewer || isOwnerMentor;
+  const isReadOnlyMentorView = isMentorViewer && !isOwnerMentor;
 
   const TABS = [
     { key: "overview", label: "Tổng quan", icon: ListChecks },
@@ -788,7 +795,7 @@ export function CourseDetail() {
 
                 {/* CTAs */}
                 <div className="space-y-2.5 mb-4">
-                  {enrolled ? (
+                  {enrolled && !isReadOnlyMentorView ? (
                     <button
                       onClick={() => navigate(`/courses/${course.id}/learn`)}
                       className="w-full py-3 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 transition-all"
@@ -797,15 +804,28 @@ export function CourseDetail() {
                       <PlayCircle className="w-4.5 h-4.5" />
                       Tiếp tục học
                     </button>
+                  ) : enrolled && isReadOnlyMentorView ? (
+                    <button
+                      disabled
+                      className="w-full py-3 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 transition-all opacity-50 cursor-not-allowed"
+                      style={{ background: "linear-gradient(135deg, #6E35E8, #8B4DFF)", color: "#fff" }}
+                    >
+                      <Lock className="w-4.5 h-4.5" />
+                      Mentor chỉ được xem khóa học
+                    </button>
                   ) : (
                     <button
-                      onClick={handleEnroll}
-                      className="w-full py-3 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 transition-all hover:brightness-110 active:scale-[0.98] shadow-lg"
+                      onClick={canTakeStudentActions ? handleEnroll : undefined}
+                      disabled={!canTakeStudentActions}
+                      className="w-full py-3 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 transition-all hover:brightness-110 active:scale-[0.98] shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
                       style={{ background: "#c4ff47", color: "#1F1F1F", boxShadow: "0 6px 20px rgba(196, 255, 71,0.3)" }}
                     >
                       <ShoppingCart className="w-4.5 h-4.5" />
-                      {course.price === 0 ? "Đăng ký miễn phí" : "Đăng ký khóa học"}
+                      {canTakeStudentActions ? (course.price === 0 ? "Đăng ký miễn phí" : "Đăng ký khóa học") : "Mentor chỉ được xem khóa học"}
                     </button>
+                  )}
+                  {isReadOnlyMentorView && (
+                    <p className="text-[10px] text-white/45 font-semibold text-center">Khóa học này không thuộc bạn nên không thể thao tác đăng ký/đặt lịch.</p>
                   )}
                   <div className="flex gap-2">
                     <button
@@ -853,7 +873,7 @@ export function CourseDetail() {
                 </div>
 
                 {/* Book Mentor CTA */}
-                {enrolled && (
+                {enrolled && canTakeStudentActions && (
                   <div
                     className="mt-5 p-4 rounded-2xl cursor-pointer hover:brightness-95 transition-all"
                     style={{ background: "linear-gradient(135deg, rgba(110, 53, 232,0.08), rgba(139, 77, 255,0.05))", border: "1px solid rgba(110, 53, 232,0.15)" }}
@@ -1061,9 +1081,10 @@ export function CourseDetail() {
                   </p>
 
                   <button
-                    onClick={() => navigate(`/mentors/${course.mentorId}`)}
+                    onClick={() => canTakeStudentActions && navigate(`/mentors/${course.mentorId}`)}
+                    disabled={!canTakeStudentActions}
                     className="w-full py-3.5 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 transition-all hover:brightness-105"
-                    style={{ background: "linear-gradient(135deg, #6E35E8, #8B4DFF)", color: "#fff" }}
+                    style={{ background: "linear-gradient(135deg, #6E35E8, #8B4DFF)", color: "#fff", opacity: canTakeStudentActions ? 1 : 0.5 }}
                   >
                     <CalendarBlank className="w-4 h-4" />
                     Book 1-1 với {course.mentorName}
@@ -1143,11 +1164,12 @@ export function CourseDetail() {
               <p className="text-white font-bold">{course.mentorName}</p>
               <p className="text-white/55 text-sm">{course.mentorTitle}</p>
               <button
-                onClick={() => navigate(`/mentors/${course.mentorId}`)}
+                onClick={() => canTakeStudentActions && navigate(`/mentors/${course.mentorId}`)}
+                disabled={!canTakeStudentActions}
                 className="mt-2 px-5 py-2 rounded-xl font-bold text-sm transition-all hover:brightness-110"
-                style={{ background: "#c4ff47", color: "#1F1F1F" }}
+                style={{ background: "#c4ff47", color: "#1F1F1F", opacity: canTakeStudentActions ? 1 : 0.5 }}
               >
-                Đặt lịch ngay →
+                {canTakeStudentActions ? "Đặt lịch ngay →" : "Mentor chỉ xem thông tin"}
               </button>
             </div>
           </div>

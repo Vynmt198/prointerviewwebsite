@@ -40,5 +40,59 @@ export class MentorController {
       next(e);
     }
   }
+
+  static async payoutHistory(req, res, next) {
+    try {
+      const result = await mentorDashboardService.getMentorPayoutHistory(req.userId);
+      if (!result.ok) return res.status(result.status).json({ success: false, error: result.error });
+      res.json({ success: true, items: result.items });
+    } catch (e) {
+      next(e);
+    }
+  }
+
+  static async payoutAccount(req, res, next) {
+    try {
+      const result = await mentorDashboardService.updatePayoutAccount(req.userId, req.body ?? {});
+      if (!result.ok) return res.status(result.status).json({ success: false, error: result.error });
+      res.json({ success: true, payoutAccount: result.payoutAccount });
+    } catch (e) {
+      next(e);
+    }
+  }
+
+  static async peerReviewQueue(req, res, next) {
+    try {
+      const result = await mentorDashboardService.getMentorPeerReviewQueue(req.userId);
+      if (!result.ok) return res.status(result.status).json({ success: false, error: result.error });
+      res.json({ success: true, items: result.items });
+    } catch (e) {
+      next(e);
+    }
+  }
+
+  static async submitPeerReview(req, res, next) {
+    try {
+      const result = await mentorDashboardService.submitMentorPeerReview(
+        req.userId,
+        req.params.courseId,
+        req.body ?? {},
+      );
+      if (!result.ok) return res.status(result.status).json({ success: false, error: result.error });
+      res.status(201).json({ success: true, review: result.review });
+    } catch (e) {
+      next(e);
+    }
+  }
+
+  static async reviews(req, res, next) {
+    try {
+      const result = await mentorDashboardService.getMentorReviews(req.userId);
+      if (!result.ok) return res.status(result.status).json({ success: false, error: result.error });
+      res.json({ success: true, items: result.items });
+    } catch (e) {
+      next(e);
+    }
+  }
 }
 

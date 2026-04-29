@@ -21,7 +21,6 @@ import {
   Globe
 } from "lucide-react";
 import { getUser } from "../../utils/auth";
-import { UPCOMING_MENTOR_MEETINGS } from "../../data/mentorMockData";
 import { MentorPageShell } from "../../components/mentor/MentorPageShell";
 import { listMentorBookings } from "../../utils/bookingsApi";
 import { fetchMentorAvailability, updateMyMentorAvailability } from "../../utils/mentorApi";
@@ -30,7 +29,7 @@ const DEFAULT_AVATAR = "https://i.pravatar.cc/120?img=22";
 
 function toMeetingItem(booking) {
   return {
-    id: booking.id,
+    id: booking.id || booking._id || "",
     status: booking.status || "",
     date: booking.date || "",
     scheduledTime: booking.timeSlot || "--:--",
@@ -53,6 +52,20 @@ function bookingOnDate(bookingDate, selectedDate) {
   if (!Number.isFinite(d) || !Number.isFinite(m)) return false;
   if (y && y !== selectedDate.getFullYear()) return false;
   return d === selectedDate.getDate() && m === selectedDate.getMonth() + 1;
+}
+
+function parseBookingDate(bookingDate) {
+  const normalized = String(bookingDate || "").trim();
+  if (!normalized) return null;
+  const parts = normalized.split("/");
+  if (parts.length < 2) return null;
+  const d = Number(parts[0]);
+  const m = Number(parts[1]);
+  const y = parts.length >= 3 ? Number(parts[2]) : new Date().getFullYear();
+  if (!Number.isFinite(d) || !Number.isFinite(m) || !Number.isFinite(y)) return null;
+  const dt = new Date(y, m - 1, d, 0, 0, 0, 0);
+  if (Number.isNaN(dt.getTime())) return null;
+  return dt;
 }
 
 const MENTOR_SCHEDULE_EXTRA_CSS = `
@@ -324,15 +337,40 @@ export function MentorSchedule() {
   useEffect(() => {
     let active = true;
     (async () => {
-      if (!user?.id) return;
-      const data = await fetchMentorAvailability(user.id);
+      const mentorLookupId = user?.id || user?._id;
+      if (!mentorLookupId) return;
+      const data = await fetchMentorAvailability(mentorLookupId);
       if (!active) return;
       if (data) setAvailability(data);
     })();
     return () => {
       active = false;
     };
-  }, [user?.id]);
+  }, [user?.id, user?._id]);
+
+  useEffect(() => {
+    if (!mentorMeetings.length) return;
+    const activeStatuses = new Set(["pending", "confirmed", "in_progress"]);
+    const activeRows = mentorMeetings.filter((m) => activeStatuses.has(String(m.status || "").toLowerCase()));
+    const rows = activeRows.length ? activeRows : mentorMeetings;
+
+    const sortedDates = rows
+      .map((m) => parseBookingDate(m.date || m.scheduledDate))
+      .filter(Boolean)
+      .sort((a, b) => a.getTime() - b.getTime());
+    if (!sortedDates.length) return;
+
+    const now = new Date();
+    const next = sortedDates.find((d) => d.getTime() >= new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime()) || sortedDates[0];
+    setSelectedDate((prev) => {
+      if (prev.toDateString() === next.toDateString()) return prev;
+      return next;
+    });
+    setCurrentDate((prev) => {
+      if (prev.getMonth() === next.getMonth() && prev.getFullYear() === next.getFullYear()) return prev;
+      return new Date(next.getFullYear(), next.getMonth(), 1);
+    });
+  }, [mentorMeetings]);
 
   if (!user || user.role !== "mentor") return null;
 
@@ -361,8 +399,7 @@ export function MentorSchedule() {
 
   const finalDays = [...calendarDays, ...paddingDays];
   const activeStatuses = new Set(["pending", "confirmed", "in_progress"]);
-  const apiMeetings = mentorMeetings.filter((m) => activeStatuses.has(String(m.status || "").toLowerCase()));
-  const sourceMeetings = apiMeetings.length ? apiMeetings : UPCOMING_MENTOR_MEETINGS;
+  const sourceMeetings = mentorMeetings;
   const selectedDayMeetings = sourceMeetings.filter((m) => bookingOnDate(m.date, selectedDate) || bookingOnDate(m.scheduledDate, selectedDate));
 
   return (
@@ -399,8 +436,8 @@ export function MentorSchedule() {
                     </div>
                  </div>
                  <div className="flex gap-2">
-                    <button onClick={() => setCurrentDate(new Date(currentDate.setMonth(currentDate.getMonth() - 1)))} className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-zinc-500 hover:text-white transition-all"><ChevronLeft size={18} /></button>
-                    <button onClick={() => setCurrentDate(new Date(currentDate.setMonth(currentDate.getMonth() + 1)))} className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-zinc-500 hover:text-white transition-all"><ChevronRight size={18} /></button>
+                    <button onClick={() => setCurrentDate((prev) => new Date(prev.getFullYear(), prev.getMonth() - 1, 1))} className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-zinc-500 hover:text-white transition-all"><ChevronLeft size={18} /></button>
+                    <button onClick={() => setCurrentDate((prev) => new Date(prev.getFullYear(), prev.getMonth() + 1, 1))} className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-zinc-500 hover:text-white transition-all"><ChevronRight size={18} /></button>
                  </div>
               </div>
 
@@ -443,8 +480,12 @@ export function MentorSchedule() {
                  </div>
 
                  <div className="space-y-4">
-                    {(selectedDayMeetings.length ? selectedDayMeetings : UPCOMING_MENTOR_MEETINGS.slice(0, 4)).map((meeting, i) => (
-                      <div key={meeting.id || i} className="group relative p-6 rounded-[32px] bg-white/[0.02] border border-white/5 hover:bg-white/[0.05] transition-all cursor-pointer overflow-hidden">
+                    {selectedDayMeetings.map((meeting, i) => (
+                      <div
+                         key={meeting.id || i}
+                         onClick={() => meeting.id && navigate(`/mentor/meeting-detail/${meeting.id}`)}
+                         className="group relative p-6 rounded-[32px] bg-white/[0.02] border border-white/5 hover:bg-white/[0.05] transition-all cursor-pointer overflow-hidden"
+                      >
                          <div className="absolute top-0 left-0 w-1.5 h-full bg-primary-fixed scale-y-0 group-hover:scale-y-100 transition-transform origin-top" />
                          <div className="flex items-center gap-4 mb-4">
                             <img src={meeting.mentee.avatar} className="w-10 h-10 rounded-2xl object-cover ring-2 ring-white/5" />
@@ -457,10 +498,29 @@ export function MentorSchedule() {
                             <div className="flex items-center gap-4 text-xs font-black text-primary-fixed uppercase tracking-widest">
                                <Clock3 size={14} /> {meeting.scheduledTime}
                             </div>
-                            <span className="text-[9px] font-black px-2 py-1 rounded-md bg-white/5 text-zinc-500 uppercase tracking-widest">Online</span>
+                            <span
+                              className={`text-[9px] font-black px-2 py-1 rounded-md uppercase tracking-widest ${
+                                String(meeting.status || "").toLowerCase() === "confirmed"
+                                  ? "bg-emerald-500/20 text-emerald-300"
+                                  : String(meeting.status || "").toLowerCase() === "pending"
+                                    ? "bg-amber-500/20 text-amber-300"
+                                    : String(meeting.status || "").toLowerCase() === "completed"
+                                      ? "bg-sky-500/20 text-sky-300"
+                                      : String(meeting.status || "").toLowerCase() === "cancelled"
+                                        ? "bg-red-500/20 text-red-300"
+                                        : "bg-white/5 text-zinc-500"
+                              }`}
+                            >
+                              {meeting.status || "online"}
+                            </span>
                          </div>
                       </div>
                     ))}
+                    {selectedDayMeetings.length === 0 && (
+                      <div className="p-6 rounded-[32px] border border-white/5 flex flex-col items-center justify-center text-zinc-500 min-h-[120px]">
+                        <p className="text-[10px] font-black uppercase tracking-widest">Không có lịch hẹn trong ngày này</p>
+                      </div>
+                    )}
                     <div className="p-6 rounded-[32px] border-2 border-dashed border-white/5 flex flex-col items-center justify-center text-zinc-700 hover:border-white/10 hover:text-zinc-500 transition-all cursor-pointer min-h-[140px]">
                        <PlusCircle size={32} className="mb-2 opacity-20" />
                        <p className="text-[10px] font-black uppercase tracking-widest">Thêm slot trống mới</p>

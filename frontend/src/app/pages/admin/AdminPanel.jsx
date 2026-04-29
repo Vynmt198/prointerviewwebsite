@@ -4,7 +4,8 @@ import React from "react";
 export function AdminPanel({ title, description, bullets = [], children }) {
   return (
     <div className="space-y-6">
-      <div>
+      <div className="rounded-3xl border border-white/10 bg-white/[0.03] px-6 py-5">
+        <p className="mb-1 text-[10px] font-black uppercase tracking-[0.2em] text-primary-fixed">Admin Workspace</p>
         <h1 className="text-2xl font-black tracking-tight text-white sm:text-3xl">{title}</h1>
         {description && (
           <p className="mt-2 max-w-3xl text-sm leading-relaxed text-white/55">{description}</p>
