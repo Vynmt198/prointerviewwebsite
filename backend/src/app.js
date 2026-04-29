@@ -18,6 +18,7 @@ import { enrollmentsRouter } from "./routes/enrollments.js";
 import { cvRouter } from "./routes/cv.js";
 import { interviewsRouter } from "./routes/interviews.js";
 import { uploadRouter } from "./routes/upload.js";
+import { mockCoursesRouter } from "./routes/mockCourses.js";
 
 export function createApp() {
   const app = express();
@@ -62,6 +63,8 @@ export function createApp() {
       notifications: "/api/notifications",
       admin: "/api/admin",
       enrollments: "/api/enrollments",
+      mockCourses: "/api/mock/courses",
+      mockEnrollments: "/api/mock/enrollments/my",
     });
   });
 
@@ -91,6 +94,7 @@ export function createApp() {
   app.use("/api/cv", cvRouter);
   app.use("/api/interviews", interviewsRouter);
   app.use("/api/upload", uploadRouter);
+  app.use("/api/mock", mockCoursesRouter);
 
   // Error handler cuối
   // eslint-disable-next-line no-unused-vars
