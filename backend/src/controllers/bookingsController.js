@@ -97,6 +97,18 @@ export class BookingsController {
     }
   }
 
+  static async getByIdForMentor(req, res, next) {
+    try {
+      const result = await bookingsService.getMentorBooking(req.userId, req.params.id);
+      if (!result.ok) {
+        return res.status(result.status).json({ success: false, error: result.error });
+      }
+      res.json({ success: true, booking: result.booking });
+    } catch (err) {
+      next(err);
+    }
+  }
+
   static async cancel(req, res, next) {
     try {
       const result = await bookingsService.cancelMyBooking(req.userId, req.params.id, req.body ?? {});
@@ -104,6 +116,30 @@ export class BookingsController {
         return res.status(result.status).json({ success: false, error: result.error });
       }
       res.json({ success: true, booking: result.booking, cancellationPolicy: result.cancellationPolicy });
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  static async cancelForMentor(req, res, next) {
+    try {
+      const result = await bookingsService.cancelMentorBooking(req.userId, req.params.id, req.body ?? {});
+      if (!result.ok) {
+        return res.status(result.status).json({ success: false, error: result.error });
+      }
+      res.json({ success: true, booking: result.booking });
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  static async rescheduleForMentor(req, res, next) {
+    try {
+      const result = await bookingsService.rescheduleMentorBooking(req.userId, req.params.id, req.body ?? {});
+      if (!result.ok) {
+        return res.status(result.status).json({ success: false, error: result.error });
+      }
+      res.json({ success: true, booking: result.booking });
     } catch (err) {
       next(err);
     }

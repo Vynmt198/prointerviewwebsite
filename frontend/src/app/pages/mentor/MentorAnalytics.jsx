@@ -38,12 +38,8 @@ import {
   Area
 } from "recharts";
 import { getUser } from "../../utils/auth";
-import {
-  MENTEE_ANALYTICS,
-  WEEKLY_STATS,
-  MENTOR_DASHBOARD_STATS,
-} from "../../data/mentorMockData";
 import { MentorPageShell } from "../../components/mentor/MentorPageShell";
+import { fetchMentorAnalytics } from "../../utils/mentorApi";
 
 const MENTOR_ANALYTICS_INPUT_CSS = `
         .input-glass {
@@ -63,19 +59,29 @@ export function MentorAnalytics() {
   const user = getUser();
   const [selectedMentee, setSelectedMentee] = useState(null);
   const [search, setSearch] = useState("");
+  const [analytics, setAnalytics] = useState(null);
 
   useEffect(() => {
     if (!user || user.role !== "mentor") {
       navigate("/");
+      return;
     }
-  }, []);
+    fetchMentorAnalytics().then((res) => {
+      if (res.success && res.analytics) setAnalytics(res.analytics);
+    });
+  }, [navigate, user?.role]);
 
   if (!user || user.role !== "mentor") return null;
 
-  const stats = MENTOR_DASHBOARD_STATS;
+  const stats = analytics?.stats || {
+    totalSessions: 0,
+    totalMentees: 0,
+    improvingCount: 0,
+    topAvgScore: 0,
+  };
 
   // Prepare chart data
-  const weeklyChartData = WEEKLY_STATS.map((w) => ({
+  const weeklyChartData = (analytics?.weeklyStats || []).map((w) => ({
     week: w.week,
     "Điểm TB": parseFloat(w.avgStarScore.toFixed(2)),
     "Số buổi": w.totalMeetings,
@@ -92,7 +98,8 @@ export function MentorAnalytics() {
     }
   };
 
-  const filteredMentees = MENTEE_ANALYTICS.filter(m => 
+  const mentees = analytics?.mentees || [];
+  const filteredMentees = mentees.filter(m => 
     m.menteeName.toLowerCase().includes(search.toLowerCase())
   );
 
@@ -113,9 +120,9 @@ export function MentorAnalytics() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-16">
            {[
              { label: "Buổi mentor", value: stats.totalSessions, trend: "+12", icon: ChartLineIcon, color: "#6E35E8" },
-             { label: "Tổng Mentees", value: MENTEE_ANALYTICS.length, trend: "Ổn định", icon: Users, color: "#c4ff47" },
-             { label: "Đang cải thiện", value: MENTEE_ANALYTICS.filter(m => m.progressTrend === "improving").length, trend: "85%", icon: Target, color: "#f59e0b" },
-             { label: "Xếp hạng top", value: MENTEE_ANALYTICS[0].avgStarScore.toFixed(1), trend: "/5.0", icon: Star, color: "#secondary" }
+             { label: "Tổng Mentees", value: stats.totalMentees, trend: "Ổn định", icon: Users, color: "#c4ff47" },
+             { label: "Đang cải thiện", value: stats.improvingCount, trend: "Live", icon: Target, color: "#f59e0b" },
+             { label: "Xếp hạng top", value: Number(stats.topAvgScore || 0).toFixed(1), trend: "/5.0", icon: Star, color: "#secondary" }
            ].map((stat, i) => (
              <div key={i} className="glass-card p-8 group">
                 <div className="flex items-center justify-between mb-6">

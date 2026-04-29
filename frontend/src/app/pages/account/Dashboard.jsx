@@ -166,6 +166,25 @@ function CancellationModal({ booking, onClose, onConfirm }) {
   );
 }
 
+function getPaymentBadge(paymentStatus, status) {
+  if (paymentStatus === "refunded") {
+    return {
+      text: "Đã hoàn tiền",
+      className: "bg-sky-500/10 text-sky-300 border-sky-500/30",
+    };
+  }
+  if (status === "confirmed" || paymentStatus === "paid") {
+    return {
+      text: "Đã thanh toán",
+      className: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
+    };
+  }
+  return {
+    text: "Chờ xử lý",
+    className: "bg-amber-500/10 text-amber-500 border-amber-500/20",
+  };
+}
+
 
 export function Dashboard() {
   const navigate = useNavigate();
@@ -467,11 +486,14 @@ export function Dashboard() {
                           <div className="flex-1 min-w-0">
                              <div className="flex items-center justify-between mb-1">
                                 <p className="text-[10px] font-black text-secondary tracking-wider uppercase">{s.date} • {s.time}</p>
-                                <span className={`text-[8px] font-black px-2 py-0.5 rounded-md uppercase border ${
-                                   s.status === "confirmed" ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" : "bg-amber-500/10 text-amber-500 border-amber-500/20"
-                                }`}>
-                                   {s.status === "confirmed" ? "Đã Thanh toán" : "Chờ xử lý"}
-                                </span>
+                                {(() => {
+                                  const badge = getPaymentBadge(s.paymentStatus, s.status);
+                                  return (
+                                    <span className={`text-[8px] font-black px-2 py-0.5 rounded-md uppercase border ${badge.className}`}>
+                                      {badge.text}
+                                    </span>
+                                  );
+                                })()}
                              </div>
                              <p className="text-[10px] font-bold text-violet-600 mb-1.5">
                                {getTimeUntilSessionLabel(s.date, s.time)}

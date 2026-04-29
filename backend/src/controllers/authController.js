@@ -139,4 +139,16 @@ export class AuthController {
       next(err);
     }
   }
+
+  static async deleteMe(req, res, next) {
+    try {
+      const result = await authService.deleteMeUser(req.userId);
+      if (!result.ok) {
+        return res.status(result.status).json({ success: false, error: result.error });
+      }
+      res.json({ success: true, message: "Đã xóa tài khoản." });
+    } catch (err) {
+      next(err);
+    }
+  }
 }

@@ -48,6 +48,12 @@ export function toPublicMentorMe(doc) {
   };
 }
 
+export async function getMyMentorProfile(userId) {
+  const r = await getMyMentorDoc(userId);
+  if (!r.ok) return r;
+  return { ok: true, mentor: toPublicMentorMe(r.mentor) };
+}
+
 export async function patchMyMentorProfile(userId, body) {
   const r = await getMyMentorDoc(userId);
   if (!r.ok) return r;

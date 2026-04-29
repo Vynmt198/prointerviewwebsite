@@ -21,6 +21,7 @@ router.post("/google", authWriteLimiter, AuthController.google);
 router.post("/refresh", refreshLimiter, AuthController.refresh);
 router.get("/me", authJwt, AuthController.me);
 router.patch("/me", authJwt, AuthController.patchMe);
+router.delete("/me", authJwt, AuthController.deleteMe);
 router.post("/logout", authJwt, AuthController.logout);
 router.get("/sessions", authJwt, AuthController.sessions);
 router.delete("/sessions/:sessionId", authJwt, AuthController.revokeSession);

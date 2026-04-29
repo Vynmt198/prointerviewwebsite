@@ -231,6 +231,23 @@ async function finalizePaymentSuccess(paymentId) {
   return { ok: true };
 }
 
+async function finalizePaymentFailure(paymentId, reason = "Thanh toán thất bại từ cổng thanh toán.") {
+  const pay = await Payment.findById(paymentId);
+  if (!pay) return { ok: false };
+  if (pay.status === "success" || pay.status === "failed") return { ok: true, already: true };
+
+  pay.status = "failed";
+  pay.failureReason = reason;
+  await pay.save();
+
+  if (pay.type === "booking" && pay.referenceModel === "Booking") {
+    await Booking.findByIdAndUpdate(pay.referenceId, {
+      $set: { paymentStatus: "failed" },
+    });
+  }
+  return { ok: true };
+}
+
 export async function handleWebhookMomo(reqBody, headerSecret) {
   const secret = webhookSecret();
   if (!secret) return { ok: false, status: 503, error: "Chưa cấu hình PAYMENT_WEBHOOK_SECRET." };
@@ -250,37 +267,64 @@ export async function handleWebhookZalopay(reqBody, headerSecret) {
 }
 
 export async function handleIpnVnpay(vnp_Params) {
-  const secureHash = vnp_Params['vnp_SecureHash'];
+  const params = { ...(vnp_Params ?? {}) };
+  const secureHash = params["vnp_SecureHash"];
+  if (!secureHash) {
+    return { ok: false, status: 400, data: { RspCode: "99", Message: "Missing signature" } };
+  }
+  const secretKey = process.env.VNP_HASH_SECRET;
+  if (!secretKey) {
+    return { ok: false, status: 503, data: { RspCode: "99", Message: "Gateway secret missing" } };
+  }
 
-  delete vnp_Params['vnp_SecureHash'];
-  delete vnp_Params['vnp_SecureHashType'];
+  delete params["vnp_SecureHash"];
+  delete params["vnp_SecureHashType"];
 
-  const sortedKeys = Object.keys(vnp_Params).sort();
+  const sortedKeys = Object.keys(params).sort();
   let signData = "";
   for (let i = 0; i < sortedKeys.length; i++) {
     const key = sortedKeys[i];
-    const val = vnp_Params[key];
+    const val = params[key];
     if (val !== undefined && val !== null && val !== "") {
       if (signData.length > 0) signData += "&";
       signData += encodeURIComponent(key) + "=" + encodeURIComponent(val).replace(/%20/g, "+");
     }
   }
 
-  const secretKey = process.env.VNP_HASH_SECRET;
   const hmac = crypto.createHmac("sha512", secretKey);
-  const signed = hmac.update(Buffer.from(signData, 'utf-8')).digest("hex");
-
-  if (secureHash.toUpperCase() === signed.toUpperCase()) {
-    const txnRef = vnp_Params['vnp_TxnRef']; // Đây là providerRef
-    const rspCode = vnp_Params['vnp_ResponseCode'];
-    if (rspCode === "00") {
-      const pay = await Payment.findOne({ providerRef: txnRef });
-      if (pay) await finalizePaymentSuccess(pay._id);
-      return { ok: true, data: { RspCode: '00', Message: 'Success' } };
-    } else {
-      return { ok: true, data: { RspCode: '00', Message: 'Confirm Success (Transaction Failed)' } };
-    }
-  } else {
-    return { ok: false, status: 400, data: { RspCode: '97', Message: 'Checksum failed' } };
+  const signed = hmac.update(Buffer.from(signData, "utf-8")).digest("hex");
+  if (secureHash.toUpperCase() !== signed.toUpperCase()) {
+    return { ok: false, status: 400, data: { RspCode: "97", Message: "Checksum failed" } };
   }
+
+  const txnRef = params["vnp_TxnRef"];
+  const rspCode = params["vnp_ResponseCode"];
+  const txnStatus = params["vnp_TransactionStatus"];
+  const amountRaw = Number(params["vnp_Amount"]);
+  const amount = Number.isFinite(amountRaw) ? Math.round(amountRaw / 100) : NaN;
+
+  const pay = await Payment.findOne({ providerRef: txnRef });
+  if (!pay) {
+    return { ok: true, data: { RspCode: "01", Message: "Order not found" } };
+  }
+
+  const expectedAmount = Math.round(Number(pay.amount) || 0);
+  if (!Number.isFinite(amount) || amount !== expectedAmount) {
+    return { ok: true, data: { RspCode: "04", Message: "Invalid amount" } };
+  }
+
+  if (pay.status === "success") {
+    return { ok: true, data: { RspCode: "02", Message: "Order already confirmed" } };
+  }
+
+  if (rspCode === "00" && (txnStatus == null || txnStatus === "00")) {
+    await finalizePaymentSuccess(pay._id);
+    return { ok: true, data: { RspCode: "00", Message: "Success" } };
+  }
+
+  await finalizePaymentFailure(
+    pay._id,
+    `VNPay failed with responseCode=${rspCode || "unknown"}, transactionStatus=${txnStatus || "unknown"}`,
+  );
+  return { ok: true, data: { RspCode: "00", Message: "Confirm Success (Transaction Failed)" } };
 }

@@ -1,6 +1,16 @@
 import * as mentorMeService from "../services/mentorMeService.js";
 
 export class MentorMeController {
+  static async getMe(req, res, next) {
+    try {
+      const result = await mentorMeService.getMyMentorProfile(req.userId);
+      if (!result.ok) return res.status(result.status).json({ success: false, error: result.error });
+      res.json({ success: true, mentor: result.mentor });
+    } catch (e) {
+      next(e);
+    }
+  }
+
   static async patchMe(req, res, next) {
     try {
       const result = await mentorMeService.patchMyMentorProfile(req.userId, req.body ?? {});
