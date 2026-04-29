@@ -425,6 +425,15 @@ export function CourseLearning() {
       }
       
       const c = courseRes.course;
+      const allLessons = (c.modules || []).flatMap((module) =>
+        (module.lessons || []).map((lesson) => ({
+          id: String(lesson._id),
+          title: lesson.title,
+          duration: lesson.durationMinutes || 0,
+          isPreview: !!lesson.isFree,
+          _id: String(lesson._id),
+        })),
+      );
       const flatCourse = {
         id: c._id,
         title: c.title,
@@ -432,7 +441,7 @@ export function CourseLearning() {
         mentorId: c.mentorId?._id,
         mentorName: c.mentorId?.userId?.name || "Khuất danh",
         mentorAvatar: c.mentorId?.userId?.avatar || "https://api.dicebear.com/7.x/avataaars/svg?seed=Lucky",
-        lessons: c.modules?.[0]?.lessons || []
+        lessons: allLessons
       };
       setCourse(flatCourse);
 
@@ -444,7 +453,7 @@ export function CourseLearning() {
         );
         if (found) {
           setEnrollment(found);
-          setCompletedLessons(found.completedLessons || []);
+          setCompletedLessons((found.completedLessons || []).map((lessonId) => String(lessonId)));
         }
       }
       setLoading(false);
@@ -469,11 +478,11 @@ export function CourseLearning() {
 
   // Load detailed lesson content
   useEffect(() => {
-    if (!id || !currentLesson?._id) return;
+    if (!id || !currentLesson?.id) return;
 
     const loadLesson = async () => {
       setLessonLoading(true);
-      const res = await fetchLessonContent(id, currentLesson._id);
+      const res = await fetchLessonContent(id, currentLesson.id);
       if (res.success) {
         setLessonContent(res.lesson);
       } else {

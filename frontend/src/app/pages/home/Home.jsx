@@ -558,8 +558,33 @@ export function Home() {
           className="absolute inset-0"
           style={{
             background:
-              "radial-gradient(ellipse 80% 60% at 80% -10%, rgba(110,53,232,0.45) 0%, transparent 70%), radial-gradient(ellipse 60% 40% at 80% 80%, rgba(180,245,0,0.08) 0%, transparent 60%), #020202",
+              "radial-gradient(ellipse 82% 64% at 84% -12%, rgba(110,53,232,0.48) 0%, transparent 72%), radial-gradient(ellipse 70% 45% at 82% 82%, rgba(180,245,0,0.14) 0%, transparent 64%), radial-gradient(ellipse 58% 40% at 30% 30%, rgba(196,255,71,0.08) 0%, transparent 72%), #04050a",
           }}
+        />
+        {/* Ambient glows để nền hero bớt tối */}
+        <div
+          className="absolute top-[30%] left-1/2 -translate-x-1/2 w-[680px] h-[360px] rounded-full blur-[120px] pointer-events-none"
+          style={{
+            background:
+              "radial-gradient(circle, rgba(180,245,0,0.18) 0%, rgba(110,53,232,0.12) 52%, transparent 78%)",
+          }}
+          aria-hidden
+        />
+        <div
+          className="absolute top-0 left-0 right-0 h-[160px] pointer-events-none"
+          style={{
+            background:
+              "linear-gradient(to bottom, rgba(4,5,10,0.98) 0%, rgba(4,5,10,0.86) 40%, rgba(4,5,10,0) 100%)",
+          }}
+          aria-hidden
+        />
+        <div
+          className="absolute top-[18%] right-[8%] w-[420px] h-[420px] rounded-full blur-[120px] pointer-events-none"
+          style={{
+            background:
+              "radial-gradient(circle, rgba(167,139,250,0.24) 0%, rgba(167,139,250,0.08) 48%, transparent 78%)",
+          }}
+          aria-hidden
         />
         {/* Noise grain */}
         <div

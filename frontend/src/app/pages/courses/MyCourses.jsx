@@ -437,8 +437,16 @@ export function MyCourses() {
         .filter(e => e.courseId) // Bỏ qua nếu khóa học không tồn tại
         .map(e => {
           const c = e.courseId;
-          const lessons = c.modules?.[0]?.lessons || [];
-          const completedCount = e.completedLessons?.length || 0;
+          const lessons = (c.modules || []).flatMap((module) =>
+            (module.lessons || []).map((lesson) => ({
+              id: String(lesson._id),
+              title: lesson.title,
+              duration: lesson.durationMinutes || 0,
+              isPreview: !!lesson.isFree,
+            })),
+          );
+          const completedLessonIds = (e.completedLessons || []).map((id) => String(id));
+          const completedCount = completedLessonIds.length;
           const totalCount = lessons.length || c.totalLessons || 1;
           const pct = Math.round((completedCount / totalCount) * 100);
           
@@ -454,12 +462,12 @@ export function MyCourses() {
               mentorTitle: c.mentorId?.userId?.desiredPosition || "Chuyên gia",
               rating: c.stats?.rating || 4.8,
               lessonsCount: totalCount,
-              lessons: lessons
+              lessons
             },
-            completedLessons: e.completedLessons || [],
+            completedLessons: completedLessonIds,
             progressPct: pct,
             isCompleted: pct === 100,
-            lastAccessed: e.lastAccessed
+            lastAccessed: e.lastAccessedAt
           };
         });
       console.log("[MyCourses] Mapped courses:", mapped);
