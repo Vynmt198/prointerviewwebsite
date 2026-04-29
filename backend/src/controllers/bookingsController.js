@@ -103,7 +103,7 @@ export class BookingsController {
       if (!result.ok) {
         return res.status(result.status).json({ success: false, error: result.error });
       }
-      res.json({ success: true, booking: result.booking });
+      res.json({ success: true, booking: result.booking, cancellationPolicy: result.cancellationPolicy });
     } catch (err) {
       next(err);
     }
