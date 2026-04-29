@@ -1,5 +1,5 @@
 import React from "react";
-import { NavLink, Outlet, useLocation, useNavigate } from "react-router";
+import { Link, NavLink, Outlet, useLocation, useNavigate } from "react-router";
 import {
   LayoutDashboard,
   Users,
@@ -16,11 +16,19 @@ import {
   Settings,
   Star,
   LifeBuoy,
+  User,
   LogOut,
   Sparkles,
   ChevronsUpDown,
 } from "lucide-react";
 import { logout, getUser, getInitials } from "../../utils/auth";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "../../components/ui/dropdown-menu";
 
 const IS = { strokeWidth: 1.75 };
 
@@ -49,6 +57,7 @@ export function AdminLayout() {
   const navigate = useNavigate();
   const location = useLocation();
   const user = getUser();
+  const displayName = user?.name || "Admin";
   const initials = getInitials(user?.name || "A");
   const navRef = React.useRef(null);
 
@@ -190,29 +199,52 @@ export function AdminLayout() {
           </div>
         </nav>
         <div className="border-t border-white/10 p-2">
-          <button type="button" className="flex h-11 w-full items-center gap-3 rounded-xl bg-white/5 px-3 py-2 transition-all hover:bg-white/10">
-            <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#6E35E8] to-[#8B4DFF] text-[11px] font-bold text-white">
-              {initials}
-            </div>
-            <div className="min-w-0 flex-1 text-left">
-              <p className="truncate text-[12px] font-medium text-white">{user?.name ?? "Admin"}</p>
-              <p className="truncate text-[10px] text-white/35">{user?.email ?? ""}</p>
-            </div>
-            <ChevronsUpDown className="h-3 w-3 shrink-0 text-white/25" />
-          </button>
-        </div>
-        <div className="border-t border-white/10 p-3">
-          <button
-            type="button"
-            onClick={async () => {
-              await logout();
-              navigate("/");
-            }}
-            className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-semibold text-red-300/90 transition-colors hover:bg-red-500/10 hover:text-red-200"
-          >
-            <LogOut className="h-4 w-4 shrink-0" {...IS} />
-            Đăng xuất
-          </button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                type="button"
+                className="flex h-11 w-full items-center gap-3 rounded-xl bg-white/5 px-3 py-2 transition-all hover:bg-white/10"
+              >
+                <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#6E35E8] to-[#8B4DFF] text-[11px] font-bold text-white">
+                  {initials}
+                </div>
+                <div className="min-w-0 flex-1 text-left">
+                  <p className="truncate text-[12px] font-medium text-white">{displayName}</p>
+                  <p className="truncate text-[10px] text-white/35">{user?.email ?? ""}</p>
+                </div>
+                <ChevronsUpDown className="h-3 w-3 shrink-0 text-white/25" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent side="top" align="end" className="mb-1 w-56">
+              <div className="border-b border-border px-3 py-2.5">
+                <p className="truncate text-sm font-semibold text-foreground">{displayName}</p>
+                <p className="mt-0.5 truncate text-xs text-muted-foreground">{user?.email || ""}</p>
+              </div>
+              <DropdownMenuItem asChild>
+                <Link to="/admin/settings" className="flex cursor-pointer items-center gap-2.5">
+                  <User className="size-4" />
+                  Hồ sơ cá nhân
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link to="/admin/settings" className="flex cursor-pointer items-center gap-2.5">
+                  <Settings className="size-4" />
+                  Cài đặt
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={async () => {
+                  await logout();
+                  navigate("/");
+                }}
+                className="flex cursor-pointer items-center gap-2.5 text-destructive focus:text-destructive"
+              >
+                <LogOut className="size-4" />
+                Đăng xuất
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </aside>
       <div className="relative z-10 flex h-screen min-w-0 flex-1 flex-col overflow-hidden">
