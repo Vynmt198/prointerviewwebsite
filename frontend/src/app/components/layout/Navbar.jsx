@@ -92,26 +92,26 @@ export function Navbar() {
 
   return (
     <header
-      className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b border-white/10 px-5 backdrop-blur-xl"
+      className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b px-5 backdrop-blur-xl"
       style={{
-        background: "rgba(18, 11, 46, 0.82)",
-        boxShadow:
-          "0 1px 0 rgba(255,255,255,0.06), 0 -1px 24px -8px rgba(196, 255, 71, 0.06) inset",
+        background: "rgba(255, 255, 255, 0.95)",
+        borderColor: "rgba(122,35,229,0.18)",
+        boxShadow: "0 1px 0 rgba(122,35,229,0.08)",
       }}
     >
-      <SidebarTrigger className="rounded-lg text-white/50 transition-colors hover:bg-white/10 hover:text-white" />
+      <SidebarTrigger className="rounded-lg text-[#7a23e5]/70 transition-colors hover:bg-[#7a23e5]/10 hover:text-[#7a23e5]" />
 
-      <div className="h-6 w-px shrink-0 bg-white/15" />
+      <div className="h-6 w-px shrink-0 bg-[#7a23e5]/20" />
 
       <div className="min-w-0 flex flex-col gap-0">
         <h1
-          className="truncate text-white"
+          className="truncate text-[#7a23e5]"
           style={{ fontSize: "0.9375rem", fontWeight: 700, lineHeight: 1.2, letterSpacing: "-0.015em" }}
         >
           {pageInfo.label}
         </h1>
         {pageInfo.sub && (
-          <p className="hidden truncate text-xs text-white/45 sm:block">{pageInfo.sub}</p>
+          <p className="hidden truncate text-xs text-[#8CAF2F] sm:block">{pageInfo.sub}</p>
         )}
       </div>
 
@@ -124,12 +124,12 @@ export function Navbar() {
               type="button"
               className="relative inline-flex size-9 items-center justify-center rounded-xl transition-all focus:outline-none"
               style={{
-                background: notifOpen ? "rgba(110,53,232,0.2)" : "transparent",
-                border: notifOpen ? "1px solid rgba(110,53,232,0.35)" : "1px solid transparent",
+                background: notifOpen ? "rgba(122,35,229,0.12)" : "transparent",
+                border: notifOpen ? "1px solid rgba(122,35,229,0.28)" : "1px solid transparent",
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.background = "rgba(110,53,232,0.15)";
-                e.currentTarget.style.border = "1px solid rgba(110,53,232,0.28)";
+                e.currentTarget.style.background = "rgba(122,35,229,0.1)";
+                e.currentTarget.style.border = "1px solid rgba(122,35,229,0.24)";
               }}
               onMouseLeave={(e) => {
                 if (!notifOpen) {
@@ -138,14 +138,14 @@ export function Navbar() {
                 }
               }}
             >
-              <Bell className="h-5 w-5 text-white/65" />
+              <Bell className="h-5 w-5 text-[#7a23e5]/75" />
               {unreadCount > 0 && (
                 <span
-                  className="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full font-bold text-white"
+                  className="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full font-bold text-[#1d1a26]"
                   style={{
-                    background: "linear-gradient(135deg, #6E35E8, #9B6DFF)",
+                    background: "linear-gradient(135deg, #B4F500, #D4FF00)",
                     fontSize: "0.6rem",
-                    boxShadow: "0 2px 8px rgba(110,53,232,0.55)",
+                    boxShadow: "0 2px 8px rgba(180,245,0,0.45)",
                   }}
                 >
                   {unreadCount}

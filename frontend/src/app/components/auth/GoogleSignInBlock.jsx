@@ -65,10 +65,10 @@ export function GoogleSignInBlock({ onError }) {
             type: "standard",
             theme: "outline",
             size: "large",
-            text: "continue_with",
+            text: "signin_with",
             shape: "pill",
             width: 360,
-            locale: "vi",
+            locale: "vi-VN",
           });
         }
         initialized.current = true;

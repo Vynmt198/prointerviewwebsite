@@ -40,7 +40,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
-import { getUser, logout, getInitials, getBrandClickPath } from "../../utils/auth";
+import { getUser, logout, getInitials, getBrandClickPath, getPlans } from "../../utils/auth";
 
 /* ── Nav data ─────────────────────────────────────────────── */
 const customerMainItems = [
@@ -74,9 +74,15 @@ export function AppSidebar() {
   const collapsed = state === "collapsed";
 
   const user = getUser();
+  const plans = getPlans();
   const displayName = user?.name || "Người dùng";
   const initials = getInitials(displayName);
   const isMentor = user?.role === "mentor";
+  const isElite = !!plans?.elitePro;
+  const isPro = !!plans?.starterPro && !isElite;
+  const upgradeTitle = isPro ? "Nâng cấp lên Elite" : "Nâng cấp lên Pro";
+  const upgradeButton = isPro ? "Xem gói Elite →" : "Xem gói Pro →";
+  const upgradeHint = isPro ? "Mở khóa toàn bộ tính năng" : "AI không giới hạn";
   const secondaryNav = [
     ...(user?.role === "admin" ? [{ title: "Quản trị", url: "/admin", icon: Shield }] : []),
     ...secondaryItems,
@@ -309,7 +315,7 @@ export function AppSidebar() {
         </SidebarGroup>
 
         {/* ── Upgrade CTA (expanded only) ─────── */}
-        {!isMentor && (
+        {!isMentor && !isElite && (
           <div className="mt-auto pt-3 group-data-[collapsible=icon]:hidden">
             <div
               className="rounded-2xl p-3.5"
@@ -326,8 +332,8 @@ export function AppSidebar() {
                   <Zap className="w-3.5 h-3.5" style={{ color: "#c4ff47" }} />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-white text-xs font-bold truncate">Nâng cấp lên Pro</p>
-                  <p className="text-white/40 text-[10px] truncate">AI không giới hạn</p>
+                  <p className="text-white text-xs font-bold truncate">{upgradeTitle}</p>
+                  <p className="text-white/40 text-[10px] truncate">{upgradeHint}</p>
                 </div>
               </div>
               <button
@@ -339,18 +345,18 @@ export function AppSidebar() {
                   boxShadow: "0 3px 14px rgba(196, 255, 71,0.32)",
                 }}
               >
-                Xem gói Pro →
+                {upgradeButton}
               </button>
             </div>
           </div>
         )}
 
         {/* ── Upgrade icon (collapsed only) ──── */}
-        {!isMentor && (
+        {!isMentor && !isElite && (
           <div className="hidden mt-auto pt-2 group-data-[collapsible=icon]:flex group-data-[collapsible=icon]:justify-center">
             <button
               onClick={() => navigate("/pricing")}
-              title="Nâng cấp Pro"
+              title={upgradeTitle}
               className="w-10 h-10 rounded-xl flex items-center justify-center transition-all hover:brightness-110"
               style={{ background: "rgba(196, 255, 71,0.12)", border: "1px solid rgba(196, 255, 71,0.22)" }}
             >
@@ -438,14 +444,14 @@ export function AppSidebar() {
                     Cài đặt
                   </Link>
                 </DropdownMenuItem>
-                {!isMentor && (
+                {!isMentor && !isElite && (
                   <DropdownMenuItem
                     onClick={() => navigate("/pricing")}
                     className="flex items-center gap-2.5 cursor-pointer"
                     style={{ color: "#6E35E8", fontWeight: 600 }}
                   >
                     <Zap className="size-4" />
-                    Nâng cấp lên Pro ↗
+                    {upgradeTitle} ↗
                   </DropdownMenuItem>
                 )}
 
