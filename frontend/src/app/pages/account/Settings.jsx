@@ -28,8 +28,8 @@ function ToggleSwitch({
     <button
       type="button"
       onClick={() => onChange(!enabled)}
-      className={`relative w-11 h-6 rounded-full transition-all duration-300 flex-shrink-0 focus:outline-none focus:ring-4 focus:ring-primary-fixed/20 ${
-        enabled ? colorClass : "bg-white/10"
+      className={`relative w-11 h-6 rounded-full transition-all duration-300 flex-shrink-0 focus:outline-none focus:ring-4 focus:ring-[#7a23e5]/20 ${
+        enabled ? colorClass : "bg-slate-300"
       }`}
     >
       <div
@@ -50,12 +50,12 @@ function SectionCard({
   return (
     <div className={`glass-card p-8 ${className}`}>
       {title && (
-         <div className="relative z-10 mb-8 flex items-center gap-3 border-b border-white/[0.08] pb-4">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-white/10 bg-white/[0.06] text-[#c4ff47]">
+         <div className="relative z-10 mb-8 flex items-center gap-3 border-b border-slate-200 pb-4">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-[#7a23e5]">
                {Icon && <Icon size={18} strokeWidth={2} />}
             </div>
             <div>
-               <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/90">{title}</h3>
+               <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-700">{title}</h3>
             </div>
          </div>
       )}
@@ -142,12 +142,12 @@ function NotificationsTab() {
       <SectionCard title="Trung tâm Thông báo" icon={Bell}>
         <div className="space-y-4">
           {push.map((item) => (
-            <div key={item.id} className="group flex items-center justify-between gap-6 rounded-2xl border border-white/[0.08] bg-white/[0.04] p-5">
+            <div key={item.id} className="group flex items-center justify-between gap-6 rounded-2xl border border-slate-200 bg-white p-5">
               <div>
-                <p className="mb-0.5 text-sm font-bold text-white">{item.label}</p>
-                <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-white/45">{item.description}</p>
+                <p className="mb-0.5 text-sm font-bold text-slate-900">{item.label}</p>
+                <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">{item.description}</p>
               </div>
-              <ToggleSwitch enabled={item.value} onChange={() => toggle(item.id)} />
+              <ToggleSwitch enabled={item.value} onChange={() => toggle(item.id)} colorClass="bg-[#A3D900]" />
             </div>
           ))}
         </div>
@@ -159,12 +159,17 @@ function NotificationsTab() {
 
 /* ─── TAB: Security ─────────────────────────────────────── */
 const MIN_PASS = 6;
+const DEFAULT_SECURITY_PREFS = [
+  { id: "two_factor", label: "Xác thực 2 bước", description: "Trình quản lý hệ thống", value: false },
+  { id: "login_alert", label: "Thông báo đăng nhập mới", description: "Trình quản lý hệ thống", value: true },
+];
 
 function SecurityTab({ profileFromServer, onProfileSynced }) {
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [saving, setSaving] = useState(false);
+  const [securityPrefs, setSecurityPrefs] = useState(DEFAULT_SECURITY_PREFS);
   /** Profile có `hasGoogleLogin` từ server (đồng bộ từ trang Settings + sau đổi MK) */
   const [sessionUser, setSessionUser] = useState(
     () => profileFromServer ?? getUser()
@@ -177,6 +182,9 @@ function SecurityTab({ profileFromServer, onProfileSynced }) {
   const hasGoogleLogin = Boolean(sessionUser?.hasGoogleLogin);
   /** Chỉ bắt buộc MK hiện tại khi server báo không có Google */
   const needsCurrentPassword = !hasGoogleLogin;
+  const toggleSecurityPref = (id) => {
+    setSecurityPrefs((prev) => prev.map((item) => (item.id === id ? { ...item, value: !item.value } : item)));
+  };
 
   const handleUpdatePassword = async () => {
     const np = newPassword.trim();
@@ -218,15 +226,33 @@ function SecurityTab({ profileFromServer, onProfileSynced }) {
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
+      <SectionCard title="Bảo mật đăng nhập" icon={ShieldCheck}>
+        <div className="space-y-6">
+          {securityPrefs.map((item) => (
+            <div key={item.id} className="group flex items-center justify-between gap-6 rounded-2xl border border-slate-200 bg-white p-5">
+              <div>
+                <p className="mb-0.5 text-sm font-bold text-slate-900">{item.label}</p>
+                <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">{item.description}</p>
+              </div>
+              <ToggleSwitch
+                enabled={item.value}
+                onChange={() => toggleSecurityPref(item.id)}
+                colorClass="bg-[#A3D900]"
+              />
+            </div>
+          ))}
+        </div>
+      </SectionCard>
+
       <SectionCard title="Cấu hình Bảo mật" icon={ShieldCheck}>
          <div className="grid md:grid-cols-2 gap-8 mb-6">
             <div className="space-y-3 md:col-span-2">
-               <label className="text-[10px] font-black uppercase tracking-widest text-white/45">
+               <label className="text-[10px] font-black uppercase tracking-widest text-slate-500">
                  Mật khẩu hiện tại
                  {needsCurrentPassword ? (
                    <span className="text-amber-400/90"> — bắt buộc</span>
                  ) : (
-                   <span className="text-white/40"> — không bắt buộc (đã liên kết Google)</span>
+                  <span className="text-slate-400"> — không bắt buộc (đã liên kết Google)</span>
                  )}
                </label>
                <input
@@ -243,7 +269,7 @@ function SecurityTab({ profileFromServer, onProfileSynced }) {
                />
             </div>
             <div className="space-y-3">
-               <label className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/45">Mật khẩu mới</label>
+               <label className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500">Mật khẩu mới</label>
                <input
                  type="password"
                  autoComplete="new-password"
@@ -254,7 +280,7 @@ function SecurityTab({ profileFromServer, onProfileSynced }) {
                />
             </div>
             <div className="space-y-3">
-               <label className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/45">Xác nhận mật khẩu mới</label>
+               <label className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500">Xác nhận mật khẩu mới</label>
                <input
                  type="password"
                  autoComplete="new-password"
@@ -269,7 +295,7 @@ function SecurityTab({ profileFromServer, onProfileSynced }) {
            type="button"
            disabled={saving}
            onClick={handleUpdatePassword}
-           className="px-8 py-4 rounded-xl bg-white/5 border border-white/10 text-[10px] font-black uppercase tracking-widest hover:bg-white/10 transition-all disabled:opacity-50"
+           className="px-8 py-4 rounded-xl bg-slate-100 border border-slate-300 text-slate-700 text-[10px] font-black uppercase tracking-widest hover:bg-slate-200 transition-all disabled:opacity-50"
          >
             {saving ? "Đang lưu…" : "Cập nhật mật khẩu"}
          </button>
@@ -277,14 +303,14 @@ function SecurityTab({ profileFromServer, onProfileSynced }) {
 
       <SectionCard title="Phiên đăng nhập" icon={Key}>
          <div className="space-y-4">
-            <div className="flex items-center justify-between rounded-2xl border border-white/[0.08] bg-white/[0.04] p-6">
+            <div className="flex items-center justify-between rounded-2xl border border-slate-200 bg-white p-6">
                <div className="flex items-center gap-5">
                   <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#c4ff47]/12 text-[#c4ff47]">
                      <Monitor size={20} strokeWidth={2} />
                   </div>
                   <div>
-                     <p className="text-sm font-bold text-white">Browser · Windows Desktop</p>
-                     <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-white/45">Hà Nội · <span className="text-emerald-400">Đang hoạt động</span></p>
+                     <p className="text-sm font-bold text-slate-900">Browser · Windows Desktop</p>
+                     <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-500">Hà Nội · <span className="text-emerald-500">Đang hoạt động</span></p>
                   </div>
                </div>
             </div>
@@ -295,75 +321,21 @@ function SecurityTab({ profileFromServer, onProfileSynced }) {
 }
 
 /* ─── TAB: Account ──────────────────────────────────────── */
-function AccountTab() {
-  const navigate = useNavigate();
-  const plans = getPlans();
-  
-  const planInfo = (() => {
-    if (plans.elitePro) return {
-      name: "Thượng hạng (Elite)",
-      desc: "Trải nghiệm không giới hạn · Phân tích hành vi · Mentor 1-1",
-      grad: "linear-gradient(135deg, #0E0922 0%, #1a0d35 100%)",
-      accent: "#c4ff47"
-    };
-    if (plans.starterPro) return {
-      name: "Chuyên nghiệp (Pro)",
-      desc: "Phỏng vấn AI · Nhận diện giọng nói · 10 buổi/tháng",
-      grad: "linear-gradient(135deg, #6E35E8 0%, #8B4DFF 100%)",
-      accent: "#6E35E8"
-    };
-    return {
-      name: "Cơ bản (Free)",
-      desc: "2 buổi AI miễn phí · 3 lần phân tích CV",
-      grad: "linear-gradient(145deg, #20134a 0%, #2e2069 100%)",
-      accent: "#f59e0b"
-    };
-  })();
-
+function AccountTab({ onLogout }) {
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
-      <div className="glass-card overflow-hidden group">
-         <div className="p-10 flex flex-col lg:flex-row lg:items-center justify-between gap-10" style={{ background: planInfo.grad }}>
-            <div className="relative z-10 max-w-lg">
-               <p className="mb-3 text-[10px] font-black uppercase tracking-[0.3em] text-white/40">Gói dịch vụ</p>
-               <h3 className="mb-2 flex items-center gap-3 text-3xl font-black tracking-tighter text-white">
-                  {planInfo.name} <Zap size={24} className="text-primary-fixed" />
-               </h3>
-               <p className="mb-8 text-sm font-medium text-white/60">{planInfo.desc}</p>
-               
-               <div className="flex flex-wrap gap-4">
-                  <button onClick={() => navigate("/pricing")} className="px-8 py-4 rounded-xl bg-white text-black font-black text-[10px] uppercase tracking-widest transition-all shadow-xl flex items-center gap-2">
-                     Khám phá các Gói <ArrowRight size={14} />
-                  </button>
-                  <button onClick={() => navigate("/pricing")} className="rounded-xl border border-white/20 bg-white/10 px-8 py-4 text-[10px] font-black uppercase tracking-widest text-white transition-all hover:bg-white/20">
-                     Bảng giá
-                  </button>
-               </div>
-            </div>
-            <Zap size={80} className="absolute -bottom-4 -right-4 rotate-12 text-white/5" />
-         </div>
-      </div>
-
-      <SectionCard title="Dữ liệu" icon={Download}>
-         <div className="flex items-center justify-between gap-8">
-            <div>
-               <p className="text-sm font-bold text-white mb-1">Xuất dữ liệu hệ thống</p>
-               <p className="text-[10px] font-medium text-white/45">Sao lưu lịch sử luyện tập và cấu hình (JSON).</p>
-            </div>
-            <button className="w-12 h-12 rounded-xl bg-white/5 border border-white/10 text-white hover:bg-white/10 transition-all flex items-center justify-center">
-               <Download size={20} />
-            </button>
-         </div>
-      </SectionCard>
-
       <SectionCard title="Tài khoản" icon={Trash}>
-         <div className="bg-red-500/[0.02] border border-red-500/10 p-8 rounded-2xl flex flex-col lg:flex-row lg:items-center justify-between gap-8">
-            <div className="max-w-md">
-               <h4 className="text-red-500 text-[10px] font-black uppercase tracking-widest mb-2">Vùng xóa dữ liệu</h4>
-               <p className="text-xs font-medium text-white/45">Tiến trình và đặc quyền sẽ bị gỡ bỏ vĩnh viễn.</p>
+         <div className="border border-red-300/40 bg-red-50/60 p-8 rounded-2xl flex flex-col lg:flex-row lg:items-center justify-between gap-8">
+            <div className="max-w-md text-center lg:text-left">
+               <h4 className="text-slate-900 text-3xl font-black tracking-tight mb-3">Vùng nguy hiểm</h4>
+               <p className="text-base font-semibold text-slate-600">Bạn có muốn hủy kích hoạt tài khoản vĩnh viễn?</p>
             </div>
-            <button className="rounded-xl bg-red-600 px-8 py-4 text-[10px] font-black uppercase tracking-widest text-white shadow-lg transition-all hover:bg-red-500">
-               Xác nhận xóa
+            <button
+              type="button"
+              onClick={onLogout}
+              className="px-10 py-4 rounded-2xl border border-red-300 text-red-500 text-[10px] font-black uppercase tracking-widest hover:bg-red-500 hover:text-white transition-all"
+            >
+              Đăng xuất tài khoản
             </button>
          </div>
       </SectionCard>
@@ -400,48 +372,41 @@ export function Settings() {
   };
 
   return (
-    <div className="pi-page-dashboard-bg relative min-h-screen overflow-x-hidden pb-32 font-sans text-white selection:bg-[rgba(196,255,71,0.28)] selection:text-white">
+    <div className="relative min-h-screen overflow-x-hidden pb-32 font-sans bg-[#f8f4ff] text-slate-900 selection:bg-[rgba(122,35,229,0.18)] selection:text-slate-900">
       <style>{`
         .glass-card {
-           background: linear-gradient(145deg, rgba(255,255,255,0.07) 0%, rgba(255,255,255,0.02) 100%);
-           backdrop-filter: blur(48px);
+           background: #ffffff;
+           backdrop-filter: none;
            border-radius: 28px;
-           border: 1px solid rgba(255, 255, 255, 0.1);
+           border: 1px solid rgba(148, 163, 184, 0.28);
            transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.35s ease, box-shadow 0.45s ease;
            position: relative;
            overflow: hidden;
+           box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
         }
         .glass-card::before {
-           content: '';
-           position: absolute;
-           inset: 0;
-           background: linear-gradient(125deg, rgba(236,72,153,0.08) 0%, transparent 42%, rgba(196, 255, 71,0.06) 100%);
-           pointer-events: none;
-           opacity: 0.85;
+           content: none;
         }
         .glass-card:hover {
-           border-color: rgba(196, 255, 71, 0.42);
-           transform: translateY(-3px);
-           box-shadow:
-             0 24px 48px rgba(0,0,0,0.45),
-             0 0 0 1px rgba(196, 255, 71, 0.12) inset,
-             0 0 40px -8px rgba(196, 255, 71, 0.22);
+           border-color: rgba(122, 35, 229, 0.28);
+           transform: translateY(-2px);
+           box-shadow: 0 16px 32px rgba(15, 23, 42, 0.08);
         }
         .settings-glass-nav {
-           background: linear-gradient(145deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 100%);
-           backdrop-filter: blur(40px);
-           border: 1px solid rgba(255, 255, 255, 0.1);
+           background: #ffffff;
+           backdrop-filter: none;
+           border: 1px solid rgba(148, 163, 184, 0.28);
         }
-        .settings-glass-nav:hover { border-color: rgba(255,255,255,0.14); }
+        .settings-glass-nav:hover { border-color: rgba(122, 35, 229, 0.22); }
         .font-headline {
           letter-spacing: -0.045em;
           text-shadow: 0 2px 24px rgba(0,0,0,0.35);
         }
         .input-glass {
-           background: rgba(255, 255, 255, 0.05);
-           border: 1px solid rgba(255, 255, 255, 0.1);
+           background: #ffffff;
+           border: 1px solid #e2e8f0;
            border-radius: 14px;
-           color: white;
+           color: #0f172a;
            padding: 12px 16px;
            font-size: 0.875rem;
            font-weight: 500;
@@ -449,30 +414,37 @@ export function Settings() {
            transition: border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
         }
         .input-glass:focus {
-           background: rgba(255, 255, 255, 0.08);
-           border-color: rgba(196, 255, 71, 0.45);
+           background: #ffffff;
+           border-color: rgba(122, 35, 229, 0.45);
            outline: none;
-           box-shadow: 0 0 0 2px rgba(196, 255, 71, 0.12);
+           box-shadow: 0 0 0 2px rgba(122, 35, 229, 0.12);
         }
-        .input-glass::placeholder { color: rgba(255,255,255,0.32); }
+        .input-glass::placeholder { color: #94a3b8; }
         @keyframes settings-shimmer {
           0% { opacity: 0.4; transform: translate(0,0) scale(1); }
           50% { opacity: 0.7; transform: translate(2%, -2%) scale(1.05); }
           100% { opacity: 0.4; transform: translate(0,0) scale(1); }
         }
+        .pricing-grid {
+          position: fixed;
+          inset: 0;
+          z-index: -2;
+          pointer-events: none;
+          opacity: 1;
+          background-image:
+            linear-gradient(rgba(148,71,255,0.06) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(148,71,255,0.06) 1px, transparent 1px);
+          background-size: 64px 64px;
+        }
       `}</style>
 
-      <div
-        className="pointer-events-none fixed inset-0 -z-10 opacity-90"
-        style={{ animation: "settings-shimmer 14s ease-in-out infinite" }}
-      >
-        <div className="absolute top-[-20%] right-[-10%] h-[70vh] w-[70vh] rounded-full bg-gradient-to-bl from-fuchsia-600/35 via-violet-600/20 to-transparent blur-[100px]" />
-        <div className="absolute bottom-[-25%] left-[-15%] h-[85vh] w-[85vh] rounded-full bg-gradient-to-tr from-[#c4ff47]/18 via-cyan-500/10 to-fuchsia-500/20 blur-[110px]" />
-        <div className="absolute left-1/2 top-1/2 h-[50vh] w-[50vh] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#6E35E8]/12 blur-[90px]" />
-      </div>
+      <div className="pricing-grid" aria-hidden />
+      <div className="fixed inset-0 pointer-events-none -z-[3]" style={{ background: "#f8f4ff" }} />
+      <div className="fixed top-[-20%] left-[-10%] w-[700px] h-[700px] rounded-full pointer-events-none -z-0 bg-[#d4ff00]/35 blur-[130px]" />
+      <div className="fixed bottom-[-20%] right-[-8%] w-[760px] h-[760px] rounded-full pointer-events-none -z-0 bg-[#9447ff]/25 blur-[140px]" />
 
       {/* ── Hero ── */}
-      <header className="relative border-b border-white/[0.07] pb-10 pt-8 sm:pb-12 sm:pt-10">
+      <header className="relative border-b border-slate-200 pb-10 pt-8 sm:pb-12 sm:pt-10">
         <div
           className="pointer-events-none absolute inset-0 opacity-[0.11]"
           style={{
@@ -483,16 +455,10 @@ export function Settings() {
           aria-hidden
         />
         <div className="relative z-10 mx-auto max-w-6xl px-6 sm:px-8">
-          <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.22em] text-white/45">Bảng điều khiển</p>
-          <h1 className="font-headline mb-3 text-4xl font-black tracking-tighter text-white sm:text-5xl md:text-6xl">
-            <span className="bg-gradient-to-r from-white via-fuchsia-100 to-zinc-300 bg-clip-text text-transparent">
-              Hệ thống{" "}
-            </span>
-            <span className="bg-gradient-to-r from-[#c4ff47] via-lime-300 to-emerald-300 bg-clip-text text-transparent">
-              Cài đặt
-            </span>
+          <h1 className="font-headline mb-3 text-4xl font-black tracking-tighter text-slate-900 sm:text-5xl md:text-6xl">
+            Hệ thống Cài đặt
           </h1>
-          <p className="max-w-2xl text-sm leading-relaxed text-white/55">
+          <p className="max-w-2xl text-sm leading-relaxed text-slate-600">
             Quản trị cấu hình bảo mật và cá nhân hóa trải nghiệm ProInterview Web.
           </p>
         </div>
@@ -511,7 +477,7 @@ export function Settings() {
                            type="button"
                            onClick={() => setActiveTab(tab.id)}
                            className={`group relative mb-1 flex w-full items-center justify-between rounded-[20px] px-5 py-4 text-left transition-all last:mb-0 ${
-                              isActive ? "bg-white text-black shadow-lg shadow-black/25" : "text-white/50 hover:bg-white/[0.06] hover:text-white"
+                              isActive ? "bg-[#f7f1ff] text-[#1d1a26] shadow-lg shadow-violet-200/40" : "text-slate-500 hover:bg-slate-100 hover:text-slate-900"
                            }`}
                         >
                            <div className="flex items-center gap-3">
@@ -522,7 +488,7 @@ export function Settings() {
                         </button>
                      );
                   })}
-                  <div className="mt-2 border-t border-white/[0.08] pt-2">
+                  <div className="mt-2 border-t border-slate-200 pt-2">
                      <button type="button" onClick={handleLogout} className="flex w-full items-center gap-3 rounded-[20px] px-5 py-4 text-left text-red-400 transition-colors hover:bg-red-500/10 hover:text-red-300">
                         <LogOut size={18} strokeWidth={2} />
                         <span className="text-[10px] font-bold uppercase tracking-[0.18em]">Đăng xuất</span>
@@ -541,7 +507,7 @@ export function Settings() {
                       onProfileSynced={(u) => setProfileFromServer(u)}
                     />
                   )}
-                  {activeTab === "account" && <AccountTab />}
+                  {activeTab === "account" && <AccountTab onLogout={handleLogout} />}
                </div>
             </main>
          </div>

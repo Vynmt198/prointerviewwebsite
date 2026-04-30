@@ -24,7 +24,6 @@ import {
   BrainCircuit,
   Target,
   Trophy,
-  Sparkles,
   XCircle,
 } from "lucide-react";
 import { getUser, getPlans, isLoggedIn } from "../../utils/auth";
@@ -328,7 +327,7 @@ export function Dashboard() {
   };
 
   return (
-    <div className="relative min-h-screen overflow-x-hidden pb-20 font-sans text-slate-900 selection:bg-[rgba(124,58,237,0.18)] selection:text-slate-900 bg-slate-50">
+    <div className="relative min-h-screen overflow-x-hidden pb-20 font-sans text-slate-900 selection:bg-[rgba(122,35,229,0.18)] selection:text-slate-900 bg-[#f8f4ff]">
       <style>{`
         .glass-card {
            background: #ffffff;
@@ -386,9 +385,23 @@ export function Dashboard() {
           transform: rotate(-2deg);
           box-shadow: 4px 4px 0 rgba(0,0,0,0.35);
         }
+        .pricing-grid {
+          position: fixed;
+          inset: 0;
+          z-index: -2;
+          pointer-events: none;
+          opacity: 1;
+          background-image:
+            linear-gradient(rgba(148,71,255,0.06) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(148,71,255,0.06) 1px, transparent 1px);
+          background-size: 64px 64px;
+        }
       `}</style>
 
-      <div className="fixed inset-0 pointer-events-none -z-10 bg-slate-50" />
+      <div className="pricing-grid" aria-hidden />
+      <div className="fixed inset-0 pointer-events-none -z-[3]" style={{ background: "#f8f4ff" }} />
+      <div className="fixed top-[-20%] left-[-10%] w-[700px] h-[700px] rounded-full pointer-events-none -z-0 bg-[#d4ff00]/35 blur-[130px]" />
+      <div className="fixed bottom-[-20%] right-[-8%] w-[760px] h-[760px] rounded-full pointer-events-none -z-0 bg-[#9447ff]/25 blur-[140px]" />
 
       <header className="relative pt-3 pb-4">
         <div
@@ -408,15 +421,14 @@ export function Dashboard() {
             className="flex items-center gap-4 sm:gap-6"
           >
             <div className="relative group">
-              <div className="relative flex h-[4.6rem] w-[4.6rem] items-center justify-center overflow-hidden rounded-[20px] border border-violet-200 bg-violet-600 text-2xl font-black text-white shadow-md sm:h-20 sm:w-20 sm:text-3xl">
-                <Sparkles className="absolute top-2 right-2 w-4 h-4 text-lime-300 opacity-80" strokeWidth={2.2} />
+              <div className="relative flex h-[4.6rem] w-[4.6rem] items-center justify-center overflow-hidden rounded-[20px] border-[3px] border-[#7a23e5] bg-[#f8f5ff] text-2xl font-black text-[#7a23e5] shadow-[0_10px_24px_rgba(122,35,229,0.25)] sm:h-20 sm:w-20 sm:text-3xl">
                 <span className="relative z-10 tracking-tight">{initials}</span>
               </div>
             </div>
             <div>
               <h1 className="text-3xl sm:text-4xl font-black tracking-tight leading-[1.08]">
                 <span className="text-slate-900">Chào, </span>
-                <span className="text-indigo-600">{fullName.split(" ").slice(-1)[0]}</span>
+                <span className="text-[#7a23e5]">{fullName}</span>
                 <span className="text-slate-900">!</span>
               </h1>
               <p className="mt-1 text-sm font-semibold text-slate-600 max-w-md">
@@ -441,8 +453,8 @@ export function Dashboard() {
       <main className="relative z-10 p-6 sm:p-8 max-w-7xl mx-auto mt-0">
         <div className="grid grid-cols-12 gap-8 lg:gap-10">
           <div className="col-span-12 lg:col-span-8 space-y-10 lg:space-y-12">
-            <div className="glass-card p-10 bg-gradient-to-br from-white to-slate-50 border-slate-200">
-               <div className="flex items-center justify-between mb-10">
+            <div className="glass-card p-7 sm:p-8 bg-gradient-to-br from-white to-slate-50 border-slate-200 h-[300px] lg:h-[320px] flex flex-col overflow-hidden">
+               <div className="flex items-center justify-between mb-4">
                   <h3 className="text-sm font-black text-slate-900 uppercase tracking-[0.14em] flex items-center gap-3">
                      <div className="w-8 h-8 rounded-xl bg-secondary/20 flex items-center justify-center text-secondary">
                         <Calendar size={18} />
@@ -456,7 +468,7 @@ export function Dashboard() {
                   )}
                </div>
 
-               <div className="space-y-6 relative">
+               <div className="space-y-4 relative flex-1 overflow-y-auto pr-1">
                  {upcomingSessions.length === 0 ? (
                     <div className="py-16 text-center border-2 border-dashed border-slate-200 rounded-[40px] bg-slate-50/70">
                        <div className="w-16 h-16 bg-slate-200 rounded-full flex items-center justify-center mx-auto mb-6 opacity-80">
@@ -467,9 +479,9 @@ export function Dashboard() {
                           <span className="text-zinc-700 italic font-medium">Chưa có lịch hẹn nào được ghi nhận</span>
                        </p>
                     </div>
-                 ) : upcomingSessions.slice(0, 3).map((s, i) => (
-                    <div key={i} className="group relative p-6 rounded-[32px] bg-white border border-slate-200 hover:bg-slate-50 hover:border-slate-300 transition-all duration-500">
-                       <div className="flex gap-5 items-center">
+                 ) : upcomingSessions.slice(0, 2).map((s, i) => (
+                    <div key={i} className="group relative p-4 rounded-[24px] bg-white border border-slate-200 hover:bg-slate-50 hover:border-slate-300 transition-all duration-500">
+                       <div className="flex gap-3 items-center">
                           <div className="relative shrink-0">
                              <div className="w-14 h-14 rounded-2xl overflow-hidden border-2 border-slate-200 group-hover:border-secondary/40 transition-colors bg-white flex items-center justify-center">
                                 {s.mentorAvatar ? (
@@ -506,13 +518,13 @@ export function Dashboard() {
                        </div>
                        
                        {s.status === "confirmed" && (
-                         <div className="mt-6 pt-5 border-t border-slate-200 flex gap-3">
-                            <button className="flex-1 h-12 rounded-2xl bg-secondary text-black font-black text-[10px] uppercase tracking-widest hover:scale-[1.02] active:scale-[0.98] transition-all shadow-[0_10px_30px_rgba(232,121,249,0.2)]">
+                         <div className="mt-4 pt-3 border-t border-slate-200 flex gap-2">
+                            <button className="flex-1 h-10 rounded-xl bg-secondary text-black font-black text-[10px] uppercase tracking-widest hover:scale-[1.02] active:scale-[0.98] transition-all shadow-[0_10px_30px_rgba(232,121,249,0.2)]">
                                Vào phòng phỏng vấn
                             </button>
                             <button 
                               onClick={() => setCancellingBooking(s)}
-                              className="w-12 h-12 rounded-2xl bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-400 hover:bg-red-500/10 hover:border-red-500/20 hover:text-red-400 transition-all"
+                              className="w-10 h-10 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-400 hover:bg-red-500/10 hover:border-red-500/20 hover:text-red-400 transition-all"
                               title="Hủy lịch hẹn (không hoàn tiền)"
                             >
                                <XCircle size={18} />
@@ -523,8 +535,8 @@ export function Dashboard() {
                  ))}
                </div>
                
-               {upcomingSessions.length > 3 && (
-                 <button className="w-full mt-8 py-3 text-[10px] font-black text-slate-500 uppercase tracking-[0.1em] hover:text-slate-800 transition-colors">
+               {upcomingSessions.length > 2 && (
+                 <button className="w-full mt-4 py-2 text-[10px] font-black text-slate-500 uppercase tracking-[0.1em] hover:text-slate-800 transition-colors">
                     Xem tất cả lịch hẹn ({upcomingSessions.length})
                  </button>
                )}
@@ -532,7 +544,7 @@ export function Dashboard() {
 
             <div className="space-y-3">
               <p className="text-[11px] font-black text-slate-700 px-1">Số liệu từ lịch sử trên máy bạn.</p>
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 items-stretch">
                 <LushMetric
                   label="Phiên phỏng vấn AI"
                   value={totalInterviews}
@@ -603,17 +615,10 @@ export function Dashboard() {
 
           <aside className="col-span-12 lg:col-span-4 space-y-8 lg:space-y-10">
             <div className="space-y-5">
-               <div className="flex items-center gap-2.5 mb-1">
-                  <div className="tech-dot" />
-                  <span className="text-xs font-bold uppercase tracking-[0.08em] text-slate-600">
-                     Quick actions
-                  </span>
-               </div>
-               
                <button
                   type="button"
                   onClick={() => navigate("/interview")}
-                  className="text-left rounded-[30px] text-white p-7 sm:p-8 shadow-[0_18px_45px_rgba(124,58,237,0.3)] transition-transform hover:-translate-y-0.5 active:scale-[0.99]"
+                  className="w-full min-h-[300px] lg:min-h-[320px] text-left rounded-[30px] text-white p-7 sm:p-8 shadow-[0_18px_45px_rgba(124,58,237,0.3)] transition-transform hover:-translate-y-0.5 active:scale-[0.99] flex flex-col"
                   style={{ background: "#6f35ff" }}
                >
                   <div
@@ -672,7 +677,7 @@ function LushMetric({ label, value, icon: Icon, accent, color, caption }) {
       animate={{ opacity: 1, y: 0 }}
       transition={{ type: "spring", stiffness: 140, damping: 18 }}
       title={caption}
-      className="glass-card p-5 sm:p-6 group flex flex-col items-stretch text-left h-full"
+      className="glass-card p-5 sm:p-6 group flex flex-col items-stretch text-left h-[280px]"
     >
       <div className="flex flex-col items-center text-center sm:items-start sm:text-left w-full">
         <div className="glow-halo mb-4 mx-auto sm:mx-0">
@@ -697,7 +702,7 @@ function LushMetric({ label, value, icon: Icon, accent, color, caption }) {
         </h4>
       </div>
       {caption ? (
-        <p className="mt-4 pt-3 border-t border-slate-200 text-xs sm:text-sm leading-relaxed text-slate-600 font-medium">
+        <p className="mt-4 pt-3 border-t border-slate-200 text-xs leading-snug text-slate-600 font-medium">
           {caption}
         </p>
       ) : null}
@@ -712,7 +717,7 @@ function LushActionTile({ title, desc, onClick, icon: Icon, accent, accent2, isL
       type="button"
       onClick={onClick}
       whileTap={{ scale: 0.97 }}
-      className={`glass-card text-left group relative border-slate-300 active:scale-[0.98] ${isLarge ? "p-10 sm:p-12" : "p-7 sm:p-8"}`}
+      className={`glass-card text-left group relative border-slate-300 active:scale-[0.98] h-full ${isLarge ? "p-10 sm:p-12" : "p-5 sm:p-6 h-[280px]"}`}
       style={{
         borderColor: `${accent}55`,
         boxShadow: isLarge ? `0 0 0 1px ${borderGlow}22, 0 12px 24px rgba(15,23,42,0.08)` : undefined,
@@ -737,7 +742,7 @@ function LushActionTile({ title, desc, onClick, icon: Icon, accent, accent2, isL
           </span>
         </h4>
         <p
-          className={`text-slate-600 font-semibold leading-relaxed group-hover:text-slate-700 transition-colors ${isLarge ? "text-sm" : "text-[11px] sm:text-xs line-clamp-2"}`}
+          className={`text-slate-600 font-semibold leading-relaxed group-hover:text-slate-700 transition-colors ${isLarge ? "text-sm" : "text-[11px] sm:text-xs"}`}
         >
           {desc}
         </p>

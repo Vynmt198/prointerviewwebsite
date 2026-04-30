@@ -13,8 +13,6 @@ import {
   Users,
   TrendingUp as TrendUp,
   Camera,
-  Bell,
-  ShieldCheck,
   ChevronRight as CaretRight,
   Zap as Lightning,
   Medal,
@@ -40,31 +38,10 @@ const ACHIEVEMENTS = [
   { icon: TrendUp, label: "Cải thiện 50%", color: "from-[#9B6DFF] to-purple-600", earned: false },
 ];
 
-const SETTINGS_SECTIONS = [
-  {
-    title: "Thông báo",
-    icon: Bell,
-    items: [
-      { label: "Nhắc nhở buổi phỏng vấn", enabled: true },
-      { label: "Phản hồi từ mentor", enabled: true },
-      { label: "Gợi ý luyện tập hàng tuần", enabled: false },
-    ],
-  },
-  {
-    title: "Bảo mật",
-    icon: ShieldCheck,
-    items: [
-      { label: "Xác thực 2 bước", enabled: false },
-      { label: "Thông báo đăng nhập mới", enabled: true },
-    ],
-  },
-];
-
 export function Profile() {
   const navigate = useNavigate();
   const user = getUser();
   const [editing, setEditing] = useState(false);
-  const [settings, setSettings] = useState(SETTINGS_SECTIONS);
   const [plans, setPlans] = useState(getPlans());
   const [form, setForm] = useState({
     name: user?.name || "",
@@ -166,21 +143,6 @@ export function Profile() {
     navigate("/");
   };
 
-  const toggleSetting = (sectionIdx, itemIdx) => {
-    setSettings((prev) =>
-      prev.map((s, si) =>
-        si === sectionIdx
-          ? {
-              ...s,
-              items: s.items.map((item, ii) =>
-                ii === itemIdx ? { ...item, enabled: !item.enabled } : item
-              ),
-            }
-          : s
-      )
-    );
-  };
-
   const STATS = [
     { label: "Tổng phỏng vấn AI", value: "15", icon: Microphone, color: "#6E35E8" },
     { label: "Phỏng vấn Mentor", value: "3", icon: Users, color: "#B4F500" },
@@ -229,6 +191,8 @@ export function Profile() {
       accent: "#f59e0b"
     };
   })();
+  const upgradeLabel = plans.starterPro ? "Elite" : "Chuyên nghiệp (Pro)";
+  const canUpgradePlan = !plans.elitePro;
 
   React.useEffect(() => {
     const refresh = () => setPlans(getPlans());
@@ -260,32 +224,25 @@ export function Profile() {
   }, [isMentor]);
 
   return (
-    <div className="pi-page-dashboard-bg relative min-h-screen overflow-x-hidden pb-20 font-sans text-white selection:bg-[rgba(196,255,71,0.28)] selection:text-white">
+    <div className="relative min-h-screen overflow-x-hidden pb-20 font-sans bg-[#f8f4ff] text-slate-900 selection:bg-[rgba(122,35,229,0.18)] selection:text-slate-900">
       <style>{`
         .glass-card {
-           background: linear-gradient(145deg, rgba(255,255,255,0.07) 0%, rgba(255,255,255,0.02) 100%);
-           backdrop-filter: blur(48px);
+           background: #ffffff;
+           backdrop-filter: none;
            border-radius: 28px;
-           border: 1px solid rgba(255, 255, 255, 0.1);
+           border: 1px solid rgba(148, 163, 184, 0.28);
            transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.35s ease, box-shadow 0.45s ease;
            position: relative;
            overflow: hidden;
+           box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
         }
         .glass-card::before {
-           content: '';
-           position: absolute;
-           inset: 0;
-           background: linear-gradient(125deg, rgba(236,72,153,0.08) 0%, transparent 42%, rgba(196, 255, 71,0.06) 100%);
-           pointer-events: none;
-           opacity: 0.85;
+           content: none;
         }
         .glass-card:hover {
-           border-color: rgba(196, 255, 71, 0.42);
-           transform: translateY(-4px);
-           box-shadow:
-             0 24px 48px rgba(0,0,0,0.45),
-             0 0 0 1px rgba(196, 255, 71, 0.12) inset,
-             0 0 40px -8px rgba(196, 255, 71, 0.22);
+           border-color: rgba(122, 35, 229, 0.28);
+           transform: translateY(-2px);
+           box-shadow: 0 16px 32px rgba(15, 23, 42, 0.08);
         }
         .font-headline {
           letter-spacing: -0.045em;
@@ -307,10 +264,10 @@ export function Profile() {
            50% { transform: scale(1.15); opacity: 0.95; }
         }
         .input-glass {
-           background: rgba(255, 255, 255, 0.05);
-           border: 1px solid rgba(255, 255, 255, 0.1);
+           background: #ffffff;
+           border: 1px solid #e2e8f0;
            border-radius: 14px;
-           color: white;
+           color: #0f172a;
            padding: 12px 16px;
            font-size: 0.875rem;
            font-weight: 500;
@@ -318,13 +275,13 @@ export function Profile() {
            transition: border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
         }
         .input-glass:focus {
-           background: rgba(255, 255, 255, 0.08);
-           border-color: rgba(196, 255, 71, 0.45);
+           background: #ffffff;
+           border-color: rgba(122, 35, 229, 0.45);
            outline: none;
-           box-shadow: 0 0 0 2px rgba(196, 255, 71, 0.12);
+           box-shadow: 0 0 0 2px rgba(122, 35, 229, 0.12);
         }
         .input-glass:disabled { opacity: 0.55; cursor: not-allowed; }
-        .input-glass::placeholder { color: rgba(255,255,255,0.32); }
+        .input-glass::placeholder { color: #94a3b8; }
         .profile-glass-danger:hover {
           transform: none;
           border-color: rgba(239, 68, 68, 0.4);
@@ -335,30 +292,31 @@ export function Profile() {
           50% { opacity: 0.7; transform: translate(2%, -2%) scale(1.05); }
           100% { opacity: 0.4; transform: translate(0,0) scale(1); }
         }
+        .pricing-grid {
+          position: fixed;
+          inset: 0;
+          z-index: -2;
+          pointer-events: none;
+          opacity: 1;
+          background-image:
+            linear-gradient(rgba(148,71,255,0.06) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(148,71,255,0.06) 1px, transparent 1px);
+          background-size: 64px 64px;
+        }
       `}</style>
 
-      <div
-        className="pointer-events-none fixed inset-0 -z-10 opacity-90"
-        style={{ animation: "profile-shimmer 14s ease-in-out infinite" }}
-      >
-        <div className="absolute top-[-20%] right-[-10%] h-[70vh] w-[70vh] rounded-full bg-gradient-to-bl from-fuchsia-600/35 via-violet-600/20 to-transparent blur-[100px]" />
-        <div className="absolute bottom-[-25%] left-[-15%] h-[85vh] w-[85vh] rounded-full bg-gradient-to-tr from-[#c4ff47]/18 via-cyan-500/10 to-fuchsia-500/20 blur-[110px]" />
-        <div className="absolute left-1/2 top-1/2 h-[50vh] w-[50vh] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#6E35E8]/12 blur-[90px]" />
-      </div>
-
+      <div className="pricing-grid" aria-hidden />
+      <div className="fixed inset-0 pointer-events-none -z-[3]" style={{ background: "#f8f4ff" }} />
+      <div className="fixed top-[-20%] left-[-10%] w-[700px] h-[700px] rounded-full pointer-events-none -z-0 bg-[#d4ff00]/35 blur-[130px]" />
+      <div className="fixed bottom-[-20%] right-[-8%] w-[760px] h-[760px] rounded-full pointer-events-none -z-0 bg-[#9447ff]/25 blur-[140px]" />
       <div className="relative z-10 mx-auto max-w-6xl px-6 pb-8 pt-8 sm:px-8 sm:pt-10">
-        <div className="mb-10 flex flex-col justify-between gap-8 border-b border-white/[0.07] pb-10 md:mb-12 md:flex-row md:items-end">
+        <div className="mb-10 flex flex-col justify-between gap-8 border-b border-slate-200 pb-10 md:mb-12 md:flex-row md:items-end">
           <div className="min-w-0">
-            <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.22em] text-white/45">Tài khoản</p>
-            <h1 className="font-headline mb-2 text-4xl font-black tracking-tighter text-white sm:text-5xl md:text-6xl">
-              <span className="bg-gradient-to-r from-white via-fuchsia-100 to-zinc-300 bg-clip-text text-transparent">
-                Hồ sơ{" "}
-              </span>
-              <span className="bg-gradient-to-r from-[#c4ff47] via-lime-300 to-emerald-300 bg-clip-text text-transparent">
-                cá nhân
-              </span>
+            <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.22em] text-slate-500">Tài khoản</p>
+            <h1 className="font-headline mb-2 text-4xl font-black tracking-tighter text-slate-900 sm:text-5xl md:text-6xl">
+              Hồ sơ cá nhân
             </h1>
-            <p className="max-w-lg text-sm leading-relaxed text-white/55">
+            <p className="max-w-lg text-sm leading-relaxed text-slate-600">
               Trung tâm cấu hình và quản trị tài khoản tối ưu
             </p>
           </div>
@@ -366,7 +324,7 @@ export function Profile() {
           <div className="flex gap-4">
             {editing ? (
                <>
-                 <button onClick={() => setEditing(false)} className="px-6 py-3 rounded-2xl bg-white/5 border border-white/10 text-xs font-black uppercase tracking-widest hover:bg-white/10 transition-all flex items-center gap-2">
+                 <button onClick={() => setEditing(false)} className="px-6 py-3 rounded-2xl bg-white border border-slate-300 text-slate-700 text-xs font-black uppercase tracking-widest hover:bg-slate-50 transition-all flex items-center gap-2">
                     <X size={14} /> Hủy
                  </button>
                  <button onClick={handleSave} className="px-8 py-3 rounded-2xl bg-emerald-600 text-white text-xs font-black uppercase tracking-widest hover:bg-emerald-500 transition-all flex items-center gap-2 shadow-[0_10px_30px_rgba(16,185,129,0.3)]">
@@ -374,7 +332,7 @@ export function Profile() {
                  </button>
                </>
             ) : (
-               <button onClick={() => setEditing(true)} className="px-8 py-4 rounded-2xl bg-primary-fixed text-black text-xs font-black uppercase tracking-widest hover:scale-105 active:scale-95 transition-all flex items-center gap-2 shadow-[0_10px_40px_rgba(180,245,0,0.3)]">
+               <button onClick={() => setEditing(true)} className="px-8 py-4 rounded-2xl bg-[#7a23e5] text-white text-xs font-black uppercase tracking-widest hover:scale-105 active:scale-95 transition-all flex items-center gap-2 shadow-[0_10px_28px_rgba(122,35,229,0.28)]">
                   <Pencil size={16} /> Chỉnh sửa hồ sơ
                </button>
             )}
@@ -388,11 +346,11 @@ export function Profile() {
           </div>
         )}
         {saveMsg === "mentor_applied" && (
-          <div className="fixed bottom-10 right-10 z-50 flex items-center gap-4 bg-[#6E35E8]/90 backdrop-blur-xl text-white px-8 py-5 rounded-2xl shadow-2xl border border-white/20 font-black text-xs uppercase tracking-widest animate-in fade-in slide-in-from-bottom-5 max-w-md">
+          <div className="fixed bottom-10 right-10 z-50 flex items-center gap-4 bg-[#6E35E8] text-white px-8 py-5 rounded-2xl shadow-2xl border border-violet-300/40 font-black text-xs uppercase tracking-widest animate-in fade-in slide-in-from-bottom-5 max-w-md">
             <div className="bg-emerald-500 rounded-full p-1"><Check size={14} /></div>
             <div>
               <p>Hồ sơ đã được gửi!</p>
-              <p className="text-[9px] text-white/60 mt-1 lowercase first-letter:uppercase font-medium">Hệ thống sẽ phản hồi kết quả trong vòng 24-48 giờ làm việc.</p>
+              <p className="text-[9px] text-white/80 mt-1 lowercase first-letter:uppercase font-medium">Hệ thống sẽ phản hồi kết quả trong vòng 24-48 giờ làm việc.</p>
             </div>
           </div>
         )}
@@ -401,76 +359,62 @@ export function Profile() {
           <div className="lg:col-span-4 space-y-10">
             <div className="glass-card p-10 text-center">
                <div className="glow-halo mb-8">
-                  <div className="relative group">
-                    <div className="w-32 h-32 rounded-[40px] bg-gradient-to-br from-[#FF8C42] to-[#FF5B00] flex items-center justify-center text-4xl font-black text-white shadow-2xl border-4 border-[#0E0922]">
-                       {initials}
-                    </div>
-                    <button className="absolute -bottom-2 -right-2 w-10 h-10 bg-white text-black rounded-2xl flex items-center justify-center shadow-2xl hover:scale-110 active:scale-90 transition-all border-4 border-[#0E0922]">
-                       <Camera size={18} />
-                    </button>
+                  <div className="w-32 h-32 rounded-[34px] bg-[#f8f5ff] border-[3px] border-[#7a23e5] flex items-center justify-center text-[2.3rem] font-black text-[#7a23e5] shadow-[0_10px_24px_rgba(122,35,229,0.25)]">
+                     {initials}
                   </div>
                </div>
                
-               <h2 className="mb-1 text-2xl font-black tracking-tight text-white sm:text-3xl">{form.name || "Người dùng"}</h2>
-               <p className="mb-6 text-[10px] font-bold uppercase tracking-[0.2em] text-white/45">{form.position || "Vị trí chuyên môn"}</p>
+               <h2 className="mb-1 text-2xl font-black tracking-tight text-slate-900 sm:text-3xl">{form.name || "Người dùng"}</h2>
+               <p className="mb-6 text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">{planInfo.name}</p>
                
                {!isMentor && (
-                 <div className="pt-8 border-t border-white/5">
-                    <div className={`p-4 rounded-2xl ${planInfo.badge.bg} border ${planInfo.badge.border} flex items-center justify-between group`}>
-                       <div className="flex items-center gap-3">
-                          <planInfo.nameIcon size={18} className={planInfo.badge.icon} />
-                          <span className={`${planInfo.badge.text} text-[10px] font-black uppercase tracking-widest`}>{planInfo.name}</span>
-                       </div>
-                       <button onClick={() => navigate("/pricing")} className="w-8 h-8 rounded-xl bg-white/10 flex items-center justify-center text-white hover:bg-white/20 transition-all">
-                          <CaretRight size={14} />
-                       </button>
-                    </div>
+                 <div className="pt-8 border-t border-slate-200">
+                    <button
+                      type="button"
+                      onClick={() => setShowMentorModal(true)}
+                      className="w-full p-4 rounded-2xl border border-[#74c9f5] bg-[#c9ebff] text-left flex items-center justify-between group hover:brightness-95 transition-all"
+                    >
+                      <div className="flex items-center gap-3">
+                        <Lightning size={18} className="text-[#0ea5e9]" />
+                        <span className="text-[#0ea5e9] text-[10px] font-black uppercase tracking-widest">
+                          Đăng ký mentor
+                        </span>
+                      </div>
+                      <span className="w-10 h-10 rounded-full bg-white/70 flex items-center justify-center text-slate-700">
+                        <CaretRight size={16} />
+                      </span>
+                    </button>
                  </div>
                )}
             </div>
 
             <div className="glass-card p-8">
-               <h3 className="mb-8 flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.2em] text-white/45">
-                  <TrendUp size={14} className="text-[#c4ff47]" strokeWidth={2} /> Thống kê vận hành
+               <h3 className="mb-8 flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">
+                  <TrendUp size={14} className="text-[#7a23e5]" strokeWidth={2} /> Thống kê vận hành
                </h3>
                <div className="grid grid-cols-2 gap-6">
                   {STATS.map((stat, i) => (
                     <div key={i}>
-                       <p className="mb-2 text-[9px] font-bold uppercase leading-none tracking-wide text-white/40">{stat.label}</p>
-                       <p className="text-xl font-black text-white tracking-tighter" style={{ color: stat.color }}>{stat.value}</p>
+                       <p className="mb-2 text-[9px] font-bold uppercase leading-none tracking-wide text-slate-500">{stat.label}</p>
+                       <p className="text-xl font-black text-slate-900 tracking-tighter" style={{ color: stat.color }}>{stat.value}</p>
                     </div>
                   ))}
                </div>
             </div>
 
-            <div className="glass-card p-8">
-               <h3 className="mb-8 flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.2em] text-white/45">
-                  <Trophy size={14} className="text-fuchsia-300" strokeWidth={2} /> Huy chương đạt được
-               </h3>
-               <div className="grid grid-cols-3 gap-6">
-                  {ACHIEVEMENTS.map((ach, i) => (
-                    <div key={i} className={`text-center group ${ach.earned ? "opacity-100" : "opacity-20 grayscale"}`}>
-                       <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${ach.color} flex items-center justify-center mx-auto mb-3 shadow-lg group-hover:scale-110 transition-transform`}>
-                          <ach.icon size={20} className="text-white" />
-                       </div>
-                       <p className="line-clamp-2 text-[8px] font-bold uppercase leading-tight tracking-wide text-white/40">{ach.label}</p>
-                    </div>
-                  ))}
-               </div>
-            </div>
           </div>
 
           <div className="lg:col-span-8 space-y-10">
             <div className="glass-card p-10">
                <div className="flex items-center justify-between mb-10">
-                  <h2 className="font-headline flex items-center gap-3 text-xl font-black tracking-tight text-white sm:text-2xl">
-                     <User size={20} className="text-[#c4ff47]" strokeWidth={2} /> Thông tin cốt lõi
+                  <h2 className="font-headline flex items-center gap-3 text-xl font-black tracking-tight text-slate-900 sm:text-2xl">
+                     <User size={20} className="text-[#7a23e5]" strokeWidth={2} /> Thông tin cốt lõi
                   </h2>
                </div>
                <div className="grid md:grid-cols-2 gap-8">
                   {FORM_FIELDS.map(({ label, key, icon: Icon }) => (
                     <div key={key} className="space-y-3">
-                       <label className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.18em] text-white/45">
+                       <label className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500">
                           <Icon size={12} /> {label}
                        </label>
                        <input
@@ -488,7 +432,7 @@ export function Profile() {
             {isMentor && (
               <div className="glass-card p-10">
                 <div className="flex items-center justify-between mb-10">
-                  <h2 className="font-headline flex items-center gap-3 text-xl font-black tracking-tight text-white sm:text-2xl">
+                  <h2 className="font-headline flex items-center gap-3 text-xl font-black tracking-tight text-slate-900 sm:text-2xl">
                     <Briefcase size={20} className="text-primary-fixed" strokeWidth={2} /> Hồ sơ mentor
                   </h2>
                 </div>
@@ -505,7 +449,7 @@ export function Profile() {
                     { label: "Múi giờ", key: "timezone" },
                   ].map((field) => (
                     <div key={field.key} className="space-y-3">
-                      <label className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/45">{field.label}</label>
+                      <label className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500">{field.label}</label>
                       <input
                         disabled={!editing}
                         type={field.type || "text"}
@@ -517,7 +461,7 @@ export function Profile() {
                     </div>
                   ))}
                   <div className="md:col-span-2 space-y-3">
-                    <label className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/45">Tiểu sử mentor</label>
+                    <label className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500">Tiểu sử mentor</label>
                     <textarea
                       disabled={!editing}
                       rows={4}
@@ -529,7 +473,7 @@ export function Profile() {
                   </div>
                 </div>
                 {mentorProfile?.finance?.bankAccount?.bankName && (
-                  <p className="mt-6 text-xs text-white/45">
+                  <p className="mt-6 text-xs text-slate-500">
                     Tài khoản nhận tiền hiện tại: {mentorProfile.finance.bankAccount.bankName} - ****
                     {String(mentorProfile.finance.bankAccount.accountNumber || "").slice(-4)}
                   </p>
@@ -540,19 +484,21 @@ export function Profile() {
             {!isMentor && (
               <>
                 <div className="glass-card overflow-hidden group">
-                  <div className="p-10 flex flex-col md:flex-row md:items-center justify-between gap-10" style={{ background: planInfo.cardGrad }}>
+                  <div className="p-10 flex flex-col md:flex-row md:items-center justify-between gap-10" style={{ background: "linear-gradient(135deg, #6E35E8 0%, #8B5CF6 55%, #7C3AED 100%)" }}>
                     <div className="relative z-10">
-                      <p className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40 mb-3">Tài khoản hiện tại</p>
+                      <p className="text-[10px] font-black uppercase tracking-[0.3em] text-white/75 mb-3">Tài khoản hiện tại</p>
                       <h3 className="text-3xl font-black text-white tracking-tighter mb-2 flex items-center gap-3">
-                        {planInfo.name} <planInfo.nameIcon size={24} className="text-white/30" />
+                        {planInfo.name} <planInfo.nameIcon size={24} className="text-white/80" />
                       </h3>
-                      <p className="text-sm font-medium text-white/60 mb-8 max-w-sm">{planInfo.desc}</p>
-                      <button 
-                        onClick={() => navigate("/pricing")}
-                        className="px-10 py-5 rounded-2xl bg-white text-black font-black text-xs uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-2xl flex items-center gap-3"
-                      >
-                        Nâng cấp {planInfo.isPaid ? 'Elite' : 'Chuyên nghiệp (Pro)'} <ArrowRight size={16} />
-                      </button>
+                      <p className="text-sm font-medium text-white/90 mb-8 max-w-sm">{planInfo.desc}</p>
+                      {canUpgradePlan && (
+                        <button
+                          onClick={() => navigate("/pricing")}
+                          className="px-10 py-5 rounded-2xl bg-[#B4F500] text-slate-900 font-black text-xs uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-[0_12px_28px_rgba(132,204,22,0.28)] flex items-center gap-3"
+                        >
+                          Nâng cấp {upgradeLabel} <ArrowRight size={16} />
+                        </button>
+                      )}
                     </div>
                     <div className="relative">
                       <div className="w-32 h-32 rounded-full border-8 border-white/10 flex items-center justify-center p-6 bg-white/[0.05] backdrop-blur-xl relative overflow-hidden">
@@ -562,83 +508,26 @@ export function Profile() {
                     </div>
                   </div>
                   {planInfo.progress && (
-                    <div className="px-10 py-8 bg-black/20 flex flex-col gap-3">
+                    <div className="px-10 py-8 bg-[#F5F3FF] flex flex-col gap-3 border-t border-violet-200/50">
                       <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest">
-                        <span className="text-zinc-500">Mức độ vận hành</span>
-                        <span className="text-primary-fixed">{planInfo.progress.used} / {planInfo.progress.max} Buổi</span>
+                        <span className="text-slate-500">Mức độ vận hành</span>
+                        <span className="text-[#7a23e5]">{planInfo.progress.used} / {planInfo.progress.max} Buổi</span>
                       </div>
-                      <div className="h-2 bg-white/5 rounded-full overflow-hidden">
+                      <div className="h-2 bg-violet-100 rounded-full overflow-hidden">
                         <motion.div 
                           initial={{ width: 0 }}
                           animate={{ width: `${(planInfo.progress.used / planInfo.progress.max) * 100}%` }}
                           transition={{ duration: 1.5, ease: "easeOut" }}
-                          className="h-full bg-gradient-to-r from-primary-fixed to-emerald-500 shadow-[0_0_15px_rgba(180,245,0,0.5)]"
+                          className="h-full bg-gradient-to-r from-[#7a23e5] to-[#a78bfa]"
                         />
                       </div>
                     </div>
                   )}
                 </div>
 
-                <div className="glass-card overflow-hidden group border-primary-fixed/20 bg-primary-fixed/[0.02]">
-                  <div className="p-8">
-                    <div className="flex items-center gap-4 mb-6">
-                      <div className="w-12 h-12 rounded-2xl bg-primary-fixed/10 flex items-center justify-center text-primary-fixed">
-                        <Star size={24} />
-                      </div>
-                      <div>
-                        <h3 className="text-xl font-black text-white tracking-tighter">Trở thành Mentor</h3>
-                        <p className="text-xs font-medium text-white/45">Chia sẻ kiến thức & Kiếm thêm thu nhập</p>
-                      </div>
-                    </div>
-                    <p className="text-sm text-white/60 mb-8 leading-relaxed">
-                      Đồng hành cùng hàng ngàn học viên trong hành trình chinh phục sự nghiệp. Hãy bắt đầu bằng việc xây dựng hồ sơ chuyên môn của bạn.
-                    </p>
-                    <button 
-                      onClick={() => setShowMentorModal(true)}
-                      className="w-full py-4 rounded-xl border border-primary-fixed/30 text-primary-fixed text-[10px] font-black uppercase tracking-widest hover:bg-primary-fixed hover:text-black transition-all flex items-center justify-center gap-2"
-                    >
-                      Bắt đầu đăng ký <ArrowRight size={14} />
-                    </button>
-                  </div>
-                </div>
               </>
             )}
 
-            <div className="grid md:grid-cols-2 gap-8">
-              {settings.map((section, sIdx) => (
-                <div key={sIdx} className="glass-card p-8">
-                  <h3 className="mb-8 flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.2em] text-white/45">
-                    <section.icon size={14} className="text-fuchsia-300" strokeWidth={2} /> {section.title}
-                  </h3>
-                  <div className="space-y-6">
-                    {section.items.map((item, iIdx) => (
-                      <div key={iIdx} className="flex items-center justify-between group">
-                        <div>
-                          <p className="text-sm font-bold text-white group-hover:text-primary-fixed transition-colors">{item.label}</p>
-                          <p className="mt-0.5 text-[10px] text-white/35">Trình quản lý hệ thống</p>
-                        </div>
-                        <button
-                          onClick={() => toggleSetting(sIdx, iIdx)}
-                          className={`relative w-11 h-6 rounded-full transition-all duration-300 ${item.enabled ? "bg-primary-fixed" : "bg-white/10"}`}
-                        >
-                          <div className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow-lg transition-transform duration-300 ${item.enabled ? "translate-x-6" : "translate-x-1"}`} />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <div className="profile-glass-danger glass-card flex flex-col items-center justify-between gap-8 border-red-500/20 bg-red-500/[0.02] p-10 md:flex-row hover:border-red-500/40">
-              <div className="text-center md:text-left">
-                <h4 className="text-lg font-black text-white tracking-tight mb-2">Vùng nguy hiểm</h4>
-                <p className="text-xs font-medium text-white/45">Bạn có muốn hủy kích hoạt tài khoản vĩnh viễn?</p>
-              </div>
-              <button onClick={handleLogout} className="px-8 py-4 rounded-2xl border border-red-500/30 text-red-500 text-[10px] font-black uppercase tracking-widest hover:bg-red-500 hover:text-white transition-all">
-                Đăng xuất tài khoản
-              </button>
-            </div>
           </div>
         </div>
       </div>
@@ -651,21 +540,20 @@ export function Profile() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setShowMentorModal(false)}
-              className="absolute inset-0 bg-black/80 backdrop-blur-md"
+              className="absolute inset-0 bg-slate-900/35 backdrop-blur-sm"
             />
             <motion.div 
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="relative w-full max-w-2xl glass-card overflow-hidden"
-              style={{ background: "#0E0922" }}
+              className="relative w-full max-w-2xl glass-card overflow-hidden bg-white"
             >
-              <div className="p-8 border-b border-white/5 flex items-center justify-between">
+              <div className="p-8 border-b border-slate-200 flex items-center justify-between">
                 <div>
-                  <h2 className="text-2xl font-black text-white tracking-tighter uppercase">Đăng ký trở thành <span className="text-primary-fixed">Mentor</span></h2>
-                  <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest mt-1">Cập nhật hồ sơ chuyên gia của bạn</p>
+                  <h2 className="text-2xl font-black text-slate-900 tracking-tighter uppercase">Đăng ký trở thành <span className="text-[#7a23e5]">Mentor</span></h2>
+                  <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">Cập nhật hồ sơ chuyên gia của bạn</p>
                 </div>
-                <button onClick={() => setShowMentorModal(false)} className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-white hover:bg-white/10 transition-all">
+                <button onClick={() => setShowMentorModal(false)} className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-700 hover:bg-slate-200 transition-all">
                   <X size={20} />
                 </button>
               </div>
@@ -673,7 +561,7 @@ export function Profile() {
               <div className="p-8 max-h-[70vh] overflow-y-auto space-y-8">
                 <div className="grid sm:grid-cols-2 gap-6">
                   <div className="space-y-2">
-                    <label className="text-[10px] font-bold uppercase tracking-widest text-white/40 flex items-center gap-2">
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 flex items-center gap-2">
                       <Briefcase size={12} /> Chức danh hiện tại*
                     </label>
                     <input 
@@ -685,7 +573,7 @@ export function Profile() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-[10px] font-bold uppercase tracking-widest text-white/40 flex items-center gap-2">
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 flex items-center gap-2">
                       <Users size={12} /> Công ty hiện tại
                     </label>
                     <input 
@@ -699,7 +587,7 @@ export function Profile() {
 
                 <div className="grid sm:grid-cols-2 gap-6">
                   <div className="space-y-2">
-                    <label className="text-[10px] font-bold uppercase tracking-widest text-white/40 flex items-center gap-2">
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 flex items-center gap-2">
                       <TrendUp size={12} /> Tổng số năm kinh nghiệm
                     </label>
                     <input 
@@ -711,7 +599,7 @@ export function Profile() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-[10px] font-bold uppercase tracking-widest text-white/40 flex items-center gap-2">
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 flex items-center gap-2">
                       <Sparkles size={12} /> Kỹ năng chuyên môn (Tags)
                     </label>
                     <input 
@@ -724,7 +612,7 @@ export function Profile() {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-white/40 flex items-center gap-2">
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 flex items-center gap-2">
                     <FileText size={12} /> Giới thiệu bản thân (Bio)*
                   </label>
                   <textarea 
@@ -737,7 +625,7 @@ export function Profile() {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-white/40 flex items-center gap-2">
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 flex items-center gap-2">
                     <History size={12} /> Lịch sử sự nghiệp (Career History)*
                   </label>
                   <textarea 
@@ -751,7 +639,7 @@ export function Profile() {
 
                 <div className="grid sm:grid-cols-2 gap-6">
                   <div className="space-y-2">
-                    <label className="text-[10px] font-bold uppercase tracking-widest text-white/40 flex items-center gap-2">
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 flex items-center gap-2">
                       <EnvelopeSimple size={12} /> LinkedIn Profile
                     </label>
                     <input 
@@ -762,7 +650,7 @@ export function Profile() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-[10px] font-bold uppercase tracking-widest text-white/40 flex items-center gap-2">
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 flex items-center gap-2">
                       <Lightning size={12} /> Mức phí mong muốn (VNĐ/60p)
                     </label>
                     <input 
@@ -776,7 +664,7 @@ export function Profile() {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-white/40 flex items-center gap-2">
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 flex items-center gap-2">
                     <Medal size={12} /> Portfolio / Link Chứng chỉ khác
                   </label>
                   <input 
@@ -788,17 +676,17 @@ export function Profile() {
                 </div>
               </div>
 
-              <div className="p-8 border-t border-white/5 flex gap-4">
+              <div className="p-8 border-t border-slate-200 flex gap-4">
                 <button 
                   onClick={() => setShowMentorModal(false)}
-                  className="flex-1 py-4 rounded-2xl bg-white/5 text-white/60 text-[10px] font-black uppercase tracking-widest hover:bg-white/10 transition-all"
+                  className="flex-1 py-4 rounded-2xl bg-slate-100 text-slate-600 text-[10px] font-black uppercase tracking-widest hover:bg-slate-200 transition-all"
                 >
                   Đóng
                 </button>
                 <button 
                   disabled={applying || !mentorForm.title || !mentorForm.bio || !mentorForm.careerHistory}
                   onClick={handleApplyMentor}
-                  className="flex-[2] py-4 rounded-2xl bg-primary-fixed text-black text-[10px] font-black uppercase tracking-widest hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:hover:scale-100 flex items-center justify-center gap-2 shadow-[0_10px_30px_rgba(180,245,0,0.2)]"
+                  className="flex-[2] py-4 rounded-2xl bg-[#A3D900] text-slate-900 text-[10px] font-black uppercase tracking-widest hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:hover:scale-100 flex items-center justify-center gap-2 shadow-[0_10px_24px_rgba(132,204,22,0.28)]"
                 >
                   {applying ? (
                     <div className="w-4 h-4 border-2 border-black/20 border-t-black animate-spin rounded-full" />
