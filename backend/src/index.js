@@ -10,6 +10,7 @@ import { bookingsRouter } from "./routes/bookings.js";
 import { plansRouter } from "./routes/plans.js";
 import { paymentsRouter } from "./routes/payments.js";
 import { usersRouter } from "./routes/users.js";
+import { cvMatchRouter } from "./routes/cvMatch.js";
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -55,6 +56,7 @@ app.use("/api/bookings", bookingsRouter);
 app.use("/api/plans", plansRouter);
 app.use("/api/payments", paymentsRouter);
 app.use("/api/users", usersRouter);
+app.use("/api/cv", cvMatchRouter);
 
 console.log(
   `API: /api/health, /api/auth, /api/mentors, /api/bookings, /api/plans, /api/payments, /api/users — nếu POST /api/auth/google trả 404 HTML thì tiến trình cũ trên cổng ${PORT} cần tắt và chạy lại backend từ repo này.`,

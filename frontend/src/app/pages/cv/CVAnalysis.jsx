@@ -169,7 +169,8 @@ export function CVAnalysis() {
 
   // ── Derived result data ─────────────────────────────────────────────────
   const R = analysisResult;
-  const matchScore   = R?.matchScore ?? 72;
+  const matchScore    = R?.matchScore    ?? 72;
+  const overallScore  = R?.overallScore  ?? matchScore;
   const matchedSet   = new Set(R ? R.matchedKeywords : DEMO_MATCHED);
   const cvDisplayKWs = R ? R.matchedKeywords     : DEMO_MATCHED;
   const jdDisplayKWs = R ? [...R.matchedKeywords, ...R.missingKeywords] : DEMO_JD_KWS;
@@ -248,6 +249,10 @@ export function CVAnalysis() {
       }, 700);
 
       try {
+        // Storage paths: set by Supabase flow; null for Python-service path
+        let cvStoragePath = null;
+        let jdStoragePath = null;
+
         // ── Helpers ────────────────────────────────────────────────────────
         const applyResult = (d) => {
           setAnalysisResult(d.analysis);
@@ -320,43 +325,132 @@ export function CVAnalysis() {
         
         console.log("✅ CV Analysis — authenticated, token ready");
 
-        const fd = buildFd(cvFile, reuseCV, jdFile, reuseJD, analyzeMode, selectedField);
-        const headers = apiHeaders(token);
-        const url = apiUrl("cv-analysis");
-        
-        console.log("📤 CV Analysis API Call:", {
-          url,
-          hasAuthHeader: !!headers.Authorization,
-          tokenLength: token.length
-        });
-        
-        const res = await fetch(url, {
-          method: "POST",
-          headers,
-          body: fd,
-        });
+        let data;
 
-        clearInterval(timer); setProgress(95); setLoadingStage(4);
+        if (analyzeMode === "jd") {
+          // ── Python CV Matcher (qua Express proxy /api/cv/analyze) ──────
+          const form = new FormData();
+          if (cvFile)   form.append("resume", cvFile);
+          if (jdFile)   form.append("jd", jdFile);
 
-        if (!res.ok) {
-          // Check 401 first (expected behavior — fallback to demo)
-          if (res.status === 401) {
-            console.info("📋 Server authentication issue — using demo result");
-            applyMockResult();
-            setProgress(100);
-            await new Promise(r => setTimeout(r, 350));
-            setStep("result");
-            return;
+          // Cascade: suggestions (full) → full (scores only) → analyze (basic)
+          const ollamaDown = (s) => s === 503 || s === 504;
+
+          let pyRes = await fetch("/api/cv/analyze/suggestions", {
+            method: "POST",
+            headers: { Authorization: `Bearer ${token}` },
+            body: form,
+          });
+
+          // Tier-2: Ollama có nhưng suggestions thất bại → thử scoring only
+          if (ollamaDown(pyRes.status)) {
+            const form2 = new FormData();
+            if (cvFile) form2.append("resume", cvFile);
+            if (jdFile) form2.append("jd", jdFile);
+            pyRes = await fetch("/api/cv/analyze/full", {
+              method: "POST",
+              headers: { Authorization: `Bearer ${token}` },
+              body: form2,
+            });
           }
-          
-          // For other errors, log and throw
-          const errJson = await res.json().catch(() => ({}));
-          console.error("CV analysis error:", res.status, errJson);
-          throw new Error(errJson.message || errJson.error || `Server ${res.status}`);
-        }
 
-        const data = await res.json();
-        if (!data?.success) throw new Error(data?.error || "Phân tích thất bại");
+          // Tier-3: Ollama hoàn toàn không chạy → basic skill-matching (không LLM)
+          let usedFallback = false;
+          if (ollamaDown(pyRes.status)) {
+            const form3 = new FormData();
+            if (cvFile) form3.append("resume", cvFile);
+            if (jdFile) form3.append("jd", jdFile);
+            pyRes = await fetch("/api/cv/analyze", {
+              method: "POST",
+              headers: { Authorization: `Bearer ${token}` },
+              body: form3,
+            });
+            usedFallback = true;
+          }
+
+          clearInterval(timer); setProgress(95); setLoadingStage(4);
+
+          if (!pyRes.ok) {
+            const e = await pyRes.json().catch(() => ({}));
+            throw new Error(e.error || `CV Analyzer lỗi ${pyRes.status}`);
+          }
+
+          const raw = await pyRes.json();
+          const m    = raw.match       ?? {};
+          const s    = raw.scores      ?? null;
+          const sugg = raw.suggestions ?? {};
+
+          const matchedSkills = m.matching ?? [];
+          const missingSkills = m.missing  ?? [];
+
+          // Strengths từ matched skills, weaknesses từ missing
+          const strengths  = matchedSkills.slice(0, 6).map(sk => `Có kỹ năng "${sk}" phù hợp với yêu cầu JD`);
+          const weaknesses = missingSkills.slice(0, 6).map(sk => `Thiếu kỹ năng "${sk}" mà JD yêu cầu`);
+
+          // Map missing_skill_suggestions → UI suggestion format
+          const suggestions = (sugg.missing_skill_suggestions ?? []).map(item => ({
+            type:     "add",
+            priority: item.priority,
+            title:    `Bổ sung kỹ năng "${item.skill}"`,
+            reason:   item.reframe_tip !== "N/A" ? item.reframe_tip : item.acquisition_path,
+            before:   `Chưa có trong CV — ước tính ${item.estimated_effort}`,
+            after:    item.acquisition_path,
+          }));
+
+          data = {
+            success: true,
+            analysis: {
+              matchScore:      Math.round(m.match_score    ?? 0),
+              overallScore:    Math.round((s?.overall ?? 0) * 10),
+              totalKeywords:   m.summary?.jd_total         ?? 0,
+              matchedKeywords: matchedSkills,
+              missingKeywords: missingSkills,
+              scores: {
+                clarity:     s?.clarity?.score     ?? 0,
+                structure:   s?.structure?.score   ?? 0,
+                relevance:   s?.relevance?.score   ?? Math.round((m.match_score ?? 0) / 10),
+                credibility: s?.credibility?.score ?? 0,
+              },
+              scoreNotes: {
+                clarity:     s?.clarity?.reason     ?? (usedFallback ? "Cần Ollama để chấm điểm — chạy: ollama run mistral:7b" : ""),
+                structure:   s?.structure?.reason   ?? (usedFallback ? "Cần Ollama để chấm điểm — chạy: ollama run mistral:7b" : ""),
+                relevance:   s?.relevance?.reason   ?? (usedFallback ? `Ước tính từ keyword match: ${Math.round(m.match_score ?? 0)}%` : ""),
+                credibility: s?.credibility?.reason ?? (usedFallback ? "Cần Ollama để chấm điểm — chạy: ollama run mistral:7b" : ""),
+              },
+              strengths,
+              weaknesses,
+              suggestions,
+              summary:  sugg.executive_summary ?? s?.summary ?? "",
+              cvText:   raw.resume_text ?? "",
+              jdText:   raw.jd_text     ?? "",
+            },
+          };
+        } else {
+          // ── Supabase Edge Function (field mode / cv-only) ───────────────
+          const fd = buildFd(cvFile, reuseCV, jdFile, reuseJD, analyzeMode, selectedField);
+          const headers = apiHeaders(token);
+          const url = apiUrl("cv-analysis");
+
+          const res = await fetch(url, { method: "POST", headers, body: fd });
+
+          clearInterval(timer); setProgress(95); setLoadingStage(4);
+
+          if (!res.ok) {
+            if (res.status === 401) {
+              console.info("📋 Server authentication issue — using demo result");
+              applyMockResult();
+              setProgress(100);
+              await new Promise(r => setTimeout(r, 350));
+              setStep("result");
+              return;
+            }
+            const errJson = await res.json().catch(() => ({}));
+            throw new Error(errJson.message || errJson.error || `Server ${res.status}`);
+          }
+
+          data = await res.json();
+          if (!data?.success) throw new Error(data?.error || "Phân tích thất bại");
+        }
 
         applyResult(data);
 
@@ -981,7 +1075,7 @@ export function CVAnalysis() {
                     <div className="flex items-end gap-3 mb-2">
                       <span style={{ fontSize: "3.5rem", fontWeight: 800, lineHeight: 1 }}>{derivedMode === "jd" ? `${matchScore}%` : matchScore}</span>
                       <div className="mb-1">
-                        <span className="text-indigo-200 text-sm">{derivedMode === "jd" ? "match score" : "/ 100 điểm"}</span>
+                        <span className="text-indigo-200 text-sm">{derivedMode === "jd" ? "keyword match" : "/ 100 điểm"}</span>
                         <div className="flex items-center gap-0.5 mt-1 flex-wrap">
                           {Array.from({ length: 10 }).map((_, i) => (
                             <div key={i} className="h-1.5 w-5 rounded-full" style={{ background: i < Math.round(matchScore / 10) ? "rgba(255,255,255,0.85)" : "rgba(255,255,255,0.22)" }} />
@@ -995,7 +1089,7 @@ export function CVAnalysis() {
                     {(derivedMode === "jd" ? [
                       { label: "Từ khóa khớp",      val: `${(R?.matchedKeywords ?? DEMO_MATCHED).length}/${R?.totalKeywords ?? DEMO_JD_KWS.length}`, color: "bg-white/20" },
                       { label: "Từ khóa thiếu",     val: `${(R?.missingKeywords ?? DEMO_JD_KWS.filter(k => !DEMO_MATCHED.includes(k))).length} kỹ năng`, color: "bg-red-400/30" },
-                      { label: "Gợi ý chỉnh sửa",   val: `${suggestionsData.length} mục`, color: "bg-amber-400/20" },
+                      { label: "Điểm AI tổng hợp",  val: `${overallScore}/100`, color: "bg-violet-400/20" },
                     ] : [
                       { label: "Điểm cấu trúc",     val: `${R?.scores.structure ?? 6}/10`, color: "bg-white/20" },
                       { label: "Độ hoàn thiện",      val: `${matchScore}%`, color: "bg-emerald-400/30" },
@@ -1013,7 +1107,14 @@ export function CVAnalysis() {
               {/* CV Doc preview */}
               {derivedMode === "jd" && (
                 <div className="relative mb-6">
-                  <CVDocumentPreview />
+                  <CVDocumentPreview
+                    cvFile={cvFile}
+                    jdFile={jdFile}
+                    cvFileName={cvFile?.name ?? reuseCV?.name}
+                    jdFileName={jdFile?.name ?? reuseJD?.name}
+                    matchedKws={R?.matchedKeywords ?? []}
+                    missingKws={R?.missingKeywords  ?? []}
+                  />
                   {isFreeTier && (
                     <div className="absolute bottom-0 left-0 right-0 flex h-2/3 flex-col items-center justify-end rounded-b-2xl pb-8" style={{ background: "linear-gradient(to bottom,transparent 0%,rgba(10,6,24,0.55) 45%,rgba(7,6,14,0.92) 100%)" }}>
                       <div className="px-6 text-center">
@@ -1070,12 +1171,13 @@ export function CVAnalysis() {
                       <div className="relative w-28 h-28">
                         <svg viewBox="0 0 100 100" className="w-full h-full -rotate-90">
                           <circle cx="50" cy="50" r="40" fill="none" stroke="rgba(255,255,255,0.12)" strokeWidth="10" />
-                          <circle cx="50" cy="50" r="40" fill="none" stroke="url(#sg)" strokeWidth="10" strokeDasharray={`${matchScore * 2.51} 251`} strokeLinecap="round" />
+                          <circle cx="50" cy="50" r="40" fill="none" stroke="url(#sg)" strokeWidth="10" strokeDasharray={`${overallScore * 2.51} 251`} strokeLinecap="round" />
                           <defs><linearGradient id="sg" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stopColor="#6E35E8" /><stop offset="100%" stopColor="#8B4DFF" /></linearGradient></defs>
                         </svg>
-                        <div className="absolute inset-0 flex flex-col items-center justify-center"><span className="font-bold text-white" style={{ fontSize: "1.6rem" }}>{matchScore}</span><span className="text-xs text-white/50">/ 100</span></div>
+                        <div className="absolute inset-0 flex flex-col items-center justify-center"><span className="font-bold text-white" style={{ fontSize: "1.6rem" }}>{overallScore}</span><span className="text-xs text-white/50">/ 100</span></div>
                       </div>
-                      <p className="mt-2 text-xs text-white/50">Overall</p>
+                      <p className="mt-1 text-xs text-white/50">Điểm AI</p>
+                      <p className="text-[0.6rem] text-white/30 text-center leading-tight mt-0.5">Clarity · Structure<br/>Relevance · Credibility</p>
                     </div>
                     <div className="flex-1 min-w-0 space-y-3">
                       {scoreTableData.map(row => (

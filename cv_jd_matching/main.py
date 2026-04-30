@@ -87,9 +87,11 @@ async def analyze(
     )
 
     return {
-        "resume": resume_data["skills"],
-        "jd":     jd_data["skills"],
-        "match":  match,
+        "resume":      resume_data["skills"],
+        "jd":          jd_data["skills"],
+        "match":       match,
+        "resume_text": resume_data["text"],
+        "jd_text":     jd_data["text"],
     }
 
 
@@ -125,10 +127,12 @@ async def analyze_full(
         raise HTTPException(504, f"Ollama timeout: {e}")
 
     return {
-        "resume": resume_data["skills"],
-        "jd":     jd_data["skills"],
-        "match":  match,
-        "scores": scores,
+        "resume":      resume_data["skills"],
+        "jd":          jd_data["skills"],
+        "match":       match,
+        "scores":      scores,
+        "resume_text": resume_data["text"],
+        "jd_text":     jd_data["text"],
     }
 
 
@@ -205,4 +209,6 @@ async def analyze_suggestions(
         "match":       match,
         "scores":      scores,
         "suggestions": suggestions,
+        "resume_text": resume_data["text"],
+        "jd_text":     jd_data["text"],
     }
