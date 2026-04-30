@@ -4,7 +4,6 @@ import {
    Plus,
    Search,
    Filter,
-   MoreVertical,
    Users,
    Star,
    ArrowLeft,
@@ -25,6 +24,7 @@ import {
 import { motion, AnimatePresence } from "motion/react";
 import { getUser } from "../../utils/auth";
 import { MentorPageShell } from "../../components/mentor/MentorPageShell";
+import { fetchMyMentorCourses } from "../../utils/courseApi";
 
 const MENTOR_COURSE_MGMT_INPUT_CSS = `
         .input-glass {
@@ -38,32 +38,64 @@ const MENTOR_COURSE_MGMT_INPUT_CSS = `
         .input-glass:focus { border-color: #c4ff47; background: rgba(255, 255, 255, 0.06); outline: none; }
 `;
 
-const MOCK_MY_COURSES = [
-   { id: 1, title: "Làm chủ STAR Method trong phỏng vấn hành vi", status: "published", students: 1240, rating: 4.9, earnings: 420000000, cover: "https://images.unsplash.com/photo-1573497619292-0b2f5c8e030b?auto=format&fit=crop&q=80&w=600", level: "Intermediate" },
-   { id: 2, title: "Technical Interview: Data Structures & Algorithms cơ bản", status: "published", students: 450, rating: 4.7, earnings: 135000000, cover: "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&q=80&w=600", level: "Intermediate" },
-   { id: 3, title: "Soft Skills trong môi trường làm việc đa văn hóa", status: "published", students: 20, rating: 4.8, earnings: 49000000, cover: "https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&q=80&w=600", level: "Advanced" },
-   { id: 4, title: "Xây dựng tư duy Product Thinking cho Developer", status: "draft", students: 0, rating: 0, earnings: 0, cover: "https://images.unsplash.com/photo-1551434678-e076c223a692?auto=format&fit=crop&q=80&w=600", level: "Expert" },
-];
+function formatCompactNumber(value) {
+   const n = Number(value) || 0;
+   if (n >= 1_000_000_000) return `${(n / 1_000_000_000).toFixed(1)}B`;
+   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
+   if (n >= 1_000) return `${(n / 1_000).toFixed(1)}k`;
+   return String(n);
+}
 
 export function MentorCourseManagement() {
    const navigate = useNavigate();
    const user = getUser();
    const [activeTab, setActiveTab] = useState("all");
    const [search, setSearch] = useState("");
+  const [myCourses, setMyCourses] = useState([]);
 
    useEffect(() => {
       if (!user || user.role !== "mentor") {
          navigate("/");
+         return;
       }
-   }, []);
+      fetchMyMentorCourses().then((res) => {
+         if (!res.success || !Array.isArray(res.courses)) {
+            setMyCourses([]);
+            return;
+         }
+         const mapped = res.courses.map((c) => ({
+            id: c._id,
+            title: c.title,
+            status: c.status || "draft",
+            students: c.stats?.enrollmentCount || 0,
+            rating: c.stats?.rating || 0,
+            earnings: c.stats?.totalRevenue || 0,
+            cover: c.thumbnail || "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&q=80&w=600",
+            level:
+               c.level === "basic"
+                  ? "Basic"
+                  : c.level === "intermediate"
+                    ? "Intermediate"
+                    : "Advanced",
+         }));
+         setMyCourses(mapped);
+      });
+   }, [navigate, user]);
 
    if (!user || user.role !== "mentor") return null;
 
-   const filtered = MOCK_MY_COURSES.filter(c => {
+   const filtered = myCourses.filter(c => {
       const matchesTab = activeTab === "all" || c.status === activeTab;
       const matchesSearch = c.title.toLowerCase().includes(search.toLowerCase());
       return matchesTab && matchesSearch;
    });
+   const totalCourses = myCourses.length;
+   const totalStudents = myCourses.reduce((sum, c) => sum + (Number(c.students) || 0), 0);
+   const totalRevenue = myCourses.reduce((sum, c) => sum + (Number(c.earnings) || 0), 0);
+   const ratedCourses = myCourses.filter((c) => Number(c.rating) > 0);
+   const avgRating = ratedCourses.length
+      ? (ratedCourses.reduce((sum, c) => sum + Number(c.rating), 0) / ratedCourses.length).toFixed(1)
+      : "0.0";
 
    return (
       <MentorPageShell bottomPad="pb-32" extraStyles={MENTOR_COURSE_MGMT_INPUT_CSS}>
@@ -80,7 +112,7 @@ export function MentorCourseManagement() {
                   <p className="text-white/55 text-lg font-medium">Xây dựng nội dung, theo dõi doanh thu và học viên của bạn</p>
                </div>
                <div className="flex gap-4">
-                  <button onClick={() => navigate("/mentor/course-edit/new")} className="px-10 py-5 rounded-3xl bg-primary-fixed text-black text-xs font-black uppercase tracking-widest hover:scale-105 transition-all shadow-[0_15px_40px_rgba(196, 255, 71,0.3)] flex items-center gap-3">
+                  <button onClick={() => navigate("/mentor/courses/new/edit")} className="px-10 py-5 rounded-3xl bg-primary-fixed text-black text-xs font-black uppercase tracking-widest hover:scale-105 transition-all shadow-[0_15px_40px_rgba(196, 255, 71,0.3)] flex items-center gap-3">
                      <Plus size={20} /> Tạo khóa học mới
                   </button>
 
@@ -90,10 +122,10 @@ export function MentorCourseManagement() {
             {/* Course Analytics Bar */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-20">
                {[
-                  { label: "Tổng khóa học", value: 4, icon: BookOpen, color: "#6E35E8" },
-                  { label: "Tổng học viên", value: "1.7k", icon: Users, color: "#c4ff47" },
-                  { label: "Rating trung bình", value: 4.8, icon: Star, color: "#f59e0b" },
-                  { label: "Doanh thu tạm tính", value: "604M", icon: CircleDollarSign, color: "#secondary" }
+                  { label: "Tổng khóa học", value: totalCourses, icon: BookOpen, color: "#6E35E8" },
+                  { label: "Tổng học viên", value: formatCompactNumber(totalStudents), icon: Users, color: "#c4ff47" },
+                  { label: "Rating trung bình", value: avgRating, icon: Star, color: "#f59e0b" },
+                  { label: "Doanh thu tạm tính", value: formatCompactNumber(totalRevenue), icon: CircleDollarSign, color: "#secondary" }
                ].map((stat, i) => (
                   <div key={i} className="glass-card p-10 group overflow-hidden">
                      <div className="relative z-10">
@@ -112,14 +144,22 @@ export function MentorCourseManagement() {
             <div className="space-y-10">
                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-8">
                   <div className="flex gap-2 p-2 bg-white/[0.03] border border-white/5 rounded-[24px]">
-                     {["all", "published", "draft"].map(t => (
+                     {["all", "published", "pending_review", "pending_update", "draft"].map(t => (
                         <button
                            key={t}
                            onClick={() => setActiveTab(t)}
                            className={`px-8 py-3 rounded-[18px] text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === t ? 'bg-white text-black shadow-xl' : 'text-zinc-500 hover:text-white'
                               }`}
                         >
-                           {t === 'all' ? 'Tất cả' : t === 'published' ? 'Đã đăng' : 'Bản nháp'}
+                           {t === "all"
+                              ? "Tất cả"
+                              : t === "published"
+                                 ? "Đã đăng"
+                                 : t === "pending_review"
+                                    ? "Chờ duyệt mới"
+                                    : t === "pending_update"
+                                       ? "Chờ duyệt cập nhật"
+                                       : "Bản nháp"}
                         </button>
                      ))}
                   </div>
@@ -142,17 +182,26 @@ export function MentorCourseManagement() {
                            <img src={course.cover} className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" />
                            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
                            <div className="absolute top-6 left-6 flex gap-2">
-                              <span className={`px-4 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest border ${course.status === 'published' ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/20' : 'bg-zinc-500/20 text-zinc-500 border-zinc-500/20'}`}>
-                                 {course.status === 'published' ? 'Đã đăng' : 'Bản nháp'}
+                              <span className={`px-4 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest border ${
+                                 course.status === 'published'
+                                    ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/20'
+                                    : course.status === 'pending_review'
+                                      ? 'bg-amber-500/20 text-amber-300 border-amber-400/30'
+                                      : course.status === 'pending_update'
+                                        ? 'bg-sky-500/20 text-sky-300 border-sky-400/30'
+                                      : 'bg-zinc-500/20 text-zinc-500 border-zinc-500/20'
+                                 }`}>
+                                 {course.status === "published"
+                                    ? "Đã đăng"
+                                    : course.status === "pending_review"
+                                      ? "Chờ duyệt mới"
+                                      : course.status === "pending_update"
+                                        ? "Chờ duyệt cập nhật"
+                                        : "Bản nháp"}
                               </span>
                               <span className="px-4 py-1.5 bg-black/60 backdrop-blur-md rounded-xl text-[9px] font-black uppercase tracking-widest text-zinc-400 border border-white/10">
                                  {course.level}
                               </span>
-                           </div>
-                           <div className="absolute top-6 right-6">
-                              <button className="w-10 h-10 rounded-xl bg-black/40 backdrop-blur-md flex items-center justify-center text-white border border-white/10 hover:bg-black/60 transition-all">
-                                 <MoreVertical size={18} />
-                              </button>
                            </div>
                         </div>
                         <div className="p-8 flex-1 flex flex-col">
@@ -177,12 +226,16 @@ export function MentorCourseManagement() {
                            </div>
                            <div className="flex items-center gap-4">
                               <button
-                                 onClick={() => navigate(`/mentor/course-edit/${course.id}`)}
+                                 onClick={() => navigate(`/mentor/courses/${course.id}/edit`)}
                                  className="flex-1 py-4 rounded-2xl bg-white/5 border border-white/10 text-[10px] font-black uppercase tracking-widest hover:text-white hover:bg-white/10 transition-all flex items-center justify-center gap-2">
                                  <Edit3 size={14} /> Chỉnh sửa
                               </button>
                               <button
-                                 className="w-14 py-4 rounded-2xl bg-white/5 border border-white/10 text-[10px] font-black uppercase tracking-widest hover:text-primary-fixed hover:bg-white/10 transition-all flex items-center justify-center">
+                                 onClick={() => course.status === "published" && navigate(`/courses/${course.id}`)}
+                                 title={course.status === "published" ? "Xem trang khóa học" : "Chỉ xem được khi khóa học đã đăng"}
+                                 className="w-14 py-4 rounded-2xl bg-white/5 border border-white/10 text-[10px] font-black uppercase tracking-widest hover:text-primary-fixed hover:bg-white/10 transition-all flex items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed"
+                                 disabled={course.status !== "published"}
+                              >
                                  <ExternalLink size={16} />
                               </button>
                            </div>
@@ -190,7 +243,7 @@ export function MentorCourseManagement() {
                      </div>
                   ))}
                   <div
-                     onClick={() => navigate("/mentor/course-edit/new")}
+                     onClick={() => navigate("/mentor/courses/new/edit")}
                      className="glass-card border-2 border-dashed border-white/10 flex flex-col items-center justify-center p-12 text-zinc-700 hover:border-primary-fixed hover:text-primary-fixed transition-all cursor-pointer group min-h-[400px]">
                      <div className="w-16 h-16 rounded-full bg-white/5 border border-white/10 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
                         <PlusCircle size={32} className="opacity-40 group-hover:opacity-100" />
@@ -198,6 +251,16 @@ export function MentorCourseManagement() {
                      <p className="text-xs font-black uppercase tracking-[0.3em]">Thiết kế khóa học mới</p>
                   </div>
                </div>
+               {!myCourses.length && (
+                  <div className="mt-6 rounded-2xl border border-white/10 bg-white/[0.03] p-6 text-center">
+                     <p className="text-sm font-semibold text-zinc-300">
+                        Bạn chưa có khóa học nào trên hệ thống.
+                     </p>
+                     <p className="mt-2 text-xs text-zinc-500">
+                        Hãy bấm "Tạo khóa học mới" để bắt đầu, sau đó gửi admin duyệt.
+                     </p>
+                  </div>
+               )}
             </div>
          </div>
       </MentorPageShell>

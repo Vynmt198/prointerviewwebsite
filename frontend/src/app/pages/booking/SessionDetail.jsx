@@ -85,6 +85,34 @@ function StarRating({ value, onChange }) {
   );
 }
 
+function getPaymentMeta(paymentStatus) {
+  if (paymentStatus === "refunded") {
+    return {
+      title: "Đã hoàn tiền",
+      titleClass: "text-sky-600",
+      note: "Khoản thanh toán đã được hoàn về ví/tài khoản theo chính sách.",
+      noteClass: "text-sky-600",
+      iconClass: "text-sky-500",
+    };
+  }
+  if (paymentStatus === "paid") {
+    return {
+      title: "Đã thanh toán",
+      titleClass: "text-gray-500",
+      note: "Hoàn tiền 100% nếu mentor không tham gia đúng giờ.",
+      noteClass: "text-gray-400",
+      iconClass: "",
+    };
+  }
+  return {
+    title: "Chờ xử lý thanh toán",
+    titleClass: "text-amber-600",
+    note: "Đơn đang chờ xác nhận thanh toán.",
+    noteClass: "text-amber-600",
+    iconClass: "text-amber-500",
+  };
+}
+
 /* ─── Countdown ────────────────────────────────────────── */
 function useCountdown(targetDate, targetTime) {
   const target = useMemo(() => {
@@ -186,6 +214,7 @@ export function SessionDetail() {
   /* ── Session state logic ── */
   const autoState = totalSec <= 0 ? "done" : totalSec <= 3600 ? "live" : "upcoming";
   const state = demoState; // use demo for now
+  const paymentMeta = getPaymentMeta(sessionData?.paymentStatus);
 
   /* ── Checklist ── */
   const [checklist, setChecklist] = useState([
@@ -562,12 +591,15 @@ export function SessionDetail() {
             {/* ── Price & refund ── */}
             <div className="card-premium p-5">
               <div className="flex justify-between items-center mb-3">
-                <span className="text-sm text-gray-500">Đã thanh toán</span>
+                <span className={`text-sm font-semibold ${paymentMeta.titleClass}`}>{paymentMeta.title}</span>
                 <span className="font-bold text-gray-900">{sessionData.price.toLocaleString("vi")}đ</span>
               </div>
               <div className="flex items-start gap-2 pt-3 border-t border-gray-100 mb-4">
-                <ShieldCheck className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: "#6E35E8" }} />
-                <p className="text-xs text-gray-400">Hoàn tiền 100% nếu mentor không tham gia đúng giờ.</p>
+                <ShieldCheck
+                  className={`w-4 h-4 flex-shrink-0 mt-0.5 ${paymentMeta.iconClass}`}
+                  style={paymentMeta.iconClass ? undefined : { color: "#6E35E8" }}
+                />
+                <p className={`text-xs ${paymentMeta.noteClass}`}>{paymentMeta.note}</p>
               </div>
 
               {/* Cancel button with refund policy */}

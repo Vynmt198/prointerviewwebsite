@@ -70,6 +70,7 @@ export function apiBookingToLocal(b) {
     cvFile,
     jdFile,
     status: mapBookingStatus(b.status),
+    paymentStatus: b.paymentStatus || "pending",
     paymentRef: ref,
   };
 }

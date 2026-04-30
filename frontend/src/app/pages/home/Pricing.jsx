@@ -15,6 +15,10 @@ import {
   Users
 } from "lucide-react";
 import { Footer } from "../../components/layout/Footer";
+import { TopNavShell } from "../../components/layout/TopNavShell";
+import { requireLoginNavigate } from "../../utils/authGate";
+import { isLoggedIn } from "../../utils/auth";
+import { BrandLogo } from "../../components/brand/BrandLogo";
 
 const FAQ_DATA = [
   {
@@ -38,138 +42,179 @@ const FAQ_DATA = [
 export function Pricing() {
   const navigate = useNavigate();
   const [openFaq, setOpenFaq] = useState(null);
+  const loggedIn = isLoggedIn();
 
   const toggleFaq = (i) => setOpenFaq(openFaq === i ? null : i);
 
   return (
-    <div className="min-h-screen bg-[#120B2E] text-white selection:bg-primary-fixed selection:text-[#120B2E]">
+    <div className="min-h-screen bg-[#f8f4ff] text-[#1d1a26] selection:bg-[#9447FF]/20 selection:text-[#1d1a26]">
       <style>{`
         .glass-card {
-           background: rgba(255, 255, 255, 0.03);
-           backdrop-filter: blur(20px);
+           background: rgba(255, 255, 255, 0.72);
+           backdrop-filter: blur(18px);
            border-radius: 24px;
-           border: 1px solid rgba(255, 255, 255, 0.08);
+           border: 1px solid rgba(148, 71, 255, 0.16);
            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+           box-shadow: 0 18px 45px rgba(107, 70, 193, 0.1);
         }
         .glass-card:hover {
-           border-color: rgba(255, 255, 255, 0.15);
-           background: rgba(255, 255, 255, 0.05);
+           border-color: rgba(148, 71, 255, 0.3);
+           background: rgba(255, 255, 255, 0.86);
            transform: translateY(-8px);
         }
         .glow-purple {
-          box-shadow: 0 0 40px rgba(110, 53, 232, 0.15);
+          box-shadow: 0 0 40px rgba(148, 71, 255, 0.18);
         }
         .glow-lime {
-          box-shadow: 0 0 40px rgba(180, 245, 0, 0.15);
+          box-shadow: 0 0 45px rgba(212, 255, 0, 0.3);
+        }
+        .pricing-grid {
+          position: fixed;
+          inset: 0;
+          z-index: -2;
+          pointer-events: none;
+          opacity: 1;
+          background-image:
+            linear-gradient(rgba(148,71,255,0.06) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(148,71,255,0.06) 1px, transparent 1px);
+          background-size: 64px 64px;
+        }
+        .blob-card-1 { border-radius: 58% 42% 36% 64% / 54% 38% 62% 46%; }
+        .blob-card-3 { border-radius: 34% 66% 44% 56% / 58% 50% 50% 42%; }
+        .vessel-glow {
+          box-shadow: 0 20px 46px rgba(148, 71, 255, 0.11);
+          transition: transform 0.45s cubic-bezier(0.23, 1, 0.32, 1), box-shadow 0.45s;
+        }
+        .vessel-glow:hover {
+          transform: translateY(-10px) rotate(0.6deg);
+          box-shadow: 0 26px 54px rgba(148, 71, 255, 0.18), 0 0 44px rgba(212,255,0,0.22);
         }
       `}</style>
 
       {/* Atmospheric Background Glows */}
-      <div className="fixed top-0 right-0 w-[800px] h-[800px] bg-secondary/10 blur-[180px] rounded-full -translate-y-1/2 translate-x-1/2 pointer-events-none -z-0"></div>
-      <div className="fixed bottom-0 left-0 w-[800px] h-[800px] bg-primary-fixed/5 blur-[180px] rounded-full translate-y-1/2 -translate-x-1/2 pointer-events-none -z-0"></div>
+      <div className="pricing-grid" aria-hidden />
+      <div className="fixed inset-0 pointer-events-none -z-[3]" style={{ background: "#f8f4ff" }} />
+      <div className="fixed top-[-20%] left-[-10%] w-[700px] h-[700px] rounded-full pointer-events-none -z-0 bg-[#d4ff00]/35 blur-[130px]" />
+      <div className="fixed bottom-[-20%] right-[-8%] w-[760px] h-[760px] rounded-full pointer-events-none -z-0 bg-[#9447ff]/25 blur-[140px]" />
 
       {/* ── Navbar ── */}
-      <nav className="fixed top-0 left-0 right-0 z-50 h-16 bg-[#07060E]/80 backdrop-blur-xl border-b border-white/5 flex items-center justify-center px-5">
-        <div className="max-w-7xl w-full flex items-center justify-between">
-          <div className="flex items-center gap-2.5 cursor-pointer" onClick={() => navigate("/")}>
-            <div className="w-8 h-8 rounded-xl flex items-center justify-center shadow-lg bg-gradient-to-br from-[#6E35E8] to-[#9B6DFF]">
-              <Sparkle className="w-4 h-4 text-white" />
-            </div>
-            <span className="text-white font-bold text-[1.05rem] tracking-tight">ProInterview</span>
-          </div>
-          
+      <TopNavShell variant="light" scrolled={true}>
+        <div className="max-w-7xl mx-auto h-full flex items-center justify-between">
           <button
-            onClick={() => navigate(-1)}
-            className="flex items-center gap-2 text-xs font-semibold text-white/60 hover:text-white transition-colors group"
+            className={`flex items-center ${loggedIn ? "cursor-default" : "cursor-pointer"}`}
+            onClick={() => {
+              if (!loggedIn) navigate("/");
+            }}
+            aria-label={loggedIn ? "ProInterview" : "Về trang chủ"}
           >
-            <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
-            Quay lại
+            <BrandLogo />
           </button>
+
+          {loggedIn && (
+            <button
+              onClick={() => navigate(-1)}
+              className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold text-[#1d1a26]/70 hover:text-[#1d1a26] hover:bg-[#9447ff]/10 transition-colors group"
+            >
+              <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
+              Quay lại
+            </button>
+          )}
         </div>
-      </nav>
+      </TopNavShell>
 
       {/* ── Hero Section ── */}
-      <section className="relative pt-24 pb-16 px-5 text-center z-10 overflow-hidden">
+      <section className="relative pt-24 pb-6 px-5 z-10 overflow-hidden">
         {/* Grid pattern */}
-        <div className="absolute inset-0 opacity-[0.05]" style={{
-          backgroundImage: "linear-gradient(rgba(255,255,255,0.5) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.5) 1px,transparent 1px)",
+        <div className="absolute inset-0 opacity-[0.2]" style={{
+          backgroundImage: "linear-gradient(rgba(148,71,255,0.14) 1px,transparent 1px),linear-gradient(90deg,rgba(148,71,255,0.14) 1px,transparent 1px)",
           backgroundSize: "40px 40px"
         }} />
-        <div className="max-w-4xl mx-auto">
-          <div className="flex items-center justify-center gap-3 mb-4">
-            <Sparkle className="text-primary-fixed size-5" />
-            <span className="text-secondary font-bold uppercase tracking-[0.2em] text-xs">Premium Access</span>
-          </div>
-          <h1 className="text-3xl md:text-5xl font-black tracking-tighter leading-none text-white mb-4 whitespace-nowrap">
-            Đầu tư cho sự nghiệp <span className="text-primary-fixed">Xứng đáng.</span>
-          </h1>
-          <p className="text-lg text-white/50 max-w-2xl mx-auto leading-relaxed mb-0">
+        <div className="max-w-7xl mx-auto grid lg:grid-cols-12 gap-10 items-center">
+          <div className="lg:col-span-7 text-center lg:text-left">
+            <div className="flex items-center justify-center lg:justify-start gap-3 mb-4">
+            <Sparkle className="text-[#9447FF] size-5" />
+            <span className="text-[#6b5ca4] font-bold uppercase tracking-[0.2em] text-xs">Gói dịch vụ</span>
+            </div>
+            <h1 className="text-[2rem] md:text-[3.25rem] font-black tracking-tighter leading-[0.98] text-[#1d1a26] mb-3">
+            Đầu tư cho sự nghiệp <span className="text-[#9447FF]">Xứng đáng.</span>
+            </h1>
+            <p className="text-[15px] text-[#4f4768] max-w-2xl lg:max-w-xl mx-auto lg:mx-0 leading-relaxed mb-0">
             Chọn gói dịch vụ phù hợp để mở khóa toàn bộ tính năng phân tích CV,
             phỏng vấn AI không giới hạn và kết nối trực tiếp với Mentor.
-          </p>
+            </p>
+          </div>
+          <div className="lg:col-span-5 hidden lg:flex justify-end">
+            <div className="relative w-52 h-52 bg-white/55 rounded-[1.5rem] border border-[#9447FF]/20 shadow-2xl p-4.5 rotate-6">
+              <div className="w-full h-full rounded-2xl bg-[#9447FF]/10 border border-dashed border-[#9447FF]/25 flex items-center justify-center">
+                <Sparkles className="size-12 text-[#9447FF]/60" />
+              </div>
+              <div className="absolute -top-8 -left-8 w-28 h-28 bg-[#d4ff00]/40 blur-2xl rounded-full" />
+            </div>
+          </div>
         </div>
       </section>
 
       {/* ── Pricing Grid ── */}
-      <section className="px-5 pb-32 z-10 relative">
+      <section className="px-5 pb-12 md:pb-16 z-10 relative">
         <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4.5">
             
             {/* Free Tier */}
-            <div className="glass-card p-10 flex flex-col h-full border-white/5 group">
-              <div className="mb-10">
-                <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center mb-6 group-hover:bg-white/10 transition-colors">
-                  <Brain className="w-6 h-6 text-white/40" />
+            <div className="glass-card vessel-glow blob-card-1 p-6.5 flex flex-col h-full border-white group md:mt-7">
+              <div className="mb-7">
+                <div className="w-11 h-11 rounded-2xl bg-[#9447ff]/10 flex items-center justify-center mb-5 group-hover:bg-[#9447ff]/15 transition-colors">
+                  <Brain className="w-5 h-5 text-[#9447FF]" />
                 </div>
-                <h3 className="text-2xl font-black mb-2">Cơ bản (Free)</h3>
-                <p className="text-white/40 text-xs font-bold uppercase tracking-widest mb-6">Trải nghiệm miễn phí</p>
+                <h3 className="text-[1.15rem] font-black mb-2 text-[#1d1a26]">Cơ bản (Free)</h3>
+                <p className="text-[#6b5ca4] text-xs font-bold uppercase tracking-widest mb-6">Trải nghiệm miễn phí</p>
                 <div className="flex items-baseline gap-1">
-                  <span className="text-5xl font-black">0đ</span>
-                  <span className="text-white/30 text-sm font-bold">/tháng</span>
+                  <span className="text-[2.2rem] font-black text-[#1d1a26]">0đ</span>
+                  <span className="text-[#7a7197] text-sm font-bold">/tháng</span>
                 </div>
               </div>
 
-              <ul className="space-y-5 mb-12 flex-grow">
+              <ul className="space-y-3 mb-6 flex-grow">
                 {[
                   "2 buổi AI Interview trải nghiệm",
                   "3 lần phân tích CV/JD chi tiết",
                   "10 câu hỏi mẫu theo ngành nghề",
                   "Truy cập cộng đồng Career Hub"
                 ].map((f, i) => (
-                  <li key={i} className="flex items-center gap-3 text-sm text-white/60">
-                    <CheckCircle2 className="w-4 h-4 text-secondary flex-shrink-0" />
+                  <li key={i} className="flex items-center gap-3 text-sm text-[#4f4768]">
+                    <CheckCircle2 className="w-4 h-4 text-[#9447FF] flex-shrink-0" />
                     {f}
                   </li>
                 ))}
               </ul>
 
-              <button 
-                onClick={() => navigate("/register")}
-                className="w-full py-4 rounded-2xl border border-white/10 text-white font-black text-xs uppercase tracking-widest hover:bg-white/5 transition-all active:scale-[0.98]"
+              <button
+                type="button"
+                onClick={() => requireLoginNavigate(navigate, "/dashboard")}
+                className="w-full py-3.5 rounded-2xl border border-[#9447FF]/25 text-[#9447FF] font-black text-xs uppercase tracking-widest hover:bg-[#9447FF]/8 transition-all active:scale-[0.98]"
               >
                 Bắt đầu ngay
               </button>
             </div>
 
             {/* Pro Tier (Popular) */}
-            <div className="glass-card p-10 flex flex-col h-full border-primary-fixed/30 bg-primary-fixed/5 glow-lime relative scale-105 z-20 overflow-hidden">
-              <div className="absolute top-0 right-0 py-2 px-8 bg-primary-fixed text-black text-[10px] font-black uppercase tracking-widest translate-x-[30%] translate-y-[100%] rotate-45">
-                Popular
+            <div className="glass-card vessel-glow p-6.5 md:p-7 flex flex-col h-full border-2 border-[#d4ff00]/80 bg-white/95 glow-lime relative scale-[1.01] z-20 overflow-hidden rounded-[2.2rem]">
+              <div className="absolute top-0 right-0 py-2 px-8 bg-[#d4ff00] text-[#1d1a26] text-[10px] font-black uppercase tracking-widest translate-x-[30%] translate-y-[100%] rotate-45">
+                Phổ biến nhất
               </div>
               
-              <div className="mb-10">
-                <div className="w-12 h-12 rounded-2xl bg-primary-fixed flex items-center justify-center mb-6 shadow-lg shadow-primary-fixed/20">
-                  <Zap className="w-6 h-6 text-black" />
+              <div className="mb-7">
+                <div className="w-11 h-11 rounded-2xl bg-[#9447FF] flex items-center justify-center mb-5 shadow-lg shadow-[#9447FF]/25">
+                  <Zap className="w-5 h-5 text-white" />
                 </div>
-                <h3 className="text-2xl font-black mb-2 text-primary-fixed">Chuyên nghiệp (Pro)</h3>
-                <p className="text-primary-fixed/60 text-xs font-bold uppercase tracking-widest mb-6">Dành cho ứng viên chủ động</p>
+                <h3 className="text-[1.15rem] font-black mb-2 text-[#9447FF]">Chuyên nghiệp (Pro)</h3>
+                <p className="text-[#6b5ca4] text-xs font-bold uppercase tracking-widest mb-6">Dành cho ứng viên chủ động</p>
                 <div className="flex items-baseline gap-1">
-                  <span className="text-5xl font-black text-white">79.000đ</span>
-                  <span className="text-white/30 text-sm font-bold">/tháng</span>
+                  <span className="text-[2.2rem] font-black text-[#1d1a26]">79.000đ</span>
+                  <span className="text-[#7a7197] text-sm font-bold">/tháng</span>
                 </div>
               </div>
 
-              <ul className="space-y-5 mb-12 flex-grow">
+              <ul className="space-y-3 mb-6 flex-grow">
                 {[
                   "10 buổi AI Interview / tháng",
                   "Công nghệ nhận diện giọng nói AI",
@@ -177,36 +222,42 @@ export function Pricing() {
                   "Phản hồi AI chi tiết từng câu trả lời",
                   "Lịch sử luyện tập 12 tháng"
                 ].map((f, i) => (
-                  <li key={i} className="flex items-center gap-3 text-sm text-white font-bold">
-                    <CheckCircle2 className="w-5 h-5 text-primary-fixed flex-shrink-0" />
+                  <li key={i} className="flex items-center gap-3 text-sm text-[#1d1a26] font-bold">
+                    <CheckCircle2 className="w-5 h-5 text-[#9447FF] flex-shrink-0" />
                     {f}
                   </li>
                 ))}
               </ul>
 
-              <button 
-                onClick={() => navigate("/checkout?plan=starterPro&billing=monthly&planPrice=79000")}
-                className="w-full py-5 rounded-2xl bg-primary-fixed text-black font-black text-xs uppercase tracking-widest shadow-xl shadow-primary-fixed/10 hover:brightness-110 transition-all active:scale-[0.98]"
+              <button
+                type="button"
+                onClick={() =>
+                  requireLoginNavigate(
+                    navigate,
+                    "/checkout?plan=starterPro&billing=monthly&planPrice=79000",
+                  )
+                }
+                className="w-full py-4 rounded-2xl bg-[#d4ff00] text-[#1d1a26] font-black text-xs uppercase tracking-widest shadow-xl shadow-[#d4ff00]/30 hover:brightness-95 transition-all active:scale-[0.98]"
               >
                 Nâng cấp Pro
               </button>
             </div>
 
             {/* Elite Tier */}
-            <div className="glass-card p-10 flex flex-col h-full border-secondary/20 shadow-xl shadow-secondary/5 group">
-              <div className="mb-10">
-                <div className="w-12 h-12 rounded-2xl bg-secondary/20 flex items-center justify-center mb-6 border border-secondary/30">
-                  <ShieldCheck className="w-6 h-6 text-secondary" />
+            <div className="glass-card vessel-glow blob-card-3 p-6.5 flex flex-col h-full border-[#9447FF]/20 shadow-xl shadow-[#9447FF]/10 group md:mt-3">
+              <div className="mb-7">
+                <div className="w-11 h-11 rounded-2xl bg-[#d4ff00]/30 flex items-center justify-center mb-5 border border-[#d4ff00]/45">
+                  <ShieldCheck className="w-5 h-5 text-[#566600]" />
                 </div>
-                <h3 className="text-2xl font-black mb-2 text-secondary">Thượng hạng (Elite)</h3>
-                <p className="text-secondary/60 text-xs font-bold uppercase tracking-widest mb-6">Chinh phục Big Corporations</p>
+                <h3 className="text-[1.15rem] font-black mb-2 text-[#9447FF]">Thượng hạng (Elite)</h3>
+                <p className="text-[#6b5ca4] text-xs font-bold uppercase tracking-widest mb-6">Chinh phục tập đoàn lớn</p>
                 <div className="flex items-baseline gap-1">
-                  <span className="text-5xl font-black text-white">99.000đ</span>
-                  <span className="text-white/30 text-sm font-bold">/tháng</span>
+                  <span className="text-[2.2rem] font-black text-[#1d1a26]">99.000đ</span>
+                  <span className="text-[#7a7197] text-sm font-bold">/tháng</span>
                 </div>
               </div>
 
-              <ul className="space-y-5 mb-12 flex-grow">
+              <ul className="space-y-3 mb-6 flex-grow">
                 {[
                   "AI Interview KHÔNG GIỚI HẠN",
                   "Phân tích hành vi & tư thế qua Camera",
@@ -214,16 +265,22 @@ export function Pricing() {
                   "Mentor ưu tiên hỗ trợ 24/7",
                   "Tải báo cáo bản PDF chuyên nghiệp"
                 ].map((f, i) => (
-                  <li key={i} className="flex items-center gap-3 text-sm text-white font-bold">
-                    <CheckCircle2 className="w-5 h-5 text-secondary flex-shrink-0" />
+                  <li key={i} className="flex items-center gap-3 text-sm text-[#1d1a26] font-bold">
+                    <CheckCircle2 className="w-5 h-5 text-[#9447FF] flex-shrink-0" />
                     {f}
                   </li>
                 ))}
               </ul>
 
-              <button 
-                onClick={() => navigate("/checkout?plan=elitePro&billing=monthly&planPrice=99000")}
-                className="w-full py-4 rounded-2xl border border-secondary/40 text-secondary font-black text-xs uppercase tracking-widest hover:bg-secondary/10 transition-all active:scale-[0.98]"
+              <button
+                type="button"
+                onClick={() =>
+                  requireLoginNavigate(
+                    navigate,
+                    "/checkout?plan=elitePro&billing=monthly&planPrice=99000",
+                  )
+                }
+                className="w-full py-3.5 rounded-2xl border border-[#9447FF]/35 text-[#9447FF] font-black text-xs uppercase tracking-widest hover:bg-[#9447FF]/8 transition-all active:scale-[0.98]"
               >
                 Nâng cấp Elite
               </button>
@@ -233,58 +290,31 @@ export function Pricing() {
       </section>
 
       {/* ── FAQ Section ── */}
-      <section className="px-5 py-32 bg-white/2 relative z-10">
+      <section className="px-5 py-24 relative z-10">
         <div className="max-w-3xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-4xl font-black tracking-tight mb-4 text-white">Câu hỏi thường gặp</h2>
-            <p className="text-white/40">Mọi thứ bạn cần biết về gói và quyền lợi của mình.</p>
+            <h2 className="text-4xl font-black tracking-tight mb-4 text-[#1d1a26]">Câu hỏi thường gặp</h2>
+            <p className="text-[#5a5174]">Mọi thứ bạn cần biết về gói và quyền lợi của mình.</p>
           </div>
 
           <div className="space-y-4">
             {FAQ_DATA.map((item, i) => (
               <div 
                 key={i} 
-                className={`glass-card p-6 cursor-pointer border-white/5 transition-all ${openFaq === i ? "bg-white/5" : ""}`}
+                className={`glass-card p-6 cursor-pointer transition-all ${openFaq === i ? "bg-white/90 border-[#9447FF]/25" : ""}`}
                 onClick={() => toggleFaq(i)}
               >
                 <div className="flex items-center justify-between gap-4">
-                  <h4 className="font-bold text-lg text-white/90">{item.q}</h4>
-                  {openFaq === i ? <ChevronUp className="w-5 h-5 text-primary-fixed" /> : <ChevronDown className="w-5 h-5 text-white/20" />}
+                  <h4 className="font-bold text-lg text-[#1d1a26]">{item.q}</h4>
+                  {openFaq === i ? <ChevronUp className="w-5 h-5 text-[#9447FF]" /> : <ChevronDown className="w-5 h-5 text-[#6b5ca4]" />}
                 </div>
                 {openFaq === i && (
-                  <div className="mt-4 pt-4 border-t border-white/5 text-white/50 leading-relaxed text-sm animate-fade-in">
+                  <div className="mt-4 pt-4 border-t border-[#9447FF]/15 text-[#5a5174] leading-relaxed text-sm animate-fade-in">
                     {item.a}
                   </div>
                 )}
               </div>
             ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── Final CTA ── */}
-      <section className="px-5 py-32 z-10 relative">
-        <div className="max-w-5xl mx-auto glass-card p-12 lg:p-20 text-center border-primary-fixed/20 glow-lime overflow-hidden relative">
-          <div className="absolute top-0 left-0 w-full h-full bg-primary-fixed/5 opacity-50"></div>
-          <div className="relative z-10">
-            <h2 className="text-4xl md:text-6xl font-black tracking-tighter mb-8 text-white">Sẵn sàng để tỏa sáng?</h2>
-            <p className="text-white/40 mb-12 max-w-xl mx-auto text-lg leading-relaxed">
-              Gia nhập cùng 10,000+ ứng viên đã thành công có được công việc mơ ước với lộ trình từ ProInterview.
-            </p>
-            <div className="flex flex-col md:flex-row items-center justify-center gap-6">
-              <button 
-                onClick={() => navigate("/register")}
-                className="bg-primary-fixed text-black font-black px-12 py-5 rounded-2xl text-lg hover:scale-105 transition-all active:scale-[0.98] shadow-2xl shadow-primary-fixed/20"
-              >
-                Bắt đầu miễn phí
-              </button>
-              <button 
-                onClick={() => navigate("/mentors")}
-                className="px-10 py-5 rounded-2xl text-white/60 font-bold hover:text-white transition-colors"
-              >
-                Hoặc tìm Mentor chuyên gia
-              </button>
-            </div>
           </div>
         </div>
       </section>

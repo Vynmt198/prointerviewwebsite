@@ -8,7 +8,6 @@ import {
   User,
   Settings,
   LogOut,
-  Sparkles,
   Zap,
   ChevronsUpDown,
   Calendar,
@@ -41,7 +40,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
-import { getUser, logout, getInitials } from "../../utils/auth";
+import { getUser, logout, getInitials, getBrandClickPath } from "../../utils/auth";
 
 /* ── Nav data ─────────────────────────────────────────────── */
 const customerMainItems = [
@@ -83,7 +82,10 @@ export function AppSidebar() {
     ...secondaryItems,
   ];
 
-  const handleLogout = () => { logout(); navigate("/"); };
+  const handleLogout = async () => {
+    await logout();
+    navigate("/");
+  };
 
   const isActive = (url) =>
     url === "/dashboard" || url === "/mentor/dashboard"
@@ -100,7 +102,7 @@ export function AppSidebar() {
             <SidebarMenuButton
               size="lg"
               tooltip="ProInterview"
-              onClick={() => navigate("/")}
+              onClick={() => navigate(getBrandClickPath())}
               className="
                 h-14 rounded-none cursor-pointer
                 hover:bg-white/5 active:bg-white/10
@@ -111,35 +113,12 @@ export function AppSidebar() {
               "
             >
               {/* Logo icon */}
-              <div
-                className="flex aspect-square size-8 shrink-0 items-center justify-center rounded-xl"
-                style={{
-                  background: "linear-gradient(135deg, #6E35E8 0%, #8B4DFF 100%)",
-                  boxShadow: "0 4px 12px rgba(110,53,232,0.45)",
-                }}
-              >
-                <Sparkles className="w-4 h-4 text-[#c4ff47]" strokeWidth={2.5} />
-              </div>
-
-              {/* Logo text — hidden when collapsed */}
-              <div className="flex flex-col min-w-0 group-data-[collapsible=icon]:hidden">
-                <div className="flex items-center gap-1.5">
-                  <span
-                    className="font-extrabold text-white truncate"
-                    style={{ fontSize: "0.9375rem", letterSpacing: "-0.02em" }}
-                  >
-                    ProInterview
-                  </span>
-                  <span
-                    className="shrink-0 text-[9px] font-bold px-1.5 py-0.5 rounded-md"
-                    style={{ background: "#c4ff47", color: "#120B2E" }}
-                  >
-                    MVP
-                  </span>
-                </div>
-                <span className="text-[10px] text-white/35 truncate">
-                  Nền tảng Phỏng vấn AI
-                </span>
+              <div className="flex h-14 w-auto shrink-0 items-center justify-center group-data-[collapsible=icon]:h-11">
+                <img
+                  src="/Logo.png"
+                  alt="ProInterview logo"
+                  className="h-full w-auto object-contain origin-center scale-[2.05] translate-x-14 group-data-[collapsible=icon]:translate-x-0 group-data-[collapsible=icon]:scale-[1.8]"
+                />
               </div>
             </SidebarMenuButton>
           </SidebarMenuItem>

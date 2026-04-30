@@ -6,6 +6,7 @@
   "scripts": {
     "build": "vite build",
     "dev": "vite",
+    "preview": "vite preview",
     "dev:full": "concurrently -n frontend,backend,ai -c cyan,green,yellow \"npm:dev\" \"npm --prefix \\\"../backend\\\" run dev\" \"cd ../cv_jd_matching && uvicorn main:app --reload --port 8000\""
   },
   "dependencies": {

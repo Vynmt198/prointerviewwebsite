@@ -56,9 +56,9 @@
   --radius-lg: 2rem;
   --radius-xl: 3rem;
 
-  --font-headline: "Plus Jakarta Sans";
-  --font-body: "Manrope";
-  --font-label: "Manrope";
+  --font-headline: "Lexend", "Plus Jakarta Sans";
+  --font-body: "Lexend", "Manrope";
+  --font-label: "Lexend", "Manrope";
 }
 
 /* Lime hệ — dùng trong style inline / shadow */
@@ -83,7 +83,7 @@ html {
 }
 
 body {
-  font-family: 'Plus Jakarta Sans', 'Inter', system-ui, sans-serif;
+  font-family: 'Lexend', 'Plus Jakarta Sans', 'Inter', system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;

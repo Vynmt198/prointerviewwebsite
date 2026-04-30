@@ -11,16 +11,14 @@ import {
   Zap, 
   Filter, 
   Search,
-  ArrowLeft,
   ArrowRight,
-  ChevronRight,
   MessageCircle,
   TrendingUp,
   Award
 } from "lucide-react";
-import { COMPLETED_MENTOR_MEETINGS } from "../../data/mentorMockData";
 import { getUser } from "../../utils/auth";
 import { MentorPageShell } from "../../components/mentor/MentorPageShell";
+import { fetchMentorReviews } from "../../utils/mentorApi";
 
 const MENTOR_REVIEWS_INPUT_CSS = `
         .input-glass {
@@ -39,17 +37,39 @@ export function MentorReviews() {
   const userAuth = getUser();
   const [filter, setFilter] = useState("all");
   const [search, setSearch] = useState("");
+  const [reviewedMeetings, setReviewedMeetings] = useState([]);
 
   useEffect(() => {
     if (!userAuth || userAuth.role !== "mentor") {
       navigate("/");
+      return;
     }
-  }, []);
+    fetchMentorReviews().then((res) => {
+      if (!res.success || !Array.isArray(res.items)) {
+        setReviewedMeetings([]);
+        return;
+      }
+      const mapped = res.items.map((r) => ({
+        id: r.id,
+        mentee: {
+          name: r.mentee?.name || "Học viên",
+          avatar: r.mentee?.avatar || "https://i.pravatar.cc/120?img=12",
+        },
+        position: r.position || "Mentee",
+        company: r.company || "ProInterview",
+        menteeReview: {
+          rating: Number(r.rating || 0),
+          comment: r.comment || "",
+          wouldRecommend: Boolean(r.wouldRecommend),
+          reviewDate: r.reviewDate,
+          reply: r.reply || null,
+        },
+      }));
+      setReviewedMeetings(mapped);
+    });
+  }, [navigate, userAuth?.role]);
 
   if (!userAuth || userAuth.role !== "mentor") return null;
-
-  // Get all meetings with reviews
-  const reviewedMeetings = COMPLETED_MENTOR_MEETINGS.filter((m) => m.menteeReview);
 
   // Filter by rating
   const filtered = reviewedMeetings.filter((m) => {
@@ -201,7 +221,7 @@ export function MentorReviews() {
                         {meeting.menteeReview.wouldRecommend && (
                            <span className="px-4 py-1.5 rounded-lg bg-primary-fixed/10 text-primary-fixed text-[10px] font-black uppercase tracking-widest border border-primary-fixed/20">Recommend</span>
                         )}
-                        <span className="px-4 py-1.5 rounded-lg bg-white/5 text-zinc-500 text-[10px] font-black uppercase tracking-widest border border-white/10">Public</span>
+                         <span className="px-4 py-1.5 rounded-lg bg-white/5 text-zinc-500 text-[10px] font-black uppercase tracking-widest border border-white/10">Public</span>
                      </div>
                   </div>
                 </div>
@@ -212,9 +232,15 @@ export function MentorReviews() {
                     "{meeting.menteeReview.comment}"
                   </p>
                   <div className="absolute bottom-6 right-8">
-                     <button className="flex items-center gap-2 text-[10px] font-black text-zinc-600 uppercase tracking-widest hover:text-primary-fixed transition-colors">
-                        Phản hồi nhận xét <ArrowRight size={14} />
-                     </button>
+                     {meeting.menteeReview.reply ? (
+                        <p className="text-[10px] font-black text-primary-fixed uppercase tracking-widest">
+                          Đã phản hồi
+                        </p>
+                     ) : (
+                        <button className="flex items-center gap-2 text-[10px] font-black text-zinc-600 uppercase tracking-widest hover:text-primary-fixed transition-colors">
+                           Phản hồi nhận xét <ArrowRight size={14} />
+                        </button>
+                     )}
                   </div>
                 </div>
               </div>

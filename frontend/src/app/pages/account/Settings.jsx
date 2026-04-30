@@ -11,6 +11,7 @@ import {
   UserCircle,
   Trash2 as Trash,
   Key,
+  Monitor,
   ChevronRight,
   ArrowRight
 } from "lucide-react";
@@ -393,8 +394,8 @@ export function Settings() {
     };
   }, []);
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await logout();
     navigate("/");
   };
 

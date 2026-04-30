@@ -13,6 +13,18 @@ export class BookingsController {
     }
   }
 
+  static async listForMentor(req, res, next) {
+    try {
+      const result = await bookingsService.listMentorBookings(req.userId);
+      if (!result.ok) {
+        return res.status(result.status).json({ success: false, error: result.error });
+      }
+      res.json({ success: true, bookings: result.bookings });
+    } catch (err) {
+      next(err);
+    }
+  }
+
   static async create(req, res, next) {
     try {
       const result = await bookingsService.createBooking(req.userId, req.body ?? {});
@@ -20,6 +32,42 @@ export class BookingsController {
         return res.status(result.status).json({ success: false, error: result.error });
       }
       res.status(201).json({ success: true, booking: result.booking });
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  static async confirmForMentor(req, res, next) {
+    try {
+      const result = await bookingsService.confirmMentorBooking(req.userId, req.params.id);
+      if (!result.ok) {
+        return res.status(result.status).json({ success: false, error: result.error });
+      }
+      res.json({ success: true, booking: result.booking });
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  static async completeForMentor(req, res, next) {
+    try {
+      const result = await bookingsService.completeMentorBooking(req.userId, req.params.id);
+      if (!result.ok) {
+        return res.status(result.status).json({ success: false, error: result.error });
+      }
+      res.json({ success: true, booking: result.booking });
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  static async updateNotesForMentor(req, res, next) {
+    try {
+      const result = await bookingsService.updateMentorNotes(req.userId, req.params.id, req.body ?? {});
+      if (!result.ok) {
+        return res.status(result.status).json({ success: false, error: result.error });
+      }
+      res.json({ success: true, booking: result.booking });
     } catch (err) {
       next(err);
     }
@@ -49,13 +97,61 @@ export class BookingsController {
     }
   }
 
+  static async getByIdForMentor(req, res, next) {
+    try {
+      const result = await bookingsService.getMentorBooking(req.userId, req.params.id);
+      if (!result.ok) {
+        return res.status(result.status).json({ success: false, error: result.error });
+      }
+      res.json({ success: true, booking: result.booking });
+    } catch (err) {
+      next(err);
+    }
+  }
+
   static async cancel(req, res, next) {
     try {
       const result = await bookingsService.cancelMyBooking(req.userId, req.params.id, req.body ?? {});
       if (!result.ok) {
         return res.status(result.status).json({ success: false, error: result.error });
       }
+      res.json({ success: true, booking: result.booking, cancellationPolicy: result.cancellationPolicy });
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  static async cancelForMentor(req, res, next) {
+    try {
+      const result = await bookingsService.cancelMentorBooking(req.userId, req.params.id, req.body ?? {});
+      if (!result.ok) {
+        return res.status(result.status).json({ success: false, error: result.error });
+      }
       res.json({ success: true, booking: result.booking });
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  static async rescheduleForMentor(req, res, next) {
+    try {
+      const result = await bookingsService.rescheduleMentorBooking(req.userId, req.params.id, req.body ?? {});
+      if (!result.ok) {
+        return res.status(result.status).json({ success: false, error: result.error });
+      }
+      res.json({ success: true, booking: result.booking });
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  static async getBookedSlots(req, res, next) {
+    try {
+      const result = await bookingsService.getMentorBookedSlots(req.params.id);
+      if (!result.ok) {
+        return res.status(result.status).json({ success: false, error: result.error });
+      }
+      res.json({ success: true, booked: result.booked });
     } catch (err) {
       next(err);
     }

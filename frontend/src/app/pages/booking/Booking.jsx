@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router";
 import {
   Calendar as CalendarBlank,
@@ -21,36 +21,59 @@ import {
   Sparkles as Sparkle,
   X,
 } from "lucide-react";
-import { fetchMentor } from "../../utils/mentorApi";
+import { fetchMentor, fetchMentorAvailability } from "../../utils/mentorApi";
+import { fetchBookedSlots } from "../../utils/bookingsApi";
 import { getSuggestedBookingData, getCVAnalysisHistory } from "../../utils/history";
 
-/* ── Calendar data ─────────────────────────────────── */
-const WEEKS = [
-  {
-    label: "Tuần này · 27/02 – 05/03",
-    days: [
-      { day: "T2", date: "27/02", full: "Thứ 2, 27/02", available: true },
-      { day: "T3", date: "28/02", full: "Thứ 3, 28/02", available: false },
-      { day: "T4", date: "01/03", full: "Thứ 4, 01/03", available: true },
-      { day: "T5", date: "02/03", full: "Thứ 5, 02/03", available: true },
-      { day: "T6", date: "03/03", full: "Thứ 6, 03/03", available: true },
-      { day: "T7", date: "04/03", full: "Thứ 7, 04/03", available: false },
-      { day: "CN", date: "05/03", full: "Chủ nhật, 05/03", available: true },
-    ],
-  },
-  {
-    label: "Tuần sau · 06/03 – 12/03",
-    days: [
-      { day: "T2", date: "06/03", full: "Thứ 2, 06/03", available: true },
-      { day: "T3", date: "07/03", full: "Thứ 3, 07/03", available: true },
-      { day: "T4", date: "08/03", full: "Thứ 4, 08/03", available: false },
-      { day: "T5", date: "09/03", full: "Thứ 5, 09/03", available: true },
-      { day: "T6", date: "10/03", full: "Thứ 6, 10/03", available: true },
-      { day: "T7", date: "11/03", full: "Thứ 7, 11/03", available: false },
-      { day: "CN", date: "12/03", full: "Chủ nhật, 12/03", available: true },
-    ],
-  },
-];
+const VI_DAY_SHORT = ["CN", "T2", "T3", "T4", "T5", "T6", "T7"];
+const VI_DAY_FULL = ["Chủ nhật", "Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5", "Thứ 6", "Thứ 7"];
+
+function pad2(n) {
+  return String(n).padStart(2, "0");
+}
+
+function toDateOnly(d) {
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+}
+
+function formatDDMM(d) {
+  return `${pad2(d.getDate())}/${pad2(d.getMonth() + 1)}`;
+}
+
+function formatDDMMYYYY(d) {
+  return `${pad2(d.getDate())}/${pad2(d.getMonth() + 1)}/${d.getFullYear()}`;
+}
+
+function startOfIsoWeek(d) {
+  const date = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  const day = date.getDay();
+  const diff = day === 0 ? -6 : 1 - day;
+  date.setDate(date.getDate() + diff);
+  return date;
+}
+
+function buildWeek(start, title, now) {
+  const days = Array.from({ length: 7 }, (_, i) => {
+    const dateObj = new Date(start.getFullYear(), start.getMonth(), start.getDate() + i);
+    const dateOnly = toDateOnly(dateObj);
+    const nowOnly = toDateOnly(now);
+    const isPast = dateOnly < nowOnly;
+    const dateDDMM = formatDDMM(dateObj);
+    const dateKey = formatDDMMYYYY(dateObj);
+    return {
+      day: VI_DAY_SHORT[dateObj.getDay()],
+      dateObj,
+      date: dateDDMM,
+      dateKey,
+      full: `${VI_DAY_FULL[dateObj.getDay()]}, ${dateKey}`,
+      available: !isPast,
+      isPast,
+    };
+  });
+  const from = formatDDMM(days[0].dateObj);
+  const to = formatDDMM(days[6].dateObj);
+  return { label: `${title} · ${from} – ${to}`, days };
+}
 
 const TIME_GROUPS = [
   { label: "Buổi sáng", icon: Sun, slots: ["08:00", "09:00", "10:00", "11:00"] },
@@ -58,22 +81,15 @@ const TIME_GROUPS = [
   { label: "Buổi tối", icon: Moon, slots: ["19:00", "20:00", "21:00"] },
 ];
 
-const BOOKED = {
-  "01/03": ["09:00", "15:00"],
-  "02/03": ["10:00", "14:00", "19:00"],
-  "03/03": ["08:00", "16:00"],
-  "06/03": ["09:00", "10:00", "20:00"],
-  "07/03": ["14:00"],
-  "09/03": ["11:00", "15:00", "21:00"],
-  "10/03": ["08:00", "09:00", "17:00"],
-  "12/03": ["10:00", "20:00"],
-};
+
 
 export function Booking() {
   const navigate = useNavigate();
   const { id } = useParams();
   const [mentor, setMentor] = useState(null);
   const [mentorLoading, setMentorLoading] = useState(true);
+  const [bookedSlots, setBookedSlots] = useState({});
+  const [mentorAvailability, setMentorAvailability] = useState(null);
 
   useEffect(() => {
     if (!id) {
@@ -82,9 +98,14 @@ export function Booking() {
       return;
     }
     setMentorLoading(true);
-    fetchMentor(id)
-      .then((m) => setMentor(m))
-      .finally(() => setMentorLoading(false));
+    
+    Promise.all([fetchMentor(id), fetchBookedSlots(id), fetchMentorAvailability(id)]).then(([m, slotsRes, availability]) => {
+      setMentor(m);
+      setMentorAvailability(availability);
+      if (slotsRes.success) {
+        setBookedSlots(slotsRes.booked);
+      }
+    }).finally(() => setMentorLoading(false));
   }, [id]);
 
   const [step, setStep] = useState(1);
@@ -97,6 +118,12 @@ export function Booking() {
   const [showSmartBanner, setShowSmartBanner] = useState(false);
   const [selectedCvFile, setSelectedCvFile] = useState("");
   const [selectedJdFile, setSelectedJdFile] = useState("");
+  const calendarWeeks = useMemo(() => {
+    const now = new Date();
+    const thisWeekStart = startOfIsoWeek(now);
+    const nextWeekStart = new Date(thisWeekStart.getFullYear(), thisWeekStart.getMonth(), thisWeekStart.getDate() + 7);
+    return [buildWeek(thisWeekStart, "Tuần này", now), buildWeek(nextWeekStart, "Tuần sau", now)];
+  }, []);
 
   useEffect(() => {
     getCVAnalysisHistory();
@@ -128,11 +155,80 @@ export function Booking() {
     navigate(`/checkout?${params.toString()}`);
   };
 
-  const isSlotBooked = (time) =>
-    selectedDay ? (BOOKED[selectedDay] ?? []).includes(time) : false;
+  const getBookedOfDay = (dayKey) => {
+    if (!dayKey) return [];
+    const noYear = dayKey.split("/").slice(0, 2).join("/");
+    return bookedSlots[dayKey] ?? bookedSlots[noYear] ?? [];
+  };
+
+  const normalizeDateKey = (raw, fallbackYear) => {
+    const s = String(raw || "").trim();
+    if (!s) return "";
+    if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+    const parts = s.split("/").map((p) => Number(p));
+    if (parts.length >= 2 && Number.isFinite(parts[0]) && Number.isFinite(parts[1])) {
+      const year = parts.length >= 3 && Number.isFinite(parts[2]) ? parts[2] : fallbackYear;
+      return `${String(year).padStart(4, "0")}-${String(parts[1]).padStart(2, "0")}-${String(parts[0]).padStart(2, "0")}`;
+    }
+    return "";
+  };
+
+  const getMentorSlotsForDay = (day) => {
+    if (!day) return TIME_GROUPS.flatMap((g) => g.slots);
+    const av = mentorAvailability;
+    const hasConfig = Boolean(
+      av &&
+        ((av.availableSlots && Object.keys(av.availableSlots).length) ||
+          (Array.isArray(av.recurringSchedule) && av.recurringSchedule.length) ||
+          (Array.isArray(av.blockedDates) && av.blockedDates.length)),
+    );
+    if (!hasConfig) return TIME_GROUPS.flatMap((g) => g.slots);
+
+    const year = day.dateObj.getFullYear();
+    const iso = `${year}-${pad2(day.dateObj.getMonth() + 1)}-${pad2(day.dateObj.getDate())}`;
+    const blockedSet = new Set((av.blockedDates || []).map((d) => normalizeDateKey(d, year)).filter(Boolean));
+    if (blockedSet.has(iso)) return [];
+
+    const entries = Object.entries(av.availableSlots || {});
+    const explicit = entries.find(([k]) => normalizeDateKey(k, year) === iso);
+    if (explicit) {
+      const slots = Array.isArray(explicit[1]) ? explicit[1].map((x) => String(x).trim()).filter(Boolean) : [];
+      return slots;
+    }
+
+    const recurring = Array.isArray(av.recurringSchedule) ? av.recurringSchedule : [];
+    if (!recurring.length) return [];
+    const mentorDay = (day.dateObj.getDay() + 6) % 7; // Mon=0
+    const row = recurring.find((r) => Number(r?.dayOfWeek) === mentorDay);
+    return row && Array.isArray(row.slots) ? row.slots.map((x) => String(x).trim()).filter(Boolean) : [];
+  };
+
+  const isSelectedDayToday = useMemo(() => {
+    if (!selectedDay) return false;
+    const [d, m, y] = selectedDay.split("/").map(Number);
+    if (!d || !m || !y) return false;
+    const dayDate = new Date(y, m - 1, d);
+    return toDateOnly(dayDate).getTime() === toDateOnly(new Date()).getTime();
+  }, [selectedDay]);
+
+  const isPastTimeInSelectedDay = (time) => {
+    if (!isSelectedDayToday) return false;
+    const [h, mi] = String(time).split(":").map(Number);
+    const now = new Date();
+    if (h < now.getHours()) return true;
+    if (h === now.getHours() && (mi || 0) <= now.getMinutes()) return true;
+    return false;
+  };
+
+  const isSlotBooked = (time) => (selectedDay ? getBookedOfDay(selectedDay).includes(time) : false);
+  const isSlotPast = (time) => isPastTimeInSelectedDay(time);
 
   const availableSlotCount = selectedDay
-    ? TIME_GROUPS.flatMap((g) => g.slots).filter((t) => !isSlotBooked(t)).length
+    ? (() => {
+        const selectedObj = calendarWeeks.flatMap((w) => w.days).find((d) => d.dateKey === selectedDay);
+        const allowed = getMentorSlotsForDay(selectedObj);
+        return allowed.filter((t) => !isSlotBooked(t) && !isSlotPast(t)).length;
+      })()
     : 0;
 
   const endTime = selectedTime
@@ -243,47 +339,48 @@ export function Booking() {
                 </div>
                 <div>
                   <p className="text-sm font-bold text-white">Chọn ngày phỏng vấn</p>
-                  <p className="text-xs text-zinc-500">Lịch trống của {mentor.name} — Tháng 2 & 3/2026</p>
+                  <p className="text-xs text-zinc-500">Lịch trống của {mentor.name} — theo thời gian hiện tại</p>
                 </div>
               </div>
               <div className="space-y-5 p-5">
-                {WEEKS.map((week) => (
+                {calendarWeeks.map((week) => (
                   <div key={week.label}>
                     <p className="mb-3 text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500">{week.label}</p>
                     <div className="grid grid-cols-7 gap-2">
                       {week.days.map((d) => {
-                        const isSelected = selectedDay === d.date;
-                        const bookedCount = (BOOKED[d.date] ?? []).length;
-                        const freeSlots = TIME_GROUPS.flatMap((g) => g.slots).length - bookedCount;
+                        const isSelected = selectedDay === d.dateKey;
+                        const mentorSlots = getMentorSlotsForDay(d);
+                        const freeSlots = mentorSlots.filter((t) => !getBookedOfDay(d.dateKey).includes(t)).length;
+                        const canBookDay = d.available && freeSlots > 0;
                         return (
                           <button
-                            key={d.date}
+                            key={d.dateKey}
                             type="button"
-                            disabled={!d.available}
+                            disabled={!canBookDay}
                             onClick={() => {
-                              setSelectedDay(d.date);
+                              setSelectedDay(d.dateKey);
                               setSelectedDayFull(d.full);
                               setSelectedTime(null);
                             }}
                             className={`flex flex-col items-center rounded-xl py-3 transition-all ${
                               isSelected
                                 ? "bg-gradient-to-br from-[#6E35E8] to-[#8B4DFF] text-white shadow-[0_8px_24px_rgba(110,53,232,0.35)]"
-                                : d.available
+                                : canBookDay
                                   ? "border border-white/12 bg-white/[0.06] text-white hover:border-primary-fixed/35"
                                   : "cursor-not-allowed bg-white/[0.03] opacity-40"
                             }`}
                           >
                             <span
                               className={`mb-1 text-xs font-semibold ${
-                                isSelected ? "text-white/75" : d.available ? "text-zinc-500" : "text-zinc-600"
+                                isSelected ? "text-white/75" : canBookDay ? "text-zinc-500" : "text-zinc-700"
                               }`}
                             >
                               {d.day}
                             </span>
-                            <span className={`text-[0.95rem] font-black ${isSelected ? "text-white" : d.available ? "text-white" : "text-zinc-600"}`}>
+                            <span className={`text-[0.95rem] font-black ${isSelected ? "text-white" : canBookDay ? "text-white" : "text-zinc-700"}`}>
                               {d.date.split("/")[0]}
                             </span>
-                            {d.available && (
+                            {canBookDay && (
                               <span
                                 className={`mt-1 rounded-full px-1.5 text-[0.6rem] font-bold ${
                                   isSelected
@@ -344,19 +441,27 @@ export function Booking() {
                         <p className="text-[10px] font-black uppercase tracking-[0.18em] text-zinc-500">{group.label}</p>
                       </div>
                       <div className="grid grid-cols-4 gap-2">
-                        {group.slots.map((time) => {
+                        {group.slots
+                          .filter((time) => {
+                            const selectedObj = calendarWeeks.flatMap((w) => w.days).find((d) => d.dateKey === selectedDay);
+                            const allowed = getMentorSlotsForDay(selectedObj);
+                            return allowed.includes(time);
+                          })
+                          .map((time) => {
                           const booked = isSlotBooked(time);
+                          const inPast = isSlotPast(time);
+                          const disabled = booked || inPast;
                           const selected = selectedTime === time;
                           return (
                             <button
                               key={time}
                               type="button"
-                              disabled={booked}
+                              disabled={disabled}
                               onClick={() => setSelectedTime(time)}
                               className={`relative rounded-xl py-3 text-sm font-bold transition-all ${
                                 selected
                                   ? "bg-gradient-to-br from-[#6E35E8] to-[#8B4DFF] text-white shadow-[0_6px_20px_rgba(110,53,232,0.35)]"
-                                  : booked
+                                  : disabled
                                     ? "cursor-not-allowed border border-white/[0.06] bg-white/[0.03] text-zinc-600"
                                     : "border border-white/12 bg-white/[0.06] text-white hover:border-primary-fixed/40 hover:text-primary-fixed"
                               }`}
@@ -365,6 +470,11 @@ export function Booking() {
                               {booked && (
                                 <span className="absolute -right-1 -top-1 rounded-full bg-white/10 px-1 text-[0.55rem] font-bold text-zinc-500">
                                   Hết
+                                </span>
+                              )}
+                              {inPast && !booked && (
+                                <span className="absolute -right-1 -top-1 rounded-full bg-white/10 px-1 text-[0.55rem] font-bold text-zinc-500">
+                                  Qua giờ
                                 </span>
                               )}
                             </button>

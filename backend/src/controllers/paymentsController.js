@@ -3,7 +3,11 @@ import * as paymentsService from "../services/paymentsService.js";
 export class PaymentsController {
   static async initiate(req, res, next) {
     try {
-      const result = await paymentsService.initiatePayment(req.userId, req.body ?? {});
+      const ipAddr = req.headers['x-forwarded-for'] || 
+                     req.connection.remoteAddress || 
+                     req.socket.remoteAddress || 
+                     req.connection.socket.remoteAddress;
+      const result = await paymentsService.initiatePayment(req.userId, { ...(req.body ?? {}), ipAddr });
       if (!result.ok) {
         return res.status(result.status).json({ success: false, error: result.error });
       }
@@ -56,6 +60,28 @@ export class PaymentsController {
         return res.status(result.status).json({ success: false, error: result.error });
       }
       res.json({ success: true });
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  static async vnpayIpn(req, res, next) {
+    try {
+      const result = await paymentsService.handleIpnVnpay(req.query ?? {});
+      res.status(result.ok ? 200 : (result.status || 400)).json(result.data);
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  static async vnpayReturn(req, res, next) {
+    try {
+      const result = await paymentsService.handleIpnVnpay(req.query ?? {});
+      if (result.ok && result.data.RspCode === "00") {
+        res.json({ success: true, message: result.data.Message });
+      } else {
+        res.status(result.status || 400).json({ success: false, error: result.data.Message || "Thanh toán không thành công." });
+      }
     } catch (err) {
       next(err);
     }

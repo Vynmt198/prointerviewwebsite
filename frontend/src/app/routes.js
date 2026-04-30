@@ -17,6 +17,9 @@ import { Booking } from "./pages/booking/Booking";
 import { SessionDetail } from "./pages/booking/SessionDetail";
 import { Profile } from "./pages/account/Profile";
 import { Settings } from "./pages/account/Settings";
+import { PaymentReturn } from "./pages/payment/PaymentReturn";
+import { SuccessPage } from "./pages/payment/SuccessPage";
+import { FailurePage } from "./pages/payment/FailurePage";
 import { AvatarDemo } from "./pages/interview/AvatarDemo";
 import { MentorReview } from "./pages/booking/MentorReview";
 import { MentorDashboard } from "./pages/mentor/MentorDashboard";
@@ -36,16 +39,16 @@ import { Pricing } from "./pages/home/Pricing";
 import { AdminLayout } from "./pages/admin/AdminLayout.jsx";
 import { adminLoader } from "./pages/admin/adminLoader.js";
 import { AdminDashboard } from "./pages/admin/AdminDashboard.jsx";
+import { AdminMentors } from "./pages/admin/AdminMentors.jsx";
+import { AdminUsers } from "./pages/admin/AdminUsers.jsx";
+import { AdminBookings } from "./pages/admin/AdminBookings.jsx";
+import { AdminMentorsPending } from "./pages/admin/AdminMentorsPending.jsx";
 import {
-  AdminUsers,
   AdminUserDetail,
-  AdminMentors,
   AdminMentorDetail,
-  AdminMentorsPending,
   AdminFinance,
   AdminTransactions,
   AdminPayouts,
-  AdminBookings,
   AdminBookingDetail,
   AdminContentQuestions,
   AdminContentVideos,
@@ -62,6 +65,9 @@ export const router = createHashRouter([
   { path: "/register", Component: Register },
   { path: "/checkout", Component: Checkout },
   { path: "/pricing", Component: Pricing },
+  { path: "/payment-return", Component: PaymentReturn },
+  { path: "/payment-success", Component: SuccessPage },
+  { path: "/payment-failure", Component: FailurePage },
   { path: "/avatar-demo", Component: AvatarDemo },
   // Course learning — full-screen, no sidebar
   { path: "/courses/:id/learn", Component: CourseLearning },

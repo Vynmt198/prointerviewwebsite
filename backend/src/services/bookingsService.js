@@ -2,8 +2,11 @@ import mongoose from "mongoose";
 import { Booking } from "../models/Booking.js";
 import { Mentor } from "../models/Mentor.js";
 import { User } from "../models/User.js";
+import { Notification } from "../models/Notification.js";
+import { Payment } from "../models/Payment.js";
 import { ensureMentorProfilesForAllMentorUsers } from "./mentorProfileService.js";
 const MONGO_ERR = "MongoDB chưa kết nối. Kiểm tra MONGO_URI trong .env.";
+const MENTOR_CANCEL_MIN_HOURS = 2;
 
 function isMongoReady() {
   return mongoose.connection.readyState === 1;
@@ -25,6 +28,115 @@ export function normalizeBookingDate(raw) {
   if (parts.length === 3) return `${parts[0].padStart(2, "0")}/${parts[1].padStart(2, "0")}/${parts[2]}`;
   if (parts.length === 2) return `${parts[0].padStart(2, "0")}/${parts[1].padStart(2, "0")}`;
   return tail;
+}
+
+function parseBookingDateTime(dateRaw, timeRaw) {
+  const dateNorm = normalizeBookingDate(dateRaw);
+  const parts = dateNorm.split("/").map((p) => Number(p));
+  if (parts.length < 2 || !Number.isFinite(parts[0]) || !Number.isFinite(parts[1])) return null;
+  const day = parts[0];
+  const month = parts[1];
+  const year = parts.length >= 3 && Number.isFinite(parts[2]) ? parts[2] : new Date().getFullYear();
+  const [hour, minute] = String(timeRaw || "00:00").split(":").map((p) => Number(p));
+  if (!Number.isFinite(hour) || !Number.isFinite(minute)) return null;
+  return new Date(year, month - 1, day, hour, minute, 0, 0);
+}
+
+async function notifyBookingOwner(userId, payload) {
+  if (!mongoose.isValidObjectId(String(userId || ""))) return;
+  await Notification.create({
+    userId,
+    type: payload.type || "system",
+    title: payload.title || "Cập nhật lịch hẹn",
+    body: payload.body || "",
+    metadata: payload.metadata || {},
+  });
+}
+
+async function refundBookingPaymentIfNeeded(booking) {
+  // Chỉ hoàn tiền khi booking đã paid.
+  if (String(booking.paymentStatus || "").toLowerCase() !== "paid") {
+    return { refunded: false, amount: 0 };
+  }
+
+  const pay = await Payment.findOne({
+    type: "booking",
+    referenceModel: "Booking",
+    referenceId: booking._id,
+    status: { $in: ["success", "pending"] },
+  }).sort({ createdAt: -1 });
+
+  if (!pay) {
+    // Không có bản ghi payment thì vẫn chuyển booking về refunded để phản ánh nghiệp vụ.
+    booking.paymentStatus = "refunded";
+    return { refunded: true, amount: Number(booking.totalAmount || booking.price || 0) };
+  }
+
+  const refundAmount = Number(pay.amount || booking.totalAmount || booking.price || 0);
+  pay.status = "refunded";
+  pay.refundedAt = new Date();
+  pay.refundAmount = refundAmount;
+  await pay.save();
+
+  booking.paymentStatus = "refunded";
+  return { refunded: true, amount: refundAmount };
+}
+
+function parseDateParts(dateRaw) {
+  const norm = normalizeBookingDate(dateRaw);
+  const parts = norm.split("/").map((p) => Number(p));
+  if (parts.length < 2 || !Number.isFinite(parts[0]) || !Number.isFinite(parts[1])) return null;
+  return {
+    day: parts[0],
+    month: parts[1],
+    year: parts.length >= 3 && Number.isFinite(parts[2]) ? parts[2] : new Date().getFullYear(),
+  };
+}
+
+function toIsoDate(dateRaw) {
+  const p = parseDateParts(dateRaw);
+  if (!p) return "";
+  return `${String(p.year).padStart(4, "0")}-${String(p.month).padStart(2, "0")}-${String(p.day).padStart(2, "0")}`;
+}
+
+function normalizeDateKey(raw, fallbackYear) {
+  const s = String(raw || "").trim();
+  if (!s) return "";
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+  const parts = s.split("/").map((p) => Number(p));
+  if (parts.length >= 2 && Number.isFinite(parts[0]) && Number.isFinite(parts[1])) {
+    const year = parts.length >= 3 && Number.isFinite(parts[2]) ? parts[2] : fallbackYear;
+    return `${String(year).padStart(4, "0")}-${String(parts[1]).padStart(2, "0")}-${String(parts[0]).padStart(2, "0")}`;
+  }
+  return "";
+}
+
+function getMentorSlotsForDate(mentor, dateRaw) {
+  const iso = toIsoDate(dateRaw);
+  if (!iso) return null;
+  const year = Number(iso.slice(0, 4));
+
+  const blocked = Array.isArray(mentor?.blockedDates) ? mentor.blockedDates : [];
+  const blockedSet = new Set(blocked.map((d) => normalizeDateKey(d, year)).filter(Boolean));
+  if (blockedSet.has(iso)) return [];
+
+  const availableSlots = mentor?.availableSlots && typeof mentor.availableSlots === "object" ? mentor.availableSlots : {};
+  const entries = Object.entries(availableSlots);
+  const explicit = entries.find(([k]) => normalizeDateKey(k, year) === iso);
+  if (explicit) {
+    return Array.isArray(explicit[1]) ? explicit[1].map((x) => String(x).trim()).filter(Boolean) : [];
+  }
+
+  const recurring = Array.isArray(mentor?.recurringSchedule) ? mentor.recurringSchedule : [];
+  if (recurring.length) {
+    const [y, m, d] = iso.split("-").map(Number);
+    const jsDay = new Date(y, m - 1, d).getDay(); // 0=Sun
+    const mentorDay = (jsDay + 6) % 7; // 0=Mon
+    const row = recurring.find((r) => Number(r?.dayOfWeek) === mentorDay);
+    return row && Array.isArray(row.slots) ? row.slots.map((x) => String(x).trim()).filter(Boolean) : [];
+  }
+
+  return null;
 }
 
 function buildNotes(body) {
@@ -116,6 +228,22 @@ export async function createBooking(userId, body) {
     return { ok: false, status: 400, error: "Thiếu date." };
   }
   const dateNormalized = normalizeBookingDate(rawDate);
+  const allowedSlots = getMentorSlotsForDate(mentor, dateNormalized);
+  if (Array.isArray(allowedSlots)) {
+    if (allowedSlots.length === 0) {
+      return { ok: false, status: 400, error: "Mentor không mở lịch cho ngày này." };
+    }
+    if (!allowedSlots.includes(timeNormalized)) {
+      return { ok: false, status: 400, error: "Khung giờ này không nằm trong lịch mentor mở." };
+    }
+  }
+  const requestedAt = parseBookingDateTime(dateNormalized, timeNormalized);
+  if (!requestedAt || Number.isNaN(requestedAt.getTime())) {
+    return { ok: false, status: 400, error: "Ngày/giờ đặt lịch không hợp lệ." };
+  }
+  if (requestedAt.getTime() <= Date.now()) {
+    return { ok: false, status: 400, error: "Không thể đặt lịch trong quá khứ." };
+  }
 
   let sessionType = typeof body.sessionType === "string" ? body.sessionType.trim() : "mock_interview";
   if (!SESSION_TYPES.has(sessionType)) sessionType = "mock_interview";
@@ -156,10 +284,14 @@ export async function createBooking(userId, body) {
     date: dateNormalized,
     timeSlot: timeNormalized,
     status: { $in: ["pending", "confirmed", "in_progress"] },
-  })
-    .select("_id")
-    .lean();
+  });
+
   if (dup) {
+    // Nếu là chính user này đang đặt lại khung giờ cũ (ví dụ: quay lại trang Checkout hoặc tải lại)
+    // và booking cũ vẫn đang ở trạng thái chờ thanh toán
+    if (String(dup.userId) === uid && dup.status === "pending" && dup.paymentStatus === "pending") {
+      return { ok: true, booking: toPublicBooking(dup, mentor) };
+    }
     return { ok: false, status: 409, error: "Khung giờ này đã được đặt. Chọn giờ khác." };
   }
 
@@ -225,9 +357,15 @@ export function toPublicBooking(doc, mentorLean) {
         : null;
   const mentorPublicId =
     m?.publicId ?? (m?._id ? String(m._id) : mongoose.isValidObjectId(b.mentorId) ? String(b.mentorId) : "");
+  const cust =
+    b.userId && typeof b.userId === "object" && b.userId !== null && "name" in b.userId ? b.userId : null;
+
   return {
     id: String(b._id),
-    userId: String(b.userId),
+    userId: cust ? String(cust._id) : String(b.userId),
+    customerName: cust?.name ?? "",
+    customerEmail: cust?.email ?? "",
+    customerAvatar: cust?.avatar ?? "",
     mentorId: mentorPublicId,
     mentorName: m?.name ?? "",
     mentorTitle: m?.title ?? "",
@@ -239,6 +377,8 @@ export function toPublicBooking(doc, mentorLean) {
     timezone: b.timezone,
     sessionType: b.sessionType,
     notes: b.notes,
+    mentorNotes: b.mentorNotes ?? "",
+    reviewId: b.reviewId ? String(b.reviewId) : "",
     meetingLink: b.meetingLink ?? "",
     status: b.status,
     price: b.price,
@@ -264,6 +404,12 @@ function bookingQueryForUser(rawId) {
   return { paymentRef: id };
 }
 
+async function getMentorByUserId(userId) {
+  const uid = String(userId ?? "").trim();
+  if (!mongoose.isValidObjectId(uid)) return null;
+  return Mentor.findOne({ userId: uid }).lean();
+}
+
 export async function listMyBookings(userId) {
   if (!isMongoReady()) return { ok: false, status: 503, error: MONGO_ERR };
   const uid = String(userId).trim();
@@ -274,6 +420,20 @@ export async function listMyBookings(userId) {
     .populate({ path: "mentorId", select: "name title company avatar publicId" })
     .lean();
 
+  return { ok: true, bookings: rows.map((row) => toPublicBooking(row)) };
+}
+
+export async function listMentorBookings(mentorUserId) {
+  if (!isMongoReady()) return { ok: false, status: 503, error: MONGO_ERR };
+  const mentor = await getMentorByUserId(mentorUserId);
+  if (!mentor?._id) {
+    return { ok: false, status: 404, error: "Không tìm thấy hồ sơ mentor." };
+  }
+  const rows = await Booking.find({ mentorId: mentor._id })
+    .sort({ createdAt: -1 })
+    .populate({ path: "mentorId", select: "name title company avatar publicId" })
+    .populate({ path: "userId", select: "name email avatar" })
+    .lean();
   return { ok: true, bookings: rows.map((row) => toPublicBooking(row)) };
 }
 
@@ -288,6 +448,91 @@ export async function getMyBooking(userId, rawId) {
     .lean();
   if (!row) return { ok: false, status: 404, error: "Không tìm thấy booking." };
   return { ok: true, booking: toPublicBooking(row) };
+}
+
+export async function getMentorBooking(mentorUserId, rawId) {
+  if (!isMongoReady()) return { ok: false, status: 503, error: MONGO_ERR };
+  const mentor = await getMentorByUserId(mentorUserId);
+  if (!mentor?._id) return { ok: false, status: 404, error: "Không tìm thấy hồ sơ mentor." };
+  if (!mongoose.isValidObjectId(rawId)) return { ok: false, status: 400, error: "id booking không hợp lệ." };
+
+  const row = await Booking.findOne({ _id: rawId, mentorId: mentor._id })
+    .populate({ path: "userId", select: "name email avatar" })
+    .populate({ path: "mentorId", select: "name title company avatar publicId" })
+    .lean();
+  if (!row) return { ok: false, status: 404, error: "Không tìm thấy booking." };
+  return { ok: true, booking: toPublicBooking(row) };
+}
+
+export async function confirmMentorBooking(mentorUserId, rawId) {
+  if (!isMongoReady()) return { ok: false, status: 503, error: MONGO_ERR };
+  const mentor = await getMentorByUserId(mentorUserId);
+  if (!mentor?._id) return { ok: false, status: 404, error: "Không tìm thấy hồ sơ mentor." };
+  if (!mongoose.isValidObjectId(rawId)) return { ok: false, status: 400, error: "id booking không hợp lệ." };
+
+  const booking = await Booking.findOne({ _id: rawId, mentorId: mentor._id });
+  if (!booking) return { ok: false, status: 404, error: "Không tìm thấy booking." };
+
+  if (["cancelled", "completed", "no_show"].includes(booking.status)) {
+    return { ok: false, status: 400, error: "Không thể xác nhận booking ở trạng thái này." };
+  }
+  if (booking.status === "confirmed" || booking.status === "in_progress") {
+    await booking.populate({ path: "userId", select: "name email avatar" });
+    return { ok: true, booking: toPublicBooking(booking) };
+  }
+  if (booking.status !== "pending") {
+    return { ok: false, status: 400, error: "Chỉ xác nhận khi booking đang chờ duyệt (pending)." };
+  }
+
+  booking.status = "confirmed";
+  await booking.save();
+  await booking.populate({ path: "userId", select: "name email avatar" });
+  return { ok: true, booking: toPublicBooking(booking) };
+}
+
+export async function completeMentorBooking(mentorUserId, rawId) {
+  if (!isMongoReady()) return { ok: false, status: 503, error: MONGO_ERR };
+  const mentor = await getMentorByUserId(mentorUserId);
+  if (!mentor?._id) return { ok: false, status: 404, error: "Không tìm thấy hồ sơ mentor." };
+  if (!mongoose.isValidObjectId(rawId)) return { ok: false, status: 400, error: "id booking không hợp lệ." };
+
+  const booking = await Booking.findOne({ _id: rawId, mentorId: mentor._id });
+  if (!booking) return { ok: false, status: 404, error: "Không tìm thấy booking." };
+
+  if (["cancelled", "completed", "no_show"].includes(booking.status)) {
+    return { ok: false, status: 400, error: "Không thể hoàn thành booking ở trạng thái này." };
+  }
+  if (!["confirmed", "in_progress"].includes(booking.status)) {
+    return {
+      ok: false,
+      status: 400,
+      error: "Chỉ đánh dấu hoàn thành khi booking đã xác nhận hoặc đang diễn ra.",
+    };
+  }
+
+  booking.status = "completed";
+  booking.completedAt = new Date();
+  await booking.save();
+  await booking.populate({ path: "userId", select: "name email avatar" });
+  return { ok: true, booking: toPublicBooking(booking) };
+}
+
+export async function updateMentorNotes(mentorUserId, rawId, body) {
+  if (!isMongoReady()) return { ok: false, status: 503, error: MONGO_ERR };
+  const mentor = await getMentorByUserId(mentorUserId);
+  if (!mentor?._id) return { ok: false, status: 404, error: "Không tìm thấy hồ sơ mentor." };
+  if (!mongoose.isValidObjectId(rawId)) return { ok: false, status: 400, error: "id booking không hợp lệ." };
+
+  const notes = typeof body?.notes === "string" ? body.notes.trim().slice(0, 8000) : "";
+  if (!notes) return { ok: false, status: 400, error: "Thiếu notes." };
+
+  const booking = await Booking.findOne({ _id: rawId, mentorId: mentor._id });
+  if (!booking) return { ok: false, status: 404, error: "Không tìm thấy booking." };
+
+  booking.mentorNotes = notes;
+  await booking.save();
+  await booking.populate({ path: "userId", select: "name email avatar" });
+  return { ok: true, booking: toPublicBooking(booking) };
 }
 
 export async function cancelMyBooking(userId, rawId, body) {
@@ -305,6 +550,26 @@ export async function cancelMyBooking(userId, rawId, body) {
     return { ok: false, status: 400, error: "Không thể hủy booking ở trạng thái này." };
   }
 
+  const sessionAt = parseBookingDateTime(booking.date, booking.timeSlot);
+  const hoursUntilStart = sessionAt instanceof Date ? (sessionAt.getTime() - Date.now()) / 3_600_000 : Number.POSITIVE_INFINITY;
+  let feePercent = 0;
+  if (!Number.isFinite(hoursUntilStart) || hoursUntilStart <= 2) {
+    feePercent = 100;
+  } else if (hoursUntilStart <= 24) {
+    feePercent = 50;
+  }
+
+  // Chỉ cập nhật trạng thái thanh toán khi booking đã thanh toán.
+  if (booking.paymentStatus === "paid" || booking.paymentStatus === "partial_refund" || booking.paymentStatus === "refunded") {
+    if (feePercent >= 100) {
+      booking.paymentStatus = "paid";
+    } else if (feePercent >= 50) {
+      booking.paymentStatus = "partial_refund";
+    } else {
+      booking.paymentStatus = "refunded";
+    }
+  }
+
   booking.status = "cancelled";
   booking.cancelledBy = "user";
   booking.cancelReason = reason || "Người dùng hủy";
@@ -312,7 +577,15 @@ export async function cancelMyBooking(userId, rawId, body) {
   await booking.save();
 
   const mentor = await Mentor.findById(booking.mentorId).lean();
-  return { ok: true, booking: toPublicBooking(booking, mentor) };
+  return {
+    ok: true,
+    booking: toPublicBooking(booking, mentor),
+    cancellationPolicy: {
+      hoursUntilStart: Number.isFinite(hoursUntilStart) ? Number(hoursUntilStart.toFixed(2)) : null,
+      feePercent,
+      refundPercent: Math.max(0, 100 - feePercent),
+    },
+  };
 }
 
 export async function rescheduleMyBooking(userId, rawId, body) {
@@ -332,6 +605,9 @@ export async function rescheduleMyBooking(userId, rawId, body) {
 
   const booking = await Booking.findOne({ userId: uid, ...q });
   if (!booking) return { ok: false, status: 404, error: "Không tìm thấy booking." };
+  if (Array.isArray(booking.rescheduleHistory) && booking.rescheduleHistory.length >= 1) {
+    return { ok: false, status: 400, error: "Mỗi lịch hẹn chỉ được dời 1 lần." };
+  }
 
   if (["cancelled", "completed", "no_show"].includes(booking.status)) {
     return { ok: false, status: 400, error: "Không thể đổi lịch booking ở trạng thái này." };
@@ -340,6 +616,23 @@ export async function rescheduleMyBooking(userId, rawId, body) {
   const newDateNorm = normalizeBookingDate(newDateRaw);
   const [th, tm] = newTime.split(":").map(Number);
   const newSlot = `${String(th).padStart(2, "0")}:${String(tm || 0).padStart(2, "0")}`;
+  const mentorDoc = await Mentor.findById(booking.mentorId).select("availableSlots recurringSchedule blockedDates").lean();
+  const allowedSlots = getMentorSlotsForDate(mentorDoc, newDateNorm);
+  if (Array.isArray(allowedSlots)) {
+    if (allowedSlots.length === 0) {
+      return { ok: false, status: 400, error: "Mentor không mở lịch cho ngày này." };
+    }
+    if (!allowedSlots.includes(newSlot)) {
+      return { ok: false, status: 400, error: "Khung giờ mới không nằm trong lịch mentor mở." };
+    }
+  }
+  const rescheduleAt = parseBookingDateTime(newDateNorm, newSlot);
+  if (!rescheduleAt || Number.isNaN(rescheduleAt.getTime())) {
+    return { ok: false, status: 400, error: "Ngày/giờ đổi lịch không hợp lệ." };
+  }
+  if (rescheduleAt.getTime() <= Date.now()) {
+    return { ok: false, status: 400, error: "Không thể đổi lịch sang thời điểm trong quá khứ." };
+  }
 
   const dup = await Booking.findOne({
     mentorId: booking.mentorId,
@@ -371,4 +664,159 @@ export async function rescheduleMyBooking(userId, rawId, body) {
 
   const mentor = await Mentor.findById(booking.mentorId).lean();
   return { ok: true, booking: toPublicBooking(booking, mentor) };
+}
+
+export async function cancelMentorBooking(mentorUserId, rawId, body) {
+  if (!isMongoReady()) return { ok: false, status: 503, error: MONGO_ERR };
+  const mentor = await getMentorByUserId(mentorUserId);
+  if (!mentor?._id) return { ok: false, status: 404, error: "Không tìm thấy hồ sơ mentor." };
+  if (!mongoose.isValidObjectId(rawId)) return { ok: false, status: 400, error: "id booking không hợp lệ." };
+
+  const reason = typeof body?.reason === "string" ? body.reason.trim().slice(0, 2000) : "";
+  if (!reason) {
+    return { ok: false, status: 400, error: "Vui lòng nhập lý do hủy lịch." };
+  }
+  const booking = await Booking.findOne({ _id: rawId, mentorId: mentor._id });
+  if (!booking) return { ok: false, status: 404, error: "Không tìm thấy booking." };
+
+  if (["cancelled", "completed", "no_show"].includes(booking.status)) {
+    return { ok: false, status: 400, error: "Không thể hủy booking ở trạng thái này." };
+  }
+
+  const startAt = parseBookingDateTime(booking.date, booking.timeSlot);
+  if (startAt && Number.isFinite(startAt.getTime())) {
+    const diffMs = startAt.getTime() - Date.now();
+    const minMs = MENTOR_CANCEL_MIN_HOURS * 60 * 60 * 1000;
+    if (diffMs > 0 && diffMs < minMs) {
+      return {
+        ok: false,
+        status: 400,
+        error: `Không thể hủy khi còn dưới ${MENTOR_CANCEL_MIN_HOURS} giờ trước buổi hẹn.`,
+      };
+    }
+  }
+
+  booking.status = "cancelled";
+  booking.cancelledBy = "mentor";
+  booking.cancelReason = reason;
+  booking.cancelledAt = new Date();
+  const refund = await refundBookingPaymentIfNeeded(booking);
+  await booking.save();
+  await booking.populate({ path: "userId", select: "name email avatar" });
+  await booking.populate({ path: "mentorId", select: "name title company avatar publicId" });
+  await notifyBookingOwner(booking.userId?._id || booking.userId, {
+    type: "booking_cancelled",
+    title: "Mentor đã hủy lịch hẹn",
+    body: `Buổi hẹn ngày ${booking.date} lúc ${booking.timeSlot} đã bị hủy. Lý do: ${reason}`,
+    metadata: {
+      bookingId: booking._id,
+      mentorId: booking.mentorId?._id || booking.mentorId,
+      actionUrl: `/session/${booking._id}`,
+    },
+  });
+  if (refund.refunded) {
+    await notifyBookingOwner(booking.userId?._id || booking.userId, {
+      type: "system",
+      title: "Hoàn tiền lịch hẹn",
+      body: `Bạn đã được hoàn ${Math.round(refund.amount).toLocaleString("vi-VN")} VND do mentor hủy lịch.`,
+      metadata: {
+        bookingId: booking._id,
+        mentorId: booking.mentorId?._id || booking.mentorId,
+        actionUrl: `/session/${booking._id}`,
+      },
+    });
+  }
+  return { ok: true, booking: toPublicBooking(booking) };
+}
+
+export async function rescheduleMentorBooking(mentorUserId, rawId, body) {
+  if (!isMongoReady()) return { ok: false, status: 503, error: MONGO_ERR };
+  const mentor = await getMentorByUserId(mentorUserId);
+  if (!mentor?._id) return { ok: false, status: 404, error: "Không tìm thấy hồ sơ mentor." };
+  if (!mongoose.isValidObjectId(rawId)) return { ok: false, status: 400, error: "id booking không hợp lệ." };
+
+  const newDateRaw = typeof body?.newDate === "string" ? body.newDate.trim() : "";
+  const newTime = String(body?.newTimeSlot ?? body?.newTime ?? "").trim();
+  const reason = typeof body?.reason === "string" ? body.reason.trim().slice(0, 2000) : "";
+  if (!newDateRaw || !newTime || !/^\d{1,2}:\d{2}$/.test(newTime)) {
+    return { ok: false, status: 400, error: "Thiếu newDate hoặc newTimeSlot (HH:mm)." };
+  }
+
+  const booking = await Booking.findOne({ _id: rawId, mentorId: mentor._id });
+  if (!booking) return { ok: false, status: 404, error: "Không tìm thấy booking." };
+  if (Array.isArray(booking.rescheduleHistory) && booking.rescheduleHistory.length >= 1) {
+    return { ok: false, status: 400, error: "Mỗi lịch hẹn chỉ được dời 1 lần." };
+  }
+  if (["cancelled", "completed", "no_show"].includes(booking.status)) {
+    return { ok: false, status: 400, error: "Không thể đổi lịch booking ở trạng thái này." };
+  }
+
+  const newDateNorm = normalizeBookingDate(newDateRaw);
+  const [th, tm] = newTime.split(":").map(Number);
+  const newSlot = `${String(th).padStart(2, "0")}:${String(tm || 0).padStart(2, "0")}`;
+  const mentorDoc = await Mentor.findById(booking.mentorId).select("availableSlots recurringSchedule blockedDates").lean();
+  const allowedSlots = getMentorSlotsForDate(mentorDoc, newDateNorm);
+  if (Array.isArray(allowedSlots)) {
+    if (allowedSlots.length === 0) return { ok: false, status: 400, error: "Mentor không mở lịch cho ngày này." };
+    if (!allowedSlots.includes(newSlot)) return { ok: false, status: 400, error: "Khung giờ mới không nằm trong lịch mentor mở." };
+  }
+  const rescheduleAt = parseBookingDateTime(newDateNorm, newSlot);
+  if (!rescheduleAt || Number.isNaN(rescheduleAt.getTime()) || rescheduleAt.getTime() <= Date.now()) {
+    return { ok: false, status: 400, error: "Ngày/giờ đổi lịch không hợp lệ." };
+  }
+  const dup = await Booking.findOne({
+    mentorId: booking.mentorId,
+    date: newDateNorm,
+    timeSlot: newSlot,
+    status: { $in: ["pending", "confirmed", "in_progress"] },
+    _id: { $ne: booking._id },
+  }).select("_id").lean();
+  if (dup) return { ok: false, status: 409, error: "Khung giờ mới đã có người đặt." };
+
+  booking.rescheduleHistory = [
+    ...(booking.rescheduleHistory || []),
+    { oldDate: booking.date, oldTimeSlot: booking.timeSlot, newDate: newDateNorm, newTimeSlot: newSlot, reason, changedBy: "mentor", changedAt: new Date() },
+  ];
+  booking.date = newDateNorm;
+  booking.timeSlot = newSlot;
+  if (booking.status !== "pending") booking.status = "confirmed";
+  await booking.save();
+  await booking.populate({ path: "userId", select: "name email avatar" });
+  await booking.populate({ path: "mentorId", select: "name title company avatar publicId" });
+  await notifyBookingOwner(booking.userId?._id || booking.userId, {
+    type: "system",
+    title: "Lịch hẹn đã được mentor dời",
+    body: `Mentor đã dời lịch sang ${booking.date} lúc ${booking.timeSlot}.${reason ? ` Lý do: ${reason}` : ""}`,
+    metadata: {
+      bookingId: booking._id,
+      mentorId: booking.mentorId?._id || booking.mentorId,
+      actionUrl: `/session/${booking._id}`,
+    },
+  });
+  return { ok: true, booking: toPublicBooking(booking) };
+}
+
+export async function getMentorBookedSlots(mentorKey) {
+  if (!isMongoReady()) return { ok: false, status: 503, error: MONGO_ERR };
+  
+  const or = [{ publicId: mentorKey }];
+  if (mongoose.isValidObjectId(mentorKey)) or.push({ _id: mentorKey });
+
+  const mentor = await Mentor.findOne({ $or: or }).select("_id").lean();
+  if (!mentor) return { ok: false, status: 404, error: "Không tìm thấy mentor." };
+
+  const rows = await Booking.find({
+    mentorId: mentor._id,
+    status: { $in: ["pending", "confirmed", "in_progress"] },
+  })
+    .select("date timeSlot")
+    .lean();
+
+  const booked = {};
+  for (const r of rows) {
+    if (!booked[r.date]) booked[r.date] = [];
+    booked[r.date].push(r.timeSlot);
+  }
+
+  return { ok: true, booked };
 }

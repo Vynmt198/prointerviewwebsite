@@ -1,4 +1,5 @@
 import crypto from "node:crypto";
+import qs from "node:querystring";
 import mongoose from "mongoose";
 import { Payment } from "../models/Payment.js";
 import { Booking } from "../models/Booking.js";
@@ -15,8 +16,9 @@ function webhookSecret() {
 }
 
 /**
- * Khởi tạo thanh toán (stub sandbox): tạo bản ghi Payment + trả metadata để FE mở cổng sau này.
- * Hiện tại: không gọi MoMo/ZaloPay thật — `mock: true`.
+ * Khởi tạo thanh toán: tạo bản ghi Payment + trả URL cổng thanh toán.
+ * @param {string} userId
+ * @param {object} body { type, provider, amount, bookingId, planKey, ipAddr }
  */
 export async function initiatePayment(userId, body) {
   if (!isMongoReady()) return { ok: false, status: 503, error: MONGO_ERR };
@@ -58,7 +60,8 @@ export async function initiatePayment(userId, body) {
     return { ok: false, status: 400, error: "type phải là booking hoặc subscription." };
   }
 
-  const providerRef = `pi_${crypto.randomUUID().replace(/-/g, "")}`;
+  // Tạo mã tham chiếu ngắn gọn (10 ký tự) để đảm bảo VNPay Sandbox không bị lỗi không tìm thấy đơn hàng
+  const providerRef = crypto.randomBytes(5).toString('hex').toUpperCase();
 
   const pay = await Payment.create({
     userId,
@@ -74,7 +77,16 @@ export async function initiatePayment(userId, body) {
   });
 
   const base = process.env.FRONTEND_URL?.replace(/\/$/, "") || "http://localhost:5173";
-  const payUrl = `${base}/#/checkout?paymentId=${pay._id.toString()}&mock=1`;
+  let payUrl = `${base}/#/checkout?paymentId=${pay._id.toString()}&mock=1`;
+  let isMock = true;
+
+  // Xử lý VNPay thật (Sandbox)
+  if (providerEnum === "vnpay" && process.env.VNP_TMN_CODE && process.env.VNP_HASH_SECRET) {
+    const ipAddr = body?.ipAddr || "127.0.0.1";
+    // Sử dụng providerRef (UUID) thay vì ObjectId để đảm bảo định dạng linh hoạt cho VNPay
+    payUrl = createVnpayUrl(pay.providerRef, amount, ipAddr);
+    isMock = false;
+  }
 
   return {
     ok: true,
@@ -83,10 +95,84 @@ export async function initiatePayment(userId, body) {
     payUrl,
     qrBase64: null,
     deepLink: null,
-    mock: true,
-    message: "Sandbox: chưa gọi MoMo/ZaloPay API. Dùng payUrl để quay lại FE hoặc webhook để xác nhận.",
+    mock: isMock,
+    message: isMock 
+      ? "Sandbox: chưa gọi provider API thật. Dùng payUrl để giả lập."
+      : "Redirecting to VNPay gateway.",
   };
 }
+
+/** ─── VNPay Helpers ─── */
+
+function createVnpayUrl(paymentId, amount, ipAddr) {
+  const tmnCode = process.env.VNP_TMN_CODE;
+  const secretKey = process.env.VNP_HASH_SECRET;
+  let vnpUrl = process.env.VNP_URL || "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html";
+  const returnUrl = process.env.VNP_RETURN_URL;
+
+  const date = new Date();
+  const createDate = formatVnpDate(date);
+
+  let vnp_Params = {};
+  vnp_Params['vnp_Version'] = '2.1.0';
+  vnp_Params['vnp_Command'] = 'pay';
+  vnp_Params['vnp_TmnCode'] = tmnCode;
+  vnp_Params['vnp_Locale'] = 'vn';
+  vnp_Params['vnp_CurrCode'] = 'VND';
+  vnp_Params['vnp_TxnRef'] = paymentId; // Đây là providerRef
+  vnp_Params['vnp_OrderInfo'] = 'Thanh toan ProInterview';
+  vnp_Params['vnp_OrderType'] = 'other';
+  vnp_Params['vnp_Amount'] = Math.round(amount * 100);
+  vnp_Params['vnp_ReturnUrl'] = returnUrl;
+  vnp_Params['vnp_IpAddr'] = (ipAddr === '::1' || ipAddr === '::ffff:127.0.0.1') ? '127.0.0.1' : ipAddr;
+  vnp_Params['vnp_CreateDate'] = createDate;
+
+  const sortedKeys = Object.keys(vnp_Params).sort();
+  let signData = "";
+  let query = "";
+
+  for (let i = 0; i < sortedKeys.length; i++) {
+    const key = sortedKeys[i];
+    const val = vnp_Params[key];
+    if (val !== undefined && val !== null && val !== "") {
+      const encodedKey = encodeURIComponent(key);
+      const encodedVal = encodeURIComponent(val).replace(/%20/g, "+");
+      if (signData.length > 0) {
+        signData += "&";
+        query += "&";
+      }
+      signData += encodedKey + "=" + encodedVal;
+      query += encodedKey + "=" + encodedVal;
+    }
+  }
+
+  const hmac = crypto.createHmac("sha512", secretKey);
+  const signed = hmac.update(Buffer.from(signData, 'utf-8')).digest("hex").toUpperCase();
+  
+  return vnpUrl + "?" + query + "&vnp_SecureHash=" + signed;
+}
+
+
+function sortVnpObject(obj) {
+  const sorted = {};
+  const keys = Object.keys(obj).sort();
+  for (const key of keys) {
+    sorted[key] = obj[key];
+  }
+  return sorted;
+}
+
+
+function formatVnpDate(date) {
+  const year = date.getFullYear();
+  const month = (1 + date.getMonth()).toString().padStart(2, '0');
+  const day = date.getDate().toString().padStart(2, '0');
+  const hour = date.getHours().toString().padStart(2, '0');
+  const minute = date.getMinutes().toString().padStart(2, '0');
+  const second = date.getSeconds().toString().padStart(2, '0');
+  return `${year}${month}${day}${hour}${minute}${second}`;
+}
+
 
 export async function listPaymentHistory(userId, limit = 50) {
   if (!isMongoReady()) return { ok: false, status: 503, error: MONGO_ERR };
@@ -145,6 +231,23 @@ async function finalizePaymentSuccess(paymentId) {
   return { ok: true };
 }
 
+async function finalizePaymentFailure(paymentId, reason = "Thanh toán thất bại từ cổng thanh toán.") {
+  const pay = await Payment.findById(paymentId);
+  if (!pay) return { ok: false };
+  if (pay.status === "success" || pay.status === "failed") return { ok: true, already: true };
+
+  pay.status = "failed";
+  pay.failureReason = reason;
+  await pay.save();
+
+  if (pay.type === "booking" && pay.referenceModel === "Booking") {
+    await Booking.findByIdAndUpdate(pay.referenceId, {
+      $set: { paymentStatus: "failed" },
+    });
+  }
+  return { ok: true };
+}
+
 export async function handleWebhookMomo(reqBody, headerSecret) {
   const secret = webhookSecret();
   if (!secret) return { ok: false, status: 503, error: "Chưa cấu hình PAYMENT_WEBHOOK_SECRET." };
@@ -161,4 +264,67 @@ export async function handleWebhookMomo(reqBody, headerSecret) {
 
 export async function handleWebhookZalopay(reqBody, headerSecret) {
   return handleWebhookMomo(reqBody, headerSecret);
+}
+
+export async function handleIpnVnpay(vnp_Params) {
+  const params = { ...(vnp_Params ?? {}) };
+  const secureHash = params["vnp_SecureHash"];
+  if (!secureHash) {
+    return { ok: false, status: 400, data: { RspCode: "99", Message: "Missing signature" } };
+  }
+  const secretKey = process.env.VNP_HASH_SECRET;
+  if (!secretKey) {
+    return { ok: false, status: 503, data: { RspCode: "99", Message: "Gateway secret missing" } };
+  }
+
+  delete params["vnp_SecureHash"];
+  delete params["vnp_SecureHashType"];
+
+  const sortedKeys = Object.keys(params).sort();
+  let signData = "";
+  for (let i = 0; i < sortedKeys.length; i++) {
+    const key = sortedKeys[i];
+    const val = params[key];
+    if (val !== undefined && val !== null && val !== "") {
+      if (signData.length > 0) signData += "&";
+      signData += encodeURIComponent(key) + "=" + encodeURIComponent(val).replace(/%20/g, "+");
+    }
+  }
+
+  const hmac = crypto.createHmac("sha512", secretKey);
+  const signed = hmac.update(Buffer.from(signData, "utf-8")).digest("hex");
+  if (secureHash.toUpperCase() !== signed.toUpperCase()) {
+    return { ok: false, status: 400, data: { RspCode: "97", Message: "Checksum failed" } };
+  }
+
+  const txnRef = params["vnp_TxnRef"];
+  const rspCode = params["vnp_ResponseCode"];
+  const txnStatus = params["vnp_TransactionStatus"];
+  const amountRaw = Number(params["vnp_Amount"]);
+  const amount = Number.isFinite(amountRaw) ? Math.round(amountRaw / 100) : NaN;
+
+  const pay = await Payment.findOne({ providerRef: txnRef });
+  if (!pay) {
+    return { ok: true, data: { RspCode: "01", Message: "Order not found" } };
+  }
+
+  const expectedAmount = Math.round(Number(pay.amount) || 0);
+  if (!Number.isFinite(amount) || amount !== expectedAmount) {
+    return { ok: true, data: { RspCode: "04", Message: "Invalid amount" } };
+  }
+
+  if (pay.status === "success") {
+    return { ok: true, data: { RspCode: "02", Message: "Order already confirmed" } };
+  }
+
+  if (rspCode === "00" && (txnStatus == null || txnStatus === "00")) {
+    await finalizePaymentSuccess(pay._id);
+    return { ok: true, data: { RspCode: "00", Message: "Success" } };
+  }
+
+  await finalizePaymentFailure(
+    pay._id,
+    `VNPay failed with responseCode=${rspCode || "unknown"}, transactionStatus=${txnStatus || "unknown"}`,
+  );
+  return { ok: true, data: { RspCode: "00", Message: "Confirm Success (Transaction Failed)" } };
 }

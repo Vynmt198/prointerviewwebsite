@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router";
-import { motion } from "motion/react";
+import { motion, AnimatePresence } from "motion/react";
 import {
   User,
   Mail as EnvelopeSimple,
@@ -23,10 +23,13 @@ import {
   Trophy,
   Sprout as Plant,
   Sparkles,
-  ArrowRight
+  ArrowRight,
+  FileText,
+  CheckCircle,
+  History
 } from "lucide-react";
-import { getUser, updateUser, logout, getInitials } from "../../utils/auth";
-import { getPlans } from "../../utils/auth";
+import { getPlans, getUser, updateUser, logout, getInitials } from "../../utils/auth";
+import { applyAsMentor, fetchMyMentorProfile, updateMyMentorProfile } from "../../utils/mentorApi";
 
 const ACHIEVEMENTS = [
   { icon: Lightning, label: "5 ngày streak", color: "from-amber-400 to-orange-500", earned: true },
@@ -72,12 +75,29 @@ export function Profile() {
     field: user?.field || "",
   });
   const [saveMsg, setSaveMsg] = useState(null);
+  const [mentorProfile, setMentorProfile] = useState(null);
+  const [showMentorModal, setShowMentorModal] = useState(false);
+  const [applying, setApplying] = useState(false);
+  const [mentorForm, setMentorForm] = useState({
+    title: "",
+    company: "",
+    yearsOfExperience: "",
+    bio: "",
+    skills: "", // Will be converted to tags array
+    careerHistory: "", // List of companies
+    portfolioLink: "",
+    linkedinProfile: "",
+    targetRate: "", // Proposed price per session
+    fields: "",
+    responseTime: "",
+    timezone: "Asia/Ho_Chi_Minh",
+  });
 
   const initials = getInitials(form.name || "U");
   const isMentor = user?.role === "mentor";
 
   const handleSave = async () => {
-    await updateUser({
+    const userRes = await updateUser({
       name: form.name,
       email: form.email,
       phone: form.phone,
@@ -85,13 +105,64 @@ export function Profile() {
       school: form.school,
       field: form.field,
     });
+    if (!userRes?.success) return;
+
+    if (isMentor) {
+      const mentorRes = await updateMyMentorProfile({
+        title: mentorForm.title,
+        company: mentorForm.company,
+        bio: mentorForm.bio,
+        experienceYears: mentorForm.yearsOfExperience,
+        specialties: mentorForm.skills
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean),
+        fields: mentorForm.fields
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean),
+        linkedinUrl: mentorForm.linkedinProfile,
+        pricePerHour: mentorForm.targetRate,
+        responseTime: mentorForm.responseTime,
+        timezone: mentorForm.timezone,
+      });
+      if (!mentorRes?.success) return;
+      if (mentorRes.mentor) setMentorProfile(mentorRes.mentor);
+    }
+
     setEditing(false);
     setSaveMsg("saved");
     setTimeout(() => setSaveMsg(null), 2500);
   };
 
-  const handleLogout = () => {
-    logout();
+  const handleApplyMentor = async () => {
+    // Basic validation
+    if (!mentorForm.title || !mentorForm.bio || !mentorForm.careerHistory) {
+      alert("Vui lòng nhập đầy đủ các thông tin bắt buộc (Chức danh, Tiểu sử, Lịch sử làm việc).");
+      return;
+    }
+
+    setApplying(true);
+    // Convert comma-separated strings to arrays where needed if backend expects it
+    const payload = {
+      ...mentorForm,
+      tags: mentorForm.skills.split(",").map(s => s.trim()).filter(s => s),
+      companies: mentorForm.careerHistory.split(",").map(c => c.trim()).filter(c => c)
+    };
+
+    const res = await applyAsMentor(payload);
+    setApplying(false);
+    if (res.success) {
+      setShowMentorModal(false);
+      setSaveMsg("mentor_applied");
+      setTimeout(() => setSaveMsg(null), 4000);
+    } else {
+      alert(res.error || "Gửi yêu cầu thất bại.");
+    }
+  };
+
+  const handleLogout = async () => {
+    await logout();
     navigate("/");
   };
 
@@ -126,7 +197,6 @@ export function Profile() {
     { label: "Lĩnh vực", key: "field", icon: Sparkles },
   ];
 
-  /* ── Derive plan display info ─────────────────── */
   const planInfo = (() => {
     if (plans.elitePro) return {
       name: "Thượng hạng (Elite)",
@@ -160,12 +230,34 @@ export function Profile() {
     };
   })();
 
-  // Re-read plans whenever page is focused
   React.useEffect(() => {
     const refresh = () => setPlans(getPlans());
     window.addEventListener("focus", refresh);
     return () => window.removeEventListener("focus", refresh);
   }, []);
+
+  React.useEffect(() => {
+    if (!isMentor) return;
+    fetchMyMentorProfile().then((res) => {
+      if (!res?.success || !res.mentor) return;
+      const m = res.mentor;
+      setMentorProfile(m);
+      setMentorForm((prev) => ({
+        ...prev,
+        title: m.title || "",
+        company: m.company || "",
+        yearsOfExperience: String(m.experienceYears ?? ""),
+        bio: m.bio || "",
+        skills: Array.isArray(m.specialties) ? m.specialties.join(", ") : "",
+        careerHistory: Array.isArray(m.companies) ? m.companies.join(", ") : "",
+        linkedinProfile: m.linkedinUrl || "",
+        targetRate: String(m.pricePerHour ?? ""),
+        fields: Array.isArray(m.fields) ? m.fields.join(", ") : "",
+        responseTime: m.responseTime || "",
+        timezone: m.timezone || "Asia/Ho_Chi_Minh",
+      }));
+    });
+  }, [isMentor]);
 
   return (
     <div className="pi-page-dashboard-bg relative min-h-screen overflow-x-hidden pb-20 font-sans text-white selection:bg-[rgba(196,255,71,0.28)] selection:text-white">
@@ -289,15 +381,23 @@ export function Profile() {
           </div>
         </div>
 
-        {/* Save toast */}
+        {/* Status messages */}
         {saveMsg === "saved" && (
           <div className="fixed bottom-10 right-10 z-50 flex items-center gap-3 bg-emerald-600/90 backdrop-blur-xl text-white px-8 py-4 rounded-2xl shadow-2xl border border-emerald-400/30 font-black text-xs uppercase tracking-widest animate-in fade-in slide-in-from-bottom-5">
             <Check size={18} /> Đã cập nhật thành công
           </div>
         )}
+        {saveMsg === "mentor_applied" && (
+          <div className="fixed bottom-10 right-10 z-50 flex items-center gap-4 bg-[#6E35E8]/90 backdrop-blur-xl text-white px-8 py-5 rounded-2xl shadow-2xl border border-white/20 font-black text-xs uppercase tracking-widest animate-in fade-in slide-in-from-bottom-5 max-w-md">
+            <div className="bg-emerald-500 rounded-full p-1"><Check size={14} /></div>
+            <div>
+              <p>Hồ sơ đã được gửi!</p>
+              <p className="text-[9px] text-white/60 mt-1 lowercase first-letter:uppercase font-medium">Hệ thống sẽ phản hồi kết quả trong vòng 24-48 giờ làm việc.</p>
+            </div>
+          </div>
+        )}
 
         <div className="grid lg:grid-cols-12 gap-10">
-          {/* LEFT: Avatar & Vital Info */}
           <div className="lg:col-span-4 space-y-10">
             <div className="glass-card p-10 text-center">
                <div className="glow-halo mb-8">
@@ -360,7 +460,6 @@ export function Profile() {
             </div>
           </div>
 
-          {/* RIGHT: Detail Form & Controls */}
           <div className="lg:col-span-8 space-y-10">
             <div className="glass-card p-10">
                <div className="flex items-center justify-between mb-10">
@@ -386,88 +485,332 @@ export function Profile() {
                </div>
             </div>
 
-            {!isMentor && (
-              <div className="glass-card overflow-hidden group">
-                 <div className="p-10 flex flex-col md:flex-row md:items-center justify-between gap-10" style={{ background: planInfo.cardGrad }}>
-                    <div className="relative z-10">
-                       <p className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40 mb-3">Tài khoản hiện tại</p>
-                       <h3 className="text-3xl font-black text-white tracking-tighter mb-2 flex items-center gap-3">
-                          {planInfo.name} <planInfo.nameIcon size={24} className="text-white/30" />
-                       </h3>
-                       <p className="text-sm font-medium text-white/60 mb-8 max-w-sm">{planInfo.desc}</p>
-                       
-                       <button 
-                          onClick={() => navigate("/pricing")}
-                          className="px-10 py-5 rounded-2xl bg-white text-black font-black text-xs uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-2xl flex items-center gap-3"
-                       >
-                          Nâng cấp {planInfo.isPaid ? 'Elite' : 'Chuyên nghiệp (Pro)'} <ArrowRight size={16} />
-                       </button>
+            {isMentor && (
+              <div className="glass-card p-10">
+                <div className="flex items-center justify-between mb-10">
+                  <h2 className="font-headline flex items-center gap-3 text-xl font-black tracking-tight text-white sm:text-2xl">
+                    <Briefcase size={20} className="text-primary-fixed" strokeWidth={2} /> Hồ sơ mentor
+                  </h2>
+                </div>
+                <div className="grid md:grid-cols-2 gap-8">
+                  {[
+                    { label: "Chức danh mentor", key: "title" },
+                    { label: "Công ty", key: "company" },
+                    { label: "Năm kinh nghiệm", key: "yearsOfExperience", type: "number" },
+                    { label: "Mức phí / giờ (VNĐ)", key: "targetRate", type: "number" },
+                    { label: "Lĩnh vực mentor", key: "fields" },
+                    { label: "Kỹ năng (cách nhau dấu phẩy)", key: "skills" },
+                    { label: "LinkedIn", key: "linkedinProfile" },
+                    { label: "Phản hồi trung bình", key: "responseTime" },
+                    { label: "Múi giờ", key: "timezone" },
+                  ].map((field) => (
+                    <div key={field.key} className="space-y-3">
+                      <label className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/45">{field.label}</label>
+                      <input
+                        disabled={!editing}
+                        type={field.type || "text"}
+                        className="input-glass w-full"
+                        value={mentorForm[field.key] || ""}
+                        onChange={(e) => setMentorForm({ ...mentorForm, [field.key]: e.target.value })}
+                        placeholder={editing ? `Nhập ${field.label.toLowerCase()}...` : "Dữ liệu trống"}
+                      />
                     </div>
-
-                    <div className="relative">
-                       <div className="w-32 h-32 rounded-full border-8 border-white/10 flex items-center justify-center p-6 bg-white/[0.05] backdrop-blur-xl relative overflow-hidden">
-                          <Lightning size={40} className="text-white/20 absolute -right-2 -top-2 rotate-12" />
-                          <Lightning size={64} className="text-white group-hover:scale-110 transition-transform duration-700" />
-                       </div>
-                    </div>
-                 </div>
-                 {planInfo.progress && (
-                   <div className="px-10 py-8 bg-black/20 flex flex-col gap-3">
-                      <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest">
-                         <span className="text-zinc-500">Mức độ vận hành</span>
-                         <span className="text-primary-fixed">{planInfo.progress.used} / {planInfo.progress.max} Buổi</span>
-                      </div>
-                      <div className="h-2 bg-white/5 rounded-full overflow-hidden">
-                         <motion.div 
-                            initial={{ width: 0 }}
-                            animate={{ width: `${(planInfo.progress.used / planInfo.progress.max) * 100}%` }}
-                            transition={{ duration: 1.5, ease: "easeOut" }}
-                            className="h-full bg-gradient-to-r from-primary-fixed to-emerald-500 shadow-[0_0_15px_rgba(180,245,0,0.5)]"
-                         />
-                      </div>
-                   </div>
-                 )}
+                  ))}
+                  <div className="md:col-span-2 space-y-3">
+                    <label className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/45">Tiểu sử mentor</label>
+                    <textarea
+                      disabled={!editing}
+                      rows={4}
+                      className="input-glass w-full resize-none"
+                      value={mentorForm.bio}
+                      onChange={(e) => setMentorForm({ ...mentorForm, bio: e.target.value })}
+                      placeholder={editing ? "Nhập giới thiệu ngắn về mentor..." : "Dữ liệu trống"}
+                    />
+                  </div>
+                </div>
+                {mentorProfile?.finance?.bankAccount?.bankName && (
+                  <p className="mt-6 text-xs text-white/45">
+                    Tài khoản nhận tiền hiện tại: {mentorProfile.finance.bankAccount.bankName} - ****
+                    {String(mentorProfile.finance.bankAccount.accountNumber || "").slice(-4)}
+                  </p>
+                )}
               </div>
             )}
 
-            <div className="grid md:grid-cols-2 gap-8">
-               {settings.map((section, sIdx) => (
-                 <div key={sIdx} className="glass-card p-8">
-                    <h3 className="mb-8 flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.2em] text-white/45">
-                       <section.icon size={14} className="text-fuchsia-300" strokeWidth={2} /> {section.title}
-                    </h3>
-                    <div className="space-y-6">
-                       {section.items.map((item, iIdx) => (
-                         <div key={iIdx} className="flex items-center justify-between group">
-                            <div>
-                               <p className="text-sm font-bold text-white group-hover:text-primary-fixed transition-colors">{item.label}</p>
-                               <p className="mt-0.5 text-[10px] text-white/35">Trình quản lý hệ thống</p>
-                            </div>
-                            <button
-                              onClick={() => toggleSetting(sIdx, iIdx)}
-                              className={`relative w-11 h-6 rounded-full transition-all duration-300 ${item.enabled ? "bg-primary-fixed" : "bg-white/10"}`}
-                            >
-                              <div className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow-lg transition-transform duration-300 ${item.enabled ? "translate-x-6" : "translate-x-1"}`} />
-                            </button>
-                         </div>
-                       ))}
+            {!isMentor && (
+              <>
+                <div className="glass-card overflow-hidden group">
+                  <div className="p-10 flex flex-col md:flex-row md:items-center justify-between gap-10" style={{ background: planInfo.cardGrad }}>
+                    <div className="relative z-10">
+                      <p className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40 mb-3">Tài khoản hiện tại</p>
+                      <h3 className="text-3xl font-black text-white tracking-tighter mb-2 flex items-center gap-3">
+                        {planInfo.name} <planInfo.nameIcon size={24} className="text-white/30" />
+                      </h3>
+                      <p className="text-sm font-medium text-white/60 mb-8 max-w-sm">{planInfo.desc}</p>
+                      <button 
+                        onClick={() => navigate("/pricing")}
+                        className="px-10 py-5 rounded-2xl bg-white text-black font-black text-xs uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-2xl flex items-center gap-3"
+                      >
+                        Nâng cấp {planInfo.isPaid ? 'Elite' : 'Chuyên nghiệp (Pro)'} <ArrowRight size={16} />
+                      </button>
                     </div>
-                 </div>
-               ))}
+                    <div className="relative">
+                      <div className="w-32 h-32 rounded-full border-8 border-white/10 flex items-center justify-center p-6 bg-white/[0.05] backdrop-blur-xl relative overflow-hidden">
+                        <Lightning size={40} className="text-white/20 absolute -right-2 -top-2 rotate-12" />
+                        <Lightning size={64} className="text-white group-hover:scale-110 transition-transform duration-700" />
+                      </div>
+                    </div>
+                  </div>
+                  {planInfo.progress && (
+                    <div className="px-10 py-8 bg-black/20 flex flex-col gap-3">
+                      <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest">
+                        <span className="text-zinc-500">Mức độ vận hành</span>
+                        <span className="text-primary-fixed">{planInfo.progress.used} / {planInfo.progress.max} Buổi</span>
+                      </div>
+                      <div className="h-2 bg-white/5 rounded-full overflow-hidden">
+                        <motion.div 
+                          initial={{ width: 0 }}
+                          animate={{ width: `${(planInfo.progress.used / planInfo.progress.max) * 100}%` }}
+                          transition={{ duration: 1.5, ease: "easeOut" }}
+                          className="h-full bg-gradient-to-r from-primary-fixed to-emerald-500 shadow-[0_0_15px_rgba(180,245,0,0.5)]"
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <div className="glass-card overflow-hidden group border-primary-fixed/20 bg-primary-fixed/[0.02]">
+                  <div className="p-8">
+                    <div className="flex items-center gap-4 mb-6">
+                      <div className="w-12 h-12 rounded-2xl bg-primary-fixed/10 flex items-center justify-center text-primary-fixed">
+                        <Star size={24} />
+                      </div>
+                      <div>
+                        <h3 className="text-xl font-black text-white tracking-tighter">Trở thành Mentor</h3>
+                        <p className="text-xs font-medium text-white/45">Chia sẻ kiến thức & Kiếm thêm thu nhập</p>
+                      </div>
+                    </div>
+                    <p className="text-sm text-white/60 mb-8 leading-relaxed">
+                      Đồng hành cùng hàng ngàn học viên trong hành trình chinh phục sự nghiệp. Hãy bắt đầu bằng việc xây dựng hồ sơ chuyên môn của bạn.
+                    </p>
+                    <button 
+                      onClick={() => setShowMentorModal(true)}
+                      className="w-full py-4 rounded-xl border border-primary-fixed/30 text-primary-fixed text-[10px] font-black uppercase tracking-widest hover:bg-primary-fixed hover:text-black transition-all flex items-center justify-center gap-2"
+                    >
+                      Bắt đầu đăng ký <ArrowRight size={14} />
+                    </button>
+                  </div>
+                </div>
+              </>
+            )}
+
+            <div className="grid md:grid-cols-2 gap-8">
+              {settings.map((section, sIdx) => (
+                <div key={sIdx} className="glass-card p-8">
+                  <h3 className="mb-8 flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.2em] text-white/45">
+                    <section.icon size={14} className="text-fuchsia-300" strokeWidth={2} /> {section.title}
+                  </h3>
+                  <div className="space-y-6">
+                    {section.items.map((item, iIdx) => (
+                      <div key={iIdx} className="flex items-center justify-between group">
+                        <div>
+                          <p className="text-sm font-bold text-white group-hover:text-primary-fixed transition-colors">{item.label}</p>
+                          <p className="mt-0.5 text-[10px] text-white/35">Trình quản lý hệ thống</p>
+                        </div>
+                        <button
+                          onClick={() => toggleSetting(sIdx, iIdx)}
+                          className={`relative w-11 h-6 rounded-full transition-all duration-300 ${item.enabled ? "bg-primary-fixed" : "bg-white/10"}`}
+                        >
+                          <div className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow-lg transition-transform duration-300 ${item.enabled ? "translate-x-6" : "translate-x-1"}`} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
             </div>
 
             <div className="profile-glass-danger glass-card flex flex-col items-center justify-between gap-8 border-red-500/20 bg-red-500/[0.02] p-10 md:flex-row hover:border-red-500/40">
-               <div className="text-center md:text-left">
-                  <h4 className="text-lg font-black text-white tracking-tight mb-2">Vùng nguy hiểm</h4>
-                  <p className="text-xs font-medium text-white/45">Bạn có muốn hủy kích hoạt tài khoản vĩnh viễn?</p>
-               </div>
-               <button onClick={handleLogout} className="px-8 py-4 rounded-2xl border border-red-500/30 text-red-500 text-[10px] font-black uppercase tracking-widest hover:bg-red-500 hover:text-white transition-all">
-                  Đăng xuất tài khoản
-               </button>
+              <div className="text-center md:text-left">
+                <h4 className="text-lg font-black text-white tracking-tight mb-2">Vùng nguy hiểm</h4>
+                <p className="text-xs font-medium text-white/45">Bạn có muốn hủy kích hoạt tài khoản vĩnh viễn?</p>
+              </div>
+              <button onClick={handleLogout} className="px-8 py-4 rounded-2xl border border-red-500/30 text-red-500 text-[10px] font-black uppercase tracking-widest hover:bg-red-500 hover:text-white transition-all">
+                Đăng xuất tài khoản
+              </button>
             </div>
           </div>
         </div>
       </div>
+
+      <AnimatePresence>
+        {showMentorModal && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowMentorModal(false)}
+              className="absolute inset-0 bg-black/80 backdrop-blur-md"
+            />
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="relative w-full max-w-2xl glass-card overflow-hidden"
+              style={{ background: "#0E0922" }}
+            >
+              <div className="p-8 border-b border-white/5 flex items-center justify-between">
+                <div>
+                  <h2 className="text-2xl font-black text-white tracking-tighter uppercase">Đăng ký trở thành <span className="text-primary-fixed">Mentor</span></h2>
+                  <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest mt-1">Cập nhật hồ sơ chuyên gia của bạn</p>
+                </div>
+                <button onClick={() => setShowMentorModal(false)} className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-white hover:bg-white/10 transition-all">
+                  <X size={20} />
+                </button>
+              </div>
+
+              <div className="p-8 max-h-[70vh] overflow-y-auto space-y-8">
+                <div className="grid sm:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-white/40 flex items-center gap-2">
+                      <Briefcase size={12} /> Chức danh hiện tại*
+                    </label>
+                    <input 
+                      autoFocus
+                      className="input-glass w-full" 
+                      placeholder="VD: Senior Frontend Developer"
+                      value={mentorForm.title}
+                      onChange={e => setMentorForm({...mentorForm, title: e.target.value})}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-white/40 flex items-center gap-2">
+                      <Users size={12} /> Công ty hiện tại
+                    </label>
+                    <input 
+                      className="input-glass w-full" 
+                      placeholder="VD: Google / VinAI"
+                      value={mentorForm.company}
+                      onChange={e => setMentorForm({...mentorForm, company: e.target.value})}
+                    />
+                  </div>
+                </div>
+
+                <div className="grid sm:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-white/40 flex items-center gap-2">
+                      <TrendUp size={12} /> Tổng số năm kinh nghiệm
+                    </label>
+                    <input 
+                      type="number"
+                      className="input-glass w-full" 
+                      placeholder="Nhập số năm..."
+                      value={mentorForm.yearsOfExperience}
+                      onChange={e => setMentorForm({...mentorForm, yearsOfExperience: e.target.value})}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-white/40 flex items-center gap-2">
+                      <Sparkles size={12} /> Kỹ năng chuyên môn (Tags)
+                    </label>
+                    <input 
+                      className="input-glass w-full" 
+                      placeholder="Cách nhau bởi dấu phẩy (VD: React, Node.js...)"
+                      value={mentorForm.skills}
+                      onChange={e => setMentorForm({...mentorForm, skills: e.target.value})}
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-white/40 flex items-center gap-2">
+                    <FileText size={12} /> Giới thiệu bản thân (Bio)*
+                  </label>
+                  <textarea 
+                    rows={4}
+                    className="input-glass w-full resize-none" 
+                    placeholder="Hãy viết một đoạn ngắn giới thiệu về thế mạnh và lý do bạn muốn làm Mentor..."
+                    value={mentorForm.bio}
+                    onChange={e => setMentorForm({...mentorForm, bio: e.target.value})}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-white/40 flex items-center gap-2">
+                    <History size={12} /> Lịch sử sự nghiệp (Career History)*
+                  </label>
+                  <textarea 
+                    rows={2}
+                    className="input-glass w-full resize-none" 
+                    placeholder="Danh sách các công ty từng làm việc, cách nhau bởi dấu phẩy..."
+                    value={mentorForm.careerHistory}
+                    onChange={e => setMentorForm({...mentorForm, careerHistory: e.target.value})}
+                  />
+                </div>
+
+                <div className="grid sm:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-white/40 flex items-center gap-2">
+                      <EnvelopeSimple size={12} /> LinkedIn Profile
+                    </label>
+                    <input 
+                      className="input-glass w-full" 
+                      placeholder="https://linkedin.com/in/..."
+                      value={mentorForm.linkedinProfile}
+                      onChange={e => setMentorForm({...mentorForm, linkedinProfile: e.target.value})}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-white/40 flex items-center gap-2">
+                      <Lightning size={12} /> Mức phí mong muốn (VNĐ/60p)
+                    </label>
+                    <input 
+                      type="number"
+                      className="input-glass w-full" 
+                      placeholder="VD: 500000"
+                      value={mentorForm.targetRate}
+                      onChange={e => setMentorForm({...mentorForm, targetRate: e.target.value})}
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-white/40 flex items-center gap-2">
+                    <Medal size={12} /> Portfolio / Link Chứng chỉ khác
+                  </label>
+                  <input 
+                    className="input-glass w-full" 
+                    placeholder="https://..."
+                    value={mentorForm.portfolioLink}
+                    onChange={e => setMentorForm({...mentorForm, portfolioLink: e.target.value})}
+                  />
+                </div>
+              </div>
+
+              <div className="p-8 border-t border-white/5 flex gap-4">
+                <button 
+                  onClick={() => setShowMentorModal(false)}
+                  className="flex-1 py-4 rounded-2xl bg-white/5 text-white/60 text-[10px] font-black uppercase tracking-widest hover:bg-white/10 transition-all"
+                >
+                  Đóng
+                </button>
+                <button 
+                  disabled={applying || !mentorForm.title || !mentorForm.bio || !mentorForm.careerHistory}
+                  onClick={handleApplyMentor}
+                  className="flex-[2] py-4 rounded-2xl bg-primary-fixed text-black text-[10px] font-black uppercase tracking-widest hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:hover:scale-100 flex items-center justify-center gap-2 shadow-[0_10px_30px_rgba(180,245,0,0.2)]"
+                >
+                  {applying ? (
+                    <div className="w-4 h-4 border-2 border-black/20 border-t-black animate-spin rounded-full" />
+                  ) : (
+                    <><CheckCircle size={14} /> Gửi hồ sơ đăng ký</>
+                  )}
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

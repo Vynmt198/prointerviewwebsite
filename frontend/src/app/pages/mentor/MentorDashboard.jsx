@@ -5,34 +5,67 @@ import {
   Calendar as CalendarBlank,
   Users,
   Star,
-  RotateCcw as ClockCounterClockwise,
-  Briefcase,
   LineChart as ChartLine,
-  Video,
   CheckCircle,
-  AlertCircle as WarningCircle,
-  TrendingUp as TrendUp,
-  Zap as Lightning,
-  Clock,
   CircleDollarSign as CurrencyCircleDollar,
   X,
   ArrowRight,
-  FileText,
   BarChart3 as ChartBar,
   BadgeCheck as SealCheck,
-  StickyNote as Notepad,
   Target,
   ArrowUpRight,
   Plus
 } from "lucide-react";
 import { getUser } from "../../utils/auth";
-import {
-  UPCOMING_MENTOR_MEETINGS,
-  COMPLETED_MENTOR_MEETINGS,
-  MENTOR_DASHBOARD_STATS,
-  WEEKLY_STATS,
-} from "../../data/mentorMockData";
 import { MentorPageShell } from "../../components/mentor/MentorPageShell";
+import { listMentorBookings } from "../../utils/bookingsApi";
+import { fetchMentorDashboard } from "../../utils/mentorApi";
+
+const DEFAULT_AVATAR = "https://i.pravatar.cc/120?img=12";
+
+function parseBookingDateTime(dateStr, timeStr = "00:00") {
+  const raw = String(dateStr || "").trim();
+  if (!raw) return null;
+  const parts = raw.split("/").map((p) => Number(p));
+  if (parts.length < 2 || !Number.isFinite(parts[0]) || !Number.isFinite(parts[1])) return null;
+  const day = parts[0];
+  const month = parts[1];
+  const year = parts.length >= 3 && Number.isFinite(parts[2]) ? parts[2] : new Date().getFullYear();
+  const [hour, minute] = String(timeStr || "00:00").split(":").map((p) => Number(p));
+  if (!Number.isFinite(hour) || !Number.isFinite(minute)) return null;
+  const dt = new Date(year, month - 1, day, hour, minute, 0, 0);
+  if (Number.isNaN(dt.getTime())) return null;
+  return dt;
+}
+
+function formatMeetingDate(dateStr, timeStr) {
+  const dt = parseBookingDateTime(dateStr, timeStr);
+  if (!dt) return "";
+  return dt.toLocaleDateString("vi-VN");
+}
+
+function toMentorMeeting(booking) {
+  return {
+    id: booking.id || booking._id || "",
+    status: booking.status || "",
+    mentee: {
+      name: booking.customerName || "Học viên",
+      avatar: booking.customerAvatar || DEFAULT_AVATAR,
+      level: "Mentee",
+    },
+    position: booking.sessionType || "Mentoring session",
+    company: booking.customerEmail || "ProInterview",
+    scheduledTime: booking.timeSlot || "--:--",
+    scheduledDate: booking.date || "",
+    meetingType: booking.sessionType || "mock-interview",
+    price: Number(booking.price || 0),
+    starScores: { situation: 0, task: 0, action: 0, result: 0 },
+    overallScore: 0,
+    feedback: "",
+    strengths: [],
+    improvements: [],
+  };
+}
 
 /* ── Mentee Progress Modal ────────────────────────────────────────────────── */
 function MenteeProgressModal({
@@ -62,13 +95,6 @@ function MenteeProgressModal({
         { key: "result", label: "Result", color: "#FF8C42", value: star.result },
       ]
     : [];
-
-  const dateStr = new Date(meeting.scheduledDate).toLocaleDateString("vi-VN", {
-    weekday: "long",
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-  });
 
   const meetingTypeLabel =
     meeting.meetingType === "mock-interview"
@@ -245,6 +271,8 @@ export function MentorDashboard() {
   const navigate = useNavigate();
   const user = getUser();
   const [selectedMeeting, setSelectedMeeting] = useState(null);
+  const [mentorBookings, setMentorBookings] = useState([]);
+  const [dashboard, setDashboard] = useState(null);
 
   useEffect(() => {
     if (!user || user.role !== "mentor") {
@@ -252,11 +280,58 @@ export function MentorDashboard() {
     }
   }, []);
 
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      const [bookingsRes, dashboardRes] = await Promise.all([
+        listMentorBookings(),
+        fetchMentorDashboard(),
+      ]);
+      if (!active) return;
+      if (bookingsRes.success) {
+        const rows = Array.isArray(bookingsRes.bookings) ? bookingsRes.bookings : [];
+        setMentorBookings(rows.map(toMentorMeeting));
+      }
+      if (dashboardRes.success) {
+        setDashboard(dashboardRes.dashboard || null);
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, []);
+
   if (!user || user.role !== "mentor") return null;
 
-  const upcomingMeetings = UPCOMING_MENTOR_MEETINGS.slice(0, 3);
-  const recentCompleted = COMPLETED_MENTOR_MEETINGS.slice(0, 5);
-  const stats = MENTOR_DASHBOARD_STATS;
+  const now = Date.now();
+  const month = new Date().getMonth();
+  const year = new Date().getFullYear();
+  const apiUpcoming = mentorBookings.filter((m) => {
+    const statusOk = ["pending", "confirmed", "in_progress"].includes(String(m.status || "").toLowerCase());
+    if (!statusOk) return false;
+    const dt = parseBookingDateTime(m.scheduledDate, m.scheduledTime);
+    return dt && dt.getTime() > now;
+  });
+  const dashboardUpcoming = Array.isArray(dashboard?.upcomingBookings)
+    ? dashboard.upcomingBookings.map(toMentorMeeting)
+    : [];
+  const upcomingMeetings = (dashboardUpcoming.length ? dashboardUpcoming : apiUpcoming).slice(0, 3);
+  const recentCompleted = mentorBookings
+    .filter((m) => String(m.status || "").toLowerCase() === "completed")
+    .slice(0, 5);
+  const thisMonthSessions = mentorBookings.filter((m) => {
+    const dt = parseBookingDateTime(m.scheduledDate, m.scheduledTime);
+    return dt && dt.getMonth() === month && dt.getFullYear() === year;
+  }).length;
+  const totalEarnings = mentorBookings
+    .filter((m) => String(m.status || "").toLowerCase() === "completed")
+    .reduce((sum, m) => sum + Number(m.price || 0), 0);
+  const stats = {
+    totalSessions: Number(dashboard?.totalSessions || mentorBookings.length),
+    thisMonthSessions,
+    upcomingMeetings: Number(dashboard?.upcomingBookings?.length || apiUpcoming.length),
+    totalEarnings,
+  };
 
   return (
     <MentorPageShell bottomPad="pb-20">
@@ -347,7 +422,9 @@ export function MentorDashboard() {
                          <div className="flex items-center gap-10">
                             <div className="text-right hidden sm:block">
                                <p className="text-xs font-black text-white">{meeting.scheduledTime}</p>
-                               <p className="text-[10px] font-bold uppercase tracking-widest text-white/40">{new Date(meeting.scheduledDate).toLocaleDateString("vi-VN")}</p>
+                               <p className="text-[10px] font-bold uppercase tracking-widest text-white/40">
+                                 {formatMeetingDate(meeting.scheduledDate, meeting.scheduledTime)}
+                               </p>
                             </div>
                             <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-primary-fixed opacity-0 group-hover:opacity-100 transition-all">
                                <ArrowRight size={18} />
@@ -366,6 +443,9 @@ export function MentorDashboard() {
                     <CheckCircle size={14} className="text-primary-fixed" /> Hoàn thành gần đây
                  </h4>
                  <div className="space-y-6">
+                    {recentCompleted.length === 0 && (
+                      <p className="text-xs font-medium text-zinc-500">Chưa có buổi hoàn thành gần đây.</p>
+                    )}
                     {recentCompleted.map((meeting) => (
                       <div key={meeting.id} 
                            onClick={() => setSelectedMeeting(meeting)}
@@ -373,7 +453,9 @@ export function MentorDashboard() {
                          <img src={meeting.mentee.avatar} className="w-10 h-10 rounded-xl object-cover grayscale group-hover:grayscale-0 transition-all" />
                          <div className="flex-1">
                             <p className="text-xs font-black text-white mb-0.5 tracking-tight">{meeting.mentee.name}</p>
-                            <p className="text-[9px] font-bold uppercase tracking-widest text-white/45">{new Date(meeting.scheduledDate).toLocaleDateString("vi-VN")}</p>
+                            <p className="text-[9px] font-bold uppercase tracking-widest text-white/45">
+                              {formatMeetingDate(meeting.scheduledDate, meeting.scheduledTime)}
+                            </p>
                          </div>
                          <div className="flex items-center gap-1.5 text-primary-fixed">
                             <Star size={12} className="fill-current" />

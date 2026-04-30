@@ -1,5 +1,4 @@
-import { apiUrl } from "./api.js";
-import { getAccessToken } from "./auth.js";
+import { authFetch, hasAuthCredentials } from "./auth.js";
 
 const jsonHeaders = {
   Accept: "application/json",
@@ -11,14 +10,13 @@ const jsonHeaders = {
  * Payload khớp Booking.jsx / Checkout: mentorId, date, time hoặc timeSlot, sessionType, notes/position/note, price, …
  */
 export async function createBooking(payload) {
-  const token = getAccessToken();
-  if (!token) {
+  if (!hasAuthCredentials()) {
     return { success: false, error: "Chưa đăng nhập." };
   }
   try {
-    const res = await fetch(apiUrl("/api/bookings"), {
+    const res = await authFetch("/api/bookings", {
       method: "POST",
-      headers: { ...jsonHeaders, Authorization: `Bearer ${token}` },
+      headers: { ...jsonHeaders },
       body: JSON.stringify(payload),
     });
     const body = await res.json().catch(() => ({}));
@@ -41,11 +39,10 @@ export async function createBooking(payload) {
 }
 
 function authedGet(path) {
-  const token = getAccessToken();
-  if (!token) return Promise.resolve({ success: false, error: "Chưa đăng nhập." });
-  return fetch(apiUrl(path), {
+  if (!hasAuthCredentials()) return Promise.resolve({ success: false, error: "Chưa đăng nhập." });
+  return authFetch(path, {
     method: "GET",
-    headers: { ...jsonHeaders, Authorization: `Bearer ${token}` },
+    headers: { ...jsonHeaders },
   })
     .then(async (res) => {
       const body = await res.json().catch(() => ({}));
@@ -56,11 +53,10 @@ function authedGet(path) {
 }
 
 function authedSend(method, path, payload) {
-  const token = getAccessToken();
-  if (!token) return Promise.resolve({ success: false, error: "Chưa đăng nhập." });
-  return fetch(apiUrl(path), {
+  if (!hasAuthCredentials()) return Promise.resolve({ success: false, error: "Chưa đăng nhập." });
+  return authFetch(path, {
     method,
-    headers: { ...jsonHeaders, Authorization: `Bearer ${token}` },
+    headers: { ...jsonHeaders },
     body: payload != null ? JSON.stringify(payload) : undefined,
   })
     .then(async (res) => {
@@ -77,9 +73,20 @@ export async function listBookings() {
   return { success: true, bookings: r.bookings ?? [] };
 }
 
+export async function listMentorBookings() {
+  const r = await authedGet("/api/bookings/mentor/list");
+  if (!r.success) return r;
+  return { success: true, bookings: r.bookings ?? [] };
+}
+
 export async function fetchBookingById(id) {
   if (!id) return { success: false, error: "Thiếu id." };
   return authedGet(`/api/bookings/${encodeURIComponent(id)}`);
+}
+
+export async function fetchMentorBookingById(id) {
+  if (!id) return { success: false, error: "Thiếu id." };
+  return authedGet(`/api/bookings/mentor/${encodeURIComponent(id)}`);
 }
 
 export async function cancelBooking(id, body = {}) {
@@ -90,4 +97,26 @@ export async function cancelBooking(id, body = {}) {
 export async function rescheduleBooking(id, body) {
   if (!id) return { success: false, error: "Thiếu id." };
   return authedSend("PATCH", `/api/bookings/${encodeURIComponent(id)}/reschedule`, body ?? {});
+}
+
+export async function mentorRescheduleBooking(id, body) {
+  if (!id) return { success: false, error: "Thiếu id." };
+  return authedSend("PATCH", `/api/bookings/mentor/${encodeURIComponent(id)}/reschedule`, body ?? {});
+}
+
+export async function mentorCancelBooking(id, body = {}) {
+  if (!id) return { success: false, error: "Thiếu id." };
+  return authedSend("PATCH", `/api/bookings/mentor/${encodeURIComponent(id)}/cancel`, body);
+}
+
+export async function fetchBookedSlots(mentorId) {
+  if (!mentorId) return { success: false, error: "Thiếu mentorId." };
+  try {
+    const res = await fetch(`${import.meta.env.VITE_API_URL}/api/bookings/mentor/${encodeURIComponent(mentorId)}/booked-slots`);
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok) return { success: false, error: body.error || "Lỗi tải lịch bận." };
+    return { success: true, booked: body.booked ?? {} };
+  } catch {
+    return { success: false, error: "Không kết nối được backend." };
+  }
 }
