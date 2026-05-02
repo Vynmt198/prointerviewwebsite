@@ -362,7 +362,9 @@ export async function loginWithGoogle(body, req) {
       audience,
     });
     payload = ticket.getPayload();
-  } catch {
+  } catch (err) {
+    const hint = err?.message || String(err);
+    console.error("[auth/google] verifyIdToken failed:", hint);
     return {
       ok: false,
       status: 401,
