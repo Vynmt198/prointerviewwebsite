@@ -9,8 +9,9 @@ services:
     name: prointerview-backend
     runtime: node
     plan: free
-    # oregon = default Render (free tier thường ổn). Đổi frankfurt/singapore trong Dashboard nếu cần — không sửa được sau khi tạo service.
-    region: oregon
+    # Phải giữ trùng region với service đã tạo trên Render — KHÔNG đổi region qua Blueprint (lỗi: changing region not supported).
+    # Muốn đổi region: xóa web service cũ trên Dashboard rồi tạo lại, hoặc tạo service mới tên khác.
+    region: singapore
     branch: main
     rootDir: backend
     buildCommand: npm install
