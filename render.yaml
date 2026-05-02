@@ -9,7 +9,8 @@ services:
     name: prointerview-backend
     runtime: node
     plan: free
-    region: singapore
+    # oregon = default Render (free tier thường ổn). Đổi frankfurt/singapore trong Dashboard nếu cần — không sửa được sau khi tạo service.
+    region: oregon
     branch: main
     rootDir: backend
     buildCommand: npm install
