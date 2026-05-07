@@ -1,11 +1,23 @@
 import mongoose from "mongoose";
 import { Mentor } from "../models/Mentor.js";
 import { Review } from "../models/Review.js";
+import { User } from "../models/User.js";
 
 const MONGO_ERR = "MongoDB chưa kết nối. Kiểm tra MONGO_URI trong .env.";
 
 function isMongoReady() {
   return mongoose.connection.readyState === 1;
+}
+
+function normalizeList(value) {
+  if (Array.isArray(value)) return value.map((x) => String(x).trim()).filter(Boolean);
+  if (typeof value === "string") {
+    return value
+      .split(",")
+      .map((x) => x.trim())
+      .filter(Boolean);
+  }
+  return [];
 }
 
 export async function getMyMentorDoc(userId) {
@@ -17,8 +29,82 @@ export async function getMyMentorDoc(userId) {
   return { ok: true, mentor: doc };
 }
 
+export async function applyForMentor(userId, body) {
+  if (!isMongoReady()) return { ok: false, status: 503, error: MONGO_ERR };
+  const uid = String(userId ?? "").trim();
+  if (!mongoose.isValidObjectId(uid)) return { ok: false, status: 401, error: "Phiên đăng nhập không hợp lệ." };
+
+  const user = await User.findById(uid).select("name email role isActive avatar");
+  if (!user || user.isActive === false) {
+    return { ok: false, status: 404, error: "Không tìm thấy tài khoản hợp lệ." };
+  }
+  if (user.role === "admin") {
+    return { ok: false, status: 400, error: "Tài khoản admin không thể đăng ký mentor." };
+  }
+
+  const title = String(body?.title || "").trim();
+  const bio = String(body?.bio || "").trim();
+  const company = String(body?.company || "").trim() || "Freelancer";
+  const linkedinUrl = String(body?.linkedinProfile || body?.linkedinUrl || "").trim();
+  const specialties = normalizeList(body?.tags?.length ? body.tags : body?.skills);
+  const companies = normalizeList(body?.companies?.length ? body.companies : body?.careerHistory);
+  const fields = normalizeList(body?.fields);
+  const targetRate = Number(body?.targetRate);
+  const experienceYears = Number(body?.yearsOfExperience);
+
+  if (!title || !bio) {
+    return { ok: false, status: 400, error: "Thiếu thông tin bắt buộc (chức danh, tiểu sử)." };
+  }
+
+  const baseProfile = {
+    name: String(user.name || "Mentor").trim() || "Mentor",
+    title,
+    company,
+    avatar: String(user.avatar || "").trim(),
+    bio,
+    specialties,
+    fields,
+    companies,
+    linkedinUrl,
+    experienceYears: Number.isFinite(experienceYears) && experienceYears >= 0 ? Math.round(experienceYears) : 0,
+    pricePerHour: Number.isFinite(targetRate) && targetRate > 0 ? Math.round(targetRate) : 350_000,
+    isActive: false,
+    available: false,
+    isVerified: false,
+    adminReview: {
+      status: "pending",
+      reason: "",
+      reviewedAt: null,
+      reviewedBy: null,
+    },
+  };
+
+  let mentor = await Mentor.findOne({ userId: uid });
+  if (!mentor) {
+    mentor = await Mentor.create({
+      userId: uid,
+      publicId: `u${uid}`,
+      ...baseProfile,
+      sessionTypes: [{ type: "mock_interview", durationMinutes: 60, price: baseProfile.pricePerHour }],
+    });
+  } else {
+    Object.assign(mentor, baseProfile);
+    if (!Array.isArray(mentor.sessionTypes) || mentor.sessionTypes.length === 0) {
+      mentor.sessionTypes = [{ type: "mock_interview", durationMinutes: 60, price: baseProfile.pricePerHour }];
+    }
+    await mentor.save();
+  }
+
+  if (user.role !== "mentor") {
+    await User.updateOne({ _id: uid }, { $set: { role: "mentor" } });
+  }
+
+  return { ok: true, mentor: toPublicMentorMe(mentor) };
+}
+
 export function toPublicMentorMe(doc) {
   const m = doc.toObject ? doc.toObject() : { ...doc };
+  const adminReview = m.adminReview || {};
   return {
     id: m.publicId ?? String(m._id),
     userId: m.userId ? String(m.userId) : null,
@@ -45,6 +131,11 @@ export function toPublicMentorMe(doc) {
     finance: m.finance ?? {},
     isVerified: Boolean(m.isVerified),
     isActive: m.isActive !== false,
+    adminReview: {
+      status: String(adminReview.status || "pending"),
+      reason: String(adminReview.reason || ""),
+      reviewedAt: adminReview.reviewedAt || null,
+    },
   };
 }
 

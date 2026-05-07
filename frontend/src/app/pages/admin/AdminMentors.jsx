@@ -25,7 +25,7 @@ export function AdminMentors() {
     if (res.success) {
       setMentors(res.mentors);
     } else {
-      toast.error(res.error);
+      toast.error(res.error || "Không thể tải danh sách cố vấn.");
     }
     setLoading(false);
   };
@@ -34,13 +34,24 @@ export function AdminMentors() {
     loadMentors();
   }, []);
 
-  const handleToggleActive = async (id, currentStatus) => {
-    const res = await adminApi.updateMentorStatus(id, !currentStatus);
+  const handleToggleActive = async (mentor) => {
+    const nextStatus = !mentor.isActive;
+    const res = await adminApi.updateMentorStatus(mentor._id, nextStatus);
     if (res.success) {
-      toast.success(currentStatus ? "Đã khóa mentor" : "Đã duyệt mentor");
-      setMentors(prev => prev.map(m => m._id === id ? { ...m, isActive: !currentStatus } : m));
+      toast.success(nextStatus ? "Đã duyệt cố vấn" : "Đã khóa cố vấn");
+      setMentors((prev) =>
+        prev.map((m) =>
+          m._id === mentor._id
+            ? {
+                ...m,
+                isActive: nextStatus,
+                isVerified: nextStatus ? true : m.isVerified,
+              }
+            : m,
+        ),
+      );
     } else {
-      toast.error(res.error);
+      toast.error(res.error || "Không thể cập nhật trạng thái cố vấn.");
     }
   };
 
@@ -53,8 +64,8 @@ export function AdminMentors() {
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
-          <h2 className="text-3xl font-black text-white tracking-tighter uppercase mb-2">Quản lý <span className="text-primary-fixed">Mentor</span></h2>
-          <p className="text-zinc-500 text-sm font-medium">Danh sách toàn bộ mentor trên hệ thống ProInterview.</p>
+          <h2 className="text-3xl font-black text-white tracking-tighter uppercase mb-2">Quản lý <span className="text-primary-fixed">Cố vấn</span></h2>
+          <p className="text-zinc-500 text-sm font-medium">Danh sách toàn bộ cố vấn trên hệ thống ProInterview.</p>
         </div>
         <div className="flex items-center gap-4">
           <div className="relative">
@@ -78,7 +89,7 @@ export function AdminMentors() {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="border-b border-white/5 bg-white/[0.02]">
-                <th className="px-8 py-6 text-[10px] font-black text-zinc-500 uppercase tracking-widest">Mentor</th>
+                <th className="px-8 py-6 text-[10px] font-black text-zinc-500 uppercase tracking-widest">Cố vấn</th>
                 <th className="px-8 py-6 text-[10px] font-black text-zinc-500 uppercase tracking-widest">Chuyên môn</th>
                 <th className="px-8 py-6 text-[10px] font-black text-zinc-500 uppercase tracking-widest text-center">Trạng thái</th>
                 <th className="px-8 py-6 text-[10px] font-black text-zinc-500 uppercase tracking-widest text-center">Đánh giá</th>
@@ -92,7 +103,7 @@ export function AdminMentors() {
                 </tr>
               ) : filtered.length === 0 ? (
                 <tr>
-                  <td colSpan="5" className="px-8 py-20 text-center text-zinc-500 italic">Không tìm thấy mentor nào.</td>
+                  <td colSpan="5" className="px-8 py-20 text-center text-zinc-500 italic">Không tìm thấy cố vấn nào.</td>
                 </tr>
               ) : (
                 filtered.map((mentor) => (
@@ -114,11 +125,15 @@ export function AdminMentors() {
                       <div className="flex justify-center">
                         {mentor.isActive ? (
                           <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-500 text-[10px] font-black uppercase border border-emerald-500/20">
-                            <CheckCircle size={10} /> Active
+                            <CheckCircle size={10} /> Hoạt động
+                          </span>
+                        ) : mentor.isVerified ? (
+                          <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-500/10 text-red-400 text-[10px] font-black uppercase border border-red-500/20">
+                            <XCircle size={10} /> Đã khóa
                           </span>
                         ) : (
                           <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-orange-500/10 text-orange-500 text-[10px] font-black uppercase border border-orange-500/20">
-                            <XCircle size={10} /> Pending
+                            <XCircle size={10} /> Chờ duyệt
                           </span>
                         )}
                       </div>
@@ -131,8 +146,8 @@ export function AdminMentors() {
                     </td>
                     <td className="px-8 py-6 text-right">
                       <div className="flex items-center justify-end gap-2">
-                        <button 
-                          onClick={() => handleToggleActive(mentor._id, mentor.isActive)}
+                        <button
+                          onClick={() => handleToggleActive(mentor)}
                           className={`p-2 rounded-xl border transition-all ${
                             mentor.isActive 
                             ? "bg-red-500/10 border-red-500/20 text-red-500 hover:bg-red-500 hover:text-white" 

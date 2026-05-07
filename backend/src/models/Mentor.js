@@ -77,6 +77,12 @@ const mentorSchema = new Schema(
     isVerified: { type: Boolean, default: false },
     isActive: { type: Boolean, default: true },
     verifiedAt: { type: Date },
+    adminReview: {
+      status: { type: String, enum: ["pending", "approved", "rejected"], default: "pending" },
+      reason: { type: String, default: "" },
+      reviewedAt: { type: Date, default: null },
+      reviewedBy: { type: Schema.Types.ObjectId, ref: "User", default: null },
+    },
   },
   { collection: "mentors", timestamps: true }
 );

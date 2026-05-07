@@ -52,13 +52,24 @@ function maskAccountNumber(value) {
 }
 
 function toPayoutHistoryRow(row) {
+  const rawStatus = String(row.status || "pending");
+  const status =
+    rawStatus === "rejected"
+      ? "failed"
+      : rawStatus === "paid" || rawStatus === "approved"
+        ? "completed"
+        : "pending";
   return {
     id: String(row._id),
     type: "withdraw",
     amount: Number(row.amount || 0),
-    status: row.status === "rejected" ? "failed" : row.status === "paid" ? "completed" : "pending",
+    status,
     date: row.requestedAt || row.createdAt,
-    description: row.status === "rejected" ? "Yêu cầu rút tiền bị từ chối" : "Yêu cầu rút tiền",
+    description: status === "failed" ? "Yêu cầu rút tiền bị từ chối" : "Yêu cầu rút tiền",
+    rejectReason: String(row.rejectReason || ""),
+    reviewedAt: row.reviewedAt || null,
+    note: String(row.note || ""),
+    providerRef: String(row.providerRef || ""),
   };
 }
 

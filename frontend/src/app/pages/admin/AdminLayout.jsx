@@ -18,7 +18,6 @@ import {
   LifeBuoy,
   User,
   LogOut,
-  Sparkles,
   ChevronsUpDown,
 } from "lucide-react";
 import { logout, getUser, getInitials } from "../../utils/auth";
@@ -32,21 +31,49 @@ import {
 
 const IS = { strokeWidth: 1.75 };
 
-const MAIN_ITEMS = [
-  { to: "/admin", label: "Bảng điều khiển", icon: LayoutDashboard, end: true },
-  { to: "/admin/users", label: "Người dùng", icon: Users },
-  { to: "/admin/mentors", label: "Mentor", icon: GraduationCap },
-  { to: "/admin/mentors/pending", label: "Duyệt mentor", icon: UserPlus },
-  { to: "/admin/finance", label: "Tài chính", icon: Wallet },
-  { to: "/admin/transactions", label: "Giao dịch", icon: ArrowLeftRight },
-  { to: "/admin/payouts", label: "Rút tiền mentor", icon: Banknote },
-  { to: "/admin/bookings", label: "Booking", icon: Calendar },
-  { to: "/admin/content/questions", label: "Câu hỏi mẫu", icon: FileQuestion },
-  { to: "/admin/content/videos", label: "Video HR", icon: Video },
-  { to: "/admin/content/courses", label: "Khóa học", icon: BookOpen },
-  { to: "/admin/analytics", label: "Analytics", icon: LineChart },
-  { to: "/admin/reviews", label: "Đánh giá", icon: Star },
-  { to: "/admin/support", label: "Hỗ trợ", icon: LifeBuoy },
+const MAIN_GROUPS = [
+  {
+    title: "Tổng quan",
+    items: [{ to: "/admin", label: "Bảng điều khiển", icon: LayoutDashboard, end: true }],
+  },
+  {
+    title: "Người dùng",
+    items: [
+      { to: "/admin/users", label: "Người dùng", icon: Users },
+      { to: "/admin/mentors", label: "Cố vấn", icon: GraduationCap },
+      { to: "/admin/mentors/pending", label: "Duyệt cố vấn", icon: UserPlus },
+    ],
+  },
+  {
+    title: "Vận hành",
+    items: [
+      { to: "/admin/bookings", label: "Lịch hẹn", icon: Calendar },
+    ],
+  },
+  {
+    title: "Tài chính",
+    items: [
+      { to: "/admin/finance", label: "Tài chính", icon: Wallet },
+      { to: "/admin/transactions", label: "Giao dịch", icon: ArrowLeftRight },
+      { to: "/admin/payouts", label: "Rút tiền cố vấn", icon: Banknote },
+    ],
+  },
+  {
+    title: "Nội dung",
+    items: [
+      { to: "/admin/content/questions", label: "Câu hỏi mẫu", icon: FileQuestion },
+      { to: "/admin/content/videos", label: "Video HR", icon: Video },
+      { to: "/admin/content/courses", label: "Khóa học", icon: BookOpen },
+    ],
+  },
+  {
+    title: "Theo dõi chất lượng",
+    items: [
+      { to: "/admin/analytics", label: "Phân tích", icon: LineChart },
+      { to: "/admin/reviews", label: "Đánh giá", icon: Star },
+      { to: "/admin/support", label: "Hỗ trợ", icon: LifeBuoy },
+    ],
+  },
 ];
 
 const SECONDARY_ITEMS = [
@@ -136,42 +163,53 @@ export function AdminLayout() {
       <aside className="z-10 flex h-screen w-[272px] shrink-0 flex-col border-r border-white/10 bg-[#07060e]/92 backdrop-blur-xl">
         <div className="border-b border-white/10 px-4 py-4">
           <button type="button" onClick={() => navigate("/admin")} className="flex w-full items-center gap-3 text-left">
-            <div className="flex aspect-square size-8 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#6E35E8] to-[#8B4DFF] shadow-lg">
-              <Sparkles className="h-4 w-4 text-[#c4ff47]" />
+            <div className="flex h-12 w-[138px] shrink-0 items-center justify-start overflow-hidden rounded-lg">
+              <img
+                src="/Logo.png"
+                alt="ProInterview logo"
+                className="h-12 w-auto origin-left scale-[1.6] object-contain"
+              />
             </div>
-            <div className="min-w-0">
+            <div className="ml-auto">
               <div className="flex items-center gap-1.5">
-                <span className="truncate text-[15px] font-extrabold tracking-tight text-white">ProInterview</span>
-                <span className="shrink-0 rounded-md bg-[#c4ff47] px-1.5 py-0.5 text-[9px] font-bold text-[#120B2E]">ADMIN</span>
+                <span className="shrink-0 rounded-md bg-[#c4ff47] px-1.5 py-0.5 text-[7px] font-bold tracking-wide text-[#120B2E]">ADMIN</span>
               </div>
-              <span className="truncate text-[10px] text-white/35">Khu vực quản trị hệ thống</span>
             </div>
           </button>
         </div>
         <nav ref={navRef} className="flex-1 overflow-y-auto overflow-x-hidden px-2 py-3">
-          <div className="mb-3">
-            <p className="mb-1 px-2 text-[10px] font-bold uppercase tracking-[0.18em] text-white/30">Menu chính</p>
-            <ul className="space-y-1">
-              {MAIN_ITEMS.map(({ to, label, icon: Icon, end }) => (
-                <li key={to}>
-                  <NavLink
-                    to={to}
-                    end={Boolean(end)}
-                    className={({ isActive }) =>
-                      `flex items-center gap-3 rounded-xl px-3 py-2.5 text-[13px] transition-all ${
-                        isActive
-                          ? "bg-gradient-to-r from-[#6E35E8] to-[#8B4DFF] text-white shadow-[0_4px_12px_rgba(110,53,232,.35)]"
-                          : "text-white/55 hover:bg-white/[0.06] hover:text-white"
-                      }`
-                    }
-                  >
-                    <Icon className="h-[18px] w-[18px] shrink-0" {...IS} />
-                    <span className="truncate font-medium">{label}</span>
-                    {location.pathname === to && <span className="ml-auto size-1.5 shrink-0 rounded-full bg-[#c4ff47]" />}
-                  </NavLink>
-                </li>
-              ))}
-            </ul>
+          <p className="mb-2 px-2 text-[10px] font-bold uppercase tracking-[0.18em] text-white/30">Menu chính</p>
+          <div className="space-y-3">
+            {MAIN_GROUPS.map((group) => (
+              <div key={group.title} className="rounded-2xl border border-white/5 bg-white/[0.02] p-2.5">
+                <p className="mb-1.5 px-1.5 text-[9px] font-black uppercase tracking-[0.14em] text-white/45">
+                  {group.title}
+                </p>
+                <ul className="space-y-1">
+                  {group.items.map(({ to, label, icon: Icon, end }) => (
+                    <li key={to}>
+                      <NavLink
+                        to={to}
+                        end={Boolean(end)}
+                        className={({ isActive }) =>
+                          `flex items-center gap-3 rounded-xl px-3 py-2.5 text-[13px] transition-all ${
+                            isActive
+                              ? "bg-gradient-to-r from-[#6E35E8] to-[#8B4DFF] text-white shadow-[0_4px_12px_rgba(110,53,232,.35)]"
+                              : "text-white/55 hover:bg-white/[0.06] hover:text-white"
+                          }`
+                        }
+                      >
+                        <Icon className="h-[18px] w-[18px] shrink-0" {...IS} />
+                        <span className="truncate font-medium">{label}</span>
+                        {location.pathname === to && (
+                          <span className="ml-auto size-1.5 shrink-0 rounded-full bg-[#c4ff47]" />
+                        )}
+                      </NavLink>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
           </div>
           <div className="mx-1 my-3 h-px bg-white/10" />
           <div>

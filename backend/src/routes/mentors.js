@@ -7,6 +7,7 @@ import { MentorMeController } from "../controllers/mentorMeController.js";
 export const mentorsRouter = express.Router();
 
 mentorsRouter.get("/", MentorsController.list);
+mentorsRouter.post("/apply", authJwt, MentorsController.apply);
 mentorsRouter.get("/me", authJwt, requireMentor, MentorMeController.getMe);
 mentorsRouter.patch("/me", authJwt, requireMentor, MentorMeController.patchMe);
 mentorsRouter.patch("/me/availability", authJwt, requireMentor, MentorMeController.patchAvailability);

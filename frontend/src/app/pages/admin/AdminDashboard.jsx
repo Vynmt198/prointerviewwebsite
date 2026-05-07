@@ -17,11 +17,11 @@ import { adminApi } from "../../utils/adminApi";
 
 const TILES = [
   { to: "/admin/users", label: "Người dùng", icon: Users, desc: "Danh sách, filter, chi tiết user" },
-  { to: "/admin/mentors", label: "Mentor", icon: GraduationCap, desc: "Mentor, duyệt pending" },
-  { to: "/admin/finance", label: "Tài chính", icon: Wallet, desc: "Doanh thu, giao dịch, payout" },
-  { to: "/admin/bookings", label: "Booking", icon: Calendar, desc: "Sessions & trạng thái" },
+  { to: "/admin/mentors", label: "Cố vấn", icon: GraduationCap, desc: "Cố vấn, duyệt chờ xét" },
+  { to: "/admin/finance", label: "Tài chính", icon: Wallet, desc: "Doanh thu, giao dịch, rút tiền" },
+  { to: "/admin/bookings", label: "Lịch hẹn", icon: Calendar, desc: "Phiên hẹn và trạng thái" },
   { to: "/admin/content/questions", label: "Nội dung", icon: FileQuestion, desc: "Câu hỏi, video, khóa học" },
-  { to: "/admin/analytics", label: "Analytics", icon: LineChart, desc: "Báo cáo & biểu đồ" },
+  { to: "/admin/analytics", label: "Phân tích", icon: LineChart, desc: "Báo cáo và biểu đồ" },
   { to: "/admin/settings", label: "Cài đặt HT", icon: Settings, desc: "Giá, fee, API, email" },
   { to: "/admin/support", label: "Hỗ trợ", icon: MessageSquare, desc: "Ticket, khiếu nại, review" },
 ];
@@ -58,13 +58,13 @@ export function AdminDashboard() {
           color="#a78bfa" 
         />
         <StatCard 
-          label="Tổng Mentor" 
+          label="Tổng cố vấn" 
           value={loading ? "..." : stats?.mentors || 0} 
           icon={GraduationCap} 
           color="#c4ff47" 
         />
         <StatCard 
-          label="Lượt Booking" 
+          label="Lượt lịch hẹn" 
           value={loading ? "..." : stats?.bookings || 0} 
           icon={Activity} 
           color="#fb923c" 

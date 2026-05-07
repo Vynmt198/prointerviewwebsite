@@ -12,6 +12,7 @@
     "start": "node src/server.js",
     "seed": "node src/scripts/seedUsers.js",
     "seed:users": "node src/scripts/seedUsers.js",
+    "seed:ui-mock": "node src/scripts/seedUiMockData.js",
     "db:prune-fake-mentors": "node src/scripts/pruneFakeMentors.js",
     "seed:all": "node src/scripts/seedAll.js",
     "sync:mentor-profiles": "node src/scripts/syncMentorProfiles.js"
