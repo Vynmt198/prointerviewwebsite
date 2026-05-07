@@ -32,15 +32,56 @@ export const AdminController = {
     try {
       const { id } = req.params;
       const { isActive } = req.body;
-      
-      const mentor = await Mentor.findByIdAndUpdate(
-        id, 
-        { isActive }, 
-        { new: true }
-      );
-      
+      if (typeof isActive !== "boolean") {
+        return res.status(400).json({ success: false, error: "isActive phải là boolean." });
+      }
+
+      const update = isActive
+        ? {
+            isActive: true,
+            isVerified: true,
+            verifiedAt: new Date(),
+            "adminReview.status": "approved",
+            "adminReview.reason": "",
+            "adminReview.reviewedAt": new Date(),
+            "adminReview.reviewedBy": req.userId || null,
+          }
+        : { isActive: false };
+
+      const mentor = await Mentor.findByIdAndUpdate(id, update, { new: true });
+
       if (!mentor) return res.status(404).json({ success: false, error: "Không tìm thấy mentor" });
-      
+
+      res.json({ success: true, mentor });
+    } catch (error) {
+      res.status(500).json({ success: false, error: error.message });
+    }
+  },
+
+  rejectMentorApplication: async (req, res) => {
+    try {
+      const { id } = req.params;
+      const reason = String(req.body?.reason || "").trim();
+      if (!reason) {
+        return res.status(400).json({ success: false, error: "Vui lòng nhập lý do từ chối hồ sơ." });
+      }
+
+      const mentor = await Mentor.findByIdAndUpdate(
+        id,
+        {
+          isActive: false,
+          isVerified: false,
+          verifiedAt: null,
+          "adminReview.status": "rejected",
+          "adminReview.reason": reason,
+          "adminReview.reviewedAt": new Date(),
+          "adminReview.reviewedBy": req.userId || null,
+        },
+        { new: true },
+      );
+
+      if (!mentor) return res.status(404).json({ success: false, error: "Không tìm thấy cố vấn." });
+
       res.json({ success: true, mentor });
     } catch (error) {
       res.status(500).json({ success: false, error: error.message });
@@ -87,6 +128,38 @@ export const AdminController = {
         .populate("userId", "name email")
         .sort({ createdAt: -1 });
       res.json({ success: true, bookings });
+    } catch (error) {
+      res.status(500).json({ success: false, error: error.message });
+    }
+  },
+
+  updateBookingStatus: async (req, res) => {
+    try {
+      const { id } = req.params;
+      const nextStatus = String(req.body?.status || "").trim();
+      const reason = String(req.body?.reason || "").trim();
+      const ALLOWED = new Set(["pending", "confirmed", "in_progress", "completed", "cancelled", "no_show"]);
+
+      if (!ALLOWED.has(nextStatus)) {
+        return res.status(400).json({ success: false, error: "Trạng thái booking không hợp lệ." });
+      }
+
+      const booking = await Booking.findById(id);
+      if (!booking) return res.status(404).json({ success: false, error: "Không tìm thấy lịch hẹn." });
+
+      booking.status = nextStatus;
+
+      if (nextStatus === "completed") {
+        booking.completedAt = new Date();
+      }
+      if (nextStatus === "cancelled") {
+        booking.cancelledAt = new Date();
+        booking.cancelledBy = "system";
+        booking.cancelReason = reason || booking.cancelReason || "Admin cập nhật trạng thái.";
+      }
+
+      await booking.save();
+      res.json({ success: true, booking });
     } catch (error) {
       res.status(500).json({ success: false, error: error.message });
     }

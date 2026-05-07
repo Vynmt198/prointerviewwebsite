@@ -5,9 +5,21 @@ const jsonHeaders = {
   "Content-Type": "application/json",
 };
 
+const ERROR_MESSAGES = {
+  UNAUTHENTICATED: "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.",
+  NETWORK: "Không thể kết nối máy chủ. Vui lòng thử lại.",
+};
+
+function normalizeApiError(body, status) {
+  const raw = String(body?.error || "").trim();
+  if (raw) return raw;
+  if (status === 401 || status === 403) return ERROR_MESSAGES.UNAUTHENTICATED;
+  return `Yêu cầu thất bại (mã ${status}). Vui lòng thử lại.`;
+}
+
 function authedFetch(path, options = {}) {
   if (!hasAuthCredentials()) {
-    return Promise.resolve({ success: false, error: "Chưa đăng nhập." });
+    return Promise.resolve({ success: false, error: ERROR_MESSAGES.UNAUTHENTICATED });
   }
   return authFetch(path, {
     ...options,
@@ -15,10 +27,10 @@ function authedFetch(path, options = {}) {
   })
     .then(async (res) => {
       const body = await res.json().catch(() => ({}));
-      if (!res.ok) return { success: false, error: body.error || `Lỗi ${res.status}` };
+      if (!res.ok) return { success: false, error: normalizeApiError(body, res.status) };
       return { success: true, ...body };
     })
-    .catch(() => ({ success: false, error: "Không kết nối được backend." }));
+    .catch(() => ({ success: false, error: ERROR_MESSAGES.NETWORK }));
 }
 
 export const adminApi = {
@@ -29,6 +41,11 @@ export const adminApi = {
       method: "PATCH",
       body: JSON.stringify({ isActive }),
     }),
+  rejectMentorApplication: (id, reason) =>
+    authedFetch(`/api/admin/mentors/${id}/reject`, {
+      method: "PATCH",
+      body: JSON.stringify({ reason }),
+    }),
   getUsers: () => authedFetch("/api/admin/users"),
   updateUserStatus: (id, isActive) =>
     authedFetch(`/api/admin/users/${id}/status`, {
@@ -36,6 +53,11 @@ export const adminApi = {
       body: JSON.stringify({ isActive }),
     }),
   getBookings: () => authedFetch("/api/admin/bookings"),
+  updateBookingStatus: (id, status, reason = "") =>
+    authedFetch(`/api/admin/bookings/${id}/status`, {
+      method: "PATCH",
+      body: JSON.stringify({ status, reason }),
+    }),
   getPayouts: () => authedFetch("/api/admin/payouts"),
   approvePayout: (id, note = "") =>
     authedFetch(`/api/admin/payouts/${id}/approve`, {

@@ -52,6 +52,7 @@ import {
    publishCourse,
    updateCourseDraft,
 } from "../../utils/courseApi";
+import { fetchMyMentorProfile } from "../../utils/mentorApi";
 import { MentorPageShell } from "../../components/mentor/MentorPageShell";
 import { toast } from "sonner";
 
@@ -488,7 +489,7 @@ function mapTopicToCategory(topics = []) {
    return "career-development";
 }
 
-function CreateCourseForm({ navigate }) {
+function CreateCourseForm({ navigate, mentorRejectReason = "" }) {
    const [step, setStep] = useState(1);
    const [form, setForm] = useState({
       title: "",
@@ -621,6 +622,19 @@ function CreateCourseForm({ navigate }) {
    return (
       <MentorPageShell bottomPad="pb-24" extraStyles={MENTOR_COURSE_EDIT_EXTRA_CSS}>
          <div className="relative z-10 p-10 max-w-6xl mx-auto pt-16">
+            {mentorRejectReason ? (
+               <div className="mb-8 rounded-2xl border border-orange-400/30 bg-orange-500/10 p-5">
+                  <div className="flex items-start gap-3">
+                     <WarningCircle size={18} className="mt-0.5 shrink-0 text-orange-300" />
+                     <div>
+                        <p className="text-[10px] font-black uppercase tracking-widest text-orange-200">
+                           Góp ý từ lần duyệt trước
+                        </p>
+                        <p className="mt-2 text-sm text-white/90">{mentorRejectReason}</p>
+                     </div>
+                  </div>
+               </div>
+            ) : null}
             <div className="flex items-center justify-between mb-8">
                <button
                   onClick={() => navigate("/mentor/courses")}
@@ -999,6 +1013,17 @@ export function MentorCourseEdit() {
    const [course, setCourse] = useState(null);
    const [loading, setLoading] = useState(!isCreateMode);
    const [editableLessons, setEditableLessons] = useState([]);
+   const [mentorRejectReason, setMentorRejectReason] = useState("");
+
+   useEffect(() => {
+      fetchMyMentorProfile().then((res) => {
+         if (!res?.success || !res?.mentor) return;
+         const review = res.mentor.adminReview || {};
+         if (review.status === "rejected" && String(review.reason || "").trim()) {
+            setMentorRejectReason(String(review.reason || "").trim());
+         }
+      });
+   }, []);
 
    useEffect(() => {
       if (isCreateMode) return;
@@ -1037,7 +1062,7 @@ export function MentorCourseEdit() {
    }, [id, isCreateMode]);
 
    if (isCreateMode) {
-      return <CreateCourseForm navigate={navigate} />;
+      return <CreateCourseForm navigate={navigate} mentorRejectReason={mentorRejectReason} />;
    }
    const lessons = editableLessons.length ? editableLessons : course?.lessons || [];
    const lessonStats = generateLessonStats(lessons.length);
@@ -1073,6 +1098,19 @@ export function MentorCourseEdit() {
    return (
       <MentorPageShell bottomPad="pb-40" extraStyles={MENTOR_COURSE_EDIT_EXTRA_CSS}>
          <div className="relative z-10 p-10 max-w-7xl mx-auto pt-20">
+            {mentorRejectReason ? (
+               <div className="mb-8 rounded-2xl border border-orange-400/30 bg-orange-500/10 p-5">
+                  <div className="flex items-start gap-3">
+                     <WarningCircle size={18} className="mt-0.5 shrink-0 text-orange-300" />
+                     <div>
+                        <p className="text-[10px] font-black uppercase tracking-widest text-orange-200">
+                           Lý do từ chối gần nhất từ admin
+                        </p>
+                        <p className="mt-2 text-sm text-white/90">{mentorRejectReason}</p>
+                     </div>
+                  </div>
+               </div>
+            ) : null}
             {/* Navigation Hero */}
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-10 mb-20">
                <div className="flex items-center gap-10">

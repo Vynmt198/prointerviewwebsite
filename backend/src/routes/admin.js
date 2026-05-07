@@ -11,11 +11,13 @@ adminRouter.use(authJwt, requireAdmin);
 adminRouter.get("/stats", AdminController.getStats);
 adminRouter.get("/mentors", AdminController.getAllMentors);
 adminRouter.patch("/mentors/:id/status", AdminController.toggleMentorStatus);
+adminRouter.patch("/mentors/:id/reject", AdminController.rejectMentorApplication);
 
 adminRouter.get("/users", AdminController.getAllUsers);
 adminRouter.patch("/users/:id/status", AdminController.toggleUserStatus);
 
 adminRouter.get("/bookings", AdminController.getAllBookings);
+adminRouter.patch("/bookings/:id/status", AdminController.updateBookingStatus);
 adminRouter.get("/payouts", AdminController.getPayoutRequests);
 adminRouter.patch("/payouts/:id/approve", AdminController.approvePayoutRequest);
 adminRouter.patch("/payouts/:id/reject", AdminController.rejectPayoutRequest);

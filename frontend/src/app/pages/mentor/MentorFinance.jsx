@@ -262,6 +262,24 @@ export function MentorFinance() {
     setActiveTab("withdraw");
     transactionSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
+  const payoutStatusMeta = (status) => {
+    if (status === "completed") {
+      return {
+        text: "Đã duyệt",
+        className: "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20",
+      };
+    }
+    if (status === "failed") {
+      return {
+        text: "Từ chối",
+        className: "bg-red-500/10 text-red-400 border border-red-500/20",
+      };
+    }
+    return {
+      text: "Đang xử lý",
+      className: "bg-orange-400/10 text-orange-400 border border-orange-400/20",
+    };
+  };
 
   return (
     <MentorPageShell bottomPad="pb-32" extraStyles={MENTOR_FINANCE_EXTRA_CSS}>
@@ -389,8 +407,8 @@ export function MentorFinance() {
                          </td>
                          <td className="px-10 py-8">
                             <div className="flex">
-                               <span className={`glass-tag ${tx.status === 'completed' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-orange-400/10 text-orange-400 border border-orange-400/20'}`}>
-                                  {tx.status === 'completed' ? 'Thành công' : 'Đang xử lý'}
+                               <span className={`glass-tag ${payoutStatusMeta(tx.status).className}`}>
+                                  {payoutStatusMeta(tx.status).text}
                                </span>
                             </div>
                          </td>
@@ -483,13 +501,9 @@ export function MentorFinance() {
               <div className="flex items-start justify-between mb-6">
                 <h3 className="text-2xl font-black text-white tracking-tighter">Chi tiết giao dịch</h3>
                 <span
-                  className={`glass-tag ${
-                    selectedTx.status === "completed"
-                      ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
-                      : "bg-orange-400/10 text-orange-400 border border-orange-400/20"
-                  }`}
+                  className={`glass-tag ${payoutStatusMeta(selectedTx.status).className}`}
                 >
-                  {selectedTx.status === "completed" ? "Thành công" : "Đang xử lý"}
+                  {payoutStatusMeta(selectedTx.status).text}
                 </span>
               </div>
 
@@ -510,6 +524,26 @@ export function MentorFinance() {
                 <p className="text-zinc-300"><span className="text-zinc-500">Loại:</span> {selectedTx.type === "income" ? "Thu nhập" : "Rút tiền"}</p>
                 <p className="text-zinc-300"><span className="text-zinc-500">Mô tả:</span> {selectedTx.description}</p>
                 <p className="text-zinc-300"><span className="text-zinc-500">Thời gian:</span> {new Date(selectedTx.date).toLocaleString("vi-VN")}</p>
+                {selectedTx.reviewedAt ? (
+                  <p className="text-zinc-300">
+                    <span className="text-zinc-500">Thời gian xử lý:</span> {new Date(selectedTx.reviewedAt).toLocaleString("vi-VN")}
+                  </p>
+                ) : null}
+                {selectedTx.providerRef ? (
+                  <p className="text-zinc-300"><span className="text-zinc-500">Mã tham chiếu:</span> {selectedTx.providerRef}</p>
+                ) : null}
+                {selectedTx.rejectReason ? (
+                  <div className="rounded-xl border border-red-500/25 bg-red-500/10 p-3">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-red-300">Lý do từ chối</p>
+                    <p className="mt-1 text-sm text-red-100">{selectedTx.rejectReason}</p>
+                  </div>
+                ) : null}
+                {selectedTx.note ? (
+                  <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Ghi chú xử lý</p>
+                    <p className="mt-1 text-sm text-zinc-200">{selectedTx.note}</p>
+                  </div>
+                ) : null}
               </div>
               <button
                 onClick={() => setSelectedTx(null)}

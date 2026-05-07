@@ -1,30 +1,26 @@
 import { useState, useEffect } from "react";
-import { 
-  Users, 
-  Search, 
-  CheckCircle, 
-  XCircle, 
-  Eye, 
-  ShieldCheck,
-  FileText,
-  Briefcase
-} from "lucide-react";
+import { CheckCircle, XCircle, FileText, Briefcase } from "lucide-react";
 import { adminApi } from "../../utils/adminApi";
 import { toast } from "sonner";
 
 export function AdminMentorsPending() {
   const [mentors, setMentors] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [rejectingMentor, setRejectingMentor] = useState(null);
+  const [rejectReason, setRejectReason] = useState("");
+  const [submittingReject, setSubmittingReject] = useState(false);
 
   const loadPendingMentors = async () => {
     setLoading(true);
     const res = await adminApi.getMentors();
     if (res.success) {
-      // Chỉ lấy những mentor chưa được active
-      const pending = res.mentors.filter(m => !m.isActive);
+      // Chỉ lấy cố vấn chờ duyệt, loại trừ hồ sơ đã bị từ chối trước đó.
+      const pending = res.mentors.filter(
+        (m) => !m.isActive && !m.isVerified && m?.adminReview?.status !== "rejected"
+      );
       setMentors(pending);
     } else {
-      toast.error(res.error);
+      toast.error(res.error || "Không thể tải danh sách hồ sơ chờ duyệt.");
     }
     setLoading(false);
   };
@@ -36,17 +32,51 @@ export function AdminMentorsPending() {
   const handleApprove = async (id) => {
     const res = await adminApi.updateMentorStatus(id, true);
     if (res.success) {
-      toast.success("Đã duyệt hồ sơ mentor thành công!");
+      toast.success("Đã duyệt hồ sơ cố vấn thành công!");
       setMentors(prev => prev.filter(m => m._id !== id));
     } else {
-      toast.error(res.error);
+      toast.error(res.error || "Không thể duyệt hồ sơ cố vấn.");
+    }
+  };
+
+  const openRejectModal = (mentor) => {
+    setRejectingMentor(mentor);
+    setRejectReason("");
+  };
+
+  const closeRejectModal = () => {
+    if (submittingReject) return;
+    setRejectingMentor(null);
+    setRejectReason("");
+  };
+
+  const handleReject = async () => {
+    const mentorId = rejectingMentor?._id;
+    if (!mentorId) return;
+
+    const reason = rejectReason.trim();
+    if (!reason) {
+      toast.error("Vui lòng nhập lý do từ chối hồ sơ.");
+      return;
+    }
+
+    setSubmittingReject(true);
+    const res = await adminApi.rejectMentorApplication(mentorId, reason);
+    setSubmittingReject(false);
+
+    if (res.success) {
+      toast.success("Đã từ chối hồ sơ cố vấn.");
+      setMentors((prev) => prev.filter((m) => m._id !== mentorId));
+      closeRejectModal();
+    } else {
+      toast.error(res.error || "Không thể từ chối hồ sơ cố vấn.");
     }
   };
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
       <div>
-        <h2 className="text-3xl font-black text-white tracking-tighter uppercase mb-2">Duyệt đăng ký <span className="text-primary-fixed">Mentor</span></h2>
+        <h2 className="text-3xl font-black text-white tracking-tighter uppercase mb-2">Duyệt đăng ký <span className="text-primary-fixed">Cố vấn</span></h2>
         <p className="text-zinc-500 text-sm font-medium">Danh sách các chuyên gia đang chờ hệ thống phê duyệt hồ sơ.</p>
       </div>
 
@@ -95,7 +125,10 @@ export function AdminMentorsPending() {
                     </td>
                     <td className="px-8 py-6 text-right">
                       <div className="flex items-center justify-end gap-3">
-                        <button className="p-2 rounded-xl bg-red-500/5 text-red-500/40 hover:bg-red-500 hover:text-white transition-all border border-red-500/10">
+                        <button
+                          onClick={() => openRejectModal(mentor)}
+                          className="p-2 rounded-xl bg-red-500/5 text-red-500/40 hover:bg-red-500 hover:text-white transition-all border border-red-500/10"
+                        >
                           <XCircle size={18} />
                         </button>
                         <button 
@@ -113,6 +146,50 @@ export function AdminMentorsPending() {
           </table>
         </div>
       </div>
+
+      {rejectingMentor ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+          <div className="w-full max-w-lg rounded-2xl border border-white/10 bg-[#0B0B1F] p-6 shadow-2xl">
+            <h3 className="text-lg font-black text-white">Từ chối hồ sơ cố vấn</h3>
+            <p className="mt-2 text-sm text-zinc-400">
+              Bạn đang từ chối hồ sơ của <span className="font-semibold text-white">{rejectingMentor.userId?.name || "cố vấn"}</span>.
+              Vui lòng nhập lý do để mentor biết và chỉnh sửa hồ sơ.
+            </p>
+
+            <label className="mt-5 block text-[11px] font-black uppercase tracking-widest text-zinc-400">
+              Lý do từ chối
+            </label>
+            <textarea
+              value={rejectReason}
+              onChange={(e) => setRejectReason(e.target.value)}
+              rows={4}
+              maxLength={500}
+              placeholder="Ví dụ: Hồ sơ còn thiếu thông tin kinh nghiệm và minh chứng chuyên môn."
+              className="mt-2 w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white outline-none transition focus:border-primary-fixed"
+            />
+            <p className="mt-1 text-right text-[10px] text-zinc-500">{rejectReason.length}/500</p>
+
+            <div className="mt-5 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={closeRejectModal}
+                disabled={submittingReject}
+                className="rounded-xl border border-white/10 px-4 py-2 text-xs font-black uppercase tracking-wider text-zinc-300 transition hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                Hủy
+              </button>
+              <button
+                type="button"
+                onClick={handleReject}
+                disabled={submittingReject}
+                className="rounded-xl border border-red-500/30 bg-red-500/15 px-4 py-2 text-xs font-black uppercase tracking-wider text-red-300 transition hover:bg-red-500 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {submittingReject ? "Đang xử lý..." : "Xác nhận từ chối"}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

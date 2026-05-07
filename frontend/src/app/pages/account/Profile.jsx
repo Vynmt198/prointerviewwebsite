@@ -24,7 +24,8 @@ import {
   ArrowRight,
   FileText,
   CheckCircle,
-  History
+  History,
+  AlertTriangle
 } from "lucide-react";
 import { getPlans, getUser, updateUser, logout, getInitials } from "../../utils/auth";
 import { applyAsMentor, fetchMyMentorProfile, updateMyMentorProfile } from "../../utils/mentorApi";
@@ -55,6 +56,7 @@ export function Profile() {
   const [mentorProfile, setMentorProfile] = useState(null);
   const [showMentorModal, setShowMentorModal] = useState(false);
   const [applying, setApplying] = useState(false);
+  const [resubmittingMentor, setResubmittingMentor] = useState(false);
   const [mentorForm, setMentorForm] = useState({
     title: "",
     company: "",
@@ -72,6 +74,7 @@ export function Profile() {
 
   const initials = getInitials(form.name || "U");
   const isMentor = user?.role === "mentor";
+  const mentorReviewStatus = mentorProfile?.adminReview?.status || (mentorProfile?.isVerified ? "approved" : "pending");
 
   const handleSave = async () => {
     const userRes = await updateUser({
@@ -141,6 +144,56 @@ export function Profile() {
   const handleLogout = async () => {
     await logout();
     navigate("/");
+  };
+
+  const handleResubmitMentorProfile = async () => {
+    if (!mentorForm.title || !mentorForm.bio || !mentorForm.careerHistory) {
+      alert("Vui lòng điền đủ Chức danh, Tiểu sử và Lịch sử làm việc trước khi gửi duyệt lại.");
+      return;
+    }
+    setResubmittingMentor(true);
+    const payload = {
+      ...mentorForm,
+      tags: mentorForm.skills
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean),
+      companies: mentorForm.careerHistory
+        .split(",")
+        .map((c) => c.trim())
+        .filter(Boolean),
+    };
+    const res = await applyAsMentor(payload);
+    setResubmittingMentor(false);
+    if (!res?.success) {
+      alert(res?.error || "Không thể gửi duyệt lại hồ sơ mentor.");
+      return;
+    }
+    if (res.mentor) {
+      setMentorProfile({
+        ...res.mentor,
+        adminReview: {
+          ...(res.mentor.adminReview || {}),
+          status: "pending",
+          reason: "",
+        },
+      });
+    } else {
+      setMentorProfile((prev) =>
+        prev
+          ? {
+              ...prev,
+              adminReview: {
+                ...(prev.adminReview || {}),
+                status: "pending",
+                reason: "",
+              },
+            }
+          : prev,
+      );
+    }
+    setSaveMsg("mentor_resubmitted");
+    setTimeout(() => setSaveMsg(null), 4000);
   };
 
   const STATS = [
@@ -354,6 +407,15 @@ export function Profile() {
             </div>
           </div>
         )}
+        {saveMsg === "mentor_resubmitted" && (
+          <div className="fixed bottom-10 right-10 z-50 flex items-center gap-4 bg-amber-500 text-slate-900 px-8 py-5 rounded-2xl shadow-2xl border border-amber-300/70 font-black text-xs uppercase tracking-widest animate-in fade-in slide-in-from-bottom-5 max-w-md">
+            <div className="bg-slate-900 text-white rounded-full p-1"><Check size={14} /></div>
+            <div>
+              <p>Đã gửi duyệt lại hồ sơ mentor!</p>
+              <p className="text-[9px] text-slate-800 mt-1 lowercase first-letter:uppercase font-semibold">Admin sẽ xem xét lại hồ sơ của bạn trong thời gian sớm nhất.</p>
+            </div>
+          </div>
+        )}
 
         <div className="grid lg:grid-cols-12 gap-10">
           <div className="lg:col-span-4 space-y-10">
@@ -435,7 +497,47 @@ export function Profile() {
                   <h2 className="font-headline flex items-center gap-3 text-xl font-black tracking-tight text-slate-900 sm:text-2xl">
                     <Briefcase size={20} className="text-primary-fixed" strokeWidth={2} /> Hồ sơ mentor
                   </h2>
+                  {mentorReviewStatus === "pending" ? (
+                    <span className="rounded-full border border-amber-300 bg-amber-100 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-amber-700">
+                      Đang chờ duyệt
+                    </span>
+                  ) : mentorReviewStatus === "approved" ? (
+                    <span className="rounded-full border border-emerald-300 bg-emerald-100 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-emerald-700">
+                      Đã duyệt
+                    </span>
+                  ) : mentorReviewStatus === "rejected" ? (
+                    <span className="rounded-full border border-red-300 bg-red-100 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-red-700">
+                      Đã từ chối
+                    </span>
+                  ) : null}
                 </div>
+                {mentorProfile?.adminReview?.status === "rejected" && mentorProfile?.adminReview?.reason ? (
+                  <div className="mb-8 rounded-2xl border border-amber-200 bg-amber-50 p-5">
+                    <div className="flex items-start gap-3">
+                      <AlertTriangle size={18} className="mt-0.5 shrink-0 text-amber-600" />
+                      <div>
+                        <p className="text-xs font-black uppercase tracking-widest text-amber-700">
+                          Hồ sơ từng bị từ chối
+                        </p>
+                        <p className="mt-2 text-sm font-semibold text-slate-800">Lý do gần nhất từ admin:</p>
+                        <p className="mt-1 text-sm leading-relaxed text-slate-700">{mentorProfile.adminReview.reason}</p>
+                        <p className="mt-2 text-[11px] text-slate-500">
+                          Hãy cập nhật hồ sơ theo góp ý rồi lưu lại để gửi duyệt lại.
+                        </p>
+                        <div className="mt-4">
+                          <button
+                            type="button"
+                            onClick={handleResubmitMentorProfile}
+                            disabled={resubmittingMentor}
+                            className="rounded-xl bg-amber-500 px-4 py-2 text-[10px] font-black uppercase tracking-widest text-slate-900 transition hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-60"
+                          >
+                            {resubmittingMentor ? "Đang gửi duyệt lại..." : "Đánh dấu đã chỉnh sửa & gửi duyệt lại hồ sơ mentor"}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ) : null}
                 <div className="grid md:grid-cols-2 gap-8">
                   {[
                     { label: "Chức danh mentor", key: "title" },

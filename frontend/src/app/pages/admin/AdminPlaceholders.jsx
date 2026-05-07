@@ -10,6 +10,18 @@ function vnd(amount) {
   return `${Number(amount || 0).toLocaleString("vi-VN")} đ`;
 }
 
+function statusLabel(status) {
+  const key = String(status || "").toLowerCase();
+  if (key === "pending") return "Chờ duyệt";
+  if (key === "confirmed") return "Đã xác nhận";
+  if (key === "completed") return "Hoàn thành";
+  if (key === "approved" || key === "paid") return "Đã duyệt";
+  if (key === "cancelled") return "Đã hủy";
+  if (key === "rejected") return "Đã từ chối";
+  if (key === "failed") return "Thất bại";
+  return key || "Không xác định";
+}
+
 export function AdminUsers() {
   return (
     <AdminPanel
@@ -17,7 +29,7 @@ export function AdminUsers() {
       description="Bảng users: email, tên, ngày đăng ký, gói, trạng thái — lọc theo gói / ngày / trạng thái, tìm theo email hoặc tên."
       bullets={[
         "Pagination server-side",
-        "Chi tiết user: profile, lịch sử gói, AI interview & CV usage, booking mentor, biểu đồ hoạt động",
+        "Chi tiết user: hồ sơ, lịch sử gói, sử dụng AI/CV, lịch hẹn cố vấn, biểu đồ hoạt động",
         "Actions: khóa/mở khóa, reset password, đổi gói thủ công, activity logs",
       ]}
     />
@@ -29,7 +41,7 @@ export function AdminUserDetail() {
   return (
     <AdminPanel
       title={`Chi tiết user · ${id ?? "—"}`}
-      description="Thông tin cá nhân, lịch sử nâng cấp gói, usage AI/CV, booking mentor, usage stats."
+      description="Thông tin cá nhân, lịch sử nâng cấp gói, sử dụng AI/CV, lịch hẹn cố vấn, thống kê mức sử dụng."
       bullets={["Khóa / mở khóa", "Reset mật khẩu", "Manual upgrade/downgrade", "Xem activity logs"]}
     >
       <Link to="/admin/users" className="text-sm font-semibold text-[#c4ff47] hover:underline">
@@ -42,12 +54,12 @@ export function AdminUserDetail() {
 export function AdminMentors() {
   return (
     <AdminPanel
-      title="Quản lý mentor"
+      title="Quản lý cố vấn"
       description="Danh sách: tên, chuyên môn, giá giờ, rating, tổng buổi, thu nhập — lọc & tìm kiếm."
       bullets={[
         "Duyệt đơn pending tại /admin/mentors/pending",
         "Chi tiết: profile, buổi đã dạy, thu nhập, reviews, lịch, biểu đồ",
-        "Khóa mentor, commission rate, lịch sử rút tiền",
+        "Khóa cố vấn, tỉ lệ hoa hồng, lịch sử rút tiền",
       ]}
     />
   );
@@ -56,9 +68,9 @@ export function AdminMentors() {
 export function AdminMentorDetail() {
   const { id } = useParams();
   return (
-    <AdminPanel title={`Mentor · ${id ?? "—"}`} description="Hồ sơ đầy đủ và thống kê hiệu suất.">
+    <AdminPanel title={`Cố vấn · ${id ?? "—"}`} description="Hồ sơ đầy đủ và thống kê hiệu suất.">
       <Link to="/admin/mentors" className="text-sm font-semibold text-[#c4ff47] hover:underline">
-        ← Danh sách mentor
+        ← Danh sách cố vấn
       </Link>
     </AdminPanel>
   );
@@ -67,7 +79,7 @@ export function AdminMentorDetail() {
 export function AdminMentorsPending() {
   return (
     <AdminPanel
-      title="Duyệt đăng ký mentor"
+      title="Duyệt đăng ký cố vấn"
       description="Đơn chờ duyệt — Approve / Reject kèm lý do, xem chứng chỉ & kinh nghiệm."
     />
   );
@@ -101,7 +113,7 @@ export function AdminFinance() {
   return (
     <AdminPanel
       title="Tài chính — Tổng quan"
-      description="Doanh thu tháng, tổng doanh thu, platform fee, pending payouts mentor."
+      description="Doanh thu tháng, tổng doanh thu, phí nền tảng, rút tiền cố vấn đang chờ duyệt."
     >
       {loading ? (
         <p className="text-sm text-zinc-400">Đang tải dữ liệu tài chính...</p>
@@ -146,7 +158,7 @@ export function AdminTransactions() {
             amount: Number(b.price || 0),
             status: b.status || b.paymentStatus || "unknown",
             date: b.createdAt || b.updatedAt || new Date().toISOString(),
-            label: `${b.userId?.name || "User"} → ${b.mentorId?.name || "Mentor"}`,
+            label: `${b.userId?.name || "Người dùng"} → ${b.mentorId?.name || "Cố vấn"}`,
           }))
         : [];
       const payoutRows = payoutRes.success
@@ -156,7 +168,7 @@ export function AdminTransactions() {
             amount: Number(p.amount || 0),
             status: p.status || "pending",
             date: p.requestedAt || p.createdAt || new Date().toISOString(),
-            label: p.mentorId?.name || p.mentorId?.userId?.name || "Mentor",
+            label: p.mentorId?.name || p.mentorId?.userId?.name || "Cố vấn",
           }))
         : [];
       setRows(
@@ -195,7 +207,7 @@ export function AdminTransactions() {
   return (
     <AdminPanel
       title="Giao dịch"
-      description="Subscription Pro/Elite, booking payments, mentor payouts, refunds — lọc theo loại, ngày, trạng thái."
+      description="Gói Pro/Elite, thanh toán lịch hẹn, rút tiền cố vấn, hoàn tiền — lọc theo loại, ngày, trạng thái."
     >
       {loading ? (
         <p className="text-sm text-zinc-400">Đang tải giao dịch...</p>
@@ -207,11 +219,11 @@ export function AdminTransactions() {
               <p className="mt-1 text-2xl font-black text-white">{vnd(totalAmount)}</p>
             </div>
             <div className="rounded-2xl border border-violet-400/25 bg-violet-500/10 p-4">
-              <p className="text-xs text-violet-200/80">Booking</p>
+              <p className="text-xs text-violet-200/80">Lịch hẹn</p>
               <p className="mt-1 text-2xl font-black text-violet-200">{bookingCount}</p>
             </div>
             <div className="rounded-2xl border border-cyan-400/25 bg-cyan-500/10 p-4">
-              <p className="text-xs text-cyan-200/80">Payout</p>
+              <p className="text-xs text-cyan-200/80">Rút tiền</p>
               <p className="mt-1 text-2xl font-black text-cyan-200">{payoutCount}</p>
             </div>
           </div>
@@ -219,8 +231,8 @@ export function AdminTransactions() {
           <div className="flex flex-wrap gap-2">
             {[
               { id: "all", label: "Tất cả" },
-              { id: "booking", label: "Booking" },
-              { id: "payout", label: "Payout" },
+              { id: "booking", label: "Lịch hẹn" },
+              { id: "payout", label: "Rút tiền" },
             ].map((item) => (
               <button
                 key={item.id}
@@ -236,12 +248,12 @@ export function AdminTransactions() {
             ))}
             {[
               { id: "all", label: "Mọi trạng thái" },
-              { id: "pending", label: "Pending" },
-              { id: "confirmed", label: "Confirmed" },
-              { id: "completed", label: "Completed" },
-              { id: "approved", label: "Approved" },
-              { id: "cancelled", label: "Cancelled" },
-              { id: "rejected", label: "Rejected" },
+              { id: "pending", label: "Chờ duyệt" },
+              { id: "confirmed", label: "Đã xác nhận" },
+              { id: "completed", label: "Hoàn thành" },
+              { id: "approved", label: "Đã duyệt" },
+              { id: "cancelled", label: "Đã hủy" },
+              { id: "rejected", label: "Đã từ chối" },
             ].map((item) => (
               <button
                 key={item.id}
@@ -271,11 +283,11 @@ export function AdminTransactions() {
               <tbody>
                 {filteredRows.map((r) => (
                   <tr key={`${r.type}-${r.id}`} className="border-t border-white/5">
-                    <td className="px-4 py-3 text-white font-semibold">{r.type === "booking" ? "Booking" : "Payout"}</td>
+                    <td className="px-4 py-3 text-white font-semibold">{r.type === "booking" ? "Lịch hẹn" : "Rút tiền"}</td>
                     <td className="px-4 py-3 text-zinc-300">{r.label}</td>
                     <td className="px-4 py-3">
                       <span className={`inline-flex px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${statusBadge(r.status)}`}>
-                        {r.status}
+                        {statusLabel(r.status)}
                       </span>
                     </td>
                     <td className="px-4 py-3 text-white font-bold">{vnd(r.amount)}</td>
@@ -299,11 +311,24 @@ export function AdminTransactions() {
 }
 
 export function AdminPayouts() {
+  const REJECT_REASON_OPTIONS = [
+    { id: "account_mismatch", label: "Thông tin tài khoản nhận tiền không khớp hồ sơ" },
+    { id: "account_invalid", label: "Số tài khoản/ngân hàng không hợp lệ" },
+    { id: "risk_check", label: "Yêu cầu cần kiểm tra rủi ro bổ sung" },
+    { id: "duplicate_request", label: "Yêu cầu trùng lặp với lệnh trước đó" },
+    { id: "policy_violation", label: "Yêu cầu chưa đáp ứng chính sách thanh toán" },
+    { id: "other", label: "Lý do khác" },
+  ];
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState("");
   const [rows, setRows] = useState([]);
   const [filter, setFilter] = useState("all");
-  const [rejectModal, setRejectModal] = useState({ open: false, payoutId: "", reason: "" });
+  const [rejectModal, setRejectModal] = useState({
+    open: false,
+    payoutId: "",
+    reasonKey: "account_invalid",
+    note: "",
+  });
 
   const loadRows = async () => {
     setLoading(true);
@@ -327,17 +352,21 @@ export function AdminPayouts() {
   };
 
   const handleReject = async (id) => {
-    setRejectModal({ open: true, payoutId: id, reason: "" });
+    setRejectModal({ open: true, payoutId: id, reasonKey: "account_invalid", note: "" });
   };
 
   const confirmReject = async () => {
     if (!rejectModal.payoutId) return;
+    const selected = REJECT_REASON_OPTIONS.find((item) => item.id === rejectModal.reasonKey);
+    const standardizedReason = selected?.label || "Lý do khác";
+    const note = String(rejectModal.note || "").trim();
+    const mergedReason = note ? `${standardizedReason}. Ghi chú: ${note}` : standardizedReason;
     setBusyId(rejectModal.payoutId);
-    const res = await adminApi.rejectPayout(rejectModal.payoutId, rejectModal.reason || "");
+    const res = await adminApi.rejectPayout(rejectModal.payoutId, mergedReason);
     setBusyId("");
     if (!res.success) return toast.error(res.error || "Không từ chối được yêu cầu.");
     toast.success("Đã từ chối yêu cầu rút tiền.");
-    setRejectModal({ open: false, payoutId: "", reason: "" });
+    setRejectModal({ open: false, payoutId: "", reasonKey: "account_invalid", note: "" });
     loadRows();
   };
 
@@ -361,7 +390,7 @@ export function AdminPayouts() {
 
   return (
     <AdminPanel
-      title="Rút tiền mentor"
+      title="Rút tiền cố vấn"
       description="Danh sách yêu cầu rút tiền — Approve / Reject payout, lịch sử đã thanh toán."
     >
       {loading ? (
@@ -386,9 +415,9 @@ export function AdminPayouts() {
           <div className="flex flex-wrap gap-2">
             {[
               { id: "all", label: "Tất cả" },
-              { id: "pending", label: "Pending" },
-              { id: "approved", label: "Approved" },
-              { id: "rejected", label: "Rejected" },
+              { id: "pending", label: "Chờ duyệt" },
+              { id: "approved", label: "Đã duyệt" },
+              { id: "rejected", label: "Đã từ chối" },
             ].map((item) => (
               <button
                 key={item.id}
@@ -405,7 +434,7 @@ export function AdminPayouts() {
           </div>
 
           {filteredRows.map((row) => {
-            const mentorName = row?.mentorId?.name || row?.mentorId?.userId?.name || "Mentor";
+            const mentorName = row?.mentorId?.name || row?.mentorId?.userId?.name || "Cố vấn";
             const isPending = row.status === "pending";
             const busy = busyId === row._id;
             return (
@@ -423,7 +452,7 @@ export function AdminPayouts() {
                   <div className="text-right">
                     <p className="text-lg font-black text-white">{vnd(row.amount)}</p>
                     <span className={`inline-flex mt-1 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${statusBadge(row.status)}`}>
-                      {row.status}
+                      {statusLabel(row.status)}
                     </span>
                   </div>
                 </div>
@@ -463,7 +492,7 @@ export function AdminPayouts() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
-            onClick={() => setRejectModal({ open: false, payoutId: "", reason: "" })}
+            onClick={() => setRejectModal({ open: false, payoutId: "", reasonKey: "account_invalid", note: "" })}
           >
             <motion.div
               initial={{ scale: 0.96, y: 16, opacity: 0 }}
@@ -474,18 +503,35 @@ export function AdminPayouts() {
             >
               <h4 className="text-xl font-black text-white">Từ chối yêu cầu rút tiền</h4>
               <p className="text-sm text-zinc-400 mt-2">
-                Nhập lý do để mentor nắm rõ nguyên nhân (không bắt buộc).
+                Chọn lý do chuẩn hóa và thêm ghi chú tự do (nếu cần) để cố vấn nắm rõ nguyên nhân.
               </p>
+              <label className="mt-4 block text-[10px] font-black uppercase tracking-widest text-zinc-400">
+                Lý do từ chối
+              </label>
+              <select
+                value={rejectModal.reasonKey}
+                onChange={(e) => setRejectModal((prev) => ({ ...prev, reasonKey: e.target.value }))}
+                className="mt-2 w-full rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-sm text-white outline-none focus:border-primary-fixed"
+              >
+                {REJECT_REASON_OPTIONS.map((item) => (
+                  <option key={item.id} value={item.id} className="bg-[#0a0618]">
+                    {item.label}
+                  </option>
+                ))}
+              </select>
+              <label className="mt-4 block text-[10px] font-black uppercase tracking-widest text-zinc-400">
+                Ghi chú bổ sung (không bắt buộc)
+              </label>
               <textarea
-                value={rejectModal.reason}
-                onChange={(e) => setRejectModal((prev) => ({ ...prev, reason: e.target.value }))}
+                value={rejectModal.note}
+                onChange={(e) => setRejectModal((prev) => ({ ...prev, note: e.target.value }))}
                 className="mt-4 w-full min-h-28 rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-sm text-white outline-none focus:border-primary-fixed"
-                placeholder="Ví dụ: Thông tin tài khoản chưa xác minh..."
+                placeholder="Ví dụ: Vui lòng cập nhật lại STK đúng với tài khoản ngân hàng đã xác minh."
               />
               <div className="mt-5 grid grid-cols-2 gap-3">
                 <button
                   type="button"
-                  onClick={() => setRejectModal({ open: false, payoutId: "", reason: "" })}
+                  onClick={() => setRejectModal({ open: false, payoutId: "", reasonKey: "account_invalid", note: "" })}
                   className="rounded-xl border border-white/10 bg-white/5 py-3 text-xs font-black uppercase tracking-wider text-white"
                 >
                   Hủy
@@ -510,9 +556,9 @@ export function AdminPayouts() {
 export function AdminBookings() {
   return (
     <AdminPanel
-      title="Booking & sessions"
-      description="User, mentor, ngày giờ, loại buổi, trạng thái, giá — filter & search."
-      bullets={["Thống kê: booking tháng, tỷ lệ hoàn thành/hủy", "Trends & top mentor theo booking"]}
+      title="Lịch hẹn và phiên làm việc"
+      description="Người dùng, cố vấn, ngày giờ, loại buổi, trạng thái, giá — lọc và tìm kiếm."
+      bullets={["Thống kê: lịch hẹn theo tháng, tỷ lệ hoàn thành/hủy", "Xu hướng và top cố vấn theo lịch hẹn"]}
     />
   );
 }
@@ -520,7 +566,7 @@ export function AdminBookings() {
 export function AdminBookingDetail() {
   const { id } = useParams();
   return (
-    <AdminPanel title={`Booking · ${id ?? "—"}`} description="Chi tiết, review, lịch sử reschedule/cancel.">
+    <AdminPanel title={`Lịch hẹn · ${id ?? "—"}`} description="Chi tiết, review, lịch sử đổi lịch/hủy lịch.">
       <Link to="/admin/bookings" className="text-sm font-semibold text-[#c4ff47] hover:underline">
         ← Danh sách booking
       </Link>
@@ -581,7 +627,7 @@ export function AdminContentCourses() {
   return (
     <AdminPanel
       title="Nội dung — Khóa học"
-      description="Duyệt khóa học mentor gửi lên: approve để xuất bản, reject để trả lại bản nháp."
+      description="Duyệt khóa học cố vấn gửi lên: duyệt để xuất bản, từ chối để trả về bản nháp."
     >
       <div className="space-y-4">
         {loading && <p className="text-sm text-zinc-400">Đang tải danh sách chờ duyệt...</p>}
@@ -589,7 +635,7 @@ export function AdminContentCourses() {
           <p className="text-sm text-zinc-400">Hiện không có khóa học nào đang chờ duyệt.</p>
         )}
         {items.map((course) => {
-          const mentorName = course?.mentorId?.userId?.name || "Mentor";
+          const mentorName = course?.mentorId?.userId?.name || "Cố vấn";
           const topic = Array.isArray(course.topics) && course.topics.length ? course.topics[0] : "Other";
           const totalLessons = Number(course.totalLessons || 0);
           const busy = busyId === course._id;
@@ -602,7 +648,7 @@ export function AdminContentCourses() {
                 <div>
                   <p className="text-lg font-black text-white">{course.title}</p>
                   <p className="mt-1 text-xs text-zinc-400">
-                    Mentor: {mentorName} · Topic: {topic} · Lessons: {totalLessons}
+                    Cố vấn: {mentorName} · Chủ đề: {topic} · Bài học: {totalLessons}
                   </p>
                   <p className="mt-2 text-sm text-zinc-300 line-clamp-2">
                     {course.description || "(Không có mô tả)"}
@@ -639,10 +685,10 @@ export function AdminAnalytics() {
   return (
     <AdminPanel
       title="Thống kê & báo cáo"
-      description="Overview: users, mentors, doanh thu, AI interview runs, CV analyses, bookings hoàn thành."
+      description="Tổng quan: người dùng, cố vấn, doanh thu, lượt phỏng vấn AI, lượt phân tích CV, lịch hẹn hoàn thành."
       bullets={[
         "Biểu đồ: new users, revenue, pie Free/Pro/Elite, AI usage, booking trends",
-        "Top mentor & top users",
+        "Top cố vấn và người dùng nổi bật",
         "Export CSV/PDF",
       ]}
     />
@@ -661,7 +707,7 @@ export function AdminSystemSettings() {
 export function AdminReviews() {
   return (
     <AdminPanel
-      title="Reviews mentor"
+      title="Đánh giá cố vấn"
       description="Danh sách review — ẩn/xóa, reply với tư cách admin."
     />
   );
@@ -671,7 +717,7 @@ export function AdminSupport() {
   return (
     <AdminPanel
       title="Hỗ trợ & khiếu nại"
-      description="Support tickets (user/mentor/bug), disputes booking, refund requests."
+      description="Phiếu hỗ trợ (người dùng/cố vấn/lỗi), tranh chấp lịch hẹn, yêu cầu hoàn tiền."
     />
   );
 }

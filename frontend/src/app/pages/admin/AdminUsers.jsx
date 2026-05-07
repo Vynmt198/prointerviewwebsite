@@ -23,7 +23,7 @@ export function AdminUsers() {
     if (res.success) {
       setUsers(res.users);
     } else {
-      toast.error(res.error);
+      toast.error(res.error || "Không thể tải danh sách người dùng.");
     }
     setLoading(false);
   };
@@ -38,7 +38,7 @@ export function AdminUsers() {
       toast.success(currentStatus ? "Đã khóa người dùng" : "Đã mở khóa người dùng");
       setUsers(prev => prev.map(u => u._id === id ? { ...u, isActive: !currentStatus } : u));
     } else {
-      toast.error(res.error);
+      toast.error(res.error || "Không thể cập nhật trạng thái người dùng.");
     }
   };
 
