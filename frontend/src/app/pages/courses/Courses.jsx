@@ -392,7 +392,7 @@ export function Courses() {
   const [selectedCategory, setSelectedCategory] =
     useState("Tất cả");
   const [selectedLevel, setSelectedLevel] = useState("Tất cả");
-  const [showFilters, setShowFilters] = useState(false);
+  const [showFilters, setShowFilters] = useState(true);
 
   // My Courses state
   const [myCoursesTab, setMyCoursesTab] = useState("Tất cả");
@@ -475,328 +475,345 @@ export function Courses() {
   };
 
   return (
-    <div className="pi-page-dashboard-bg min-h-full w-full font-sans text-white selection:bg-[rgba(196,255,71,0.28)] selection:text-white">
-      <header className="relative border-b border-white/[0.07] pb-12 pt-12 sm:pb-16 sm:pt-14">
-        <div
-          className="pointer-events-none absolute inset-0 opacity-[0.09]"
-          style={{
-            backgroundImage:
-              "linear-gradient(rgba(255,255,255,0.45) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.45) 1px,transparent 1px)",
-            backgroundSize: "32px 32px",
-          }}
-          aria-hidden
-        />
+    <div className="courses-light pi-page-dashboard-bg relative min-h-full w-full overflow-hidden font-sans text-slate-900 selection:bg-[rgba(196,255,71,0.28)] selection:text-slate-900">
+      <div className="pointer-events-none fixed inset-0 z-0">
+        <div className="fixed top-[-22%] left-[-12%] h-[760px] w-[760px] rounded-full bg-[#d4ff00]/48 blur-[135px]" />
+        <div className="fixed bottom-[-22%] right-[-10%] h-[820px] w-[820px] rounded-full bg-[#9447ff]/34 blur-[150px]" />
+      </div>
+      <style>{`
+        .courses-light.pi-page-dashboard-bg {
+          background: linear-gradient(165deg, #f8f4ff 0%, #f5f8ff 45%, #f7f4ff 100%);
+        }
+        .courses-light .glass-card,
+        .courses-light .card-premium {
+          background: linear-gradient(145deg, rgba(255,255,255,0.92) 0%, rgba(246,248,255,0.95) 100%) !important;
+          border-color: rgba(148,71,255,0.16) !important;
+          box-shadow: 0 14px 30px rgba(15,23,42,0.1) !important;
+        }
+        .courses-light .text-white { color: #0f172a !important; }
+        .courses-light .text-zinc-300,
+        .courses-light .text-zinc-200 { color: #334155 !important; }
+        .courses-light .text-white\\/65,
+        .courses-light .text-white\\/60,
+        .courses-light .text-white\\/55,
+        .courses-light .text-white\\/50,
+        .courses-light .text-white\\/45,
+        .courses-light .text-zinc-500,
+        .courses-light .text-zinc-700 { color: #64748b !important; }
+        .courses-light .text-zinc-400 { color: #475569 !important; }
+        .courses-light .border-white\\/12,
+        .courses-light .border-white\\/10,
+        .courses-light .border-white\\/8,
+        .courses-light .border-white\\/5 { border-color: rgba(148,71,255,0.14) !important; }
+        .courses-light header { border-bottom-color: rgba(148,71,255,0.16) !important; }
+        .courses-light header .absolute.inset-0 {
+          opacity: .05 !important;
+          background-image: linear-gradient(rgba(148,71,255,0.16) 1px,transparent 1px),linear-gradient(90deg,rgba(148,71,255,0.16) 1px,transparent 1px) !important;
+        }
+      `}</style>
+      <header className="relative z-10 pb-4 pt-10 sm:pb-4 sm:pt-12">
         <div className="relative z-10 mx-auto max-w-7xl px-6 sm:px-8">
-          <div className="max-w-4xl">
+          <div className="w-full rounded-[28px] border border-violet-200/75 bg-[#f4f2ff]/95 px-6 py-7 shadow-[0_18px_44px_rgba(76,29,149,0.1)] sm:px-8 sm:py-8">
             <div className="mb-4 flex items-center gap-3">
               <GraduationCap className="size-5 text-[#c4ff47]" />
-              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-fuchsia-300/90">Thư viện kiến thức</span>
+              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Thư viện kiến thức</span>
             </div>
-            <h1 className="mb-4 text-3xl font-black leading-[1.05] tracking-tighter text-white md:text-5xl">
+            <h1 className="mb-4 text-3xl font-black leading-[1.05] tracking-tight text-slate-900 md:text-5xl">
               Luyện tập cùng{" "}
-              <span className="bg-gradient-to-r from-[#c4ff47] via-fuchsia-300 to-violet-300 bg-clip-text text-transparent">
+              <span className="text-[#6E35E8]">
                 Chuyên gia.
               </span>
             </h1>
-            <p className="mb-6 max-w-2xl text-sm font-semibold leading-relaxed text-white/65 sm:text-base">
+            <p className="mb-6 max-w-2xl text-sm font-semibold leading-relaxed text-slate-600 sm:text-base">
               Trang bị kiến thức cốt lõi qua các video bài giảng ngắn gọn. Áp dụng ngay vào buổi phỏng vấn 1-1 với Mentor để được đánh giá trực tiếp.
             </p>
-
-            <div className="mb-8 flex w-fit rounded-2xl border border-white/12 bg-white/[0.05] p-1.5 backdrop-blur-xl">
-              <button
-                onClick={() => setSearchParams({ tab: "explore" })}
-                className={`flex items-center gap-2 rounded-xl px-8 py-3 text-sm font-bold transition-all ${
-                  activeTab === "explore"
-                    ? "bg-[#c4ff47] text-[#0a0618] shadow-lg shadow-[#c4ff47]/25"
-                    : "text-white/60 hover:text-white"
-                }`}
-              >
-                <Compass className="size-4.5" />
-                Khám phá
-              </button>
-              <button
-                onClick={() => setSearchParams({ tab: "my-courses" })}
-                className={`flex items-center gap-2 rounded-xl px-8 py-3 text-sm font-bold transition-all ${
-                  activeTab === "my-courses"
-                    ? "bg-[#c4ff47] text-[#0a0618] shadow-lg shadow-[#c4ff47]/25"
-                    : "text-white/60 hover:text-white"
-                }`}
-              >
-                <BookOpen className="size-4.5" />
-                Khóa học của tôi
-              </button>
-            </div>
-
-            {activeTab === "explore" && (
-              <div className="flex flex-col gap-4 md:flex-row">
-                <div className="group relative flex-1">
-                  <Search className="absolute left-5 top-1/2 size-5 -translate-y-1/2 text-white/40 transition-colors group-focus-within:text-[#c4ff47]" />
-                  <input
-                    type="text"
-                    placeholder="Tìm kiếm khóa học theo tên, kỹ năng, tag..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full rounded-2xl border border-white/12 bg-white/[0.06] py-4 pl-14 pr-6 text-sm font-medium text-white backdrop-blur-md placeholder:text-white/45 transition-all focus:outline-none focus:ring-2 focus:ring-[#6E35E8]/40"
-                  />
-                </div>
+          </div>
+          <div
+            className={`mt-4 w-full border border-violet-200/75 bg-[#f4f2ff]/95 px-6 py-5 shadow-[0_16px_36px_rgba(76,29,149,0.09)] sm:px-8 sm:py-6 ${
+              activeTab === "explore" ? "rounded-t-[28px] rounded-b-none border-b-0" : "rounded-[28px]"
+            }`}
+          >
+            <div className="p-0 sm:p-0">
+              <div className="mb-4 flex w-fit rounded-2xl border border-white/12 bg-white/[0.05] p-1.5 backdrop-blur-xl">
                 <button
-                  type="button"
-                  onClick={() => setShowFilters(!showFilters)}
-                  className={`flex items-center gap-3 rounded-2xl border px-8 py-4 text-sm font-bold transition-all ${
-                    showFilters
-                      ? "border-[#c4ff47]/50 bg-[#c4ff47]/10 text-[#d4ff6a]"
-                      : "border-white/12 bg-white/[0.06] text-white hover:border-white/20 hover:bg-white/[0.09]"
+                  onClick={() => setSearchParams({ tab: "explore" })}
+                  className={`flex items-center gap-2 rounded-xl px-8 py-3 text-sm font-bold transition-all ${
+                    activeTab === "explore"
+                      ? "bg-[#c4ff47] text-[#0a0618] shadow-lg shadow-[#c4ff47]/25"
+                      : "text-slate-500 hover:text-slate-800"
                   }`}
                 >
-                  <Filter className="size-5" />
-                  Bộ lọc
+                  <Compass className="size-4.5" />
+                  Khám phá
+                </button>
+                <button
+                  onClick={() => setSearchParams({ tab: "my-courses" })}
+                  className={`flex items-center gap-2 rounded-xl px-8 py-3 text-sm font-bold transition-all ${
+                    activeTab === "my-courses"
+                      ? "bg-[#c4ff47] text-[#0a0618] shadow-lg shadow-[#c4ff47]/25"
+                      : "text-slate-500 hover:text-slate-800"
+                  }`}
+                >
+                  <BookOpen className="size-4.5" />
+                  Khóa học của tôi
                 </button>
               </div>
-            )}
+
+              {activeTab === "explore" && (
+                <div>
+                  <div className="flex flex-col gap-4 md:flex-row">
+                    <div className="group relative flex-1">
+                      <Search className="absolute left-5 top-1/2 size-5 -translate-y-1/2 text-white/40 transition-colors group-focus-within:text-[#c4ff47]" />
+                      <input
+                        type="text"
+                        placeholder="Tìm kiếm khóa học theo tên, kỹ năng, tag..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="w-full rounded-2xl border border-slate-300 bg-white py-4 pl-14 pr-6 text-sm font-medium text-slate-800 backdrop-blur-md placeholder:text-slate-400 transition-all focus:outline-none focus:ring-2 focus:ring-[#6E35E8]/40"
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setShowFilters((prev) => !prev)}
+                      className={`flex w-[170px] items-center justify-center gap-3 rounded-2xl border px-5 py-4 text-sm font-bold transition-all ${
+                        showFilters
+                          ? "border-[#b6e93f] bg-[#d4ff6a]/75 text-[#1f2d00]"
+                          : "border-slate-300 bg-white text-slate-700 hover:border-violet-300 hover:bg-violet-50/40"
+                      }`}
+                    >
+                      <Filter className="size-5" />
+                      {showFilters ? "Ẩn bộ lọc" : "Hiện bộ lọc"}
+                    </button>
+                  </div>
+
+                  {showFilters && (
+                    <div className="mt-4 grid grid-cols-1 gap-6 rounded-2xl border border-violet-200/45 bg-white/82 p-5">
+                      <div>
+                        <label className="mb-4 block text-xs font-black uppercase tracking-widest text-slate-500">Danh mục</label>
+                        <div className="flex flex-wrap gap-3">
+                          {CATEGORIES.map((cat) => (
+                            <button
+                              key={cat}
+                              onClick={() => setSelectedCategory(cat)}
+                              className={`px-6 py-2.5 rounded-xl text-sm font-bold transition-all border ${
+                                selectedCategory === cat
+                                  ? "bg-primary-fixed text-on-primary-fixed border-primary-fixed"
+                                  : "border-white/10 bg-white/[0.05] text-white/55 hover:border-white/25 hover:text-white"
+                              }`}
+                            >
+                              {cat}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                      <div>
+                        <label className="mb-4 block text-xs font-black uppercase tracking-widest text-slate-500">Cấp độ</label>
+                        <div className="flex flex-wrap gap-3">
+                          {LEVELS.map((level) => (
+                            <button
+                              key={level}
+                              onClick={() => setSelectedLevel(level)}
+                              className={`px-6 py-2.5 rounded-xl text-sm font-bold transition-all border ${
+                                selectedLevel === level
+                                  ? "bg-primary-fixed text-on-primary-fixed border-primary-fixed"
+                                  : "border-white/10 bg-white/[0.05] text-white/55 hover:border-white/25 hover:text-white"
+                              }`}
+                            >
+                              {level}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  <p className="mt-4 font-medium text-slate-600">
+                    Hiển thị <span className="font-black text-slate-900">{filteredCourses.length}</span> khóa học
+                    {searchQuery && <span> cho "<span className="text-[#c4ff47]">{searchQuery}</span>"</span>}
+                  </p>
+
+                  <div className="my-4 h-px bg-violet-200/55" />
+
+                  <div className="pb-2 pt-1">
+                    <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+                      {filteredCourses.map((course) => (
+                        <div
+                          key={course.id}
+                          onClick={() => navigate(`/courses/${course.id}`)}
+                          className="group glass-card rounded-2xl overflow-hidden cursor-pointer transition-all duration-500 hover:-translate-y-2 hover:border-secondary/30"
+                        >
+                          <div className="relative h-56 overflow-hidden">
+                            <img
+                              src={course.thumbnail}
+                              alt={course.title}
+                              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                            />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+
+                            <div className="absolute top-4 left-4 flex gap-2">
+                              <span className="bg-secondary/90 backdrop-blur-md text-white px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">
+                                {course.category}
+                              </span>
+                            </div>
+
+                            <div className="absolute top-4 right-4">
+                              <span className="bg-black/40 backdrop-blur-md text-white/90 px-3 py-1 rounded-full text-[10px] font-bold border border-white/10">
+                                {course.level}
+                              </span>
+                            </div>
+
+                            <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-500 scale-90 group-hover:scale-100">
+                              <div className="w-14 h-14 rounded-full bg-primary-fixed/90 flex items-center justify-center shadow-2xl shadow-primary-fixed/30 transform transition-transform border border-white/20">
+                                <Play className="text-on-primary-fixed size-7 translate-x-0.5" />
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="p-7">
+                            <h3 className="text-xl font-bold mb-5 text-white group-hover:text-primary-fixed transition-colors leading-tight line-clamp-2">
+                              {course.title}
+                            </h3>
+
+                            <div className="flex items-center gap-3 mb-6">
+                              <img
+                                src={course.mentorAvatar}
+                                alt={course.mentorName}
+                                className="w-10 h-10 rounded-xl object-cover border border-white/10"
+                              />
+                              <div>
+                                <p className="text-sm font-bold text-white">{course.mentorName}</p>
+                                <p className="text-[10px] uppercase tracking-wider text-white/50">{course.mentorTitle}</p>
+                              </div>
+                            </div>
+
+                            <div className="flex items-center justify-between pt-6 border-t border-white/5">
+                              <div className="flex items-center gap-4">
+                                <div className="flex items-center gap-1.5">
+                                  <Star className="text-primary-fixed size-4.5" />
+                                  <span className="font-bold text-white text-sm">{course.rating}</span>
+                                </div>
+                                <div className="flex items-center gap-1.5 text-zinc-500">
+                                  <Clock className="size-4.5" />
+                                  <span className="text-sm font-medium">{Math.floor(course.duration / 60)}h</span>
+                                </div>
+                              </div>
+                              <div className="text-xl font-black text-primary-fixed">
+                                {formatPrice(course.price)}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {filteredCourses.length === 0 && (
+                      <div className="mt-4 text-center py-24 glass-card rounded-3xl border border-white/5">
+                        <Search className="mb-6 size-16 text-white/25" />
+                        <h3 className="text-2xl font-black text-slate-900 mb-2">Không tìm thấy khóa học</h3>
+                        <p className="mb-10 text-white/55">Thử thay đổi bộ lọc hoặc từ khóa tìm kiếm</p>
+                        <button
+                          onClick={() => {
+                            setSearchQuery("");
+                            setSelectedCategory("Tất cả");
+                            setSelectedLevel("Tất cả");
+                          }}
+                          className="rounded-full bg-violet-600 px-8 py-3 font-bold text-white transition-all hover:scale-105 hover:bg-violet-500"
+                        >
+                          Xóa tất cả bộ lọc
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {activeTab === "my-courses" && (
+                <div>
+                  <div className="mt-2 mb-6 flex flex-col justify-between gap-8 md:flex-row md:items-end">
+                    <div>
+                      <h2 className="mb-4 text-4xl font-black tracking-tight text-slate-900">Lộ trình của bạn</h2>
+                      <p className="max-w-xl text-slate-600">
+                        Theo dõi tiến độ học tập và các chứng chỉ bạn đã đạt được trên hành trình chinh phục sự nghiệp.
+                      </p>
+                    </div>
+
+                    <div className="flex gap-4">
+                      {[
+                        { label: "Hoàn thành", value: totalCompleted, icon: <ShieldCheck className="text-primary-fixed size-5" /> },
+                        { label: "Giờ học", value: `${totalHoursLearned}h`, icon: <Clock className="size-5" /> },
+                      ].map((stat, i) => (
+                        <div key={i} className="glass-card flex items-center gap-4 rounded-2xl border border-white/5 px-6 py-4">
+                          <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-primary-fixed/20 bg-primary-fixed/10">
+                            {stat.icon}
+                          </div>
+                          <div>
+                            <p className="text-xl font-black text-white">{stat.value}</p>
+                            <p className="text-[10px] font-bold uppercase tracking-widest text-white/50">{stat.label}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <RecentActivity items={enrolledCourses} />
+
+                  <div className="mb-6 flex flex-col items-center justify-between gap-6 md:flex-row">
+                    <div className="flex rounded-xl border border-white/5 bg-white/5 p-1">
+                      {["Tất cả", "Đang học", "Đã hoàn thành"].map((t) => (
+                        <button
+                          key={t}
+                          onClick={() => setMyCoursesTab(t)}
+                          className={`rounded-lg px-6 py-2.5 text-xs font-bold transition-all ${
+                            myCoursesTab === t ? "bg-white/10 text-white shadow-lg" : "text-white/50 hover:text-white"
+                          }`}
+                        >
+                          {t}
+                        </button>
+                      ))}
+                    </div>
+
+                    <div className="group relative w-full md:w-96">
+                      <Search className="absolute left-4 top-1/2 size-4.5 -translate-y-1/2 text-white/40 transition-colors group-focus-within:text-[#c4ff47]" />
+                      <input
+                        type="text"
+                        placeholder="Tìm trong khóa học của tôi..."
+                        value={myCoursesSearch}
+                        onChange={(e) => setMyCoursesSearch(e.target.value)}
+                        className="w-full rounded-2xl border border-white/12 bg-white/[0.06] py-3.5 pl-11 pr-5 text-sm text-white placeholder:text-white/45 transition-all focus:outline-none focus:ring-2 focus:ring-[#6E35E8]/35"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+                    {filteredMyCourses.map((item) => (
+                      <EnrolledCourseCard
+                        key={item.course.id}
+                        item={item}
+                        onContinue={() => navigate(`/courses/${item.course.id}/learn`)}
+                      />
+                    ))}
+                  </div>
+
+                  {filteredMyCourses.length === 0 && (
+                    <div className="mt-4 rounded-3xl border border-white/5 py-24 text-center glass-card">
+                      <span className="material-symbols-outlined mb-6 text-6xl text-white/25">menu_book</span>
+                      <h3 className="mb-2 text-2xl font-black text-slate-900">Chưa có khóa học nào</h3>
+                      <p className="mb-10 text-white/55">Khám phá các khóa học mới để bắt đầu hành trình của bạn.</p>
+                      <button
+                        onClick={() => setSearchParams({ tab: "explore" })}
+                        className="rounded-full bg-primary-fixed px-10 py-4 font-black text-on-primary-fixed transition-all hover:scale-105"
+                      >
+                        Khám phá ngay
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </header>
 
-
-      {/* ═══════════════ EXPLORE TAB ═══════════════ */}
-      {activeTab === "explore" && (
-        <div className="relative z-[1] py-16">
-          {/* Filters */}
-          {showFilters && (
-            <div className="max-w-7xl mx-auto px-6 mb-16 relative z-10">
-              <div className="glass-card p-8 rounded-3xl border border-white/5 grid md:grid-cols-2 gap-12">
-                <div>
-                  <label className="mb-4 block text-xs font-black uppercase tracking-widest text-fuchsia-300/80">Danh mục</label>
-                  <div className="flex flex-wrap gap-3">
-                    {CATEGORIES.map((cat) => (
-                      <button
-                        key={cat}
-                        onClick={() => setSelectedCategory(cat)}
-                        className={`px-6 py-2.5 rounded-xl text-sm font-bold transition-all border ${
-                          selectedCategory === cat
-                            ? "bg-primary-fixed text-on-primary-fixed border-primary-fixed"
-                            : "border-white/10 bg-white/[0.05] text-white/55 hover:border-white/25 hover:text-white"
-                        }`}
-                      >
-                        {cat}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-                <div>
-                  <label className="mb-4 block text-xs font-black uppercase tracking-widest text-fuchsia-300/80">Cấp độ</label>
-                  <div className="flex flex-wrap gap-3">
-                    {LEVELS.map((level) => (
-                      <button
-                        key={level}
-                        onClick={() => setSelectedLevel(level)}
-                        className={`px-6 py-2.5 rounded-xl text-sm font-bold transition-all border ${
-                          selectedLevel === level
-                            ? "bg-primary-fixed text-on-primary-fixed border-primary-fixed"
-                            : "border-white/10 bg-white/[0.05] text-white/55 hover:border-white/25 hover:text-white"
-                        }`}
-                      >
-                        {level}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Results Summary */}
-          <div className="relative z-10 mx-auto mb-10 flex max-w-7xl items-center justify-between px-6">
-            <p className="font-medium text-white/60">
-              Hiển thị <span className="font-bold text-white">{filteredCourses.length}</span> khóa học
-              {searchQuery && <span> cho "<span className="text-[#c4ff47]">{searchQuery}</span>"</span>}
-            </p>
-          </div>
-
-          {/* Courses Grid */}
-          <div className="max-w-7xl mx-auto px-6 pb-20 relative z-10">
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {filteredCourses.map((course) => (
-                <div
-                  key={course.id}
-                  onClick={() => navigate(`/courses/${course.id}`)}
-                  className="group glass-card rounded-2xl overflow-hidden cursor-pointer transition-all duration-500 hover:-translate-y-2 hover:border-secondary/30"
-                >
-                  {/* Thumbnail */}
-                  <div className="relative h-56 overflow-hidden">
-                    <img
-                      src={course.thumbnail}
-                      alt={course.title}
-                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-                    
-                    <div className="absolute top-4 left-4 flex gap-2">
-                      <span className="bg-secondary/90 backdrop-blur-md text-white px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">
-                        {course.category}
-                      </span>
-                    </div>
-
-                    <div className="absolute top-4 right-4">
-                      <span className="bg-black/40 backdrop-blur-md text-white/90 px-3 py-1 rounded-full text-[10px] font-bold border border-white/10">
-                        {course.level}
-                      </span>
-                    </div>
-                    
-                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-500 scale-90 group-hover:scale-100">
-                      <div className="w-14 h-14 rounded-full bg-primary-fixed/90 flex items-center justify-center shadow-2xl shadow-primary-fixed/30 transform transition-transform border border-white/20">
-                        <Play className="text-on-primary-fixed size-7 translate-x-0.5" />
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="p-7">
-                    <h3 className="text-xl font-bold mb-5 text-white group-hover:text-primary-fixed transition-colors leading-tight line-clamp-2">
-                      {course.title}
-                    </h3>
-                    
-                    <div className="flex items-center gap-3 mb-6">
-                      <img
-                        src={course.mentorAvatar}
-                        alt={course.mentorName}
-                        className="w-10 h-10 rounded-xl object-cover border border-white/10"
-                      />
-                      <div>
-                        <p className="text-sm font-bold text-white">{course.mentorName}</p>
-                        <p className="text-[10px] uppercase tracking-wider text-white/50">{course.mentorTitle}</p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center justify-between pt-6 border-t border-white/5">
-                      <div className="flex items-center gap-4">
-                        <div className="flex items-center gap-1.5">
-                          <Star className="text-primary-fixed size-4.5" />
-                          <span className="font-bold text-white text-sm">{course.rating}</span>
-                        </div>
-                        <div className="flex items-center gap-1.5 text-zinc-500">
-                          <Clock className="size-4.5" />
-                          <span className="text-sm font-medium">{Math.floor(course.duration / 60)}h</span>
-                        </div>
-                      </div>
-                      <div className="text-xl font-black text-primary-fixed">
-                        {formatPrice(course.price)}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {filteredCourses.length === 0 && (
-              <div className="text-center py-32 glass-card rounded-3xl border border-white/5">
-                <Search className="mb-6 size-16 text-white/25" />
-                <h3 className="text-2xl font-bold text-white mb-2">Không tìm thấy khóa học</h3>
-                <p className="mb-10 text-white/55">Thử thay đổi bộ lọc hoặc từ khóa tìm kiếm</p>
-                <button
-                  onClick={() => {
-                    setSearchQuery("");
-                    setSelectedCategory("Tất cả");
-                    setSelectedLevel("Tất cả");
-                  }}
-                  className="rounded-full bg-violet-600 px-8 py-3 font-bold text-white transition-all hover:scale-105 hover:bg-violet-500"
-                >
-                  Xóa tất cả bộ lọc
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* ═══════════════ MY COURSES TAB ═══════════════ */}
-      {activeTab === "my-courses" && (
-        <div className="relative z-[1] mx-auto max-w-7xl px-6 py-16">
-          {/* Header & Stats */}
-          <div className="mb-16">
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-8">
-              <div>
-                <h2 className="text-4xl font-black text-white tracking-tighter mb-4">Lộ trình của bạn</h2>
-                <p className="max-w-xl text-white/60">Theo dõi tiến độ học tập và các chứng chỉ bạn đã đạt được trên hành trình chinh phục sự nghiệp.</p>
-              </div>
-              
-              <div className="flex gap-4">
-                {[
-                  { label: "Hoàn thành", value: totalCompleted, icon: <ShieldCheck className="text-primary-fixed size-5" /> },
-                  { label: "Giờ học", value: `${totalHoursLearned}h`, icon: <Clock className="size-5" /> }
-                ].map((stat, i) => (
-                  <div key={i} className="glass-card px-6 py-4 rounded-2xl border border-white/5 flex items-center gap-4">
-                    <div className="w-10 h-10 rounded-xl bg-primary-fixed/10 flex items-center justify-center border border-primary-fixed/20">
-                      {stat.icon}
-                    </div>
-                    <div>
-                      <p className="text-xl font-black text-white">{stat.value}</p>
-                      <p className="text-[10px] font-bold uppercase tracking-widest text-white/50">{stat.label}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Recent activity */}
-          <RecentActivity items={enrolledCourses} />
-
-          {/* Filter & Search for My Courses */}
-          <div className="flex flex-col md:flex-row gap-6 mb-12 items-center justify-between">
-            <div className="flex p-1 bg-white/5 rounded-xl border border-white/5">
-              {["Tất cả", "Đang học", "Đã hoàn thành"].map((t) => (
-                <button
-                  key={t}
-                  onClick={() => setMyCoursesTab(t)}
-                  className={`px-6 py-2.5 rounded-lg text-xs font-bold transition-all ${
-                    myCoursesTab === t
-                      ? "bg-white/10 text-white shadow-lg"
-                      : "text-white/50 hover:text-white"
-                  }`}
-                >
-                  {t}
-                </button>
-              ))}
-            </div>
-
-            <div className="relative w-full md:w-96 group">
-              <Search className="absolute left-4 top-1/2 size-4.5 -translate-y-1/2 text-white/40 transition-colors group-focus-within:text-[#c4ff47]" />
-              <input
-                type="text"
-                placeholder="Tìm trong khóa học của tôi..."
-                value={myCoursesSearch}
-                onChange={(e) => setMyCoursesSearch(e.target.value)}
-                className="w-full rounded-2xl border border-white/12 bg-white/[0.06] py-3.5 pl-11 pr-5 text-sm text-white placeholder:text-white/45 transition-all focus:outline-none focus:ring-2 focus:ring-[#6E35E8]/35"
-              />
-            </div>
-          </div>
-
-          {/* Grid */}
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {filteredMyCourses.map((item) => (
-              <EnrolledCourseCard
-                key={item.course.id}
-                item={item}
-                onContinue={() => navigate(`/courses/${item.course.id}/learn`)}
-              />
-            ))}
-          </div>
-
-          {filteredMyCourses.length === 0 && (
-            <div className="text-center py-32 glass-card rounded-3xl border border-white/5">
-              <span className="material-symbols-outlined mb-6 text-6xl text-white/25">menu_book</span>
-              <h3 className="text-2xl font-bold text-white mb-2">Chưa có khóa học nào</h3>
-              <p className="mb-10 text-white/55">Khám phá các khóa học mới để bắt đầu hành trình của bạn.</p>
-              <button
-                onClick={() => setSearchParams({ tab: "explore" })}
-                className="px-10 py-4 bg-primary-fixed text-on-primary-fixed rounded-full font-black hover:scale-105 transition-all"
-              >
-                Khám phá ngay
-              </button>
-            </div>
-          )}
-        </div>
-      )}
     </div>
   );
 }

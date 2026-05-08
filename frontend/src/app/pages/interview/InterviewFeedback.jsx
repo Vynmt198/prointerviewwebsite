@@ -145,8 +145,13 @@ export function InterviewFeedback() {
       : { cls: "bg-red-100 text-red-600", label: "Cần cải thiện" };
 
   return (
-    <div className="pi-page-dashboard-bg min-h-full w-full text-foreground">
-      <div className="mx-auto max-w-4xl p-6">
+    <div className="pi-page-dashboard-bg relative min-h-full w-full overflow-hidden text-foreground">
+      <div className="pointer-events-none absolute inset-0 z-0">
+        <div className="absolute -left-24 top-10 h-80 w-80 rounded-full bg-[#d4ff00]/45 blur-[130px]" />
+        <div className="absolute -right-20 top-24 h-[22rem] w-[22rem] rounded-full bg-[#9447ff]/32 blur-[150px]" />
+        <div className="absolute left-1/2 top-[30%] h-44 w-[55rem] -translate-x-1/2 bg-gradient-to-r from-[#d4ff00]/20 via-[#d4ff00]/8 to-[#9447ff]/20 blur-[95px]" />
+      </div>
+      <div className="relative z-10 mx-auto max-w-4xl p-6">
       {/* Header */}
       <div className="mb-8 flex items-start gap-3 sm:gap-4">
         <button
@@ -506,7 +511,9 @@ export function InterviewFeedback() {
       </div>
 
       {/* Action buttons */}
-      <div className="flex flex-wrap gap-3 pb-6">
+      <div className="mb-6 rounded-2xl border border-violet-200/55 bg-white/88 p-4 shadow-[0_10px_30px_rgba(76,29,149,0.08)] backdrop-blur-sm">
+      <h3 className="mb-3 text-sm font-semibold tracking-tight text-slate-900">Tiếp tục luyện tập</h3>
+      <div className="flex flex-wrap gap-3">
         <button
           type="button"
           onClick={() => navigate("/interview")}
@@ -519,11 +526,20 @@ export function InterviewFeedback() {
 
         <button
           type="button"
+          onClick={() => navigate("/courses")}
+          className="flex items-center gap-2 rounded-xl border border-violet-300/45 bg-white/90 px-5 py-2.5 text-sm font-semibold text-violet-700 shadow-sm transition-all hover:border-violet-400/65 hover:bg-violet-50"
+        >
+          <BookOpen className="h-4 w-4 shrink-0 text-violet-700" {...IS} />
+          <span className="min-w-0">Khóa học</span>
+        </button>
+
+        <button
+          type="button"
           onClick={() => navigate("/mentors")}
           className="flex items-center gap-2 rounded-xl border border-[#c4ff47]/50 bg-zinc-950/55 px-5 py-2.5 text-sm font-semibold shadow-sm ring-1 ring-white/5 transition-all hover:border-[#c4ff47]/65 hover:bg-zinc-950/75"
         >
           <Calendar className="h-4 w-4 shrink-0 text-[#d4ff6a]" {...IS} />
-          <span className="min-w-0 text-white">Đặt lịch Mentor 1-1</span>
+          <span className="min-w-0 text-white">Tìm mentor</span>
           <span className="shrink-0 rounded-full border border-[#c4ff47]/25 bg-[#c4ff47]/12 px-2 py-0.5 text-[10px] font-bold text-[#c4ff47]">
             Cải thiện 3×
           </span>
@@ -545,9 +561,10 @@ export function InterviewFeedback() {
           Tải PDF
         </button>
       </div>
+      </div>
 
       {/* ── Course Recommendations ─────────────────────────── */}
-      <div className="mb-8">
+      <div className="mb-8 rounded-2xl border border-violet-200/55 bg-white/88 p-4 shadow-[0_10px_30px_rgba(76,29,149,0.08)] backdrop-blur-sm">
         <CourseRecommendations
           tags={["star-method", "behavioral-interview", "interview-skills"]}
           title="Khóa học giúp bạn cải thiện điểm yếu"

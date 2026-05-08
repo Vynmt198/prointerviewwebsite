@@ -73,10 +73,19 @@ export function createApp() {
   });
 
   app.get("/api/health", (_req, res) => {
+    const connected = mongoose.connection.readyState === 1;
+    const db = mongoose.connection.db;
     res.status(200).json({
       ok: true,
       service: "backend",
-      database: mongoose.connection.readyState === 1 ? "connected" : "disconnected",
+      database: connected ? "connected" : "disconnected",
+      /** Giúp đối chiếu với Atlas: tên DB + host (không lộ password). */
+      mongo: connected
+        ? {
+            databaseName: db?.databaseName ?? null,
+            host: mongoose.connection.host || null,
+          }
+        : null,
       timestamp: new Date().toISOString(),
     });
   });

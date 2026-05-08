@@ -174,6 +174,10 @@ export function Home() {
         <Sparkles
           key={`section-stick-${idx}`}
           className="absolute text-slate-400"
+          strokeWidth={1.45}
+          strokeLinecap="butt"
+          strokeLinejoin="miter"
+          strokeMiterlimit={12}
           style={{
             left: `${s.x}%`,
             top: `${s.y}%`,
@@ -181,6 +185,9 @@ export function Home() {
             height: `${s.size}px`,
             opacity: s.opacity,
             filter: "drop-shadow(0 0 8px rgba(148,163,184,0.24))",
+            transform: `rotate(${
+              typeof s.tilt === "number" ? s.tilt : idx % 4 === 0 ? 0 : idx % 4 === 1 ? -18 : idx % 4 === 2 ? 24 : -30
+            }deg)`,
           }}
         />
       ))}

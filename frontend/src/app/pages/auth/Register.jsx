@@ -102,6 +102,10 @@ export function Register() {
             <Sparkles
               key={`register-stick-${i}`}
               className="absolute hidden md:block"
+              strokeWidth={1.45}
+              strokeLinecap="butt"
+              strokeLinejoin="miter"
+              strokeMiterlimit={12}
               style={{
                 left: `${s.x}%`,
                 top: `${s.y}%`,

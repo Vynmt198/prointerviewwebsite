@@ -360,8 +360,9 @@ export function Profile() {
 
       <div className="pricing-grid" aria-hidden />
       <div className="fixed inset-0 pointer-events-none -z-[3]" style={{ background: "#f8f4ff" }} />
-      <div className="fixed top-[-20%] left-[-10%] w-[700px] h-[700px] rounded-full pointer-events-none -z-0 bg-[#d4ff00]/35 blur-[130px]" />
-      <div className="fixed bottom-[-20%] right-[-8%] w-[760px] h-[760px] rounded-full pointer-events-none -z-0 bg-[#9447ff]/25 blur-[140px]" />
+      <div className="fixed top-[-22%] left-[-12%] w-[760px] h-[760px] rounded-full pointer-events-none -z-0 bg-[#d4ff00]/48 blur-[135px]" />
+      <div className="fixed bottom-[-22%] right-[-10%] w-[820px] h-[820px] rounded-full pointer-events-none -z-0 bg-[#9447ff]/34 blur-[150px]" />
+      <div className="fixed left-0 right-0 top-[38%] h-[180px] pointer-events-none -z-0" style={{ background: "linear-gradient(90deg, rgba(212,255,0,0.14) 0%, rgba(148,71,255,0.22) 55%, rgba(148,71,255,0.1) 100%)", filter: "blur(32px)" }} />
       <div className="relative z-10 mx-auto max-w-6xl px-6 pb-8 pt-8 sm:px-8 sm:pt-10">
         <div className="mb-10 flex flex-col justify-between gap-8 border-b border-slate-200 pb-10 md:mb-12 md:flex-row md:items-end">
           <div className="min-w-0">
