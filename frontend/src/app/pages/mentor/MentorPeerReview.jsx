@@ -5,7 +5,6 @@ import {
    Star,
    ArrowLeft,
    Search,
-   Filter,
    CheckCircle2,
    Clock,
    AlertCircle,
@@ -23,18 +22,6 @@ import { getUser } from "../../utils/auth";
 import { MentorPageShell } from "../../components/mentor/MentorPageShell";
 import { fetchMentorPeerReviews, submitMentorPeerReview } from "../../utils/mentorApi";
 import { toast } from "sonner";
-
-const MENTOR_PEER_REVIEW_INPUT_CSS = `
-        .input-glass {
-           background: rgba(255, 255, 255, 0.03);
-           border: 1px solid rgba(255, 255, 255, 0.1);
-           border-radius: 20px;
-           padding: 14px 24px;
-           color: white;
-           transition: all 0.3s;
-        }
-        .input-glass:focus { border-color: #c4ff47; background: rgba(255, 255, 255, 0.06); outline: none; }
-`;
 
 export function MentorPeerReview() {
    const navigate = useNavigate();
@@ -119,55 +106,55 @@ export function MentorPeerReview() {
    };
 
    return (
-      <MentorPageShell bottomPad="pb-32" extraStyles={MENTOR_PEER_REVIEW_INPUT_CSS}>
-         <div className="relative z-10 p-10 max-w-7xl mx-auto pt-20">
+      <MentorPageShell bottomPad="pb-32">
+         <div className="relative z-10 p-8 max-w-7xl mx-auto pt-16">
             {/* Header Section */}
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-10 mb-16">
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
                <div className="max-w-3xl">
-                  <h1 className="text-6xl font-black text-white font-headline tracking-tighter mb-6 uppercase">
+                  <h1 className="text-6xl font-black text-slate-900 font-headline tracking-tighter mb-6 uppercase">
                      Đánh giá <span className="text-secondary tracking-tighter">Chéo Khóa học</span>
                   </h1>
-                  <p className="text-white/55 text-lg font-medium leading-relaxed">
+                  <p className="text-slate-600 text-lg font-medium leading-relaxed">
                      Với tư cách mentor trong hệ thống ProInterview, bạn có hành quyền đánh giá chuyên môn các khóa học của đồng nghiệp để đảm bảo chất lượng nội dung toàn hệ thống.
                   </p>
                </div>
-               <button onClick={() => navigate("/mentor/dashboard")} className="px-8 py-4 rounded-3xl bg-white/5 border border-white/10 text-xs font-black uppercase tracking-widest hover:bg-white/10 transition-all flex items-center gap-2">
+               <button onClick={() => navigate("/mentor/dashboard")} className="px-8 py-4 rounded-3xl bg-slate-50 border border-slate-200 text-xs font-black uppercase tracking-widest hover:bg-slate-100 transition-all flex items-center gap-2">
                   <ArrowLeft size={14} /> Về dashboard
                </button>
             </div>
 
             {/* Global Stats Bar */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-16">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-5 mb-12">
                {[
                   { label: "Cần đánh giá", value: pendingCount, icon: Clock, color: "#6E35E8" },
                   { label: "Đã hoàn thành", value: reviewedCount, icon: CheckCircle2, color: "#c4ff47" },
                   { label: "Review điểm cao", value: highScoreCount, icon: TrendingUp, color: "#secondary" },
                   { label: "Rating trung bình", value: avgRating, icon: Star, color: "#f59e0b" }
                ].map((stat, i) => (
-                  <div key={i} className="glass-card p-8 group">
-                     <div className="flex items-center justify-between mb-6">
-                        <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center">
+                  <div key={i} className="glass-card p-7 group">
+                     <div className="flex items-center justify-between mb-5">
+                        <div className="w-10 h-10 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center">
                            <stat.icon size={18} style={{ color: stat.color }} />
                         </div>
-                        <div className="w-2 h-2 rounded-full bg-white/10 group-hover:bg-primary-fixed transition-colors" />
+                        <div className="h-2 w-2 rounded-full bg-slate-200 transition-colors group-hover:bg-lime-400" />
                      </div>
-                     <h3 className="text-4xl font-black text-white tracking-tighter mb-1">{stat.value}</h3>
+                     <h3 className="text-4xl font-black text-slate-900 tracking-tighter mb-1">{stat.value}</h3>
                      <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest leading-none">{stat.label}</p>
                   </div>
                ))}
             </div>
 
             {/* Informational Toast */}
-            <div className="glass-card mb-16 p-10 relative overflow-hidden group">
+            <div className="glass-card mb-12 p-7 relative overflow-hidden group">
                <div className="absolute top-0 right-0 p-10 rotate-12 opacity-5 scale-125 group-hover:rotate-0 transition-all duration-1000">
                   <ShieldCheck size={140} className="text-primary-fixed" />
                </div>
-               <div className="relative z-10 flex items-start gap-8">
+               <div className="relative z-10 flex items-start gap-5">
                   <div className="w-14 h-14 rounded-2xl bg-primary-fixed/20 flex items-center justify-center text-primary-fixed shrink-0">
                      <Zap size={28} />
                   </div>
                   <div>
-                     <h4 className="text-xl font-black text-white tracking-tight mb-3">Quy tắc Đánh giá chuyên môn</h4>
+                     <h4 className="text-xl font-black text-slate-900 tracking-tight mb-3">Quy tắc Đánh giá chuyên môn</h4>
                      <p className="text-sm font-medium text-zinc-500 max-w-2xl leading-relaxed italic">
                         "Hãy đánh giá khách quan và chuyên nghiệp dựa trên kiến thức của bạn. Đánh giá của bạn giúp học viên tin tưởng hơn vào nội dung và nhận point thưởng từ nền tảng."
                      </p>
@@ -176,24 +163,24 @@ export function MentorPeerReview() {
             </div>
 
             {/* Filter & List Controls */}
-            <div className="space-y-8">
-               <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-                  <div className="relative flex-1 group max-w-xl">
-                     <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-zinc-600 group-hover:text-primary-fixed transition-colors" size={20} />
+            <div className="space-y-5">
+               <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5">
+                  <div className="group relative max-w-xl flex-1">
+                     <Search className="absolute left-5 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-500 transition-colors group-focus-within:text-violet-600" size={20} />
                      <input
                         type="text"
                         placeholder="Tìm kiếm khóa học hoặc mentor..."
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
-                        className="input-glass pl-16 w-full text-sm font-medium"
+                        className="w-full rounded-[20px] border border-slate-200 bg-white py-3.5 pl-16 pr-5 text-sm font-medium text-slate-900 shadow-sm outline-none transition placeholder:text-slate-500 focus:border-violet-400 focus:ring-2 focus:ring-violet-200/80"
                      />
                   </div>
-                  <div className="flex gap-2 p-2 bg-white/[0.03] border border-white/5 rounded-[24px]">
+                  <div className="flex gap-2 rounded-[24px] border border-slate-200 bg-slate-50 p-2">
                      {["all", "pending", "reviewed"].map((v) => (
                         <button
                            key={v}
                            onClick={() => setFilter(v)}
-                           className={`px-8 py-3 rounded-[18px] text-[10px] font-black uppercase tracking-widest transition-all ${filter === v ? "bg-white text-black shadow-xl" : "text-zinc-500 hover:text-white"
+                           className={`rounded-[18px] px-8 py-3 text-[10px] font-black uppercase tracking-widest transition-all ${filter === v ? "bg-violet-600 text-white shadow-md" : "text-slate-600 hover:bg-white hover:text-slate-900"
                               }`}
                         >
                            {v === "all" ? "Tất cả" : v === "pending" ? "Chưa đánh giá" : "Đã đánh giá"}
@@ -207,7 +194,7 @@ export function MentorPeerReview() {
                      <button
                         key={cat}
                         onClick={() => setCategory(cat)}
-                        className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${category === cat ? "bg-primary-fixed text-black" : "bg-white/5 border border-white/10 text-zinc-500 hover:text-white"
+                        className={`rounded-xl px-6 py-2.5 text-[10px] font-black uppercase tracking-widest transition-all ${category === cat ? "bg-violet-600 text-white shadow-sm" : "border border-slate-200 bg-slate-50 text-slate-600 hover:text-slate-900"
                            }`}
                      >
                         {cat === "all" ? "Tất cả lĩnh vực" : cat}
@@ -223,7 +210,7 @@ export function MentorPeerReview() {
                            <img src={course.cover} className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" />
                            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
                            <div className="absolute top-6 left-6 flex gap-2">
-                              <span className="px-3 py-1 bg-black/60 backdrop-blur-md rounded-lg text-[9px] font-black uppercase tracking-widest text-primary-fixed border border-primary-fixed/20">
+                              <span className="rounded-lg border border-violet-200 bg-violet-50 px-3 py-1 text-[9px] font-black uppercase tracking-widest text-violet-800 backdrop-blur-md">
                                  {course.category}
                               </span>
                               <span className={`px-3 py-1 backdrop-blur-md rounded-lg text-[9px] font-black uppercase tracking-widest border ${course.status === 'reviewed' ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/20' : 'bg-orange-500/20 text-orange-400 border-orange-500/20'}`}>
@@ -231,28 +218,28 @@ export function MentorPeerReview() {
                               </span>
                            </div>
                         </div>
-                        <div className="p-8">
-                           <h4 className="text-xl font-black text-white tracking-tighter mb-2 group-hover:text-primary-fixed transition-colors">
+                        <div className="p-6">
+                           <h4 className="text-xl font-black text-slate-900 tracking-tighter mb-2 group-hover:text-primary-fixed transition-colors">
                               {course.title}
                            </h4>
-                           <p className="text-[10px] font-black text-zinc-600 uppercase tracking-widest mb-8">Tác giả: <span className="text-white">{course.mentor}</span></p>
+                           <p className="text-[10px] font-black text-zinc-600 uppercase tracking-widest mb-6">Tác giả: <span className="text-slate-900">{course.mentor}</span></p>
 
                            <div className="flex items-center justify-between">
                               <div className="flex items-center gap-6">
                                  <div className="flex items-center gap-2">
                                     <Users size={14} className="text-zinc-600" />
-                                    <span className="text-xs font-black text-white">{course.participants}</span>
+                                    <span className="text-xs font-black text-slate-900">{course.participants}</span>
                                  </div>
                                  {course.rating > 0 && (
                                     <div className="flex items-center gap-2">
                                        <Star size={14} className="text-[#FFD600] fill-current" />
-                                       <span className="text-xs font-black text-white">{course.rating}</span>
+                                       <span className="text-xs font-black text-slate-900">{course.rating}</span>
                                     </div>
                                  )}
                               </div>
                               <button
                                  onClick={() => startReview(course)}
-                                 className="flex items-center gap-2 text-[10px] font-black text-white uppercase tracking-widest hover:text-primary-fixed transition-all group/btn"
+                                 className="flex items-center gap-2 text-[10px] font-black text-slate-900 uppercase tracking-widest hover:text-primary-fixed transition-all group/btn"
                               >
                                  {course.status === "reviewed" ? "Đã đánh giá" : "Bắt đầu đánh giá"} <ChevronRight size={14} className="group-hover/btn:translate-x-1 transition-transform" />
                               </button>
@@ -262,7 +249,7 @@ export function MentorPeerReview() {
                   ))}
                </div>
                {!coursesForReview.length && (
-                  <div className="mt-6 rounded-2xl border border-white/10 bg-white/[0.03] p-6 text-center">
+                  <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50 p-6 text-center">
                      <p className="text-sm font-semibold text-zinc-300">Hiện chưa có khóa học nào khả dụng để đánh giá chéo.</p>
                   </div>
                )}
@@ -274,7 +261,7 @@ export function MentorPeerReview() {
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
-                  className="fixed inset-0 z-50 flex items-center justify-center p-6 backdrop-blur-2xl bg-black/60"
+                  className="fixed inset-0 z-50 flex items-center justify-center p-6 backdrop-blur-sm bg-slate-900/35"
                   onClick={() => setSelectedCourse(null)}
                >
                   <motion.div
@@ -284,14 +271,14 @@ export function MentorPeerReview() {
                      className="glass-card w-full max-w-xl p-8"
                      onClick={(e) => e.stopPropagation()}
                   >
-                     <h3 className="text-2xl font-black text-white tracking-tight mb-2">Đánh giá chéo khóa học</h3>
+                     <h3 className="text-2xl font-black text-slate-900 tracking-tight mb-2">Đánh giá chéo khóa học</h3>
                      <p className="text-sm text-zinc-400 mb-6">{selectedCourse.title}</p>
-                     <div className="mb-6 rounded-2xl border border-white/10 bg-white/[0.03] p-4 space-y-3">
+                     <div className="mb-6 rounded-2xl border border-slate-200 bg-slate-50 p-4 space-y-3">
                         <p className="text-xs text-zinc-300 line-clamp-3">
                            {selectedCourse.description || "Chưa có mô tả chi tiết cho khóa học này."}
                         </p>
                         <div className="flex flex-wrap items-center gap-3 text-[10px] uppercase tracking-widest font-black text-zinc-500">
-                           <span className="px-2 py-1 rounded-lg border border-white/10 bg-white/5">{selectedCourse.level || "N/A"}</span>
+                           <span className="px-2 py-1 rounded-lg border border-slate-200 bg-white/5">{selectedCourse.level || "N/A"}</span>
                            <span>{selectedCourse.isFree ? "Miễn phí" : `${Number(selectedCourse.price || 0).toLocaleString("vi-VN")} ₫`}</span>
                            <span>{Number(selectedCourse.lessonCount || 0)} bài học</span>
                         </div>
@@ -309,14 +296,14 @@ export function MentorPeerReview() {
                            ["priceValueRating", "Giá trị / Chi phí"],
                         ].map(([field, label]) => (
                            <div key={field} className="flex items-center justify-between gap-4">
-                              <span className="text-sm font-semibold text-zinc-300">{label}</span>
+                              <span className="text-sm font-semibold text-slate-700">{label}</span>
                               <select
                                  value={reviewForm[field]}
                                  onChange={(e) => setReviewForm((prev) => ({ ...prev, [field]: Number(e.target.value) }))}
-                                 className="bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm font-bold text-white"
+                                 className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm font-bold text-slate-900"
                               >
                                  {[1, 2, 3, 4, 5].map((n) => (
-                                    <option key={n} value={n} className="bg-[#121212]">
+                                    <option key={n} value={n} className="bg-white text-slate-900">
                                        {n} / 5
                                     </option>
                                  ))}
@@ -327,13 +314,13 @@ export function MentorPeerReview() {
                            value={reviewForm.feedback}
                            onChange={(e) => setReviewForm((prev) => ({ ...prev, feedback: e.target.value }))}
                            placeholder="Nhận xét chi tiết (không bắt buộc)"
-                           className="w-full min-h-28 bg-white/5 border border-white/10 rounded-2xl p-4 text-sm text-white outline-none focus:border-primary-fixed"
+                           className="min-h-28 w-full rounded-2xl border border-slate-200 bg-white p-4 text-sm text-slate-900 outline-none transition placeholder:text-slate-500 focus:border-violet-400 focus:ring-2 focus:ring-violet-200/80"
                         />
                      </div>
                      <div className="mt-7 grid grid-cols-2 gap-3">
                         <button
                            onClick={() => setSelectedCourse(null)}
-                           className="py-3 rounded-xl bg-white/5 border border-white/10 text-[10px] font-black uppercase tracking-widest text-white"
+                           className="py-3 rounded-xl bg-slate-50 border border-slate-200 text-[10px] font-black uppercase tracking-widest text-slate-900"
                         >
                            Hủy
                         </button>

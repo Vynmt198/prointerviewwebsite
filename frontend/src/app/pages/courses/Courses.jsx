@@ -511,25 +511,25 @@ export function Courses() {
           background-image: linear-gradient(rgba(148,71,255,0.16) 1px,transparent 1px),linear-gradient(90deg,rgba(148,71,255,0.16) 1px,transparent 1px) !important;
         }
       `}</style>
-      <header className="relative z-10 pb-4 pt-10 sm:pb-4 sm:pt-12">
+      <header className="relative z-10 pb-2 pt-8 sm:pb-4 sm:pt-10">
         <div className="relative z-10 mx-auto max-w-7xl px-6 sm:px-8">
-          <div className="w-full rounded-[28px] border border-violet-200/75 bg-[#f4f2ff]/95 px-6 py-7 shadow-[0_18px_44px_rgba(76,29,149,0.1)] sm:px-8 sm:py-8">
+          <div className="mb-8">
             <div className="mb-4 flex items-center gap-3">
               <GraduationCap className="size-5 text-[#c4ff47]" />
               <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Thư viện kiến thức</span>
             </div>
-            <h1 className="mb-4 text-3xl font-black leading-[1.05] tracking-tight text-slate-900 md:text-5xl">
+            <h1 className="mb-4 text-3xl font-black leading-[1.08] tracking-tight text-slate-900 sm:text-4xl md:text-5xl">
               Luyện tập cùng{" "}
               <span className="text-[#6E35E8]">
                 Chuyên gia.
               </span>
             </h1>
-            <p className="mb-6 max-w-2xl text-sm font-semibold leading-relaxed text-slate-600 sm:text-base">
+            <p className="max-w-2xl text-base font-semibold leading-relaxed text-slate-600 sm:text-lg">
               Trang bị kiến thức cốt lõi qua các video bài giảng ngắn gọn. Áp dụng ngay vào buổi phỏng vấn 1-1 với Mentor để được đánh giá trực tiếp.
             </p>
           </div>
           <div
-            className={`mt-4 w-full border border-violet-200/75 bg-[#f4f2ff]/95 px-6 py-5 shadow-[0_16px_36px_rgba(76,29,149,0.09)] sm:px-8 sm:py-6 ${
+            className={`w-full border border-violet-200/75 bg-[#f4f2ff]/95 px-6 py-5 shadow-[0_16px_36px_rgba(76,29,149,0.09)] sm:px-8 sm:py-6 ${
               activeTab === "explore" ? "rounded-t-[28px] rounded-b-none border-b-0" : "rounded-[28px]"
             }`}
           >

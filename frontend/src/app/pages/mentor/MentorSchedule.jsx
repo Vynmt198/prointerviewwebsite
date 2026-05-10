@@ -80,7 +80,7 @@ const MENTOR_SCHEDULE_EXTRA_CSS = `
            cursor: pointer;
            position: relative;
         }
-        .calendar-cell:hover { background: rgba(255, 255, 255, 0.05); }
+        .calendar-cell:hover { background: rgba(15, 23, 42, 0.04); }
         .calendar-cell.active {
            background: #c4ff47;
            color: black;
@@ -209,7 +209,7 @@ function AvailabilityModal({ onClose, availability, onSaved }) {
   return (
     <motion.div
       initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 flex items-center justify-center p-6 backdrop-blur-3xl bg-black/60"
+      className="fixed inset-0 z-50 flex items-center justify-center p-6 backdrop-blur-sm bg-slate-900/35"
       onClick={onClose}
     >
       <motion.div
@@ -219,12 +219,12 @@ function AvailabilityModal({ onClose, availability, onSaved }) {
         className="glass-card w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="p-8 border-b border-white/5 flex items-center justify-between bg-white/[0.02]">
+        <div className="p-8 border-b border-slate-200 flex items-center justify-between bg-slate-50">
            <div>
-              <h2 className="text-2xl font-black text-white tracking-tighter">Cài đặt Thời gian rảnh</h2>
+              <h2 className="text-2xl font-black text-slate-900 tracking-tighter">Cài đặt Thời gian rảnh</h2>
               <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mt-1 text-primary-fixed">Quản lý lịch làm việc định kỳ hàng tuần</p>
            </div>
-           <button onClick={onClose} className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-zinc-500 hover:text-white transition-all">
+           <button onClick={onClose} className="w-10 h-10 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center text-zinc-500 hover:text-slate-900 transition-all">
               <X size={18} />
            </button>
         </div>
@@ -235,34 +235,34 @@ function AvailabilityModal({ onClose, availability, onSaved }) {
                  <Globe size={20} />
               </div>
               <div>
-                 <p className="text-xs font-black text-white uppercase tracking-widest">Múi giờ hệ thống</p>
+                 <p className="text-xs font-black text-slate-900 uppercase tracking-widest">Múi giờ hệ thống</p>
                  <p className="text-xs font-medium text-zinc-500">(GMT+07:00) Asia/Ho_Chi_Minh</p>
               </div>
            </div>
 
            <div className="space-y-4">
               {workingHours.map((row, idx) => (
-                <div key={idx} className="p-6 rounded-[32px] bg-white/[0.02] border border-white/5 flex flex-col md:flex-row md:items-center justify-between gap-6 group">
+                <div key={idx} className="p-6 rounded-[32px] bg-slate-50 border border-slate-200 flex flex-col md:flex-row md:items-center justify-between gap-6 group">
                    <div className="w-24 shrink-0">
-                      <p className="text-sm font-black text-white group-hover:text-primary-fixed transition-colors">{row.day}</p>
+                      <p className="text-sm font-black text-slate-900 group-hover:text-primary-fixed transition-colors">{row.day}</p>
                    </div>
                    <div className="flex-1 flex flex-wrap gap-2">
                       {row.slots.map((s, i) => (
-                        <div key={i} className="px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-[10px] font-black uppercase tracking-widest text-zinc-400 flex items-center gap-2 group/slot">
+                        <div key={i} className="px-4 py-2 rounded-xl bg-slate-50 border border-slate-200 text-[10px] font-black uppercase tracking-widest text-zinc-400 flex items-center gap-2 group/slot">
                            {s} <X size={12} className="cursor-pointer hover:text-red-500" onClick={() => removeSlot(row.dayOfWeek, s)} />
                         </div>
                       ))}
                    </div>
                 </div>
               ))}
-              <div className="w-full rounded-2xl border border-dashed border-white/20 p-4 flex flex-col md:flex-row md:items-center gap-3">
+              <div className="flex w-full flex-col gap-3 rounded-2xl border border-dashed border-slate-300 p-4 md:flex-row md:items-center">
                 <select
                   value={newSlotDay}
                   onChange={(e) => setNewSlotDay(Number(e.target.value))}
-                  className="px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-[11px] font-bold text-white outline-none"
+                  className="px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-[11px] font-bold text-slate-900 outline-none"
                 >
                   {DAY_ROWS.map((d) => (
-                    <option key={d.key} value={d.key} className="bg-[#161321] text-white">
+                    <option key={d.key} value={d.key} className="bg-[#161321] text-slate-900">
                       {d.label}
                     </option>
                   ))}
@@ -271,12 +271,12 @@ function AvailabilityModal({ onClose, availability, onSaved }) {
                 <select
                   value={newSlotRange}
                   onChange={(e) => setNewSlotRange(e.target.value)}
-                  className="px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-[11px] font-bold text-white outline-none"
+                  className="px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-[11px] font-bold text-slate-900 outline-none"
                 >
                   {SLOT_OPTIONS.map((start) => {
                     const range = toOneHourRange(start);
                     return (
-                    <option key={range} value={range} className="bg-[#161321] text-white">
+                    <option key={range} value={range} className="bg-[#161321] text-slate-900">
                       {range}
                     </option>
                   )})}
@@ -291,10 +291,10 @@ function AvailabilityModal({ onClose, availability, onSaved }) {
            </div>
         </div>
 
-        <div className="p-6 border-t border-white/5 bg-black/20 flex items-center justify-between">
+        <div className="p-6 border-t border-slate-200 bg-slate-100 flex items-center justify-between">
            <p className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest px-4">Lưu ý: Thay đổi sẽ áp dụng từ tuần kế tiếp</p>
            <div className="flex gap-4">
-              <button onClick={onClose} className="px-8 py-3 rounded-2xl bg-white/5 border border-white/10 text-[10px] font-black uppercase tracking-widest text-zinc-500 hover:text-white transition-all">Hủy</button>
+              <button onClick={onClose} className="px-8 py-3 rounded-2xl bg-slate-50 border border-slate-200 text-[10px] font-black uppercase tracking-widest text-zinc-500 hover:text-slate-900 transition-all">Hủy</button>
               <button disabled={saving} onClick={handleSave} className="px-8 py-3 rounded-2xl bg-primary-fixed text-black text-[10px] font-black uppercase tracking-widest shadow-xl disabled:opacity-60">
                 {saving ? "Đang lưu..." : "Lưu cấu hình"}
               </button>
@@ -408,7 +408,7 @@ export function MentorSchedule() {
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-10 mb-16">
           <div>
-            <h1 className="text-6xl font-black text-white font-headline tracking-tighter mb-4 uppercase">
+            <h1 className="text-6xl font-black text-slate-900 font-headline tracking-tighter mb-4 uppercase">
                Lịch trình <span className="text-primary-fixed tracking-tighter">Hệ thống</span>
             </h1>
             <p className="text-zinc-500 text-lg font-medium">Bố trí thời gian rảnh và quản lý các buổi hẹn mentor</p>
@@ -425,19 +425,19 @@ export function MentorSchedule() {
            <div className="lg:col-span-12 xl:col-span-7 glass-card p-10">
               <div className="flex items-center justify-between mb-10">
                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-primary-fixed">
+                    <div className="w-12 h-12 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-center text-primary-fixed">
                        <CalendarIcon size={22} />
                     </div>
                     <div>
-                       <h3 className="text-2xl font-black text-white tracking-tighter italic">
+                       <h3 className="text-2xl font-black text-slate-900 tracking-tighter italic">
                           {currentDate.toLocaleDateString("vi-VN", { month: "long", year: "numeric" })}
                        </h3>
                        <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">Lịch trình khả dụng</p>
                     </div>
                  </div>
                  <div className="flex gap-2">
-                    <button onClick={() => setCurrentDate((prev) => new Date(prev.getFullYear(), prev.getMonth() - 1, 1))} className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-zinc-500 hover:text-white transition-all"><ChevronLeft size={18} /></button>
-                    <button onClick={() => setCurrentDate((prev) => new Date(prev.getFullYear(), prev.getMonth() + 1, 1))} className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-zinc-500 hover:text-white transition-all"><ChevronRight size={18} /></button>
+                    <button onClick={() => setCurrentDate((prev) => new Date(prev.getFullYear(), prev.getMonth() - 1, 1))} className="w-10 h-10 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center text-zinc-500 hover:text-slate-900 transition-all"><ChevronLeft size={18} /></button>
+                    <button onClick={() => setCurrentDate((prev) => new Date(prev.getFullYear(), prev.getMonth() + 1, 1))} className="w-10 h-10 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center text-zinc-500 hover:text-slate-900 transition-all"><ChevronRight size={18} /></button>
                  </div>
               </div>
 
@@ -453,7 +453,7 @@ export function MentorSchedule() {
                      <div 
                         key={i} 
                         onClick={() => setSelectedDate(cell.date)}
-                        className={`calendar-cell ${isSelected ? 'active' : ''} ${cell.currentMonth ? 'text-white' : 'text-zinc-700 opacity-30'} ${hasMeetings ? 'dot' : ''}`}
+                        className={`calendar-cell ${isSelected ? 'active' : ''} ${cell.currentMonth ? 'text-slate-900' : 'text-zinc-700 opacity-30'} ${hasMeetings ? 'dot' : ''}`}
                      >
                         <span className="text-xs">{cell.date.getDate()}</span>
                         {isToday && !isSelected && <div className="absolute top-2 right-2 w-1 h-1 rounded-full bg-primary-fixed" />}
@@ -461,7 +461,7 @@ export function MentorSchedule() {
                    );
                  })}
               </div>
-              <div className="mt-10 pt-10 border-t border-white/5 flex items-center gap-8 justify-center sm:justify-start">
+              <div className="mt-10 pt-10 border-t border-slate-200 flex items-center gap-8 justify-center sm:justify-start">
                  <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-zinc-500">
                     <div className="w-3 h-3 rounded-full bg-primary-fixed" /> Hôm nay
                  </div>
@@ -475,8 +475,8 @@ export function MentorSchedule() {
            <div className="lg:col-span-12 xl:col-span-5 space-y-8">
               <div className="glass-card p-10 h-full">
                  <div className="flex items-center justify-between mb-8">
-                    <h4 className="text-lg font-black text-white uppercase tracking-tighter">Ngày {selectedDate.getDate()} thg {selectedDate.getMonth() + 1}</h4>
-                    <button className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-primary-fixed hover:bg-white/10 transition-all"><Plus size={18} /></button>
+                    <h4 className="text-lg font-black text-slate-900 uppercase tracking-tighter">Ngày {selectedDate.getDate()} thg {selectedDate.getMonth() + 1}</h4>
+                    <button className="w-10 h-10 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center text-primary-fixed hover:bg-slate-100 transition-all"><Plus size={18} /></button>
                  </div>
 
                  <div className="space-y-4">
@@ -484,13 +484,13 @@ export function MentorSchedule() {
                       <div
                          key={meeting.id || i}
                          onClick={() => meeting.id && navigate(`/mentor/meeting-detail/${meeting.id}`)}
-                         className="group relative p-6 rounded-[32px] bg-white/[0.02] border border-white/5 hover:bg-white/[0.05] transition-all cursor-pointer overflow-hidden"
+                         className="group relative p-6 rounded-[32px] bg-slate-50 border border-slate-200 hover:bg-slate-100 transition-all cursor-pointer overflow-hidden"
                       >
                          <div className="absolute top-0 left-0 w-1.5 h-full bg-primary-fixed scale-y-0 group-hover:scale-y-100 transition-transform origin-top" />
                          <div className="flex items-center gap-4 mb-4">
                             <img src={meeting.mentee.avatar} className="w-10 h-10 rounded-2xl object-cover ring-2 ring-white/5" />
                             <div>
-                               <p className="text-sm font-black text-white">{meeting.mentee.name}</p>
+                               <p className="text-sm font-black text-slate-900">{meeting.mentee.name}</p>
                                <p className="text-[10px] font-black text-zinc-600 uppercase tracking-widest">{meeting.position}</p>
                             </div>
                          </div>
@@ -508,7 +508,7 @@ export function MentorSchedule() {
                                       ? "bg-sky-500/20 text-sky-300"
                                       : String(meeting.status || "").toLowerCase() === "cancelled"
                                         ? "bg-red-500/20 text-red-300"
-                                        : "bg-white/5 text-zinc-500"
+                                        : "bg-slate-50 text-zinc-500"
                               }`}
                             >
                               {meeting.status || "online"}
@@ -517,11 +517,11 @@ export function MentorSchedule() {
                       </div>
                     ))}
                     {selectedDayMeetings.length === 0 && (
-                      <div className="p-6 rounded-[32px] border border-white/5 flex flex-col items-center justify-center text-zinc-500 min-h-[120px]">
+                      <div className="p-6 rounded-[32px] border border-slate-200 flex flex-col items-center justify-center text-zinc-500 min-h-[120px]">
                         <p className="text-[10px] font-black uppercase tracking-widest">Không có lịch hẹn trong ngày này</p>
                       </div>
                     )}
-                    <div className="p-6 rounded-[32px] border-2 border-dashed border-white/5 flex flex-col items-center justify-center text-zinc-700 hover:border-white/10 hover:text-zinc-500 transition-all cursor-pointer min-h-[140px]">
+                    <div className="p-6 rounded-[32px] border-2 border-dashed border-slate-200 flex flex-col items-center justify-center text-zinc-700 hover:border-slate-200 hover:text-zinc-500 transition-all cursor-pointer min-h-[140px]">
                        <PlusCircle size={32} className="mb-2 opacity-20" />
                        <p className="text-[10px] font-black uppercase tracking-widest">Thêm slot trống mới</p>
                     </div>

@@ -108,40 +108,40 @@ function MenteeProgressModal({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 flex items-center justify-center p-6 backdrop-blur-xl bg-black/40"
+      className="fixed inset-0 z-50 flex items-center justify-center p-6 backdrop-blur-sm bg-slate-900/35"
       onClick={onClose}
     >
       <motion.div
         initial={{ scale: 0.9, y: 20, opacity: 0 }}
         animate={{ scale: 1, y: 0, opacity: 1 }}
         exit={{ scale: 0.9, y: 20, opacity: 0 }}
-        className="glass-card w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh] shadow-[0_40px_100px_rgba(0,0,0,0.6)]"
+        className="glass-card w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh] shadow-[0_28px_80px_rgba(15,23,42,0.18)] border border-slate-200"
         onClick={(e) => e.stopPropagation()}
       >
         {/* ── Header ── */}
-        <div className="p-8 border-b border-white/5 relative bg-gradient-to-br from-[#1a0d35] to-[#0E0922]">
+        <div className="relative border-b border-slate-200 bg-gradient-to-br from-violet-50 to-white p-8">
           <div className="flex items-start justify-between">
             <div className="flex items-center gap-6">
                <div className="relative">
                   <img
                     src={meeting.mentee.avatar}
                     alt={meeting.mentee.name}
-                    className="w-20 h-20 rounded-[28px] object-cover ring-4 ring-white/5 shadow-2xl"
+                    className="h-20 w-20 rounded-[28px] object-cover shadow-md ring-2 ring-violet-200"
                   />
-                  <div className="absolute -bottom-2 -right-2 w-8 h-8 rounded-xl bg-primary-fixed text-black flex items-center justify-center shadow-lg">
+                  <div className="absolute -bottom-2 -right-2 flex h-8 w-8 items-center justify-center rounded-xl bg-[#c4ff47] text-slate-900 shadow-lg">
                      <SealCheck size={16} />
                   </div>
                </div>
                <div>
-                  <div className="flex items-center gap-3 mb-2">
-                     <span className="text-[10px] font-black px-3 py-1 rounded-lg bg-white/10 text-white uppercase tracking-widest">{meetingTypeLabel}</span>
-                     <span className="text-[10px] font-black px-3 py-1 rounded-lg bg-primary-fixed/20 text-primary-fixed uppercase tracking-widest">{meeting.mentee.level}</span>
+                  <div className="mb-2 flex items-center gap-3">
+                     <span className="rounded-lg bg-slate-100 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-slate-700">{meetingTypeLabel}</span>
+                     <span className="rounded-lg bg-violet-100 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-violet-800">{meeting.mentee.level}</span>
                   </div>
-                  <h2 className="text-3xl font-black text-white tracking-tighter mb-1">{meeting.mentee.name}</h2>
-                  <p className="text-sm font-medium text-zinc-500">{meeting.position} @ {meeting.company}</p>
+                  <h2 className="mb-1 text-3xl font-black tracking-tighter text-slate-900">{meeting.mentee.name}</h2>
+                  <p className="text-sm font-medium text-slate-600">{meeting.position} @ {meeting.company}</p>
                </div>
             </div>
-            <button onClick={onClose} className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-zinc-500 hover:text-white transition-all">
+            <button type="button" onClick={onClose} className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 transition-all hover:border-slate-300 hover:text-slate-900">
                <X size={18} />
             </button>
           </div>
@@ -153,7 +153,7 @@ function MenteeProgressModal({
            <div className="flex items-center gap-10">
               <div className="relative w-32 h-32 flex-shrink-0 group">
                  <svg viewBox="0 0 100 100" className="w-full h-full -rotate-90">
-                    <circle cx="50" cy="50" r="42" fill="none" stroke="rgba(255,255,255,0.04)" strokeWidth="10" />
+                    <circle cx="50" cy="50" r="42" fill="none" stroke="rgba(148,163,184,0.35)" strokeWidth="10" />
                     <motion.circle
                       initial={{ strokeDasharray: "0 264" }}
                       animate={{ strokeDasharray: `${(overall / 5) * 264} 264` }}
@@ -171,18 +171,18 @@ function MenteeProgressModal({
               </div>
 
               <div>
-                 <p className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.3em] mb-2 text-primary-fixed">Đánh giá tổng thể</p>
-                 <h4 className="text-2xl font-black text-white mb-3">{scoreLabel}</h4>
-                 <div className="flex items-center gap-2 mb-4">
+                 <p className="text-[10px] font-black uppercase tracking-[0.3em] mb-2 text-violet-700">Đánh giá tổng thể</p>
+                 <h4 className="mb-3 text-2xl font-black text-slate-900">{scoreLabel}</h4>
+                 <div className="mb-4 flex items-center gap-2">
                     {[1, 2, 3, 4, 5].map((s) => (
                       <Star
                         key={s}
                         size={16}
-                        className={s <= Math.round(overall) ? "text-[#FFD600] fill-[#FFD600]" : "text-white/10"}
+                        className={s <= Math.round(overall) ? "text-[#FFD600] fill-[#FFD600]" : "text-slate-200"}
                       />
                     ))}
                  </div>
-                 <p className="text-sm text-zinc-500 italic max-w-sm">"{meeting.feedback?.substring(0, 100)}..."</p>
+                 <p className="max-w-sm text-sm italic text-slate-600">"{meeting.feedback?.substring(0, 100)}..."</p>
               </div>
            </div>
 
@@ -196,12 +196,12 @@ function MenteeProgressModal({
                    <div key={comp.key} className="space-y-3">
                       <div className="flex items-center justify-between">
                          <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-xl flex items-center justify-center font-black text-xs text-white" style={{ background: comp.color }}>{comp.label[0]}</div>
-                            <span className="text-xs font-bold text-white/80">{comp.label}</span>
+                            <div className="flex h-8 w-8 items-center justify-center rounded-xl text-xs font-black text-slate-900" style={{ background: comp.color }}>{comp.label[0]}</div>
+                            <span className="text-xs font-bold text-slate-700">{comp.label}</span>
                          </div>
-                         <span className="text-xs font-black text-white">{comp.value.toFixed(1)}/5.0</span>
+                         <span className="text-xs font-black text-slate-900">{comp.value.toFixed(1)}/5.0</span>
                       </div>
-                      <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
+                      <div className="h-1.5 overflow-hidden rounded-full bg-slate-100">
                          <motion.div
                            initial={{ width: 0 }}
                            animate={{ width: `${(comp.value / 5) * 100}%` }}
@@ -223,7 +223,7 @@ function MenteeProgressModal({
                  </h6>
                  <ul className="space-y-3">
                     {meeting.strengths?.map((s, i) => (
-                      <li key={i} className="text-xs font-medium text-white/70 flex items-start gap-2">
+                      <li key={i} className="flex items-start gap-2 text-xs font-medium text-slate-700">
                          <span className="w-1.5 h-1.5 rounded-full bg-primary-fixed mt-1.5 shrink-0" />
                          {s}
                       </li>
@@ -236,7 +236,7 @@ function MenteeProgressModal({
                  </h6>
                  <ul className="space-y-3">
                     {meeting.improvements?.map((s, i) => (
-                      <li key={i} className="text-xs font-medium text-white/70 flex items-start gap-2">
+                      <li key={i} className="flex items-start gap-2 text-xs font-medium text-slate-700">
                          <span className="w-1.5 h-1.5 rounded-full bg-orange-400 mt-1.5 shrink-0" />
                          {s}
                       </li>
@@ -247,16 +247,18 @@ function MenteeProgressModal({
         </div>
 
         {/* ── Footer ── */}
-        <div className="p-6 border-t border-white/5 bg-black/20 flex items-center justify-between gap-4">
+        <div className="flex items-center justify-between gap-4 border-t border-slate-200 bg-slate-50 p-6">
            <button
+              type="button"
               onClick={() => navigate(`/mentor/meeting-detail/${meeting.id}`)}
-              className="flex-1 px-6 py-4 rounded-2xl bg-white text-black text-[10px] font-black uppercase tracking-widest hover:scale-105 transition-all shadow-xl"
+              className="flex-1 rounded-2xl bg-violet-600 px-6 py-4 text-[10px] font-black uppercase tracking-widest text-white shadow-lg transition-all hover:bg-violet-700"
            >
               Xem báo cáo chi tiết
            </button>
            <button
+              type="button"
               onClick={onClose}
-              className="px-8 py-4 rounded-2xl bg-white/5 border border-white/10 text-[10px] font-black uppercase tracking-widest text-zinc-500 hover:text-white transition-all"
+              className="rounded-2xl border border-slate-200 bg-white px-8 py-4 text-[10px] font-black uppercase tracking-widest text-slate-600 transition-all hover:border-slate-300 hover:text-slate-900"
            >
               Đóng
            </button>
@@ -338,41 +340,41 @@ export function MentorDashboard() {
       <style>{`
         .custom-scrollbar::-webkit-scrollbar { width: 6px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(148,163,184,0.5); border-radius: 10px; }
       `}</style>
-      <div className="relative z-10 mx-auto max-w-7xl p-10 pt-20">
-        <div className="mb-14 flex flex-col md:flex-row md:items-end justify-between gap-8">
+      <div className="relative z-10 mx-auto max-w-7xl px-6 pb-10 pt-16 sm:px-8 sm:pt-20">
+        <div className="mb-10 flex flex-col justify-between gap-6 md:mb-14 md:flex-row md:items-end md:gap-8">
           <div>
-            <h1 className="text-7xl font-black text-white font-headline tracking-tighter mb-4">
-               Xin chào, <span className="text-primary-fixed">{user.name.split(" ")[0]}!</span> 👋
+            <h1 className="mb-3 font-headline text-4xl font-black tracking-tighter text-slate-900 sm:text-5xl md:text-6xl">
+               Xin chào, <span className="text-violet-700">{user.name.split(" ")[0]}!</span> 👋
             </h1>
-            <p className="text-lg font-medium leading-relaxed text-white/55">Bảng điều khiển tối ưu dành cho Mentor của ProInterview</p>
+            <p className="max-w-xl text-base font-medium leading-relaxed text-slate-600 sm:text-lg">Bảng điều khiển tối ưu dành cho Mentor của ProInterview</p>
           </div>
           <div className="flex gap-4">
-              <button onClick={() => navigate("/mentor/schedule")} className="px-8 py-4 rounded-3xl bg-primary-fixed text-black text-xs font-black uppercase tracking-widest hover:scale-105 transition-all shadow-[0_10px_40px_rgba(180,245,0,0.3)] flex items-center gap-2">
+              <button type="button" onClick={() => navigate("/mentor/schedule")} className="flex items-center gap-2 rounded-3xl bg-gradient-to-r from-[#c4ff47] to-[#8fbc24] px-8 py-4 text-xs font-black uppercase tracking-widest text-[#0a0814] shadow-[0_10px_30px_rgba(196,255,71,0.25)] transition-all hover:brightness-110">
                  <Plus size={18} /> Tạo lịch mới
               </button>
           </div>
         </div>
 
         {/* Vital Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-14">
+        <div className="mb-10 grid grid-cols-1 gap-6 md:mb-14 md:grid-cols-3 md:gap-8">
            {[
              { label: "Tổng buổi mentor", value: stats.totalSessions, sub: `+${stats.thisMonthSessions} tháng này`, icon: Users, color: "#6E35E8" },
              { label: "Lịch hẹn sắp tới", value: stats.upcomingMeetings, sub: "Trong 7 ngày tới", icon: CalendarBlank, color: "#f59e0b" },
              { label: "Doanh thu tạm tính", value: `${(stats.totalEarnings / 1000000).toFixed(1)}M`, sub: "Sẵn sàng rút tiền", icon: CurrencyCircleDollar, color: "#B4F500" }
            ].map((stat, i) => (
-             <div key={i} className="glass-card p-10 group overflow-hidden">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-white/[0.05] to-transparent -translate-y-1/2 translate-x-1/2 rounded-full" />
-                <div className="flex items-center gap-4 mb-8">
-                   <div className="w-12 h-12 rounded-2xl flex items-center justify-center border border-white/10 bg-white/5 group-hover:bg-white/10 transition-all">
+             <div key={i} className="glass-card group relative overflow-hidden bg-gradient-to-br from-white to-slate-50 p-8 sm:p-10">
+                <div className="absolute right-0 top-0 h-32 w-32 translate-x-1/2 -translate-y-1/2 rounded-full bg-gradient-to-br from-violet-100/80 to-transparent" />
+                <div className="mb-6 flex items-center gap-4">
+                   <div className="flex h-12 w-12 items-center justify-center rounded-2xl border-2 border-slate-200 bg-white shadow-sm transition-all group-hover:border-violet-200">
                       <stat.icon size={22} style={{ color: stat.color }} />
                    </div>
-                   <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/45">{stat.label}</span>
+                   <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">{stat.label}</span>
                 </div>
-                <h3 className="text-5xl font-black text-white tracking-tighter mb-2">{stat.value}</h3>
-                <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-white/45">
-                   <ArrowUpRight size={14} className="text-primary-fixed" /> {stat.sub}
+                <h3 className="mb-2 text-4xl font-black tracking-tighter text-slate-900 sm:text-5xl">{stat.value}</h3>
+                <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-slate-500">
+                   <ArrowUpRight size={14} className="text-lime-600" /> {stat.sub}
                 </p>
              </div>
            ))}
@@ -388,45 +390,48 @@ export function MentorDashboard() {
                    { label: "Tài chính", desc: "Thu nhập & Rút tiền", icon: CurrencyCircleDollar, path: "/mentor/finance", color: "#B4F500" },
                    { label: "Phân tích", desc: "Hiệu suất Mentees", icon: ChartLine, path: "/mentor/analytics", color: "#f59e0b" }
                  ].map((nav, i) => (
-                   <button key={i} onClick={() => navigate(nav.path)} className="glass-card p-6 flex items-center gap-5 group text-left">
-                      <div className="w-14 h-14 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center group-hover:scale-110 transition-transform shadow-inner">
+                   <button type="button" key={i} onClick={() => navigate(nav.path)} className="glass-card group flex items-center gap-5 bg-white p-6 text-left">
+                      <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 transition-transform group-hover:scale-105">
                          <nav.icon size={24} style={{ color: nav.color }} />
                       </div>
                       <div>
-                         <p className="text-xs font-black text-white uppercase tracking-widest mb-1">{nav.label}</p>
-                         <p className="text-[10px] font-bold uppercase tracking-widest text-white/45">{nav.desc}</p>
+                         <p className="mb-1 text-xs font-black uppercase tracking-widest text-slate-900">{nav.label}</p>
+                         <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500">{nav.desc}</p>
                       </div>
                    </button>
                  ))}
               </div>
 
               {/* Upcoming Detailed Feed */}
-              <div className="glass-card p-10">
-                 <div className="flex items-center justify-between mb-10">
-                    <h4 className="text-2xl font-black text-white font-headline tracking-tight">Lịch phỏng vấn sắp tới</h4>
-                    <button onClick={() => navigate("/mentor/schedule")} className="text-[10px] font-black text-primary-fixed uppercase tracking-widest hover:underline">Xem tất cả lịch trình</button>
+              <div className="glass-card bg-white p-8 sm:p-10">
+                 <div className="mb-8 flex items-center justify-between sm:mb-10">
+                    <h4 className="font-headline text-xl font-black tracking-tight text-slate-900 sm:text-2xl">Lịch phỏng vấn sắp tới</h4>
+                    <button type="button" onClick={() => navigate("/mentor/schedule")} className="text-[10px] font-black uppercase tracking-widest text-violet-700 hover:underline">Xem tất cả lịch trình</button>
                  </div>
                  
                  <div className="space-y-4">
                     {upcomingMeetings.map((meeting) => (
                       <div key={meeting.id} 
+                           role="button"
+                           tabIndex={0}
                            onClick={() => navigate(`/mentor/meeting-detail/${meeting.id}`)}
-                           className="flex items-center justify-between p-6 rounded-[32px] bg-white/[0.02] border border-white/5 hover:bg-white/[0.05] transition-all group cursor-pointer">
-                         <div className="flex items-center gap-6">
-                            <img src={meeting.mentee.avatar} className="w-14 h-14 rounded-2xl object-cover ring-2 ring-white/5" />
+                           onKeyDown={(e) => { if (e.key === "Enter") navigate(`/mentor/meeting-detail/${meeting.id}`); }}
+                           className="group flex cursor-pointer items-center justify-between rounded-[28px] border border-slate-200 bg-slate-50/80 p-5 transition-all hover:border-violet-200 hover:bg-violet-50/40 sm:rounded-[32px] sm:p-6">
+                         <div className="flex items-center gap-4 sm:gap-6">
+                            <img src={meeting.mentee.avatar} alt="" className="h-12 w-12 rounded-2xl object-cover ring-2 ring-slate-200 sm:h-14 sm:w-14" />
                             <div>
-                               <h5 className="text-lg font-black text-white group-hover:text-primary-fixed transition-colors">{meeting.mentee.name}</h5>
-                               <p className="text-[10px] font-black text-zinc-600 uppercase tracking-widest">{meeting.position} @ {meeting.company}</p>
+                               <h5 className="text-base font-black text-slate-900 transition-colors group-hover:text-violet-800 sm:text-lg">{meeting.mentee.name}</h5>
+                               <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">{meeting.position} @ {meeting.company}</p>
                             </div>
                          </div>
-                         <div className="flex items-center gap-10">
-                            <div className="text-right hidden sm:block">
-                               <p className="text-xs font-black text-white">{meeting.scheduledTime}</p>
-                               <p className="text-[10px] font-bold uppercase tracking-widest text-white/40">
+                         <div className="flex items-center gap-6 sm:gap-10">
+                            <div className="hidden text-right sm:block">
+                               <p className="text-xs font-black text-slate-900">{meeting.scheduledTime}</p>
+                               <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500">
                                  {formatMeetingDate(meeting.scheduledDate, meeting.scheduledTime)}
                                </p>
                             </div>
-                            <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-primary-fixed opacity-0 group-hover:opacity-100 transition-all">
+                            <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-violet-600 opacity-0 transition-all group-hover:opacity-100">
                                <ArrowRight size={18} />
                             </div>
                          </div>
@@ -438,47 +443,50 @@ export function MentorDashboard() {
 
            {/* Sidebar: Recent Activity & Peer Review */}
            <div className="lg:col-span-4 space-y-10">
-              <div className="glass-card p-10">
-                 <h4 className="mb-8 flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.2em] text-white/45">
-                    <CheckCircle size={14} className="text-primary-fixed" /> Hoàn thành gần đây
+              <div className="glass-card bg-white p-8 sm:p-10">
+                 <h4 className="mb-6 flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 sm:mb-8">
+                    <CheckCircle size={14} className="text-lime-600" /> Hoàn thành gần đây
                  </h4>
-                 <div className="space-y-6">
+                 <div className="space-y-5">
                     {recentCompleted.length === 0 && (
-                      <p className="text-xs font-medium text-zinc-500">Chưa có buổi hoàn thành gần đây.</p>
+                      <p className="text-xs font-medium text-slate-500">Chưa có buổi hoàn thành gần đây.</p>
                     )}
                     {recentCompleted.map((meeting) => (
                       <div key={meeting.id} 
+                           role="button"
+                           tabIndex={0}
                            onClick={() => setSelectedMeeting(meeting)}
-                           className="flex items-center gap-4 group cursor-pointer">
-                         <img src={meeting.mentee.avatar} className="w-10 h-10 rounded-xl object-cover grayscale group-hover:grayscale-0 transition-all" />
-                         <div className="flex-1">
-                            <p className="text-xs font-black text-white mb-0.5 tracking-tight">{meeting.mentee.name}</p>
-                            <p className="text-[9px] font-bold uppercase tracking-widest text-white/45">
+                           onKeyDown={(e) => { if (e.key === "Enter") setSelectedMeeting(meeting); }}
+                           className="group flex cursor-pointer items-center gap-4">
+                         <img src={meeting.mentee.avatar} alt="" className="h-10 w-10 rounded-xl object-cover grayscale transition-all group-hover:grayscale-0" />
+                         <div className="min-w-0 flex-1">
+                            <p className="mb-0.5 text-xs font-black tracking-tight text-slate-900">{meeting.mentee.name}</p>
+                            <p className="text-[9px] font-bold uppercase tracking-widest text-slate-500">
                               {formatMeetingDate(meeting.scheduledDate, meeting.scheduledTime)}
                             </p>
                          </div>
-                         <div className="flex items-center gap-1.5 text-primary-fixed">
+                         <div className="flex shrink-0 items-center gap-1.5 text-violet-700">
                             <Star size={12} className="fill-current" />
                             <span className="text-xs font-black">{meeting.overallScore?.toFixed(1)}</span>
                          </div>
                       </div>
                     ))}
                  </div>
-                 <button onClick={() => navigate("/mentor/analytics")} className="w-full mt-10 py-4 rounded-2xl bg-white/5 border border-white/10 text-[10px] font-black uppercase tracking-widest hover:bg-white/10 transition-all">
+                 <button type="button" onClick={() => navigate("/mentor/analytics")} className="mt-8 w-full rounded-2xl border border-slate-200 bg-slate-50 py-4 text-[10px] font-black uppercase tracking-widest text-slate-700 transition-all hover:bg-slate-100 sm:mt-10">
                     Xem toàn bộ lịch sử
                  </button>
               </div>
 
               {/* Peer Review Call-to-action */}
-              <div className="glass-card p-10 overflow-hidden group">
-                 <div className="absolute top-0 right-0 p-8 rotate-12 opacity-10 group-hover:rotate-0 transition-all duration-700">
-                    <SealCheck size={120} className="text-secondary" />
+              <div className="glass-card group relative overflow-hidden border-violet-200 bg-gradient-to-br from-violet-50 to-white p-8 sm:p-10">
+                 <div className="pointer-events-none absolute right-0 top-0 p-6 opacity-[0.12] transition-all duration-700 group-hover:rotate-0 sm:p-8" style={{ transform: "rotate(12deg)" }}>
+                    <SealCheck size={120} className="text-violet-500" />
                  </div>
-                 <p className="text-[10px] font-black text-secondary uppercase tracking-[0.3em] mb-4">Peer Review</p>
-                 <h4 className="text-2xl font-black text-white mb-4 tracking-tighter">Tham gia Đánh giá Khóa học</h4>
-                 <p className="text-xs text-zinc-600 font-medium mb-8 leading-relaxed">Góp ý nội dung cho đồng nghiệp và nhận point thưởng từ ProInterview.</p>
-                 <button onClick={() => navigate("/mentor/peer-review")} className="flex items-center gap-2 text-xs font-black text-white hover:gap-4 transition-all">
-                    Bắt đầu ngay <ArrowRight size={18} className="text-primary-fixed" />
+                 <p className="relative mb-3 text-[10px] font-black uppercase tracking-[0.3em] text-violet-700">Peer Review</p>
+                 <h4 className="relative mb-3 text-xl font-black tracking-tighter text-slate-900 sm:text-2xl">Tham gia Đánh giá Khóa học</h4>
+                 <p className="relative mb-6 text-xs font-medium leading-relaxed text-slate-600 sm:mb-8">Góp ý nội dung cho đồng nghiệp và nhận point thưởng từ ProInterview.</p>
+                 <button type="button" onClick={() => navigate("/mentor/peer-review")} className="relative flex items-center gap-2 text-xs font-black text-violet-800 transition-all hover:gap-4">
+                    Bắt đầu ngay <ArrowRight size={18} className="text-lime-700" />
                  </button>
               </div>
            </div>
