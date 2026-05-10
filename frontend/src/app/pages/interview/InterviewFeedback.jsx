@@ -32,7 +32,9 @@ import { getPlans } from "../../utils/auth";
 const IS = { strokeWidth: 1.75, strokeLinecap: "round", strokeLinejoin: "round" };
 
 const FREE_LIMIT = 3;
-const QUESTIONS_FEEDBACK = [
+
+/** Dùng chung InterviewRoom (lưu lịch sử) — điểm mẫu khớp trang feedback */
+export const QUESTIONS_FEEDBACK = [
   {
     q: "Hãy giới thiệu về bản thân và điểm mạnh nổi bật nhất của bạn?",
     scores: { clarity: 4, structure: 4, relevance: 4.5, credibility: 3.5 },

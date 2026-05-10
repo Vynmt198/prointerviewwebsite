@@ -19,7 +19,10 @@ import {
   Star,
 } from "lucide-react";
 import { MOCK_INTERVIEW_QUESTIONS } from "../../data/mockData";
-import { getPlans } from "../../utils/auth";
+import { getPlans, hasAuthCredentials } from "../../utils/auth";
+import { addInterviewRecord } from "../../utils/history";
+import { createInterviewSession, completeInterviewSession } from "../../utils/interviewsApi";
+import { QUESTIONS_FEEDBACK } from "./InterviewFeedback";
 
 /* ── Session storage key ─────────────────────────────────── */
 const TRANSCRIPT_KEY = "prointerview_transcripts";
@@ -63,6 +66,40 @@ const HR_TITLES = {
   male: "HR AI Nam · ProInterview",
   female: "HR AI Nữ · ProInterview",
 };
+
+function interviewMetaFromLocationState(state) {
+  if (!state || typeof state !== "object") return { position: "Phỏng vấn AI", company: "—" };
+  if (state.form?.position) {
+    return {
+      position: String(state.form.position),
+      company: state.form.company ? String(state.form.company) : "—",
+    };
+  }
+  if (state.latestCV?.position) {
+    return {
+      position: String(state.latestCV.position),
+      company: state.latestCV.company ? String(state.latestCV.company) : "—",
+    };
+  }
+  if (state.storedCV?.position) {
+    return {
+      position: String(state.storedCV.position),
+      company: state.storedCV.company ? String(state.storedCV.company) : "—",
+    };
+  }
+  return { position: "Phỏng vấn AI", company: "—" };
+}
+
+function aggregateScoresFromFeedbackSlice(slice) {
+  if (!slice.length) return { clarity: 0, structure: 0, relevance: 0, credibility: 0, overall: 0 };
+  const keys = ["clarity", "structure", "relevance", "credibility"];
+  const scores = {};
+  for (const k of keys) {
+    scores[k] = slice.reduce((s, q) => s + (q.scores?.[k] ?? 0), 0) / slice.length;
+  }
+  const overall = slice.reduce((s, q) => s + (q.overall ?? 0), 0) / slice.length;
+  return { ...scores, overall };
+}
 
 /* ── Tất cả 5 câu hỏi ───────────────────────────────────── */
 const QUESTIONS = MOCK_INTERVIEW_QUESTIONS;
@@ -524,12 +561,47 @@ export default function InterviewRoom() {
     return updated;
   };
 
-  const goToFeedback = (transcripts) => {
+  const goToFeedback = async (transcripts) => {
     isNavigatingRef.current = true;
     isListeningRef.current = false;
     recognitionRef.current?.abort();
     clearInterval(timerRef.current);
     sessionStorage.setItem(TRANSCRIPT_KEY, JSON.stringify(transcripts));
+
+    if (hasAuthCredentials()) {
+      try {
+        const created = await createInterviewSession(hrGender);
+        if (created.success && created.sessionId) {
+          await completeInterviewSession(created.sessionId);
+        }
+      } catch {
+        /* vẫn lưu local + chuyển trang */
+      }
+    }
+
+    const { position, company } = interviewMetaFromLocationState(location.state);
+    const answered = transcripts.filter((t) => t && String(t).trim()).length;
+    const n = Math.min(QUESTIONS_FEEDBACK.length, Math.max(1, answered > 0 ? answered : 1));
+    const slice = QUESTIONS_FEEDBACK.slice(0, n);
+    const agg = aggregateScoresFromFeedbackSlice(slice);
+    const durationMin = Math.max(1, Math.round(timerSeconds / 60));
+
+    addInterviewRecord({
+      id: `ai-${Date.now()}`,
+      type: "ai",
+      date: new Date().toISOString().slice(0, 10),
+      position,
+      company,
+      scores: {
+        clarity: Math.round(agg.clarity * 10) / 10,
+        structure: Math.round(agg.structure * 10) / 10,
+        relevance: Math.round(agg.relevance * 10) / 10,
+        credibility: Math.round(agg.credibility * 10) / 10,
+      },
+      overall: Math.round(agg.overall * 10) / 10,
+      duration: durationMin,
+    });
+
     navigate("/interview/feedback");
   };
 

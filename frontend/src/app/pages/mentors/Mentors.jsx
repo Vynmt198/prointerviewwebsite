@@ -261,20 +261,20 @@ export function Mentors() {
           background-image: linear-gradient(rgba(148,71,255,0.16) 1px,transparent 1px),linear-gradient(90deg,rgba(148,71,255,0.16) 1px,transparent 1px) !important;
         }
       `}</style>
-      <header className="relative z-10 pb-4 pt-10 sm:pb-4 sm:pt-12">
+      <header className="relative z-10 pb-2 pt-8 sm:pb-4 sm:pt-10">
         <div className="relative z-10 mx-auto max-w-7xl px-6 sm:px-8">
-          <div className="w-full rounded-[28px] border border-violet-200/75 bg-[#f4f2ff]/95 px-6 py-7 shadow-[0_18px_44px_rgba(76,29,149,0.1)] sm:px-8 sm:py-8">
+          <div className="mb-8">
           <div className="mb-4 flex items-center gap-3">
             <Users className="size-5 text-[#c4ff47]" />
             <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Mentor 1-1</span>
           </div>
-          <h1 className="mb-4 max-w-4xl text-3xl font-black leading-[1.05] tracking-tight text-slate-900 md:text-5xl">
+          <h1 className="mb-4 max-w-4xl text-3xl font-black leading-[1.08] tracking-tight text-slate-900 sm:text-4xl md:text-5xl">
             Tìm Mentor{" "}
             <span className="text-[#6E35E8]">
               phù hợp.
             </span>
           </h1>
-          <p className="mb-8 max-w-2xl text-sm font-semibold leading-relaxed text-slate-600 sm:text-base">
+          <p className="mb-8 max-w-2xl text-base font-semibold leading-relaxed text-slate-600 sm:text-lg">
             Đặt lịch phỏng vấn 1-1 với các HR/Manager từ Shopee, Grab, VNG và 200+ công ty hàng đầu
           </p>
           <div className="flex flex-wrap gap-6">
@@ -284,12 +284,12 @@ export function Mentors() {
               { icon: SealCheck, value: "4.8★", label: "Điểm hài lòng trung bình" },
             ].map((s, i) => (
               <div key={i} className="flex items-center gap-2">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/[0.12]">
-                  <s.icon className="h-4 w-4 text-white" />
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white shadow-sm">
+                  <s.icon className="h-4 w-4 text-violet-700" />
                 </div>
                 <div>
                   <p className="text-sm font-black text-slate-900">{s.value}</p>
-                  <p className="text-xs text-white/55">{s.label}</p>
+                  <p className="text-xs text-slate-500">{s.label}</p>
                 </div>
               </div>
             ))}

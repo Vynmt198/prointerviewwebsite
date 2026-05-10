@@ -1,39 +1,38 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router";
 import { motion, AnimatePresence } from "motion/react";
-import {
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-  Area,
-  AreaChart,
-  CartesianGrid,
-  Radar,
-  RadarChart,
-  PolarGrid,
-  PolarAngleAxis,
-} from "recharts";
-import {
-  Mic,
-  FileText,
-  Zap,
-  Flame,
-  ArrowRight,
-  Calendar,
-  BrainCircuit,
-  Target,
-  Trophy,
-  XCircle,
-} from "lucide-react";
-import { getUser, getPlans, isLoggedIn } from "../../utils/auth";
+import { getUser, isLoggedIn } from "../../utils/auth";
 import { getCVAnalysisHistory, getStoredInterviewHistory } from "../../utils/history";
 import { toast } from "sonner";
 import { getAllBookings, parseDateMs } from "../../utils/bookings";
 import { listBookings, cancelBooking } from "../../utils/bookingsApi";
 import { fetchDashboardStats } from "../../utils/dashboardApi";
 import { apiBookingToLocal } from "../../utils/bookingMappers";
-import { PROGRESS_DATA, SKILLS_DATA } from "../../data/mockData";
+import { SKILLS_DATA } from "../../data/mockData";
+import { MentorPageShell } from "../../components/mentor/MentorPageShell";
+
+/** Google Material Symbols Outlined — same family as mock (index.html loads the font). */
+function MsIcon({ name, className = "", filled = false, size = 24, style }) {
+  return (
+    <span
+      className={`material-symbols-outlined ${filled ? "ms-filled" : ""} ${className}`.trim()}
+      style={{
+        fontSize: size,
+        lineHeight: 1,
+        display: "inline-flex",
+        alignItems: "center",
+        justifyContent: "center",
+        fontVariationSettings: filled
+          ? "'FILL' 1, 'wght' 600, 'GRAD' 0, 'opsz' 24"
+          : "'FILL' 0, 'wght' 600, 'GRAD' 0, 'opsz' 24",
+        ...style,
+      }}
+      aria-hidden
+    >
+      {name}
+    </span>
+  );
+}
 
 function getCancellationPolicy(dateStr, timeStr) {
   const [d, m, y] = String(dateStr || "").split("/").map(Number);
@@ -47,6 +46,15 @@ function getCancellationPolicy(dateStr, timeStr) {
   if (hoursUntil <= 24) return { feePercent: 50, refundPercent: 50 };
   return { feePercent: 0, refundPercent: 100 };
 }
+
+/** Nhãn hiển thị cho skill seed (Dashboard). */
+const SKILL_DISPLAY = {
+  Clarity: "Clarity (Mạch lạc)",
+  Structure: "Structure (Cấu trúc)",
+  Relevance: "Relevance (Độ liên quan)",
+  Credibility: "Credibility (Độ tin cậy)",
+  Communication: "Communication (Giao tiếp)",
+};
 
 function getTimeUntilSessionLabel(dateStr, timeStr) {
   const [d, m, y] = String(dateStr || "").split("/").map(Number);
@@ -193,16 +201,14 @@ export function Dashboard() {
     ? user.name.trim().split(/\s+/).map((w) => w[0]).join("").slice(0, 2).toUpperCase()
     : "U";
 
-  const [plans, setPlans] = useState(getPlans());
-  const [interviewHistory, setInterviewHistory] = useState(() => getStoredInterviewHistory());
-  const [cvHistory, setCvHistory] = useState(() => getCVAnalysisHistory());
   const [upcomingSessions, setUpcomingSessions] = useState([]);
   const [cancellingBooking, setCancellingBooking] = useState(null);
+  const [cvHistory, setCvHistory] = useState(() => getCVAnalysisHistory());
+  const [interviewHistory, setInterviewHistory] = useState(() => getStoredInterviewHistory());
   const [serverStats, setServerStats] = useState(null);
   const [statsFetched, setStatsFetched] = useState(false);
 
   const loadData = async () => {
-    setPlans(getPlans());
     setInterviewHistory(getStoredInterviewHistory());
     setCvHistory(getCVAnalysisHistory());
     const all = getAllBookings();
@@ -297,150 +303,82 @@ export function Dashboard() {
       ? Math.max(...cvHistory.map((i) => i.matchScore))
       : 0;
 
-  // Mapping Song ngữ cho Ma trận năng lực
-  const skillMapping = {
-    "Clarity": "Clarity (Mạch lạc)",
-    "Structure": "Structure (Cấu trúc)",
-    "Relevance": "Relevance (Độ liên quan)",
-    "Credibility": "Credibility (Tin cậy)",
-    "Communication": "Communication (Giao tiếp)"
-  };
-
-  const localizedSkillsData = SKILLS_DATA.map(item => ({
-    ...item,
-    skill: skillMapping[item.skill] || item.skill
-  }));
-
-  const CustomTooltip = ({ active, payload, label }) => {
-    if (active && payload && payload.length) {
-      return (
-        <div className="bg-[#1a0d35]/95 backdrop-blur-3xl border border-white/20 p-4 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] border-l-4 border-l-primary-fixed">
-          <p className="text-[10px] uppercase font-black tracking-widest text-zinc-500 mb-2">{label}</p>
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-primary-fixed shadow-[0_0_10px_#c4ff47]"></div>
-            <p className="text-white font-black text-sm">{payload[0].value} <span className="text-[10px] font-normal text-zinc-400">Điểm số</span></p>
-          </div>
-        </div>
-      );
-    }
-    return null;
-  };
+  const skillStrengths = [...SKILLS_DATA].sort((a, b) => b.value - a.value).slice(0, 2);
+  const skillWeaknesses = [...SKILLS_DATA].sort((a, b) => a.value - b.value).slice(0, 2);
 
   return (
-    <div className="relative min-h-screen overflow-x-hidden pb-20 font-sans text-slate-900 selection:bg-[rgba(122,35,229,0.18)] selection:text-slate-900 bg-[#f8f4ff]">
+    <MentorPageShell bottomPad="pb-20">
       <style>{`
-        .glass-card {
-           background: #ffffff;
-           backdrop-filter: none;
-           border-radius: 20px;
-           border: 1px solid rgba(148, 163, 184, 0.28);
-           transition: transform 0.3s ease, border-color 0.25s ease, box-shadow 0.3s ease;
-           position: relative;
-           overflow: hidden;
-           box-shadow: 0 8px 18px rgba(15, 23, 42, 0.06);
+        .material-symbols-outlined {
+          font-family: "Material Symbols Outlined";
+          font-weight: normal;
+          font-style: normal;
+          font-size: 1.5rem;
+          line-height: 1;
+          letter-spacing: normal;
+          text-transform: none;
+          display: inline-block;
+          white-space: nowrap;
+          word-wrap: normal;
+          direction: ltr;
+          font-variation-settings: "FILL" 0, "wght" 600, "GRAD" 0, "opsz" 24;
+          -webkit-font-smoothing: antialiased;
         }
-        .glass-card::before {
-           content: none;
+        .material-symbols-outlined.ms-filled {
+          font-variation-settings: "FILL" 1, "wght" 600, "GRAD" 0, "opsz" 24;
         }
-        .glass-card:hover {
-           border-color: rgba(99, 102, 241, 0.32);
-           transform: translateY(-2px);
-           box-shadow: 0 12px 24px rgba(15, 23, 42, 0.1);
+        @keyframes wave-hand {
+           0%, 100% { transform: rotate(0deg); }
+           20% { transform: rotate(16deg); }
+           40% { transform: rotate(-10deg); }
+           60% { transform: rotate(14deg); }
+           80% { transform: rotate(-6deg); }
         }
-        .glow-halo {
-           position: relative;
-           display: flex;
-           align-items: center;
-           justify-content: center;
-        }
-        .glow-halo::after {
-           content: none;
-        }
-        @keyframes pulse-halo {
-           0%, 100% { transform: scale(1); opacity: 0.55; }
-           50% { transform: scale(1.15); opacity: 0.95; }
-        }
-        @keyframes float-y {
-           0%, 100% { transform: translateY(0); }
-           50% { transform: translateY(-8px); }
-        }
-        @keyframes shimmer-bg {
-           0% { opacity: 0.4; transform: translate(0,0) scale(1); }
-           50% { opacity: 0.7; transform: translate(2%, -2%) scale(1.05); }
-           100% { opacity: 0.4; transform: translate(0,0) scale(1); }
-        }
-        .font-headline {
-          letter-spacing: -0.045em;
-          text-shadow: 0 2px 24px rgba(0,0,0,0.35);
-        }
-        .tech-dot {
-          width: 8px;
-          height: 8px;
-          border-radius: 50%;
-          background: #64748b;
-          box-shadow: none;
-          animation: none;
-        }
-        .sticker-badge {
-          transform: rotate(-2deg);
-          box-shadow: 4px 4px 0 rgba(0,0,0,0.35);
-        }
-        .pricing-grid {
-          position: fixed;
-          inset: 0;
-          z-index: -2;
-          pointer-events: none;
-          opacity: 1;
-          background-image:
-            linear-gradient(rgba(148,71,255,0.06) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(148,71,255,0.06) 1px, transparent 1px);
-          background-size: 64px 64px;
+        .wave-emoji {
+          display: inline-block;
+          transform-origin: 70% 70%;
+          animation: wave-hand 2.2s ease-in-out infinite;
         }
       `}</style>
 
-      <div className="pricing-grid" aria-hidden />
-      <div className="fixed inset-0 pointer-events-none -z-[3]" style={{ background: "#f8f4ff" }} />
-      <div className="fixed top-[-22%] left-[-12%] w-[760px] h-[760px] rounded-full pointer-events-none -z-0 bg-[#d4ff00]/48 blur-[135px]" />
-      <div className="fixed bottom-[-22%] right-[-10%] w-[820px] h-[820px] rounded-full pointer-events-none -z-0 bg-[#9447ff]/34 blur-[150px]" />
-      <div className="fixed left-0 right-0 top-[38%] h-[180px] pointer-events-none -z-0" style={{ background: "linear-gradient(90deg, rgba(212,255,0,0.14) 0%, rgba(148,71,255,0.22) 55%, rgba(148,71,255,0.1) 100%)", filter: "blur(32px)" }} />
-
-      <header className="relative pt-3 pb-4">
-        <div
-          className="absolute inset-0 opacity-[0.03]"
-          style={{
-            backgroundImage:
-              "linear-gradient(rgba(255,255,255,0.55) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.45) 1px,transparent 1px)",
-            backgroundSize: "44px 44px",
-          }}
-        />
-        <div className="max-w-7xl mx-auto px-6 sm:px-8">
-          <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-5 rounded-[28px] border border-slate-200 bg-white/80 backdrop-blur-sm px-5 sm:px-6 py-4 sm:py-5 shadow-[0_12px_24px_rgba(15,23,42,0.06)]">
+      <div className="relative z-10 mx-auto max-w-7xl px-6 pb-10 pt-2 sm:px-8 sm:pt-3">
+        <div className="mb-10 flex flex-col justify-between gap-6 md:mb-14 md:flex-row md:items-end md:gap-8">
           <motion.div
             initial={{ opacity: 0, x: -24 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ type: "spring", stiffness: 120, damping: 18 }}
-            className="flex items-center gap-4 sm:gap-6"
+            className="flex min-w-0 flex-1 items-center gap-4 sm:gap-6"
           >
-            <div className="relative group">
+            <div className="relative shrink-0">
               <div className="relative flex h-[4.6rem] w-[4.6rem] items-center justify-center overflow-hidden rounded-[20px] border-[3px] border-[#7a23e5] bg-[#f8f5ff] text-2xl font-black text-[#7a23e5] shadow-[0_10px_24px_rgba(122,35,229,0.25)] sm:h-20 sm:w-20 sm:text-3xl">
                 <span className="relative z-10 tracking-tight">{initials}</span>
               </div>
             </div>
-            <div>
-              <h1 className="text-3xl sm:text-4xl font-black tracking-tight leading-[1.08]">
+            <div className="min-w-0">
+              <h1 className="mb-2 font-headline text-4xl font-black tracking-tighter text-slate-900 sm:text-5xl md:text-6xl break-words">
                 <span className="text-slate-900">Chào, </span>
-                <span className="text-[#7a23e5]">{fullName}</span>
-                <span className="text-slate-900">!</span>
+                <span className="text-violet-700">{fullName}</span>
+                <span className="text-slate-900">!</span>{" "}
+                <span className="wave-emoji ml-0.5" aria-hidden>
+                  👋
+                </span>
               </h1>
-              <p className="mt-1 text-sm font-semibold text-slate-600 max-w-md">
+              <p className="max-w-xl text-base font-medium leading-relaxed text-slate-600 sm:text-lg">
                 Sẵn sàng chinh phục mục tiêu phỏng vấn hôm nay?
               </p>
             </div>
           </motion.div>
 
-          <div className="w-full max-w-[330px] rounded-[22px] bg-white border border-lime-200 p-4.5 shadow-[0_10px_20px_rgba(15,23,42,0.08)]">
-            <p className="text-[10px] font-black uppercase tracking-[0.14em] text-slate-500">Learning streak</p>
-            <p className="mt-1.5 text-[2rem] font-black text-slate-900">12 Days</p>
+          <div className="w-full max-w-[330px] shrink-0 rounded-[22px] border border-lime-200 bg-white p-4 shadow-[0_10px_20px_rgba(15,23,42,0.08)] sm:p-5 md:w-[min(100%,330px)]">
+            <div className="flex justify-between items-start gap-3">
+              <div className="min-w-0">
+                <p className="text-[10px] font-black uppercase tracking-[0.14em] text-slate-500">Learning streak</p>
+                <p className="mt-1.5 text-[2rem] font-black text-slate-900">12 Days</p>
+              </div>
+              <div className="shrink-0 flex h-11 w-11 items-center justify-center rounded-full border-2 border-amber-300/90 bg-amber-100 shadow-sm">
+                <MsIcon name="local_fire_department" filled size={24} className="text-amber-800" />
+              </div>
+            </div>
             <p className="text-xs text-slate-500 mt-1">Giữ nhịp luyện tập liên tục</p>
             <div className="mt-4 h-2 rounded-full bg-slate-100 overflow-hidden">
               <div className="h-full w-3/4 bg-gradient-to-r from-lime-300 to-violet-400" />
@@ -448,17 +386,20 @@ export function Dashboard() {
             <p className="text-xs text-slate-500 mt-2">Còn 3 ngày để đạt mốc mới.</p>
           </div>
         </div>
-        </div>
-      </header>
 
-      <main className="relative z-10 p-6 sm:p-8 max-w-7xl mx-auto mt-0">
-        <div className="grid grid-cols-12 gap-8 lg:gap-10">
-          <div className="col-span-12 lg:col-span-8 space-y-10 lg:space-y-12">
-            <div className="glass-card p-7 sm:p-8 bg-gradient-to-br from-white to-slate-50 border-slate-200 h-[300px] lg:h-[320px] flex flex-col overflow-hidden">
-               <div className="flex items-center justify-between mb-4">
+        <div className="grid grid-cols-12 gap-8 lg:gap-10 items-start">
+          <div className="col-span-12 lg:col-span-8 space-y-10">
+            <div
+              className={`glass-card p-8 sm:p-10 bg-gradient-to-br from-white to-slate-50 border-slate-200 flex flex-col overflow-hidden ${
+                upcomingSessions.length === 0
+                  ? "min-h-0 h-auto"
+                  : "h-[300px] lg:h-[320px]"
+              }`}
+            >
+               <div className="flex items-center justify-between mb-3">
                   <h3 className="text-sm font-black text-slate-900 uppercase tracking-[0.14em] flex items-center gap-3">
-                     <div className="w-8 h-8 rounded-xl bg-secondary/20 flex items-center justify-center text-secondary">
-                        <Calendar size={18} />
+                     <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border-2 border-violet-300/90 bg-violet-100 shadow-sm">
+                        <MsIcon name="calendar_month" size={20} className="text-violet-700" />
                      </div>
                      Lịch trình hành trình
                   </h3>
@@ -469,11 +410,15 @@ export function Dashboard() {
                   )}
                </div>
 
-               <div className="space-y-4 relative flex-1 overflow-y-auto pr-1">
+               <div
+                 className={`space-y-4 relative overflow-y-auto pr-1 ${
+                   upcomingSessions.length === 0 ? "" : "flex-1 min-h-0"
+                 }`}
+               >
                  {upcomingSessions.length === 0 ? (
-                    <div className="py-16 text-center border-2 border-dashed border-slate-200 rounded-[40px] bg-slate-50/70">
-                       <div className="w-16 h-16 bg-slate-200 rounded-full flex items-center justify-center mx-auto mb-6 opacity-80">
-                          <Calendar size={32} />
+                    <div className="py-8 sm:py-9 text-center border-2 border-dashed border-slate-200 rounded-[28px] bg-slate-50/70">
+                       <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full border-2 border-slate-300/90 bg-slate-100 shadow-sm">
+                          <MsIcon name="event_busy" size={32} className="text-slate-700" />
                        </div>
                        <p className="text-zinc-500 text-[10px] font-black uppercase tracking-[0.3em] leading-loose">
                           Sẵn sàng vận hành<br/>
@@ -525,10 +470,10 @@ export function Dashboard() {
                             </button>
                             <button 
                               onClick={() => setCancellingBooking(s)}
-                              className="w-10 h-10 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-400 hover:bg-red-500/10 hover:border-red-500/20 hover:text-red-400 transition-all"
+                              className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-red-200 bg-red-50 transition-all hover:border-red-400 hover:bg-red-100"
                               title="Hủy lịch hẹn (không hoàn tiền)"
                             >
-                               <XCircle size={18} />
+                               <MsIcon name="cancel" size={22} className="text-red-700" />
                             </button>
                          </div>
                        )}
@@ -543,13 +488,13 @@ export function Dashboard() {
                )}
             </div>
 
-            <div className="space-y-3">
-              <p className="text-[11px] font-black text-slate-700 px-1">Số liệu từ lịch sử trên máy bạn.</p>
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 items-stretch">
+            <div className="space-y-2 mt-1">
+              <p className="text-[11px] font-black text-slate-700 px-1 leading-tight">Số liệu từ lịch sử trên máy bạn.</p>
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 items-stretch">
                 <LushMetric
                   label="Phiên phỏng vấn AI"
                   value={totalInterviews}
-                  icon={Mic}
+                  icon="mic"
                   accent="violet"
                   color="#a78bfa"
                   caption="Số buổi PV thử với AI đã hoàn thành và được lưu."
@@ -557,7 +502,7 @@ export function Dashboard() {
                 <LushMetric
                   label="Điểm trung bình"
                   value={avgStar}
-                  icon={Target}
+                  icon="track_changes"
                   accent="lime"
                   color="#84cc16"
                   caption="TB điểm AI chấm (≈0–5) qua các phiên đã lưu."
@@ -565,7 +510,7 @@ export function Dashboard() {
                 <LushMetric
                   label="Lượt phân tích CV"
                   value={totalCVAnalyses}
-                  icon={FileText}
+                  icon="description"
                   accent="cyan"
                   color="#06b6d4"
                   caption="Số lần chạy phân tích CV so với JD."
@@ -573,7 +518,7 @@ export function Dashboard() {
                 <LushMetric
                   label="Khớp JD (cao nhất)"
                   value={totalCVAnalyses === 0 ? "—" : `${bestMatch}%`}
-                  icon={BrainCircuit}
+                  icon="psychology"
                   accent="sunset"
                   color="#f97316"
                   caption="% khớp JD cao nhất trong các lần phân tích; chưa có lượt → “—”."
@@ -582,19 +527,25 @@ export function Dashboard() {
             </div>
 
             {/* INSIGHTS (Removed AI Advice as requested) */}
-            <div className="glass-card p-10 border-slate-200 bg-white">
-               <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+            <div className="glass-card p-8 sm:p-10 border-slate-200 bg-white">
+               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
                   <div className="space-y-4">
                      <h4 className="text-[10px] font-black text-secondary tracking-widest uppercase flex items-center gap-2">
                         <div className="w-1 h-3 bg-secondary"></div> Thế mạnh hiện tại
                      </h4>
                      <ul className="space-y-3">
-                        <li className="flex items-center gap-3 text-sm font-bold text-slate-800 group hover:text-secondary transition-colors cursor-default">
-                           <div className="w-1.5 h-1.5 rounded-full bg-secondary"></div> Clarity (Mạch lạc)
-                        </li>
-                        <li className="flex items-center gap-3 text-sm font-bold text-slate-800 group hover:text-secondary transition-colors cursor-default">
-                           <div className="w-1.5 h-1.5 rounded-full bg-secondary"></div> Relevance (Độ liên quan)
-                        </li>
+                        {skillStrengths.map((s) => (
+                          <li
+                            key={s.id}
+                            className="flex items-center gap-3 text-sm font-bold text-slate-800 group hover:text-secondary transition-colors cursor-default"
+                          >
+                            <div className="w-1.5 h-1.5 rounded-full bg-secondary shrink-0" />
+                            <span className="min-w-0 flex-1">
+                              {SKILL_DISPLAY[s.skill] || s.skill}{" "}
+                              <span className="text-zinc-500 font-semibold">({s.value}%)</span>
+                            </span>
+                          </li>
+                        ))}
                      </ul>
                   </div>
                   <div className="space-y-4">
@@ -602,20 +553,26 @@ export function Dashboard() {
                         <div className="w-1 h-3 bg-primary-fixed"></div> Điểm cần cải thiện
                      </h4>
                      <ul className="space-y-3">
-                        <li className="flex items-center gap-3 text-sm font-bold text-slate-800 group hover:text-primary-fixed transition-colors cursor-default">
-                           <div className="w-1.5 h-1.5 rounded-full bg-primary-fixed"></div> Cấu trúc câu chuyện còn lỏng
-                        </li>
-                        <li className="flex items-center gap-3 text-sm font-bold text-slate-800 group hover:text-primary-fixed transition-colors cursor-default">
-                           <div className="w-1.5 h-1.5 rounded-full bg-primary-fixed"></div> Giao tiếc ánh mắt / nhịp nói
-                        </li>
+                        {skillWeaknesses.map((s) => (
+                          <li
+                            key={s.id}
+                            className="flex items-center gap-3 text-sm font-bold text-slate-800 group hover:text-primary-fixed transition-colors cursor-default"
+                          >
+                            <div className="w-1.5 h-1.5 rounded-full bg-primary-fixed shrink-0" />
+                            <span className="min-w-0 flex-1">
+                              {SKILL_DISPLAY[s.skill] || s.skill}{" "}
+                              <span className="text-zinc-500 font-semibold">({s.value}%)</span>
+                            </span>
+                          </li>
+                        ))}
                      </ul>
                   </div>
                </div>
             </div>
           </div>
 
-          <aside className="col-span-12 lg:col-span-4 space-y-8 lg:space-y-10">
-            <div className="space-y-5">
+          <aside className="col-span-12 lg:col-span-4 space-y-10">
+            <div className="space-y-4">
                <button
                   type="button"
                   onClick={() => navigate("/interview")}
@@ -637,18 +594,39 @@ export function Dashboard() {
                     style={{ background: "#bfff3f", color: "#0f172a" }}
                   >
                     Bắt đầu phiên
-                    <ArrowRight size={16} />
+                    <MsIcon
+                      name="arrow_forward"
+                      size={22}
+                      className="text-[#0f172a]"
+                      style={{ fontVariationSettings: "'FILL' 0, 'wght' 700, 'GRAD' 0, 'opsz' 24" }}
+                    />
                   </span>
                </button>
                
                <div className="grid grid-cols-2 gap-4">
-                  <LushActionTile title="CV × JD" desc="So khớp & gợi ý chỉnh CV." onClick={() => navigate("/cv-analysis")} icon={FileText} accent="#22d3ee" />
-                  <LushActionTile title="Book mentor" desc="Slot 1-1 với người trong nghề." onClick={() => navigate("/mentors")} icon={Calendar} accent="#c4ff47" />
+                  <LushActionTile
+                    title="Phân tích CV"
+                    desc="So khớp CV với JD và gợi ý chỉnh sửa."
+                    onClick={() => navigate("/cv-analysis")}
+                    icon="description"
+                    accent="#22d3ee"
+                    iconWellClass="rounded-full border-2 border-cyan-300/90 bg-cyan-50 shadow-sm"
+                    iconGlyphClass="text-cyan-900"
+                  />
+                  <LushActionTile
+                    title="Tìm Mentor"
+                    desc="Đặt lịch 1-1 với mentor trong nghề."
+                    onClick={() => navigate("/mentors")}
+                    icon="person_search"
+                    accent="#c4ff47"
+                    iconWellClass="rounded-full border-2 border-violet-300/90 bg-violet-100 shadow-sm"
+                    iconGlyphClass="text-violet-700"
+                  />
                </div>
             </div>
           </aside>
         </div>
-      </main>
+    </div>
 
       <AnimatePresence>
         {cancellingBooking && (
@@ -659,34 +637,46 @@ export function Dashboard() {
           />
         )}
       </AnimatePresence>
-    </div>
+    </MentorPageShell>
   );
 }
 
-const metricAccentRing = {
-  violet: "from-violet-500/50 to-fuchsia-500/30 ring-fuchsia-400/20",
-  lime: "from-lime-400/50 to-emerald-500/30 ring-lime-300/25",
-  cyan: "from-cyan-400/45 to-sky-500/25 ring-cyan-300/20",
-  sunset: "from-orange-400/50 to-rose-500/30 ring-orange-300/20",
+/** Pastel circle + saturated glyph (same hue), như mock UI. */
+const metricIconPastel = {
+  violet: {
+    well: "rounded-full border-2 border-violet-300/90 bg-violet-100 shadow-sm",
+    glyph: "text-violet-700",
+  },
+  lime: {
+    well: "rounded-full border-2 border-lime-400/80 bg-lime-100 shadow-sm",
+    glyph: "text-emerald-800",
+  },
+  cyan: {
+    well: "rounded-full border-2 border-cyan-300/90 bg-cyan-50 shadow-sm",
+    glyph: "text-cyan-900",
+  },
+  sunset: {
+    well: "rounded-full border-2 border-orange-300/90 bg-orange-100 shadow-sm",
+    glyph: "text-orange-800",
+  },
 };
 
-function LushMetric({ label, value, icon: Icon, accent, color, caption }) {
-  const ring = metricAccentRing[accent] || metricAccentRing.violet;
+function LushMetric({ label, value, icon, accent, color, caption }) {
+  const pair = metricIconPastel[accent] || metricIconPastel.violet;
   return (
     <motion.div
       initial={{ opacity: 0, y: 14 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ type: "spring", stiffness: 140, damping: 18 }}
       title={caption}
-      className="glass-card p-5 sm:p-6 group flex flex-col items-stretch text-left h-[280px]"
+      className="glass-card p-5 sm:p-6 group flex flex-col items-stretch text-left h-[252px]"
     >
       <div className="flex flex-col items-center text-center sm:items-start sm:text-left w-full">
         <div className="glow-halo mb-4 mx-auto sm:mx-0">
           <div
-            className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${ring} ring-2 ring-inset flex items-center justify-center group-hover:scale-110 group-hover:rotate-3 transition-all duration-400 shadow-lg`}
-            style={{ color }}
+            className={`flex h-14 w-14 items-center justify-center group-hover:scale-110 group-hover:rotate-3 transition-all duration-400 ${pair.well}`}
           >
-            <Icon size={24} strokeWidth={2.2} />
+            <MsIcon name={icon} size={28} className={pair.glyph} />
           </div>
         </div>
         <p className="text-[11px] font-black text-slate-500 uppercase tracking-[0.08em] mb-1 w-full leading-snug">{label}</p>
@@ -711,28 +701,27 @@ function LushMetric({ label, value, icon: Icon, accent, color, caption }) {
   );
 }
 
-function LushActionTile({ title, desc, onClick, icon: Icon, accent, accent2, isLarge }) {
+function LushActionTile({ title, desc, onClick, icon, accent, accent2, isLarge, iconWellClass, iconGlyphClass }) {
   const borderGlow = accent2 || accent;
+  const well =
+    iconWellClass ||
+    "rounded-full border-2 border-slate-300/90 bg-slate-100 shadow-sm";
+  const glyph = iconGlyphClass || "text-slate-800";
   return (
     <motion.button
       type="button"
       onClick={onClick}
       whileTap={{ scale: 0.97 }}
-      className={`glass-card text-left group relative border-slate-300 active:scale-[0.98] h-full ${isLarge ? "p-10 sm:p-12" : "p-5 sm:p-6 h-[280px]"}`}
+      className={`glass-card text-left group relative border-slate-300 active:scale-[0.98] h-full ${isLarge ? "p-8 sm:p-10" : "p-5 sm:p-6 h-[252px]"}`}
       style={{
         borderColor: `${accent}55`,
         boxShadow: isLarge ? `0 0 0 1px ${borderGlow}22, 0 12px 24px rgba(15,23,42,0.08)` : undefined,
       }}
     >
       <div
-        className={`rounded-2xl border flex items-center justify-center group-hover:scale-110 group-hover:-rotate-2 transition-all duration-500 shadow-lg ${isLarge ? "w-16 h-16 mb-8" : "w-12 h-12 mb-5"}`}
-        style={{
-          background: `linear-gradient(145deg, ${accent}28, rgba(255,255,255,0.92))`,
-          borderColor: `${accent}50`,
-          color: accent,
-        }}
+        className={`flex items-center justify-center group-hover:scale-110 group-hover:-rotate-2 transition-all duration-500 ${isLarge ? "mb-8 h-16 w-16" : "mb-5 h-12 w-12"} ${well}`}
       >
-        <Icon size={isLarge ? 28 : 20} strokeWidth={2.2} />
+        <MsIcon name={icon} size={isLarge ? 28 : 24} className={glyph} />
       </div>
       <div className="relative z-10">
         <h4

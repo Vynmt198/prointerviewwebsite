@@ -548,26 +548,22 @@ export function CVAnalysis() {
       <div className="fixed top-[-22%] left-[-12%] w-[760px] h-[760px] rounded-full pointer-events-none -z-[2] bg-[#d4ff00]/48 blur-[135px]" />
       <div className="fixed bottom-[-22%] right-[-10%] w-[820px] h-[820px] rounded-full pointer-events-none -z-[2] bg-[#9447ff]/34 blur-[150px]" />
       <div className="fixed left-0 right-0 top-[38%] h-[180px] pointer-events-none -z-[2]" style={{ background: "linear-gradient(90deg, rgba(212,255,0,0.14) 0%, rgba(148,71,255,0.22) 55%, rgba(148,71,255,0.1) 100%)", filter: "blur(32px)" }} />
-      <div className="relative z-[1] mx-auto mt-8 w-full max-w-7xl px-6">
-      <div className="w-full rounded-[28px] border border-slate-200 bg-white/85 px-6 pt-8 shadow-[0_18px_40px_rgba(15,23,42,0.08)] backdrop-blur-sm">
-      <div className="mb-8 pb-8">
+      <div className="relative z-[1] mx-auto w-full max-w-7xl px-6 pb-4 pt-8 sm:px-8 sm:pb-6 sm:pt-10">
+        <div className="mb-8">
         <div className="mb-4 flex items-center gap-3">
           <FileText className="size-5 text-[#c4ff47]" />
-          <span className="text-[10px] font-black uppercase tracking-[0.2em] text-violet-600/90">Phân tích CV/JD</span>
+          <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Phân tích CV/JD</span>
         </div>
-        <h1 className="mb-4 text-3xl font-black leading-[1.05] tracking-tight text-slate-900 md:text-5xl">
+        <h1 className="mb-4 text-3xl font-black leading-[1.08] tracking-tight text-slate-900 sm:text-4xl md:text-5xl">
           Phân tích CV{" "}
           <span className="text-[#6E35E8]">& JD</span>
         </h1>
-        <p className="max-w-2xl text-sm font-semibold leading-relaxed text-slate-600 sm:text-base">
+        <p className="max-w-2xl text-base font-semibold leading-relaxed text-slate-600 sm:text-lg">
           Hệ thống AI đa năng tự động phân tích CV, trích xuất kỹ năng chuyên môn từ JD và tạo đề xuất cải thiện hồ sơ phù hợp. Lưu trữ sẵn sàng cho Phỏng vấn AI thực tế.
         </p>
-      </div>
-      </div>
-      </div>
+        </div>
 
-      <div className="relative z-[1] mx-auto mt-8 w-full max-w-7xl px-6">
-      <div className="w-full rounded-[28px] border border-slate-200 bg-white/85 px-6 pb-10 pt-8 shadow-[0_18px_40px_rgba(15,23,42,0.08)] backdrop-blur-sm">
+        <div className="w-full rounded-[28px] border border-slate-200 bg-white/85 px-6 pb-10 pt-6 shadow-[0_18px_40px_rgba(15,23,42,0.08)] backdrop-blur-sm sm:px-8">
       {/* Page tabs */}
       <div className="flex gap-2 mb-6">
         {[
@@ -814,7 +810,7 @@ export function CVAnalysis() {
                     }}
                     className={`group relative rounded-2xl border-2 p-6 text-left backdrop-blur-sm transition-all hover:shadow-md ${
                       enableJD
-                        ? "border-[#6E35E8] bg-[#6E35E8]/15 shadow-sm"
+                        ? "border-[#6E35E8] bg-violet-50 shadow-sm"
                         : "border-slate-300 bg-white hover:border-violet-400/35"
                     }`}
                   >
@@ -826,7 +822,7 @@ export function CVAnalysis() {
                       </div>
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-1">
-                          <p className={`font-bold ${enableJD ? "text-violet-200" : "text-slate-900"}`}>
+                          <p className={`font-bold ${enableJD ? "text-violet-950" : "text-slate-900"}`}>
                             Có Job Description
                           </p>
                           {enableJD && (
@@ -835,7 +831,7 @@ export function CVAnalysis() {
                             </div>
                           )}
                         </div>
-                        <p className={`text-sm leading-relaxed ${enableJD ? "text-violet-100/90" : "text-slate-600"}`}>
+                        <p className={`text-sm leading-relaxed ${enableJD ? "text-slate-700" : "text-slate-600"}`}>
                           Upload JD để phân tích mức độ phù hợp CV với vị trí tuyển dụng cụ thể
                         </p>
                       </div>
@@ -850,7 +846,7 @@ export function CVAnalysis() {
                     }}
                     className={`group relative rounded-2xl border-2 p-6 text-left backdrop-blur-sm transition-all hover:shadow-md ${
                       enableField
-                        ? "border-[#8B4DFF] bg-[#8B4DFF]/15 shadow-sm"
+                        ? "border-[#8B4DFF] bg-violet-50 shadow-sm"
                         : "border-slate-300 bg-white hover:border-violet-400/35"
                     }`}
                   >
@@ -862,7 +858,7 @@ export function CVAnalysis() {
                       </div>
                       <div className="flex-1">
                         <div className="mb-1 flex items-center gap-2">
-                          <p className={`font-bold ${enableField ? "text-violet-200" : "text-slate-900"}`}>
+                          <p className={`font-bold ${enableField ? "text-violet-950" : "text-slate-900"}`}>
                             Chọn theo ngành nghề
                           </p>
                           {enableField && (
@@ -871,7 +867,7 @@ export function CVAnalysis() {
                             </div>
                           )}
                         </div>
-                        <p className={`text-sm leading-relaxed ${enableField ? "text-violet-100/90" : "text-slate-600"}`}>
+                        <p className={`text-sm leading-relaxed ${enableField ? "text-slate-700" : "text-slate-600"}`}>
                           Đánh giá và tinh chỉnh CV đạt chuẩn chuyên nghiệp của từng nhóm ngành.
                         </p>
                       </div>
@@ -1290,7 +1286,7 @@ export function CVAnalysis() {
         </div>
       )}
       </div>
-      </div>
+    </div>
     </div>
   );
 }

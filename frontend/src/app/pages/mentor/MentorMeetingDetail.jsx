@@ -267,11 +267,11 @@ export function MentorMeetingDetail() {
       <div className="relative z-10 p-10 max-w-7xl mx-auto pt-20">
         {/* Header Navigation */}
         <div className="flex items-center justify-between mb-16">
-           <button type="button" onClick={() => navigate(-1)} className="group flex items-center gap-3 text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 transition-all hover:text-white">
+           <button type="button" onClick={() => navigate(-1)} className="group flex items-center gap-3 text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 transition-all hover:text-slate-900">
               <ArrowLeft size={16} className="transition-transform group-hover:-translate-x-1" /> Quay lại
            </button>
            <div className="flex gap-4">
-              <button className="w-12 h-12 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-zinc-500 hover:text-white transition-all">
+              <button className="w-12 h-12 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center text-zinc-500 hover:text-slate-900 transition-all">
                  <MoreVertical size={20} />
               </button>
            </div>
@@ -294,26 +294,26 @@ export function MentorMeetingDetail() {
                          <Layout size={14} /> {meetingTypeLabel}
                        </span>
                     </div>
-                    <h1 className="text-6xl font-black text-white font-headline tracking-tighter mb-10 max-w-2xl leading-none">
+                    <h1 className="text-6xl font-black text-slate-900 font-headline tracking-tighter mb-10 max-w-2xl leading-none">
                        {isCompleted ? 'Báo cáo chi tiết buổi Mentor' : 'Sẵn sàng phỏng vấn cùng Mentee'}
                     </h1>
                     
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-10">
                        <div className="space-y-2">
                           <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">Thời gian bắt đầu</p>
-                          <p className="text-xl font-black text-white flex items-center gap-3">
+                          <p className="text-xl font-black text-slate-900 flex items-center gap-3">
                              <Clock size={20} className="text-primary-fixed" /> {meeting.scheduledTime}
                           </p>
                        </div>
                        <div className="space-y-2">
                           <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">Ngày diễn ra</p>
-                          <p className="text-xl font-black text-white flex items-center gap-3">
+                          <p className="text-xl font-black text-slate-900 flex items-center gap-3">
                             <Calendar size={20} className="text-primary-fixed" /> {formatMeetingDate(meeting.scheduledDate, meeting.scheduledTime)}
                           </p>
                        </div>
                        <div className="space-y-2">
                           <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">Thời lượng</p>
-                          <p className="text-xl font-black text-white flex items-center gap-3">
+                          <p className="text-xl font-black text-slate-900 flex items-center gap-3">
                              <ShieldCheck size={20} className="text-primary-fixed" /> {meeting.duration} Phút
                           </p>
                        </div>
@@ -325,12 +325,12 @@ export function MentorMeetingDetail() {
               {isCompleted && (
                  <div className="glass-card p-12">
                     <div className="flex items-center justify-between mb-12">
-                       <h4 className="text-2xl font-black text-white font-headline tracking-tight flex items-center gap-4">
+                       <h4 className="text-2xl font-black text-slate-900 font-headline tracking-tight flex items-center gap-4">
                           <Target className="text-primary-fixed" size={24} /> Kết quả STAR Framework
                        </h4>
-                       <div className="flex items-center gap-3 px-6 py-3 rounded-2xl bg-white/5 border border-white/10">
+                       <div className="flex items-center gap-3 px-6 py-3 rounded-2xl bg-slate-50 border border-slate-200">
                           <Star className="text-[#FFD600] fill-current" size={18} />
-                          <span className="text-lg font-black text-white">{meeting.overallScore?.toFixed(1)}</span>
+                          <span className="text-lg font-black text-slate-900">{meeting.overallScore?.toFixed(1)}</span>
                           <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">/ 5.0</span>
                        </div>
                     </div>
@@ -349,13 +349,13 @@ export function MentorMeetingDetail() {
                                  <div className="flex items-center gap-4">
                                     <div className="w-10 h-10 rounded-2xl flex items-center justify-center text-white font-black text-sm" style={{ background: item.color }}>{item.label[0]}</div>
                                     <div>
-                                       <p className="text-sm font-black text-white tracking-tight">{item.label}</p>
+                                       <p className="text-sm font-black text-slate-900 tracking-tight">{item.label}</p>
                                        <p className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest">{item.desc}</p>
                                     </div>
                                  </div>
-                                 <span className="text-sm font-black text-white">{score.toFixed(1)}/5.0</span>
+                                 <span className="text-sm font-black text-slate-900">{score.toFixed(1)}/5.0</span>
                               </div>
-                              <div className="h-2 bg-white/5 rounded-full overflow-hidden">
+                              <div className="h-2 bg-slate-50 rounded-full overflow-hidden">
                                  <motion.div 
                                     initial={{ width: 0 }}
                                     animate={{ width: `${(score / 5) * 100}%` }}
@@ -394,28 +394,28 @@ export function MentorMeetingDetail() {
                  <p className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.3em] mb-10">Hồ sơ Mentee</p>
                  <div className="flex flex-col items-center text-center mb-10">
                     <img src={meeting.mentee.avatar} className="w-32 h-32 rounded-[40px] object-cover ring-8 ring-white/5 shadow-2xl mb-6" />
-                    <h3 className="text-3xl font-black text-white tracking-tighter">{meeting.mentee.name}</h3>
+                    <h3 className="text-3xl font-black text-slate-900 tracking-tighter">{meeting.mentee.name}</h3>
                     <p className="text-sm font-black text-primary-fixed uppercase tracking-widest mt-2">{meeting.mentee.level}</p>
                  </div>
                  
-                 <div className="space-y-6 pt-10 border-t border-white/5">
+                 <div className="space-y-6 pt-10 border-t border-slate-200">
                     <div className="flex items-center gap-4">
-                       <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-zinc-500"><Briefcase size={18} /></div>
+                       <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-zinc-500"><Briefcase size={18} /></div>
                        <div>
                           <p className="text-[10px] font-black text-zinc-600 uppercase tracking-widest">Vị trí hiện tại</p>
-                          <p className="text-xs font-bold text-white">{meeting.position} @ {meeting.company}</p>
+                          <p className="text-xs font-bold text-slate-900">{meeting.position} @ {meeting.company}</p>
                        </div>
                     </div>
                     <div className="flex items-center gap-4">
-                       <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-zinc-500"><Star size={18} /></div>
+                       <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-zinc-500"><Star size={18} /></div>
                        <div>
                           <p className="text-[10px] font-black text-zinc-600 uppercase tracking-widest">Các buổi đã tham gia</p>
-                          <p className="text-xs font-bold text-white">{menteeSessionCount || 1} buổi học tập</p>
+                          <p className="text-xs font-bold text-slate-900">{menteeSessionCount || 1} buổi học tập</p>
                        </div>
                     </div>
                  </div>
 
-                 <button onClick={() => navigate("/mentor/analytics")} className="w-full mt-10 py-4 rounded-3xl bg-white/5 border border-white/10 text-[10px] font-black uppercase tracking-widest hover:text-white hover:bg-white/10 transition-all flex items-center justify-center gap-3">
+                 <button onClick={() => navigate("/mentor/analytics")} className="w-full mt-10 py-4 rounded-3xl bg-slate-50 border border-slate-200 text-[10px] font-black uppercase tracking-widest hover:text-slate-900 hover:bg-slate-100 transition-all flex items-center justify-center gap-3">
                     Xem toàn bộ tiến trình <ChevronRight size={14} />
                  </button>
               </div>
@@ -451,7 +451,7 @@ export function MentorMeetingDetail() {
                               loadAvailableSlots();
                             }}
                             disabled={busyAction !== ""}
-                            className="w-full py-5 rounded-3xl bg-white/5 border border-white/10 text-[10px] font-black uppercase tracking-widest hover:bg-white/10 transition-all"
+                            className="w-full py-5 rounded-3xl bg-slate-50 border border-slate-200 text-[10px] font-black uppercase tracking-widest hover:bg-slate-100 transition-all"
                          >
                             {busyAction === "reschedule" ? "Đang dời lịch..." : "Dời lịch hẹn"}
                           </button>
@@ -472,7 +472,7 @@ export function MentorMeetingDetail() {
                           <button className="w-full py-5 rounded-3xl bg-primary-fixed text-black text-[10px] font-black uppercase tracking-widest shadow-[0_15px_40px_rgba(196, 255, 71,0.32)] hover:scale-105 transition-all flex items-center justify-center gap-2">
                              <TrendingUp size={16} /> Gửi feedback bổ sung
                           </button>
-                          <button className="w-full py-5 rounded-3xl bg-white/5 border border-white/10 text-[10px] font-black uppercase tracking-widest hover:bg-white/10 transition-all flex items-center justify-center gap-2">
+                          <button className="w-full py-5 rounded-3xl bg-slate-50 border border-slate-200 text-[10px] font-black uppercase tracking-widest hover:bg-slate-100 transition-all flex items-center justify-center gap-2">
                              <Layout size={16} /> Xem bản ghi video
                           </button>
                        </>
@@ -488,7 +488,7 @@ export function MentorMeetingDetail() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-6 backdrop-blur-xl bg-black/50"
+            className="fixed inset-0 z-50 flex items-center justify-center p-6 backdrop-blur-sm bg-slate-900/35"
             onClick={() => setActionModal("")}
           >
             <motion.div
@@ -498,7 +498,7 @@ export function MentorMeetingDetail() {
               className="glass-card w-full max-w-xl p-8"
               onClick={(e) => e.stopPropagation()}
             >
-              <h4 className="text-xl font-black text-white mb-6">Dời lịch hẹn</h4>
+              <h4 className="text-xl font-black text-slate-900 mb-6">Dời lịch hẹn</h4>
               <div className="space-y-4">
                 <input
                   value={canReschedule ? `${rescheduleForm.newDate} ${rescheduleForm.newTimeSlot}`.trim() : "Đã dời lịch 1 lần"}
@@ -534,7 +534,7 @@ export function MentorMeetingDetail() {
                 )}
                 {actionError && <p className="text-xs text-red-400 font-bold">{actionError}</p>}
                 <div className="flex justify-end gap-3">
-                  <button onClick={() => setActionModal("")} className="px-5 py-3 rounded-xl bg-white/5 border border-white/10 text-xs font-black text-zinc-300">Đóng</button>
+                  <button onClick={() => setActionModal("")} className="px-5 py-3 rounded-xl bg-slate-50 border border-slate-200 text-xs font-black text-zinc-300">Đóng</button>
                   <button onClick={handleMentorReschedule} disabled={busyAction !== "" || !canReschedule || loadingSlots || slotOptions.length === 0} className="px-5 py-3 rounded-xl bg-primary-fixed text-black text-xs font-black disabled:opacity-60">
                     {busyAction === "reschedule" ? "Đang dời lịch..." : "Xác nhận dời lịch"}
                   </button>
@@ -548,7 +548,7 @@ export function MentorMeetingDetail() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-6 backdrop-blur-xl bg-black/50"
+            className="fixed inset-0 z-50 flex items-center justify-center p-6 backdrop-blur-sm bg-slate-900/35"
             onClick={() => setActionModal("")}
           >
             <motion.div
@@ -558,7 +558,7 @@ export function MentorMeetingDetail() {
               className="glass-card w-full max-w-xl p-8"
               onClick={(e) => e.stopPropagation()}
             >
-              <h4 className="text-xl font-black text-white mb-3">Hủy buổi mentor</h4>
+              <h4 className="text-xl font-black text-slate-900 mb-3">Hủy buổi mentor</h4>
               <p className="text-sm text-zinc-400 mb-4">Bạn cần nhập lý do trước khi hủy lịch.</p>
               <textarea
                 value={cancelReason}
@@ -568,7 +568,7 @@ export function MentorMeetingDetail() {
               />
               {actionError && <p className="text-xs text-red-400 font-bold mt-3">{actionError}</p>}
               <div className="flex justify-end gap-3 mt-5">
-                <button onClick={() => setActionModal("")} className="px-5 py-3 rounded-xl bg-white/5 border border-white/10 text-xs font-black text-zinc-300">Đóng</button>
+                <button onClick={() => setActionModal("")} className="px-5 py-3 rounded-xl bg-slate-50 border border-slate-200 text-xs font-black text-zinc-300">Đóng</button>
                 <button onClick={handleMentorCancel} disabled={busyAction !== ""} className="px-5 py-3 rounded-xl bg-red-600/20 border border-red-500/30 text-red-300 text-xs font-black">
                   {busyAction === "cancel" ? "Đang hủy..." : "Xác nhận hủy"}
                 </button>

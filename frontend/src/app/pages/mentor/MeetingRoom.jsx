@@ -89,7 +89,7 @@ export function MeetingRoom() {
 
   if (!meeting) {
     return (
-      <div className="min-h-screen bg-[#07060E] flex items-center justify-center text-white">
+      <div className="min-h-screen bg-[#f8f4ff] flex items-center justify-center text-slate-900">
         <div className="text-center">
           <motion.div animate={{ rotate: 360 }} transition={{ duration: 2, repeat: Infinity, ease: "linear" }}>
              <Sparkles size={48} className="text-primary-fixed mb-6 opacity-20" />
@@ -105,41 +105,41 @@ export function MeetingRoom() {
   ────────────────────────────────────────────────────────── */
   if (!joined) {
     return (
-      <div className="min-h-screen flex items-center justify-center relative overflow-hidden text-white font-sans"
-           style={{ background: "linear-gradient(145deg, #0E0922 0%, #07060E 100%)" }}>
+      <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#f8f4ff] font-sans text-slate-900">
+        <div className="pointer-events-none absolute inset-0 opacity-40" aria-hidden>
+          <div className="absolute -right-24 top-0 h-[420px] w-[420px] rounded-full bg-violet-300/50 blur-[100px]" />
+          <div className="absolute -left-20 bottom-0 h-[380px] w-[380px] rounded-full bg-lime-200/60 blur-[90px]" />
+        </div>
         
         <style>{`
-          .glass-card { background: rgba(255, 255, 255, 0.04); backdrop-filter: blur(40px); border-radius: 40px; border: 1px solid rgba(255, 255, 255, 0.08); transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1); }
-          .input-neon { background: rgba(255,255,255,0.03); border: 2px solid rgba(255,255,255,0.08); border-radius: 20px; transition: all 0.3s; text-align: center; }
-          .input-neon:focus { border-color: #c4ff47; background: rgba(255,255,255,0.06); outline: none; box-shadow: 0 0 20px rgba(196, 255, 71,0.2); }
+          .meeting-join-glass { background: rgba(255,255,255,0.95); backdrop-filter: blur(16px); border-radius: 28px; border: 1px solid rgba(148,163,184,0.35); box-shadow: 0 20px 50px rgba(15,23,42,0.1); transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
+          .meeting-join-input { background: #f8fafc; border: 2px solid #e2e8f0; border-radius: 20px; transition: all 0.3s; text-align: center; color: #0f172a; }
+          .meeting-join-input:focus { border-color: #c4ff47; background: #fff; outline: none; box-shadow: 0 0 0 3px rgba(196, 255, 71, 0.35); }
         `}</style>
-
-        <div className="fixed top-0 right-0 w-[1000px] h-[1000px] bg-secondary/10 blur-[250px] rounded-full pointer-events-none -z-0"></div>
-        <div className="fixed bottom-0 left-0 w-[800px] h-[800px] bg-primary-fixed/5 blur-[200px] rounded-full pointer-events-none -z-0"></div>
 
         <motion.div 
            initial={{ opacity: 0, scale: 0.9 }}
            animate={{ opacity: 1, scale: 1 }}
-           className="glass-card w-full max-w-lg p-12 relative z-10"
+           className="meeting-join-glass relative z-10 w-full max-w-lg p-10 sm:p-12"
         >
-          <div className="w-20 h-20 rounded-3xl bg-primary-fixed flex items-center justify-center mx-auto mb-10 shadow-[0_0_40px_rgba(196, 255, 71,0.3)]">
-            <VideoIcon size={32} className="text-black" />
+          <div className="mx-auto mb-8 flex h-20 w-20 items-center justify-center rounded-3xl bg-gradient-to-br from-[#c4ff47] to-[#8fbc24] shadow-[0_0_40px_rgba(196,255,71,0.35)] sm:mb-10">
+            <VideoIcon size={32} className="text-slate-900" />
           </div>
 
-          <h1 className="text-4xl font-black text-center mb-4 tracking-tighter uppercase leading-none">
-             Vào phòng <span className="text-secondary tracking-tighter">Mentor</span>
+          <h1 className="mb-3 text-center text-3xl font-black uppercase leading-none tracking-tighter text-slate-900 sm:text-4xl">
+             Vào phòng <span className="text-violet-700">Mentor</span>
           </h1>
-          <p className="text-center text-zinc-500 text-sm font-medium mb-10">Vui lòng nhập mã tham gia để bắt đầu phiên học</p>
+          <p className="mb-8 text-center text-sm font-medium text-slate-600 sm:mb-10">Vui lòng nhập mã tham gia để bắt đầu phiên học</p>
 
           <div className="space-y-8">
             <div className="relative">
-              <p className="text-[10px] font-black text-zinc-600 uppercase tracking-[0.3em] mb-4 text-center">Mã tham gia 6 chữ số</p>
+              <p className="mb-3 text-center text-[10px] font-black uppercase tracking-[0.3em] text-slate-500">Mã tham gia 6 chữ số</p>
               <input
                 type="text"
                 value={joinCode}
                 onChange={(e) => setJoinCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
                 placeholder="000 000"
-                className="input-neon w-full py-6 text-4xl font-black tracking-[0.5em] text-white"
+                className="meeting-join-input w-full py-6 text-4xl font-black tracking-[0.5em] text-slate-900"
               />
             </div>
 
@@ -152,12 +152,12 @@ export function MeetingRoom() {
             <button
               onClick={handleJoin}
               disabled={joinCode.length !== 6}
-              className="w-full py-5 rounded-3xl bg-white text-black text-xs font-black uppercase tracking-[0.2em] transition-all disabled:opacity-20 disabled:grayscale hover:scale-[1.02] shadow-2xl"
+              className="w-full rounded-3xl bg-gradient-to-r from-[#c4ff47] to-[#8fbc24] py-5 text-xs font-black uppercase tracking-[0.2em] text-[#0a0814] shadow-[0_12px_32px_rgba(196,255,71,0.25)] transition-all hover:brightness-110 disabled:opacity-30 disabled:grayscale disabled:hover:scale-100"
             >
               Tham gia ngay ϟ
             </button>
 
-            <div className="p-6 rounded-3xl bg-white/[0.02] border border-white/5 space-y-3">
+            <div className="p-6 rounded-3xl bg-slate-50 border border-slate-200 space-y-3">
                <div className="flex items-center gap-3 text-zinc-500">
                   <ShieldCheck size={14} className="text-primary-fixed" />
                   <p className="text-[9px] font-black uppercase tracking-widest">Phiên làm việc được bảo mật và ghi âm</p>
@@ -196,7 +196,7 @@ export function MeetingRoom() {
       <div className="flex-1 relative z-10 flex flex-col items-center justify-center p-10">
         
         {/* Remote Participant (Main Frame) */}
-        <div className="w-full h-full max-w-6xl rounded-[60px] bg-white/[0.02] border border-white/5 flex items-center justify-center relative overflow-hidden group shadow-[0_40px_100px_rgba(0,0,0,0.8)]">
+        <div className="w-full h-full max-w-6xl rounded-[60px] bg-slate-50 border border-slate-200 flex items-center justify-center relative overflow-hidden group shadow-[0_40px_100px_rgba(0,0,0,0.8)]">
            <div className="absolute inset-0 bg-gradient-to-br from-white/[0.02] to-transparent pointer-events-none" />
            <div className="relative text-center z-10">
               <motion.div 
@@ -204,9 +204,9 @@ export function MeetingRoom() {
                 transition={{ duration: 4, repeat: Infinity }}
                 className="w-40 h-40 rounded-full mx-auto mb-8 bg-gradient-to-br from-primary-fixed/20 to-secondary/20 flex items-center justify-center ring-4 ring-white/5"
               >
-                 <User size={64} className="text-white/20" />
+                 <User size={64} className="text-slate-300" />
               </motion.div>
-              <h2 className="text-3xl font-black text-white uppercase tracking-tighter mb-4">
+              <h2 className="text-3xl font-black text-slate-900 uppercase tracking-tighter mb-4">
                  {user?.role === "mentor" ? "HỌC VIÊN ĐANG CHỜ..." : "MENTOR ĐANG ĐẾN..."}
               </h2>
               <p className="text-zinc-600 font-black text-xs uppercase tracking-[0.3em] flex items-center justify-center gap-3">
@@ -218,7 +218,7 @@ export function MeetingRoom() {
            <div className="absolute bottom-10 left-10 flex items-center gap-4">
               <div className="video-label flex items-center gap-3">
                  <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_10px_#10b981]" />
-                 <span className="text-[10px] font-black text-white uppercase tracking-widest">
+                 <span className="text-[10px] font-black text-slate-900 uppercase tracking-widest">
                     {user?.role === "mentor" ? "Participant" : session.mentorName}
                  </span>
               </div>
@@ -229,7 +229,7 @@ export function MeetingRoom() {
         <motion.div 
            drag
            dragConstraints={{ left: -400, right: 400, top: -200, bottom: 200 }}
-           className="absolute top-10 right-10 w-64 h-48 rounded-[40px] bg-black/40 backdrop-blur-3xl border border-white/10 shadow-2xl overflow-hidden cursor-move ring-4 ring-white/5"
+           className="absolute top-10 right-10 w-64 h-48 rounded-[40px] bg-slate-900/40 backdrop-blur-3xl border border-slate-200 shadow-2xl overflow-hidden cursor-move ring-4 ring-white/5"
         >
            {isVideoOff ? (
              <div className="w-full h-full flex flex-col items-center justify-center gap-4">
@@ -238,23 +238,23 @@ export function MeetingRoom() {
              </div>
            ) : (
              <div className="w-full h-full bg-gradient-to-tr from-primary-fixed/5 to-secondary/5 flex items-center justify-center">
-                <User size={40} className="text-white/10" />
+                <User size={40} className="text-slate-200" />
              </div>
            )}
            <div className="absolute bottom-4 left-4 video-label py-1.5 px-3">
-              <span className="text-[9px] font-black text-white uppercase tracking-widest">YOU</span>
+              <span className="text-[9px] font-black text-slate-900 uppercase tracking-widest">YOU</span>
            </div>
         </motion.div>
 
         {/* Top Info Bar */}
         <div className="absolute top-10 left-1/2 -translate-x-1/2 flex gap-4">
-           <div className="flex items-center gap-4 px-8 py-3 rounded-2xl bg-black/40 border border-white/5 backdrop-blur-xl">
+           <div className="flex items-center gap-4 px-8 py-3 rounded-2xl bg-slate-900/40 border border-slate-200 backdrop-blur-xl">
               <div className="flex items-center gap-3 px-3 py-1 bg-red-500/10 text-red-500 rounded-lg border border-red-500/20">
                  <div className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
                  <span className="text-[9px] font-black uppercase tracking-widest">LIVE REC</span>
               </div>
               <div className="w-[1px] h-4 bg-white/10" />
-              <div className="flex items-center gap-3 text-white">
+              <div className="flex items-center gap-3 text-slate-900">
                  <Clock size={14} className="text-primary-fixed" />
                  <span className="text-sm font-black font-mono tracking-tighter">{formatTime(elapsedTime)}</span>
               </div>
@@ -264,13 +264,13 @@ export function MeetingRoom() {
 
       {/* Control Toolbar */}
       <div className="relative z-20 pb-12 px-10">
-         <div className="max-w-2xl mx-auto flex items-center justify-between gap-10 bg-white/[0.03] border border-white/10 backdrop-blur-3xl p-4 rounded-[36px] shadow-2xl">
+         <div className="max-w-2xl mx-auto flex items-center justify-between gap-10 bg-slate-50 border border-slate-200 backdrop-blur-3xl p-4 rounded-[36px] shadow-2xl">
             <div className="flex items-center gap-3 ml-4">
                <div className="w-10 h-10 rounded-xl bg-primary-fixed/20 flex items-center justify-center text-primary-fixed">
                   <Target size={20} />
                </div>
                <div>
-                  <p className="text-[10px] font-black text-white uppercase tracking-widest">Room ID</p>
+                  <p className="text-[10px] font-black text-slate-900 uppercase tracking-widest">Room ID</p>
                   <p className="text-xs font-bold text-zinc-500 uppercase tracking-tighter">#{meeting.joinCode}</p>
                </div>
             </div>
@@ -293,7 +293,7 @@ export function MeetingRoom() {
 
             <div className="mr-4">
                <button onClick={handleEndCall} className="flex items-center gap-2 group">
-                  <div className="w-10 h-10 rounded-xl flex items-center justify-center text-zinc-500 group-hover:text-white group-hover:bg-white/5 transition-all">
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center text-zinc-500 group-hover:text-slate-900 group-hover:bg-slate-50 transition-all">
                      <LogOut size={20} />
                   </div>
                </button>

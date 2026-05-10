@@ -122,7 +122,7 @@ function WithdrawalModal({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 flex items-center justify-center p-6 backdrop-blur-2xl bg-black/60"
+      className="fixed inset-0 z-50 flex items-center justify-center p-6 backdrop-blur-sm bg-slate-900/35"
       onClick={onClose}
     >
       <motion.div
@@ -138,17 +138,17 @@ function WithdrawalModal({
               <div className="w-24 h-24 rounded-full bg-primary-fixed/20 border border-primary-fixed/40 flex items-center justify-center mx-auto text-primary-fixed">
                 <CheckCircle size={48} />
               </div>
-              <h2 className="text-3xl font-black text-white tracking-tighter">Yêu cầu thành công!</h2>
+              <h2 className="text-3xl font-black text-slate-900 tracking-tighter">Yêu cầu thành công!</h2>
               <p className="text-sm text-zinc-500 font-medium px-4">Số tiền của bạn đang được hệ thống xử lý và sẽ chuyển khoản trong vòng 1-2 ngày làm việc.</p>
               <button onClick={onClose} className="w-full py-4 rounded-2xl bg-white text-black text-[10px] font-black uppercase tracking-widest shadow-xl">Đóng cửa sổ</button>
             </div>
           ) : (
             <div className="space-y-8">
               <div className="flex items-center justify-between mb-2">
-                 <h2 className="text-2xl font-black text-white tracking-tighter">Rút tiền mặt</h2>
-                 <button onClick={onClose} className="text-zinc-600 hover:text-white transition-colors"><X size={20} /></button>
+                 <h2 className="text-2xl font-black text-slate-900 tracking-tighter">Rút tiền mặt</h2>
+                 <button onClick={onClose} className="text-zinc-600 hover:text-slate-900 transition-colors"><X size={20} /></button>
               </div>
-              <div className="p-6 rounded-[32px] bg-white/5 border border-white/10 text-left">
+              <div className="p-6 rounded-[32px] bg-slate-50 border border-slate-200 text-left">
                  <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-2">Số dư khả dụng</p>
                  <h3 className="text-2xl font-black text-primary-fixed tracking-tight">{balance.toLocaleString()} ₫</h3>
               </div>
@@ -157,11 +157,11 @@ function WithdrawalModal({
                  <select
                    value={bankName}
                    onChange={(e) => setBankName(e.target.value)}
-                   className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-sm font-bold text-white outline-none focus:border-primary-fixed transition-all"
+                   className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-sm font-bold text-slate-900 outline-none focus:border-primary-fixed transition-all"
                  >
-                   <option value="" className="bg-[#121212]">Chọn ngân hàng</option>
+                   <option value="" className="bg-white text-slate-900">Chọn ngân hàng</option>
                    {SUPPORTED_BANKS.map((bank) => (
-                     <option key={bank} value={bank} className="bg-[#121212]">
+                     <option key={bank} value={bank} className="bg-white text-slate-900">
                        {bank}
                      </option>
                    ))}
@@ -172,9 +172,9 @@ function WithdrawalModal({
                      placeholder="Số tài khoản"
                      value={accountNumber}
                      onChange={(e) => setAccountNumber(e.target.value.replace(/\D/g, ""))}
-                     className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-sm font-bold text-white outline-none focus:border-primary-fixed transition-all"
+                     className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-sm font-bold text-slate-900 outline-none focus:border-primary-fixed transition-all"
                    />
-                   <div className="w-full bg-white/[0.03] border border-white/10 rounded-2xl p-4 text-sm font-bold text-white">
+                   <div className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-sm font-bold text-slate-900">
                      {payoutAccountOwnerName || "Mentor"}
                    </div>
                  </div>
@@ -185,7 +185,7 @@ function WithdrawalModal({
                  <button
                    onClick={persistAccount}
                    disabled={!isAccountReady || savingAccount}
-                   className="w-full py-3 rounded-2xl bg-white/5 border border-white/10 text-[10px] font-black uppercase tracking-widest hover:bg-white/10 disabled:opacity-40 transition-all"
+                   className="w-full py-3 rounded-2xl bg-slate-50 border border-slate-200 text-[10px] font-black uppercase tracking-widest hover:bg-slate-100 disabled:opacity-40 transition-all"
                  >
                    {savingAccount ? "Đang lưu tài khoản..." : "Lưu tài khoản nhận tiền"}
                  </button>
@@ -199,12 +199,12 @@ function WithdrawalModal({
                        placeholder="Nhập số tiền (VD: 500.000)"
                        value={amountDigits ? amountValue.toLocaleString("vi-VN") : ""}
                        onChange={(e) => setAmount(e.target.value.replace(/\D/g, ""))}
-                       className="w-full bg-white/5 border border-white/10 rounded-2xl p-5 text-lg font-black text-white outline-none focus:border-primary-fixed transition-all"
+                       className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-5 text-lg font-black text-slate-900 outline-none focus:border-primary-fixed transition-all"
                     />
                     <span className="absolute right-5 top-1/2 -translate-y-1/2 font-black text-zinc-600">₫</span>
                  </div>
                  <p className="text-[10px] text-zinc-500 font-semibold">
-                   Bạn sẽ rút: <span className="text-white">{amountValue.toLocaleString("vi-VN")} ₫</span>
+                   Bạn sẽ rút: <span className="text-slate-900">{amountValue.toLocaleString("vi-VN")} ₫</span>
                  </p>
               </div>
               <button 
@@ -287,10 +287,10 @@ export function MentorFinance() {
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-10 mb-16">
           <div>
-            <h1 className="text-6xl font-black text-white font-headline tracking-tighter mb-4 uppercase">
+            <h1 className="text-6xl font-black text-slate-900 font-headline tracking-tighter mb-4 uppercase">
                Quản lý <span className="text-secondary tracking-tighter">Tài chính</span>
             </h1>
-            <p className="text-white/55 text-lg font-medium">Theo dõi thu nhập, giao dịch và quản lý dòng tiền của bạn</p>
+            <p className="text-slate-600 text-lg font-medium">Theo dõi thu nhập, giao dịch và quản lý dòng tiền của bạn</p>
           </div>
         </div>
 
@@ -304,7 +304,7 @@ export function MentorFinance() {
               <div className="relative z-10">
                  <p className="text-[10px] font-black text-primary-fixed uppercase tracking-[0.4em] mb-6">Số dư khả dụng</p>
                  <div className="flex items-baseline gap-4 mb-10">
-                    <h2 className="text-7xl font-black text-white tracking-tighter">{availableBalance.toLocaleString()}</h2>
+                    <h2 className="text-7xl font-black text-slate-900 tracking-tighter">{availableBalance.toLocaleString()}</h2>
                     <p className="text-2xl font-black text-zinc-500 uppercase tracking-widest mb-1">vnđ</p>
                  </div>
                  <div className="flex flex-wrap gap-4">
@@ -315,7 +315,7 @@ export function MentorFinance() {
                     </button>
                     <button
                        onClick={openWithdrawHistory}
-                       className="px-10 py-5 rounded-3xl bg-white/5 border border-white/10 text-xs font-black uppercase tracking-widest hover:bg-white/10 transition-all"
+                       className="px-10 py-5 rounded-3xl bg-slate-50 border border-slate-200 text-xs font-black uppercase tracking-widest hover:bg-slate-100 transition-all"
                     >
                        Xem lịch sử rút
                     </button>
@@ -328,7 +328,7 @@ export function MentorFinance() {
               <div className="glass-card p-10 flex items-center justify-between border-t border-t-secondary/20">
                  <div>
                     <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-3">Chờ giải ngân</p>
-                    <h3 className="text-4xl font-black text-white tracking-tighter">{pendingBalance.toLocaleString()} ₫</h3>
+                    <h3 className="text-4xl font-black text-slate-900 tracking-tighter">{pendingBalance.toLocaleString()} ₫</h3>
                     <p className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest mt-2">Dự kiến sau 7 ngày</p>
                  </div>
                  <div className="w-14 h-14 rounded-2xl bg-secondary/10 flex items-center justify-center text-secondary">
@@ -339,7 +339,7 @@ export function MentorFinance() {
               <div className="glass-card p-10 flex items-center justify-between">
                  <div>
                     <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-3">Tổng thu nhập</p>
-                    <h3 className="text-4xl font-black text-white tracking-tighter">{totalEarned.toLocaleString()} ₫</h3>
+                    <h3 className="text-4xl font-black text-slate-900 tracking-tighter">{totalEarned.toLocaleString()} ₫</h3>
                     <p className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest mt-2 flex items-center gap-2">
                        <ArrowUpRight size={14} className="text-primary-fixed" /> +12% so với tháng trước
                     </p>
@@ -353,19 +353,19 @@ export function MentorFinance() {
 
         {/* Transaction History */}
         <div ref={transactionSectionRef} className="glass-card overflow-hidden">
-           <div className="p-10 border-b border-white/5 flex flex-col md:flex-row md:items-center justify-between gap-8 bg-white/[0.01]">
+           <div className="p-10 border-b border-slate-200 flex flex-col md:flex-row md:items-center justify-between gap-8 bg-white/[0.01]">
               <div className="flex items-center gap-4">
-                 <div className="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-secondary">
+                 <div className="w-12 h-12 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-center text-secondary">
                     <History size={22} />
                  </div>
                  <div>
-                    <h4 className="text-xl font-black text-white tracking-tight">Lịch sử giao dịch</h4>
+                    <h4 className="text-xl font-black text-slate-900 tracking-tight">Lịch sử giao dịch</h4>
                     <p className="text-xs font-medium text-zinc-600 uppercase tracking-widest">Danh sách các khoản thu và lệnh rút tiền</p>
                  </div>
               </div>
               <div className="flex gap-2">
                  {["all", "income", "withdraw"].map(t => (
-                    <button key={t} className={`px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === t ? 'bg-white text-black' : 'bg-white/5 text-zinc-500 hover:text-white'}`} onClick={() => setActiveTab(t)}>
+                    <button key={t} className={`px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === t ? 'bg-white text-black' : 'bg-slate-50 text-zinc-500 hover:text-slate-900'}`} onClick={() => setActiveTab(t)}>
                        {t === 'all' ? 'Tất cả' : t === 'income' ? 'Thu nhập' : 'Rút tiền'}
                     </button>
                  ))}
@@ -375,7 +375,7 @@ export function MentorFinance() {
            <div className="overflow-x-auto">
               <table className="w-full">
                  <thead>
-                    <tr className="text-[10px] font-black text-zinc-600 uppercase tracking-[0.2em] border-b border-white/5">
+                    <tr className="text-[10px] font-black text-zinc-600 uppercase tracking-[0.2em] border-b border-slate-200">
                        <th className="px-10 py-6 text-left">Giao dịch</th>
                        <th className="px-10 py-6 text-left">Ngày tháng</th>
                        <th className="px-10 py-6 text-left">Số tiền</th>
@@ -385,23 +385,23 @@ export function MentorFinance() {
                  </thead>
                  <tbody className="divide-y divide-white/5">
                     {filteredTransactions.map((tx, i) => (
-                      <tr key={i} className="hover:bg-white/[0.02] transition-colors group">
+                      <tr key={i} className="hover:bg-slate-50 transition-colors group">
                          <td className="px-10 py-8">
                             <div className="flex items-center gap-4">
                                <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${tx.type === 'income' ? 'bg-primary-fixed/10 text-primary-fixed' : 'bg-orange-500/10 text-orange-400'}`}>
                                   {tx.type === 'income' ? <ArrowUpRight size={18} /> : <ArrowDownRight size={18} />}
                                </div>
                                <div>
-                                  <p className="text-sm font-black text-white tracking-tight">{tx.description}</p>
+                                  <p className="text-sm font-black text-slate-900 tracking-tight">{tx.description}</p>
                                   <p className="text-[10px] font-black text-zinc-600 uppercase tracking-widest">ID: {tx.id}</p>
                                </div>
                             </div>
                          </td>
                          <td className="px-10 py-8">
-                            <p className="text-xs font-black text-white">{new Date(tx.date).toLocaleDateString("vi-VN")}</p>
+                            <p className="text-xs font-black text-slate-900">{new Date(tx.date).toLocaleDateString("vi-VN")}</p>
                          </td>
                          <td className="px-10 py-8">
-                            <p className={`text-sm font-black tracking-tight ${tx.type === 'income' ? 'text-primary-fixed' : 'text-white'}`}>
+                            <p className={`text-sm font-black tracking-tight ${tx.type === 'income' ? 'text-primary-fixed' : 'text-slate-700'}`}>
                                {tx.type === 'income' ? '+' : '-'}{tx.amount.toLocaleString()} ₫
                             </p>
                          </td>
@@ -415,7 +415,7 @@ export function MentorFinance() {
                          <td className="px-10 py-8 text-right">
                             <button
                                onClick={() => setSelectedTx(tx)}
-                               className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-zinc-600 hover:text-white transition-all ml-auto"
+                               className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-zinc-600 hover:text-slate-900 transition-all ml-auto"
                             >
                                <ArrowRight size={16} />
                             </button>
@@ -488,18 +488,18 @@ export function MentorFinance() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-6 backdrop-blur-2xl bg-black/60"
+            className="fixed inset-0 z-50 flex items-center justify-center p-6 backdrop-blur-sm bg-slate-900/35"
             onClick={() => setSelectedTx(null)}
           >
             <motion.div
               initial={{ scale: 0.95, y: 20, opacity: 0 }}
               animate={{ scale: 1, y: 0, opacity: 1 }}
               exit={{ scale: 0.95, y: 20, opacity: 0 }}
-              className="glass-card w-full max-w-lg p-8 border border-white/10"
+              className="glass-card w-full max-w-lg p-8 border border-slate-200"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex items-start justify-between mb-6">
-                <h3 className="text-2xl font-black text-white tracking-tighter">Chi tiết giao dịch</h3>
+                <h3 className="text-2xl font-black text-slate-900 tracking-tighter">Chi tiết giao dịch</h3>
                 <span
                   className={`glass-tag ${payoutStatusMeta(selectedTx.status).className}`}
                 >
@@ -507,7 +507,7 @@ export function MentorFinance() {
                 </span>
               </div>
 
-              <div className="rounded-2xl border border-white/10 bg-white/[0.03] px-5 py-4 mb-5">
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 px-5 py-4 mb-5">
                 <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-2">Số tiền giao dịch</p>
                 <p
                   className={`text-3xl font-black tracking-tight ${
@@ -539,7 +539,7 @@ export function MentorFinance() {
                   </div>
                 ) : null}
                 {selectedTx.note ? (
-                  <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3">
+                  <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
                     <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Ghi chú xử lý</p>
                     <p className="mt-1 text-sm text-zinc-200">{selectedTx.note}</p>
                   </div>

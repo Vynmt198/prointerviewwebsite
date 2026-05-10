@@ -18,6 +18,7 @@ import {
   Filter as FunnelSimple,
   ChevronDown as CaretDown,
   CalendarDays as CalendarBlank,
+  Users,
 } from "lucide-react";
 import { CV_ANALYSIS_HISTORY } from "../../data/mockData";
 
@@ -65,112 +66,118 @@ export function AnalysisHistory() {
   const fieldAnalyses = CV_ANALYSIS_HISTORY.filter(item => item.mode === "field").length;
 
   return (
-    <div className="min-h-full p-6 text-foreground">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
+    <div className="relative min-h-full w-full overflow-x-hidden text-slate-900 selection:bg-[rgba(196,255,71,0.28)] selection:text-slate-900">
+      <div className="fixed inset-0 pointer-events-none -z-[3]" style={{ background: "#f8f4ff" }} />
+      <div className="fixed top-[-22%] left-[-12%] w-[760px] h-[760px] rounded-full pointer-events-none -z-[2] bg-[#d4ff00]/48 blur-[135px]" />
+      <div className="fixed bottom-[-22%] right-[-10%] w-[820px] h-[820px] rounded-full pointer-events-none -z-[2] bg-[#9447ff]/34 blur-[150px]" />
+      <div
+        className="fixed left-0 right-0 top-[38%] h-[180px] pointer-events-none -z-[2]"
+        style={{
+          background: "linear-gradient(90deg, rgba(212,255,0,0.14) 0%, rgba(148,71,255,0.22) 55%, rgba(148,71,255,0.1) 100%)",
+          filter: "blur(32px)",
+        }}
+        aria-hidden
+      />
+      <div className="pricing-grid pointer-events-none fixed inset-0 -z-[1] opacity-[0.45]" aria-hidden style={{
+        backgroundImage: "linear-gradient(rgba(148,71,255,0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(148,71,255,0.06) 1px, transparent 1px)",
+        backgroundSize: "64px 64px",
+      }} />
+
+      <div className="relative z-[1] mx-auto w-full max-w-7xl px-6 pb-4 pt-8 sm:px-8 sm:pb-6 sm:pt-10">
         <div className="mb-8">
+        {/* Header */}
+        <div className="mb-6">
           <button
             type="button"
             onClick={() => navigate(-1)}
-            className="mb-4 flex items-center gap-2 text-sm font-medium text-gray-600 transition-colors hover:text-[#6E35E8]"
+            className="mb-3 flex items-center gap-2 text-sm font-semibold text-slate-600 transition-colors hover:text-[#6E35E8]"
           >
             <ArrowLeft className="h-4 w-4" />
             Quay lại
           </button>
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-[#1F1F1F] mb-2">
-                Lịch sử phân tích CV/JD
+              <div className="mb-3 flex items-center gap-3">
+                <FileText className="size-5 text-[#c4ff47]" />
+                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
+                  Phân tích CV/JD
+                </span>
+              </div>
+              <h1 className="mb-4 text-3xl font-black leading-[1.08] tracking-tight text-slate-900 sm:text-4xl md:text-5xl">
+                Lịch sử phân tích{" "}
+                <span className="text-[#6E35E8]">CV/JD</span>
               </h1>
-              <p className="text-gray-500">
+              <p className="max-w-2xl text-base font-semibold leading-relaxed text-slate-600 sm:text-lg">
                 Xem lại các kết quả phân tích đã thực hiện
               </p>
             </div>
-            <div className="flex items-center gap-3">
-              <FileText
-                className="w-12 h-12 text-[#6E35E8]"
-              />
+            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-slate-200 bg-violet-50 shadow-sm sm:mt-1">
+              <FileText className="h-7 w-7 text-[#6E35E8]" strokeWidth={2.25} />
             </div>
           </div>
         </div>
+        </div>
 
+        <div className="w-full rounded-[28px] border border-slate-200 bg-white/90 px-5 py-6 shadow-[0_18px_40px_rgba(15,23,42,0.08)] backdrop-blur-sm sm:px-8 sm:py-8">
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-          <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
+        <div className="mb-5 grid grid-cols-1 gap-3 sm:gap-4 md:grid-cols-4">
+          <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
             <div className="flex items-center gap-3">
-              <div
-                className="w-10 h-10 rounded-xl flex items-center justify-center"
-                style={{ background: "rgba(110, 53, 232,0.1)" }}
-              >
-                <ChartBar className="w-5 h-5 text-[#6E35E8]" />
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-violet-200/80 bg-violet-100">
+                <ChartBar className="h-5 w-5 text-violet-700" strokeWidth={2.25} />
               </div>
               <div>
-                <p className="text-2xl font-bold text-[#1F1F1F]">
+                <p className="text-2xl font-black text-slate-900">
                   {totalAnalyses}
                 </p>
-                <p className="text-xs text-gray-500">Tổng phân tích</p>
+                <p className="text-xs font-semibold text-slate-500">Tổng phân tích</p>
               </div>
             </div>
           </div>
 
-          <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
+          <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
             <div className="flex items-center gap-3">
-              <div
-                className="w-10 h-10 rounded-xl flex items-center justify-center"
-                style={{ background: "rgba(180,240,0,0.15)" }}
-              >
-                <Sparkle
-                  className="w-5 h-5"
-                  style={{ color: "#6E9900" }}
-                />
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-lime-200/90 bg-lime-100">
+                <Sparkle className="h-5 w-5 text-emerald-800" strokeWidth={2.25} />
               </div>
               <div>
-                <p className="text-2xl font-bold text-[#1F1F1F]">{avgScore}</p>
-                <p className="text-xs text-gray-500">Điểm TB</p>
+                <p className="text-2xl font-black text-slate-900">{avgScore}</p>
+                <p className="text-xs font-semibold text-slate-500">Điểm TB</p>
               </div>
             </div>
           </div>
 
-          <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
+          <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
             <div className="flex items-center gap-3">
-              <div
-                className="w-10 h-10 rounded-xl flex items-center justify-center"
-                style={{ background: "rgba(110, 53, 232,0.1)" }}
-              >
-                <FileText className="w-5 h-5 text-[#6E35E8]" />
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-violet-200/80 bg-violet-100">
+                <FileText className="h-5 w-5 text-violet-700" strokeWidth={2.25} />
               </div>
               <div>
-                <p className="text-2xl font-bold text-[#1F1F1F]">
+                <p className="text-2xl font-black text-slate-900">
                   {jdAnalyses}
                 </p>
-                <p className="text-xs text-gray-500">Phân tích CV+JD</p>
+                <p className="text-xs font-semibold text-slate-500">Phân tích CV+JD</p>
               </div>
             </div>
           </div>
 
-          <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
+          <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
             <div className="flex items-center gap-3">
-              <div
-                className="w-10 h-10 rounded-xl flex items-center justify-center"
-                style={{ background: "rgba(255,214,0,0.15)" }}
-              >
-                <FileText
-                  className="w-5 h-5"
-                  style={{ color: "#997F00" }}
-                />
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-amber-200/90 bg-amber-100">
+                <Users className="h-5 w-5 text-amber-900" strokeWidth={2.25} />
               </div>
               <div>
-                <p className="text-2xl font-bold text-[#1F1F1F]">
+                <p className="text-2xl font-black text-slate-900">
                   {fieldAnalyses}
                 </p>
-                <p className="text-xs text-gray-500">Phân tích theo ngành</p>
+                <p className="text-xs font-semibold text-slate-500">Phân tích theo ngành</p>
               </div>
             </div>
           </div>
         </div>
 
         {/* Filters & Search */}
-        <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm mb-6">
+        <div className="mb-5 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
           <div className="flex flex-col md:flex-row gap-4">
             {/* Search */}
             <div className="flex-1 relative">
@@ -592,6 +599,7 @@ export function AnalysisHistory() {
             })}
           </div>
         )}
+        </div>
       </div>
     </div>
   );

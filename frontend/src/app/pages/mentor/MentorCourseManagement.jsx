@@ -3,16 +3,13 @@ import { useNavigate } from "react-router";
 import {
    Plus,
    Search,
-   Filter,
    Users,
    Star,
    ArrowLeft,
    BookOpen,
-   TrendingUp,
    CircleDollarSign,
    ArrowRight,
    PlusCircle,
-   Layout,
    ExternalLink,
    Edit3,
    Trash2,
@@ -25,18 +22,6 @@ import { motion, AnimatePresence } from "motion/react";
 import { getUser } from "../../utils/auth";
 import { MentorPageShell } from "../../components/mentor/MentorPageShell";
 import { fetchMyMentorCourses } from "../../utils/courseApi";
-
-const MENTOR_COURSE_MGMT_INPUT_CSS = `
-        .input-glass {
-           background: rgba(255, 255, 255, 0.03);
-           border: 1px solid rgba(255, 255, 255, 0.1);
-           border-radius: 20px;
-           padding: 14px 24px;
-           color: white;
-           transition: all 0.3s;
-        }
-        .input-glass:focus { border-color: #c4ff47; background: rgba(255, 255, 255, 0.06); outline: none; }
-`;
 
 function formatCompactNumber(value) {
    const n = Number(value) || 0;
@@ -98,18 +83,18 @@ export function MentorCourseManagement() {
       : "0.0";
 
    return (
-      <MentorPageShell bottomPad="pb-32" extraStyles={MENTOR_COURSE_MGMT_INPUT_CSS}>
-         <div className="relative z-10 p-10 max-w-7xl mx-auto pt-20">
+      <MentorPageShell bottomPad="pb-32">
+         <div className="relative z-10 p-8 max-w-7xl mx-auto pt-16">
             {/* Header Unit */}
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-10 mb-16">
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
                <div>
                   <div className="flex items-center gap-3 text-[10px] font-black text-primary-fixed uppercase tracking-[0.3em] mb-4">
                      <Shapes size={14} /> Hệ thống Đào tạo
                   </div>
-                  <h1 className="text-7xl font-black text-white font-headline tracking-tighter mb-4 uppercase leading-none">
-                     Khóa học <span className="text-secondary tracking-tighter">của tôi</span>
+                  <h1 className="mb-4 text-5xl font-black uppercase leading-none tracking-tighter text-slate-900 sm:text-6xl md:text-7xl">
+                     Khóa học <span className="text-violet-700">của tôi</span>
                   </h1>
-                  <p className="text-white/55 text-lg font-medium">Xây dựng nội dung, theo dõi doanh thu và học viên của bạn</p>
+                  <p className="text-slate-600 text-lg font-medium">Xây dựng nội dung, theo dõi doanh thu và học viên của bạn</p>
                </div>
                <div className="flex gap-4">
                   <button onClick={() => navigate("/mentor/courses/new/edit")} className="px-10 py-5 rounded-3xl bg-primary-fixed text-black text-xs font-black uppercase tracking-widest hover:scale-105 transition-all shadow-[0_15px_40px_rgba(196, 255, 71,0.3)] flex items-center gap-3">
@@ -120,19 +105,19 @@ export function MentorCourseManagement() {
             </div>
 
             {/* Course Analytics Bar */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-20">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-14">
                {[
                   { label: "Tổng khóa học", value: totalCourses, icon: BookOpen, color: "#6E35E8" },
                   { label: "Tổng học viên", value: formatCompactNumber(totalStudents), icon: Users, color: "#c4ff47" },
                   { label: "Rating trung bình", value: avgRating, icon: Star, color: "#f59e0b" },
-                  { label: "Doanh thu tạm tính", value: formatCompactNumber(totalRevenue), icon: CircleDollarSign, color: "#secondary" }
+                  { label: "Doanh thu tạm tính", value: formatCompactNumber(totalRevenue), icon: CircleDollarSign, color: "#d946ef" }
                ].map((stat, i) => (
-                  <div key={i} className="glass-card p-10 group overflow-hidden">
+                  <div key={i} className="glass-card p-7 group overflow-hidden">
                      <div className="relative z-10">
-                        <div className="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mb-10 group-hover:scale-110 transition-transform">
+                        <div className="w-12 h-12 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
                            <stat.icon size={22} style={{ color: stat.color }} />
                         </div>
-                        <h3 className="text-5xl font-black text-white tracking-tighter mb-2 leading-none">{stat.value}</h3>
+                        <h3 className="text-5xl font-black text-slate-900 tracking-tighter mb-2 leading-none">{stat.value}</h3>
                         <p className="text-[10px] font-black text-zinc-600 uppercase tracking-[0.2em]">{stat.label}</p>
                      </div>
                      <div className="absolute -bottom-6 -right-6 w-24 h-24 bg-gradient-to-br from-white/[0.03] to-transparent rounded-full" />
@@ -141,14 +126,14 @@ export function MentorCourseManagement() {
             </div>
 
             {/* Controls & Grid */}
-            <div className="space-y-10">
-               <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-8">
-                  <div className="flex gap-2 p-2 bg-white/[0.03] border border-white/5 rounded-[24px]">
+            <div className="space-y-6">
+               <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5">
+                  <div className="flex gap-2 rounded-[24px] border border-slate-200 bg-slate-50 p-2">
                      {["all", "published", "pending_review", "pending_update", "draft"].map(t => (
                         <button
                            key={t}
                            onClick={() => setActiveTab(t)}
-                           className={`px-8 py-3 rounded-[18px] text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === t ? 'bg-white text-black shadow-xl' : 'text-zinc-500 hover:text-white'
+                           className={`rounded-[18px] px-6 py-3 text-[10px] font-black uppercase tracking-widest transition-all sm:px-8 ${activeTab === t ? "bg-violet-600 text-white shadow-md" : "text-slate-600 hover:bg-white hover:text-slate-900"
                               }`}
                         >
                            {t === "all"
@@ -163,19 +148,19 @@ export function MentorCourseManagement() {
                         </button>
                      ))}
                   </div>
-                  <div className="relative group flex-1 max-w-lg">
-                     <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-zinc-600 group-hover:text-primary-fixed transition-colors" size={20} />
+                  <div className="group relative max-w-lg flex-1">
+                     <Search className="absolute left-5 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-500 transition-colors group-focus-within:text-violet-600" size={20} />
                      <input
                         type="text"
                         placeholder="Tìm kiếm nội dung khóa học..."
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
-                        className="input-glass pl-16 w-full text-sm font-medium"
+                        className="w-full rounded-[20px] border border-slate-200 bg-white py-3.5 pl-16 pr-5 text-sm font-medium text-slate-900 shadow-sm outline-none transition placeholder:text-slate-500 focus:border-violet-400 focus:ring-2 focus:ring-violet-200/80"
                      />
                   </div>
                </div>
 
-               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-7">
                   {filtered.map((course) => (
                      <div key={course.id} className="glass-card flex flex-col group h-full">
                         <div className="relative h-60 overflow-hidden">
@@ -199,13 +184,13 @@ export function MentorCourseManagement() {
                                         ? "Chờ duyệt cập nhật"
                                         : "Bản nháp"}
                               </span>
-                              <span className="px-4 py-1.5 bg-black/60 backdrop-blur-md rounded-xl text-[9px] font-black uppercase tracking-widest text-zinc-400 border border-white/10">
+                              <span className="rounded-xl border border-slate-200 bg-slate-100 px-4 py-1.5 text-[9px] font-black uppercase tracking-widest text-slate-600 backdrop-blur-md">
                                  {course.level}
                               </span>
                            </div>
                         </div>
                         <div className="p-8 flex-1 flex flex-col">
-                           <h4 className="text-xl font-black text-white tracking-tighter mb-4 group-hover:text-primary-fixed transition-colors leading-tight">
+                           <h4 className="text-xl font-black text-slate-900 tracking-tighter mb-4 group-hover:text-primary-fixed transition-colors leading-tight">
                               {course.title}
                            </h4>
                            <div className="grid grid-cols-2 gap-6 mb-10 mt-auto">
@@ -213,27 +198,27 @@ export function MentorCourseManagement() {
                                  <Users size={16} className="text-zinc-600" />
                                  <div>
                                     <p className="text-[9px] font-black text-zinc-500 uppercase tracking-widest leading-none mb-1">Học viên</p>
-                                    <p className="text-sm font-black text-white">{course.students.toLocaleString()}</p>
+                                    <p className="text-sm font-black text-slate-900">{course.students.toLocaleString()}</p>
                                  </div>
                               </div>
                               <div className="flex items-center gap-3">
                                  <Star size={16} className="text-[#FFD600]" />
                                  <div>
                                     <p className="text-[9px] font-black text-zinc-500 uppercase tracking-widest leading-none mb-1">Đánh giá</p>
-                                    <p className="text-sm font-black text-white">{course.rating > 0 ? course.rating : 'N/A'}</p>
+                                    <p className="text-sm font-black text-slate-900">{course.rating > 0 ? course.rating : 'N/A'}</p>
                                  </div>
                               </div>
                            </div>
                            <div className="flex items-center gap-4">
                               <button
                                  onClick={() => navigate(`/mentor/courses/${course.id}/edit`)}
-                                 className="flex-1 py-4 rounded-2xl bg-white/5 border border-white/10 text-[10px] font-black uppercase tracking-widest hover:text-white hover:bg-white/10 transition-all flex items-center justify-center gap-2">
+                                 className="flex-1 py-4 rounded-2xl bg-slate-50 border border-slate-200 text-[10px] font-black uppercase tracking-widest hover:text-slate-900 hover:bg-slate-100 transition-all flex items-center justify-center gap-2">
                                  <Edit3 size={14} /> Chỉnh sửa
                               </button>
                               <button
                                  onClick={() => course.status === "published" && navigate(`/courses/${course.id}`)}
                                  title={course.status === "published" ? "Xem trang khóa học" : "Chỉ xem được khi khóa học đã đăng"}
-                                 className="w-14 py-4 rounded-2xl bg-white/5 border border-white/10 text-[10px] font-black uppercase tracking-widest hover:text-primary-fixed hover:bg-white/10 transition-all flex items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed"
+                                 className="w-14 py-4 rounded-2xl bg-slate-50 border border-slate-200 text-[10px] font-black uppercase tracking-widest hover:text-primary-fixed hover:bg-slate-100 transition-all flex items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed"
                                  disabled={course.status !== "published"}
                               >
                                  <ExternalLink size={16} />
@@ -244,15 +229,15 @@ export function MentorCourseManagement() {
                   ))}
                   <div
                      onClick={() => navigate("/mentor/courses/new/edit")}
-                     className="glass-card border-2 border-dashed border-white/10 flex flex-col items-center justify-center p-12 text-zinc-700 hover:border-primary-fixed hover:text-primary-fixed transition-all cursor-pointer group min-h-[400px]">
-                     <div className="w-16 h-16 rounded-full bg-white/5 border border-white/10 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                     className="glass-card border-2 border-dashed border-slate-200 flex flex-col items-center justify-center p-10 text-zinc-700 hover:border-primary-fixed hover:text-primary-fixed transition-all cursor-pointer group min-h-[360px]">
+                     <div className="w-16 h-16 rounded-full bg-slate-50 border border-slate-200 flex items-center justify-center mb-5 group-hover:scale-110 transition-transform">
                         <PlusCircle size={32} className="opacity-40 group-hover:opacity-100" />
                      </div>
                      <p className="text-xs font-black uppercase tracking-[0.3em]">Thiết kế khóa học mới</p>
                   </div>
                </div>
                {!myCourses.length && (
-                  <div className="mt-6 rounded-2xl border border-white/10 bg-white/[0.03] p-6 text-center">
+                  <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50 p-6 text-center">
                      <p className="text-sm font-semibold text-zinc-300">
                         Bạn chưa có khóa học nào trên hệ thống.
                      </p>

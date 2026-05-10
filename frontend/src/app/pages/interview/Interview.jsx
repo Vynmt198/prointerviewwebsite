@@ -34,10 +34,42 @@ const FIELDS_LIST = [
 const IS = { strokeWidth: 1.75, strokeLinecap: "round", strokeLinejoin: "round" };
 
 const PREVIEW_ITEMS = [
-  { icon: Brain, color: "#a78bfa", title: "5 câu hỏi cá nhân hóa", desc: "AI tạo câu hỏi dựa trên JD & CV của bạn" },
-  { icon: Video, color: "#c4b5fd", title: "Phân tích hành vi theo thời gian thực", desc: "AI đánh giá ánh mắt, biểu cảm, ngôn ngữ cơ thể" },
-  { icon: BarChart3, color: "#fb923c", title: "Phân tích lời nói & diễn đạt", desc: "Nội dung STAR, tốc độ nói, từ đệm" },
-  { icon: BadgeCheck, color: "#fbbf24", title: "Phản hồi chi tiết từng câu", desc: "Điểm số + gợi ý câu trả lời mẫu tốt hơn" },
+  { icon: Brain, title: "5 câu hỏi cá nhân hóa", desc: "AI tạo câu hỏi dựa trên JD & CV của bạn" },
+  { icon: Video, title: "Phân tích hành vi theo thời gian thực", desc: "AI đánh giá ánh mắt, biểu cảm, ngôn ngữ cơ thể" },
+  { icon: BarChart3, title: "Phân tích lời nói & diễn đạt", desc: "Nội dung STAR, tốc độ nói, từ đệm" },
+  { icon: BadgeCheck, title: "Phản hồi chi tiết từng câu", desc: "Điểm số + gợi ý câu trả lời mẫu tốt hơn" },
+];
+
+/** Thẻ pastel + chữ đậm (cùng tông) — giống mock coaching cho user */
+const PREVIEW_PASTEL = [
+  {
+    shell: "border-emerald-200/95 bg-emerald-50 shadow-[0_4px_16px_rgba(15,23,42,0.06)]",
+    iconWell: "border-emerald-300/90 bg-emerald-100",
+    iconClass: "text-emerald-800",
+    title: "text-emerald-950",
+    body: "text-emerald-900/90",
+  },
+  {
+    shell: "border-amber-200/95 bg-amber-50 shadow-[0_4px_16px_rgba(15,23,42,0.06)]",
+    iconWell: "border-amber-300/90 bg-amber-100",
+    iconClass: "text-amber-900",
+    title: "text-amber-950",
+    body: "text-amber-900/88",
+  },
+  {
+    shell: "border-sky-200/95 bg-sky-50 shadow-[0_4px_16px_rgba(15,23,42,0.06)]",
+    iconWell: "border-sky-300/90 bg-sky-100",
+    iconClass: "text-sky-900",
+    title: "text-sky-950",
+    body: "text-sky-900/88",
+  },
+  {
+    shell: "border-violet-200/95 bg-violet-50 shadow-[0_4px_16px_rgba(15,23,42,0.06)]",
+    iconWell: "border-violet-300/90 bg-violet-100",
+    iconClass: "text-violet-800",
+    title: "text-violet-950",
+    body: "text-violet-900/88",
+  },
 ];
 
 const HR_PREVIEWS = {
@@ -100,7 +132,7 @@ function StepBar({ current = 1 }) {
             <span
               className={`text-sm font-semibold ${
                 s.n === current
-                  ? "text-[#c4ff47]"
+                  ? "text-lime-800"
                   : s.n < current
                     ? "text-white/55"
                     : "text-zinc-500"
@@ -259,13 +291,12 @@ export function Interview() {
           aria-hidden
         />
         <div className="relative z-10 mx-auto w-full max-w-7xl px-6">
-          <div className="w-full rounded-[28px] border border-slate-200 bg-white/85 px-6 py-6 shadow-[0_12px_24px_rgba(15,23,42,0.06)] backdrop-blur-sm sm:px-8 sm:py-7">
             <div className="mb-4 flex items-center gap-3">
               <IconFrame size="sm" tone="lime" className="rounded-lg">
-                <Sparkles className="h-4 w-4 text-[#c4ff47]" {...IS} />
+                <Sparkles className="h-4 w-4 text-lime-950" {...IS} strokeWidth={2.25} />
               </IconFrame>
               <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
-                ProInterview <span className="text-[#c4ff47]/95">· Phỏng vấn AI</span>
+                ProInterview <span className="text-lime-800">· Phỏng vấn AI</span>
               </span>
             </div>
             <h1 className="mb-4 text-3xl font-black leading-[1.08] tracking-tight text-slate-900 sm:text-4xl md:text-5xl">
@@ -279,7 +310,6 @@ export function Interview() {
             <p className="max-w-2xl text-base font-semibold leading-relaxed text-slate-600 sm:text-lg">
               Khởi động không gian phỏng vấn mô phỏng. Cung cấp thông tin để AI tối ưu hóa bộ câu hỏi cá nhân hoá dành riêng cho bạn.
             </p>
-          </div>
         </div>
       </header>
 
@@ -308,7 +338,7 @@ export function Interview() {
                 </div>
               )}
               <IconFrame tone="lime" className="mb-3">
-                <FileCheck className="h-5 w-5 text-[#7a9800]" {...IS} />
+                <FileCheck className="h-5 w-5 text-lime-950" {...IS} strokeWidth={2.25} />
               </IconFrame>
               <p className="mb-1 text-sm font-black text-slate-900">Dùng CV/JD đã phân tích</p>
               <p className="text-xs leading-relaxed text-slate-600">
@@ -349,7 +379,7 @@ export function Interview() {
                     onClick={() => setInputMethod(t.id)}
                     className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition-all ${
                       inputMethod === t.id
-                        ? "border border-[#c4ff47]/40 bg-[#c4ff47]/10 text-[#c4ff47]"
+                        ? "border border-lime-600/45 bg-lime-500/10 text-lime-950"
                         : "border border-white/10 bg-white/[0.04] text-zinc-400 hover:border-white/20 hover:text-zinc-200"
                     }`}
                   >
@@ -372,7 +402,7 @@ export function Interview() {
                   {cvUploaded ? (
                     <div className="flex flex-col items-center">
                       <IconFrame size="lg" tone="lime" className="mb-3 rounded-2xl">
-                        <Check className="h-6 w-6 text-[#c4ff47]" {...IS} strokeWidth={2} />
+                        <Check className="h-6 w-6 text-lime-950" {...IS} strokeWidth={2.25} />
                       </IconFrame>
                       <p className="text-sm font-black text-slate-900">CV đã được tải lên thành công</p>
                       <p className="mt-1 text-xs text-zinc-400">
@@ -381,7 +411,7 @@ export function Interview() {
                       <button
                         type="button"
                         onClick={(e) => { e.stopPropagation(); setCvUploaded(false); }}
-                        className="mt-3 text-xs font-semibold text-[#c4ff47] underline underline-offset-2 hover:text-[#e8ffc4]"
+                        className="mt-3 text-xs font-semibold text-lime-800 underline underline-offset-2 hover:text-lime-950"
                       >
                         Tải lại
                       </button>
@@ -389,7 +419,7 @@ export function Interview() {
                   ) : (
                     <div className="relative flex flex-col items-center">
                       <IconFrame size="lg" tone="violet" className="mb-3 rounded-2xl">
-                        <FileStack className="h-6 w-6 text-violet-200" {...IS} strokeWidth={2} />
+                        <FileStack className="h-6 w-6 text-violet-900" {...IS} strokeWidth={2.25} />
                       </IconFrame>
                       <p className="text-sm font-black text-slate-900">Kéo & thả CV hoặc click để chọn</p>
                       <p className="mt-1 text-xs text-zinc-500">PDF, DOC, DOCX · Tối đa 5 MB</p>
@@ -604,34 +634,33 @@ export function Interview() {
         {flowStep === 1 && (
         <section className="interview-glass mb-8 p-6 sm:p-8">
           <div className="mb-5 flex flex-wrap items-center gap-2.5">
-            <IconFrame size="sm" tone="neutral" className="rounded-lg border-[#c4ff47]/25">
-              <Timer className="h-4 w-4 text-[#c4ff47]" {...IS} />
+            <IconFrame size="sm" tone="lime" className="rounded-lg">
+              <Timer className="h-4 w-4 text-lime-950" {...IS} strokeWidth={2.25} />
             </IconFrame>
             <h2 className="text-sm font-black uppercase tracking-[0.14em] text-slate-900">Những gì sẽ xảy ra trong buổi phỏng vấn</h2>
             <span className="ml-auto text-xs font-semibold text-zinc-500">~30–45 phút</span>
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-2">
-            {PREVIEW_ITEMS.map((item, i) => (
-              <div
-                key={i}
-                className="flex gap-3 rounded-xl border border-white/10 bg-white/[0.04] p-3.5 transition-colors hover:border-[#c4ff47]/20"
-              >
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
+            {PREVIEW_ITEMS.map((item, i) => {
+              const p = PREVIEW_PASTEL[i] ?? PREVIEW_PASTEL[0];
+              return (
                 <div
-                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]"
-                  style={{
-                    background: `linear-gradient(145deg, ${item.color}22, ${item.color}08)`,
-                    borderColor: `${item.color}40`,
-                  }}
+                  key={i}
+                  className={`flex gap-3.5 rounded-[1.35rem] border-2 p-4 transition-shadow hover:shadow-lg sm:p-5 ${p.shell}`}
                 >
-                  <item.icon className="h-[18px] w-[18px]" style={{ color: item.color }} {...IS} />
+                  <div
+                    className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border-2 shadow-sm ${p.iconWell}`}
+                  >
+                    <item.icon className={`h-5 w-5 ${p.iconClass}`} {...IS} strokeWidth={2.25} />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className={`text-sm font-black leading-snug ${p.title}`}>{item.title}</p>
+                    <p className={`mt-2 text-xs leading-relaxed sm:text-sm ${p.body}`}>{item.desc}</p>
+                  </div>
                 </div>
-                <div className="min-w-0">
-                  <p className="text-xs font-black text-slate-900">{item.title}</p>
-                  <p className="mt-0.5 text-xs leading-relaxed text-zinc-400">{item.desc}</p>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           <div className="mt-6 border-t border-white/10 pt-5">
