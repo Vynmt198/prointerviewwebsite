@@ -8,7 +8,7 @@ export function FailurePage() {
   const errorMsg = state?.error || "Giao dịch không thành công hoặc đã bị hủy.";
 
   return (
-    <div className="min-h-screen bg-[#07060E] text-white flex items-center justify-center p-6 overflow-hidden">
+    <div className="min-h-screen bg-[#07060E] text-white flex items-center justify-center p-6 overflow-hidden antialiased">
       <div className="absolute top-[-10%] left-[-10%] h-[60vh] w-[60vh] rounded-full bg-red-500/10 blur-[120px]" />
       
       <motion.div 

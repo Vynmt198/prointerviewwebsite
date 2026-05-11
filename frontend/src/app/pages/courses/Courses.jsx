@@ -475,7 +475,7 @@ export function Courses() {
   };
 
   return (
-    <div className="courses-light pi-page-dashboard-bg relative min-h-full w-full overflow-hidden font-sans text-slate-900 selection:bg-[rgba(196,255,71,0.28)] selection:text-slate-900">
+    <div className="courses-light pi-page-dashboard-bg relative min-h-full w-full overflow-hidden font-sans antialiased text-slate-900 selection:bg-[rgba(196,255,71,0.28)] selection:text-slate-900">
       <div className="pointer-events-none fixed inset-0 z-0">
         <div className="fixed top-[-22%] left-[-12%] h-[760px] w-[760px] rounded-full bg-[#d4ff00]/48 blur-[135px]" />
         <div className="fixed bottom-[-22%] right-[-10%] h-[820px] w-[820px] rounded-full bg-[#9447ff]/34 blur-[150px]" />
@@ -515,8 +515,15 @@ export function Courses() {
         <div className="relative z-10 mx-auto max-w-7xl px-6 sm:px-8">
           <div className="mb-8">
             <div className="mb-4 flex items-center gap-3">
-              <GraduationCap className="size-5 text-[#c4ff47]" />
-              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Thư viện kiến thức</span>
+              <GraduationCap
+                className="size-6 shrink-0 text-lime-900"
+                strokeWidth={2.5}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-800 sm:text-[11px]">
+                Thư viện kiến thức
+              </span>
             </div>
             <h1 className="mb-4 text-3xl font-black leading-[1.08] tracking-tight text-slate-900 sm:text-4xl md:text-5xl">
               Luyện tập cùng{" "}

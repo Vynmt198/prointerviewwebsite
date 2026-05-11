@@ -3,6 +3,8 @@ import { AppLayout } from "./components/layout/AppLayout";
 import { Home } from "./pages/home/Home";
 import { Login } from "./pages/auth/Login";
 import { Register } from "./pages/auth/Register";
+import { ForgotPassword } from "./pages/auth/ForgotPassword";
+import { ResetPassword } from "./pages/auth/ResetPassword";
 import { Checkout } from "./pages/booking/Checkout";
 import { Dashboard } from "./pages/account/Dashboard";
 import { CVAnalysis } from "./pages/cv/CVAnalysis";
@@ -35,6 +37,7 @@ import { CourseLearning } from "./pages/courses/CourseLearning";
 import { MentorCourseManagement } from "./pages/mentor/MentorCourseManagement";
 import { MentorCourseEdit } from "./pages/mentor/MentorCourseEdit";
 import { MentorPeerReview } from "./pages/mentor/MentorPeerReview";
+import { MentorArea } from "./pages/mentor/MentorArea";
 import { Pricing } from "./pages/home/Pricing";
 import { AdminLayout } from "./pages/admin/AdminLayout.jsx";
 import { adminLoader } from "./pages/admin/adminLoader.js";
@@ -63,6 +66,8 @@ export const router = createHashRouter([
   { path: "/", Component: Home },
   { path: "/login", Component: Login },
   { path: "/register", Component: Register },
+  { path: "/forgot-password", Component: ForgotPassword },
+  { path: "/reset-password", Component: ResetPassword },
   { path: "/checkout", Component: Checkout },
   { path: "/pricing", Component: Pricing },
   { path: "/payment-return", Component: PaymentReturn },
@@ -114,19 +119,24 @@ export const router = createHashRouter([
       { path: "review/:sessionId", Component: MentorReview },
       { path: "profile", Component: Profile },
       { path: "settings", Component: Settings },
-      // Mentor routes
-      { path: "mentor/dashboard", Component: MentorDashboard },
-      { path: "mentor/schedule", Component: MentorSchedule },
-      { path: "mentor/finance", Component: MentorFinance },
-      { path: "mentor/analytics", Component: MentorAnalytics },
-      { path: "mentor/reviews", Component: MentorReviews },
-      { path: "mentor/meeting/:sessionId", Component: MeetingRoom },
-      { path: "mentor/meeting-detail/:sessionId", Component: MentorMeetingDetail },
+      {
+        path: "mentor",
+        Component: MentorArea,
+        children: [
+          { path: "dashboard", Component: MentorDashboard },
+          { path: "schedule", Component: MentorSchedule },
+          { path: "finance", Component: MentorFinance },
+          { path: "analytics", Component: MentorAnalytics },
+          { path: "reviews", Component: MentorReviews },
+          { path: "meeting/:sessionId", Component: MeetingRoom },
+          { path: "meeting-detail/:sessionId", Component: MentorMeetingDetail },
+          { path: "courses", Component: MentorCourseManagement },
+          { path: "courses/:id/edit", Component: MentorCourseEdit },
+          { path: "peer-review", Component: MentorPeerReview },
+        ],
+      },
       { path: "courses", Component: Courses },
       { path: "courses/:id", Component: CourseDetail },
-      { path: "mentor/courses", Component: MentorCourseManagement },
-      { path: "mentor/courses/:id/edit", Component: MentorCourseEdit },
-      { path: "mentor/peer-review", Component: MentorPeerReview },
     ],
   },
   // Wildcard route outside AppLayout to catch all unmatched routes

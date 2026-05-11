@@ -147,7 +147,7 @@ export function InterviewFeedback() {
       : { cls: "bg-red-100 text-red-600", label: "Cần cải thiện" };
 
   return (
-    <div className="pi-page-dashboard-bg relative min-h-full w-full overflow-hidden text-foreground">
+    <div className="pi-page-dashboard-bg relative min-h-full w-full overflow-hidden antialiased text-foreground">
       <div className="pointer-events-none absolute inset-0 z-0">
         <div className="absolute -left-24 top-10 h-80 w-80 rounded-full bg-[#d4ff00]/45 blur-[130px]" />
         <div className="absolute -right-20 top-24 h-[22rem] w-[22rem] rounded-full bg-[#9447ff]/32 blur-[150px]" />

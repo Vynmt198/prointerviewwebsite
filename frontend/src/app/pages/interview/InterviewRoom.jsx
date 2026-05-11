@@ -637,7 +637,7 @@ export default function InterviewRoom() {
   if (phase === "ready") {
     return (
       <div
-        className="pi-page-dashboard-bg relative flex flex-col items-center justify-center overflow-hidden"
+        className="pi-page-dashboard-bg relative flex flex-col items-center justify-center overflow-hidden antialiased"
         style={{ height: "calc(100vh - 56px)" }}
       >
         <div
@@ -769,7 +769,7 @@ export default function InterviewRoom() {
   /* ══ RENDER — Main interview room ═════════════════════════ */
   return (
     <div
-      className="pi-page-dashboard-bg relative flex flex-col overflow-hidden"
+      className="pi-page-dashboard-bg relative flex flex-col overflow-hidden antialiased"
       style={{ height: "calc(100vh - 56px)" }}
     >
       {/* ── Upgrade modal overlay (non-Pro, after FREE_LIMIT) ── */}

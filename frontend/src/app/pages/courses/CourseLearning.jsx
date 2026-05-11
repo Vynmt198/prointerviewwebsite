@@ -556,7 +556,7 @@ export function CourseLearning() {
   }
 
   return (
-    <div className="flex flex-col h-screen bg-gray-950 overflow-hidden">
+    <div className="flex h-screen flex-col overflow-hidden bg-gray-950 antialiased">
       {/* ── Top bar ─────────────────────────────────────────── */}
       <header
         className="flex items-center gap-4 px-4 py-3 shrink-0 z-30"

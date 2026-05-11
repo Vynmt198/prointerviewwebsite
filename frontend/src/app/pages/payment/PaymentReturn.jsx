@@ -86,7 +86,7 @@ export function PaymentReturn() {
   };
 
   return (
-    <div className="pi-page-dashboard-bg relative min-h-screen flex items-center justify-center p-6 overflow-hidden text-white font-sans">
+    <div className="pi-page-dashboard-bg relative min-h-screen flex items-center justify-center overflow-hidden p-6 font-sans antialiased text-white">
       {/* Background Orbs */}
       <div className="absolute top-[-10%] right-[-10%] h-[60vh] w-[60vh] rounded-full bg-fuchsia-600/20 blur-[120px]" />
       <div className="absolute bottom-[-10%] left-[-10%] h-[60vh] w-[60vh] rounded-full bg-[#c4ff47]/10 blur-[120px]" />

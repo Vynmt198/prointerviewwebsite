@@ -16,7 +16,7 @@ import {
   ArrowUpRight,
   Plus
 } from "lucide-react";
-import { getUser } from "../../utils/auth";
+import { getUser, getDisplayName } from "../../utils/auth";
 import { MentorPageShell } from "../../components/mentor/MentorPageShell";
 import { listMentorBookings } from "../../utils/bookingsApi";
 import { fetchMentorDashboard } from "../../utils/mentorApi";
@@ -345,8 +345,9 @@ export function MentorDashboard() {
       <div className="relative z-10 mx-auto max-w-7xl px-6 pb-10 pt-16 sm:px-8 sm:pt-20">
         <div className="mb-10 flex flex-col justify-between gap-6 md:mb-14 md:flex-row md:items-end md:gap-8">
           <div>
-            <h1 className="mb-3 font-headline text-4xl font-black tracking-tighter text-slate-900 sm:text-5xl md:text-6xl">
-               Xin chào, <span className="text-violet-700">{user.name.split(" ")[0]}!</span> 👋
+            <h1 className="mb-3 font-headline text-4xl font-black tracking-tighter text-slate-900 sm:text-5xl md:text-6xl break-words">
+               Xin chào,{" "}
+               <span className="text-violet-700">{getDisplayName(user, "Mentor")}!</span>
             </h1>
             <p className="max-w-xl text-base font-medium leading-relaxed text-slate-600 sm:text-lg">Bảng điều khiển tối ưu dành cho Mentor của ProInterview</p>
           </div>

@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router";
 import { motion, AnimatePresence } from "motion/react";
-import { getUser, isLoggedIn } from "../../utils/auth";
+import { getUser, isLoggedIn, getDisplayName, getInitials } from "../../utils/auth";
 import { getCVAnalysisHistory, getStoredInterviewHistory } from "../../utils/history";
 import { toast } from "sonner";
 import { getAllBookings, parseDateMs } from "../../utils/bookings";
@@ -196,10 +196,8 @@ function getPaymentBadge(paymentStatus, status) {
 export function Dashboard() {
   const navigate = useNavigate();
   const user = getUser();
-  const fullName = user?.name || "Người dùng";
-  const initials = user?.name
-    ? user.name.trim().split(/\s+/).map((w) => w[0]).join("").slice(0, 2).toUpperCase()
-    : "U";
+  const fullName = getDisplayName(user);
+  const initials = getInitials(fullName);
 
   const [upcomingSessions, setUpcomingSessions] = useState([]);
   const [cancellingBooking, setCancellingBooking] = useState(null);
@@ -327,18 +325,6 @@ export function Dashboard() {
         .material-symbols-outlined.ms-filled {
           font-variation-settings: "FILL" 1, "wght" 600, "GRAD" 0, "opsz" 24;
         }
-        @keyframes wave-hand {
-           0%, 100% { transform: rotate(0deg); }
-           20% { transform: rotate(16deg); }
-           40% { transform: rotate(-10deg); }
-           60% { transform: rotate(14deg); }
-           80% { transform: rotate(-6deg); }
-        }
-        .wave-emoji {
-          display: inline-block;
-          transform-origin: 70% 70%;
-          animation: wave-hand 2.2s ease-in-out infinite;
-        }
       `}</style>
 
       <div className="relative z-10 mx-auto max-w-7xl px-6 pb-10 pt-2 sm:px-8 sm:pt-3">
@@ -358,10 +344,7 @@ export function Dashboard() {
               <h1 className="mb-2 font-headline text-4xl font-black tracking-tighter text-slate-900 sm:text-5xl md:text-6xl break-words">
                 <span className="text-slate-900">Chào, </span>
                 <span className="text-violet-700">{fullName}</span>
-                <span className="text-slate-900">!</span>{" "}
-                <span className="wave-emoji ml-0.5" aria-hidden>
-                  👋
-                </span>
+                <span className="text-slate-900">!</span>
               </h1>
               <p className="max-w-xl text-base font-medium leading-relaxed text-slate-600 sm:text-lg">
                 Sẵn sàng chinh phục mục tiêu phỏng vấn hôm nay?

@@ -232,7 +232,7 @@ export function Interview() {
   const optOn = "border-violet-500/65 bg-violet-100 shadow-[0_0_24px_rgba(122,35,229,0.18)]";
 
   return (
-    <div className="interview-light relative min-h-screen overflow-x-hidden pb-24 font-sans text-slate-900 selection:bg-[rgba(196,255,71,0.28)] selection:text-slate-900">
+    <div className="interview-light relative min-h-screen overflow-x-hidden pb-24 font-sans text-slate-900 antialiased selection:bg-[rgba(196,255,71,0.28)] selection:text-slate-900">
       <style>{`
         .interview-light.pi-page-dashboard-bg {
           background: linear-gradient(165deg, #f8f4ff 0%, #f5f8ff 45%, #f7f4ff 100%);
@@ -290,13 +290,16 @@ export function Interview() {
           }}
           aria-hidden
         />
-        <div className="relative z-10 mx-auto w-full max-w-7xl px-6">
+        <div className="relative z-10 mx-auto w-full max-w-7xl px-6 sm:px-8">
             <div className="mb-4 flex items-center gap-3">
-              <IconFrame size="sm" tone="lime" className="rounded-lg">
-                <Sparkles className="h-4 w-4 text-lime-950" {...IS} strokeWidth={2.25} />
-              </IconFrame>
-              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
-                ProInterview <span className="text-lime-800">· Phỏng vấn AI</span>
+              <Sparkles
+                className="size-6 shrink-0 text-lime-900"
+                strokeWidth={2.5}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-800 sm:text-[11px]">
+                ProInterview · Phỏng vấn AI
               </span>
             </div>
             <h1 className="mb-4 text-3xl font-black leading-[1.08] tracking-tight text-slate-900 sm:text-4xl md:text-5xl">

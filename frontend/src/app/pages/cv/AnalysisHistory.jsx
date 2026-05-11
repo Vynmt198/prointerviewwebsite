@@ -66,7 +66,7 @@ export function AnalysisHistory() {
   const fieldAnalyses = CV_ANALYSIS_HISTORY.filter(item => item.mode === "field").length;
 
   return (
-    <div className="relative min-h-full w-full overflow-x-hidden text-slate-900 selection:bg-[rgba(196,255,71,0.28)] selection:text-slate-900">
+    <div className="relative min-h-full w-full overflow-x-hidden font-sans antialiased text-slate-900 selection:bg-[rgba(196,255,71,0.28)] selection:text-slate-900">
       <div className="fixed inset-0 pointer-events-none -z-[3]" style={{ background: "#f8f4ff" }} />
       <div className="fixed top-[-22%] left-[-12%] w-[760px] h-[760px] rounded-full pointer-events-none -z-[2] bg-[#d4ff00]/48 blur-[135px]" />
       <div className="fixed bottom-[-22%] right-[-10%] w-[820px] h-[820px] rounded-full pointer-events-none -z-[2] bg-[#9447ff]/34 blur-[150px]" />
@@ -98,8 +98,13 @@ export function AnalysisHistory() {
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div>
               <div className="mb-3 flex items-center gap-3">
-                <FileText className="size-5 text-[#c4ff47]" />
-                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
+                <FileText
+                  className="size-6 shrink-0 text-lime-900"
+                  strokeWidth={2.5}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-800 sm:text-[11px]">
                   Phân tích CV/JD
                 </span>
               </div>

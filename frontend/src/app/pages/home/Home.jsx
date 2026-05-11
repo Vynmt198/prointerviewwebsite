@@ -69,7 +69,7 @@ const FEATURES = [
     dotColor: "#FFB800",
     borderHover: "rgba(255,184,0,0.5)",
     bgHover: "rgba(255,184,0,0.07)",
-    title: "Mentor 1-1 Thực Tế",
+    title: "Mentor 1:1 Thực tế",
     desc: "Đặt lịch phỏng vấn chuyên ngành 1-1 với HR/Manager từ Shopee, Vingroup, FPT và 200+ công ty hàng đầu.",
     route: "/mentors",
     cta: "Tìm Mentor",
@@ -155,12 +155,212 @@ const STATS = [
   { value: "85%", label: "Tỷ lệ được nhận việc" },
   { value: "4.8/5", label: "Điểm hài lòng" },
 ];
+
+/** Clip demo phỏng vấn AI — dùng chung hero (cột phải) và mock màn hình khu tính năng. */
+const HOME_AI_DEMO_VIDEO =
+  "https://res.cloudinary.com/dee4bvivu/video/upload/v1774336640/Female_delxmy.mp4";
 const NAV_LINKS = [
   { label: "Tính năng", href: "#features" },
   { label: "Khóa học", href: "#courses" },
   { label: "Đánh giá", href: "#mentors" },
   { label: "Bảng giá", href: "#pricing" },
 ];
+
+/** Hero: video + viền trắng + thẻ feedback chồng góc (không lồng thêm khung tím bên ngoài). */
+function HeroInterviewVideoCard() {
+  return (
+    <div className="relative mx-auto w-full max-w-[min(100%,300px)] sm:max-w-[350px] lg:max-w-[380px] lg:justify-self-end">
+      <div
+        className="relative overflow-hidden rounded-[20px] border-[8px] border-white shadow-[0_20px_48px_-16px_rgba(15,23,42,0.4)] sm:rounded-[22px] sm:border-[10px]"
+        style={{ aspectRatio: "19 / 20" }}
+      >
+        <video
+          autoPlay
+          loop
+          muted
+          playsInline
+          className="h-full w-full object-cover"
+        >
+          <source src={HOME_AI_DEMO_VIDEO} type="video/mp4" />
+        </video>
+        <div
+          className="absolute bottom-3 left-3 z-10 flex max-w-[calc(100%-1.5rem)] items-center gap-2.5 rounded-full border-2 border-white bg-white py-2.5 pl-2.5 pr-3.5 shadow-[0_10px_32px_-8px_rgba(15,23,42,0.4)] sm:bottom-4 sm:left-4 sm:gap-3 sm:py-3 sm:pl-3 sm:pr-4"
+          role="status"
+        >
+          <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-600 ring-2 ring-emerald-200/90 sm:size-9">
+            <Check className="size-4 stroke-[2.5]" />
+          </span>
+          <div className="min-w-0">
+            <p className="text-[12px] font-black leading-tight text-slate-900 sm:text-[13px]">Bạn làm tốt lắm!</p>
+            <p className="text-[10px] font-medium text-slate-500 sm:text-[11px]">AI Feedback vừa xong</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** Mock cửa sổ phỏng vấn AI + video + overlay (section Interview Preview). */
+function InterviewDemoMockup() {
+  const glow = "-inset-6 blur-3xl";
+  const shell = "p-1 sm:p-1.5 rounded-[28px]";
+  const inner = "rounded-[24px]";
+  const chrome = "flex items-center justify-between px-5 py-3.5";
+  const titleSz = "text-xs";
+  const topBar = "p-4";
+  const bottomWrap = "p-5";
+  const bubble = "p-4";
+  const qLead = "text-xs mb-1.5";
+  const qBody = "text-sm leading-relaxed";
+  const statsGrid = "grid grid-cols-3 gap-2 mt-3";
+  const statCell = "flex items-center gap-2 px-2.5 py-2 rounded-lg";
+  const statIcon = "w-3.5 h-3.5";
+  const statTxt = "text-xs font-medium";
+
+  return (
+    <div className="relative">
+      <div
+        className={`absolute ${glow} rounded-[32px] opacity-50 pointer-events-none`}
+        style={{
+          background:
+            "radial-gradient(circle, rgba(196,255,71,0.2) 0%, rgba(110, 53, 232,0.35) 45%, transparent 70%)",
+        }}
+        aria-hidden
+      />
+      <div className={`glass-card ${shell}`}>
+        <div
+          className={`relative ${inner} overflow-hidden border-0 bg-[#07060e]/95`}
+          style={{
+            boxShadow: "0 24px 64px rgba(0,0,0,0.5), 0 0 0 1px rgba(196,255,71,0.08) inset",
+          }}
+        >
+          <div
+            className={chrome}
+            style={{
+              background: "#0A0816",
+              borderBottom: "1px solid rgba(255,255,255,0.07)",
+            }}
+          >
+            <div className="flex gap-1.5">
+              <div className="h-2.5 w-2.5 rounded-full sm:h-3 sm:w-3" style={{ background: "#FF5F57" }} />
+              <div className="h-2.5 w-2.5 rounded-full sm:h-3 sm:w-3" style={{ background: "#FEBC2E" }} />
+              <div className="h-2.5 w-2.5 rounded-full sm:h-3 sm:w-3" style={{ background: "#28C840" }} />
+            </div>
+            <div className="flex min-w-0 flex-1 items-center justify-center gap-2 px-2">
+              <div className="h-1.5 w-1.5 shrink-0 rounded-full sm:h-2 sm:w-2" style={{ background: "rgba(110, 53, 232,0.6)" }} />
+              <span className={`truncate font-medium ${titleSz}`} style={{ color: "rgba(255,255,255,0.35)" }}>
+                ProInterview — Phỏng vấn AI
+              </span>
+            </div>
+            <div className="flex shrink-0 items-center gap-1">
+              <div className="h-1.5 w-1.5 animate-pulse rounded-full sm:h-2 sm:w-2" style={{ background: "#FF5F57" }} />
+              <span className={`font-semibold ${titleSz}`} style={{ color: "#FF5F57" }}>
+                Đang ghi
+              </span>
+            </div>
+          </div>
+
+          <div className="relative bg-[#0A0816]" style={{ aspectRatio: "16/10" }}>
+            <div className="absolute inset-0 flex items-center justify-center">
+              <video
+                autoPlay
+                loop
+                muted
+                playsInline
+                className="h-full w-full object-cover"
+                style={{ opacity: 0.95 }}
+              >
+                <source src={HOME_AI_DEMO_VIDEO} type="video/mp4" />
+              </video>
+            </div>
+
+            <div className="pointer-events-none absolute inset-0">
+              <div
+                className={`absolute left-0 right-0 top-0 flex items-center justify-between ${topBar}`}
+                style={{
+                  background: "linear-gradient(to bottom, rgba(18,11,46,0.92), transparent)",
+                }}
+              >
+                <div className="flex items-center gap-2">
+                  <div className="h-1.5 w-1.5 animate-pulse rounded-full sm:h-2 sm:w-2" style={{ background: "#FF5F57" }} />
+                  <span className="font-semibold text-white text-xs">
+                    Đang phỏng vấn
+                  </span>
+                </div>
+                <div
+                  className="rounded-md border px-3 py-1.5 text-xs font-semibold sm:rounded-lg"
+                  style={{
+                    background: "rgba(110, 53, 232,0.25)",
+                    borderColor: "rgba(110, 53, 232,0.4)",
+                    color: "#B89DFF",
+                  }}
+                >
+                  03:24 / 15:00
+                </div>
+              </div>
+
+              <div
+                className={`absolute bottom-0 left-0 right-0 ${bottomWrap}`}
+                style={{
+                  background: "linear-gradient(to top, rgba(18,11,46,0.95), transparent)",
+                }}
+              >
+                <div
+                  className={bubble}
+                  style={{
+                    background: "rgba(110, 53, 232,0.15)",
+                    border: "1px solid rgba(110, 53, 232,0.35)",
+                    backdropFilter: "blur(12px)",
+                    borderRadius: "12px",
+                  }}
+                >
+                  <div className="flex items-start gap-2 sm:gap-3">
+                    <div
+                      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg"
+                      style={{
+                        background: "linear-gradient(135deg, #6E35E8, #9B6DFF)",
+                      }}
+                    >
+                      <Sparkle className="h-4 w-4 text-white" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className={`font-semibold text-white/50 ${qLead}`}>Câu hỏi 2/5</p>
+                      <p className={`text-white ${qBody}`}>
+                        Hãy kể về một lần bạn phải giải quyết xung đột trong nhóm. Bạn đã xử lý như thế nào?
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className={statsGrid}>
+                  {[
+                    { icon: Microphone, label: "Đang nghe", color: "#B4F500" },
+                    { icon: Brain, label: "Phân tích STAR", color: "#6E35E8" },
+                    { icon: ChartBar, label: "Điểm: 3.8/5", color: "#FFB800" },
+                  ].map((item, i) => (
+                    <div
+                      key={i}
+                      className={statCell}
+                      style={{
+                        background: "rgba(255,255,255,0.06)",
+                        border: "1px solid rgba(255,255,255,0.08)",
+                      }}
+                    >
+                      <item.icon className={`${statIcon} shrink-0`} style={{ color: item.color }} />
+                      <span className={statTxt} style={{ color: "rgba(255,255,255,0.6)" }}>
+                        {item.label}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export function Home() {
   const [scrolled, setScrolled] = useState(false);
@@ -169,7 +369,7 @@ export function Home() {
 
   const handleFeatureClick = (route) => requireLoginNavigate(navigate, route);
   const renderSectionSticks = (sticks) => (
-    <div className="pointer-events-none absolute inset-0 z-[1] hidden lg:block" aria-hidden>
+    <div className="pointer-events-none absolute inset-0 z-[5] hidden lg:block" aria-hidden>
       {sticks.map((s, idx) => (
         <Sparkles
           key={`section-stick-${idx}`}
@@ -431,10 +631,10 @@ export function Home() {
 
       {/* ═══ NAVBAR ════════════════════════════════════════ */}
       <TopNavShell variant="dark" scrolled={scrolled}>
-        <div className="max-w-7xl mx-auto px-5 h-16 flex items-center gap-6">
+        <div className="mx-auto flex h-16 max-w-7xl items-center gap-6">
           {/* Logo */}
           <div
-            className="flex items-center gap-2.5 cursor-pointer flex-shrink-0"
+            className="-ml-2 flex shrink-0 cursor-pointer items-center gap-2.5 sm:-ml-3"
             onClick={() =>
               window.scrollTo({ top: 0, behavior: "smooth" })
             }
@@ -517,7 +717,7 @@ export function Home() {
               borderColor: "rgba(255,255,255,0.08)",
             }}
           >
-            <div className="max-w-7xl mx-auto px-5 py-4 flex flex-col gap-1">
+            <div className="mx-auto flex max-w-7xl flex-col gap-1 py-4">
               {NAV_LINKS.map((l) => (
                 <a
                   key={l.label}
@@ -570,12 +770,12 @@ export function Home() {
       </TopNavShell>
 
       {/* ═══ HERO ═══════════════════════════════════════════ */}
-      <section className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden px-5 pt-20">
+      <section className="relative flex min-h-[100dvh] flex-col justify-start overflow-hidden px-5 pb-10 pt-24 lg:min-h-screen lg:pb-12 lg:pt-28">
         {renderSectionSticks([
-          { x: 18, y: 18, size: 36, opacity: 0.52 },
-          { x: 82, y: 22, size: 48, opacity: 0.6 },
-          { x: 14, y: 68, size: 32, opacity: 0.46 },
-          { x: 86, y: 72, size: 36, opacity: 0.5 },
+          { x: 5, y: 11, size: 34, opacity: 0.48 },
+          { x: 93, y: 13, size: 40, opacity: 0.55 },
+          { x: 3, y: 50, size: 28, opacity: 0.4 },
+          { x: 92, y: 80, size: 32, opacity: 0.46 },
         ])}
         {/* BG gradient mesh */}
         <div
@@ -632,112 +832,120 @@ export function Home() {
           aria-hidden
         />
 
-        {/* Hero content */}
-        <div className="relative z-10 text-center max-w-4xl mx-auto">
-          <div
-            className="inline-flex items-center gap-2 mb-7 px-4 py-2 rounded-full border text-xs font-bold cute-glass hero-badge-animated"
-            style={{
-              background: "rgba(110, 53, 232,0.15)",
-              borderColor: "rgba(110, 53, 232,0.35)",
-              color: "#B89DFF",
-            }}
-          >
-            <Sparkle className="w-3.5 h-3.5" />
-            Nền tảng luyện phỏng vấn với AI
-          </div>
+        {/* Hero content — 2 cột lg: copy trái + video/mockup phải */}
+        <div className="relative z-10 mx-auto w-full max-w-7xl">
+          <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1.05fr)_minmax(260px,440px)] lg:grid-rows-[auto_auto] lg:items-start lg:gap-x-14 lg:gap-y-5 xl:gap-x-16">
+            <div className="order-1 text-left lg:col-start-1 lg:row-start-1">
+              <div
+                className="mb-5 inline-flex items-center gap-2 rounded-full border px-4 py-2 text-xs font-bold cute-glass hero-badge-animated lg:mb-5"
+                style={{
+                  background: "rgba(110, 53, 232,0.15)",
+                  borderColor: "rgba(110, 53, 232,0.35)",
+                  color: "#B89DFF",
+                }}
+              >
+                <Sparkle className="w-3.5 h-3.5" />
+                Nền tảng luyện phỏng vấn với AI
+              </div>
 
-          {/* Headline */}
-          <h1
-            className="text-white mb-6 py-2 leading-[1.08] cute-heading font-headline tracking-tighter"
-            style={{
-              fontSize: "clamp(2rem, 5.5vw, 3.5rem)",
-            }}
-          >
-            <span className="text-white">
-              Phỏng vấn{" "}
-            </span>
-            <span
-              className="hero-title-animated hero-orbit-text"
-              style={{ 
-                background: "linear-gradient(135deg, #B4F500 0%, #6E35E8 100%)",
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent",
-                backgroundClip: "text",
-                padding: "0.1em 0" 
-              }}
-            >
-              1:1 với AI
-            </span>
-            <span className="text-white"> qua mô phỏng hội thoại thông minh</span>
-          </h1>
-
-          {/* Sub */}
-          <p
-            className="text-white/55 max-w-2xl mx-auto mb-10 leading-relaxed"
-            style={{ fontSize: "1rem" }}
-          >
-            ProInterview phân tích CV/JD, tạo câu hỏi phỏng vấn
-            cá nhân hóa, và kết nối bạn với Mentor HR thực tế từ
-            Shopee, Vingroup, FPT và hơn 200 công ty hàng đầu.
-          </p>
-
-          {/* CTA buttons */}
-          <div className="flex flex-col sm:flex-row gap-3.5 justify-center mb-16">
-            <button
-              type="button"
-              onClick={() => navigateToInterview(navigate)}
-              className="inline-flex items-center justify-center gap-2.5 px-8 py-4 rounded-full font-black transition-all hover:brightness-110 active:scale-[0.98] hover:-translate-y-0.5"
-              style={{
-                background:
-                  "linear-gradient(135deg, #B4F500, #8fbc24)",
-                color: "#1a1a1a",
-                fontSize: "0.9375rem",
-                boxShadow:
-                  "0 0 40px rgba(196, 255, 71,0.3), 0 8px 24px rgba(0,0,0,0.3)",
-              }}
-            >
-              <Lightning className="w-5 h-5" />
-              Phỏng vấn thử miễn phí
-            </button>
-            <button
-              type="button"
-              onClick={() => requireLoginNavigate(navigate, "/mentors")}
-              className="inline-flex items-center justify-center gap-2.5 px-8 py-4 rounded-full font-semibold transition-all hover:bg-white/12 hover:-translate-y-0.5"
-              style={{
-                background: "rgba(255,255,255,0.07)",
-                color: "rgba(255,255,255,0.85)",
-                fontSize: "0.9375rem",
-                border: "1px solid rgba(255,255,255,0.14)",
-                backdropFilter: "blur(8px)",
-              }}
-            >
-              <Users className="w-5 h-5" />
-              Tìm Mentor ngay
-            </button>
-          </div>
-
-          {/* Stats — glass-card giống khối metric Dashboard */}
-          <div className="glass-card p-3 sm:p-4">
-            <div className="relative z-[1] grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3">
-              {STATS.map((s, i) => (
-                <div
-                  key={i}
-                  className="text-center py-5 px-3 sm:px-4 rounded-2xl border border-white/[0.08] bg-white/[0.04]"
+              <h1
+                className="mb-4 py-2 font-headline text-white leading-[1.08] tracking-tighter cute-heading lg:mb-5"
+                style={{
+                  fontSize: "clamp(2rem, 5.5vw, 3.5rem)",
+                }}
+              >
+                <span className="text-white">
+                  Phỏng vấn{" "}
+                </span>
+                <span
+                  className="hero-title-animated hero-orbit-text"
+                  style={{
+                    background: "linear-gradient(135deg, #B4F500 0%, #6E35E8 100%)",
+                    WebkitBackgroundClip: "text",
+                    WebkitTextFillColor: "transparent",
+                    backgroundClip: "text",
+                    padding: "0.1em 0",
+                  }}
                 >
-                  <div
-                    className="text-white font-black mb-1"
-                    style={{
-                      fontSize: "clamp(1.25rem, 3.5vw, 1.5rem)",
-                      letterSpacing: "-0.03em",
-                    }}
-                  >
-                    {s.value}
-                  </div>
-                  <div className="text-white/45 text-[11px] font-semibold leading-snug">
-                    {s.label}
-                  </div>
+                  1:1 với AI
+                </span>
+                <span className="text-white"> qua mô phỏng hội thoại thông minh</span>
+              </h1>
+
+              <p
+                className="mb-6 max-w-2xl leading-relaxed text-white/55 lg:mb-7"
+                style={{ fontSize: "1rem" }}
+              >
+                ProInterview phân tích CV/JD, tạo câu hỏi phỏng vấn
+                cá nhân hóa, và kết nối bạn với Mentor HR thực tế từ
+                Shopee, Vingroup, FPT và hơn 200 công ty hàng đầu.
+              </p>
+
+              <div className="mb-6 flex flex-col gap-3.5 sm:flex-row sm:justify-start lg:mb-0">
+                <button
+                  type="button"
+                  onClick={() => navigateToInterview(navigate)}
+                  className="inline-flex items-center justify-center gap-2.5 px-8 py-4 rounded-full font-black transition-all hover:brightness-110 active:scale-[0.98] hover:-translate-y-0.5"
+                  style={{
+                    background:
+                      "linear-gradient(135deg, #B4F500, #8fbc24)",
+                    color: "#1a1a1a",
+                    fontSize: "0.9375rem",
+                    boxShadow:
+                      "0 0 40px rgba(196, 255, 71,0.3), 0 8px 24px rgba(0,0,0,0.3)",
+                  }}
+                >
+                  <Lightning className="w-5 h-5" />
+                  Phỏng vấn thử miễn phí
+                </button>
+                <button
+                  type="button"
+                  onClick={() => requireLoginNavigate(navigate, "/mentors")}
+                  className="inline-flex items-center justify-center gap-2.5 px-8 py-4 rounded-full font-semibold transition-all hover:bg-white/12 hover:-translate-y-0.5"
+                  style={{
+                    background: "rgba(255,255,255,0.07)",
+                    color: "rgba(255,255,255,0.85)",
+                    fontSize: "0.9375rem",
+                    border: "1px solid rgba(255,255,255,0.14)",
+                    backdropFilter: "blur(8px)",
+                  }}
+                >
+                  <Users className="w-5 h-5" />
+                  Tìm Mentor ngay
+                </button>
+              </div>
+            </div>
+
+            {/* Cột phải: căn đáy hàng 1 để video không “bay” quá cao so với copy */}
+            <div className="order-3 mt-6 flex w-full justify-start lg:order-2 lg:col-start-2 lg:row-start-1 lg:mt-0 lg:flex lg:justify-end lg:self-end">
+              <HeroInterviewVideoCard />
+            </div>
+
+            {/* Thanh stats — full width, căn giữa; khoảng cách trên lg gọn để còn trong 1 màn */}
+            <div className="order-2 mt-6 flex w-full justify-center lg:order-3 lg:col-span-2 lg:col-start-1 lg:row-start-2 lg:mt-5">
+              <div className="glass-card w-full max-w-xl p-2.5 sm:max-w-3xl sm:p-3 lg:max-w-4xl">
+                <div className="relative z-[1] grid grid-cols-2 gap-2 sm:gap-3 md:grid-cols-4">
+                  {STATS.map((s, i) => (
+                    <div
+                      key={i}
+                      className="rounded-2xl border border-white/[0.08] bg-white/[0.04] px-2.5 py-3 text-center sm:px-3 sm:py-4 md:py-3.5"
+                    >
+                      <div
+                        className="mb-1 font-black text-white"
+                        style={{
+                          fontSize: "clamp(1.25rem, 3.5vw, 1.5rem)",
+                          letterSpacing: "-0.03em",
+                        }}
+                      >
+                        {s.value}
+                      </div>
+                      <div className="text-[11px] font-semibold leading-snug text-white/45">
+                        {s.label}
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              ))}
+              </div>
             </div>
           </div>
         </div>
@@ -956,194 +1164,7 @@ export function Home() {
               </div>
             </div>
 
-            {/* Right: mock interview screen with HR video */}
-            <div className="relative">
-              <div
-                className="absolute -inset-6 rounded-[32px] opacity-50 blur-3xl pointer-events-none"
-                style={{
-                  background:
-                    "radial-gradient(circle, rgba(196,255,71,0.2) 0%, rgba(110, 53, 232,0.35) 45%, transparent 70%)",
-                }}
-                aria-hidden
-              />
-              <div className="glass-card p-1 sm:p-1.5 rounded-[28px]">
-                <div
-                  className="relative rounded-[24px] overflow-hidden border border-white/[0.08] bg-[#07060e]/95"
-                  style={{
-                    boxShadow: "0 24px 64px rgba(0,0,0,0.5), 0 0 0 1px rgba(196,255,71,0.08) inset",
-                  }}
-                >
-                  {/* Window chrome */}
-                  <div
-                    className="flex items-center justify-between px-5 py-3.5"
-                    style={{
-                      background: "#0A0816",
-                      borderBottom:
-                        "1px solid rgba(255,255,255,0.07)",
-                    }}
-                  >
-                    <div className="flex gap-1.5">
-                      <div
-                        className="w-3 h-3 rounded-full"
-                        style={{ background: "#FF5F57" }}
-                      />
-                      <div
-                        className="w-3 h-3 rounded-full"
-                        style={{ background: "#FEBC2E" }}
-                      />
-                      <div
-                        className="w-3 h-3 rounded-full"
-                        style={{ background: "#28C840" }}
-                      />
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div
-                        className="w-2 h-2 rounded-full"
-                        style={{
-                          background: "rgba(110, 53, 232,0.6)",
-                        }}
-                      />
-                      <span
-                        className="text-xs"
-                        style={{
-                          color: "rgba(255,255,255,0.35)",
-                        }}
-                      >
-                        ProInterview — Phỏng vấn AI
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <div
-                        className="w-2 h-2 rounded-full animate-pulse"
-                        style={{ background: "#FF5F57" }}
-                      />
-                      <span
-                        className="text-xs"
-                        style={{ color: "#FF5F57" }}
-                      >
-                        Đang ghi
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Interview screen content */}
-                  <div className="relative" style={{ aspectRatio: "16/10", background: "#0A0816" }}>
-                    {/* HR Video */}
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <video
-                        autoPlay
-                        loop
-                        muted
-                        playsInline
-                        className="w-full h-full object-cover"
-                        style={{ opacity: 0.95 }}
-                      >
-                        <source
-                          src="https://res.cloudinary.com/dee4bvivu/video/upload/v1774336640/Female_delxmy.mp4"
-                          type="video/mp4"
-                        />
-                      </video>
-                    </div>
-
-                    {/* Overlay UI */}
-                    <div className="absolute inset-0 pointer-events-none">
-                      {/* Top bar with timer and info */}
-                      <div className="absolute top-0 left-0 right-0 p-4 flex items-center justify-between"
-                        style={{
-                          background: "linear-gradient(to bottom, rgba(18,11,46,0.92), transparent)"
-                        }}
-                      >
-                        <div className="flex items-center gap-2">
-                          <div
-                            className="w-2 h-2 rounded-full animate-pulse"
-                            style={{ background: "#FF5F57" }}
-                          />
-                          <span className="text-white text-xs font-semibold">
-                            Đang phỏng vấn
-                          </span>
-                        </div>
-                        <div
-                          className="px-3 py-1.5 rounded-lg text-xs font-semibold"
-                          style={{
-                            background: "rgba(110, 53, 232,0.25)",
-                            border: "1px solid rgba(110, 53, 232,0.4)",
-                            color: "#B89DFF"
-                          }}
-                        >
-                          03:24 / 15:00
-                        </div>
-                      </div>
-
-                      {/* Current question display */}
-                      <div className="absolute bottom-0 left-0 right-0 p-5"
-                        style={{
-                          background: "linear-gradient(to top, rgba(18,11,46,0.95), transparent)"
-                        }}
-                      >
-                        <div
-                          className="p-4 rounded-xl"
-                          style={{
-                            background: "rgba(110, 53, 232,0.15)",
-                            border: "1px solid rgba(110, 53, 232,0.35)",
-                            backdropFilter: "blur(12px)"
-                          }}
-                        >
-                          <div className="flex items-start gap-3">
-                            <div
-                              className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
-                              style={{
-                                background: "linear-gradient(135deg, #6E35E8, #9B6DFF)",
-                              }}
-                            >
-                              <Sparkle
-                                className="w-4 h-4 text-white"
-                              />
-                            </div>
-                            <div className="flex-1">
-                              <p className="text-white/50 text-xs mb-1.5 font-semibold">
-                                Câu hỏi 2/5
-                              </p>
-                              <p className="text-white text-sm leading-relaxed">
-                                Hãy kể về một lần bạn phải giải quyết xung đột trong nhóm. Bạn đã xử lý như thế nào?
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Quick stats */}
-                        <div className="grid grid-cols-3 gap-2 mt-3">
-                          {[
-                            { icon: Microphone, label: "Đang nghe", color: "#B4F500" },
-                            { icon: Brain, label: "Phân tích STAR", color: "#6E35E8" },
-                            { icon: ChartBar, label: "Điểm: 3.8/5", color: "#FFB800" },
-                          ].map((item, i) => (
-                            <div
-                              key={i}
-                              className="flex items-center gap-2 px-2.5 py-2 rounded-lg"
-                              style={{
-                                background: "rgba(255,255,255,0.06)",
-                                border: "1px solid rgba(255,255,255,0.08)"
-                              }}
-                            >
-                              <item.icon
-                                className="w-3.5 h-3.5 flex-shrink-0"
-                                style={{ color: item.color }}
-                              />
-                              <span
-                                className="text-xs font-medium"
-                                style={{ color: "rgba(255,255,255,0.6)" }}
-                              >
-                                {item.label}
-                              </span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <InterviewDemoMockup />
           </div>
         </div>
       </section>

@@ -48,7 +48,17 @@ export async function setRoleByAdmin(adminId, targetUserId, newRole) {
   if (r === "mentor" && previousRole === "customer") {
     await Mentor.updateMany(
       { userId: target._id },
-      { $set: { isActive: true, available: true } },
+      {
+        $set: {
+          isActive: true,
+          available: true,
+          isVerified: true,
+          verifiedAt: new Date(),
+          "adminReview.status": "approved",
+          "adminReview.reason": "",
+          "adminReview.reviewedAt": new Date(),
+        },
+      },
     ).catch(() => {});
   }
 

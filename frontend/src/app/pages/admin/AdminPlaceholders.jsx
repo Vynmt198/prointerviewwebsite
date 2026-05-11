@@ -44,7 +44,7 @@ export function AdminUserDetail() {
       description="Thông tin cá nhân, lịch sử nâng cấp gói, sử dụng AI/CV, lịch hẹn cố vấn, thống kê mức sử dụng."
       bullets={["Khóa / mở khóa", "Reset mật khẩu", "Manual upgrade/downgrade", "Xem activity logs"]}
     >
-      <Link to="/admin/users" className="text-sm font-semibold text-[#c4ff47] hover:underline">
+      <Link to="/admin/users" className="text-sm font-semibold text-violet-700 hover:underline">
         ← Quay lại danh sách
       </Link>
     </AdminPanel>
@@ -69,7 +69,7 @@ export function AdminMentorDetail() {
   const { id } = useParams();
   return (
     <AdminPanel title={`Cố vấn · ${id ?? "—"}`} description="Hồ sơ đầy đủ và thống kê hiệu suất.">
-      <Link to="/admin/mentors" className="text-sm font-semibold text-[#c4ff47] hover:underline">
+      <Link to="/admin/mentors" className="text-sm font-semibold text-violet-700 hover:underline">
         ← Danh sách cố vấn
       </Link>
     </AdminPanel>
@@ -116,24 +116,24 @@ export function AdminFinance() {
       description="Doanh thu tháng, tổng doanh thu, phí nền tảng, rút tiền cố vấn đang chờ duyệt."
     >
       {loading ? (
-        <p className="text-sm text-zinc-400">Đang tải dữ liệu tài chính...</p>
+        <p className="text-sm text-slate-500">Đang tải dữ liệu tài chính...</p>
       ) : (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
-            <p className="text-xs text-zinc-400">Tổng doanh thu booking</p>
-            <p className="mt-2 text-2xl font-black text-white">{vnd(totalBookingRevenue)}</p>
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+            <p className="text-xs text-slate-500">Tổng doanh thu booking</p>
+            <p className="mt-2 text-2xl font-black text-slate-900">{vnd(totalBookingRevenue)}</p>
           </div>
-          <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
-            <p className="text-xs text-zinc-400">Tổng yêu cầu rút</p>
-            <p className="mt-2 text-2xl font-black text-white">{vnd(totalPayoutRequested)}</p>
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+            <p className="text-xs text-slate-500">Tổng yêu cầu rút</p>
+            <p className="mt-2 text-2xl font-black text-slate-900">{vnd(totalPayoutRequested)}</p>
           </div>
           <div className="rounded-2xl border border-orange-400/25 bg-orange-500/10 p-5">
-            <p className="text-xs text-orange-200/80">Rút tiền chờ duyệt</p>
-            <p className="mt-2 text-2xl font-black text-orange-200">{vnd(pendingPayout)}</p>
+            <p className="text-xs text-orange-900/80">Rút tiền chờ duyệt</p>
+            <p className="mt-2 text-2xl font-black text-orange-900">{vnd(pendingPayout)}</p>
           </div>
           <div className="rounded-2xl border border-emerald-400/25 bg-emerald-500/10 p-5">
-            <p className="text-xs text-emerald-200/80">Rút tiền đã duyệt</p>
-            <p className="mt-2 text-2xl font-black text-emerald-200">{vnd(approvedPayout)}</p>
+            <p className="text-xs text-emerald-800/80">Rút tiền đã duyệt</p>
+            <p className="mt-2 text-2xl font-black text-emerald-800">{vnd(approvedPayout)}</p>
           </div>
         </div>
       )}
@@ -193,15 +193,15 @@ export function AdminTransactions() {
 
   const statusBadge = (status) => {
     if (["completed", "approved", "paid", "confirmed"].includes(status)) {
-      return "bg-emerald-500/10 text-emerald-200 border border-emerald-400/25";
+      return "bg-emerald-500/10 text-emerald-800 border border-emerald-400/25";
     }
     if (status === "pending") {
-      return "bg-orange-500/10 text-orange-200 border border-orange-400/25";
+      return "bg-orange-500/10 text-orange-900 border border-orange-400/25";
     }
     if (["cancelled", "failed", "rejected"].includes(status)) {
-      return "bg-red-500/10 text-red-200 border border-red-400/25";
+      return "bg-red-500/10 text-red-800 border border-red-400/25";
     }
-    return "bg-white/10 text-zinc-300 border border-white/20";
+    return "border-slate-200 bg-slate-100/90";
   };
 
   return (
@@ -210,21 +210,21 @@ export function AdminTransactions() {
       description="Gói Pro/Elite, thanh toán lịch hẹn, rút tiền cố vấn, hoàn tiền — lọc theo loại, ngày, trạng thái."
     >
       {loading ? (
-        <p className="text-sm text-zinc-400">Đang tải giao dịch...</p>
+        <p className="text-sm text-slate-500">Đang tải giao dịch...</p>
       ) : (
         <div className="space-y-4">
           <div className="grid gap-3 md:grid-cols-3">
-            <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-              <p className="text-xs text-zinc-400">Tổng giá trị (đang lọc)</p>
-              <p className="mt-1 text-2xl font-black text-white">{vnd(totalAmount)}</p>
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+              <p className="text-xs text-slate-500">Tổng giá trị (đang lọc)</p>
+              <p className="mt-1 text-2xl font-black text-slate-900">{vnd(totalAmount)}</p>
             </div>
             <div className="rounded-2xl border border-violet-400/25 bg-violet-500/10 p-4">
-              <p className="text-xs text-violet-200/80">Lịch hẹn</p>
-              <p className="mt-1 text-2xl font-black text-violet-200">{bookingCount}</p>
+              <p className="text-xs text-violet-800/80">Lịch hẹn</p>
+              <p className="mt-1 text-2xl font-black text-violet-800">{bookingCount}</p>
             </div>
             <div className="rounded-2xl border border-cyan-400/25 bg-cyan-500/10 p-4">
-              <p className="text-xs text-cyan-200/80">Rút tiền</p>
-              <p className="mt-1 text-2xl font-black text-cyan-200">{payoutCount}</p>
+              <p className="text-xs text-cyan-800/80">Rút tiền</p>
+              <p className="mt-1 text-2xl font-black text-cyan-800">{payoutCount}</p>
             </div>
           </div>
 
@@ -240,7 +240,7 @@ export function AdminTransactions() {
                 className={`rounded-xl px-4 py-2 text-xs font-black uppercase tracking-wider transition-all ${
                   typeFilter === item.id
                     ? "bg-primary-fixed text-black"
-                    : "border border-white/10 bg-white/5 text-zinc-300 hover:bg-white/10"
+                    : "border border-slate-200 bg-white/5 text-slate-600 hover:bg-white/10"
                 }`}
               >
                 {item.label}
@@ -261,7 +261,7 @@ export function AdminTransactions() {
                 className={`rounded-xl px-4 py-2 text-xs font-black uppercase tracking-wider transition-all ${
                   statusFilter === item.id
                     ? "bg-white text-black"
-                    : "border border-white/10 bg-white/5 text-zinc-300 hover:bg-white/10"
+                    : "border border-slate-200 bg-white/5 text-slate-600 hover:bg-white/10"
                 }`}
               >
                 {item.label}
@@ -269,9 +269,9 @@ export function AdminTransactions() {
             ))}
           </div>
 
-          <div className="overflow-x-auto rounded-2xl border border-white/10">
+          <div className="overflow-x-auto rounded-2xl border border-slate-200">
             <table className="w-full text-left text-sm">
-              <thead className="bg-white/[0.03] text-xs uppercase tracking-wider text-zinc-400">
+              <thead className="bg-slate-50 text-xs uppercase tracking-wider text-slate-500">
                 <tr>
                   <th className="px-4 py-3">Loại</th>
                   <th className="px-4 py-3">Nội dung</th>
@@ -282,21 +282,21 @@ export function AdminTransactions() {
               </thead>
               <tbody>
                 {filteredRows.map((r) => (
-                  <tr key={`${r.type}-${r.id}`} className="border-t border-white/5">
-                    <td className="px-4 py-3 text-white font-semibold">{r.type === "booking" ? "Lịch hẹn" : "Rút tiền"}</td>
-                    <td className="px-4 py-3 text-zinc-300">{r.label}</td>
+                  <tr key={`${r.type}-${r.id}`} className="border-t border-slate-100">
+                    <td className="px-4 py-3 text-slate-900 font-semibold">{r.type === "booking" ? "Lịch hẹn" : "Rút tiền"}</td>
+                    <td className="px-4 py-3 text-slate-600">{r.label}</td>
                     <td className="px-4 py-3">
                       <span className={`inline-flex px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${statusBadge(r.status)}`}>
                         {statusLabel(r.status)}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-white font-bold">{vnd(r.amount)}</td>
-                    <td className="px-4 py-3 text-zinc-400">{new Date(r.date).toLocaleString("vi-VN")}</td>
+                    <td className="px-4 py-3 text-slate-900 font-bold">{vnd(r.amount)}</td>
+                    <td className="px-4 py-3 text-slate-500">{new Date(r.date).toLocaleString("vi-VN")}</td>
                   </tr>
                 ))}
                 {!filteredRows.length && (
                   <tr>
-                    <td colSpan={5} className="px-4 py-10 text-center text-zinc-500">
+                    <td colSpan={5} className="px-4 py-10 text-center text-slate-500">
                       Không có giao dịch phù hợp bộ lọc.
                     </td>
                   </tr>
@@ -377,15 +377,15 @@ export function AdminPayouts() {
 
   const statusBadge = (status) => {
     if (status === "pending") {
-      return "bg-orange-500/10 text-orange-200 border border-orange-400/25";
+      return "bg-orange-500/10 text-orange-900 border border-orange-400/25";
     }
     if (status === "approved" || status === "paid") {
-      return "bg-emerald-500/10 text-emerald-200 border border-emerald-400/25";
+      return "bg-emerald-500/10 text-emerald-800 border border-emerald-400/25";
     }
     if (status === "rejected") {
-      return "bg-red-500/10 text-red-200 border border-red-400/25";
+      return "bg-red-500/10 text-red-800 border border-red-400/25";
     }
-    return "bg-white/10 text-zinc-300 border border-white/20";
+    return "border-slate-200 bg-slate-100/90";
   };
 
   return (
@@ -394,21 +394,21 @@ export function AdminPayouts() {
       description="Danh sách yêu cầu rút tiền — Approve / Reject payout, lịch sử đã thanh toán."
     >
       {loading ? (
-        <p className="text-sm text-zinc-400">Đang tải yêu cầu rút tiền...</p>
+        <p className="text-sm text-slate-500">Đang tải yêu cầu rút tiền...</p>
       ) : (
         <div className="space-y-4">
           <div className="grid gap-3 md:grid-cols-3">
             <div className="rounded-2xl border border-orange-400/25 bg-orange-500/10 p-4">
-              <p className="text-xs text-orange-200/80">Chờ duyệt</p>
-              <p className="text-2xl font-black text-orange-200 mt-1">{pendingCount}</p>
+              <p className="text-xs text-orange-900/80">Chờ duyệt</p>
+              <p className="text-2xl font-black text-orange-900 mt-1">{pendingCount}</p>
             </div>
             <div className="rounded-2xl border border-emerald-400/25 bg-emerald-500/10 p-4">
-              <p className="text-xs text-emerald-200/80">Đã duyệt</p>
-              <p className="text-2xl font-black text-emerald-200 mt-1">{approvedCount}</p>
+              <p className="text-xs text-emerald-800/80">Đã duyệt</p>
+              <p className="text-2xl font-black text-emerald-800 mt-1">{approvedCount}</p>
             </div>
             <div className="rounded-2xl border border-red-400/25 bg-red-500/10 p-4">
-              <p className="text-xs text-red-200/80">Từ chối</p>
-              <p className="text-2xl font-black text-red-200 mt-1">{rejectedCount}</p>
+              <p className="text-xs text-red-800/80">Từ chối</p>
+              <p className="text-2xl font-black text-red-800 mt-1">{rejectedCount}</p>
             </div>
           </div>
 
@@ -425,7 +425,7 @@ export function AdminPayouts() {
                 className={`rounded-xl px-4 py-2 text-xs font-black uppercase tracking-wider transition-all ${
                   filter === item.id
                     ? "bg-primary-fixed text-black"
-                    : "border border-white/10 bg-white/5 text-zinc-300 hover:bg-white/10"
+                    : "border border-slate-200 bg-white/5 text-slate-600 hover:bg-white/10"
                 }`}
               >
                 {item.label}
@@ -438,26 +438,26 @@ export function AdminPayouts() {
             const isPending = row.status === "pending";
             const busy = busyId === row._id;
             return (
-              <div key={row._id} className="rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.05] to-white/[0.02] p-5">
+              <div key={row._id} className="rounded-2xl border border-slate-200 bg-gradient-to-br from-slate-50 to-white p-5">
                 <div className="flex flex-wrap items-center justify-between gap-4">
                   <div>
-                    <p className="text-white font-black">{mentorName}</p>
-                    <p className="text-xs text-zinc-400">
+                    <p className="text-slate-900 font-black">{mentorName}</p>
+                    <p className="text-xs text-slate-500">
                       {row.payoutAccount?.bankName} - ****{String(row.payoutAccount?.accountNumber || "").slice(-4)}
                     </p>
-                    <p className="text-xs text-zinc-500 mt-1">
+                    <p className="text-xs text-slate-500 mt-1">
                       {new Date(row.requestedAt || row.createdAt).toLocaleString("vi-VN")}
                     </p>
                   </div>
                   <div className="text-right">
-                    <p className="text-lg font-black text-white">{vnd(row.amount)}</p>
+                    <p className="text-lg font-black text-slate-900">{vnd(row.amount)}</p>
                     <span className={`inline-flex mt-1 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${statusBadge(row.status)}`}>
                       {statusLabel(row.status)}
                     </span>
                   </div>
                 </div>
                 {!!row.rejectReason && (
-                  <p className="mt-3 text-xs text-red-200/85 bg-red-500/10 border border-red-400/25 rounded-xl px-3 py-2">
+                  <p className="mt-3 text-xs text-red-800/85 bg-red-500/10 border border-red-400/25 rounded-xl px-3 py-2">
                     Lý do từ chối: {row.rejectReason}
                   </p>
                 )}
@@ -466,14 +466,14 @@ export function AdminPayouts() {
                     <button
                       disabled={busy}
                       onClick={() => handleReject(row._id)}
-                      className="rounded-xl border border-red-400/25 bg-red-500/10 px-4 py-2 text-xs font-black uppercase tracking-wider text-red-200 disabled:opacity-50"
+                      className="rounded-xl border border-red-400/25 bg-red-500/10 px-4 py-2 text-xs font-black uppercase tracking-wider text-red-800 disabled:opacity-50"
                     >
                       {busy ? "..." : "Từ chối"}
                     </button>
                     <button
                       disabled={busy}
                       onClick={() => handleApprove(row._id)}
-                      className="rounded-xl border border-emerald-400/25 bg-emerald-500/10 px-4 py-2 text-xs font-black uppercase tracking-wider text-emerald-200 disabled:opacity-50"
+                      className="rounded-xl border border-emerald-400/25 bg-emerald-500/10 px-4 py-2 text-xs font-black uppercase tracking-wider text-emerald-800 disabled:opacity-50"
                     >
                       {busy ? "..." : "Duyệt"}
                     </button>
@@ -482,7 +482,7 @@ export function AdminPayouts() {
               </div>
             );
           })}
-          {!filteredRows.length && <p className="text-sm text-zinc-500">Không có yêu cầu phù hợp bộ lọc hiện tại.</p>}
+          {!filteredRows.length && <p className="text-sm text-slate-500">Không có yêu cầu phù hợp bộ lọc hiện tại.</p>}
         </div>
       )}
       <AnimatePresence>
@@ -498,41 +498,41 @@ export function AdminPayouts() {
               initial={{ scale: 0.96, y: 16, opacity: 0 }}
               animate={{ scale: 1, y: 0, opacity: 1 }}
               exit={{ scale: 0.96, y: 16, opacity: 0 }}
-              className="w-full max-w-lg rounded-3xl border border-white/10 bg-[#0a0618] p-6"
+              className="w-full max-w-lg rounded-3xl border border-slate-200 bg-white p-6"
               onClick={(e) => e.stopPropagation()}
             >
-              <h4 className="text-xl font-black text-white">Từ chối yêu cầu rút tiền</h4>
-              <p className="text-sm text-zinc-400 mt-2">
+              <h4 className="text-xl font-black text-slate-900">Từ chối yêu cầu rút tiền</h4>
+              <p className="text-sm text-slate-500 mt-2">
                 Chọn lý do chuẩn hóa và thêm ghi chú tự do (nếu cần) để cố vấn nắm rõ nguyên nhân.
               </p>
-              <label className="mt-4 block text-[10px] font-black uppercase tracking-widest text-zinc-400">
+              <label className="mt-4 block text-[10px] font-black uppercase tracking-widest text-slate-500">
                 Lý do từ chối
               </label>
               <select
                 value={rejectModal.reasonKey}
                 onChange={(e) => setRejectModal((prev) => ({ ...prev, reasonKey: e.target.value }))}
-                className="mt-2 w-full rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-sm text-white outline-none focus:border-primary-fixed"
+                className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-900 outline-none focus:border-primary-fixed"
               >
                 {REJECT_REASON_OPTIONS.map((item) => (
-                  <option key={item.id} value={item.id} className="bg-[#0a0618]">
+                  <option key={item.id} value={item.id} className="bg-white">
                     {item.label}
                   </option>
                 ))}
               </select>
-              <label className="mt-4 block text-[10px] font-black uppercase tracking-widest text-zinc-400">
+              <label className="mt-4 block text-[10px] font-black uppercase tracking-widest text-slate-500">
                 Ghi chú bổ sung (không bắt buộc)
               </label>
               <textarea
                 value={rejectModal.note}
                 onChange={(e) => setRejectModal((prev) => ({ ...prev, note: e.target.value }))}
-                className="mt-4 w-full min-h-28 rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-sm text-white outline-none focus:border-primary-fixed"
+                className="mt-4 w-full min-h-28 rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-900 outline-none focus:border-primary-fixed"
                 placeholder="Ví dụ: Vui lòng cập nhật lại STK đúng với tài khoản ngân hàng đã xác minh."
               />
               <div className="mt-5 grid grid-cols-2 gap-3">
                 <button
                   type="button"
                   onClick={() => setRejectModal({ open: false, payoutId: "", reasonKey: "account_invalid", note: "" })}
-                  className="rounded-xl border border-white/10 bg-white/5 py-3 text-xs font-black uppercase tracking-wider text-white"
+                  className="rounded-xl border border-slate-200 bg-white/5 py-3 text-xs font-black uppercase tracking-wider text-slate-900"
                 >
                   Hủy
                 </button>
@@ -540,7 +540,7 @@ export function AdminPayouts() {
                   type="button"
                   onClick={confirmReject}
                   disabled={busyId === rejectModal.payoutId}
-                  className="rounded-xl border border-red-400/25 bg-red-500/10 py-3 text-xs font-black uppercase tracking-wider text-red-200 disabled:opacity-50"
+                  className="rounded-xl border border-red-400/25 bg-red-500/10 py-3 text-xs font-black uppercase tracking-wider text-red-800 disabled:opacity-50"
                 >
                   {busyId === rejectModal.payoutId ? "Đang xử lý..." : "Xác nhận từ chối"}
                 </button>
@@ -567,7 +567,7 @@ export function AdminBookingDetail() {
   const { id } = useParams();
   return (
     <AdminPanel title={`Lịch hẹn · ${id ?? "—"}`} description="Chi tiết, review, lịch sử đổi lịch/hủy lịch.">
-      <Link to="/admin/bookings" className="text-sm font-semibold text-[#c4ff47] hover:underline">
+      <Link to="/admin/bookings" className="text-sm font-semibold text-violet-700 hover:underline">
         ← Danh sách booking
       </Link>
     </AdminPanel>
@@ -630,9 +630,9 @@ export function AdminContentCourses() {
       description="Duyệt khóa học cố vấn gửi lên: duyệt để xuất bản, từ chối để trả về bản nháp."
     >
       <div className="space-y-4">
-        {loading && <p className="text-sm text-zinc-400">Đang tải danh sách chờ duyệt...</p>}
+        {loading && <p className="text-sm text-slate-500">Đang tải danh sách chờ duyệt...</p>}
         {!loading && items.length === 0 && (
-          <p className="text-sm text-zinc-400">Hiện không có khóa học nào đang chờ duyệt.</p>
+          <p className="text-sm text-slate-500">Hiện không có khóa học nào đang chờ duyệt.</p>
         )}
         {items.map((course) => {
           const mentorName = course?.mentorId?.userId?.name || "Cố vấn";
@@ -642,15 +642,15 @@ export function AdminContentCourses() {
           return (
             <div
               key={course._id}
-              className="rounded-2xl border border-white/10 bg-white/[0.03] p-5"
+              className="rounded-2xl border border-slate-200 bg-slate-50 p-5"
             >
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <p className="text-lg font-black text-white">{course.title}</p>
-                  <p className="mt-1 text-xs text-zinc-400">
+                  <p className="text-lg font-black text-slate-900">{course.title}</p>
+                  <p className="mt-1 text-xs text-slate-500">
                     Cố vấn: {mentorName} · Chủ đề: {topic} · Bài học: {totalLessons}
                   </p>
-                  <p className="mt-2 text-sm text-zinc-300 line-clamp-2">
+                  <p className="mt-2 text-sm text-slate-600 line-clamp-2">
                     {course.description || "(Không có mô tả)"}
                   </p>
                 </div>
@@ -659,7 +659,7 @@ export function AdminContentCourses() {
                     type="button"
                     disabled={busy}
                     onClick={() => handleReject(course._id)}
-                    className="rounded-xl border border-red-400/25 bg-red-500/10 px-4 py-2 text-xs font-black uppercase tracking-wider text-red-200 disabled:opacity-50"
+                    className="rounded-xl border border-red-400/25 bg-red-500/10 px-4 py-2 text-xs font-black uppercase tracking-wider text-red-800 disabled:opacity-50"
                   >
                     {busy ? "..." : "Từ chối"}
                   </button>
@@ -667,7 +667,7 @@ export function AdminContentCourses() {
                     type="button"
                     disabled={busy}
                     onClick={() => handleApprove(course._id)}
-                    className="rounded-xl border border-emerald-400/25 bg-emerald-500/10 px-4 py-2 text-xs font-black uppercase tracking-wider text-emerald-200 disabled:opacity-50"
+                    className="rounded-xl border border-emerald-400/25 bg-emerald-500/10 px-4 py-2 text-xs font-black uppercase tracking-wider text-emerald-800 disabled:opacity-50"
                   >
                     {busy ? "..." : "Duyệt"}
                   </button>

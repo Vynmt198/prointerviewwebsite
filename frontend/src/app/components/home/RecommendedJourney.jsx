@@ -35,7 +35,7 @@ const JOURNEY_STEPS = [
     number: "03",
     icon: Users,
     title: "Đặt lịch Mentor",
-    desc: "Củng cố kiến thức với mentor 1-1",
+    desc: "Củng cố kiến thức với mentor 1:1",
     route: "/mentors",
     color: "#FFB800",
     bgColor: "rgba(255,184,0,0.12)",
