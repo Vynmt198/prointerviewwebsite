@@ -559,31 +559,40 @@ export function CourseLearning() {
     <div className="flex h-screen flex-col overflow-hidden bg-gray-950 antialiased">
       {/* ── Top bar ─────────────────────────────────────────── */}
       <header
-        className="flex items-center gap-4 px-4 py-3 shrink-0 z-30"
+        className="flex items-center gap-1.5 px-2 py-0 shrink-0 z-30"
         style={{ background: "#111", borderBottom: "1px solid rgba(255,255,255,0.08)" }}
       >
         {/* Logo + Back */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-1 shrink-0">
           <button
             type="button"
             onClick={() => navigate(-1)}
-            className="group flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-white/20 bg-white/10 text-white shadow-[0_1px_0_rgba(255,255,255,0.06)_inset] transition-all hover:border-white/35 hover:bg-white/[0.18] active:scale-[0.97]"
+            className="group flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-white/20 bg-white/10 text-white shadow-[0_1px_0_rgba(255,255,255,0.06)_inset] transition-all hover:border-white/35 hover:bg-white/[0.18] active:scale-[0.97]"
             aria-label="Quay lại trang trước"
           >
             <ArrowLeft className="h-5 w-5 transition-transform group-hover:-translate-x-0.5" strokeWidth={2} />
           </button>
-          <div className="w-px h-5 bg-white/10" />
+          <div className="h-7 w-px shrink-0 self-center bg-white/10" aria-hidden />
           <div
-            className="flex items-center gap-1.5 cursor-pointer"
+            className="flex cursor-pointer items-center gap-0 p-0 leading-none"
             onClick={() => navigate("/")}
+            role="link"
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") navigate("/");
+            }}
+            aria-label="Về trang chủ ProInterview"
           >
-            <Lightning className="w-5 h-5" style={{ color: "#c4ff47" }} />
-            <span className="font-bold text-white text-sm hidden sm:inline">ProInterview</span>
+            <img
+              src="/Logo.png"
+              alt="ProInterview"
+              className="block h-12 w-auto max-w-[min(280px,52vw)] object-contain object-left object-top brightness-[0.92] contrast-[1.12] sm:h-14 md:h-16"
+            />
           </div>
         </div>
 
         {/* Course name */}
-        <div className="flex-1 min-w-0 px-4">
+        <div className="flex-1 min-w-0 px-1.5 py-0">
           <p className="text-white/80 text-sm font-medium truncate">{course.title}</p>
           <p className="text-white/40 text-xs">
             Bài {currentLessonIdx + 1}/{lessons.length} · {currentLesson.title}
@@ -591,8 +600,8 @@ export function CourseLearning() {
         </div>
 
         {/* Progress */}
-        <div className="flex items-center gap-3 shrink-0">
-          <div className="hidden md:flex items-center gap-2">
+        <div className="flex items-center gap-1 shrink-0">
+          <div className="hidden md:flex items-center gap-1.5">
             <div className="w-32 h-1.5 bg-white/10 rounded-full overflow-hidden">
               <div
                 className="h-full rounded-full transition-all duration-500"
@@ -615,7 +624,7 @@ export function CourseLearning() {
 
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="p-2 rounded-xl text-white/60 hover:text-white hover:bg-white/10 transition-all"
+            className="p-1 rounded-lg text-white/60 hover:text-white hover:bg-white/10 transition-all"
           >
             <List className="w-5 h-5" />
           </button>
