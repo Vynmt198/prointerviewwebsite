@@ -30,6 +30,7 @@ import {
   BadgeCheck,
 } from "lucide-react";
 import { getPlans, getCVRemaining, incrementCVCount, CV_FREE_LIMIT } from "../../utils/auth";
+import { apiUrl as expressApiUrl } from "../../utils/api";
 import { CVDocumentPreview } from "../../components/cv/CVDocumentPreview";
 import { addCVAnalysisRecord } from "../../utils/history";
 import { projectId, publicAnonKey } from "/utils/supabase/info.js";
@@ -336,7 +337,7 @@ export function CVAnalysis() {
           // Cascade: suggestions (full) → full (scores only) → analyze (basic)
           const ollamaDown = (s) => s === 503 || s === 504;
 
-          let pyRes = await fetch("/api/cv/analyze/suggestions", {
+          let pyRes = await fetch(expressApiUrl("/api/cv/analyze/suggestions"), {
             method: "POST",
             headers: { Authorization: `Bearer ${token}` },
             body: form,
@@ -347,7 +348,7 @@ export function CVAnalysis() {
             const form2 = new FormData();
             if (cvFile) form2.append("resume", cvFile);
             if (jdFile) form2.append("jd", jdFile);
-            pyRes = await fetch("/api/cv/analyze/full", {
+            pyRes = await fetch(expressApiUrl("/api/cv/analyze/full"), {
               method: "POST",
               headers: { Authorization: `Bearer ${token}` },
               body: form2,
@@ -360,7 +361,7 @@ export function CVAnalysis() {
             const form3 = new FormData();
             if (cvFile) form3.append("resume", cvFile);
             if (jdFile) form3.append("jd", jdFile);
-            pyRes = await fetch("/api/cv/analyze", {
+            pyRes = await fetch(expressApiUrl("/api/cv/analyze"), {
               method: "POST",
               headers: { Authorization: `Bearer ${token}` },
               body: form3,
