@@ -10,6 +10,7 @@ import {
   Star,
   ShieldCheck,
   Sparkles,
+  Mail,
 } from "lucide-react";
 import { registerUser, getBrandClickPath } from "../../utils/auth";
 import { GoogleSignInBlock } from "../../components/auth/GoogleSignInBlock";
@@ -78,8 +79,10 @@ export function Register() {
     });
     setLoading(false);
     if (!result.success) { setError(result.error); return; }
-    navigate(searchParams.get("redirect") || "/login?registered=1");
+    setRegisteredEmail(form.email.trim());
   };
+
+  const [registeredEmail, setRegisteredEmail] = useState("");
 
   const handleChange = (k, v) => {
     setForm((f) => ({ ...f, [k]: v }));
@@ -89,6 +92,38 @@ export function Register() {
   const errorIsGoogleEnvHint = Boolean(
     error && /VITE_GOOGLE|Google chưa được bật|thiếu.*CLIENT_ID/i.test(error),
   );
+
+  if (registeredEmail) {
+    return (
+      <div className="h-screen bg-[#fcfaff] flex flex-col items-center justify-center px-6 text-center">
+        <div className="w-full max-w-md bg-white rounded-3xl border border-gray-200 p-8 shadow-sm">
+          <div className="h-20 w-20 bg-[#6E35E8]/10 rounded-full flex items-center justify-center mb-6 mx-auto">
+            <Mail className="h-10 w-10 text-[#6E35E8]" />
+          </div>
+          <h1 className="text-3xl font-black mb-4 tracking-tight">Kiểm tra email của bạn</h1>
+          <p className="text-gray-600 mb-8 leading-relaxed">
+            Chúng tôi đã gửi link xác thực đến <strong className="text-gray-900">{registeredEmail}</strong>.
+            Vui lòng nhấn vào link trong email để kích hoạt tài khoản trước khi đăng nhập.
+          </p>
+          <div className="space-y-4">
+            <Link
+              to="/login"
+              className="w-full inline-flex items-center justify-center rounded-2xl px-6 py-4 text-base font-black text-white transition-all active:scale-[0.98]"
+              style={{ background: "linear-gradient(135deg, #6E35E8, #9B6DFF)" }}
+            >
+              Về trang đăng nhập
+            </Link>
+            <button
+              onClick={() => setRegisteredEmail("")}
+              className="text-sm font-bold text-gray-500 hover:text-[#6E35E8] transition-colors"
+            >
+              Quay lại đăng ký
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div

@@ -16,6 +16,8 @@ router.use((req, res, next) => {
 });
 
 router.post("/register", authWriteLimiter, AuthController.register);
+router.get("/verify-email", AuthController.verifyEmail);
+router.post("/resend-verification", authWriteLimiter, AuthController.resendVerification);
 router.post("/login", authWriteLimiter, AuthController.login);
 router.post("/google", authWriteLimiter, AuthController.google);
 router.post("/forgot-password", authWriteLimiter, AuthController.forgotPassword);
