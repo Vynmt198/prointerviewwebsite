@@ -10,6 +10,7 @@ function isMongoReady() {
 }
 
 function toPublicReview(r) {
+  const u = r.userId && typeof r.userId === "object" ? r.userId : null;
   return {
     id: String(r._id),
     targetType: r.targetType,
@@ -20,6 +21,10 @@ function toPublicReview(r) {
     tags: r.tags ?? [],
     reply: r.reply?.content ? { content: r.reply.content, repliedAt: r.reply.repliedAt } : null,
     createdAt: r.createdAt,
+    isVerified: Boolean(r.isVerified),
+    userName: u?.name || "",
+    userAvatar: u?.avatar || "",
+    userTitle: u?.desiredPosition || "",
   };
 }
 
@@ -43,6 +48,7 @@ export async function listReviews(query) {
 
   const rows = await Review.find({ targetType, targetId, isVisible: { $ne: false } })
     .sort({ createdAt: -1 })
+    .populate({ path: "userId", select: "name avatar desiredPosition currentCompany" })
     .lean();
   return { ok: true, reviews: rows.map(toPublicReview) };
 }
@@ -130,7 +136,23 @@ export async function createReview(userId, body) {
     await Booking.updateOne({ _id: bookingId }, { $set: { reviewId: doc._id } });
   }
 
-  return { ok: true, review: toPublicReview(doc) };
+  if (targetType === "course") {
+    const oid = new mongoose.Types.ObjectId(targetIdRaw);
+    const agg = await Review.aggregate([
+      { $match: { targetType: "course", targetId: oid, isVisible: { $ne: false } } },
+      { $group: { _id: null, avgRating: { $avg: "$rating" }, n: { $sum: 1 } } },
+    ]);
+    const row = agg[0];
+    const avg = row?.avgRating != null ? Math.round(row.avgRating * 10) / 10 : 0;
+    const n = row?.n ?? 0;
+    await Course.updateOne({ _id: targetIdRaw }, { $set: { "stats.rating": avg, "stats.reviewCount": n } });
+  }
+
+  const populated = await Review.findById(doc._id)
+    .populate({ path: "userId", select: "name avatar desiredPosition currentCompany" })
+    .lean();
+
+  return { ok: true, review: toPublicReview(populated || doc) };
 }
 
 export async function replyToReview(mentorUserId, reviewId, body) {

@@ -627,7 +627,84 @@ export function Home() {
           filter: blur(120px);
           opacity: 0.85;
         }
+        /* Loang nền toàn trang — mask loại vùng góc trên trái để không làm chìm logo */
+        .home-global-ambient {
+          position: fixed;
+          inset: 0;
+          z-index: -2;
+          pointer-events: none;
+          overflow: hidden;
+          mask-image: radial-gradient(
+            ellipse 300px 96px at 0px 0px,
+            transparent 0%,
+            transparent 58%,
+            rgba(255, 255, 255, 0.92) 100%
+          );
+          -webkit-mask-image: radial-gradient(
+            ellipse 300px 96px at 0px 0px,
+            transparent 0%,
+            transparent 58%,
+            rgba(255, 255, 255, 0.92) 100%
+          );
+          mask-mode: alpha;
+          -webkit-mask-mode: alpha;
+        }
+        @media (min-width: 640px) {
+          .home-global-ambient {
+            mask-image: radial-gradient(
+              ellipse 340px 104px at 0px 0px,
+              transparent 0%,
+              transparent 58%,
+              rgba(255, 255, 255, 0.94) 100%
+            );
+            -webkit-mask-image: radial-gradient(
+              ellipse 340px 104px at 0px 0px,
+              transparent 0%,
+              transparent 58%,
+              rgba(255, 255, 255, 0.94) 100%
+            );
+          }
+        }
       `}</style>
+
+      {/* Nền loang toàn cục (trừ vùng logo nhờ .home-global-ambient) */}
+      <div className="home-global-ambient" aria-hidden>
+        <div
+          className="absolute -top-[8%] right-[-14%] h-[min(92vw,780px)] w-[min(92vw,780px)] rounded-full opacity-[0.42] blur-[110px]"
+          style={{
+            background:
+              "radial-gradient(circle at 38% 42%, rgba(110,53,232,0.55) 0%, rgba(139,92,246,0.18) 42%, transparent 70%)",
+          }}
+        />
+        <div
+          className="absolute top-[28%] right-[6%] h-[min(70vw,520px)] w-[min(70vw,520px)] rounded-full opacity-[0.28] blur-[100px]"
+          style={{
+            background:
+              "radial-gradient(circle at 50% 50%, rgba(196,255,71,0.22) 0%, rgba(180,245,0,0.08) 45%, transparent 72%)",
+          }}
+        />
+        <div
+          className="absolute bottom-[-12%] left-[8%] h-[min(85vw,640px)] w-[min(85vw,640px)] rounded-full opacity-[0.32] blur-[115px]"
+          style={{
+            background:
+              "radial-gradient(circle at 45% 40%, rgba(56,189,248,0.16) 0%, rgba(110,53,232,0.12) 48%, transparent 74%)",
+          }}
+        />
+        <div
+          className="absolute bottom-[8%] right-[-8%] h-[min(75vw,560px)] w-[min(75vw,560px)] rounded-full opacity-[0.26] blur-[105px]"
+          style={{
+            background:
+              "radial-gradient(circle at 55% 55%, rgba(244,114,182,0.14) 0%, rgba(110,53,232,0.1) 50%, transparent 72%)",
+          }}
+        />
+        <div
+          className="absolute top-[48%] left-[22%] h-[min(90vw,680px)] w-[min(90vw,680px)] -translate-x-1/2 rounded-full opacity-[0.18] blur-[130px]"
+          style={{
+            background:
+              "radial-gradient(circle at 50% 50%, rgba(167,139,250,0.2) 0%, transparent 65%)",
+          }}
+        />
+      </div>
 
       {/* ═══ NAVBAR ════════════════════════════════════════ */}
       <TopNavShell variant="dark" scrolled={scrolled}>
@@ -777,20 +854,20 @@ export function Home() {
           { x: 3, y: 50, size: 28, opacity: 0.4 },
           { x: 92, y: 80, size: 32, opacity: 0.46 },
         ])}
-        {/* BG gradient mesh */}
+        {/* BG gradient mesh — tránh loang mạnh góc trên trái (vùng logo/nav) */}
         <div
           className="absolute inset-0"
           style={{
             background:
-              "radial-gradient(ellipse 82% 64% at 84% -12%, rgba(110,53,232,0.48) 0%, transparent 72%), radial-gradient(ellipse 70% 45% at 82% 82%, rgba(180,245,0,0.14) 0%, transparent 64%), radial-gradient(ellipse 58% 40% at 30% 30%, rgba(196,255,71,0.08) 0%, transparent 72%), #04050a",
+              "radial-gradient(ellipse 88% 68% at 86% -8%, rgba(110,53,232,0.52) 0%, transparent 70%), radial-gradient(ellipse 72% 48% at 80% 84%, rgba(180,245,0,0.16) 0%, transparent 64%), radial-gradient(ellipse 62% 44% at 68% 32%, rgba(196,255,71,0.1) 0%, transparent 72%), #04050a",
           }}
         />
-        {/* Ambient glows để nền hero bớt tối */}
+        {/* Ambient glows để nền hero bớt tối — lệch phải / giữa, không đặt trọng tâm gần góc trái */}
         <div
-          className="absolute top-[30%] left-1/2 -translate-x-1/2 w-[680px] h-[360px] rounded-full blur-[120px] pointer-events-none"
+          className="absolute top-[30%] left-[58%] w-[min(92vw,680px)] max-w-[680px] -translate-x-1/2 h-[360px] rounded-full blur-[120px] pointer-events-none sm:left-[60%]"
           style={{
             background:
-              "radial-gradient(circle, rgba(180,245,0,0.18) 0%, rgba(110,53,232,0.12) 52%, transparent 78%)",
+              "radial-gradient(circle, rgba(180,245,0,0.2) 0%, rgba(110,53,232,0.14) 52%, transparent 78%)",
           }}
           aria-hidden
         />
@@ -968,16 +1045,16 @@ export function Home() {
         className="relative min-h-screen flex flex-col justify-center py-12 overflow-hidden border-t border-white/[0.06]"
         style={{ background: "#080808" }}
       >
-        <div className="section-ambient w-[520px] h-[520px] -top-36 -left-24 bg-[#B4F500]/[0.12]" aria-hidden />
-        <div className="section-ambient w-[560px] h-[560px] top-[38%] right-[-180px] bg-[#6E35E8]/[0.18]" aria-hidden />
+        <div className="section-ambient w-[520px] h-[520px] -top-32 left-[14%] bg-[#B4F500]/[0.14]" aria-hidden />
+        <div className="section-ambient w-[560px] h-[560px] top-[38%] right-[-180px] bg-[#6E35E8]/[0.2]" aria-hidden />
         {renderSectionSticks([
           { x: 10, y: 16, size: 34, opacity: 0.45 },
           { x: 88, y: 20, size: 40, opacity: 0.55 },
           { x: 82, y: 78, size: 32, opacity: 0.44 },
         ])}
         {/* Nền phẳng (xen kẽ với section có lưới) */}
-        <div className="absolute top-0 left-0 w-[500px] h-[500px] bg-[#B4F500]/[0.07] blur-[120px] rounded-full -translate-x-1/2 -translate-y-1/2" aria-hidden />
-        <div className="absolute bottom-0 right-0 w-[500px] h-[500px] bg-[#6E35E8]/10 blur-[120px] rounded-full translate-x-1/2 translate-y-1/2" aria-hidden />
+        <div className="absolute top-0 left-[18%] w-[500px] h-[500px] bg-[#B4F500]/[0.09] blur-[120px] rounded-full -translate-y-1/2" aria-hidden />
+        <div className="absolute bottom-0 right-0 w-[500px] h-[500px] bg-[#6E35E8]/12 blur-[120px] rounded-full translate-x-1/2 translate-y-1/2" aria-hidden />
 
         <div className="max-w-7xl mx-auto px-6 relative z-10 w-full py-8">
           <div className="text-center mb-14">
@@ -1066,7 +1143,7 @@ export function Home() {
           overflow: "hidden",
         }}
       >
-        <div className="section-ambient w-[480px] h-[480px] -top-24 left-[-140px] bg-[#6E35E8]/[0.14]" aria-hidden />
+        <div className="section-ambient w-[480px] h-[480px] -top-24 left-[-80px] bg-[#6E35E8]/[0.15]" aria-hidden />
         <div className="section-ambient w-[460px] h-[460px] bottom-[-140px] right-[0] bg-[#B4F500]/[0.1]" aria-hidden />
         {renderSectionSticks([
           { x: 14, y: 24, size: 32, opacity: 0.42 },
