@@ -729,7 +729,7 @@ export function CVAnalysis() {
                       </div>
                     )}
                   </div>
-                  <button type="button" onClick={() => setAnalyzeError(null)} className="rounded-lg p-1 text-white/50 transition-colors hover:bg-white/10 hover:text-white/80" aria-label="Đóng"><X className="h-4 w-4" /></button>
+                  <button type="button" onClick={() => setAnalyzeError(null)} className="rounded-lg p-1 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700" aria-label="Đóng"><X className="h-4 w-4" /></button>
                 </div>
               )}
 
@@ -980,17 +980,22 @@ export function CVAnalysis() {
               <div className="w-20 h-20 rounded-2xl flex items-center justify-center mb-8 shadow-xl shadow-[#6E35E8]/30" style={{ background: "linear-gradient(135deg,#6E35E8,#9B6DFF)" }}>
                 <Loader2 className="w-10 h-10 text-white animate-spin" />
               </div>
-              <h2 className="mb-3 text-xl font-semibold text-white">Đang xử lý...</h2>
-              <p className="mb-8 text-sm text-white/60">Gemini AI đang đọc file PDF và phân tích — vui lòng đợi.</p>
-              <div className="mb-3 h-2.5 w-full overflow-hidden rounded-full bg-white/10">
+              <h2 className="mb-3 text-xl font-semibold text-slate-900">Đang xử lý...</h2>
+              <p className="mb-8 text-sm text-slate-600">Hệ thống đang đọc file PDF và phân tích — vui lòng đợi.</p>
+              <div className="mb-3 h-2.5 w-full overflow-hidden rounded-full bg-slate-200">
                 <div className="h-full rounded-full transition-all duration-700" style={{ width: `${progress}%`, background: "linear-gradient(90deg,#6E35E8,#9B6DFF)" }} />
               </div>
               <p className="text-[#6E35E8] text-sm font-medium mb-6">{Math.round(progress)}%</p>
               <div className="space-y-2 text-left w-full">
                 {loadingSteps.map((t, i) => (
-                  <div key={i} className={`flex items-center gap-2 text-sm transition-all duration-500 ${loadingStage > i ? "opacity-100" : "opacity-25"}`}>
-                    {loadingStage > i ? <Check className="w-4 h-4 text-emerald-500 flex-shrink-0" /> : <Loader2 className={`w-4 h-4 flex-shrink-0 text-[#6E35E8] ${loadingStage === i ? "animate-spin" : ""}`} />}
-                    <span className="text-white/70">{t}</span>
+                  <div
+                    key={i}
+                    className={`flex items-center gap-2 text-sm transition-all duration-500 ${
+                      loadingStage > i ? "text-slate-800" : loadingStage === i ? "text-slate-700" : "text-slate-400"
+                    }`}
+                  >
+                    {loadingStage > i ? <Check className="w-4 h-4 text-emerald-600 flex-shrink-0" /> : <Loader2 className={`w-4 h-4 flex-shrink-0 text-[#6E35E8] ${loadingStage === i ? "animate-spin" : "opacity-40"}`} />}
+                    <span>{t}</span>
                   </div>
                 ))}
               </div>
@@ -1005,8 +1010,8 @@ export function CVAnalysis() {
                 <div className="mb-4 flex items-center gap-3 rounded-2xl px-5 py-3" style={{ background: "rgba(255,214,0,0.08)", border: "1.5px solid rgba(250,204,21,0.35)" }}>
                   <span className="text-lg">🔒</span>
                   <div className="flex-1">
-                    <p className="text-sm font-semibold text-amber-100">Kết quả Demo — Cần đăng nhập để phân tích thực tế</p>
-                    <p className="mt-0.5 text-xs text-amber-100/80">
+                    <p className="text-sm font-semibold text-amber-900">Kết quả Demo — Cần đăng nhập để phân tích thực tế</p>
+                    <p className="mt-0.5 text-xs text-amber-800/90">
                       Phiên đăng nhập hết hạn hoặc chưa đăng nhập. Đây là kết quả mẫu — hãy đăng nhập lại để nhận phân tích CV thực từ AI.
                     </p>
                   </div>
@@ -1018,8 +1023,8 @@ export function CVAnalysis() {
                 <div className="flex items-center gap-4 rounded-2xl px-5 py-4 mb-6" style={{ background: "linear-gradient(135deg,rgba(110, 53, 232,0.08),rgba(139, 77, 255,0.05))", border: "1.5px solid rgba(110, 53, 232,0.2)" }}>
                   <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: "rgba(110, 53, 232,0.15)" }}><Lock className="w-5 h-5 text-[#6E35E8]" /></div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-bold text-white">Đang xem bản xem trước — Gói Free</p>
-                    <p className="mt-0.5 text-xs text-white/60">Phần đánh giá chi tiết & gợi ý bị ẩn. Nâng cấp để xem đầy đủ.</p>
+                    <p className="text-sm font-bold text-slate-900">Đang xem bản xem trước — Gói Free</p>
+                    <p className="mt-0.5 text-xs text-slate-600">Phần đánh giá chi tiết & gợi ý bị ẩn. Nâng cấp để xem đầy đủ.</p>
                   </div>
                   <button onClick={() => navigate("/pricing")} className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-white flex-shrink-0" style={{ background: "linear-gradient(135deg,#6E35E8,#8B4DFF)" }}>
                     <Zap className="w-3.5 h-3.5" /> Mở khoá
@@ -1045,7 +1050,7 @@ export function CVAnalysis() {
                         <DownloadSimple className="w-3.5 h-3.5" /> Tải JD ({savedFileInfo.jdFileName})
                       </a>
                     )}
-                    <span className="text-xs text-white/50">ID: {savedFileInfo.analysisId?.slice(0, 8)}…</span>
+                    <span className="text-xs text-slate-500">ID: {savedFileInfo.analysisId?.slice(0, 8)}…</span>
                   </div>
                 </div>
               )}
@@ -1053,7 +1058,7 @@ export function CVAnalysis() {
               {/* Gemini badge */}
               {R && (
                 <div className="flex items-center gap-2 mb-5">
-                  <span className="flex items-center gap-1.5 rounded-lg border border-violet-400/25 px-3 py-1.5 text-xs font-medium text-violet-100" style={{ background: "rgba(110, 53, 232,0.22)" }}>
+                  <span className="flex items-center gap-1.5 rounded-lg border border-violet-300/40 px-3 py-1.5 text-xs font-medium text-violet-900" style={{ background: "rgba(110, 53, 232,0.14)" }}>
                     ✨ {R.summary ?? "Phân tích thực từ Gemini AI"}
                   </span>
                 </div>
@@ -1123,26 +1128,50 @@ export function CVAnalysis() {
                 </div>
               )}
 
-              {/* Keywords */}
+              {/* Keywords — nền sáng trong card trắng: dùng slate + emerald/orange đậm */}
               {derivedMode === "jd" && (
                 <div className="mb-6 grid gap-6 md:grid-cols-2">
-                  <div className="rounded-2xl border border-white/12 bg-white/[0.04] p-5 shadow-sm backdrop-blur-sm">
-                    <div className="mb-4 flex items-center gap-2"><FileText className="h-4 w-4 text-violet-300" /><h3 className="text-sm font-semibold text-white">Từ khóa khớp với JD</h3></div>
-                    <div className="flex flex-wrap gap-2">
-                      {cvDisplayKWs.map(kw => <span key={kw} className="rounded-full px-3 py-1 text-xs font-medium" style={{ background: "rgba(180,240,0,0.15)", color: "#c4ff47", border: "1px solid rgba(180,240,0,0.35)" }}>{kw} ✓</span>)}
+                  <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5 shadow-sm">
+                    <div className="mb-4 flex items-center gap-2">
+                      <FileText className="h-4 w-4 text-[#6E35E8]" />
+                      <h3 className="text-sm font-semibold text-slate-900">Từ khóa khớp với JD</h3>
                     </div>
-                    <p className="mt-3 text-xs text-white/55"><span className="font-medium text-[#c4ff47]">{cvDisplayKWs.length}</span> từ khóa khớp</p>
+                    <div className="flex flex-wrap gap-2">
+                      {cvDisplayKWs.map(kw => (
+                        <span
+                          key={kw}
+                          className="rounded-full border border-emerald-500 bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-900"
+                        >
+                          {kw} ✓
+                        </span>
+                      ))}
+                    </div>
+                    <p className="mt-3 text-xs text-slate-600">
+                      <span className="font-semibold text-emerald-800">{cvDisplayKWs.length}</span> từ khóa khớp
+                    </p>
                   </div>
-                  <div className="relative overflow-hidden rounded-2xl border border-white/12 bg-white/[0.04] p-5 shadow-sm backdrop-blur-sm">
-                    <div className="mb-4 flex items-center gap-2"><Briefcase className="h-4 w-4 text-violet-300" /><h3 className="text-sm font-semibold text-white">Toàn bộ từ khóa JD</h3></div>
+                  <div className="relative overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 p-5 shadow-sm">
+                    <div className="mb-4 flex items-center gap-2">
+                      <Briefcase className="h-4 w-4 text-[#6E35E8]" />
+                      <h3 className="text-sm font-semibold text-slate-900">Toàn bộ từ khóa JD</h3>
+                    </div>
                     <div className="flex flex-wrap gap-2">
                       {jdDisplayKWs.map(kw => (
-                        <span key={kw} className="rounded-full px-3 py-1 text-xs font-medium" style={matchedSet.has(kw) ? { background: "rgba(180,240,0,0.15)", color: "#c4ff47", border: "1px solid rgba(180,240,0,0.35)" } : { background: "rgba(255,140,66,0.12)", color: "#ffb088", border: "1px solid rgba(255,140,66,0.28)" }}>
+                        <span
+                          key={kw}
+                          className={
+                            matchedSet.has(kw)
+                              ? "rounded-full border border-emerald-500 bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-900"
+                              : "rounded-full border border-orange-500 bg-orange-100 px-3 py-1 text-xs font-semibold text-orange-950"
+                          }
+                        >
                           {kw} {!matchedSet.has(kw) && "⚠"}
                         </span>
                       ))}
                     </div>
-                    <p className="mt-3 text-xs text-white/55"><span className="font-medium text-orange-200">{jdDisplayKWs.filter(k => !matchedSet.has(k)).length}</span> từ khóa chưa có trong CV</p>
+                    <p className="mt-3 text-xs text-slate-600">
+                      <span className="font-semibold text-orange-800">{jdDisplayKWs.filter(k => !matchedSet.has(k)).length}</span> từ khóa chưa có trong CV
+                    </p>
                     {isFreeTier && (
                       <div className="absolute inset-0 flex items-center justify-center rounded-2xl" style={{ background: "rgba(7,6,14,0.78)", backdropFilter: "blur(8px)" }}>
                         <div className="px-4 text-center"><Lock className="mx-auto mb-2 h-7 w-7 text-violet-300" /><p className="mb-2 text-xs font-semibold text-white">Từ khóa JD bị ẩn</p><button type="button" onClick={() => navigate("/pricing")} className="rounded-lg px-4 py-1.5 text-xs font-bold text-white" style={{ background: "#6E35E8" }}>Mở khoá</button></div>
@@ -1272,19 +1301,38 @@ export function CVAnalysis() {
                 )}
               </div>
 
-              {/* CTAs */}
-              <div className="flex gap-3 flex-wrap">
-                <button onClick={() => navigate("/interview")} className="flex items-center gap-2 text-white px-6 py-3 rounded-xl text-sm font-semibold" style={{ background: "#6E35E8" }} onMouseEnter={e => (e.currentTarget.style.background = "#5C28D9")} onMouseLeave={e => (e.currentTarget.style.background = "#6E35E8")}>
-                  <Mic className="w-4 h-4" /> Phỏng vấn với AI
+              {/* CTAs — nền sáng trong card trắng: chữ tối + viền rõ */}
+              <div className="flex gap-3 flex-wrap pt-1">
+                <button
+                  type="button"
+                  onClick={() => navigate("/interview")}
+                  className="flex items-center gap-2 rounded-xl bg-[#6E35E8] px-6 py-3 text-sm font-semibold text-white shadow-md transition-colors hover:bg-[#5C28D9]"
+                >
+                  <Mic className="h-4 w-4 shrink-0" aria-hidden />
+                  Phỏng vấn với AI
                 </button>
-                <button onClick={() => navigate("/mentors")} className="flex items-center gap-2 rounded-xl border border-[#c4ff47]/45 bg-[#c4ff47]/10 px-6 py-3 text-sm font-semibold text-white shadow-sm transition-all hover:border-[#c4ff47]/60 hover:bg-[#c4ff47]/16">
-                  <Users className="h-4 w-4 text-[#d4ff6a]" /> Đặt lịch Mentor
+                <button
+                  type="button"
+                  onClick={() => navigate("/mentors")}
+                  className="flex items-center gap-2 rounded-xl border-2 border-emerald-600 bg-emerald-50 px-6 py-3 text-sm font-semibold text-emerald-950 shadow-sm transition-colors hover:bg-emerald-100"
+                >
+                  <Users className="h-4 w-4 shrink-0 text-emerald-800" aria-hidden />
+                  Đặt lịch Mentor
                 </button>
-                <button onClick={() => { setStep("upload"); setAnalysisResult(null); setSavedFileInfo(null); }} className="flex items-center gap-2 rounded-xl border border-white/18 bg-white/[0.08] px-6 py-3 text-sm font-medium text-white/90 shadow-sm transition-all hover:border-white/28 hover:bg-white/[0.12]">
+                <button
+                  type="button"
+                  onClick={() => { setStep("upload"); setAnalysisResult(null); setSavedFileInfo(null); }}
+                  className="flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-6 py-3 text-sm font-semibold text-slate-800 shadow-sm transition-colors hover:border-slate-400 hover:bg-slate-50"
+                >
                   Phân tích lại
                 </button>
-                <button onClick={() => navigate("/cv-analysis/history")} className="flex items-center gap-2 rounded-xl border border-white/18 bg-white/[0.08] px-6 py-3 text-sm font-medium text-white/90 shadow-sm transition-all hover:border-white/28 hover:bg-white/[0.12]">
-                  <History className="h-4 w-4" /> Xem lịch sử
+                <button
+                  type="button"
+                  onClick={() => navigate("/cv-analysis/history")}
+                  className="flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-6 py-3 text-sm font-semibold text-slate-800 shadow-sm transition-colors hover:border-slate-400 hover:bg-slate-50"
+                >
+                  <History className="h-4 w-4 shrink-0 text-slate-600" aria-hidden />
+                  Xem lịch sử
                 </button>
               </div>
             </div>

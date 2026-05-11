@@ -40,57 +40,52 @@ function makeTextRenderer(matchedKws, missingKws, side) {
       const lower = match.toLowerCase();
       const isMatched = matchedKws.some(k => k.toLowerCase() === lower);
       if (isMatched)
-        return `<mark style="background:rgba(134,239,172,0.55);color:#14532d;border-radius:3px;padding:0 3px;font-weight:700;border:1px solid rgba(134,239,172,0.9)">${match}</mark>`;
-      return `<mark style="background:rgba(254,202,202,0.65);color:#7f1d1d;border-radius:3px;padding:0 3px;font-weight:700;border:1px solid rgba(252,165,165,0.9)">${match}</mark>`;
+        return `<mark style="background:#bbf7d0;color:#14532d;border-radius:3px;padding:0 4px;font-weight:700;border:1px solid #22c55e">${match}</mark>`;
+      return `<mark style="background:#fecaca;color:#7f1d1d;border-radius:3px;padding:0 4px;font-weight:700;border:1px solid #f87171">${match}</mark>`;
     });
   };
 }
 
 // ─── Keyword chips summary ────────────────────────────────────────────────────
+const chipMatched = {
+  background: "#dcfce7",
+  color: "#14532d",
+  border: "1px solid #22c55e",
+};
+const chipMissing = {
+  background: "#ffedd5",
+  color: "#9a3412",
+  border: "1px solid #ea580c",
+};
+
 function KeywordChips({ matchedKws, missingKws, side }) {
-  const showMissing = side === "cv" && missingKws.length > 0;
+  const showMissing = (side === "cv" || side === "jd") && missingKws.length > 0;
   if (matchedKws.length === 0 && !showMissing) return null;
 
   return (
     <div
-      className="flex-shrink-0 border-t border-gray-100 bg-gray-50/80 px-3 py-2"
-      style={{ maxHeight: 96, overflowY: "auto" }}
+      className="flex-shrink-0 border-t border-slate-200 bg-slate-100 px-3 py-2.5"
+      style={{ maxHeight: 112, overflowY: "auto" }}
     >
       <div className="flex flex-wrap gap-1.5">
         {matchedKws.map(kw => (
           <span
-            key={kw}
-            className="inline-flex items-center gap-1"
-            style={{
-              background: "rgba(134,239,172,0.4)",
-              color: "#14532d",
-              border: "1px solid rgba(134,239,172,0.85)",
-              borderRadius: 5,
-              padding: "2px 8px",
-              fontSize: "0.67rem",
-              fontWeight: 700,
-            }}
+            key={`m-${kw}`}
+            className="inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[11px] font-bold leading-tight"
+            style={chipMatched}
           >
-            <CheckCircle2 style={{ width: 10, height: 10, flexShrink: 0 }} />
+            <CheckCircle2 className="h-3 w-3 shrink-0 text-emerald-800" strokeWidth={2.5} aria-hidden />
             {kw}
           </span>
         ))}
         {showMissing &&
           missingKws.map(kw => (
             <span
-              key={kw}
-              className="inline-flex items-center gap-1"
-              style={{
-                background: "rgba(254,202,202,0.5)",
-                color: "#7f1d1d",
-                border: "1px solid rgba(252,165,165,0.85)",
-                borderRadius: 5,
-                padding: "2px 8px",
-                fontSize: "0.67rem",
-                fontWeight: 700,
-              }}
+              key={`x-${kw}`}
+              className="inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[11px] font-bold leading-tight"
+              style={chipMissing}
             >
-              <XCircle style={{ width: 10, height: 10, flexShrink: 0 }} />
+              <XCircle className="h-3 w-3 shrink-0 text-orange-800" strokeWidth={2.5} aria-hidden />
               {kw}
             </span>
           ))}
@@ -133,12 +128,12 @@ function DocPanel({ title, fileName, icon, accentColor, file, matchedKws, missin
         </div>
         <div className="flex gap-1.5 flex-shrink-0">
           {matchedKws.length > 0 && (
-            <span style={{ background: "rgba(134,239,172,0.3)", color: "#d1fae5", borderRadius: 20, padding: "2px 9px", fontSize: "0.64rem", fontWeight: 700 }}>
+            <span className="rounded-full px-2.5 py-0.5 text-[0.64rem] font-bold shadow-sm" style={{ background: "#dcfce7", color: "#14532d", border: "1px solid #22c55e" }}>
               ✓ {matchedKws.length} khớp
             </span>
           )}
-          {side === "cv" && missingKws.length > 0 && (
-            <span style={{ background: "rgba(254,202,202,0.3)", color: "#fde8e8", borderRadius: 20, padding: "2px 9px", fontSize: "0.64rem", fontWeight: 700 }}>
+          {missingKws.length > 0 && (
+            <span className="rounded-full px-2.5 py-0.5 text-[0.64rem] font-bold shadow-sm" style={{ background: "#ffedd5", color: "#9a3412", border: "1px solid #ea580c" }}>
               ✗ {missingKws.length} thiếu
             </span>
           )}
@@ -255,12 +250,12 @@ export function CVDocumentPreview({
       {expanded && (
         <div className="flex flex-wrap gap-3 mb-4 px-1">
           {[
-            { bg: "rgba(134,239,172,0.4)", border: "rgba(134,239,172,0.85)", label: "Từ khóa khớp (có trong CV)" },
-            { bg: "rgba(254,202,202,0.5)", border: "rgba(252,165,165,0.85)", label: "Từ khóa JD chưa có trong CV" },
+            { bg: "#bbf7d0", border: "#22c55e", label: "Từ khóa khớp (có trong CV)" },
+            { bg: "#fed7aa", border: "#ea580c", label: "Từ khóa JD chưa có trong CV" },
           ].map(({ bg, border, label }) => (
             <div key={label} className="flex items-center gap-1.5">
               <span style={{ display: "inline-block", width: 12, height: 12, borderRadius: 3, background: bg, border: `1px solid ${border}` }} />
-              <span className="text-gray-600" style={{ fontSize: "0.75rem" }}>{label}</span>
+              <span className="text-slate-700 text-xs font-medium">{label}</span>
             </div>
           ))}
         </div>

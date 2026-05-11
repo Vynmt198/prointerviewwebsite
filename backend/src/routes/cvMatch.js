@@ -36,7 +36,7 @@ cvMatchRouter.post(
   upload.fields([{ name: "resume", maxCount: 1 }, { name: "jd", maxCount: 1 }]),
   async (req, res) => {
     const resume = req.files?.["resume"]?.[0];
-    const jd     = req.files?.["jd"]?.[0];
+    const jd = req.files?.["jd"]?.[0];
     if (!resume || !jd) return res.status(400).json({ success: false, error: "Cần upload cả resume và jd (PDF)" });
     await proxyToAnalyzer("/analyze", { resume, jd }, res);
   }
@@ -49,7 +49,7 @@ cvMatchRouter.post(
   upload.fields([{ name: "resume", maxCount: 1 }, { name: "jd", maxCount: 1 }]),
   async (req, res) => {
     const resume = req.files?.["resume"]?.[0];
-    const jd     = req.files?.["jd"]?.[0];
+    const jd = req.files?.["jd"]?.[0];
     if (!resume || !jd) return res.status(400).json({ success: false, error: "Cần upload cả resume và jd (PDF)" });
     await proxyToAnalyzer("/analyze/full", { resume, jd }, res);
   }
@@ -62,7 +62,7 @@ cvMatchRouter.post(
   upload.fields([{ name: "resume", maxCount: 1 }, { name: "jd", maxCount: 1 }]),
   async (req, res) => {
     const resume = req.files?.["resume"]?.[0];
-    const jd     = req.files?.["jd"]?.[0];
+    const jd = req.files?.["jd"]?.[0];
     if (!resume || !jd) return res.status(400).json({ success: false, error: "Cần upload cả resume và jd (PDF)" });
     await proxyToAnalyzer("/analyze/suggestions", { resume, jd }, res);
   }
