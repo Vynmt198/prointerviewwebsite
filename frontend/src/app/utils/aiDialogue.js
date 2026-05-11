@@ -145,7 +145,7 @@ export function getAIResponse(
 
   // ── 3. Greetings ───────────────────────────────────────────────────────────
   if (GREETING_PATTERNS.test(lower) && input.length < 40) {
-    return stay("Xin chào 👋 Rất vui được gặp bạn. Tôi là **AI Interviewer** của ProInterview — sẵn sàng giúp bạn luyện phỏng vấn hiệu quả!\n\nHãy trả lời câu hỏi đang hiển thị nhé. Chúng ta bắt đầu thôi 🚀");
+    return stay("Xin chào. Rất vui được gặp bạn. Tôi là **AI Interviewer** của ProInterview — sẵn sàng giúp bạn luyện phỏng vấn hiệu quả!\n\nHãy trả lời câu hỏi đang hiển thị nhé. Chúng ta bắt đầu thôi 🚀");
   }
 
   // ── 4. Mood / emotional check-in ──────────────────────────────────────────

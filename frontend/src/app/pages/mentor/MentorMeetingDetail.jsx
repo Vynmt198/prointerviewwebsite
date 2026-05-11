@@ -155,8 +155,8 @@ export function MentorMeetingDetail() {
   }, [meeting?.userId]);
 
   if (!user || user.role !== "mentor") return null;
-  if (loading) return <MentorPageShell bottomPad="pb-32"><div className="p-10 text-zinc-300">Đang tải chi tiết buổi hẹn...</div></MentorPageShell>;
-  if (!meeting) return <MentorPageShell bottomPad="pb-32"><div className="p-10 text-zinc-300">Không tìm thấy buổi hẹn này.</div></MentorPageShell>;
+  if (loading) return <MentorPageShell bottomPad="pb-32"><div className="p-10 text-sm font-medium text-slate-500">Đang tải chi tiết buổi hẹn…</div></MentorPageShell>;
+  if (!meeting) return <MentorPageShell bottomPad="pb-32"><div className="p-10 text-sm font-medium text-slate-600">Không tìm thấy buổi hẹn này.</div></MentorPageShell>;
 
   const isCompleted = meeting.status === "completed" || meeting.overallScore > 0;
   const canReschedule = Number(meeting.rescheduleCount || 0) < 1;

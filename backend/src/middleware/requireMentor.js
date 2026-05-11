@@ -11,11 +11,11 @@ export async function requireMentor(req, res, next) {
         error: "Chỉ mentor mới được thực hiện thao tác này.",
       });
     }
-    const mentor = await Mentor.findOne({ userId: req.userId }).select("isActive").lean();
-    if (!mentor || mentor.isActive === false) {
+    const mentor = await Mentor.findOne({ userId: req.userId }).select("isActive isVerified").lean();
+    if (!mentor || mentor.isActive !== true || mentor.isVerified !== true) {
       return res.status(403).json({
         success: false,
-        error: "Hồ sơ mentor đang chờ duyệt hoặc chưa được kích hoạt.",
+        error: "Hồ sơ mentor đang chờ duyệt, chưa được kích hoạt hoặc chưa được xác minh.",
       });
     }
     next();

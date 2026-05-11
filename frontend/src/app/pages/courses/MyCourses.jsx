@@ -518,7 +518,7 @@ export function MyCourses() {
   }
 
   return (
-    <div className="min-h-full bg-transparent text-foreground">
+    <div className="min-h-full bg-transparent antialiased text-foreground">
       {/* ── Hero Banner ── */}
       <div
         className="relative overflow-hidden"

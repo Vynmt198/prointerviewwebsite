@@ -199,6 +199,47 @@ export async function loginUser(email, password) {
   }
 }
 
+export async function requestPasswordReset(email) {
+  try {
+    const res = await fetch(apiUrl("/api/auth/forgot-password"), {
+      method: "POST",
+      headers: jsonHeaders,
+      body: JSON.stringify({ email }),
+    });
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      return { success: false, error: body.error || `Không thể gửi yêu cầu (${res.status}).` };
+    }
+    return { success: true, resetUrl: body.resetUrl, resetToken: body.resetToken };
+  } catch {
+    return {
+      success: false,
+      error: "Không kết nối được backend. Hãy chạy `npm run dev` trong thư mục backend.",
+    };
+  }
+}
+
+export async function resetPassword(token, password) {
+  try {
+    const res = await fetch(apiUrl("/api/auth/reset-password"), {
+      method: "POST",
+      headers: jsonHeaders,
+      body: JSON.stringify({ token, password }),
+    });
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      return { success: false, error: body.error || `Đặt lại mật khẩu thất bại (${res.status}).` };
+    }
+    if (body.success) return { success: true };
+    return { success: false, error: body.error || "Đặt lại mật khẩu thất bại." };
+  } catch {
+    return {
+      success: false,
+      error: "Không kết nối được backend. Hãy chạy backend và thử lại.",
+    };
+  }
+}
+
 export async function restoreSession() {
   const hasAccess = !!getAccessToken();
   const hasRefresh = !!getRefreshToken();
@@ -354,6 +395,55 @@ export function getInitials(name) {
   const parts = name.trim().split(/\s+/);
   if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
   return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
+
+function looksLikeEmail(value) {
+  if (typeof value !== "string") return false;
+  const s = value.trim();
+  if (!s.includes("@")) return false;
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s);
+}
+
+function titleCaseFromLocalEmailPart(local) {
+  const cleaned = String(local || "")
+    .replace(/[._+-]+/g, " ")
+    .replace(/\d+/g, (d) => ` ${d} `)
+    .trim();
+  if (!cleaned) return "";
+  return cleaned
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+    .join(" ");
+}
+
+/**
+ * Họ tên hiển thị: ưu tiên `name` khi không phải / không trùng email.
+ * Tránh hiển thị cả địa chỉ email thay cho tên người dùng.
+ */
+export function getDisplayName(user, fallback = "Người dùng") {
+  if (!user) return fallback;
+  const email = (user.email || "").trim().toLowerCase();
+  const rawName = (user.name || "").trim();
+
+  if (rawName && !looksLikeEmail(rawName) && rawName.toLowerCase() !== email) {
+    return rawName;
+  }
+
+  if (email.includes("@")) {
+    const nice = titleCaseFromLocalEmailPart(email.split("@")[0]);
+    if (nice) return nice;
+  }
+
+  if (rawName && !looksLikeEmail(rawName)) return rawName;
+  return fallback;
+}
+
+/** Từ đầu tiên của tên hiển thị (lời chào ngắn). */
+export function getDisplayFirstName(user, fallback = "bạn") {
+  const full = getDisplayName(user, fallback);
+  const parts = full.trim().split(/\s+/).filter(Boolean);
+  return parts[0] || fallback;
 }
 
 /* ══════════════════════════════════════════════════════════

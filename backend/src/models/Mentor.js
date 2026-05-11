@@ -35,6 +35,8 @@ const mentorSchema = new Schema(
     fields: [{ type: String }],
     companies: [{ type: String }],
     linkedinUrl: { type: String, default: "" },
+    /** Link portfolio / CV online do ứng viên gửi khi đăng ký mentor */
+    portfolioUrl: { type: String, default: "" },
 
     experienceYears: { type: Number, default: 0 },
 

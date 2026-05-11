@@ -9,9 +9,8 @@ import {
   LineChart,
   Settings,
   MessageSquare,
-  TrendingUp,
   Activity,
-  ArrowRight
+  ArrowRight,
 } from "lucide-react";
 import { adminApi } from "../../utils/adminApi";
 
@@ -31,7 +30,7 @@ export function AdminDashboard() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    adminApi.getStats().then(res => {
+    adminApi.getStats().then((res) => {
       if (res.success) setStats(res.stats);
       setLoading(false);
     });
@@ -39,35 +38,36 @@ export function AdminDashboard() {
 
   return (
     <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
-      <div className="admin-glass-card px-8 py-8">
-        <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.22em] text-primary-fixed">
+      <div className="glass-card px-8 py-8">
+        <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.22em] text-[#7a23e5]">
           ProInterview Command Center
         </p>
-        <h1 className="text-5xl font-black tracking-tighter text-white sm:text-6xl">
-          Xin chào, <span className="text-primary-fixed">Admin!</span>
+        <h1 className="font-headline text-5xl font-black tracking-tighter text-slate-900 sm:text-6xl">
+          Xin chào, <span className="text-violet-700">Admin!</span>
         </h1>
-        <p className="mt-3 text-sm text-white/55">Trung tâm điều hành toàn bộ hệ thống ProInterview.</p>
+        <p className="mt-3 text-sm font-medium text-slate-600">
+          Trung tâm điều hành toàn bộ hệ thống ProInterview.
+        </p>
       </div>
 
-      {/* Quick Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <StatCard 
-          label="Tổng người dùng" 
-          value={loading ? "..." : stats?.users || 0} 
-          icon={Users} 
-          color="#a78bfa" 
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+        <StatCard
+          label="Tổng người dùng"
+          value={loading ? "..." : stats?.users || 0}
+          icon={Users}
+          color="#6E35E8"
         />
-        <StatCard 
-          label="Tổng cố vấn" 
-          value={loading ? "..." : stats?.mentors || 0} 
-          icon={GraduationCap} 
-          color="#c4ff47" 
+        <StatCard
+          label="Tổng cố vấn"
+          value={loading ? "..." : stats?.mentors || 0}
+          icon={GraduationCap}
+          color="#84cc16"
         />
-        <StatCard 
-          label="Lượt lịch hẹn" 
-          value={loading ? "..." : stats?.bookings || 0} 
-          icon={Activity} 
-          color="#fb923c" 
+        <StatCard
+          label="Lượt lịch hẹn"
+          value={loading ? "..." : stats?.bookings || 0}
+          icon={Activity}
+          color="#f59e0b"
         />
       </div>
 
@@ -76,15 +76,16 @@ export function AdminDashboard() {
           <Link
             key={to}
             to={to}
-            className="group admin-glass-card p-6 transition-all hover:border-primary-fixed/40 hover:bg-white/[0.08]"
+            className="group glass-card border-slate-200/90 p-6 transition-all hover:border-violet-300/80"
           >
-            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl border border-white/10 bg-white/5 text-white group-hover:bg-primary-fixed group-hover:text-black transition-all">
+            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 text-violet-700 transition-all group-hover:border-[#c4ff47]/60 group-hover:bg-[#c4ff47]/20 group-hover:text-[#120B2E]">
               <Icon size={24} strokeWidth={2} />
             </div>
-            <h2 className="text-base font-black text-white group-hover:text-primary-fixed flex items-center gap-2">
-              {label} <ArrowRight size={14} className="opacity-0 group-hover:opacity-100 transition-all" />
+            <h2 className="flex items-center gap-2 text-base font-black text-slate-900 group-hover:text-violet-800">
+              {label}{" "}
+              <ArrowRight size={14} className="opacity-0 transition-all group-hover:opacity-100" />
             </h2>
-            <p className="mt-2 text-[11px] font-medium leading-relaxed text-zinc-500">{desc}</p>
+            <p className="mt-2 text-[11px] font-medium leading-relaxed text-slate-500">{desc}</p>
           </Link>
         ))}
       </div>
@@ -94,12 +95,17 @@ export function AdminDashboard() {
 
 function StatCard({ label, value, icon: Icon, color }) {
   return (
-    <div className="admin-glass-card p-8 flex items-center justify-between group">
+    <div className="glass-card flex items-center justify-between p-8 group">
       <div>
-        <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-2">{label}</p>
-        <h3 className="text-4xl font-black text-white tracking-tighter group-hover:scale-110 transition-transform origin-left">{value}</h3>
+        <p className="mb-2 text-[10px] font-black uppercase tracking-widest text-slate-500">{label}</p>
+        <h3 className="origin-left text-4xl font-black tracking-tighter text-slate-900 transition-transform group-hover:scale-105">
+          {value}
+        </h3>
       </div>
-      <div className="w-16 h-16 rounded-[24px] bg-white/5 border border-white/10 flex items-center justify-center" style={{ color }}>
+      <div
+        className="flex h-16 w-16 items-center justify-center rounded-[24px] border border-slate-200 bg-slate-50"
+        style={{ color }}
+      >
         <Icon size={32} strokeWidth={2.5} />
       </div>
     </div>

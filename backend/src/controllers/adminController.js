@@ -6,7 +6,7 @@ const Booking = mongoose.model("Booking");
 const Course = mongoose.model("Course");
 
 export const AdminController = {
-  // Lấy danh sách toàn bộ mentor (chỉ hiện những người vẫn còn role mentor ở bảng User)
+  // Lấy danh sách mentor (có cả ứng viên chờ duyệt role customer) — admin UI lọc theo ngữ cảnh.
   getAllMentors: async (req, res) => {
     try {
       // Ép hệ thống kiểm tra và tạo hồ sơ mới nếu bạn vừa sửa ở Compass
@@ -18,8 +18,8 @@ export const AdminController = {
         .sort({ createdAt: -1 })
         .lean();
       
-      // Lọc bỏ những ai đã bị đổi role ở bảng User nhưng vẫn còn record ở bảng Mentor
-      const filtered = mentors.filter(m => m.userId && m.userId.role === "mentor");
+      // Có userId: gồm cố vấn đã duyệt (role mentor) và ứng viên đang chờ (role customer).
+      const filtered = mentors.filter((m) => m.userId);
       
       res.json({ success: true, mentors: filtered });
     } catch (error) {
@@ -52,6 +52,12 @@ export const AdminController = {
 
       if (!mentor) return res.status(404).json({ success: false, error: "Không tìm thấy mentor" });
 
+      if (mentor.userId) {
+        if (isActive) {
+          await User.updateOne({ _id: mentor.userId }, { $set: { role: "mentor" } });
+        }
+      }
+
       res.json({ success: true, mentor });
     } catch (error) {
       res.status(500).json({ success: false, error: error.message });
@@ -81,6 +87,10 @@ export const AdminController = {
       );
 
       if (!mentor) return res.status(404).json({ success: false, error: "Không tìm thấy cố vấn." });
+
+      if (mentor.userId) {
+        await User.updateOne({ _id: mentor.userId }, { $set: { role: "customer" } });
+      }
 
       res.json({ success: true, mentor });
     } catch (error) {

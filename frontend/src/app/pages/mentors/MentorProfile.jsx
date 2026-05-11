@@ -59,13 +59,23 @@ export function MentorProfile() {
   }, [mentor?.id]);
 
   if (loadingMentor && !mentor) return (
-    <div className="flex items-center justify-center min-h-screen bg-[#07060E]">
-      <div className="w-10 h-10 border-4 border-primary-fixed border-t-transparent rounded-full animate-spin" />
-    </div>
+    <MentorPageShell bottomPad="pb-32">
+      <div className="flex min-h-[50vh] items-center justify-center px-6">
+        <div className="h-10 w-10 animate-spin rounded-full border-4 border-violet-300 border-t-violet-700" aria-hidden />
+        <span className="sr-only">Đang tải…</span>
+      </div>
+    </MentorPageShell>
   );
-  
-  if (!mentor) return <div className="p-20 text-center text-zinc-500 bg-[#07060E] min-h-screen">Không tìm thấy mentor.</div>;
 
+  if (!mentor) {
+    return (
+      <MentorPageShell bottomPad="pb-32">
+        <div className="px-6 py-20 text-center text-sm font-medium text-slate-600">
+          Không tìm thấy mentor.
+        </div>
+      </MentorPageShell>
+    );
+  }
   return (
     <MentorPageShell bottomPad="pb-32">
       <div className="relative z-10 mx-auto max-w-7xl px-10 pb-10 pt-8 sm:pt-10">

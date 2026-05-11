@@ -10,6 +10,11 @@ const MIN_PASSWORD = 6;
 const MAX_AUTH_SESSIONS = 10;
 const MAX_FAILED_LOGINS = 5;
 const LOCKOUT_MINUTES = 15;
+const RESET_TOKEN_MINUTES = 20;
+
+function sha256Hex(input) {
+  return crypto.createHash("sha256").update(String(input ?? ""), "utf8").digest("hex");
+}
 
 function accessExpiresIn() {
   return process.env.JWT_ACCESS_EXPIRES_IN || process.env.JWT_EXPIRES_IN || "15m";
@@ -205,6 +210,69 @@ export async function revokeAuthSession(userId, sessionIdStr) {
     { new: true },
   );
   if (!r) return { ok: false, status: 404, error: "Không tìm thấy phiên." };
+  return { ok: true };
+}
+
+/**
+ * Quên mật khẩu:
+ * - Luôn trả ok=true để tránh lộ email có tồn tại hay không.
+ * - Nếu có user + có passwordHash (không phải tài khoản Google-only) → lưu token hash + hạn.
+ * - Không gửi email ở bản demo này; ở dev trả về resetUrl để FE hiển thị.
+ */
+export async function requestPasswordReset(emailRaw, req) {
+  const email = typeof emailRaw === "string" ? emailRaw.trim().toLowerCase() : "";
+  if (!email) return { ok: true };
+
+  const user = await User.findOne({ email }).select("+passwordHash +resetPasswordTokenHash +resetPasswordExpiresAt");
+  if (!user) return { ok: true };
+
+  // Nếu user chưa có mật khẩu (Google-only) thì không cho reset qua email/password.
+  if (!user.passwordHash) return { ok: true };
+
+  const token = crypto.randomBytes(32).toString("hex");
+  user.resetPasswordTokenHash = sha256Hex(token);
+  user.resetPasswordExpiresAt = new Date(Date.now() + RESET_TOKEN_MINUTES * 60 * 1000);
+  await user.save();
+
+  const isProd = String(process.env.NODE_ENV || "").toLowerCase() === "production";
+  if (isProd) return { ok: true };
+
+  // Dev convenience: FE có thể hiển thị link reset.
+  const origin = typeof process.env.CORS_ORIGIN === "string" ? process.env.CORS_ORIGIN.trim() : "http://localhost:5173";
+  const resetUrl = `${origin.replace(/\/$/, "")}/reset-password?token=${encodeURIComponent(token)}`;
+  return { ok: true, resetToken: token, resetUrl };
+}
+
+export async function resetPasswordWithToken(body) {
+  const token = typeof body?.token === "string" ? body.token.trim() : "";
+  const password =
+    typeof body?.password === "string" ? body.password.trim() : String(body?.password ?? "").trim();
+
+  if (!token) return { ok: false, status: 400, error: "Thiếu token đặt lại mật khẩu." };
+  if (!password) return { ok: false, status: 400, error: "Vui lòng nhập mật khẩu mới." };
+  if (password.length < MIN_PASSWORD) {
+    return { ok: false, status: 400, error: `Mật khẩu cần ít nhất ${MIN_PASSWORD} ký tự.` };
+  }
+
+  const tokenHash = sha256Hex(token);
+  const user = await User.findOne({
+    resetPasswordTokenHash: tokenHash,
+    resetPasswordExpiresAt: { $gt: new Date() },
+  }).select("+passwordHash +resetPasswordTokenHash +resetPasswordExpiresAt +authSessions");
+
+  if (!user) {
+    return { ok: false, status: 400, error: "Link đặt lại mật khẩu không hợp lệ hoặc đã hết hạn." };
+  }
+
+  user.passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
+  user.resetPasswordTokenHash = "";
+  user.resetPasswordExpiresAt = null;
+  user.failedLoginAttempts = 0;
+  user.lockUntil = null;
+  user.tokenVersion = (Number(user.tokenVersion) || 0) + 1;
+  user.authSessions = [];
+  await user.save();
+
   return { ok: true };
 }
 

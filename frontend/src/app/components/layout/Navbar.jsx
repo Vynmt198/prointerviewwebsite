@@ -15,7 +15,7 @@ const PAGE_TITLES = {
   "/dashboard": { label: "Bảng điều khiển", sub: "Tổng quan tiến độ học của bạn" },
   "/cv-analysis": { label: "Phân tích CV/JD", sub: "Tối ưu hồ sơ theo từng vị trí" },
   "/interview": { label: "Phỏng vấn AI", sub: "Thiết lập & bắt đầu phiên luyện tập" },
-  "/mentors": { label: "Tìm Mentor", sub: "Đặt lịch 1-1 với chuyên gia" },
+  "/mentors": { label: "Tìm Mentor", sub: "Đặt lịch 1:1 với chuyên gia" },
   "/profile": { label: "Hồ sơ cá nhân", sub: "Thông tin và thành tích của bạn" },
   "/settings": { label: "Cài đặt", sub: "Tuỳ chỉnh tài khoản" },
   "/pricing": { label: "Bảng giá", sub: "Nâng cấp để mở khoá đầy đủ tính năng" },
@@ -28,6 +28,10 @@ const PAGE_TITLES = {
   "/mentor/analytics": { label: "Phân tích", sub: "Số liệu & hiệu suất" },
   "/mentor/reviews": { label: "Đánh giá", sub: "Phản hồi từ học viên" },
   "/mentor/peer-review": { label: "Đánh giá chéo", sub: "Peer review mentor" },
+  "/session": { label: "Chi tiết buổi", sub: "Lịch hẹn & trạng thái" },
+  "/cv-analysis/history": { label: "Lịch sử phân tích", sub: "Các bản phân tích CV đã lưu" },
+  "/mentor/meeting-detail": { label: "Chi tiết buổi mentor", sub: "Thông tin phiên họp" },
+  "/mentor/meeting": { label: "Phòng họp", sub: "Buổi mentor trực tuyến" },
 };
 
 const MOCK_NOTIFICATIONS = [
@@ -92,7 +96,7 @@ export function Navbar() {
 
   return (
     <header
-      className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b px-5 backdrop-blur-xl"
+      className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b px-5 antialiased backdrop-blur-xl"
       style={{
         background: "rgba(255, 255, 255, 0.95)",
         borderColor: "rgba(122,35,229,0.18)",

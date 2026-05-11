@@ -8,13 +8,14 @@ function isMongoReady() {
 
 const MONGO_ERR = "MongoDB chưa kết nối. Kiểm tra MONGO_URI trong .env và đã chạy mongod chưa.";
 
-/** Chỉ mentor đã liên kết tài khoản User role `mentor` (không còn mentor catalog/seed ảo). */
+/** Chỉ mentor đã duyệt: User role mentor + hồ sơ kích hoạt + đã xác minh. */
 function isBookableMentorDoc(m) {
   const u = m?.userId;
   if (!u || typeof u !== "object" || !("role" in u)) return false;
   if (u.role !== "mentor") return false;
   if (u.isActive === false) return false;
-  if (m.isActive === false) return false;
+  if (m.isActive !== true) return false;
+  if (m.isVerified !== true) return false;
   return true;
 }
 

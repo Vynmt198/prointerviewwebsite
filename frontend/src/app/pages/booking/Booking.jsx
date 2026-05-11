@@ -240,7 +240,7 @@ export function Booking() {
 
   if (mentorLoading) {
     return (
-      <div className="pi-page-dashboard-bg relative flex min-h-screen items-center justify-center text-zinc-400">
+      <div className="pi-page-dashboard-bg relative flex min-h-screen items-center justify-center text-zinc-400 antialiased">
         Đang tải thông tin mentor…
       </div>
     );
@@ -248,7 +248,7 @@ export function Booking() {
 
   if (!mentor) {
     return (
-      <div className="pi-page-dashboard-bg relative flex min-h-screen flex-col items-center justify-center gap-4 px-6 text-center text-zinc-400">
+      <div className="pi-page-dashboard-bg relative flex min-h-screen flex-col items-center justify-center gap-4 px-6 text-center text-zinc-400 antialiased">
         <p>Không tìm thấy mentor hoặc mentor chưa mở nhận booking.</p>
         <button
           type="button"
@@ -262,7 +262,7 @@ export function Booking() {
   }
 
   return (
-    <div className="pi-page-dashboard-bg relative min-h-screen w-full overflow-x-hidden pb-20 font-sans text-white selection:bg-[rgba(196,255,71,0.28)] selection:text-white">
+    <div className="pi-page-dashboard-bg relative min-h-screen w-full overflow-x-hidden pb-20 font-sans antialiased text-white selection:bg-[rgba(196,255,71,0.28)] selection:text-white">
       <div className="pointer-events-none fixed inset-0 -z-10 opacity-90">
         <div className="absolute top-[-18%] right-[-8%] h-[65vh] w-[65vh] rounded-full bg-gradient-to-bl from-fuchsia-600/30 via-violet-600/18 to-transparent blur-[100px]" />
         <div className="absolute bottom-[-22%] left-[-12%] h-[80vh] w-[80vh] rounded-full bg-gradient-to-tr from-[#c4ff47]/14 via-cyan-500/8 to-fuchsia-500/16 blur-[110px]" />

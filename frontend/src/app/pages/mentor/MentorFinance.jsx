@@ -21,7 +21,7 @@ import {
   X,
   Plus
 } from "lucide-react";
-import { getUser } from "../../utils/auth";
+import { getUser, getDisplayName } from "../../utils/auth";
 import { MentorPageShell } from "../../components/mentor/MentorPageShell";
 import { fetchMentorFinance, requestMentorPayout, updateMentorPayoutAccount } from "../../utils/mentorApi";
 import { toast } from "sonner";
@@ -251,7 +251,7 @@ export function MentorFinance() {
   const totalEarned = Number(finance?.totalEarned || 0);
   const payoutAccount = finance?.payoutAccount || {};
   const payoutAccountMasked = finance?.payoutAccountMasked || "";
-  const payoutAccountOwnerName = finance?.payoutAccountOwnerName || user?.name || "Mentor";
+  const payoutAccountOwnerName = finance?.payoutAccountOwnerName || getDisplayName(user, "Mentor");
   const transactions = Array.isArray(finance?.history) ? finance.history : [];
   const filteredTransactions = transactions.filter((tx) => {
     if (activeTab === "all") return true;

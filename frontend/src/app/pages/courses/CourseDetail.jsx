@@ -679,7 +679,7 @@ export function CourseDetail() {
   ];
 
   return (
-    <div className="pi-page-dashboard-bg min-h-full w-full font-sans text-white selection:bg-[rgba(196,255,71,0.28)] selection:text-white">
+    <div className="pi-page-dashboard-bg min-h-full w-full font-sans antialiased text-white selection:bg-[rgba(196,255,71,0.28)] selection:text-white">
       <header className="relative border-b border-white/[0.07] pb-14 pt-4 sm:pb-16 sm:pt-5">
         <div
           className="pointer-events-none absolute inset-0 opacity-[0.09]"
