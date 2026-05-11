@@ -372,7 +372,7 @@ export function Settings() {
   };
 
   return (
-    <div className="relative min-h-screen overflow-x-hidden pb-32 font-sans bg-[#f8f4ff] text-slate-900 selection:bg-[rgba(122,35,229,0.18)] selection:text-slate-900">
+    <div className="relative min-h-screen overflow-x-hidden pb-32 font-sans antialiased bg-[#f8f4ff] text-slate-900 selection:bg-[rgba(122,35,229,0.18)] selection:text-slate-900">
       <style>{`
         .glass-card {
            background: #ffffff;
@@ -400,7 +400,7 @@ export function Settings() {
         .settings-glass-nav:hover { border-color: rgba(122, 35, 229, 0.22); }
         .font-headline {
           letter-spacing: -0.045em;
-          text-shadow: 0 2px 24px rgba(0,0,0,0.35);
+          text-shadow: none;
         }
         .input-glass {
            background: #ffffff;

@@ -249,7 +249,7 @@ export function SessionDetail() {
 
   if (sessionLoading) {
     return (
-      <div className="p-12 text-center text-gray-500 text-sm">
+      <div className="p-12 text-center text-sm text-gray-500 antialiased">
         Đang tải thông tin buổi phỏng vấn…
       </div>
     );
@@ -257,7 +257,7 @@ export function SessionDetail() {
 
   if (!sessionData) {
     return (
-      <div className="p-8 text-center text-gray-400">
+      <div className="p-8 text-center text-gray-400 antialiased">
         <WarningCircle className="w-12 h-12 mx-auto mb-3 text-gray-300" />
         <p>Không tìm thấy thông tin buổi phỏng vấn.</p>
         <button
@@ -272,7 +272,7 @@ export function SessionDetail() {
   }
 
   return (
-    <div className="max-w-5xl mx-auto p-6 pb-12">
+    <div className="mx-auto max-w-5xl p-6 pb-12 antialiased">
       {/* ── Back ── */}
       <button
         type="button"

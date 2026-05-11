@@ -8,7 +8,7 @@ export function SuccessPage() {
   const details = state?.details || {};
 
   return (
-    <div className="min-h-screen bg-[#07060E] text-white flex items-center justify-center p-6 overflow-hidden">
+    <div className="min-h-screen bg-[#07060E] text-white flex items-center justify-center p-6 overflow-hidden antialiased">
       <div className="absolute top-[-10%] right-[-10%] h-[60vh] w-[60vh] rounded-full bg-emerald-500/10 blur-[120px]" />
       
       <motion.div 

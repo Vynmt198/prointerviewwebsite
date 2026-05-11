@@ -85,6 +85,13 @@ const userSchema = new Schema(
     lockUntil: { type: Date, default: null },
 
     /**
+     * Quên mật khẩu: chỉ lưu hash token (không bao giờ lưu token thô).
+     * Khi đặt lại mật khẩu thành công → xóa 2 field này.
+     */
+    resetPasswordTokenHash: { type: String, select: false, default: "" },
+    resetPasswordExpiresAt: { type: Date, select: false, default: null },
+
+    /**
      * Refresh token (thiết bị): chỉ lưu hash; token gửi client = `sessionId:secret` (opaque).
      * select: false — không lôi nhầm vào toPublicUser.
      */

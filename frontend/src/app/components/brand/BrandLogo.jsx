@@ -20,7 +20,7 @@ export function BrandLogo({ className = "" }) {
           <img
             src={BRAND_LOGO_SRC}
             alt="ProInterview logo"
-            className="h-full w-auto object-contain"
+            className="h-full w-auto object-contain contrast-[1.12] brightness-[0.94]"
             onError={() => setLoadError(true)}
           />
         )}

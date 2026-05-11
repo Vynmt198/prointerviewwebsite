@@ -215,7 +215,7 @@ export function AIGenderSelection() {
   };
 
   return (
-    <div className="ai-gender-light pi-page-dashboard-bg relative min-h-full w-full overflow-hidden px-6 pb-6 pt-3 sm:pt-4">
+    <div className="ai-gender-light pi-page-dashboard-bg relative min-h-full w-full overflow-hidden px-6 pb-6 pt-3 font-sans antialiased sm:pt-4">
       <div className="pointer-events-none fixed inset-0 -z-10">
         <div className="fixed top-[-22%] left-[-12%] h-[760px] w-[760px] rounded-full bg-[#d4ff00]/48 blur-[135px]" />
         <div className="fixed bottom-[-22%] right-[-10%] h-[820px] w-[820px] rounded-full bg-[#9447ff]/34 blur-[150px]" />

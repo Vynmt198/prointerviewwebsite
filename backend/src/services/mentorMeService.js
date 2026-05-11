@@ -46,6 +46,7 @@ export async function applyForMentor(userId, body) {
   const bio = String(body?.bio || "").trim();
   const company = String(body?.company || "").trim() || "Freelancer";
   const linkedinUrl = String(body?.linkedinProfile || body?.linkedinUrl || "").trim();
+  const portfolioUrl = String(body?.portfolioLink || body?.portfolioUrl || "").trim();
   const specialties = normalizeList(body?.tags?.length ? body.tags : body?.skills);
   const companies = normalizeList(body?.companies?.length ? body.companies : body?.careerHistory);
   const fields = normalizeList(body?.fields);
@@ -66,6 +67,7 @@ export async function applyForMentor(userId, body) {
     fields,
     companies,
     linkedinUrl,
+    portfolioUrl,
     experienceYears: Number.isFinite(experienceYears) && experienceYears >= 0 ? Math.round(experienceYears) : 0,
     pricePerHour: Number.isFinite(targetRate) && targetRate > 0 ? Math.round(targetRate) : 350_000,
     isActive: false,
@@ -95,9 +97,7 @@ export async function applyForMentor(userId, body) {
     await mentor.save();
   }
 
-  if (user.role !== "mentor") {
-    await User.updateOne({ _id: uid }, { $set: { role: "mentor" } });
-  }
+  /** Không đổi role User tại đây — chỉ admin phê duyệt mới cấp `mentor` (PATCH /api/admin/mentors/:id/status). */
 
   return { ok: true, mentor: toPublicMentorMe(mentor) };
 }
@@ -159,6 +159,8 @@ export async function patchMyMentorProfile(userId, body) {
   if (Array.isArray(body.fields)) m.fields = body.fields.map((x) => String(x).trim()).filter(Boolean);
   if (Array.isArray(body.companies)) m.companies = body.companies.map((x) => String(x).trim()).filter(Boolean);
   if (typeof body.linkedinUrl === "string") m.linkedinUrl = body.linkedinUrl.trim();
+  if (typeof body.portfolioUrl === "string") m.portfolioUrl = body.portfolioUrl.trim();
+  else if (typeof body.portfolioLink === "string") m.portfolioUrl = body.portfolioLink.trim();
   if (body.experienceYears != null) {
     const n = Number(body.experienceYears);
     if (Number.isFinite(n) && n >= 0) m.experienceYears = Math.round(n);

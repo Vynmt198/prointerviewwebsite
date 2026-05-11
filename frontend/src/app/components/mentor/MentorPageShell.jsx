@@ -4,6 +4,7 @@ import React from "react";
  * Vỏ trang mentor — nền sáng, thẻ trắng, chữ slate (cùng họ với `Dashboard.jsx` / `Interview.jsx` user).
  * @param {string} [extraStyles] — CSS bổ sung (vd. calendar-cell, tab-btn).
  * @param {string} [bottomPad] — padding đáy, mặc định `pb-20`.
+ * @param {boolean} [fillHeight] — khi true: lấp đầy flex cha (vd. admin bên cạnh sidebar), bỏ `min-h-screen`.
  */
 const MENTOR_LIGHT_STYLES = `
         .glass-card {
@@ -55,10 +56,19 @@ const MENTOR_LIGHT_STYLES = `
         }
 `;
 
-export function MentorPageShell({ children, className = "", extraStyles = "", bottomPad = "pb-20" }) {
+export function MentorPageShell({
+  children,
+  className = "",
+  extraStyles = "",
+  bottomPad = "pb-20",
+  fillHeight = false,
+}) {
+  const heightBlock = fillHeight
+    ? "min-h-0 flex-1 h-full overflow-y-auto overflow-x-hidden"
+    : "min-h-screen overflow-x-hidden";
   return (
     <div
-      className={`mentor-surface relative min-h-screen overflow-x-hidden font-sans text-slate-900 selection:bg-[rgba(122,35,229,0.18)] selection:text-slate-900 bg-[#f8f4ff] ${bottomPad} ${className}`.trim()}
+      className={`mentor-surface relative antialiased ${heightBlock} font-sans text-slate-900 selection:bg-[rgba(122,35,229,0.18)] selection:text-slate-900 bg-[#f8f4ff] ${bottomPad} ${className}`.trim()}
     >
       <style>{`${MENTOR_LIGHT_STYLES}${extraStyles || ""}`}</style>
       <div className="pricing-grid" aria-hidden />

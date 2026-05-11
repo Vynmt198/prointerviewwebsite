@@ -18,6 +18,8 @@ router.use((req, res, next) => {
 router.post("/register", authWriteLimiter, AuthController.register);
 router.post("/login", authWriteLimiter, AuthController.login);
 router.post("/google", authWriteLimiter, AuthController.google);
+router.post("/forgot-password", authWriteLimiter, AuthController.forgotPassword);
+router.post("/reset-password", authWriteLimiter, AuthController.resetPassword);
 router.post("/refresh", refreshLimiter, AuthController.refresh);
 router.get("/me", authJwt, AuthController.me);
 router.patch("/me", authJwt, AuthController.patchMe);

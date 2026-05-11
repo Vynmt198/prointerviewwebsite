@@ -184,9 +184,9 @@ export function Login() {
               <div>
                 <div className="flex justify-between items-center mb-1.5">
                   <label htmlFor="login-password" className="text-sm font-semibold text-gray-700">Mật khẩu</label>
-                  <button type="button" className="text-sm font-medium text-gray-400 cursor-not-allowed">
+                  <Link to="/forgot-password" className="text-sm font-semibold hover:underline" style={{ color: "#6E35E8" }}>
                     Quên mật khẩu?
-                  </button>
+                  </Link>
                 </div>
                 <div className="relative">
                   <input

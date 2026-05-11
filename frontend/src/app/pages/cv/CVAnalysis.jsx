@@ -543,7 +543,7 @@ export function CVAnalysis() {
 
   // ────────────────────────────────────────────────────────────────────────────
   return (
-    <div className="min-h-full w-full text-slate-900 selection:bg-[rgba(196,255,71,0.28)] selection:text-slate-900">
+    <div className="min-h-full w-full font-sans antialiased text-slate-900 selection:bg-[rgba(196,255,71,0.28)] selection:text-slate-900">
       <div className="fixed inset-0 pointer-events-none -z-[3]" style={{ background: "#f8f4ff" }} />
       <div className="fixed top-[-22%] left-[-12%] w-[760px] h-[760px] rounded-full pointer-events-none -z-[2] bg-[#d4ff00]/48 blur-[135px]" />
       <div className="fixed bottom-[-22%] right-[-10%] w-[820px] h-[820px] rounded-full pointer-events-none -z-[2] bg-[#9447ff]/34 blur-[150px]" />
@@ -551,8 +551,13 @@ export function CVAnalysis() {
       <div className="relative z-[1] mx-auto w-full max-w-7xl px-6 pb-4 pt-8 sm:px-8 sm:pb-6 sm:pt-10">
         <div className="mb-8">
         <div className="mb-4 flex items-center gap-3">
-          <FileText className="size-5 text-[#c4ff47]" />
-          <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Phân tích CV/JD</span>
+          <FileText
+            className="size-6 shrink-0 text-lime-900"
+            strokeWidth={2.5}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+          <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-800 sm:text-[11px]">Phân tích CV/JD</span>
         </div>
         <h1 className="mb-4 text-3xl font-black leading-[1.08] tracking-tight text-slate-900 sm:text-4xl md:text-5xl">
           Phân tích CV{" "}
@@ -563,7 +568,7 @@ export function CVAnalysis() {
         </p>
         </div>
 
-        <div className="w-full rounded-[28px] border border-slate-200 bg-white/85 px-6 pb-10 pt-6 shadow-[0_18px_40px_rgba(15,23,42,0.08)] backdrop-blur-sm sm:px-8">
+        <div className="w-full rounded-[28px] border border-slate-200 bg-white/95 px-6 pb-10 pt-6 shadow-[0_18px_40px_rgba(15,23,42,0.08)] sm:px-8">
       {/* Page tabs */}
       <div className="flex gap-2 mb-6">
         {[

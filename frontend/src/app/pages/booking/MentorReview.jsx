@@ -189,7 +189,7 @@ export function MentorReview() {
   /* ── Not found ── */
   if (!session) {
     return (
-      <div className="p-8 text-center text-gray-400">
+      <div className="p-8 text-center text-gray-400 antialiased">
         <p className="text-lg font-semibold mb-2">Không tìm thấy buổi phỏng vấn</p>
         <button onClick={() => navigate("/dashboard")}
           className="mt-4 px-5 py-2.5 rounded-xl text-sm font-semibold text-white"
@@ -205,7 +205,7 @@ export function MentorReview() {
   ────────────────────────────────────────────────────── */
   if (submitted) {
     return (
-      <div className="max-w-2xl mx-auto p-6 pb-16">
+      <div className="mx-auto max-w-2xl p-6 pb-16 antialiased">
         <button onClick={() => navigate(-1)}
           className="group flex items-center gap-2 text-gray-500 hover:text-gray-900 text-sm mb-8 transition-colors px-3 py-1.5 rounded-lg hover:bg-gray-100 -ml-3">
           <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-0.5" />
@@ -374,7 +374,7 @@ export function MentorReview() {
      FORM — review input
   ────────────────────────────────────────────────────── */
   return (
-    <div className="max-w-2xl mx-auto p-6 pb-16">
+    <div className="mx-auto max-w-2xl p-6 pb-16 antialiased">
 
       {/* Back */}
       <button

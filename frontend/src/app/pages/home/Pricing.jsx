@@ -47,7 +47,7 @@ export function Pricing() {
   const toggleFaq = (i) => setOpenFaq(openFaq === i ? null : i);
 
   return (
-    <div className="min-h-screen bg-[#f8f4ff] text-[#1d1a26] selection:bg-[#9447FF]/20 selection:text-[#1d1a26]">
+    <div className="min-h-screen bg-[#f8f4ff] text-[#1d1a26] antialiased selection:bg-[#9447FF]/20 selection:text-[#1d1a26]">
       <style>{`
         .glass-card {
            background: rgba(255, 255, 255, 0.72);
@@ -94,9 +94,10 @@ export function Pricing() {
       {/* Atmospheric Background Glows */}
       <div className="pricing-grid" aria-hidden />
       <div className="fixed inset-0 pointer-events-none -z-[3]" style={{ background: "#f8f4ff" }} />
-      <div className="fixed top-[-22%] left-[-12%] w-[760px] h-[760px] rounded-full pointer-events-none -z-0 bg-[#d4ff00]/48 blur-[135px]" />
+      {/* Lime glow — hạ xuống (trước: top-[-22%]) để không dồn góc trên; vẫn trái để cân với footer */}
+      <div className="pointer-events-none fixed left-[-14%] top-[22%] -z-0 h-[min(92vw,760px)] w-[min(92vw,760px)] rounded-full bg-[#d4ff00]/42 blur-[130px] sm:left-[-12%] sm:top-[28%]" />
       <div className="fixed bottom-[-22%] right-[-10%] w-[820px] h-[820px] rounded-full pointer-events-none -z-0 bg-[#9447ff]/34 blur-[150px]" />
-      <div className="fixed left-0 right-0 top-[38%] h-[180px] pointer-events-none -z-0" style={{ background: "linear-gradient(90deg, rgba(212,255,0,0.14) 0%, rgba(148,71,255,0.22) 55%, rgba(148,71,255,0.1) 100%)", filter: "blur(32px)" }} />
+      <div className="pointer-events-none fixed left-0 right-0 top-[48%] -z-0 h-[200px] sm:top-[52%]" style={{ background: "linear-gradient(90deg, rgba(212,255,0,0.12) 0%, rgba(148,71,255,0.2) 55%, rgba(148,71,255,0.09) 100%)", filter: "blur(32px)" }} />
 
       {/* ── Navbar ── */}
       <TopNavShell variant="light" scrolled={true}>

@@ -31,7 +31,6 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarRail,
-  useSidebar,
 } from "../ui/sidebar";
 import {
   DropdownMenu,
@@ -40,7 +39,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
-import { getUser, logout, getInitials, getBrandClickPath, getPlans } from "../../utils/auth";
+import { getUser, logout, getInitials, getBrandClickPath, getPlans, getDisplayName } from "../../utils/auth";
 
 /* ── Nav data ─────────────────────────────────────────────── */
 const customerMainItems = [
@@ -70,12 +69,10 @@ const secondaryItems = [
 export function AppSidebar() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { state } = useSidebar();
-  const collapsed = state === "collapsed";
 
   const user = getUser();
   const plans = getPlans();
-  const displayName = user?.name || "Người dùng";
+  const displayName = getDisplayName(user);
   const initials = getInitials(displayName);
   const isMentor = user?.role === "mentor";
   const isElite = !!plans?.elitePro;
@@ -110,21 +107,36 @@ export function AppSidebar() {
               tooltip="ProInterview"
               onClick={() => navigate(getBrandClickPath())}
               className="
-                h-14 rounded-none cursor-pointer
+                !overflow-visible h-14 min-h-14 rounded-none cursor-pointer py-1
                 hover:bg-white/5 active:bg-white/10
                 data-[active=true]:bg-transparent
-                group-data-[collapsible=icon]:!justify-center
+                group-data-[collapsible=icon]:!h-10 group-data-[collapsible=icon]:!w-10
+                group-data-[collapsible=icon]:!min-h-10 group-data-[collapsible=icon]:!min-w-10
+                group-data-[collapsible=icon]:!justify-center group-data-[collapsible=icon]:!p-0
+                group-data-[collapsible=icon]:shadow-none group-data-[collapsible=icon]:ring-0
+                group-data-[collapsible=icon]:focus-visible:ring-0
+                group-data-[collapsible=icon]:!overflow-visible
                 group-data-[collapsible=icon]:px-0
                 px-4
               "
             >
-              {/* Logo icon */}
-              <div className="flex h-14 w-auto shrink-0 items-center justify-center group-data-[collapsible=icon]:h-11">
+              {/* Full wordmark (expanded) + circular mark (collapsed) */}
+              <div className="relative flex h-14 w-auto shrink-0 items-center justify-center group-data-[collapsible=icon]:size-10 group-data-[collapsible=icon]:overflow-visible">
                 <img
                   src="/Logo.png"
-                  alt="ProInterview logo"
-                  className="h-full w-auto object-contain origin-center scale-[2.05] translate-x-14 group-data-[collapsible=icon]:translate-x-0 group-data-[collapsible=icon]:scale-[1.8]"
+                  alt="ProInterview"
+                  className="h-full w-auto object-contain origin-center brightness-[0.92] contrast-[1.14] saturate-[1.05] scale-[1.74] translate-x-12 group-data-[collapsible=icon]:hidden sm:scale-[1.8]"
                 />
+                <div
+                  className="hidden size-10 shrink-0 items-center justify-center bg-transparent overflow-visible group-data-[collapsible=icon]:flex"
+                  aria-hidden
+                >
+                  <img
+                    src="/logo-mark-circle.png?v=4"
+                    alt=""
+                    className="h-10 w-10 object-contain object-center brightness-[0.95] contrast-[1.08] translate-x-2.5 translate-y-0.5 scale-[1.1]"
+                  />
+                </div>
               </div>
             </SidebarMenuButton>
           </SidebarMenuItem>

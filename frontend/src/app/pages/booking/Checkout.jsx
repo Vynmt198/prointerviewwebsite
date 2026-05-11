@@ -49,7 +49,7 @@ const PLANS = {
     yearlyPrice: 79000,
     badge: "TỐT NHẤT",
     accentColor: "#c4ff47",
-    features: ["AI phỏng vấn không giới hạn", "AI nhận dạng giọng nói — Turbo 2×", "CV/JD phân tích không giới hạn", "Phân tích hành vi: Giao tiếp mắt, Tư thế", "Phân tích giọng nói: Tốc độ, Từ đệm", "Mentor 1-1 ưu tiên"],
+    features: ["AI phỏng vấn không giới hạn", "AI nhận dạng giọng nói — Turbo 2×", "CV/JD phân tích không giới hạn", "Phân tích hành vi: Giao tiếp mắt, Tư thế", "Phân tích giọng nói: Tốc độ, Từ đệm", "Mentor 1:1 ưu tiên"],
   },
 };
 
@@ -490,7 +490,7 @@ export function Checkout() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#07060E] text-white overflow-x-hidden">
+    <div className="min-h-screen overflow-x-hidden bg-[#07060E] text-white antialiased">
       <style>{`
         @keyframes fadeIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
         .fade-in { animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) both; }

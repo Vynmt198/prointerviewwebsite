@@ -46,7 +46,7 @@ const NAV_LINKS = {
   "Sản phẩm": [
     { label: "Phỏng vấn AI", path: "/interview" },
     { label: "Phân tích CV/JD", path: "/cv-analysis" },
-    { label: "Mentor 1-1", path: "/mentors" },
+    { label: "Mentor 1:1", path: "/mentors" },
     { label: "Bảng điều khiển", path: "/dashboard" },
   ],
   "Dịch vụ": [
@@ -84,14 +84,21 @@ function FooterDark() {
 
   return (
     <footer
+      className="relative overflow-hidden"
       style={{
         background: "linear-gradient(180deg, #07060e 0%, #0a0618 55%, #12081f 100%)",
         borderTop: "1px solid rgba(255,255,255,0.08)",
         boxShadow: "0 -1px 0 rgba(196, 255, 71, 0.06)",
       }}
     >
+      {/* Đóm vàng — đặt thấp (khối hỗ trợ / chân trang), không dồn góc trên trái */}
+      <div
+        className="pointer-events-none absolute z-0 h-[min(72vw,520px)] w-[min(72vw,520px)] rounded-full bg-[#d4ff00]/18 blur-[100px] sm:h-[520px] sm:w-[520px] sm:blur-[110px]"
+        style={{ left: "-14%", top: "38%" }}
+        aria-hidden
+      />
       {/* Support 24/7 banner */}
-      <div style={{ 
+      <div className="relative z-[1]" style={{ 
         background: "linear-gradient(135deg, rgba(110, 53, 232,0.14) 0%, rgba(196, 255, 71,0.1) 100%)",
         borderBottom: "1px solid rgba(255,255,255,0.07)"
       }}>
@@ -144,7 +151,7 @@ function FooterDark() {
       </div>
 
       {/* Main body */}
-      <div className="max-w-7xl mx-auto px-6 py-16">
+      <div className="relative z-[1] max-w-7xl mx-auto px-6 py-16">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-12 lg:gap-10">
           {/* Brand */}
           <div className="lg:col-span-2">
@@ -231,6 +238,7 @@ function FooterDark() {
 
       {/* Facebook community strip */}
       <div 
+        className="relative z-[1]"
         style={{ 
           borderTop: "1px solid rgba(255,255,255,0.06)", 
           background: "linear-gradient(135deg, rgba(24,119,242,0.12) 0%, rgba(24,119,242,0.06) 100%)"
@@ -270,7 +278,7 @@ function FooterDark() {
       </div>
 
       {/* Bottom bar */}
-      <div style={{ borderTop: "1px solid rgba(255,255,255,0.05)", background: "rgba(0,0,0,0.2)" }}>
+      <div className="relative z-[1]" style={{ borderTop: "1px solid rgba(255,255,255,0.05)", background: "rgba(0,0,0,0.2)" }}>
         <div className="max-w-7xl mx-auto px-6 py-5 flex flex-col sm:flex-row items-center justify-between gap-3">
           <p className="text-white/35 text-xs">
             © {new Date().getFullYear()} ProInterview. All rights reserved.

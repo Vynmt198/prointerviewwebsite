@@ -74,6 +74,14 @@ export async function createMentorProfileForUser(user) {
       ...profile,
       available: true,
       isActive: true,
+      isVerified: true,
+      verifiedAt: new Date(),
+      adminReview: {
+        status: "approved",
+        reason: "",
+        reviewedAt: new Date(),
+        reviewedBy: null,
+      },
     });
   } catch (err) {
     if (err && err.code === 11000) {

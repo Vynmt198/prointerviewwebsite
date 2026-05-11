@@ -151,4 +151,29 @@ export class AuthController {
       next(err);
     }
   }
+
+  static async forgotPassword(req, res, next) {
+    try {
+      const result = await authService.requestPasswordReset(req.body?.email, req);
+      // Luôn 200 để tránh leak email tồn tại.
+      const payload = { success: true };
+      if (result?.resetUrl) payload.resetUrl = result.resetUrl;
+      if (result?.resetToken) payload.resetToken = result.resetToken;
+      res.json(payload);
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  static async resetPassword(req, res, next) {
+    try {
+      const result = await authService.resetPasswordWithToken(req.body ?? {});
+      if (!result.ok) {
+        return res.status(result.status).json({ success: false, error: result.error });
+      }
+      res.json({ success: true });
+    } catch (err) {
+      next(err);
+    }
+  }
 }

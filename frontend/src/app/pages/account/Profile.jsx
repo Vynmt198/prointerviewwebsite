@@ -27,7 +27,7 @@ import {
   History,
   AlertTriangle
 } from "lucide-react";
-import { getPlans, getUser, updateUser, logout, getInitials } from "../../utils/auth";
+import { getPlans, getUser, updateUser, logout, getInitials, restoreSession } from "../../utils/auth";
 import { applyAsMentor, fetchMyMentorProfile, updateMyMentorProfile } from "../../utils/mentorApi";
 
 const ACHIEVEMENTS = [
@@ -74,7 +74,10 @@ export function Profile() {
 
   const initials = getInitials(form.name || "U");
   const isMentor = user?.role === "mentor";
-  const mentorReviewStatus = mentorProfile?.adminReview?.status || (mentorProfile?.isVerified ? "approved" : "pending");
+  const mentorReviewStatus = mentorProfile
+    ? mentorProfile?.adminReview?.status || (mentorProfile?.isVerified ? "approved" : "pending")
+    : "";
+  const mentorFormLockedPending = !isMentor && mentorReviewStatus === "pending";
 
   const handleSave = async () => {
     const userRes = await updateUser({
@@ -102,6 +105,7 @@ export function Profile() {
           .map((s) => s.trim())
           .filter(Boolean),
         linkedinUrl: mentorForm.linkedinProfile,
+        portfolioUrl: mentorForm.portfolioLink,
         pricePerHour: mentorForm.targetRate,
         responseTime: mentorForm.responseTime,
         timezone: mentorForm.timezone,
@@ -134,6 +138,8 @@ export function Profile() {
     setApplying(false);
     if (res.success) {
       setShowMentorModal(false);
+      if (res.mentor) setMentorProfile(res.mentor);
+      await restoreSession().catch(() => {});
       setSaveMsg("mentor_applied");
       setTimeout(() => setSaveMsg(null), 4000);
     } else {
@@ -192,6 +198,7 @@ export function Profile() {
           : prev,
       );
     }
+    await restoreSession().catch(() => {});
     setSaveMsg("mentor_resubmitted");
     setTimeout(() => setSaveMsg(null), 4000);
   };
@@ -218,7 +225,7 @@ export function Profile() {
       nameIcon: Medal,
       badge: { bg: "bg-primary-fixed/20", border: "border-primary-fixed/30", icon: "text-primary-fixed", text: "text-primary-fixed" },
       cardGrad: "linear-gradient(145deg, #0E0922 0%, #1a0d35 100%)",
-      desc: "Không giới hạn · Phân tích hành vi · Mentor 1-1",
+      desc: "Không giới hạn · Phân tích hành vi · Mentor 1:1",
       progress: null,
       isPaid: true,
       accent: "#B4F500"
@@ -254,9 +261,12 @@ export function Profile() {
   }, []);
 
   React.useEffect(() => {
-    if (!isMentor) return;
+    if (!user?.email) return;
     fetchMyMentorProfile().then((res) => {
-      if (!res?.success || !res.mentor) return;
+      if (!res?.success || !res.mentor) {
+        setMentorProfile(null);
+        return;
+      }
       const m = res.mentor;
       setMentorProfile(m);
       setMentorForm((prev) => ({
@@ -268,16 +278,17 @@ export function Profile() {
         skills: Array.isArray(m.specialties) ? m.specialties.join(", ") : "",
         careerHistory: Array.isArray(m.companies) ? m.companies.join(", ") : "",
         linkedinProfile: m.linkedinUrl || "",
+        portfolioLink: m.portfolioUrl || "",
         targetRate: String(m.pricePerHour ?? ""),
         fields: Array.isArray(m.fields) ? m.fields.join(", ") : "",
         responseTime: m.responseTime || "",
         timezone: m.timezone || "Asia/Ho_Chi_Minh",
       }));
     });
-  }, [isMentor]);
+  }, [user?.email]);
 
   return (
-    <div className="relative min-h-screen overflow-x-hidden pb-20 font-sans bg-[#f8f4ff] text-slate-900 selection:bg-[rgba(122,35,229,0.18)] selection:text-slate-900">
+    <div className="relative min-h-screen overflow-x-hidden pb-20 font-sans antialiased bg-[#f8f4ff] text-slate-900 selection:bg-[rgba(122,35,229,0.18)] selection:text-slate-900">
       <style>{`
         .glass-card {
            background: #ffffff;
@@ -299,7 +310,7 @@ export function Profile() {
         }
         .font-headline {
           letter-spacing: -0.045em;
-          text-shadow: 0 2px 24px rgba(0,0,0,0.35);
+          text-shadow: none;
         }
         .glow-halo { position: relative; display: flex; align-items: center; justify-content: center; }
         .glow-halo::after {
@@ -432,6 +443,7 @@ export function Profile() {
                
                {!isMentor && (
                  <div className="pt-8 border-t border-slate-200">
+                    {!mentorProfile ? (
                     <button
                       type="button"
                       onClick={() => setShowMentorModal(true)}
@@ -447,6 +459,11 @@ export function Profile() {
                         <CaretRight size={16} />
                       </span>
                     </button>
+                    ) : mentorReviewStatus === "pending" ? (
+                      <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-center text-xs font-semibold text-amber-900">
+                        Hồ sơ cố vấn đã gửi — đang chờ quản trị phê duyệt. Bạn vẫn dùng giao diện học viên cho đến khi được duyệt.
+                      </div>
+                    ) : null}
                  </div>
                )}
             </div>
@@ -492,7 +509,7 @@ export function Profile() {
                </div>
             </div>
 
-            {isMentor && (
+            {mentorProfile && (
               <div className="glass-card p-10">
                 <div className="flex items-center justify-between mb-10">
                   <h2 className="font-headline flex items-center gap-3 text-xl font-black tracking-tight text-slate-900 sm:text-2xl">
@@ -554,7 +571,7 @@ export function Profile() {
                     <div key={field.key} className="space-y-3">
                       <label className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500">{field.label}</label>
                       <input
-                        disabled={!editing}
+                        disabled={!editing || mentorFormLockedPending}
                         type={field.type || "text"}
                         className="input-glass w-full"
                         value={mentorForm[field.key] || ""}
@@ -566,7 +583,7 @@ export function Profile() {
                   <div className="md:col-span-2 space-y-3">
                     <label className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500">Tiểu sử mentor</label>
                     <textarea
-                      disabled={!editing}
+                      disabled={!editing || mentorFormLockedPending}
                       rows={4}
                       className="input-glass w-full resize-none"
                       value={mentorForm.bio}
