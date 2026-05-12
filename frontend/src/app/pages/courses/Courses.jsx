@@ -31,6 +31,7 @@ import {
 import { fetchCourses } from "../../utils/courseApi";
 import { enrollmentApi } from "../../utils/enrollmentApi";
 import { normalizeCourseStats } from "../../utils/courseStats";
+import { enrollmentAccessGranted } from "../../utils/enrollmentAccess.js";
 
 const CATEGORIES = [
   "Tất cả",
@@ -252,7 +253,7 @@ function RecentActivity({
 }) {
   const navigate = useNavigate();
   const inProgress = items.filter(
-    (i) => i.progressPct > 0 && !i.isCompleted,
+    (i) => i.hasPaidAccess && i.progressPct > 0 && !i.isCompleted,
   );
   if (inProgress.length === 0) return null;
 
@@ -384,7 +385,9 @@ export function Courses() {
               },
               completedLessons: e.completedLessons || [],
               progressPct: pct,
-              isCompleted: pct === 100
+              isCompleted: pct === 100,
+              hasPaidAccess: enrollmentAccessGranted(e),
+              coursePrice: Number(c.price ?? 0),
             };
           });
         setEnrolledCourses(mapped);
@@ -802,7 +805,15 @@ export function Courses() {
                       <EnrolledCourseCard
                         key={item.course.id}
                         item={item}
-                        onContinue={() => navigate(`/courses/${item.course.id}/learn`)}
+                        onContinue={() => {
+                          if (item.hasPaidAccess) {
+                            navigate(`/courses/${item.course.id}/learn`);
+                          } else {
+                            navigate(
+                              `/checkout?type=course&courseId=${item.course.id}&price=${Math.round(item.coursePrice || 0)}`,
+                            );
+                          }
+                        }}
                       />
                     ))}
                   </div>

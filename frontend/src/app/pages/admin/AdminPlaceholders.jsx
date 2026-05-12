@@ -13,6 +13,7 @@ function vnd(amount) {
 function statusLabel(status) {
   const key = String(status || "").toLowerCase();
   if (key === "pending") return "Chờ duyệt";
+  if (key === "course_pending_ck") return "Chờ xác nhận CK";
   if (key === "confirmed") return "Đã xác nhận";
   if (key === "completed") return "Hoàn thành";
   if (key === "approved" || key === "paid") return "Đã duyệt";
@@ -89,19 +90,25 @@ export function AdminFinance() {
   const [loading, setLoading] = useState(true);
   const [bookings, setBookings] = useState([]);
   const [payouts, setPayouts] = useState([]);
+  const [courseFinance, setCourseFinance] = useState(null);
 
   useEffect(() => {
     const run = async () => {
       setLoading(true);
-      const [bookingRes, payoutRes] = await Promise.all([adminApi.getBookings(), adminApi.getPayouts()]);
+      const [bookingRes, payoutRes, courseRes] = await Promise.all([
+        adminApi.getBookings(),
+        adminApi.getPayouts(),
+        adminApi.getCourseFinanceSummary(),
+      ]);
       if (bookingRes.success) setBookings(bookingRes.bookings || []);
       if (payoutRes.success) setPayouts(payoutRes.payouts || []);
+      if (courseRes.success) setCourseFinance(courseRes.courseFinance || null);
       setLoading(false);
     };
     run();
   }, []);
 
-  const totalBookingRevenue = bookings.reduce((sum, b) => sum + Number(b.price || 0), 0);
+  const totalBookingRevenue = bookings.reduce((sum, b) => sum + Number(b.totalAmount ?? b.price ?? 0), 0);
   const totalPayoutRequested = payouts.reduce((sum, p) => sum + Number(p.amount || 0), 0);
   const pendingPayout = payouts
     .filter((p) => p.status === "pending")
@@ -110,31 +117,73 @@ export function AdminFinance() {
     .filter((p) => p.status === "approved" || p.status === "paid")
     .reduce((sum, p) => sum + Number(p.amount || 0), 0);
 
+  const cf = courseFinance;
+
   return (
     <AdminPanel
       title="Tài chính — Tổng quan"
-      description="Doanh thu tháng, tổng doanh thu, phí nền tảng, rút tiền cố vấn đang chờ duyệt."
+      description="Doanh thu đặt lịch mentor, học phí khóa học (CK), phí nền tảng, rút tiền cố vấn. Duyệt chuyển khoản khóa học tại Lịch hẹn & duyệt CK."
     >
       {loading ? (
         <p className="text-sm text-slate-500">Đang tải dữ liệu tài chính...</p>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
-            <p className="text-xs text-slate-500">Tổng doanh thu booking</p>
-            <p className="mt-2 text-2xl font-black text-slate-900">{vnd(totalBookingRevenue)}</p>
+        <div className="space-y-10">
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+              <p className="text-xs text-slate-500">Tổng giá trị lịch hẹn (booking)</p>
+              <p className="mt-2 text-2xl font-black text-slate-900">{vnd(totalBookingRevenue)}</p>
+              <p className="mt-2 text-[11px] text-slate-500">Theo tổng tiền phiên (totalAmount / price).</p>
+            </div>
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+              <p className="text-xs text-slate-500">Tổng yêu cầu rút</p>
+              <p className="mt-2 text-2xl font-black text-slate-900">{vnd(totalPayoutRequested)}</p>
+            </div>
+            <div className="rounded-2xl border border-orange-400/25 bg-orange-500/10 p-5">
+              <p className="text-xs text-orange-900/80">Rút tiền chờ duyệt</p>
+              <p className="mt-2 text-2xl font-black text-orange-900">{vnd(pendingPayout)}</p>
+            </div>
+            <div className="rounded-2xl border border-emerald-400/25 bg-emerald-500/10 p-5">
+              <p className="text-xs text-emerald-800/80">Rút tiền đã duyệt</p>
+              <p className="mt-2 text-2xl font-black text-emerald-800">{vnd(approvedPayout)}</p>
+            </div>
           </div>
-          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
-            <p className="text-xs text-slate-500">Tổng yêu cầu rút</p>
-            <p className="mt-2 text-2xl font-black text-slate-900">{vnd(totalPayoutRequested)}</p>
-          </div>
-          <div className="rounded-2xl border border-orange-400/25 bg-orange-500/10 p-5">
-            <p className="text-xs text-orange-900/80">Rút tiền chờ duyệt</p>
-            <p className="mt-2 text-2xl font-black text-orange-900">{vnd(pendingPayout)}</p>
-          </div>
-          <div className="rounded-2xl border border-emerald-400/25 bg-emerald-500/10 p-5">
-            <p className="text-xs text-emerald-800/80">Rút tiền đã duyệt</p>
-            <p className="mt-2 text-2xl font-black text-emerald-800">{vnd(approvedPayout)}</p>
-          </div>
+
+          {cf && (
+            <div className="space-y-4">
+              <div className="flex flex-wrap items-end justify-between gap-4 border-b border-slate-200 pb-4">
+                <div>
+                  <h3 className="text-lg font-black tracking-tight text-slate-900">Học phí khóa học</h3>
+                  <p className="mt-1 text-sm text-slate-600">
+                    Ghi danh khóa có phí (chuyển khoản). Tiền chờ CK là chưa xác nhận trên sao kê; đã thu là đã bấm xác nhận CK trong mục Lịch hẹn &amp; duyệt CK.
+                  </p>
+                </div>
+                <Link
+                  to="/admin/bookings"
+                  className="shrink-0 rounded-xl bg-violet-600 px-4 py-2.5 text-xs font-black uppercase tracking-wider text-white shadow-sm transition hover:bg-violet-700"
+                >
+                  Duyệt CK khóa học →
+                </Link>
+              </div>
+              <div className="grid gap-4 md:grid-cols-3">
+                <div className="rounded-2xl border border-violet-400/30 bg-violet-500/10 p-5">
+                  <p className="text-xs font-semibold text-violet-900/90">Đã thu (CK đã xác nhận)</p>
+                  <p className="mt-2 text-2xl font-black text-violet-950">{vnd(cf.paidCollectedAmount)}</p>
+                  <p className="mt-2 text-[11px] text-violet-900/70">{cf.paidCollectedCount} ghi danh có học phí &gt; 0</p>
+                </div>
+                <div className="rounded-2xl border border-amber-400/35 bg-amber-500/10 p-5">
+                  <p className="text-xs font-semibold text-amber-950/90">Chờ đối soát CK</p>
+                  <p className="mt-2 text-2xl font-black text-amber-950">{vnd(cf.pendingTransferAmount)}</p>
+                  <p className="mt-2 text-[11px] text-amber-950/75">{cf.pendingTransferCount} ghi danh đang pending</p>
+                </div>
+                <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+                  <p className="text-xs text-slate-500">Ghi chú</p>
+                  <p className="mt-2 text-sm leading-relaxed text-slate-700">
+                    Khóa miễn phí không vào đây. Chia sẻ doanh thu mentor (nếu có) sẽ bổ sung ở phiên sau — hiện chỉ tổng hợp tiền học viên theo ghi danh.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </AdminPanel>
@@ -150,12 +199,16 @@ export function AdminTransactions() {
   useEffect(() => {
     const run = async () => {
       setLoading(true);
-      const [bookingRes, payoutRes] = await Promise.all([adminApi.getBookings(), adminApi.getPayouts()]);
+      const [bookingRes, payoutRes, courseRes] = await Promise.all([
+        adminApi.getBookings(),
+        adminApi.getPayouts(),
+        adminApi.getCourseFinanceSummary(),
+      ]);
       const bookingRows = bookingRes.success
         ? (bookingRes.bookings || []).map((b) => ({
             id: b._id,
             type: "booking",
-            amount: Number(b.price || 0),
+            amount: Number(b.totalAmount ?? b.price ?? 0),
             status: b.status || b.paymentStatus || "unknown",
             date: b.createdAt || b.updatedAt || new Date().toISOString(),
             label: `${b.userId?.name || "Người dùng"} → ${b.mentorId?.name || "Cố vấn"}`,
@@ -171,10 +224,34 @@ export function AdminTransactions() {
             label: p.mentorId?.name || p.mentorId?.userId?.name || "Cố vấn",
           }))
         : [];
+      const cf = courseRes.success ? courseRes.courseFinance : null;
+      const courseRows = [];
+      if (cf) {
+        (cf.pendingList || []).forEach((e) => {
+          courseRows.push({
+            id: `enr-p-${e._id}`,
+            type: "course_fee",
+            amount: Number(e.pricePaid || 0),
+            status: "course_pending_ck",
+            date: e.transferSubmittedAt || e.updatedAt || e.createdAt || new Date().toISOString(),
+            label: `${e.userId?.name || "Học viên"} · ${e.courseId?.title || "Khóa học"} (chờ CK)`,
+          });
+        });
+        (cf.recentPaidRows || []).forEach((e) => {
+          courseRows.push({
+            id: `enr-paid-${e._id}`,
+            type: "course_fee",
+            amount: Number(e.pricePaid || 0),
+            status: "paid",
+            date: e.paidAt || e.updatedAt || e.createdAt || new Date().toISOString(),
+            label: `${e.userId?.name || "Học viên"} · ${e.courseId?.title || "Khóa học"}`,
+          });
+        });
+      }
       setRows(
-        [...bookingRows, ...payoutRows]
+        [...bookingRows, ...payoutRows, ...courseRows]
           .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-          .slice(0, 80),
+          .slice(0, 120),
       );
       setLoading(false);
     };
@@ -190,12 +267,13 @@ export function AdminTransactions() {
   const totalAmount = filteredRows.reduce((sum, r) => sum + Number(r.amount || 0), 0);
   const bookingCount = filteredRows.filter((r) => r.type === "booking").length;
   const payoutCount = filteredRows.filter((r) => r.type === "payout").length;
+  const courseFeeCount = filteredRows.filter((r) => r.type === "course_fee").length;
 
   const statusBadge = (status) => {
     if (["completed", "approved", "paid", "confirmed"].includes(status)) {
       return "bg-emerald-500/10 text-emerald-800 border border-emerald-400/25";
     }
-    if (status === "pending") {
+    if (status === "pending" || status === "course_pending_ck") {
       return "bg-orange-500/10 text-orange-900 border border-orange-400/25";
     }
     if (["cancelled", "failed", "rejected"].includes(status)) {
@@ -207,13 +285,13 @@ export function AdminTransactions() {
   return (
     <AdminPanel
       title="Giao dịch"
-      description="Gói Pro/Elite, thanh toán lịch hẹn, rút tiền cố vấn, hoàn tiền — lọc theo loại, ngày, trạng thái."
+      description="Lịch hẹn mentor, học phí khóa học (CK), rút tiền cố vấn — lọc theo loại và trạng thái."
     >
       {loading ? (
         <p className="text-sm text-slate-500">Đang tải giao dịch...</p>
       ) : (
         <div className="space-y-4">
-          <div className="grid gap-3 md:grid-cols-3">
+          <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
             <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
               <p className="text-xs text-slate-500">Tổng giá trị (đang lọc)</p>
               <p className="mt-1 text-2xl font-black text-slate-900">{vnd(totalAmount)}</p>
@@ -221,6 +299,10 @@ export function AdminTransactions() {
             <div className="rounded-2xl border border-violet-400/25 bg-violet-500/10 p-4">
               <p className="text-xs text-violet-800/80">Lịch hẹn</p>
               <p className="mt-1 text-2xl font-black text-violet-800">{bookingCount}</p>
+            </div>
+            <div className="rounded-2xl border border-teal-400/25 bg-teal-500/10 p-4">
+              <p className="text-xs text-teal-900/85">Học phí khóa</p>
+              <p className="mt-1 text-2xl font-black text-teal-950">{courseFeeCount}</p>
             </div>
             <div className="rounded-2xl border border-cyan-400/25 bg-cyan-500/10 p-4">
               <p className="text-xs text-cyan-800/80">Rút tiền</p>
@@ -232,6 +314,7 @@ export function AdminTransactions() {
             {[
               { id: "all", label: "Tất cả" },
               { id: "booking", label: "Lịch hẹn" },
+              { id: "course_fee", label: "Học phí khóa" },
               { id: "payout", label: "Rút tiền" },
             ].map((item) => (
               <button
@@ -249,6 +332,7 @@ export function AdminTransactions() {
             {[
               { id: "all", label: "Mọi trạng thái" },
               { id: "pending", label: "Chờ duyệt" },
+              { id: "course_pending_ck", label: "Chờ CK khóa" },
               { id: "confirmed", label: "Đã xác nhận" },
               { id: "completed", label: "Hoàn thành" },
               { id: "approved", label: "Đã duyệt" },
@@ -283,7 +367,9 @@ export function AdminTransactions() {
               <tbody>
                 {filteredRows.map((r) => (
                   <tr key={`${r.type}-${r.id}`} className="border-t border-slate-100">
-                    <td className="px-4 py-3 text-slate-900 font-semibold">{r.type === "booking" ? "Lịch hẹn" : "Rút tiền"}</td>
+                    <td className="px-4 py-3 text-slate-900 font-semibold">
+                      {r.type === "booking" ? "Lịch hẹn" : r.type === "course_fee" ? "Học phí khóa" : "Rút tiền"}
+                    </td>
                     <td className="px-4 py-3 text-slate-600">{r.label}</td>
                     <td className="px-4 py-3">
                       <span className={`inline-flex px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${statusBadge(r.status)}`}>

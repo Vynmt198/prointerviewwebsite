@@ -1,6 +1,7 @@
 import { Course } from "../models/Course.js";
 import { Enrollment } from "../models/Enrollment.js";
 import { Mentor } from "../models/Mentor.js";
+import { enrollmentAccessGranted } from "../helpers/enrollmentAccess.js";
 
 function normalizeCoursePayload(body = {}) {
   const chapters = Array.isArray(body.chapters) ? body.chapters : [];
@@ -130,6 +131,12 @@ export const CoursesController = {
         const enrolled = await Enrollment.findOne({ userId, courseId });
         if (!enrolled) {
           return res.status(403).json({ success: false, error: "Bạn chưa ghi danh khóa học này để xem nội dung" });
+        }
+        if (!enrollmentAccessGranted(enrolled)) {
+          return res.status(403).json({
+            success: false,
+            error: "Khóa học có phí — hoàn tất thanh toán chuyển khoản để xem bài học.",
+          });
         }
       }
 

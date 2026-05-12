@@ -6,16 +6,45 @@ const jsonHeaders = {
 };
 
 export const enrollmentApi = {
-  /** Ghi danh vào một khóa học */
-  enroll: async (courseId) => {
+  /** Ghi danh: khóa miễn phí tạo paid ngay; khóa có phí cần `{ paymentMethod: "transfer", orderNum? }` từ bước checkout. */
+  enroll: async (courseId, body = null) => {
     if (!hasAuthCredentials()) return { success: false, error: "Chưa đăng nhập." };
     try {
       const res = await authFetch(`/api/courses/${courseId}/enroll`, {
         method: "POST",
         headers: { ...jsonHeaders },
+        body: body != null ? JSON.stringify(body) : undefined,
       });
-      const body = await res.json().catch(() => ({}));
-      return { success: res.ok, ...body };
+      const out = await res.json().catch(() => ({}));
+      return { success: res.ok, ...out };
+    } catch {
+      return { success: false, error: "Không kết nối được backend." };
+    }
+  },
+
+  submitEnrollmentTransfer: async (enrollmentId, reference) => {
+    if (!hasAuthCredentials()) return { success: false, error: "Chưa đăng nhập." };
+    try {
+      const res = await authFetch(`/api/enrollments/${encodeURIComponent(enrollmentId)}/submit-transfer`, {
+        method: "PATCH",
+        headers: { ...jsonHeaders },
+        body: JSON.stringify({ reference: String(reference ?? "").trim() }),
+      });
+      const raw = await res.text().catch(() => "");
+      let body = {};
+      try {
+        body = raw ? JSON.parse(raw) : {};
+      } catch {
+        body = {};
+      }
+      if (!res.ok) {
+        const hint =
+          body.error ||
+          body.message ||
+          (raw && !raw.trim().startsWith("{") && raw.length < 280 ? raw.trim().slice(0, 280) : "");
+        return { success: false, error: hint || `Lỗi ${res.status}` };
+      }
+      return { success: true, ...body };
     } catch {
       return { success: false, error: "Không kết nối được backend." };
     }

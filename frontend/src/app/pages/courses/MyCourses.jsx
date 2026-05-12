@@ -19,6 +19,7 @@ import {
 import { enrollmentApi } from "../../utils/enrollmentApi";
 import { toast } from "sonner";
 import { normalizeCourseStats } from "../../utils/courseStats";
+import { enrollmentAccessGranted } from "../../utils/enrollmentAccess.js";
 
 /* ── Level Badge ────────────────────────────────────────────── */
 function LevelBadge({ level }) {
@@ -348,7 +349,9 @@ function EmptyState({ tab, onBrowse }) {
 
 /* ── Recent Activity ────────────────────────────────────────── */
 function RecentActivity({ items }) {
-  const inProgress = items.filter((i) => i.progressPct > 0 && !i.isCompleted);
+  const inProgress = items.filter(
+    (i) => i.hasPaidAccess && i.progressPct > 0 && !i.isCompleted,
+  );
   if (inProgress.length === 0) return null;
 
   return (
@@ -471,7 +474,9 @@ export function MyCourses() {
             completedLessons: completedLessonIds,
             progressPct: pct,
             isCompleted: pct === 100,
-            lastAccessed: e.lastAccessedAt
+            lastAccessed: e.lastAccessedAt,
+            hasPaidAccess: enrollmentAccessGranted(e),
+            coursePrice: Number(c.price ?? 0),
           };
         });
       console.log("[MyCourses] Mapped courses:", mapped);
@@ -677,7 +682,15 @@ export function MyCourses() {
               <CourseCard
                 key={item.course.id}
                 item={item}
-                onContinue={() => navigate(`/courses/${item.course.id}/learn`)}
+                onContinue={() => {
+                  if (item.hasPaidAccess) {
+                    navigate(`/courses/${item.course.id}/learn`);
+                  } else {
+                    navigate(
+                      `/checkout?type=course&courseId=${item.course.id}&price=${Math.round(item.coursePrice || 0)}`,
+                    );
+                  }
+                }}
               />
             ))}
           </div>

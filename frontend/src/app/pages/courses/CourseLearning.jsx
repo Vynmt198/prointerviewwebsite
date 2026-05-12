@@ -29,6 +29,7 @@ import { useParams, useNavigate } from "react-router";
 import { fetchCourseById, fetchLessonContent } from "../../utils/courseApi";
 import { enrollmentApi } from "../../utils/enrollmentApi";
 import { toast } from "sonner";
+import { enrollmentAccessGranted } from "../../utils/enrollmentAccess.js";
 
 /* ── Helpers ────────────────────────────────────────────────── */
 const formatDuration = (minutes) => {
@@ -399,6 +400,8 @@ export function CourseLearning() {
 
   const [course, setCourse] = useState(null);
   const [enrollment, setEnrollment] = useState(null);
+  /** Ghi danh CK đang chờ admin — không set vào `enrollment` để tránh coi như đã học được. */
+  const [paymentPendingInfo, setPaymentPendingInfo] = useState(null);
   const [completedLessons, setCompletedLessons] = useState([]);
   const [loading, setLoading] = useState(true);
   const [currentLessonIdx, setCurrentLessonIdx] = useState(0);
@@ -417,6 +420,9 @@ export function CourseLearning() {
     
     const loadData = async () => {
       setLoading(true);
+      setEnrollment(null);
+      setCompletedLessons([]);
+      setPaymentPendingInfo(null);
       // Get course data
       const courseRes = await fetchCourseById(id);
       if (!courseRes.success) {
@@ -448,12 +454,26 @@ export function CourseLearning() {
       // Get enrollment data
       const enrollRes = await enrollmentApi.getMyEnrollments();
       if (enrollRes.success) {
-        const found = enrollRes.enrollments.find(e => 
-          (e.courseId?._id === id) || (e.courseId === id)
+        const found = enrollRes.enrollments.find(
+          (e) => String(e.courseId?._id || e.courseId || "") === String(id),
         );
         if (found) {
-          setEnrollment(found);
-          setCompletedLessons((found.completedLessons || []).map((lessonId) => String(lessonId)));
+          if (enrollmentAccessGranted(found)) {
+            setEnrollment(found);
+            setCompletedLessons((found.completedLessons || []).map((lessonId) => String(lessonId)));
+            setPaymentPendingInfo(null);
+          } else {
+            setEnrollment(null);
+            setCompletedLessons([]);
+            setPaymentPendingInfo({
+              courseId: String(id),
+              price: Number(c.price || 0),
+            });
+          }
+        } else {
+          setEnrollment(null);
+          setCompletedLessons([]);
+          setPaymentPendingInfo(null);
         }
       }
       setLoading(false);
@@ -532,6 +552,63 @@ export function CourseLearning() {
     return (
       <div className="min-h-screen bg-gray-950 flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-4 border-primary-fixed border-t-transparent"></div>
+      </div>
+    );
+  }
+
+  if (!loading && paymentPendingInfo && course) {
+    return (
+      <div className="min-h-screen bg-gray-950 flex items-center justify-center px-6">
+        <div className="text-center max-w-md">
+          <BookOpen className="w-16 h-16 text-amber-500/80 mx-auto mb-4" />
+          <h2 className="text-xl font-bold text-white mb-2">Chờ xác nhận thanh toán</h2>
+          <p className="text-sm text-white/55 mb-6 leading-relaxed">
+            Ghi danh khóa học đã được tạo. Sau khi bạn chuyển khoản và admin xác nhận, bạn có thể vào học đầy đủ.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <button
+              type="button"
+              onClick={() =>
+                navigate(
+                  `/checkout?type=course&courseId=${paymentPendingInfo.courseId}&price=${paymentPendingInfo.price}`,
+                )
+              }
+              className="rounded-xl px-6 py-3 text-sm font-bold text-white shadow-lg transition-all hover:brightness-110"
+              style={{ background: "#6E35E8" }}
+            >
+              Tiếp tục thanh toán
+            </button>
+            <button
+              type="button"
+              onClick={() => navigate(`/courses/${id}`)}
+              className="rounded-xl border border-white/20 bg-white/5 px-6 py-3 text-sm font-semibold text-white/90 hover:bg-white/10"
+            >
+              Về trang khóa học
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!loading && course && !enrollment && !paymentPendingInfo && lessons.length > 0) {
+    return (
+      <div className="min-h-screen bg-gray-950 flex items-center justify-center px-6">
+        <div className="text-center max-w-md">
+          <BookOpen className="w-16 h-16 text-gray-600 mx-auto mb-4" />
+          <h2 className="text-xl font-bold text-white mb-2">Chưa ghi danh</h2>
+          <p className="text-sm text-white/50 mb-6">
+            Vui lòng đăng ký (và thanh toán nếu khóa có phí) từ trang chi tiết khóa học.
+          </p>
+          <button
+            type="button"
+            onClick={() => navigate(`/courses/${id}`)}
+            className="rounded-xl px-6 py-3 text-sm font-semibold text-white"
+            style={{ background: "#6E35E8" }}
+          >
+            Về trang khóa học
+          </button>
+        </div>
       </div>
     );
   }
@@ -941,7 +1018,7 @@ export function CourseLearning() {
       </div>
 
       {/* ── Certificate Modal ──────────────────────────────── */}
-      {showCertificate && (
+      {showCertificate && enrollment && (
         <CertificateModal
           enrollmentId={enrollment._id}
           courseName={course.title}

@@ -40,6 +40,7 @@ import { toast } from "sonner";
 import { requireLoginNavigate } from "../../utils/authGate";
 import { MentorPageShell } from "../../components/mentor/MentorPageShell";
 import { normalizeCourseStats } from "../../utils/courseStats";
+import { enrollmentAccessGranted } from "../../utils/enrollmentAccess.js";
 
 import {
   Dialog,
@@ -49,7 +50,6 @@ import {
   DialogDescription,
 } from "../../components/ui/dialog";
 
-/* ── Helpers ─────────────────────────────────────────────── */
 const formatPrice = (price) => {
   if (price === 0) return "Miễn phí";
   return new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(price);
@@ -548,7 +548,7 @@ export function CourseDetail() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("overview");
   const [showAllLessons, setShowAllLessons] = useState(false);
-  const [enrolled, setEnrolled] = useState(false); 
+  const [enrollmentRow, setEnrollmentRow] = useState(null); 
   const [wishlisted, setWishlisted] = useState(false);
   const currentUser = getUser();
 
@@ -597,22 +597,28 @@ export function CourseDetail() {
       setLoading(false);
     });
 
-    // Check if current user is enrolled
-    enrollmentApi.getMyEnrollments().then(res => {
+    enrollmentApi.getMyEnrollments().then((res) => {
       if (res.success) {
-        const isEnrolled = res.enrollments.some(e => 
-          (e.courseId?._id === id) || (e.courseId === id)
+        const row = res.enrollments.find(
+          (e) => String(e.courseId?._id || e.courseId || "") === String(id),
         );
-        setEnrolled(isEnrolled);
+        setEnrollmentRow(row || null);
       }
     });
   }, [id]);
 
+  const hasPaidEnrollment = enrollmentAccessGranted(enrollmentRow);
+  const hasPendingPayment = !!enrollmentRow && !enrollmentAccessGranted(enrollmentRow);
+
   const handleEnroll = async () => {
-    if (!id) return;
+    if (!id || !course) return;
+    if (course.price > 0) {
+      navigate(`/checkout?type=course&courseId=${id}&price=${course.price}`);
+      return;
+    }
     const res = await enrollmentApi.enroll(id);
     if (res.success) {
-      setEnrolled(true);
+      setEnrollmentRow(res.enrollment || enrollmentRow);
       toast.success("Đăng ký khóa học thành công!");
     } else {
       if (res.error === "Chưa đăng nhập.") {
@@ -782,7 +788,7 @@ export function CourseDetail() {
 
                 {/* CTAs */}
                 <div className="space-y-2.5 mb-4">
-                  {enrolled && !isReadOnlyMentorView ? (
+                  {hasPaidEnrollment && !isReadOnlyMentorView ? (
                     <button
                       onClick={() => navigate(`/courses/${course.id}/learn`)}
                       className="w-full py-3 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 transition-all"
@@ -791,7 +797,7 @@ export function CourseDetail() {
                       <PlayCircle className="w-4.5 h-4.5" />
                       Tiếp tục học
                     </button>
-                  ) : enrolled && isReadOnlyMentorView ? (
+                  ) : hasPaidEnrollment && isReadOnlyMentorView ? (
                     <button
                       disabled
                       className="w-full py-3 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 transition-all opacity-50 cursor-not-allowed"
@@ -800,6 +806,22 @@ export function CourseDetail() {
                       <Lock className="w-4.5 h-4.5" />
                       Mentor chỉ được xem khóa học
                     </button>
+                  ) : hasPendingPayment && canTakeStudentActions ? (
+                    <div className="space-y-2">
+                      <p className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-center text-xs font-semibold text-amber-900">
+                        Đã ghi danh — đang chờ admin xác nhận chuyển khoản trước khi vào học đầy đủ.
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          navigate(`/checkout?type=course&courseId=${course.id}&price=${course.price}`)
+                        }
+                        className="flex w-full items-center justify-center gap-2 rounded-2xl border border-violet-300 bg-white py-3 text-sm font-bold text-violet-900 shadow-sm transition-all hover:bg-violet-50 active:scale-[0.98]"
+                      >
+                        <ShoppingCart className="w-4.5 h-4.5" />
+                        Tiếp tục thanh toán
+                      </button>
+                    </div>
                   ) : (
                     <button
                       onClick={canTakeStudentActions ? handleEnroll : undefined}
@@ -807,7 +829,11 @@ export function CourseDetail() {
                       className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-br from-[#6E35E8] to-[#8B4DFF] py-3 text-sm font-bold text-white shadow-[0_8px_28px_rgba(110,53,232,0.35)] transition-all hover:shadow-[0_12px_36px_rgba(110,53,232,0.45)] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       <ShoppingCart className="w-4.5 h-4.5" />
-                      {canTakeStudentActions ? (course.price === 0 ? "Đăng ký miễn phí" : "Đăng ký khóa học") : "Mentor chỉ được xem khóa học"}
+                      {canTakeStudentActions
+                        ? course.price === 0
+                          ? "Đăng ký miễn phí"
+                          : "Thanh toán & ghi danh"
+                        : "Mentor chỉ được xem khóa học"}
                     </button>
                   )}
                   {isReadOnlyMentorView && (
@@ -847,19 +873,22 @@ export function CourseDetail() {
                     { icon: Video, label: "Video chất lượng", value: "HD 1080p" },
                     { icon: Certificate, label: "Chứng chỉ hoàn thành", value: "Có" },
                     { icon: CalendarBlank, label: "Truy cập mãi mãi", value: "Không giới hạn" },
-                  ].map((item) => (
+                  ].map((item) => {
+                    const ItemIcon = item.icon;
+                    return (
                     <div key={item.label} className="flex items-center justify-between text-sm">
                       <div className="flex items-center gap-2 text-slate-500">
-                        <item.icon className="h-4 w-4" />
+                        <ItemIcon className="h-4 w-4" />
                         {item.label}
                       </div>
                       <span className="font-semibold text-slate-900">{item.value}</span>
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>
 
                 {/* Book Mentor CTA */}
-                {enrolled && canTakeStudentActions && (
+                {hasPaidEnrollment && canTakeStudentActions && (
                   <div
                     className="mt-5 cursor-pointer rounded-2xl border border-violet-200 bg-gradient-to-br from-violet-50 to-white p-4 transition-all hover:border-violet-300"
                     onClick={() => navigate(`/mentors/${course.mentorId}`)}
@@ -883,7 +912,9 @@ export function CourseDetail() {
 
       <div className="relative z-[1] mx-auto max-w-7xl px-6 sm:px-8">
         <div className="-mx-6 mt-8 flex gap-1 overflow-x-auto border-b border-slate-200 px-6">
-          {TABS.map((tab) => (
+          {TABS.map((tab) => {
+            const TabIcon = tab.icon;
+            return (
             <button
               key={tab.key}
               type="button"
@@ -894,10 +925,11 @@ export function CourseDetail() {
                   : "border-transparent text-slate-500 hover:text-slate-800"
               }`}
             >
-              <tab.icon className="h-4 w-4" />
+              <TabIcon className="h-4 w-4" />
               {tab.label}
             </button>
-          ))}
+            );
+          })}
         </div>
 
         <div className="grid lg:grid-cols-[1fr_380px] gap-10 py-10">
@@ -1080,7 +1112,7 @@ export function CourseDetail() {
 
             {/* ── Reviews Tab ──────────────────────────────── */}
             {activeTab === "reviews" && (
-              <ReviewsSection course={course} enrolled={enrolled} />
+              <ReviewsSection course={course} enrolled={hasPaidEnrollment} />
             )}
           </div>
 

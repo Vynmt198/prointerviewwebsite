@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Search, Clock, User, CheckCircle, XCircle, AlertCircle } from "lucide-react";
+import { Search, Clock, User, CheckCircle, XCircle, AlertCircle, BookOpen } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { adminApi } from "../../utils/adminApi";
 import { toast } from "sonner";
@@ -16,6 +16,33 @@ export function AdminBookings() {
     reason: "",
   });
 
+  const [pendingEnrollments, setPendingEnrollments] = useState([]);
+  const [enrollBusyId, setEnrollBusyId] = useState("");
+  /** mentor = bảng lịch hẹn + CK booking; course = học phí khóa CK */
+  const [moneyTab, setMoneyTab] = useState("mentor");
+
+  const loadPendingEnrollments = async () => {
+    const res = await adminApi.getPendingEnrollmentTransfers();
+    if (res.success) {
+      setPendingEnrollments(res.enrollments || []);
+    } else {
+      toast.error(res.error || "Không tải được ghi danh chờ CK.");
+    }
+  };
+
+  const confirmEnrollmentTransfer = async (enrollmentId) => {
+    if (!enrollmentId) return;
+    setEnrollBusyId(enrollmentId);
+    const res = await adminApi.confirmEnrollmentTransferPayment(enrollmentId);
+    setEnrollBusyId("");
+    if (!res.success) {
+      toast.error(res.error || "Không xác nhận được thanh toán ghi danh.");
+      return;
+    }
+    toast.success("Đã kích hoạt ghi danh khóa học.");
+    setPendingEnrollments((prev) => prev.filter((e) => String(e._id) !== String(enrollmentId)));
+  };
+
   const loadBookings = async () => {
     setLoading(true);
     const res = await adminApi.getBookings();
@@ -27,8 +54,34 @@ export function AdminBookings() {
     setLoading(false);
   };
 
+  const confirmBankTransfer = async (bookingId) => {
+    if (!bookingId) return;
+    setBusyId(bookingId);
+    const res = await adminApi.confirmBookingTransferPayment(bookingId);
+    setBusyId("");
+    if (!res.success) {
+      toast.error(res.error || "Không xác nhận được thanh toán.");
+      return;
+    }
+    toast.success("Đã xác nhận đã nhận chuyển khoản.");
+    setBookings((prev) =>
+      prev.map((b) =>
+        String(b._id) === String(bookingId)
+          ? {
+              ...b,
+              paymentStatus: "paid",
+              status: res.booking?.status || "confirmed",
+              paidAt: res.booking?.paidAt || new Date().toISOString(),
+              paymentRef: res.booking?.paymentRef ?? b.paymentRef,
+            }
+          : b,
+      ),
+    );
+  };
+
   useEffect(() => {
-    loadBookings();
+    void loadBookings();
+    void loadPendingEnrollments();
   }, []);
 
   const handleStatusChange = async (bookingId, nextStatus, previousStatus = "pending") => {
@@ -127,10 +180,11 @@ export function AdminBookings() {
       <div className="flex flex-col justify-between gap-6 md:flex-row md:items-center">
         <div>
           <h2 className="font-headline mb-2 text-3xl font-black uppercase tracking-tighter text-slate-900">
-            Quản lý <span className="text-violet-700">Lịch hẹn</span>
+            <span className="text-violet-700">Lịch hẹn</span> &amp; duyệt CK
           </h2>
           <p className="text-sm font-medium text-slate-600">
-            Theo dõi toàn bộ các phiên cố vấn và phỏng vấn trên hệ thống.
+            Tab <span className="font-semibold text-slate-800">Đặt lịch mentor</span>: lịch hẹn và nút xác nhận CK buổi cố vấn.
+            Tab <span className="font-semibold text-slate-800">Học phí khóa học</span>: ghi danh khóa có phí — chờ đối soát chuyển khoản.
           </p>
         </div>
         <div className="flex items-center gap-4">
@@ -147,6 +201,37 @@ export function AdminBookings() {
         </div>
       </div>
 
+      <div className="flex flex-wrap gap-2 rounded-2xl border border-slate-200 bg-slate-50/90 p-1.5">
+        <button
+          type="button"
+          onClick={() => setMoneyTab("mentor")}
+          className={`rounded-xl px-4 py-2.5 text-left text-xs font-black uppercase tracking-wider transition ${
+            moneyTab === "mentor"
+              ? "bg-white text-violet-900 shadow-sm ring-1 ring-slate-200/80"
+              : "text-slate-500 hover:bg-white/60 hover:text-slate-800"
+          }`}
+        >
+          Đặt lịch mentor / CK lịch hẹn
+        </button>
+        <button
+          type="button"
+          onClick={() => setMoneyTab("course")}
+          className={`inline-flex flex-wrap items-center gap-2 rounded-xl px-4 py-2.5 text-left text-xs font-black uppercase tracking-wider transition ${
+            moneyTab === "course"
+              ? "bg-white text-violet-900 shadow-sm ring-1 ring-slate-200/80"
+              : "text-slate-500 hover:bg-white/60 hover:text-slate-800"
+          }`}
+        >
+          Học phí khóa học (CK)
+          {pendingEnrollments.length > 0 ? (
+            <span className="rounded-full bg-amber-500 px-2 py-0.5 text-[10px] font-black text-white tabular-nums">
+              {pendingEnrollments.length}
+            </span>
+          ) : null}
+        </button>
+      </div>
+
+      {moneyTab === "mentor" && (
       <div className="glass-card overflow-hidden border-slate-200/90">
         <div className="overflow-x-auto">
           <table className="w-full border-collapse text-left">
@@ -161,6 +246,9 @@ export function AdminBookings() {
                 <th className="px-8 py-6 text-right text-[10px] font-black uppercase tracking-widest text-slate-500">
                   Chi phí
                 </th>
+                <th className="px-8 py-6 text-center text-[10px] font-black uppercase tracking-widest text-slate-500">
+                  Thanh toán
+                </th>
                 <th className="px-8 py-6 text-right text-[10px] font-black uppercase tracking-widest text-slate-500">
                   Thao tác
                 </th>
@@ -169,13 +257,13 @@ export function AdminBookings() {
             <tbody className="divide-y divide-slate-100 text-sm">
               {loading ? (
                 <tr>
-                  <td colSpan="6" className="px-8 py-20 text-center text-[10px] font-black uppercase italic tracking-widest text-slate-500">
+                  <td colSpan="7" className="px-8 py-20 text-center text-[10px] font-black uppercase italic tracking-widest text-slate-500">
                     Đang tải lịch sử đặt lịch...
                   </td>
                 </tr>
               ) : filtered.length === 0 ? (
                 <tr>
-                  <td colSpan="6" className="px-8 py-20 text-center text-[10px] font-black uppercase italic tracking-widest text-slate-500">
+                  <td colSpan="7" className="px-8 py-20 text-center text-[10px] font-black uppercase italic tracking-widest text-slate-500">
                     Không có lịch hẹn nào.
                   </td>
                 </tr>
@@ -198,11 +286,42 @@ export function AdminBookings() {
                       </p>
                     </td>
                     <td className="px-8 py-6">
-                      <div className="flex justify-center">{getStatusBadge(b.status || b.paymentStatus)}</div>
+                      <div className="flex justify-center">{getStatusBadge(b.status)}</div>
                     </td>
                     <td className="px-8 py-6 text-right font-black text-violet-700">
-                      {(b.price || 0).toLocaleString()}{" "}
+                      {(b.totalAmount ?? b.price ?? 0).toLocaleString()}{" "}
                       <span className="text-[10px] font-medium uppercase tracking-widest text-slate-500">đ</span>
+                    </td>
+                    <td className="px-8 py-6 text-center align-top">
+                      <div className="flex flex-col items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-slate-600">
+                        <span>{b.paymentMethod === "transfer" ? "CK" : b.paymentMethod || "—"}</span>
+                        <span
+                          className={
+                            b.paymentStatus === "paid"
+                              ? "text-emerald-700"
+                              : b.paymentStatus === "pending"
+                                ? "text-amber-700"
+                                : "text-slate-500"
+                          }
+                        >
+                          {b.paymentStatus || "—"}
+                        </span>
+                        {b.paymentRef ? (
+                          <span className="max-w-[160px] truncate font-mono text-[9px] font-semibold normal-case text-slate-500" title={b.paymentRef}>
+                            {b.paymentRef}
+                          </span>
+                        ) : null}
+                        {b.paymentMethod === "transfer" && b.paymentStatus === "pending" ? (
+                          <button
+                            type="button"
+                            disabled={busyId === b._id}
+                            onClick={() => void confirmBankTransfer(b._id)}
+                            className="mt-1 rounded-lg border border-emerald-300 bg-emerald-50 px-2 py-1.5 text-[9px] font-black uppercase tracking-wider text-emerald-900 hover:bg-emerald-100 disabled:opacity-50"
+                          >
+                            Xác nhận đã CK
+                          </button>
+                        ) : null}
+                      </div>
                     </td>
                     <td className="px-8 py-6">
                       <div className="flex justify-end">
@@ -228,6 +347,83 @@ export function AdminBookings() {
           </table>
         </div>
       </div>
+      )}
+
+      {moneyTab === "course" && (
+      <div>
+        <div className="mb-4 flex items-center gap-3">
+          <BookOpen className="h-6 w-6 text-violet-600" />
+          <div>
+            <h3 className="font-headline text-xl font-black uppercase tracking-tighter text-slate-900">
+              Ghi danh khóa học — chờ CK
+            </h3>
+            <p className="text-sm font-medium text-slate-600">
+              Xác nhận sau khi đối soát chuyển khoản (cùng luồng với lịch hẹn CK).
+            </p>
+          </div>
+        </div>
+        <div className="glass-card overflow-hidden border-slate-200/90">
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse text-left">
+              <thead>
+                <tr className="border-b border-slate-200 bg-slate-50/90">
+                  <th className="px-8 py-4 text-[10px] font-black uppercase tracking-widest text-slate-500">Học viên</th>
+                  <th className="px-8 py-4 text-[10px] font-black uppercase tracking-widest text-slate-500">Khóa học</th>
+                  <th className="px-8 py-4 text-right text-[10px] font-black uppercase tracking-widest text-slate-500">Số tiền</th>
+                  <th className="px-8 py-4 text-[10px] font-black uppercase tracking-widest text-slate-500">Mã / nội dung CK</th>
+                  <th className="px-8 py-4 text-right text-[10px] font-black uppercase tracking-widest text-slate-500">Thao tác</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 text-sm">
+                {pendingEnrollments.length === 0 ? (
+                  <tr>
+                    <td colSpan="5" className="px-8 py-12 text-center text-[10px] font-black uppercase italic tracking-widest text-slate-500">
+                      Không có ghi danh chờ xác nhận CK.
+                    </td>
+                  </tr>
+                ) : (
+                  pendingEnrollments.map((row) => (
+                    <tr key={row._id} className="transition-colors hover:bg-violet-50/40">
+                      <td className="px-8 py-4">
+                        <p className="font-black text-slate-900">{row.userId?.name || "—"}</p>
+                        <p className="text-xs text-slate-500">{row.userId?.email || ""}</p>
+                      </td>
+                      <td className="px-8 py-4 font-medium text-slate-800">{row.courseId?.title || "—"}</td>
+                      <td className="px-8 py-4 text-right font-black text-violet-700">
+                        {(row.pricePaid ?? row.courseId?.price ?? 0).toLocaleString("vi-VN")}{" "}
+                        <span className="text-[10px] font-medium uppercase tracking-widest text-slate-500">đ</span>
+                      </td>
+                      <td className="px-8 py-4">
+                        <span className="max-w-[220px] truncate font-mono text-xs text-slate-600" title={row.paymentRef}>
+                          {row.paymentRef || "—"}
+                        </span>
+                        {row.transferSubmittedAt ? (
+                          <p className="mt-1 text-[10px] uppercase tracking-wider text-emerald-700">
+                            Đã báo CK: {new Date(row.transferSubmittedAt).toLocaleString("vi-VN")}
+                          </p>
+                        ) : (
+                          <p className="mt-1 text-[10px] text-amber-700">Chưa báo đã chuyển</p>
+                        )}
+                      </td>
+                      <td className="px-8 py-4 text-right">
+                        <button
+                          type="button"
+                          disabled={enrollBusyId === row._id}
+                          onClick={() => void confirmEnrollmentTransfer(row._id)}
+                          className="rounded-lg border border-emerald-300 bg-emerald-50 px-3 py-2 text-[10px] font-black uppercase tracking-wider text-emerald-900 hover:bg-emerald-100 disabled:opacity-50"
+                        >
+                          {enrollBusyId === row._id ? "Đang xử lý…" : "Xác nhận đã CK"}
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      )}
 
       <AnimatePresence>
         {cancelModal.open && (
