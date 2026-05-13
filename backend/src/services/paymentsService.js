@@ -4,6 +4,7 @@ import mongoose from "mongoose";
 import { Payment } from "../models/Payment.js";
 import { Booking } from "../models/Booking.js";
 import { User } from "../models/User.js";
+import { Enrollment } from "../models/Enrollment.js";
 
 const MONGO_ERR = "MongoDB chưa kết nối. Kiểm tra MONGO_URI trong .env.";
 
@@ -174,6 +175,201 @@ function formatVnpDate(date) {
 }
 
 
+/**
+ * Admin xác nhận đã nhận CK — ghi vào `payments` (cùng nguồn sự thật với MoMo/VNPay).
+ * Idempotent: đã có bản ghi transfer+success cho cùng reference thì bỏ qua.
+ */
+export async function recordAdminTransferSuccess({
+  userId,
+  type,
+  referenceModel,
+  referenceId,
+  amount,
+  adminUserId = "",
+  forceConfirm = false,
+  forceNote = "",
+  session = null,
+}) {
+  if (!isMongoReady()) return { ok: false, error: MONGO_ERR };
+  if (!mongoose.isValidObjectId(userId) || !mongoose.isValidObjectId(referenceId)) {
+    return { ok: false, error: "Tham chiếu không hợp lệ." };
+  }
+  const uid = new mongoose.Types.ObjectId(String(userId));
+  const rid = new mongoose.Types.ObjectId(String(referenceId));
+  const amt = Math.round(Number(amount) || 0);
+  if (amt <= 0) return { ok: false, error: "Số tiền không hợp lệ." };
+  const t = String(type || "").toLowerCase();
+  if (!["booking", "course"].includes(t)) return { ok: false, error: "type phải là booking hoặc course." };
+  const refModel =
+    referenceModel || (t === "booking" ? "Booking" : "Enrollment");
+  if (!["Booking", "Enrollment"].includes(String(refModel))) {
+    return { ok: false, error: "referenceModel không hợp lệ." };
+  }
+
+  const providerRef = `trf-${t}-${String(rid)}`;
+
+  // Ưu tiên update bản ghi CK pending (nếu đã tạo trước) → success
+  const existing = await Payment.findOne({
+    userId: uid,
+    type: t,
+    referenceId: rid,
+    provider: "transfer",
+  })
+    .session(session)
+    .select("_id status providerRef")
+    .lean();
+
+  if (existing && existing.status === "success") return { ok: true, idempotent: true };
+
+  const note = String(forceNote || "").trim().slice(0, 500);
+  const confirmMeta = {
+    channel: "bank_transfer",
+    confirmedBy: "admin",
+    confirmedByUserId: String(adminUserId || "").trim() || null,
+    confirmedAt: new Date(),
+    forceConfirm: Boolean(forceConfirm),
+    forceNote: note || "",
+  };
+
+  if (existing) {
+    const current = await Payment.findById(existing._id).session(session).select("providerResponse").lean();
+    const prev = current?.providerResponse && typeof current.providerResponse === "object" ? current.providerResponse : {};
+    await Payment.updateOne(
+      { _id: existing._id },
+      {
+        $set: {
+          amount: amt,
+          referenceModel: refModel,
+          providerRef: providerRef,
+          status: "success",
+          paidAt: new Date(),
+          providerResponse: { ...prev, ...confirmMeta },
+        },
+        $unset: { failureReason: "" },
+      },
+      { session },
+    );
+    return { ok: true, updated: true };
+  }
+
+  // Fallback: chưa có pending (data cũ) → tạo luôn success
+  try {
+    const created = new Payment({
+      userId: uid,
+      type: t,
+      referenceId: rid,
+      referenceModel: refModel,
+      amount: amt,
+      currency: "VND",
+      provider: "transfer",
+      providerRef,
+      status: "success",
+      paidAt: new Date(),
+      providerResponse: confirmMeta,
+    });
+    await created.save({ session });
+  } catch (e) {
+    if (e?.code === 11000) return { ok: true, idempotent: true };
+    console.error("[recordAdminTransferSuccess]", e?.message || e);
+    return { ok: false, error: e?.message || "Không ghi được bản ghi thanh toán." };
+  }
+  return { ok: true, created: true };
+}
+
+/**
+ * Tạo bản ghi CK pending trong `payments` ngay khi user chọn CK (booking / course).
+ * Idempotent: đã có record transfer cho reference thì bỏ qua.
+ */
+export async function recordTransferPending({ userId, type, referenceModel, referenceId, amount, session = null }) {
+  if (!isMongoReady()) return { ok: false, error: MONGO_ERR };
+  if (!mongoose.isValidObjectId(userId) || !mongoose.isValidObjectId(referenceId)) {
+    return { ok: false, error: "Tham chiếu không hợp lệ." };
+  }
+  const uid = new mongoose.Types.ObjectId(String(userId));
+  const rid = new mongoose.Types.ObjectId(String(referenceId));
+  const amt = Math.round(Number(amount) || 0);
+  if (amt <= 0) return { ok: false, error: "Số tiền không hợp lệ." };
+
+  const t = String(type || "").toLowerCase();
+  if (!["booking", "course"].includes(t)) return { ok: false, error: "type phải là booking hoặc course." };
+
+  const refModel = referenceModel || (t === "booking" ? "Booking" : "Enrollment");
+  if (!["Booking", "Enrollment"].includes(String(refModel))) {
+    return { ok: false, error: "referenceModel không hợp lệ." };
+  }
+
+  const existing = await Payment.findOne({
+    userId: uid,
+    type: t,
+    referenceId: rid,
+    provider: "transfer",
+  })
+    .session(session)
+    .select("_id status")
+    .lean();
+  if (existing) return { ok: true, idempotent: true, status: existing.status };
+
+  const providerRef = `trf-${t}-${String(rid)}`;
+  try {
+    const created = new Payment({
+      userId: uid,
+      type: t,
+      referenceId: rid,
+      referenceModel: refModel,
+      amount: amt,
+      currency: "VND",
+      provider: "transfer",
+      providerRef,
+      status: "pending",
+      providerResponse: { channel: "bank_transfer" },
+    });
+    await created.save({ session });
+  } catch (e) {
+    if (e?.code === 11000) return { ok: true, idempotent: true };
+    console.error("[recordTransferPending]", e?.message || e);
+    return { ok: false, error: e?.message || "Không ghi được bản ghi thanh toán." };
+  }
+  return { ok: true, created: true };
+}
+
+/**
+ * User bấm “Tôi đã chuyển khoản” → lưu metadata vào payment transfer pending.
+ * (Không đổi status; admin sẽ xác nhận sau.)
+ */
+export async function recordTransferSubmitted({ userId, type, referenceId, paymentRef, submittedAt, session = null }) {
+  if (!isMongoReady()) return { ok: false, error: MONGO_ERR };
+  if (!mongoose.isValidObjectId(userId) || !mongoose.isValidObjectId(referenceId)) {
+    return { ok: false, error: "Tham chiếu không hợp lệ." };
+  }
+  const uid = new mongoose.Types.ObjectId(String(userId));
+  const rid = new mongoose.Types.ObjectId(String(referenceId));
+  const t = String(type || "").toLowerCase();
+  if (!["booking", "course"].includes(t)) return { ok: false, error: "type phải là booking hoặc course." };
+
+  const ref = typeof paymentRef === "string" ? paymentRef.trim().slice(0, 200) : "";
+  const at = submittedAt instanceof Date ? submittedAt : new Date();
+
+  const row = await Payment.findOne({
+    userId: uid,
+    type: t,
+    referenceId: rid,
+    provider: "transfer",
+  }).session(session);
+
+  if (!row) return { ok: false, missing: true, error: "Không tìm thấy giao dịch CK trong ledger." };
+  if (row.status !== "pending") return { ok: true, noop: true, status: row.status };
+
+  const prev = row.providerResponse && typeof row.providerResponse === "object" ? row.providerResponse : {};
+  row.providerResponse = {
+    ...prev,
+    channel: "bank_transfer",
+    submittedAt: at,
+    paymentRef: ref,
+  };
+  await row.save({ session });
+  return { ok: true };
+}
+
 export async function listPaymentHistory(userId, limit = 50) {
   if (!isMongoReady()) return { ok: false, status: 503, error: MONGO_ERR };
   const lim = Math.min(100, Math.max(1, Number(limit) || 50));
@@ -186,6 +382,7 @@ export async function listPaymentHistory(userId, limit = 50) {
     payments: rows.map((p) => ({
       id: String(p._id),
       type: p.type,
+      referenceModel: p.referenceModel,
       amount: p.amount,
       currency: p.currency,
       provider: p.provider,
@@ -209,6 +406,11 @@ async function finalizePaymentSuccess(paymentId) {
   if (pay.type === "booking" && pay.referenceModel === "Booking") {
     await Booking.findByIdAndUpdate(pay.referenceId, {
       $set: { paymentStatus: "paid", status: "confirmed", paidAt: new Date() },
+    });
+  }
+  if (pay.type === "course" && pay.referenceModel === "Enrollment") {
+    await Enrollment.findByIdAndUpdate(pay.referenceId, {
+      $set: { paymentStatus: "paid", paidAt: new Date() },
     });
   }
   if (pay.type === "subscription") {

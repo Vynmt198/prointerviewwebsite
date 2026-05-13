@@ -15,7 +15,8 @@
     "seed:ui-mock": "node src/scripts/seedUiMockData.js",
     "db:prune-fake-mentors": "node src/scripts/pruneFakeMentors.js",
     "seed:all": "node src/scripts/seedAll.js",
-    "sync:mentor-profiles": "node src/scripts/syncMentorProfiles.js"
+    "sync:mentor-profiles": "node src/scripts/syncMentorProfiles.js",
+    "db:normalize-transfer-refs": "node src/scripts/normalizeTransferRefs.js"
   },
   "dependencies": {
     "bcrypt": "^6.0.0",

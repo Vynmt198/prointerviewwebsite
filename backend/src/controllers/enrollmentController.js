@@ -2,23 +2,22 @@ import mongoose from "mongoose";
 import { Enrollment } from "../models/Enrollment.js";
 import { Course } from "../models/Course.js";
 import { enrollmentAccessGranted } from "../helpers/enrollmentAccess.js";
+import { recordTransferPending, recordTransferSubmitted } from "../services/paymentsService.js";
 
 function genOrderRef() {
   return `PI${Math.floor(Math.random() * 900000 + 100000)}`;
 }
 
+function extractOrderPart(value) {
+  const s = String(value || "").trim();
+  if (!s) return "";
+  return s.split("|")[0].trim().slice(0, 120);
+}
+
 function mergePaymentRef(orderPart, refRaw) {
-  const order = String(orderPart || "").trim();
-  const raw = String(refRaw || "").trim();
-  let paymentRef = order.slice(0, 120);
-  if (raw.length > 0 && raw !== order) {
-    if (raw.startsWith(`${order} |`)) {
-      paymentRef = raw.slice(0, 120);
-    } else {
-      paymentRef = `${order} | ${raw}`.slice(0, 120);
-    }
-  }
-  return paymentRef;
+  const order = extractOrderPart(orderPart);
+  const fallback = extractOrderPart(refRaw);
+  return (order || fallback).slice(0, 120);
 }
 
 export const EnrollmentController = {
@@ -39,10 +38,11 @@ export const EnrollmentController = {
         }
         const bodyPm = String(req.body?.paymentMethod || "").trim();
         if (price > 0 && bodyPm === "transfer") {
+          const orderPart = extractOrderPart(existing.paymentRef) || String(existing._id).slice(-8);
           return res.json({
             success: true,
             enrollment: existing,
-            orderNum: String(existing.paymentRef || "").trim(),
+            orderNum: orderPart,
             awaitingPayment: true,
           });
         }
@@ -74,7 +74,7 @@ export const EnrollmentController = {
         });
       }
 
-      const clientOrder = String(req.body?.orderNum || "").trim().slice(0, 120);
+      const clientOrder = extractOrderPart(req.body?.orderNum);
       const orderRef = clientOrder || genOrderRef();
 
       const enrollment = await Enrollment.create({
@@ -86,6 +86,21 @@ export const EnrollmentController = {
         paymentRef: orderRef,
         lastAccessedAt: new Date(),
       });
+
+      // Ledger pending cho CK khóa học
+      const ledgerAmt = Math.round(Number(enrollment.pricePaid ?? 0));
+      if (ledgerAmt > 0) {
+        const ledger = await recordTransferPending({
+          userId: enrollment.userId,
+          type: "course",
+          referenceModel: "Enrollment",
+          referenceId: enrollment._id,
+          amount: ledgerAmt,
+        });
+        if (!ledger.ok && !ledger.idempotent) {
+          console.error("[enroll] ledger:", ledger.error);
+        }
+      }
 
       return res.status(201).json({ success: true, enrollment, orderNum: enrollment.paymentRef });
     } catch (error) {
@@ -115,6 +130,33 @@ export const EnrollmentController = {
       enrollment.paymentRef = mergePaymentRef(orderPart, refRaw);
       enrollment.transferSubmittedAt = new Date();
       await enrollment.save();
+
+      // Đồng bộ ledger (payments) tương tự booking CK.
+      const ledgerAmt = Math.round(Number(enrollment.pricePaid ?? 0));
+      if (ledgerAmt > 0) {
+        const ensure = await recordTransferPending({
+          userId: enrollment.userId,
+          type: "course",
+          referenceModel: "Enrollment",
+          referenceId: enrollment._id,
+          amount: ledgerAmt,
+        });
+        if (!ensure.ok && !ensure.idempotent) {
+          console.error("[submitTransfer] ensure ledger:", ensure.error);
+        } else {
+          const meta = await recordTransferSubmitted({
+            userId: enrollment.userId,
+            type: "course",
+            referenceId: enrollment._id,
+            paymentRef: enrollment.paymentRef,
+            submittedAt: enrollment.transferSubmittedAt,
+          });
+          if (!meta.ok) {
+            console.error("[submitTransfer] ledger meta:", meta.error);
+          }
+        }
+      }
+
       res.json({ success: true, enrollment });
     } catch (error) {
       res.status(500).json({ success: false, error: error.message });

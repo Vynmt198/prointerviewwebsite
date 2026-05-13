@@ -1,4 +1,5 @@
 import { authFetch, hasAuthCredentials } from "./auth.js";
+import { apiUrl } from "./api.js";
 
 const jsonHeaders = {
   Accept: "application/json",
@@ -120,7 +121,7 @@ export async function mentorCancelBooking(id, body = {}) {
 export async function fetchBookedSlots(mentorId) {
   if (!mentorId) return { success: false, error: "Thiếu mentorId." };
   try {
-    const res = await fetch(`${import.meta.env.VITE_API_URL}/api/bookings/mentor/${encodeURIComponent(mentorId)}/booked-slots`);
+    const res = await fetch(apiUrl(`/api/bookings/mentor/${encodeURIComponent(mentorId)}/booked-slots`));
     const body = await res.json().catch(() => ({}));
     if (!res.ok) return { success: false, error: body.error || "Lỗi tải lịch bận." };
     return { success: true, booked: body.booked ?? {} };
