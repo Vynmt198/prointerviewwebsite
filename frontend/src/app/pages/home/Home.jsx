@@ -167,7 +167,7 @@ const STEPS = [
     step: "04",
     icon: TrendUp,
     title: "Theo dõi tiến độ",
-    desc: "Hệ thống hóa lộ trình phát triển và đo lường sự thăng tiến qua từng buổi tập.",
+    desc: "Hệ thống hóa quá trình luyện tập,\ntheo dõi sự tiến bộ qua từng buổi phỏng vấn.",
     color: "#b8f600",
   },
 ];
@@ -309,7 +309,7 @@ function InterviewDemoMockup() {
             </div>
             <div className="flex min-w-0 flex-1 items-center justify-center gap-2 px-2">
               <div className="h-1.5 w-1.5 shrink-0 rounded-full sm:h-2 sm:w-2" style={{ background: "rgba(110, 53, 232,0.6)" }} />
-              <span className={`truncate font-medium ${titleSz}`} style={{ color: "rgba(255,255,255,0.35)" }}>
+              <span className={`truncate font-medium ${titleSz}`} style={{ color: "rgba(15,23,42,0.5)" }}>
                 ProInterview — Phỏng vấn AI
               </span>
             </div>
@@ -385,8 +385,8 @@ function InterviewDemoMockup() {
                       <SparkleGlyph className="h-4 w-4" />
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className={`font-semibold text-foreground/50 ${qLead}`}>Câu hỏi 2/5</p>
-                      <p className={`text-foreground ${qBody}`}>
+                      <p className={`font-semibold text-slate-600 ${qLead}`}>Câu hỏi 2/5</p>
+                      <p className={`text-slate-900 ${qBody}`}>
                         Hãy kể về một lần bạn phải giải quyết xung đột trong nhóm. Bạn đã xử lý như thế nào?
                       </p>
                     </div>
@@ -403,12 +403,13 @@ function InterviewDemoMockup() {
                       key={i}
                       className={statCell}
                       style={{
-                        background: "rgba(0,0,0,0.03)",
-                        border: "1px solid rgba(0,0,0,0.03)",
+                        background: "rgba(255,255,255,0.82)",
+                        border: "1px solid rgba(15,23,42,0.1)",
+                        boxShadow: "0 1px 0 rgba(255,255,255,0.9) inset",
                       }}
                     >
                       <item.icon className={`${statIcon} shrink-0`} style={{ color: item.color }} />
-                      <span className={statTxt} style={{ color: "rgba(255,255,255,0.6)" }}>
+                      <span className={statTxt} style={{ color: "rgba(15,23,42,0.82)" }}>
                         {item.label}
                       </span>
                     </div>
@@ -580,13 +581,32 @@ export function Home() {
           font-weight: 850;
           line-height: 1.08;
         }
-        .home-section-violet-wash {
-          background-color: #f6f3fb;
+        .home-page-violet-ambient {
+          position: absolute;
+          inset: 0;
+          z-index: 0;
+          min-height: 100%;
+          pointer-events: none;
+          background-color: #f3f0f9;
           background-image:
-            radial-gradient(ellipse 125% 85% at 92% 0%, rgba(110, 53, 232, 0.19), transparent 52%),
-            radial-gradient(ellipse 95% 78% at 0% 100%, rgba(95, 0, 240, 0.13), transparent 50%),
-            radial-gradient(ellipse 72% 52% at 50% 108%, rgba(155, 109, 255, 0.1), transparent 58%),
-            radial-gradient(ellipse 50% 40% at 72% 45%, rgba(110, 53, 232, 0.075), transparent 55%);
+            radial-gradient(ellipse 130% 58% at 50% 108%, rgba(45, 22, 72, 0.075), transparent 58%),
+            radial-gradient(ellipse 42% 36% at 93% 4%, rgba(72, 32, 185, 0.17), transparent 52%),
+            radial-gradient(ellipse 40% 34% at 4% 97%, rgba(58, 22, 145, 0.135), transparent 50%),
+            radial-gradient(ellipse 38% 32% at 88% 94%, rgba(68, 30, 168, 0.125), transparent 48%),
+            radial-gradient(ellipse 82% 68% at 50% 46%, rgba(255, 255, 255, 0.5), transparent 62%),
+            radial-gradient(ellipse 125% 95% at 88% -5%, rgba(110, 53, 232, 0.125), transparent 56%),
+            radial-gradient(ellipse 105% 90% at -8% 100%, rgba(95, 0, 240, 0.095), transparent 54%),
+            radial-gradient(ellipse 100% 85% at 38% 38%, rgba(155, 109, 255, 0.072), transparent 60%),
+            radial-gradient(ellipse 90% 75% at 85% 95%, rgba(110, 53, 232, 0.058), transparent 55%),
+            linear-gradient(
+              180deg,
+              rgba(255, 255, 255, 0.48) 0%,
+              rgba(255, 255, 255, 0.06) 16%,
+              rgba(210, 200, 232, 0.28) 38%,
+              rgba(225, 216, 242, 0.16) 52%,
+              rgba(198, 186, 222, 0.24) 68%,
+              rgba(255, 255, 255, 0.36) 100%
+            );
         }
         .sticker-badge {
           border-radius: 999px;
@@ -700,7 +720,47 @@ export function Home() {
         #pricing > .max-w-7xl > .grid > .glass-card {
           overflow: visible !important;
         }
+        @keyframes testimonial-marquee {
+          0% {
+            transform: translateX(0);
+          }
+          100% {
+            transform: translateX(-50%);
+          }
+        }
+        @keyframes testimonial-marquee-rev {
+          0% {
+            transform: translateX(-50%);
+          }
+          100% {
+            transform: translateX(0);
+          }
+        }
+        .testimonial-marquee-row {
+          overflow: hidden;
+          width: 100%;
+        }
+        .testimonial-marquee-row:hover .testimonial-marquee-track {
+          animation-play-state: paused;
+        }
+        .testimonial-marquee-track {
+          display: flex;
+          width: max-content;
+          gap: 1.25rem;
+          animation: testimonial-marquee 44s linear infinite;
+        }
+        .testimonial-marquee-track--alt {
+          animation: testimonial-marquee-rev 56s linear infinite;
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .testimonial-marquee-track,
+          .testimonial-marquee-track--alt {
+            animation: none !important;
+          }
+        }
       `}</style>
+
+      <div className="home-page-violet-ambient" aria-hidden />
 
       {/* ═══ NAVBAR ════════════════════════════════════════ */}
       {/* ═══ NAVBAR ════════════════════════════════════════ */}
@@ -821,7 +881,7 @@ export function Home() {
       </TopNavShell>
 
       {/* ═══ HERO ═══════════════════════════════════════════ */}
-      <section className="relative flex h-screen max-h-screen flex-col justify-start overflow-hidden home-section-violet-wash px-10 sm:px-16 lg:px-24 pt-36">
+      <section className="relative z-10 flex h-screen max-h-screen flex-col justify-start overflow-hidden px-10 sm:px-16 lg:px-24 pt-36">
         {renderSectionSticks([
           { x: 5, y: 11, size: 38, opacity: 0.48 },
           { x: 93, y: 13, size: 44, opacity: 0.55 },
@@ -959,7 +1019,7 @@ export function Home() {
       {/* ═══ HOW IT WORKS ════════════════════════════════════ */}
       <section
         id="features"
-        className="relative h-screen max-h-screen flex flex-col justify-center overflow-hidden border-t border-slate-100 home-section-violet-wash"
+        className="relative z-10 h-screen max-h-screen flex flex-col justify-center overflow-hidden"
       >
         {renderSectionSticks([
           { x: 10, y: 16, size: 34, opacity: 0.45 },
@@ -972,11 +1032,11 @@ export function Home() {
               <span className="h-1 w-10 rounded-full bg-gradient-to-r from-[#6E35E8] to-[#9B6DFF]" />
             </div>
             <h2 className="text-3xl md:text-5xl text-slate-900 mb-3 leading-[1.1] py-1 cute-heading font-headline tracking-tighter font-black">
-              Quy trình tinh gọn,<br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#5F00F0] to-[#7A35FF]">kết quả đột phá</span>
+              Chuẩn bị thông minh<br />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#5F00F0] to-[#7A35FF]">phỏng vấn bản lĩnh</span>
             </h2>
             <p className="text-slate-600 text-lg max-w-2xl mx-auto leading-relaxed font-medium">
-              Sẵn sàng chinh phục mọi nhà tuyển dụng với lộ trình chuẩn bị được cá nhân hóa bởi trí tuệ nhân tạo.
+              Cá nhân hóa lộ trình luyện tập bằng AI để tăng khả năng chinh phục nhà tuyển dụng.
             </p>
           </div>
 
@@ -1013,8 +1073,8 @@ export function Home() {
                       </span>
                     )}
                   </div>
-                  <div className={`absolute top-0 right-0 p-4 transition-opacity pointer-events-none ${i === 1 ? "opacity-[0.2]" : "opacity-[0.08] group-hover:opacity-[0.14]"}`}>
-                    <span className={`text-6xl font-black italic ${i === 1 ? "text-[#5F00F0]/35" : "text-slate-200/90"}`}>{s.step}</span>
+                  <div className={`absolute top-0 right-0 p-4 transition-opacity pointer-events-none ${i === 1 ? "opacity-[0.22]" : "opacity-[0.18] group-hover:opacity-[0.26]"}`}>
+                    <span className={`text-6xl font-black italic ${i === 1 ? "text-[#5F00F0]/40" : "text-[#5F00F0]/30"}`}>{s.step}</span>
                   </div>
 
                   <div
@@ -1027,7 +1087,7 @@ export function Home() {
                   </div>
 
                   <h3 className="text-base font-extrabold mb-1.5 text-slate-900 font-headline tracking-tight">{s.title}</h3>
-                  <p className="text-slate-600 text-xs leading-relaxed font-medium">
+                  <p className="text-slate-600 text-xs leading-relaxed font-medium whitespace-pre-line">
                     {s.desc}
                   </p>
                 </div>
@@ -1060,7 +1120,7 @@ export function Home() {
 
       {/* ═══ INTERVIEW PREVIEW ═══════════════════════════════ */}
       <section
-        className="border-t border-slate-100 relative h-screen max-h-screen flex flex-col justify-center home-section-violet-wash"
+        className="relative z-10 h-screen max-h-screen flex flex-col justify-center"
         style={{ overflow: "hidden" }}
       >
         {renderSectionSticks([
@@ -1090,7 +1150,7 @@ export function Home() {
                 >
                   Trải nghiệm phỏng vấn{" "}
                   <span className="inline-block bg-gradient-to-r from-[#5F00F0] via-[#6E35E8] to-[#9B6DFF] bg-clip-text text-transparent">
-                    như thật
+                    như thật với AI
                   </span>
                 </h2>
                 <p
@@ -1157,7 +1217,7 @@ export function Home() {
       {/* ═══ COURSES SECTION ═════════════════════════════════ */}
       <section
         id="courses"
-        className="relative h-screen max-h-screen flex flex-col justify-center overflow-hidden border-t border-slate-100 home-section-violet-wash"
+        className="relative z-10 h-screen max-h-screen flex flex-col justify-center overflow-hidden"
       >
         {renderSectionSticks([
           { x: 90, y: 8, size: 32, opacity: 0.44 },
@@ -1166,14 +1226,14 @@ export function Home() {
           { x: 82, y: 78, size: 34, opacity: 0.46 },
         ])}
 
-        <div className="max-w-7xl mx-auto px-6 relative z-10 w-full py-4">
-          <div className="flex flex-col md:flex-row items-end gap-4 mb-5">
+        <div className="max-w-7xl mx-auto px-6 relative z-10 w-full py-3.5">
+          <div className="flex flex-col md:flex-row items-end gap-3.5 mb-4">
             <div className="md:w-2/3">
-              <div className="h-1 w-10 rounded-full bg-gradient-to-r from-[#6E35E8] to-[#9B6DFF] mb-4" aria-hidden />
-              <span className="font-bold uppercase tracking-[0.2em] text-[10px] mb-3 block text-[#6E35E8] drop-shadow-[0_0_12px_rgba(167,139,250,0.)]">
+              <div className="h-1 w-10 rounded-full bg-gradient-to-r from-[#6E35E8] to-[#9B6DFF] mb-3" aria-hidden />
+              <span className="font-bold uppercase tracking-[0.2em] text-[10px] mb-2 block text-[#6E35E8] drop-shadow-[0_0_12px_rgba(167,139,250,0.)]">
                 Nền tảng học
               </span>
-              <h2 className="text-2xl md:text-4xl font-black tracking-tighter leading-[0.95] text-slate-900 mb-3">
+              <h2 className="text-2xl md:text-[2.15rem] font-black tracking-tighter leading-[0.95] text-slate-900 mb-2">
                 Học từ chuyên gia,<br />
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#5F00F0] to-[#9B6DFF]">
                   sửa lỗi ngay.
@@ -1186,29 +1246,29 @@ export function Home() {
             <div className="w-full md:w-1/3 flex justify-end">
               <div className="glass-card !rounded-full px-2 py-1.5 flex items-center gap-3 min-w-0 max-w-full">
                 <div className="relative z-[1] flex items-center gap-3 w-full">
-                  <div className="flex -space-x-3 px-2">
+                  <div className="flex -space-x-3 px-1.5">
                     {[1, 2, 3].map(i => (
-                      <img key={i} src={`https://i.pravatar.cc/100?img=${i + 10}`} alt="Student" className="w-8 h-8 rounded-full border-2 border-white/15 object-cover" />
+                      <img key={i} src={`https://i.pravatar.cc/100?img=${i + 10}`} alt="Student" className="h-8 w-8 rounded-full border-2 border-white/15 object-cover" />
                     ))}
                   </div>
-                  <span className="pr-4 pl-1 text-[11px] font-bold text-[#6E35E8]">10k+ Học viên</span>
+                  <span className="pr-3 pl-0.5 text-[11px] font-bold text-[#6E35E8]">10k+ Học viên</span>
                 </div>
               </div>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-5">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5 mb-4">
             {COURSES_DATA.slice(0, 3).map((course, idx) => (
               <div
                 key={course.id}
                 onClick={() =>
                   handleFeatureClick(`/courses/${course.id}`)
                 }
-                className="group glass-card overflow-hidden cursor-pointer !rounded-[28px]"
+                className="group glass-card overflow-hidden cursor-pointer !rounded-[24px]"
               >
                 <div className="relative z-[1]">
                   {/* Thumbnail */}
-                  <div className="relative h-32 overflow-hidden">
+                  <div className="relative h-[7.75rem] overflow-hidden">
                     <img
                       src={course.thumbnail}
                       alt={course.title}
@@ -1216,36 +1276,36 @@ export function Home() {
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
 
-                    <div className="absolute top-4 left-4 flex gap-2">
-                      <span className="bg-black/55 backdrop-blur-md text-white px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">
+                    <div className="absolute top-3.5 left-3.5 flex gap-2">
+                      <span className="bg-black/55 backdrop-blur-md text-white px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider">
                         {course.category}
                       </span>
-                      <span className="bg-black/60 backdrop-blur-md text-white px-3 py-1 rounded-full text-[10px] font-medium flex items-center gap-1.5">
-                        <span className="material-symbols-outlined text-sm">schedule</span>
+                      <span className="bg-black/60 backdrop-blur-md text-white px-2.5 py-0.5 rounded-full text-[10px] font-medium flex items-center gap-1">
+                        <span className="material-symbols-outlined text-[13px]">schedule</span>
                         {Math.floor(course.duration / 60)}h {course.duration % 60}m
                       </span>
                     </div>
                     {idx === 0 && (
-                      <span className="absolute top-4 right-4 rounded-full bg-[#6E35E8] px-2.5 py-1 text-[10px] font-black tracking-wide uppercase text-white shadow-md">
+                      <span className="absolute top-3.5 right-3.5 rounded-full bg-[#6E35E8] px-2 py-0.5 text-[10px] font-black tracking-wide uppercase text-white shadow-md">
                         New
                       </span>
                     )}
 
                     <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-500 scale-90 group-hover:scale-100">
-                      <div className="w-14 h-14 rounded-full flex items-center justify-center shadow-2xl transform transition-transform border-2 border-white/90 float-icon-delay parallax-layer"
+                      <div className="w-[3.35rem] h-[3.35rem] rounded-full flex items-center justify-center shadow-2xl transform transition-transform border-2 border-white/90 float-icon-delay parallax-layer"
                         style={{ background: "linear-gradient(135deg, #B4F500, #93D600)" }}
                       >
-                        <PlayCircle className="w-7 h-7 text-slate-900 translate-x-0.5" />
+                        <PlayCircle className="w-[1.4rem] h-[1.4rem] text-slate-900 translate-x-0.5" />
                       </div>
                     </div>
                   </div>
 
                   <div className="p-4">
-                    <h3 className="text-base font-bold mb-3 text-slate-900 transition-colors leading-tight line-clamp-2 group-hover:text-[#6E35E8]">
+                    <h3 className="text-[0.9375rem] font-bold mb-2.5 text-slate-900 transition-colors leading-snug line-clamp-2 group-hover:text-[#6E35E8]">
                       {course.title}
                     </h3>
 
-                    <div className="flex items-center gap-2 mb-3">
+                    <div className="flex items-center gap-2 mb-2.5">
                       <img
                         src={course.mentorAvatar}
                         alt={course.mentorName}
@@ -1259,9 +1319,9 @@ export function Home() {
                       </div>
                     </div>
 
-                    <div className="flex items-center justify-between pt-4 border-t border-slate-100">
+                    <div className="flex items-center justify-between pt-3.5 border-t border-slate-100">
                       <div className="flex items-center gap-2">
-                        <span className="material-symbols-outlined text-amber-500 text-lg" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
+                        <span className="material-symbols-outlined text-amber-500 text-[1.05rem]" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
                         <span className="font-bold text-slate-800 text-sm">{course.rating}</span>
                         <span className="text-slate-500 text-xs">({(course.reviewsCount || 0) + 700})</span>
                       </div>
@@ -1301,26 +1361,26 @@ export function Home() {
       {/* ═══ TESTIMONIALS ═══════════════════════════════════ */}
       <section
         id="mentors"
-        className="h-screen max-h-screen relative overflow-hidden border-t border-slate-100 home-section-violet-wash"
+        className="relative z-10 h-screen max-h-screen overflow-hidden"
       >
         {renderSectionSticks([
-          { x: 10, y: 20, size: 36, opacity: 0.5 },
-          { x: 86, y: 18, size: 42, opacity: 0.54 },
-          { x: 16, y: 80, size: 30, opacity: 0.38 },
+          { x: 78, y: 12, size: 34, opacity: 0.46 },
+          { x: 92, y: 52, size: 36, opacity: 0.5 },
+          { x: 10, y: 86, size: 30, opacity: 0.38 },
         ])}
         <div className="max-w-7xl mx-auto px-5 lg:px-8 py-0 h-full flex flex-col justify-center relative z-10">
-          <div className="grid lg:grid-cols-12 gap-6 lg:gap-6 items-center">
+          <div className="grid lg:grid-cols-12 gap-6 lg:gap-6 items-start">
             <div className="lg:col-span-5">
               <h2 className="text-slate-900 mb-0 cute-heading text-2xl md:text-3xl flex flex-col items-start gap-0 leading-none">
-                <span className="block leading-[1] tracking-tight">Người dùng nói gì về</span>
+                <span className="block leading-none tracking-tight">Người dùng nói gì về</span>
                 <img
                   src="/Logo.png"
                   alt="ProInterview"
-                  className="-ml-1.5 -mt-3 block h-[4.6rem] w-auto max-w-[min(100%,26rem)] object-contain object-left object-top contrast-[1.06] sm:-ml-2 sm:h-[5.1rem] sm:-mt-3.5 md:h-[5.95rem] md:-ml-2.5 md:-mt-4 lg:h-[6.5rem] lg:-ml-3 lg:-mt-[1.15rem]"
+                  className="-ml-3.5 -mt-[1.05em] block h-[5.75rem] w-auto max-w-[min(100%,30rem)] object-contain object-left object-top contrast-[1.06] sm:-ml-4 sm:h-[6.35rem] sm:-mt-[1.12em] md:h-[7.15rem] md:-ml-[1.125rem] md:-mt-[1.18em] lg:h-[7.85rem] lg:-ml-5 lg:-mt-[1.22em]"
                   decoding="async"
                 />
               </h2>
-              <p className="text-slate-600 text-sm leading-relaxed max-w-xl mt-1.5">
+              <p className="text-slate-600 text-[0.9375rem] leading-relaxed max-w-xl mt-1.5">
                 Kết hợp AI thông minh và mạng lưới Mentor thực chiến để giúp bạn bứt tốc qua mọi vòng phỏng vấn.
                 Đây là phản hồi thật từ học viên đã nhận offer.
               </p>
@@ -1330,13 +1390,13 @@ export function Home() {
                   {TESTIMONIALS.map((t) => (
                     <div
                       key={`avatar-${t.name}`}
-                      className={`w-8 h-8 rounded-full bg-gradient-to-br ${t.grad} border-2 border-white flex items-center justify-center text-[10px] font-black text-white shadow-sm`}
+                      className={`w-9 h-9 rounded-full bg-gradient-to-br ${t.grad} border-2 border-white flex items-center justify-center text-[11px] font-black text-white shadow-sm`}
                     >
                       {t.avatar}
                     </div>
                   ))}
                 </div>
-                <p className="text-sm text-slate-600">
+                <p className="text-[0.9375rem] text-slate-600">
                   <span className="text-[#6E35E8] font-black">500+</span> ứng viên đã thành công
                 </p>
               </div>
@@ -1344,8 +1404,8 @@ export function Home() {
 
             <div className="lg:col-span-7">
               <div className="mb-3">
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-violet-50 border border-violet-200 text-[10px] uppercase tracking-[0.2em] text-[#5B21B6] font-black">
-                  <SparkleGlyph className="size-3" />
+                <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-violet-50 border border-violet-200 text-[11px] uppercase tracking-[0.18em] text-[#5B21B6] font-black">
+                  <SparkleGlyph className="size-3.5" />
                   Bình luận nổi bật
                 </div>
               </div>
@@ -1356,38 +1416,47 @@ export function Home() {
                   WebkitMaskImage: "linear-gradient(to right, transparent 0%, black 12%, black 88%, transparent 100%)",
                 }}
               >
-                <div className="space-y-4">
-                  <div className="flex flex-col sm:flex-row gap-4 sm:gap-5 sm:-translate-x-6">
-                    {TESTIMONIALS.map((t) => (
-                      <div key={`row1-${t.name}`} className="min-w-0 sm:min-w-[230px] flex-1 bg-white border border-slate-200 rounded-2xl p-4 shadow-sm">
-                        <div className="flex items-center gap-2 mb-2">
-                          <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${t.grad} flex items-center justify-center`}>
-                            <CheckCircle2 className="size-4 text-white" />
+                <div className="space-y-5">
+                  <div className="testimonial-marquee-row">
+                    <div className="testimonial-marquee-track">
+                      {[...TESTIMONIALS, ...TESTIMONIALS].map((t, i) => (
+                        <div
+                          key={`marq1-${i}-${t.name}`}
+                          className="shrink-0 w-[min(17.5rem,calc(100vw-3rem))] sm:w-[15.5rem] bg-white border border-slate-200 rounded-2xl p-5 shadow-sm"
+                        >
+                          <div className="flex items-center gap-2.5 mb-2.5">
+                            <div className={`w-9 h-9 shrink-0 rounded-lg bg-gradient-to-br ${t.grad} flex items-center justify-center`}>
+                              <CheckCircle2 className="size-[1.125rem] text-white" />
+                            </div>
+                            <p className="text-[11px] sm:text-xs uppercase tracking-widest text-[#6E35E8] font-black leading-tight">{t.tag}</p>
                           </div>
-                          <p className="text-[10px] uppercase tracking-widest text-[#6E35E8] font-black">{t.tag}</p>
+                          <p className="text-[0.9375rem] sm:text-base text-slate-700 leading-snug line-clamp-2">"{t.text}"</p>
                         </div>
-                        <p className="text-sm text-slate-700 line-clamp-2">"{t.text}"</p>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
                   </div>
 
-                  <div className="flex flex-col sm:flex-row gap-4 sm:gap-5 sm:translate-x-8">
-                    {TESTIMONIALS.map((t) => (
-                      <div key={`row2-${t.role}`} className="min-w-0 sm:min-w-[230px] flex-1 bg-white border border-slate-200 rounded-2xl p-4 shadow-sm">
-                        <div className="flex gap-1 mb-2">
-                          {[...Array(t.stars)].map((_, j) => (
-                            <Star key={`${t.name}-s-${j}`} className="size-3.5 text-yellow-400 fill-yellow-400" />
-                          ))}
+                  <div className="testimonial-marquee-row">
+                    <div className="testimonial-marquee-track testimonial-marquee-track--alt">
+                      {[...TESTIMONIALS, ...TESTIMONIALS].map((t, i) => (
+                        <div
+                          key={`marq2-${i}-${t.name}`}
+                          className="shrink-0 w-[min(17.5rem,calc(100vw-3rem))] sm:w-[15.5rem] bg-white border border-slate-200 rounded-2xl p-5 shadow-sm"
+                        >
+                          <div className="flex gap-1 mb-2.5">
+                            {[...Array(t.stars)].map((_, j) => (
+                              <Star key={`${t.name}-s-${i}-${j}`} className="size-4 text-yellow-400 fill-yellow-400" />
+                            ))}
+                          </div>
+                          <p className="text-[0.9375rem] sm:text-base text-slate-700 leading-snug line-clamp-2 mb-2.5">"{t.text}"</p>
+                          <p className="text-sm text-slate-600 font-semibold">{t.name}</p>
                         </div>
-                        <p className="text-sm text-slate-700 line-clamp-2 mb-2">"{t.text}"</p>
-                        <p className="text-[11px] text-slate-600 font-semibold">{t.name}</p>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
                   </div>
-
                 </div>
-                <div className="pointer-events-none absolute inset-y-0 left-0 w-14 bg-gradient-to-r from-[#ffffff] via-[#ffffff]/70 to-transparent blur-md" />
-                <div className="pointer-events-none absolute inset-y-0 right-0 w-14 bg-gradient-to-l from-[#ffffff] via-[#ffffff]/70 to-transparent blur-md" />
+                <div className="pointer-events-none absolute inset-y-0 left-0 w-14 bg-gradient-to-r from-[#f3f0f9] via-[#f3f0f9]/70 to-transparent blur-md" />
+                <div className="pointer-events-none absolute inset-y-0 right-0 w-14 bg-gradient-to-l from-[#f3f0f9] via-[#f3f0f9]/70 to-transparent blur-md" />
               </div>
             </div>
           </div>
@@ -1397,7 +1466,7 @@ export function Home() {
       {/* ═══ PRICING SECTION ═════════════════════════════════════ */}
       <section
         id="pricing"
-        className="h-screen max-h-screen flex flex-col justify-center relative overflow-hidden home-section-violet-wash border-t border-slate-100"
+        className="relative z-10 h-screen max-h-screen flex flex-col justify-center overflow-hidden"
       >
         {renderSectionSticks([
           { x: 10, y: 20, size: 30, opacity: 0.44 },
@@ -1411,10 +1480,10 @@ export function Home() {
               <span className="h-1 w-10 rounded-full bg-gradient-to-r from-[#6E35E8] to-[#9B6DFF]" />
             </div>
             <h2 className="text-2xl md:text-3xl font-black font-headline tracking-tighter mb-2 leading-tight text-slate-900">
-              Bảng giá <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#5F00F0] to-[#9B6DFF]">linh hoạt</span>
+            Sẵn sàng hơn cho <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#5F00F0] to-[#9B6DFF]">mọi buổi phỏng vấn</span>
             </h2>
             <p className="text-slate-600 max-w-xl mx-auto text-sm">
-              Chọn gói giải pháp phù hợp với lộ trình sự nghiệp của bạn.
+            Chọn gói phù hợp để luyện tập, cải thiện và sẵn sàng chinh phục nhà tuyển dụng.
             </p>
           </header>
 
@@ -1430,7 +1499,7 @@ export function Home() {
                   </div>
                 </div>
                 <ul className="space-y-2 mb-4 flex-grow">
-                  {["2 buổi AI Interview thử nghiệm", "3 lần phân tích CV/JD", "10 câu hỏi mẫu theo ngành"].map((f, i) => (
+                  {["3/5 câu hỏi phỏng vấn cùng AI", "1 lần phân tích CV/JD", "Bộ câu hỏi phỏng vấn theo ngành nghề"].map((f, i) => (
                     <li key={i} className="flex items-start gap-2 text-sm text-slate-700">
                       <CheckCircle2 className="size-4 shrink-0 text-secondary" />
                       {f}
@@ -1530,8 +1599,9 @@ export function Home() {
           {/* CTA Section */}
           <div className="mt-4 glass-card py-3 px-4 sm:py-3.5 sm:px-5 !rounded-[20px] text-center relative overflow-hidden">
             <div className="relative z-[1]">
-              <h2 className="text-base sm:text-lg font-headline font-black mb-0.5 text-slate-900">Bạn vẫn còn băn khoăn?</h2>
-              <p className="text-slate-600 mb-2 text-sm max-w-xl mx-auto leading-snug">Thử gói Free để trải nghiệm sức mạnh của AI.</p>
+              <h2 className="text-base sm:text-lg font-headline font-black mb-0.5 text-slate-900">Sẵn sàng cho buổi phỏng vấn tiếp theo?</h2>
+              <p className="text-slate-600 mb-2 text-sm max-w-xl mx-auto leading-snug">Trải nghiệm miễn phí và bắt đầu luyện tập cùng AI ngay hôm nay.
+              </p>
               <div className="flex items-center justify-center">
                 <button
                   type="button"
