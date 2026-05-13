@@ -1,10 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router";
 import {
-  MessageCircle as ChatCircleDots,
-  Phone,
-  Mail as EnvelopeSimple,
-  Clock,
   ArrowRight,
   Heart,
   ShieldCheck,
@@ -69,12 +65,6 @@ const SOCIAL_LINKS = [
   { name: "LinkedIn", href: "https://www.linkedin.com/company/prointerviewai/", icon: LinkedinIcon,  color: "#0A66C2", bgLight: "rgba(10,102,194,0.08)",  bgDark: "rgba(10,102,194,0.1)"  },
 ];
 
-const SUPPORT_ITEMS = [
-  { icon: ChatCircleDots, title: "Live Chat",  desc: "Phản hồi trong 2 phút",    color: "#6E35E8", bg: "rgba(110, 53, 232,0.1)" },
-  { icon: Phone,          title: "Hotline",    desc: "1800 1234 (miễn phí)",     color: "#FF8C42", bg: "rgba(255,140,66,0.1)" },
-  { icon: EnvelopeSimple, title: "Email",      desc: "support@prointerview.vn",  color: "#10b981", bg: "rgba(16,185,129,0.1)" },
-];
-
 /* ══════════════════════════════════════════════════════════════
    DARK variant — dùng ở /home (nền tối #0F0B1A)
 ══════════════════════════════════════════════════════════════ */
@@ -91,64 +81,12 @@ function FooterDark() {
         boxShadow: "0 -1px 0 rgba(196, 255, 71, 0.06)",
       }}
     >
-      {/* Đóm vàng — đặt thấp (khối hỗ trợ / chân trang), không dồn góc trên trái */}
+      {/* Đóm vàng — đặt thấp (chân trang), không dồn góc trên trái */}
       <div
         className="pointer-events-none absolute z-0 h-[min(72vw,520px)] w-[min(72vw,520px)] rounded-full bg-[#d4ff00]/18 blur-[100px] sm:h-[520px] sm:w-[520px] sm:blur-[110px]"
         style={{ left: "-14%", top: "38%" }}
         aria-hidden
       />
-      {/* Support 24/7 banner */}
-      <div className="relative z-[1]" style={{ 
-        background: "linear-gradient(135deg, rgba(110, 53, 232,0.14) 0%, rgba(196, 255, 71,0.1) 100%)",
-        borderBottom: "1px solid rgba(255,255,255,0.07)"
-      }}>
-        <div className="max-w-7xl mx-auto px-6 py-10">
-          <div className="flex flex-col lg:flex-row items-center justify-between gap-8">
-            <div className="text-center lg:text-left max-w-md">
-              <div className="flex items-center gap-2.5 justify-center lg:justify-start mb-3">
-                <div className="relative w-6 h-6 rounded-full flex items-center justify-center" style={{ background: "rgba(16,185,129,0.2)" }}>
-                  <div className="w-3 h-3 rounded-full bg-emerald-400 animate-pulse" />
-                  <div className="absolute inset-0 rounded-full bg-emerald-400 animate-ping opacity-20" />
-                </div>
-                <span className="text-emerald-400 text-sm font-bold tracking-wider">HỖ TRỢ 24/7 • LUÔN SẴN SÀNG</span>
-              </div>
-              <h3 className="text-white mb-2" style={{ fontSize: "1.5rem", fontWeight: 800, letterSpacing: "-0.03em" }}>
-                Chúng tôi luôn ở đây hỗ trợ bạn
-              </h3>
-              <p className="text-white/60 text-sm leading-relaxed">
-                Đội ngũ chuyên nghiệp phản hồi trong 2 phút — kể cả cuối tuần và ngày lễ.
-              </p>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              {SUPPORT_ITEMS.map((item) => {
-                const Icon = item.icon;
-                return (
-                  <div 
-                    key={item.title} 
-                    className="group flex items-center gap-3 px-5 py-4 rounded-2xl cursor-pointer transition-all hover:scale-[1.03] hover:-translate-y-1"
-                    style={{ 
-                      background: "rgba(255,255,255,0.05)", 
-                      border: "1px solid rgba(196, 255, 71, 0.12)",
-                      backdropFilter: "blur(12px)"
-                    }}
-                  >
-                    <div 
-                      className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 transition-transform group-hover:scale-110" 
-                      style={{ background: item.bg, boxShadow: `0 4px 16px ${item.color}33` }}
-                    >
-                      <Icon style={{ color: item.color, width: 20, height: 20 }} />
-                    </div>
-                    <div>
-                      <p className="text-white text-sm font-bold">{item.title}</p>
-                      <p className="text-white/50 text-xs mt-0.5">{item.desc}</p>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-      </div>
 
       {/* Main body */}
       <div className="relative z-[1] max-w-7xl mx-auto px-6 py-16">
