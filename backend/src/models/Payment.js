@@ -37,5 +37,7 @@ const paymentSchema = new Schema(
 paymentSchema.index({ userId: 1 });
 paymentSchema.index({ referenceId: 1 });
 paymentSchema.index({ providerRef: 1 }, { unique: true, sparse: true });
+// 1 booking/enrollment chỉ có tối đa 1 giao dịch CK (transfer) trong ledger
+paymentSchema.index({ provider: 1, type: 1, referenceId: 1 }, { unique: true, sparse: true });
 
 export const Payment = mongoose.models.Payment ?? mongoose.model("Payment", paymentSchema);

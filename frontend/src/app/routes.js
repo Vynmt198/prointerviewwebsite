@@ -46,6 +46,7 @@ import { AdminDashboard } from "./pages/admin/AdminDashboard.jsx";
 import { AdminMentors } from "./pages/admin/AdminMentors.jsx";
 import { AdminUsers } from "./pages/admin/AdminUsers.jsx";
 import { AdminBookings } from "./pages/admin/AdminBookings.jsx";
+import { AdminCoursePayments } from "./pages/admin/AdminCoursePayments.jsx";
 import { AdminMentorsPending } from "./pages/admin/AdminMentorsPending.jsx";
 import {
   AdminUserDetail,
@@ -94,6 +95,7 @@ export const router = createHashRouter([
       { path: "transactions", Component: AdminTransactions },
       { path: "payouts", Component: AdminPayouts },
       { path: "bookings", Component: AdminBookings },
+      { path: "course-payments", Component: AdminCoursePayments },
       { path: "bookings/:id", Component: AdminBookingDetail },
       { path: "content/questions", Component: AdminContentQuestions },
       { path: "content/videos", Component: AdminContentVideos },

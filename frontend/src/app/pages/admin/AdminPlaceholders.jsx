@@ -13,7 +13,7 @@ function vnd(amount) {
 function statusLabel(status) {
   const key = String(status || "").toLowerCase();
   if (key === "pending") return "Chờ duyệt";
-  if (key === "course_pending_ck") return "Chờ xác nhận CK";
+  if (key === "course_pending_ck") return "Chờ xác nhận chuyển khoản";
   if (key === "confirmed") return "Đã xác nhận";
   if (key === "completed") return "Hoàn thành";
   if (key === "approved" || key === "paid") return "Đã duyệt";
@@ -122,7 +122,7 @@ export function AdminFinance() {
   return (
     <AdminPanel
       title="Tài chính — Tổng quan"
-      description="Doanh thu đặt lịch mentor, học phí khóa học (CK), phí nền tảng, rút tiền cố vấn. Duyệt chuyển khoản khóa học tại Lịch hẹn & duyệt CK."
+      description="Doanh thu lịch hẹn cố vấn, học phí khóa học, phí nền tảng và rút tiền cố vấn. Đối soát chuyển khoản khóa học tại mục Học phí khóa học."
     >
       {loading ? (
         <p className="text-sm text-slate-500">Đang tải dữ liệu tài chính...</p>
@@ -154,24 +154,24 @@ export function AdminFinance() {
                 <div>
                   <h3 className="text-lg font-black tracking-tight text-slate-900">Học phí khóa học</h3>
                   <p className="mt-1 text-sm text-slate-600">
-                    Ghi danh khóa có phí (chuyển khoản). Tiền chờ CK là chưa xác nhận trên sao kê; đã thu là đã bấm xác nhận CK trong mục Lịch hẹn &amp; duyệt CK.
+                    Ghi danh khóa có phí (chuyển khoản). Khoản chờ đối soát là giao dịch chưa được xác nhận trên sao kê; khoản đã thu là giao dịch đã được xác nhận thanh toán.
                   </p>
                 </div>
                 <Link
-                  to="/admin/bookings"
+                  to="/admin/course-payments"
                   className="shrink-0 rounded-xl bg-violet-600 px-4 py-2.5 text-xs font-black uppercase tracking-wider text-white shadow-sm transition hover:bg-violet-700"
                 >
-                  Duyệt CK khóa học →
+                  Mở trang học phí khóa →
                 </Link>
               </div>
               <div className="grid gap-4 md:grid-cols-3">
                 <div className="rounded-2xl border border-violet-400/30 bg-violet-500/10 p-5">
-                  <p className="text-xs font-semibold text-violet-900/90">Đã thu (CK đã xác nhận)</p>
+                  <p className="text-xs font-semibold text-violet-900/90">Đã thu (đã xác nhận thanh toán)</p>
                   <p className="mt-2 text-2xl font-black text-violet-950">{vnd(cf.paidCollectedAmount)}</p>
                   <p className="mt-2 text-[11px] text-violet-900/70">{cf.paidCollectedCount} ghi danh có học phí &gt; 0</p>
                 </div>
                 <div className="rounded-2xl border border-amber-400/35 bg-amber-500/10 p-5">
-                  <p className="text-xs font-semibold text-amber-950/90">Chờ đối soát CK</p>
+                  <p className="text-xs font-semibold text-amber-950/90">Chờ đối soát chuyển khoản</p>
                   <p className="mt-2 text-2xl font-black text-amber-950">{vnd(cf.pendingTransferAmount)}</p>
                   <p className="mt-2 text-[11px] text-amber-950/75">{cf.pendingTransferCount} ghi danh đang pending</p>
                 </div>
@@ -234,7 +234,7 @@ export function AdminTransactions() {
             amount: Number(e.pricePaid || 0),
             status: "course_pending_ck",
             date: e.transferSubmittedAt || e.updatedAt || e.createdAt || new Date().toISOString(),
-            label: `${e.userId?.name || "Học viên"} · ${e.courseId?.title || "Khóa học"} (chờ CK)`,
+            label: `${e.userId?.name || "Học viên"} · ${e.courseId?.title || "Khóa học"} (chờ xác nhận chuyển khoản)`,
           });
         });
         (cf.recentPaidRows || []).forEach((e) => {
@@ -285,7 +285,7 @@ export function AdminTransactions() {
   return (
     <AdminPanel
       title="Giao dịch"
-      description="Lịch hẹn mentor, học phí khóa học (CK), rút tiền cố vấn — lọc theo loại và trạng thái."
+      description="Lịch hẹn cố vấn, học phí khóa học và rút tiền cố vấn — lọc theo loại và trạng thái."
     >
       {loading ? (
         <p className="text-sm text-slate-500">Đang tải giao dịch...</p>
@@ -332,7 +332,7 @@ export function AdminTransactions() {
             {[
               { id: "all", label: "Mọi trạng thái" },
               { id: "pending", label: "Chờ duyệt" },
-              { id: "course_pending_ck", label: "Chờ CK khóa" },
+              { id: "course_pending_ck", label: "Chờ xác nhận chuyển khoản khóa" },
               { id: "confirmed", label: "Đã xác nhận" },
               { id: "completed", label: "Hoàn thành" },
               { id: "approved", label: "Đã duyệt" },

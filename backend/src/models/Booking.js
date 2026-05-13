@@ -56,6 +56,11 @@ const bookingSchema = new Schema(
     paymentRef: { type: String, default: "" },
     /** Khách đã bấm “đã chuyển” và gửi mã tham chiếu CK (chờ admin xác nhận). */
     transferSubmittedAt: { type: Date },
+    /** Audit admin xác nhận CK (để UI hiển thị truy vết, không cần join payments). */
+    transferConfirmedAt: { type: Date },
+    transferConfirmedBy: { type: Schema.Types.ObjectId, ref: "User" },
+    transferForceConfirm: { type: Boolean, default: false },
+    transferForceNote: { type: String, default: "" },
     paidAt: { type: Date },
 
     rescheduleHistory: [rescheduleEntrySchema],

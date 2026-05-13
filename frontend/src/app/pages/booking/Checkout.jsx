@@ -86,6 +86,12 @@ function buildVietQrImageUrl(bankId, accountDigits, amountVnd, addInfo) {
   return `https://img.vietqr.io/image/${bid}-${acc}-compact2.png?amount=${amt}&addInfo=${add}`;
 }
 
+function extractOrderPart(value) {
+  const s = String(value || "").trim();
+  if (!s) return "";
+  return s.split("|")[0].trim();
+}
+
 /* ─── CopyBtn ────────────────────────────────────────────── */
 function CopyBtn({ text }) {
   const [copied, setCopied] = useState(false);
@@ -210,8 +216,8 @@ export function Checkout() {
   const baseTotal = isBooking ? bookingPrice : isCourse ? coursePriceNum : plan.monthlyPrice;
   const total = isBooking ? bookingPrice : isCourse ? coursePriceNum : price; // never multiply by 12 — price is always the per-period amount shown on the card
 
-  const orderNum = useMemo(() => `PI${Math.floor(Math.random() * 900000 + 100000)}`, []);
-  const meetLink = useMemo(() => genMeetLink(orderNum), [orderNum]);
+  const [transferOrderNum, setTransferOrderNum] = useState(() => `PI${Math.floor(Math.random() * 900000 + 100000)}`);
+  const meetLink = useMemo(() => genMeetLink(transferOrderNum), [transferOrderNum]);
 
   /* ── Read all booking params from URL ── */
   const bookingPosition = searchParams.get("position") ?? "";
@@ -234,8 +240,8 @@ export function Checkout() {
 
   const vietQrBankId = useMemo(() => inferVietQrBankId(), []);
   const vietQrUrl = useMemo(
-    () => buildVietQrImageUrl(vietQrBankId, BANK_TRANSFER.accountNumber, payAmount, orderNum),
-    [vietQrBankId, orderNum, payAmount],
+    () => buildVietQrImageUrl(vietQrBankId, BANK_TRANSFER.accountNumber, payAmount, transferOrderNum),
+    [vietQrBankId, transferOrderNum, payAmount],
   );
   const [vietQrLoadFailed, setVietQrLoadFailed] = useState(false);
   useEffect(() => {
@@ -261,11 +267,11 @@ export function Checkout() {
     try {
       let ok = false;
       if (isBooking) {
-        const res = await submitBookingTransferReference(bankBookingId, orderNum || "");
+        const res = await submitBookingTransferReference(bankBookingId, transferOrderNum || "");
         ok = res.success;
         if (!ok) setCardError(res.error || "Không lưu được.");
       } else {
-        const res = await enrollmentApi.submitEnrollmentTransfer(bankEnrollmentId, orderNum || "");
+        const res = await enrollmentApi.submitEnrollmentTransfer(bankEnrollmentId, transferOrderNum || "");
         ok = res.success;
         if (!ok) setCardError(res.error || "Không lưu được.");
       }
@@ -310,9 +316,11 @@ export function Checkout() {
       }
       setCardError("");
       try {
-        const apiRes = await enrollmentApi.enroll(courseId, { paymentMethod: "transfer", orderNum });
+        const apiRes = await enrollmentApi.enroll(courseId, { paymentMethod: "transfer", orderNum: transferOrderNum });
         const eid = apiRes.enrollment?._id || apiRes.enrollment?.id;
         if (apiRes.success && eid) {
+          const serverOrder = extractOrderPart(apiRes.orderNum || apiRes.enrollment?.paymentRef);
+          if (serverOrder) setTransferOrderNum(serverOrder);
           setBankEnrollmentId(String(eid));
           setAppStep("awaiting_transfer");
         } else {
@@ -343,11 +351,13 @@ export function Checkout() {
         price: bookingPrice,
         durationMinutes: 60,
         meetingLink: meetLink,
-        orderNum,
+        orderNum: transferOrderNum,
         paymentStatus: "pending",
         paymentMethod: "transfer",
       });
       if (apiRes.success && apiRes.booking?.id) {
+        const serverOrder = extractOrderPart(apiRes.booking?.paymentRef);
+        if (serverOrder) setTransferOrderNum(serverOrder);
         setBankBookingId(apiRes.booking.id);
         setAppStep("awaiting_transfer");
       } else {
@@ -375,7 +385,7 @@ export function Checkout() {
                 {submitted ? "Đã ghi nhận chuyển khoản" : "Chuyển khoản ngân hàng"}
               </h1>
               <p className="text-[10px] font-bold uppercase tracking-widest text-white/45">
-                Mã đơn: {orderNum} · {fmt(payAmount)}
+                Mã đơn: {transferOrderNum} · {fmt(payAmount)}
               </p>
             </div>
           </div>
@@ -407,9 +417,9 @@ export function Checkout() {
               </div>
               <div className="flex flex-wrap items-center justify-between gap-2 border-t border-white/10 pt-3">
                 <span className="text-white/50">Nội dung CK</span>
-                <CopyBtn text={orderNum} />
+                <CopyBtn text={transferOrderNum} />
               </div>
-              <p className="text-[11px] text-primary-fixed font-bold">Ghi đúng nội dung: {orderNum}</p>
+              <p className="text-[11px] text-primary-fixed font-bold">Ghi đúng nội dung: {transferOrderNum}</p>
             </div>
           )}
 
@@ -420,7 +430,7 @@ export function Checkout() {
               </p>
               <p className="mb-4 text-center text-[11px] text-white/55 leading-relaxed">
                 Mở app ngân hàng → Quét mã QR. Thường sẽ điền sẵn số tiền và nội dung{" "}
-                <span className="font-semibold text-white">{orderNum}</span>.
+                <span className="font-semibold text-white">{transferOrderNum}</span>.
               </p>
               <img
                 src={vietQrUrl}
@@ -431,7 +441,7 @@ export function Checkout() {
               />
               <p className="mt-4 text-center text-[11px] text-white/50 leading-relaxed">
                 Sau khi chuyển xong, bấm <span className="font-semibold text-white/80">Tôi đã chuyển khoản</span> bên dưới. Admin đối soát theo{" "}
-                <span className="font-semibold text-white/80">số tiền + nội dung mã đơn</span> (đã gắn trong QR / nội dung CK).
+                <span className="font-semibold text-white/80">số tiền + một nội dung chuyển khoản duy nhất</span> (đã gắn trong QR).
               </p>
             </div>
           )}
@@ -623,7 +633,7 @@ export function Checkout() {
               {/* Summary header */}
               <div className="px-8 py-6 border-b border-white/5 bg-white/5">
                 <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 mb-1">Order Summary</p>
-                <p className="text-xl font-black text-white tracking-tighter">#{orderNum}</p>
+                <p className="text-xl font-black text-white tracking-tighter">#{transferOrderNum}</p>
               </div>
 
               {isBooking ? (

@@ -57,7 +57,10 @@ const MAIN_GROUPS = [
   },
   {
     title: "Vận hành",
-    items: [{ to: "/admin/bookings", label: "Lịch hẹn & duyệt CK", icon: Calendar }],
+    items: [
+      { to: "/admin/bookings", label: "Lịch hẹn & thanh toán", icon: Calendar },
+      { to: "/admin/course-payments", label: "Học phí khóa học", icon: BookOpen },
+    ],
   },
   {
     title: "Tài chính",
