@@ -53,7 +53,7 @@ function fmt(n) {
   return new Intl.NumberFormat("vi-VN").format(n) + "đ";
 }
 
-/** Hiển thị trên checkout CK — cấu hình trong frontend/.env.local (Vite). */
+/** Hiển thị trên checkout CK — Vite: .env / .env.local (dev) hoặc env trên host build (Vercel) + redeploy. */
 const BANK_TRANSFER = {
   bankName: import.meta.env.VITE_BANK_TRANSFER_NAME || "",
   accountNumber: import.meta.env.VITE_BANK_TRANSFER_ACCOUNT || "",
@@ -381,11 +381,13 @@ export function Checkout() {
           </div>
 
           {!hasBank && (
-            <p className="mb-4 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-xs text-amber-100">
+            <p className="mb-4 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-xs text-amber-100 leading-relaxed">
               Cấu hình <span className="font-mono">VITE_BANK_TRANSFER_NAME</span>,{" "}
               <span className="font-mono">VITE_BANK_TRANSFER_ACCOUNT</span>,{" "}
-              <span className="font-mono">VITE_BANK_TRANSFER_OWNER</span> trong{" "}
-              <span className="font-mono">frontend/.env.local</span> để hiển thị STK nhận tiền.
+              <span className="font-mono">VITE_BANK_TRANSFER_OWNER</span>: trên máy dùng{" "}
+              <span className="font-mono">frontend/.env</span> hoặc <span className="font-mono">.env.local</span>; trên
+              Vercel vào <span className="font-semibold">Settings → Environment Variables</span> rồi{" "}
+              <span className="font-semibold">Redeploy</span> (Vite chỉ nhúng biến lúc build).
             </p>
           )}
 
