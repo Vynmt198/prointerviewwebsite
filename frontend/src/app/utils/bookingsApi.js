@@ -94,6 +94,14 @@ export async function cancelBooking(id, body = {}) {
   return authedSend("DELETE", `/api/bookings/${encodeURIComponent(id)}`, body);
 }
 
+/** Khách báo đã CK; `reference` tuỳ chọn (FT…). Có thể gửi mã đơn hoặc để trống — VietQR đã gắn nội dung. */
+export async function submitBookingTransferReference(bookingId, reference) {
+  if (!bookingId) return { success: false, error: "Thiếu id booking." };
+  return authedSend("PATCH", `/api/bookings/${encodeURIComponent(bookingId)}/submit-transfer`, {
+    reference: String(reference ?? "").trim(),
+  });
+}
+
 export async function rescheduleBooking(id, body) {
   if (!id) return { success: false, error: "Thiếu id." };
   return authedSend("PATCH", `/api/bookings/${encodeURIComponent(id)}/reschedule`, body ?? {});

@@ -18,6 +18,8 @@ import {
 } from "lucide-react";
 import { enrollmentApi } from "../../utils/enrollmentApi";
 import { toast } from "sonner";
+import { normalizeCourseStats } from "../../utils/courseStats";
+import { enrollmentAccessGranted } from "../../utils/enrollmentAccess.js";
 
 /* ── Level Badge ────────────────────────────────────────────── */
 function LevelBadge({ level }) {
@@ -191,7 +193,9 @@ function CourseCard({ item, onContinue }) {
           </div>
           <div className="flex items-center gap-1">
             <Star className="w-3.5 h-3.5 text-[#FFD600]" />
-            <span className="font-semibold text-gray-700">{course.rating}</span>
+            <span className="font-semibold text-gray-700">
+              {course.rating != null ? course.rating.toFixed(1) : "—"}
+            </span>
           </div>
         </div>
 
@@ -345,7 +349,9 @@ function EmptyState({ tab, onBrowse }) {
 
 /* ── Recent Activity ────────────────────────────────────────── */
 function RecentActivity({ items }) {
-  const inProgress = items.filter((i) => i.progressPct > 0 && !i.isCompleted);
+  const inProgress = items.filter(
+    (i) => i.hasPaidAccess && i.progressPct > 0 && !i.isCompleted,
+  );
   if (inProgress.length === 0) return null;
 
   return (
@@ -449,7 +455,8 @@ export function MyCourses() {
           const completedCount = completedLessonIds.length;
           const totalCount = lessons.length || c.totalLessons || 1;
           const pct = Math.round((completedCount / totalCount) * 100);
-          
+          const { rating } = normalizeCourseStats(c.stats);
+
           return {
             course: {
               id: c._id,
@@ -460,14 +467,16 @@ export function MyCourses() {
               mentorName: c.mentorId?.userId?.name || "Sư phụ",
               mentorAvatar: c.mentorId?.userId?.avatar || "https://api.dicebear.com/7.x/avataaars/svg?seed=Lucky",
               mentorTitle: c.mentorId?.userId?.desiredPosition || "Chuyên gia",
-              rating: c.stats?.rating || 4.8,
+              rating,
               lessonsCount: totalCount,
               lessons
             },
             completedLessons: completedLessonIds,
             progressPct: pct,
             isCompleted: pct === 100,
-            lastAccessed: e.lastAccessedAt
+            lastAccessed: e.lastAccessedAt,
+            hasPaidAccess: enrollmentAccessGranted(e),
+            coursePrice: Number(c.price ?? 0),
           };
         });
       console.log("[MyCourses] Mapped courses:", mapped);
@@ -673,7 +682,15 @@ export function MyCourses() {
               <CourseCard
                 key={item.course.id}
                 item={item}
-                onContinue={() => navigate(`/courses/${item.course.id}/learn`)}
+                onContinue={() => {
+                  if (item.hasPaidAccess) {
+                    navigate(`/courses/${item.course.id}/learn`);
+                  } else {
+                    navigate(
+                      `/checkout?type=course&courseId=${item.course.id}&price=${Math.round(item.coursePrice || 0)}`,
+                    );
+                  }
+                }}
               />
             ))}
           </div>

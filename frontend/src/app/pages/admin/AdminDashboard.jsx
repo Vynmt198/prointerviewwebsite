@@ -17,8 +17,8 @@ import { adminApi } from "../../utils/adminApi";
 const TILES = [
   { to: "/admin/users", label: "Người dùng", icon: Users, desc: "Danh sách, filter, chi tiết user" },
   { to: "/admin/mentors", label: "Cố vấn", icon: GraduationCap, desc: "Cố vấn, duyệt chờ xét" },
-  { to: "/admin/finance", label: "Tài chính", icon: Wallet, desc: "Doanh thu, giao dịch, rút tiền" },
-  { to: "/admin/bookings", label: "Lịch hẹn", icon: Calendar, desc: "Phiên hẹn và trạng thái" },
+  { to: "/admin/finance", label: "Tài chính", icon: Wallet, desc: "Booking, học phí khóa CK, rút tiền mentor" },
+  { to: "/admin/bookings", label: "Lịch hẹn & CK", icon: Calendar, desc: "Duyệt CK đặt lịch mentor + học phí khóa học" },
   { to: "/admin/content/questions", label: "Nội dung", icon: FileQuestion, desc: "Câu hỏi, video, khóa học" },
   { to: "/admin/analytics", label: "Phân tích", icon: LineChart, desc: "Báo cáo và biểu đồ" },
   { to: "/admin/settings", label: "Cài đặt HT", icon: Settings, desc: "Giá, fee, API, email" },

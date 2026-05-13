@@ -29,6 +29,7 @@ import { useParams, useNavigate } from "react-router";
 import { fetchCourseById, fetchLessonContent } from "../../utils/courseApi";
 import { enrollmentApi } from "../../utils/enrollmentApi";
 import { toast } from "sonner";
+import { enrollmentAccessGranted } from "../../utils/enrollmentAccess.js";
 
 /* ── Helpers ────────────────────────────────────────────────── */
 const formatDuration = (minutes) => {
@@ -399,6 +400,8 @@ export function CourseLearning() {
 
   const [course, setCourse] = useState(null);
   const [enrollment, setEnrollment] = useState(null);
+  /** Ghi danh CK đang chờ admin — không set vào `enrollment` để tránh coi như đã học được. */
+  const [paymentPendingInfo, setPaymentPendingInfo] = useState(null);
   const [completedLessons, setCompletedLessons] = useState([]);
   const [loading, setLoading] = useState(true);
   const [currentLessonIdx, setCurrentLessonIdx] = useState(0);
@@ -417,6 +420,9 @@ export function CourseLearning() {
     
     const loadData = async () => {
       setLoading(true);
+      setEnrollment(null);
+      setCompletedLessons([]);
+      setPaymentPendingInfo(null);
       // Get course data
       const courseRes = await fetchCourseById(id);
       if (!courseRes.success) {
@@ -448,12 +454,26 @@ export function CourseLearning() {
       // Get enrollment data
       const enrollRes = await enrollmentApi.getMyEnrollments();
       if (enrollRes.success) {
-        const found = enrollRes.enrollments.find(e => 
-          (e.courseId?._id === id) || (e.courseId === id)
+        const found = enrollRes.enrollments.find(
+          (e) => String(e.courseId?._id || e.courseId || "") === String(id),
         );
         if (found) {
-          setEnrollment(found);
-          setCompletedLessons((found.completedLessons || []).map((lessonId) => String(lessonId)));
+          if (enrollmentAccessGranted(found)) {
+            setEnrollment(found);
+            setCompletedLessons((found.completedLessons || []).map((lessonId) => String(lessonId)));
+            setPaymentPendingInfo(null);
+          } else {
+            setEnrollment(null);
+            setCompletedLessons([]);
+            setPaymentPendingInfo({
+              courseId: String(id),
+              price: Number(c.price || 0),
+            });
+          }
+        } else {
+          setEnrollment(null);
+          setCompletedLessons([]);
+          setPaymentPendingInfo(null);
         }
       }
       setLoading(false);
@@ -536,6 +556,63 @@ export function CourseLearning() {
     );
   }
 
+  if (!loading && paymentPendingInfo && course) {
+    return (
+      <div className="min-h-screen bg-gray-950 flex items-center justify-center px-6">
+        <div className="text-center max-w-md">
+          <BookOpen className="w-16 h-16 text-amber-500/80 mx-auto mb-4" />
+          <h2 className="text-xl font-bold text-white mb-2">Chờ xác nhận thanh toán</h2>
+          <p className="text-sm text-white/55 mb-6 leading-relaxed">
+            Ghi danh khóa học đã được tạo. Sau khi bạn chuyển khoản và admin xác nhận, bạn có thể vào học đầy đủ.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <button
+              type="button"
+              onClick={() =>
+                navigate(
+                  `/checkout?type=course&courseId=${paymentPendingInfo.courseId}&price=${paymentPendingInfo.price}`,
+                )
+              }
+              className="rounded-xl px-6 py-3 text-sm font-bold text-white shadow-lg transition-all hover:brightness-110"
+              style={{ background: "#6E35E8" }}
+            >
+              Tiếp tục thanh toán
+            </button>
+            <button
+              type="button"
+              onClick={() => navigate(`/courses/${id}`)}
+              className="rounded-xl border border-white/20 bg-white/5 px-6 py-3 text-sm font-semibold text-white/90 hover:bg-white/10"
+            >
+              Về trang khóa học
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!loading && course && !enrollment && !paymentPendingInfo && lessons.length > 0) {
+    return (
+      <div className="min-h-screen bg-gray-950 flex items-center justify-center px-6">
+        <div className="text-center max-w-md">
+          <BookOpen className="w-16 h-16 text-gray-600 mx-auto mb-4" />
+          <h2 className="text-xl font-bold text-white mb-2">Chưa ghi danh</h2>
+          <p className="text-sm text-white/50 mb-6">
+            Vui lòng đăng ký (và thanh toán nếu khóa có phí) từ trang chi tiết khóa học.
+          </p>
+          <button
+            type="button"
+            onClick={() => navigate(`/courses/${id}`)}
+            className="rounded-xl px-6 py-3 text-sm font-semibold text-white"
+            style={{ background: "#6E35E8" }}
+          >
+            Về trang khóa học
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   if (!course || (!currentLesson && lessons.length > 0)) {
     return (
       <div className="min-h-screen bg-gray-950 flex items-center justify-center">
@@ -559,31 +636,40 @@ export function CourseLearning() {
     <div className="flex h-screen flex-col overflow-hidden bg-gray-950 antialiased">
       {/* ── Top bar ─────────────────────────────────────────── */}
       <header
-        className="flex items-center gap-4 px-4 py-3 shrink-0 z-30"
+        className="flex items-center gap-1.5 px-2 py-0 shrink-0 z-30"
         style={{ background: "#111", borderBottom: "1px solid rgba(255,255,255,0.08)" }}
       >
         {/* Logo + Back */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-1 shrink-0">
           <button
             type="button"
             onClick={() => navigate(-1)}
-            className="group flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-white/20 bg-white/10 text-white shadow-[0_1px_0_rgba(255,255,255,0.06)_inset] transition-all hover:border-white/35 hover:bg-white/[0.18] active:scale-[0.97]"
+            className="group flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-white/20 bg-white/10 text-white shadow-[0_1px_0_rgba(255,255,255,0.06)_inset] transition-all hover:border-white/35 hover:bg-white/[0.18] active:scale-[0.97]"
             aria-label="Quay lại trang trước"
           >
             <ArrowLeft className="h-5 w-5 transition-transform group-hover:-translate-x-0.5" strokeWidth={2} />
           </button>
-          <div className="w-px h-5 bg-white/10" />
+          <div className="h-7 w-px shrink-0 self-center bg-white/10" aria-hidden />
           <div
-            className="flex items-center gap-1.5 cursor-pointer"
+            className="flex cursor-pointer items-center gap-0 p-0 leading-none"
             onClick={() => navigate("/")}
+            role="link"
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") navigate("/");
+            }}
+            aria-label="Về trang chủ ProInterview"
           >
-            <Lightning className="w-5 h-5" style={{ color: "#c4ff47" }} />
-            <span className="font-bold text-white text-sm hidden sm:inline">ProInterview</span>
+            <img
+              src="/Logo.png"
+              alt="ProInterview"
+              className="block h-12 w-auto max-w-[min(280px,52vw)] object-contain object-left object-top brightness-[0.92] contrast-[1.12] sm:h-14 md:h-16"
+            />
           </div>
         </div>
 
         {/* Course name */}
-        <div className="flex-1 min-w-0 px-4">
+        <div className="flex-1 min-w-0 px-1.5 py-0">
           <p className="text-white/80 text-sm font-medium truncate">{course.title}</p>
           <p className="text-white/40 text-xs">
             Bài {currentLessonIdx + 1}/{lessons.length} · {currentLesson.title}
@@ -591,8 +677,8 @@ export function CourseLearning() {
         </div>
 
         {/* Progress */}
-        <div className="flex items-center gap-3 shrink-0">
-          <div className="hidden md:flex items-center gap-2">
+        <div className="flex items-center gap-1 shrink-0">
+          <div className="hidden md:flex items-center gap-1.5">
             <div className="w-32 h-1.5 bg-white/10 rounded-full overflow-hidden">
               <div
                 className="h-full rounded-full transition-all duration-500"
@@ -615,7 +701,7 @@ export function CourseLearning() {
 
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="p-2 rounded-xl text-white/60 hover:text-white hover:bg-white/10 transition-all"
+            className="p-1 rounded-lg text-white/60 hover:text-white hover:bg-white/10 transition-all"
           >
             <List className="w-5 h-5" />
           </button>
@@ -932,7 +1018,7 @@ export function CourseLearning() {
       </div>
 
       {/* ── Certificate Modal ──────────────────────────────── */}
-      {showCertificate && (
+      {showCertificate && enrollment && (
         <CertificateModal
           enrollmentId={enrollment._id}
           courseName={course.title}

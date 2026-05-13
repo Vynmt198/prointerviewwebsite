@@ -30,6 +30,8 @@ import {
 
 import { fetchCourses } from "../../utils/courseApi";
 import { enrollmentApi } from "../../utils/enrollmentApi";
+import { normalizeCourseStats } from "../../utils/courseStats";
+import { enrollmentAccessGranted } from "../../utils/enrollmentAccess.js";
 
 const CATEGORIES = [
   "Tất cả",
@@ -251,7 +253,7 @@ function RecentActivity({
 }) {
   const navigate = useNavigate();
   const inProgress = items.filter(
-    (i) => i.progressPct > 0 && !i.isCompleted,
+    (i) => i.hasPaidAccess && i.progressPct > 0 && !i.isCompleted,
   );
   if (inProgress.length === 0) return null;
 
@@ -336,22 +338,25 @@ export function Courses() {
     // 1. Fetch marketplace courses
     fetchCourses().then((res) => {
       if (res.success) {
-        const mapped = res.courses.map((c) => ({
-          id: c._id,
-          title: c.title,
-          description: c.description,
-          thumbnail: c.thumbnail || "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&q=80",
-          category: c.topics?.[0] || "Kỹ năng khác",
-          level: c.level === "basic" ? "Beginner" : c.level === "intermediate" ? "Intermediate" : "Advanced",
-          mentorName: c.mentorId?.userId?.name || "Khuất danh",
-          mentorAvatar: c.mentorId?.userId?.avatar || "https://api.dicebear.com/7.x/avataaars/svg?seed=Lucky",
-          mentorTitle: c.mentorId?.userId?.desiredPosition || "Chuyên gia",
-          mentorCompany: c.mentorId?.userId?.currentCompany || "ProInterview",
-          rating: c.stats?.rating || 4.8,
-          duration: c.totalDurationMinutes || 120,
-          price: c.price || 0,
-          tags: c.tags || [],
-        }));
+        const mapped = res.courses.map((c) => {
+          const { rating } = normalizeCourseStats(c.stats);
+          return {
+            id: c._id,
+            title: c.title,
+            description: c.description,
+            thumbnail: c.thumbnail || "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&q=80",
+            category: c.topics?.[0] || "Kỹ năng khác",
+            level: c.level === "basic" ? "Beginner" : c.level === "intermediate" ? "Intermediate" : "Advanced",
+            mentorName: c.mentorId?.userId?.name || "Khuất danh",
+            mentorAvatar: c.mentorId?.userId?.avatar || "https://api.dicebear.com/7.x/avataaars/svg?seed=Lucky",
+            mentorTitle: c.mentorId?.userId?.desiredPosition || "Chuyên gia",
+            mentorCompany: c.mentorId?.userId?.currentCompany || "ProInterview",
+            rating,
+            duration: c.totalDurationMinutes || 120,
+            price: c.price || 0,
+            tags: c.tags || [],
+          };
+        });
         setCourses(mapped);
       }
       setLoading(false);
@@ -380,7 +385,9 @@ export function Courses() {
               },
               completedLessons: e.completedLessons || [],
               progressPct: pct,
-              isCompleted: pct === 100
+              isCompleted: pct === 100,
+              hasPaidAccess: enrollmentAccessGranted(e),
+              coursePrice: Number(c.price ?? 0),
             };
           });
         setEnrolledCourses(mapped);
@@ -697,7 +704,9 @@ export function Courses() {
                               <div className="flex items-center gap-4">
                                 <div className="flex items-center gap-1.5">
                                   <Star className="text-primary-fixed size-4.5" />
-                                  <span className="font-bold text-white text-sm">{course.rating}</span>
+                                  <span className="font-bold text-white text-sm">
+                                    {course.rating != null ? course.rating.toFixed(1) : "—"}
+                                  </span>
                                 </div>
                                 <div className="flex items-center gap-1.5 text-zinc-500">
                                   <Clock className="size-4.5" />
@@ -796,7 +805,15 @@ export function Courses() {
                       <EnrolledCourseCard
                         key={item.course.id}
                         item={item}
-                        onContinue={() => navigate(`/courses/${item.course.id}/learn`)}
+                        onContinue={() => {
+                          if (item.hasPaidAccess) {
+                            navigate(`/courses/${item.course.id}/learn`);
+                          } else {
+                            navigate(
+                              `/checkout?type=course&courseId=${item.course.id}&price=${Math.round(item.coursePrice || 0)}`,
+                            );
+                          }
+                        }}
                       />
                     ))}
                   </div>

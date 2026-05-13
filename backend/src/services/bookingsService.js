@@ -160,8 +160,9 @@ function mapPaymentMethod(method) {
   const m = String(method ?? "").toLowerCase();
   if (m === "momo") return "momo";
   if (m === "zalopay") return "zalopay";
+  if (m === "vnpay") return "vnpay";
   if (m === "visa" || m === "card") return "card";
-  if (m === "vnpay" || m === "transfer") return "transfer";
+  if (m === "transfer" || m === "bank" || m === "bank_transfer" || m === "ck") return "transfer";
   return "card";
 }
 
@@ -388,6 +389,7 @@ export function toPublicBooking(doc, mentorLean) {
     paymentStatus: b.paymentStatus,
     paymentMethod: b.paymentMethod,
     paymentRef: b.paymentRef ?? "",
+    transferSubmittedAt: b.transferSubmittedAt ?? null,
     rescheduleHistory: Array.isArray(b.rescheduleHistory) ? b.rescheduleHistory : [],
     cancelReason: b.cancelReason ?? "",
     cancelledBy: b.cancelledBy ?? "",
@@ -462,6 +464,75 @@ export async function getMentorBooking(mentorUserId, rawId) {
     .lean();
   if (!row) return { ok: false, status: 404, error: "Không tìm thấy booking." };
   return { ok: true, booking: toPublicBooking(row) };
+}
+
+/**
+ * Khách xác nhận đã chuyển khoản. `reference` tuỳ chọn (FT…); có thể gửi trùng mã đơn (nội dung QR) — không lưu trùng lặp trong paymentRef.
+ */
+export async function submitBankTransferReference(userId, rawId, body) {
+  if (!isMongoReady()) return { ok: false, status: 503, error: MONGO_ERR };
+  const uid = String(userId).trim();
+  if (!mongoose.isValidObjectId(uid)) return { ok: false, status: 401, error: "Phiên đăng nhập không hợp lệ." };
+  const q = bookingQueryForUser(rawId);
+  if (!q) return { ok: false, status: 400, error: "Thiếu id booking." };
+
+  const refRaw = String(body?.reference ?? body?.transferReference ?? "").trim();
+
+  const booking = await Booking.findOne({ userId: uid, ...q });
+  if (!booking) return { ok: false, status: 404, error: "Không tìm thấy booking." };
+  if (booking.paymentMethod !== "transfer") {
+    return { ok: false, status: 400, error: "Booking này không dùng hình thức chuyển khoản." };
+  }
+  if (booking.paymentStatus !== "pending") {
+    return { ok: false, status: 400, error: "Thanh toán đã được xử lý." };
+  }
+
+  const orderPart = String(booking.paymentRef || "").trim() || String(booking._id).slice(-8);
+  let paymentRef = orderPart.slice(0, 120);
+  if (refRaw.length > 0 && refRaw !== orderPart) {
+    if (refRaw.startsWith(`${orderPart} |`)) {
+      paymentRef = refRaw.slice(0, 120);
+    } else {
+      paymentRef = `${orderPart} | ${refRaw}`.slice(0, 120);
+    }
+  }
+  booking.paymentRef = paymentRef;
+  booking.transferSubmittedAt = new Date();
+  await booking.save();
+  await booking.populate({ path: "userId", select: "name email avatar" });
+  const mentor = await Mentor.findById(booking.mentorId).select("name title company avatar publicId").lean();
+  return { ok: true, booking: toPublicBooking(booking, mentor) };
+}
+
+/**
+ * Admin xác nhận đã nhận tiền CK — giống thanh toán thành công qua cổng.
+ */
+export async function confirmBankTransferPaymentByAdmin(bookingId) {
+  if (!isMongoReady()) return { ok: false, status: 503, error: MONGO_ERR };
+  if (!mongoose.isValidObjectId(bookingId)) {
+    return { ok: false, status: 400, error: "id booking không hợp lệ." };
+  }
+
+  const booking = await Booking.findById(bookingId);
+  if (!booking) return { ok: false, status: 404, error: "Không tìm thấy booking." };
+  if (booking.paymentMethod !== "transfer") {
+    return { ok: false, status: 400, error: "Chỉ áp dụng cho booking thanh toán chuyển khoản." };
+  }
+  if (booking.paymentStatus === "paid") {
+    return { ok: false, status: 400, error: "Booking đã được đánh dấu đã thanh toán." };
+  }
+  if (booking.paymentStatus !== "pending") {
+    return { ok: false, status: 400, error: "Trạng thái thanh toán không cho phép xác nhận." };
+  }
+
+  booking.paymentStatus = "paid";
+  booking.status = "confirmed";
+  booking.paidAt = new Date();
+  await booking.save();
+
+  await booking.populate({ path: "mentorId", select: "name title company avatar publicId" });
+  await booking.populate({ path: "userId", select: "name email avatar" });
+  return { ok: true, booking: toPublicBooking(booking) };
 }
 
 export async function confirmMentorBooking(mentorUserId, rawId) {

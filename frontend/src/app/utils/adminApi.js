@@ -58,6 +58,18 @@ export const adminApi = {
       method: "PATCH",
       body: JSON.stringify({ status, reason }),
     }),
+  confirmBookingTransferPayment: (id) =>
+    authedFetch(`/api/admin/bookings/${id}/confirm-transfer-payment`, {
+      method: "PATCH",
+      body: JSON.stringify({}),
+    }),
+  getPendingEnrollmentTransfers: () => authedFetch("/api/admin/enrollments/pending-transfer"),
+  getCourseFinanceSummary: () => authedFetch("/api/admin/finance/courses"),
+  confirmEnrollmentTransferPayment: (id) =>
+    authedFetch(`/api/admin/enrollments/${id}/confirm-transfer-payment`, {
+      method: "PATCH",
+      body: JSON.stringify({}),
+    }),
   getPayouts: () => authedFetch("/api/admin/payouts"),
   approvePayout: (id, note = "") =>
     authedFetch(`/api/admin/payouts/${id}/approve`, {

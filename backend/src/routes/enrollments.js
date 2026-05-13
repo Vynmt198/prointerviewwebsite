@@ -7,5 +7,6 @@ export const enrollmentsRouter = Router();
 enrollmentsRouter.use(authJwt);
 
 enrollmentsRouter.get("/my", EnrollmentController.getMyEnrollments);
+enrollmentsRouter.patch("/:id/submit-transfer", EnrollmentController.submitTransfer);
 enrollmentsRouter.get("/:id/certificate", EnrollmentController.getCertificate);
 enrollmentsRouter.patch("/:id/progress", EnrollmentController.updateProgress);

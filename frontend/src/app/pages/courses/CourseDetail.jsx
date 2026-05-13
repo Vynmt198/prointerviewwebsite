@@ -38,7 +38,9 @@ import { enrollmentApi } from "../../utils/enrollmentApi";
 import { getUser } from "../../utils/auth";
 import { toast } from "sonner";
 import { requireLoginNavigate } from "../../utils/authGate";
-
+import { MentorPageShell } from "../../components/mentor/MentorPageShell";
+import { normalizeCourseStats } from "../../utils/courseStats";
+import { enrollmentAccessGranted } from "../../utils/enrollmentAccess.js";
 
 import {
   Dialog,
@@ -48,7 +50,6 @@ import {
   DialogDescription,
 } from "../../components/ui/dialog";
 
-/* ── Helpers ─────────────────────────────────────────────── */
 const formatPrice = (price) => {
   if (price === 0) return "Miễn phí";
   return new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(price);
@@ -61,9 +62,11 @@ const formatDuration = (minutes) => {
 const getLevelLabel = (level) =>
   level === "Beginner" ? "Cơ bản" : level === "Intermediate" ? "Trung cấp" : "Nâng cao";
 const getLevelColor = (level) => {
-  if (level === "Beginner") return { bg: "rgba(196, 255, 71,0.12)", text: "#4A7A00", border: "rgba(196, 255, 71,0.3)" };
-  if (level === "Intermediate") return { bg: "rgba(110, 53, 232,0.2)", text: "#ddd6fe", border: "rgba(167, 139, 250, 0.45)" };
-  return { bg: "rgba(255,140,66,0.12)", text: "#CC5C00", border: "rgba(255,140,66,0.35)" };
+  if (level === "Beginner")
+    return { bg: "rgba(224, 242, 254, 0.98)", text: "#0369a1", border: "rgba(14, 165, 233, 0.35)" };
+  if (level === "Intermediate")
+    return { bg: "rgba(237, 233, 254, 0.98)", text: "#5b21b6", border: "rgba(139, 92, 246, 0.35)" };
+  return { bg: "rgba(255, 237, 213, 0.98)", text: "#c2410c", border: "rgba(251, 146, 60, 0.4)" };
 };
 
 const getRelatedCourses = (currentId, category, limit) => {
@@ -75,32 +78,31 @@ const getRelatedCourses = (currentId, category, limit) => {
 function LessonRow({ lesson, index }) {
   return (
     <div
-      className="flex items-center gap-4 py-3 px-4 rounded-xl transition-all"
-      style={{ background: lesson.isPreview ? "rgba(196, 255, 71,0.04)" : "transparent" }}
+      className={`flex items-center gap-4 px-4 py-3 transition-all ${lesson.isPreview ? "bg-violet-50/50" : ""}`}
     >
       <div
         className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 text-sm font-bold"
         style={{
-          background: lesson.isPreview ? "rgba(196, 255, 71,0.15)" : "rgba(110, 53, 232,0.08)",
-          color: lesson.isPreview ? "#4A7A00" : "#6E35E8",
+          background: lesson.isPreview ? "rgba(110, 53, 232, 0.2)" : "rgba(110, 53, 232,0.08)",
+          color: lesson.isPreview ? "#e9d5ff" : "#6E35E8",
         }}
       >
         {index + 1}
       </div>
       <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-medium text-white">{lesson.title}</p>
-        <p className="mt-0.5 text-xs text-white/50">{formatDuration(lesson.duration)}</p>
+        <p className="truncate text-sm font-medium text-slate-900">{lesson.title}</p>
+        <p className="mt-0.5 text-xs text-slate-500">{formatDuration(lesson.duration)}</p>
       </div>
       {lesson.isPreview ? (
         <span
           className="text-xs font-bold px-2.5 py-1 rounded-lg flex items-center gap-1 shrink-0"
-          style={{ background: "rgba(196, 255, 71,0.15)", color: "#4A7A00" }}
+          style={{ background: "rgba(110, 53, 232, 0.22)", color: "#ede9fe", border: "1px solid rgba(167, 139, 250, 0.35)" }}
         >
           <PlayCircle className="w-3.5 h-3.5" />
           Preview
         </span>
       ) : (
-        <Lock className="h-4 w-4 shrink-0 text-white/35" />
+        <Lock className="h-4 w-4 shrink-0 text-slate-300" />
       )}
     </div>
   );
@@ -109,12 +111,14 @@ function LessonRow({ lesson, index }) {
 /* ── Star Rating ──────────────────────────────────────────── */
 function StarRating({ rating, size = "sm" }) {
   const s = size === "lg" ? "w-5 h-5" : "w-4 h-4";
+  const n = rating == null ? NaN : Number(rating);
+  const filled = Number.isFinite(n) ? Math.min(5, Math.max(0, Math.round(n))) : 0;
   return (
     <div className="flex gap-0.5">
       {[1, 2, 3, 4, 5].map((i) => (
         <Star
           key={i}
-          fill={i <= Math.round(rating) ? "#FFD600" : "none"}
+          fill={i <= filled ? "#FFD600" : "none"}
           className={s}
           style={{ color: "#FFD600" }}
         />
@@ -225,39 +229,27 @@ function ReviewsSection({ course, enrolled }) {
   return (
     <div className="space-y-6">
       {/* Rating summary */}
-      <div className="rounded-3xl border border-white/12 bg-white/[0.04] p-6 backdrop-blur-sm">
-        <div className="flex items-center gap-8 mb-6">
-          <div className="text-center">
+      <div className="glass-card p-6">
+        <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-8">
+          <div className="text-center sm:min-w-[140px]">
             <p
-              className="font-bold mb-1"
+              className="mb-1 font-bold"
               style={{ fontSize: "3rem", lineHeight: 1, color: "#6E35E8" }}
             >
-              {course.rating}
+              {course.rating != null ? course.rating.toFixed(1) : "—"}
             </p>
             <StarRating rating={course.rating} size="lg" />
-            <p className="text-xs text-white/50 mt-1">{course.reviewsCount} đánh giá</p>
+            <p className="mt-1 text-xs text-slate-500">{course.reviewsCount} đánh giá</p>
           </div>
-          <div className="flex-1">
-            {[5, 4, 3, 2, 1].map((star) => (
-              <div key={star} className="flex items-center gap-3 mb-1.5">
-                <div className="flex items-center gap-1 w-6 shrink-0">
-                  <span className="text-xs text-white/55">{star}</span>
-                  <Star className="w-3 h-3 text-[#FFD600]" />
-                </div>
-                <div className="h-2 flex-1 overflow-hidden rounded-full bg-white/10">
-                  <div
-                    className="h-full rounded-full transition-all"
-                    style={{
-                      width: star === 5 ? "72%" : star === 4 ? "20%" : star === 3 ? "6%" : star === 2 ? "1.5%" : "0.5%",
-                      background: "linear-gradient(90deg, #6E35E8, #8B4DFF)",
-                    }}
-                  />
-                </div>
-                <span className="text-xs text-white/50 w-8 shrink-0 text-right">
-                  {star === 5 ? "72%" : star === 4 ? "20%" : star === 3 ? "6%" : star === 2 ? "2%" : "0%"}
-                </span>
-              </div>
-            ))}
+          <div className="flex-1 rounded-2xl border border-slate-100 bg-slate-50/80 px-4 py-3 text-sm text-slate-600">
+            {course.reviewsCount > 0 ? (
+              <p>
+                Điểm trung bình từ <span className="font-semibold text-slate-800">{course.reviewsCount}</span> đánh giá
+                học viên (đã duyệt). Phân bổ chi tiết theo từng mức sao sẽ được bổ sung khi có đủ dữ liệu.
+              </p>
+            ) : (
+              <p>Chưa có đánh giá từ học viên. Hãy là người đầu tiên chia sẻ trải nghiệm sau khi hoàn thành khóa học.</p>
+            )}
           </div>
         </div>
 
@@ -275,14 +267,11 @@ function ReviewsSection({ course, enrolled }) {
 
         {/* Success message */}
         {submitted && (
-          <div
-            className="p-4 rounded-2xl flex items-center gap-3"
-            style={{ background: "rgba(196, 255, 71,0.08)", border: "1px solid rgba(196, 255, 71,0.25)" }}
-          >
-            <CheckCircle className="w-5 h-5 text-[#4A7A00]" />
+          <div className="flex items-center gap-3 rounded-2xl border border-violet-200 bg-violet-50 p-4">
+            <CheckCircle className="h-5 w-5 shrink-0 text-[#6E35E8]" />
             <div>
-              <p className="font-bold text-[#4A7A00] text-sm">Đánh giá đã được gửi thành công</p>
-              <p className="text-xs text-white/55 mt-0.5">Cảm ơn bạn đã chia sẻ trải nghiệm. Đánh giá sẽ hiển thị sau khi được kiểm duyệt.</p>
+              <p className="text-sm font-bold text-violet-950">Đánh giá đã được gửi thành công</p>
+              <p className="mt-0.5 text-xs text-slate-600">Cảm ơn bạn đã chia sẻ trải nghiệm. Đánh giá sẽ hiển thị sau khi được kiểm duyệt.</p>
             </div>
           </div>
         )}
@@ -292,15 +281,15 @@ function ReviewsSection({ course, enrolled }) {
       <div>
         <div className="flex items-center gap-2 mb-4">
           <Sparkle className="w-5 h-5 text-[#6E35E8]" />
-          <h3 className="font-bold text-white">Đánh giá từ Mentor chuyên nghiệp</h3>
+          <h3 className="font-bold text-slate-900">Đánh giá từ Mentor chuyên nghiệp</h3>
           <span
-            className="text-xs font-bold px-2 py-0.5 rounded-full"
-            style={{ background: "rgba(196, 255, 71,0.15)", color: "#4A7A00" }}
+            className="rounded-full px-2 py-0.5 text-xs font-bold"
+            style={{ background: "rgba(110, 53, 232, 0.12)", color: "#5b21b6", border: "1px solid rgba(167, 139, 250, 0.35)" }}
           >
             Peer Review
           </span>
         </div>
-        <p className="text-sm text-white/55 mb-4">
+        <p className="mb-4 text-sm text-slate-600">
           Các khóa học được đánh giá chéo bởi các mentor khác trong hệ thống, đảm bảo chất lượng và độ chính xác.
         </p>
 
@@ -308,31 +297,31 @@ function ReviewsSection({ course, enrolled }) {
           {(course.reviews || []).map((review) => (
             <div
               key={review.id}
-              className="rounded-2xl border border-white/12 bg-white/[0.04] p-5 backdrop-blur-sm transition-all hover:border-violet-400/30"
+              className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-all hover:border-violet-200"
             >
               <div className="flex items-start gap-4">
                 <img
                   src={review.mentorAvatar}
                   alt={review.mentorName}
-                  className="w-12 h-12 rounded-full object-cover shrink-0"
+                  className="h-12 w-12 shrink-0 rounded-full object-cover"
                 />
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap mb-1">
-                    <span className="font-bold text-white">{review.mentorName}</span>
+                <div className="min-w-0 flex-1">
+                  <div className="mb-1 flex flex-wrap items-center gap-2">
+                    <span className="font-bold text-slate-900">{review.mentorName}</span>
                     {review.verified && (
                       <span
-                        className="flex items-center gap-1 text-xs font-bold px-2 py-0.5 rounded-full"
+                        className="flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-bold"
                         style={{ background: "rgba(110, 53, 232,0.1)", color: "#6E35E8" }}
                       >
-                        <SealCheck className="w-3 h-3" />
+                        <SealCheck className="h-3 w-3" />
                         Verified Mentor
                       </span>
                     )}
                   </div>
-                  <p className="text-xs text-white/55 mb-2">{review.mentorTitle}</p>
+                  <p className="mb-2 text-xs text-slate-500">{review.mentorTitle}</p>
                   <StarRating rating={review.rating} />
-                  <p className="text-sm text-white/85 mt-3 leading-relaxed">{review.comment}</p>
-                  <p className="text-xs text-white/50 mt-2">
+                  <p className="mt-3 text-sm leading-relaxed text-slate-700">{review.comment}</p>
+                  <p className="mt-2 text-xs text-slate-500">
                     {new Date(review.createdAt).toLocaleDateString("vi-VN", {
                       day: "numeric",
                       month: "long",
@@ -350,9 +339,9 @@ function ReviewsSection({ course, enrolled }) {
       <div>
         <div className="flex items-center gap-2 mb-4">
           <ThumbsUp className="w-5 h-5 text-[#6E35E8]" />
-          <h3 className="font-bold text-white">Đánh giá từ Học viên</h3>
+          <h3 className="font-bold text-slate-900">Đánh giá từ Học viên</h3>
         </div>
-        <p className="text-sm text-white/55 mb-4">
+        <p className="mb-4 text-sm text-slate-600">
           Những đánh giá chân thật từ học viên đã hoàn thành khóa học.
         </p>
 
@@ -360,31 +349,31 @@ function ReviewsSection({ course, enrolled }) {
           {STUDENT_REVIEWS.map((review) => (
             <div
               key={review.id}
-              className="rounded-2xl border border-white/12 bg-white/[0.04] p-5 backdrop-blur-sm transition-all hover:border-violet-400/30"
+              className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-all hover:border-violet-200"
             >
               <div className="flex items-start gap-4">
                 <img
                   src={review.avatar}
                   alt={review.name}
-                  className="w-12 h-12 rounded-full object-cover shrink-0"
+                  className="h-12 w-12 shrink-0 rounded-full object-cover"
                 />
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap mb-1">
-                    <span className="font-bold text-white">{review.name}</span>
+                <div className="min-w-0 flex-1">
+                  <div className="mb-1 flex flex-wrap items-center gap-2">
+                    <span className="font-bold text-slate-900">{review.name}</span>
                     {review.verified && (
                       <span
-                        className="flex items-center gap-1 text-xs font-bold px-2 py-0.5 rounded-full"
+                        className="flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-bold"
                         style={{ background: "rgba(110, 53, 232,0.1)", color: "#6E35E8" }}
                       >
-                        <SealCheck className="w-3 h-3" />
+                        <SealCheck className="h-3 w-3" />
                         Verified Student
                       </span>
                     )}
                   </div>
-                  <p className="text-xs text-white/55 mb-2">{review.role}</p>
+                  <p className="mb-2 text-xs text-slate-500">{review.role}</p>
                   <StarRating rating={review.rating} />
-                  <p className="text-sm text-white/85 mt-3 leading-relaxed">{review.comment}</p>
-                  <p className="text-xs text-white/50 mt-2">
+                  <p className="mt-3 text-sm leading-relaxed text-slate-700">{review.comment}</p>
+                  <p className="mt-2 text-xs text-slate-500">
                     {new Date(review.date).toLocaleDateString("vi-VN", {
                       day: "numeric",
                       month: "long",
@@ -400,27 +389,23 @@ function ReviewsSection({ course, enrolled }) {
         {/* CTA to add review if enrolled */}
         {enrolled && !submitted && (
           <div
-            className="mt-5 p-6 rounded-3xl cursor-pointer hover:brightness-95 transition-all"
-            style={{ 
-              background: "linear-gradient(135deg, rgba(110, 53, 232,0.06), rgba(139, 77, 255,0.02))", 
-              border: "2px dashed rgba(110, 53, 232,0.2)" 
-            }}
+            className="mt-5 cursor-pointer rounded-3xl border-2 border-dashed border-violet-200 bg-gradient-to-br from-violet-50/80 to-white p-6 transition-all hover:border-violet-300"
             onClick={() => setShowReviewDialog(true)}
           >
             <div className="flex items-center gap-4">
               <div
-                className="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0"
+                className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl"
                 style={{ background: "linear-gradient(135deg, #6E35E8, #8B4DFF)" }}
               >
-                <Pencil className="w-6 h-6 text-white" />
+                <Pencil className="h-6 w-6 text-white" />
               </div>
-              <div className="flex-1">
-                <p className="font-bold text-white mb-1">Chia sẻ trải nghiệm của bạn</p>
-                <p className="text-sm text-white/70">
+              <div className="min-w-0 flex-1">
+                <p className="mb-1 font-bold text-slate-900">Chia sẻ trải nghiệm của bạn</p>
+                <p className="text-sm text-slate-600">
                   Bạn đã hoàn thành khóa học? Hãy viết đánh giá để giúp học viên khác đưa ra quyết định đúng đắn.
                 </p>
               </div>
-              <ArrowRight className="w-5 h-5 text-[#6E35E8] shrink-0" />
+              <ArrowRight className="h-5 w-5 shrink-0 text-[#6E35E8]" />
             </div>
           </div>
         )}
@@ -428,36 +413,36 @@ function ReviewsSection({ course, enrolled }) {
 
       {/* Review Dialog */}
       <Dialog open={showReviewDialog} onOpenChange={setShowReviewDialog}>
-        <DialogContent className="border border-white/12 bg-[#120d24] text-white sm:max-w-2xl">
+        <DialogContent className="border border-slate-200 bg-white text-slate-900 sm:max-w-2xl">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-xl font-bold text-white">
-              <Pencil className="w-5 h-5 text-[#6E35E8]" />
+            <DialogTitle className="flex items-center gap-2 text-xl font-bold text-slate-900">
+              <Pencil className="h-5 w-5 text-[#6E35E8]" />
               Đánh giá khóa học
             </DialogTitle>
-            <DialogDescription className="text-sm text-white/60">
+            <DialogDescription className="text-sm text-slate-600">
               Chia sẻ trải nghiệm của bạn để giúp học viên khác có cái nhìn đúng đắn hơn về khóa học.
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-5 mt-4">
+          <div className="mt-4 space-y-5">
             {/* Course info quick reference */}
-            <div className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/[0.06] p-3">
+            <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 p-3">
               <img
                 src={course.thumbnail}
                 alt={course.title}
-                className="w-16 h-16 rounded-xl object-cover shrink-0"
+                className="h-16 w-16 shrink-0 rounded-xl object-cover"
               />
-              <div className="flex-1 min-w-0">
-                <p className="font-bold text-white text-sm truncate">{course.title}</p>
-                <p className="text-xs text-white/55 mt-0.5">Bởi {course.mentorName}</p>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-bold text-slate-900">{course.title}</p>
+                <p className="mt-0.5 text-xs text-slate-500">Bởi {course.mentorName}</p>
               </div>
             </div>
 
             {/* Star rating picker */}
             <div>
-              <p className="text-sm font-medium text-white/85 mb-3">
+              <p className="mb-3 text-sm font-medium text-slate-800">
                 Bạn đánh giá khóa học này mấy sao?
-                <span className="text-red-400 ml-1">*</span>
+                <span className="ml-1 text-red-500">*</span>
               </p>
               <div className="flex gap-2">
                 {[1, 2, 3, 4, 5].map((s) => (
@@ -470,8 +455,8 @@ function ReviewsSection({ course, enrolled }) {
                   >
                     <Star
                       fill={s <= (hoverRating || reviewRating) ? "#FFD600" : "none"}
-                      className="w-10 h-10"
-                      style={{ color: s <= (hoverRating || reviewRating) ? "#FFD600" : "rgba(255,255,255,0.28)" }}
+                      className="h-10 w-10"
+                      style={{ color: s <= (hoverRating || reviewRating) ? "#FFD600" : "rgb(203 213 225)" }}
                     />
                   </button>
                 ))}
@@ -493,30 +478,30 @@ function ReviewsSection({ course, enrolled }) {
 
             {/* Comment textarea */}
             <div>
-              <label className="text-sm font-medium text-white/85 mb-2 block">
+              <label className="mb-2 block text-sm font-medium text-slate-800">
                 Chia sẻ trải nghiệm của bạn
-                <span className="text-red-400 ml-1">*</span>
+                <span className="ml-1 text-red-500">*</span>
               </label>
               <textarea
                 value={reviewComment}
                 onChange={(e) => setReviewComment(e.target.value)}
                 placeholder="Khóa học đã giúp bạn cải thiện điều gì? Điểm nổi bật nhất là gì? Bạn có đề xuất gì cho mentor không?..."
                 rows={5}
-                className="w-full resize-none rounded-2xl border border-white/15 bg-[#0c0818]/80 px-4 py-3 text-sm text-white outline-none transition-all placeholder:text-white/40 focus:border-[#6E35E8] focus:ring-2 focus:ring-violet-500/25"
+                className="w-full resize-none rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition-all placeholder:text-slate-400 focus:border-[#6E35E8] focus:ring-2 focus:ring-violet-500/20"
                 maxLength={800}
               />
-              <div className="flex justify-between mt-1.5">
-                <p 
+              <div className="mt-1.5 flex justify-between">
+                <p
                   className="text-xs"
-                  style={{ 
-                    color: reviewComment.length >= 30 ? "#4A7A00" : reviewComment.length > 0 ? "#CC5C00" : "rgba(255,255,255,0.45)" 
+                  style={{
+                    color: reviewComment.length >= 30 ? "#15803d" : reviewComment.length > 0 ? "#c2410c" : "rgb(100 116 139)",
                   }}
                 >
                   {reviewComment.length >= 30 
                     ? "✓ Đủ độ dài để gửi" 
                     : "Tối thiểu 30 ký tự để đánh giá được chấp thuận"}
                 </p>
-                <p className="text-xs text-white/50">{reviewComment.length}/800</p>
+                <p className="text-xs text-slate-500">{reviewComment.length}/800</p>
               </div>
             </div>
 
@@ -525,7 +510,7 @@ function ReviewsSection({ course, enrolled }) {
               <button
                 onClick={handleCloseDialog}
                 disabled={submitting}
-                className="flex-1 rounded-xl border border-white/15 py-3 text-sm font-medium text-white/70 transition-all hover:bg-white/[0.08] disabled:opacity-40"
+                className="flex-1 rounded-xl border border-slate-200 py-3 text-sm font-medium text-slate-700 transition-all hover:bg-slate-50 disabled:opacity-40"
               >
                 Huỷ
               </button>
@@ -537,7 +522,7 @@ function ReviewsSection({ course, enrolled }) {
               >
                 {submitting ? (
                   <>
-                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-violet-200 border-t-violet-700" />
                     Đang gửi...
                   </>
                 ) : (
@@ -563,7 +548,7 @@ export function CourseDetail() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("overview");
   const [showAllLessons, setShowAllLessons] = useState(false);
-  const [enrolled, setEnrolled] = useState(false); 
+  const [enrollmentRow, setEnrollmentRow] = useState(null); 
   const [wishlisted, setWishlisted] = useState(false);
   const currentUser = getUser();
 
@@ -580,6 +565,7 @@ export function CourseDetail() {
             isPreview: !!lesson.isFree,
           })),
         );
+        const stats = normalizeCourseStats(c.stats);
         setCourse({
           id: c._id,
           title: c.title,
@@ -593,8 +579,8 @@ export function CourseDetail() {
           mentorAvatar: c.mentorId?.userId?.avatar || "https://api.dicebear.com/7.x/avataaars/svg?seed=Lucky",
           mentorTitle: c.mentorId?.userId?.desiredPosition || "Chuyên gia",
           mentorCompany: c.mentorId?.userId?.currentCompany || "ProInterview",
-          rating: c.stats?.rating || 4.8,
-          reviewsCount: c.stats?.reviewCount || 0,
+          rating: stats.rating,
+          reviewsCount: stats.reviewsCount,
           studentsCount: c.stats?.enrollmentCount || 0,
           duration: c.totalDurationMinutes || 120,
           lessonsCount: c.totalLessons || 0,
@@ -611,22 +597,28 @@ export function CourseDetail() {
       setLoading(false);
     });
 
-    // Check if current user is enrolled
-    enrollmentApi.getMyEnrollments().then(res => {
+    enrollmentApi.getMyEnrollments().then((res) => {
       if (res.success) {
-        const isEnrolled = res.enrollments.some(e => 
-          (e.courseId?._id === id) || (e.courseId === id)
+        const row = res.enrollments.find(
+          (e) => String(e.courseId?._id || e.courseId || "") === String(id),
         );
-        setEnrolled(isEnrolled);
+        setEnrollmentRow(row || null);
       }
     });
   }, [id]);
 
+  const hasPaidEnrollment = enrollmentAccessGranted(enrollmentRow);
+  const hasPendingPayment = !!enrollmentRow && !enrollmentAccessGranted(enrollmentRow);
+
   const handleEnroll = async () => {
-    if (!id) return;
+    if (!id || !course) return;
+    if (course.price > 0) {
+      navigate(`/checkout?type=course&courseId=${id}&price=${course.price}`);
+      return;
+    }
     const res = await enrollmentApi.enroll(id);
     if (res.success) {
-      setEnrolled(true);
+      setEnrollmentRow(res.enrollment || enrollmentRow);
       toast.success("Đăng ký khóa học thành công!");
     } else {
       if (res.error === "Chưa đăng nhập.") {
@@ -639,18 +631,20 @@ export function CourseDetail() {
 
   if (loading) {
     return (
-      <div className="pi-page-dashboard-bg flex min-h-full w-full items-center justify-center px-6 py-20">
-        <div className="animate-spin rounded-full h-12 w-12 border-4 border-primary-fixed border-t-transparent"></div>
-      </div>
+      <MentorPageShell bottomPad="pb-24">
+        <div className="flex min-h-[50vh] w-full items-center justify-center px-6 py-20">
+          <div className="h-12 w-12 animate-spin rounded-full border-4 border-violet-300 border-t-violet-700" />
+        </div>
+      </MentorPageShell>
     );
   }
 
   if (!course) {
     return (
-      <div className="pi-page-dashboard-bg flex min-h-full w-full items-center justify-center px-6 py-20 font-sans text-white">
-        <div className="text-center">
-          <BookOpen className="mx-auto mb-4 h-16 w-16 text-white/30" />
-          <h2 className="mb-2 text-xl font-bold text-white">Không tìm thấy khóa học</h2>
+      <MentorPageShell bottomPad="pb-24">
+        <div className="flex min-h-[50vh] w-full flex-col items-center justify-center px-6 py-20 text-center font-sans text-slate-600">
+          <BookOpen className="mx-auto mb-4 h-16 w-16 text-slate-300" />
+          <h2 className="mb-2 text-xl font-bold text-slate-900">Không tìm thấy khóa học</h2>
           <button
             type="button"
             onClick={() => navigate("/courses")}
@@ -659,7 +653,7 @@ export function CourseDetail() {
             Quay lại danh sách
           </button>
         </div>
-      </div>
+      </MentorPageShell>
     );
   }
 
@@ -679,22 +673,14 @@ export function CourseDetail() {
   ];
 
   return (
-    <div className="pi-page-dashboard-bg min-h-full w-full font-sans antialiased text-white selection:bg-[rgba(196,255,71,0.28)] selection:text-white">
-      <header className="relative border-b border-white/[0.07] pb-14 pt-4 sm:pb-16 sm:pt-5">
-        <div
-          className="pointer-events-none absolute inset-0 opacity-[0.09]"
-          style={{
-            backgroundImage:
-              "linear-gradient(rgba(255,255,255,0.45) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.45) 1px,transparent 1px)",
-            backgroundSize: "32px 32px",
-          }}
-          aria-hidden
-        />
+    <MentorPageShell bottomPad="pb-24">
+      <div className="relative z-10 min-h-full w-full font-sans text-slate-900 antialiased selection:bg-[rgba(122,35,229,0.18)] selection:text-slate-900">
+      <header className="relative border-b border-slate-200/80 pb-12 pt-6 sm:pb-14 sm:pt-8">
         <div className="relative z-10 mx-auto max-w-7xl px-6 sm:px-8">
           <button
             type="button"
             onClick={() => navigate(-1)}
-            className="group mb-3 flex h-11 w-11 items-center justify-center rounded-full border border-white/20 bg-white/10 text-white shadow-[0_1px_0_rgba(255,255,255,0.06)_inset] transition-all hover:border-white/35 hover:bg-white/[0.18] active:scale-[0.97]"
+            className="group mb-3 flex h-11 w-11 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 shadow-sm transition-all hover:border-violet-300 hover:bg-violet-50 hover:text-slate-900 active:scale-[0.97]"
             aria-label="Quay lại trang trước"
           >
             <ArrowLeft className="h-5 w-5 transition-transform group-hover:-translate-x-0.5" strokeWidth={2} />
@@ -704,11 +690,8 @@ export function CourseDetail() {
             {/* Left: Course Info */}
             <div>
               {/* Category + Level badges */}
-              <div className="flex items-center gap-2 mb-4 flex-wrap">
-                <span
-                  className="text-xs font-bold px-3 py-1 rounded-full"
-                  style={{ background: "rgba(196, 255, 71,0.15)", color: "#c4ff47", border: "1px solid rgba(196, 255, 71,0.25)" }}
-                >
+              <div className="mb-4 flex flex-wrap items-center gap-2">
+                <span className="rounded-full border border-violet-200 bg-violet-50 px-3 py-1 text-xs font-bold text-violet-900">
                   {course.category}
                 </span>
                 <span
@@ -719,30 +702,32 @@ export function CourseDetail() {
                 </span>
               </div>
 
-              <h1 className="mb-4 text-3xl font-black leading-tight tracking-tighter text-white md:text-4xl">
+              <h1 className="mb-4 text-3xl font-black leading-tight tracking-tighter text-slate-900 md:text-4xl">
                 {course.title}
               </h1>
-              <p className="mb-6 max-w-2xl text-base font-semibold leading-relaxed text-white/65">
+              <p className="mb-6 max-w-2xl text-base font-semibold leading-relaxed text-slate-600">
                 {course.description}
               </p>
 
               {/* Rating row */}
-              <div className="flex items-center gap-6 mb-6 flex-wrap">
+              <div className="mb-6 flex flex-wrap items-center gap-6">
                 <div className="flex items-center gap-2">
                   <StarRating rating={course.rating} />
-                  <span className="font-bold text-[#FFD600]">{course.rating}</span>
-                  <span className="text-white/50 text-sm">({course.reviewsCount} đánh giá)</span>
+                  <span className="font-bold text-amber-600">
+                    {course.rating != null ? course.rating.toFixed(1) : "—"}
+                  </span>
+                  <span className="text-sm text-slate-500">({course.reviewsCount} đánh giá)</span>
                 </div>
-                <div className="flex items-center gap-1.5 text-white/60 text-sm">
-                  <Users className="w-4 h-4" />
+                <div className="flex items-center gap-1.5 text-sm text-slate-600">
+                  <Users className="h-4 w-4" />
                   <span>{course.studentsCount.toLocaleString()} học viên</span>
                 </div>
-                <div className="flex items-center gap-1.5 text-white/60 text-sm">
-                  <Clock className="w-4 h-4" />
+                <div className="flex items-center gap-1.5 text-sm text-slate-600">
+                  <Clock className="h-4 w-4" />
                   <span>{formatDuration(course.duration)}</span>
                 </div>
-                <div className="flex items-center gap-1.5 text-white/60 text-sm">
-                  <BookOpen className="w-4 h-4" />
+                <div className="flex items-center gap-1.5 text-sm text-slate-600">
+                  <BookOpen className="h-4 w-4" />
                   <span>{course.lessonsCount} bài học</span>
                 </div>
               </div>
@@ -752,23 +737,20 @@ export function CourseDetail() {
                 <img
                   src={course.mentorAvatar}
                   alt={course.mentorName}
-                  className="w-12 h-12 rounded-full object-cover border-2 border-white/20"
+                  className="h-12 w-12 rounded-full border-2 border-slate-200 object-cover"
                 />
                 <div>
                   <div className="flex items-center gap-1.5">
-                    <span className="text-white font-semibold">{course.mentorName}</span>
-                    <SealCheck className="w-4 h-4 text-[#c4ff47]" />
+                    <span className="font-semibold text-slate-900">{course.mentorName}</span>
+                    <SealCheck className="h-4 w-4 text-[#6E35E8]" />
                   </div>
-                  <p className="text-white/55 text-sm">{course.mentorTitle} · {course.mentorCompany}</p>
+                  <p className="text-sm text-slate-600">{course.mentorTitle} · {course.mentorCompany}</p>
                 </div>
               </div>
             </div>
 
             {/* Right: Sticky Enrollment Card */}
-            <div
-              className="rounded-3xl overflow-hidden shadow-2xl border"
-              style={{ border: "1px solid rgba(255,255,255,0.12)", background: "rgba(255,255,255,0.97)" }}
-            >
+            <div className="glass-card overflow-hidden shadow-[0_20px_50px_rgba(15,23,42,0.08)]">
               {/* Thumbnail preview */}
               <div className="relative h-48 overflow-hidden">
                 <img src={course.thumbnail} alt={course.title} className="w-full h-full object-cover" />
@@ -780,20 +762,17 @@ export function CourseDetail() {
                     <PlayCircle className="w-8 h-8 text-white" />
                   </div>
                 </div>
-                <div
-                  className="absolute top-3 left-3 text-xs font-bold px-2.5 py-1 rounded-full"
-                  style={{ background: "#c4ff47", color: "#1F1F1F" }}
-                >
+                <div className="absolute left-3 top-3 rounded-full bg-[#6E35E8]/95 px-2.5 py-1 text-xs font-bold text-white shadow-lg backdrop-blur-[2px]">
                   Xem trước miễn phí
                 </div>
               </div>
 
-              <div className="border-t border-white/10 bg-[#0c0818]/40 p-6 backdrop-blur-sm">
+              <div className="border-t border-slate-200 bg-slate-50/90 p-6">
                 {/* Price */}
                 <div className="mb-4 flex items-end gap-2">
-                  <span className="text-2xl font-bold text-violet-200">{formatPrice(course.price)}</span>
+                  <span className="text-2xl font-bold text-slate-900">{formatPrice(course.price)}</span>
                   {course.price > 0 && (
-                    <span className="mb-1 text-xs text-white/45 line-through">
+                    <span className="mb-1 text-xs text-slate-400 line-through">
                       {formatPrice(Math.round(course.price * 1.4))}
                     </span>
                   )}
@@ -809,7 +788,7 @@ export function CourseDetail() {
 
                 {/* CTAs */}
                 <div className="space-y-2.5 mb-4">
-                  {enrolled && !isReadOnlyMentorView ? (
+                  {hasPaidEnrollment && !isReadOnlyMentorView ? (
                     <button
                       onClick={() => navigate(`/courses/${course.id}/learn`)}
                       className="w-full py-3 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 transition-all"
@@ -818,7 +797,7 @@ export function CourseDetail() {
                       <PlayCircle className="w-4.5 h-4.5" />
                       Tiếp tục học
                     </button>
-                  ) : enrolled && isReadOnlyMentorView ? (
+                  ) : hasPaidEnrollment && isReadOnlyMentorView ? (
                     <button
                       disabled
                       className="w-full py-3 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 transition-all opacity-50 cursor-not-allowed"
@@ -827,19 +806,38 @@ export function CourseDetail() {
                       <Lock className="w-4.5 h-4.5" />
                       Mentor chỉ được xem khóa học
                     </button>
+                  ) : hasPendingPayment && canTakeStudentActions ? (
+                    <div className="space-y-2">
+                      <p className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-center text-xs font-semibold text-amber-900">
+                        Đã ghi danh — đang chờ admin xác nhận chuyển khoản trước khi vào học đầy đủ.
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          navigate(`/checkout?type=course&courseId=${course.id}&price=${course.price}`)
+                        }
+                        className="flex w-full items-center justify-center gap-2 rounded-2xl border border-violet-300 bg-white py-3 text-sm font-bold text-violet-900 shadow-sm transition-all hover:bg-violet-50 active:scale-[0.98]"
+                      >
+                        <ShoppingCart className="w-4.5 h-4.5" />
+                        Tiếp tục thanh toán
+                      </button>
+                    </div>
                   ) : (
                     <button
                       onClick={canTakeStudentActions ? handleEnroll : undefined}
                       disabled={!canTakeStudentActions}
-                      className="w-full py-3 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 transition-all hover:brightness-110 active:scale-[0.98] shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
-                      style={{ background: "#c4ff47", color: "#1F1F1F", boxShadow: "0 6px 20px rgba(196, 255, 71,0.3)" }}
+                      className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-br from-[#6E35E8] to-[#8B4DFF] py-3 text-sm font-bold text-white shadow-[0_8px_28px_rgba(110,53,232,0.35)] transition-all hover:shadow-[0_12px_36px_rgba(110,53,232,0.45)] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       <ShoppingCart className="w-4.5 h-4.5" />
-                      {canTakeStudentActions ? (course.price === 0 ? "Đăng ký miễn phí" : "Đăng ký khóa học") : "Mentor chỉ được xem khóa học"}
+                      {canTakeStudentActions
+                        ? course.price === 0
+                          ? "Đăng ký miễn phí"
+                          : "Thanh toán & ghi danh"
+                        : "Mentor chỉ được xem khóa học"}
                     </button>
                   )}
                   {isReadOnlyMentorView && (
-                    <p className="text-[10px] text-white/45 font-semibold text-center">Khóa học này không thuộc bạn nên không thể thao tác đăng ký/đặt lịch.</p>
+                    <p className="text-center text-[10px] font-semibold text-slate-500">Khóa học này không thuộc bạn nên không thể thao tác đăng ký/đặt lịch.</p>
                   )}
                   <div className="flex gap-2">
                     <button
@@ -847,8 +845,8 @@ export function CourseDetail() {
                       onClick={() => setWishlisted(!wishlisted)}
                       className={`flex flex-1 items-center justify-center gap-1.5 rounded-xl border py-2.5 text-xs font-semibold transition-all ${
                         wishlisted
-                          ? "border-violet-400/45 bg-violet-500/15 text-violet-100"
-                          : "border-white/15 bg-transparent text-white/60 hover:border-white/25 hover:bg-white/[0.06]"
+                          ? "border-violet-300 bg-violet-50 text-violet-900"
+                          : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50"
                       }`}
                     >
                       <Heart
@@ -859,7 +857,7 @@ export function CourseDetail() {
                     </button>
                     <button
                       type="button"
-                      className="flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-white/15 py-2.5 text-xs font-semibold text-white/60 transition-all hover:bg-white/[0.06]"
+                      className="flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white py-2.5 text-xs font-semibold text-slate-600 transition-all hover:bg-slate-50"
                     >
                       <ShareNetwork className="h-3.5 w-3.5" />
                       Chia sẻ
@@ -868,39 +866,41 @@ export function CourseDetail() {
                 </div>
 
                 {/* Course stats */}
-                <div className="space-y-2.5 border-t border-white/10 pt-5">
+                <div className="space-y-2.5 border-t border-slate-200 pt-5">
                   {[
                     { icon: Clock, label: "Thời lượng", value: formatDuration(course.duration) },
                     { icon: BookOpen, label: "Số bài học", value: `${course.lessonsCount} bài` },
                     { icon: Video, label: "Video chất lượng", value: "HD 1080p" },
                     { icon: Certificate, label: "Chứng chỉ hoàn thành", value: "Có" },
                     { icon: CalendarBlank, label: "Truy cập mãi mãi", value: "Không giới hạn" },
-                  ].map((item) => (
+                  ].map((item) => {
+                    const ItemIcon = item.icon;
+                    return (
                     <div key={item.label} className="flex items-center justify-between text-sm">
-                      <div className="flex items-center gap-2 text-white/55">
-                        <item.icon className="h-4 w-4" />
+                      <div className="flex items-center gap-2 text-slate-500">
+                        <ItemIcon className="h-4 w-4" />
                         {item.label}
                       </div>
-                      <span className="font-semibold text-white">{item.value}</span>
+                      <span className="font-semibold text-slate-900">{item.value}</span>
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>
 
                 {/* Book Mentor CTA */}
-                {enrolled && canTakeStudentActions && (
+                {hasPaidEnrollment && canTakeStudentActions && (
                   <div
-                    className="mt-5 p-4 rounded-2xl cursor-pointer hover:brightness-95 transition-all"
-                    style={{ background: "linear-gradient(135deg, rgba(110, 53, 232,0.08), rgba(139, 77, 255,0.05))", border: "1px solid rgba(110, 53, 232,0.15)" }}
+                    className="mt-5 cursor-pointer rounded-2xl border border-violet-200 bg-gradient-to-br from-violet-50 to-white p-4 transition-all hover:border-violet-300"
                     onClick={() => navigate(`/mentors/${course.mentorId}`)}
                   >
                     <div className="flex items-center gap-3">
-                      <img src={course.mentorAvatar} alt={course.mentorName} className="w-10 h-10 rounded-full object-cover" />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs font-bold text-[#6E35E8] mb-0.5">Sau khi học xong →</p>
-                        <p className="text-sm font-semibold text-white">Book 1-1 với {course.mentorName}</p>
-                        <p className="text-xs text-white/55">Confirm kiến thức & nhận feedback cá nhân</p>
+                      <img src={course.mentorAvatar} alt={course.mentorName} className="h-10 w-10 rounded-full object-cover" />
+                      <div className="min-w-0 flex-1">
+                        <p className="mb-0.5 text-xs font-bold text-[#6E35E8]">Sau khi học xong →</p>
+                        <p className="text-sm font-semibold text-slate-900">Book 1-1 với {course.mentorName}</p>
+                        <p className="text-xs text-slate-600">Confirm kiến thức & nhận feedback cá nhân</p>
                       </div>
-                      <ArrowRight className="h-4 w-4 shrink-0 text-violet-300" />
+                      <ArrowRight className="h-4 w-4 shrink-0 text-violet-500" />
                     </div>
                   </div>
                 )}
@@ -911,22 +911,25 @@ export function CourseDetail() {
       </header>
 
       <div className="relative z-[1] mx-auto max-w-7xl px-6 sm:px-8">
-        <div className="-mx-6 mt-8 flex gap-1 overflow-x-auto border-b border-white/10 px-6">
-          {TABS.map((tab) => (
+        <div className="-mx-6 mt-8 flex gap-1 overflow-x-auto border-b border-slate-200 px-6">
+          {TABS.map((tab) => {
+            const TabIcon = tab.icon;
+            return (
             <button
               key={tab.key}
               type="button"
               onClick={() => setActiveTab(tab.key)}
               className={`flex items-center gap-2 whitespace-nowrap border-b-2 px-4 py-3 text-sm font-semibold transition-all ${
                 activeTab === tab.key
-                  ? "border-violet-400 text-violet-100"
-                  : "border-transparent text-white/50 hover:text-white/80"
+                  ? "border-[#6E35E8] text-[#6E35E8]"
+                  : "border-transparent text-slate-500 hover:text-slate-800"
               }`}
             >
-              <tab.icon className="h-4 w-4" />
+              <TabIcon className="h-4 w-4" />
               {tab.label}
             </button>
-          ))}
+            );
+          })}
         </div>
 
         <div className="grid lg:grid-cols-[1fr_380px] gap-10 py-10">
@@ -936,48 +939,48 @@ export function CourseDetail() {
             {activeTab === "overview" && (
               <div className="space-y-8">
                 {/* Learning outcomes */}
-                <div className="rounded-3xl border border-white/12 bg-white/[0.04] p-6 backdrop-blur-sm">
-                  <h2 className="text-xl font-bold text-white mb-5 flex items-center gap-2">
-                    <Trophy className="w-5 h-5 text-[#6E35E8]" />
+                <div className="glass-card p-6">
+                  <h2 className="mb-5 flex items-center gap-2 text-xl font-bold text-slate-900">
+                    <Trophy className="h-5 w-5 text-[#6E35E8]" />
                     Bạn sẽ học được gì?
                   </h2>
-                  <div className="grid sm:grid-cols-2 gap-3">
+                  <div className="grid gap-3 sm:grid-cols-2">
                     {course.learningOutcomes.map((outcome, i) => (
                       <div key={i} className="flex items-start gap-3">
-                        <CheckCircle className="w-5 h-5 text-[#6E35E8] shrink-0 mt-0.5" />
-                        <span className="text-sm text-white/85">{outcome}</span>
+                        <CheckCircle className="mt-0.5 h-5 w-5 shrink-0 text-[#6E35E8]" />
+                        <span className="text-sm text-slate-700">{outcome}</span>
                       </div>
                     ))}
                   </div>
                 </div>
 
                 {/* Requirements */}
-                <div className="rounded-3xl border border-white/12 bg-white/[0.04] p-6 backdrop-blur-sm">
-                  <h2 className="text-xl font-bold text-white mb-5 flex items-center gap-2">
-                    <Target className="w-5 h-5 text-[#FF8C42]" />
+                <div className="glass-card p-6">
+                  <h2 className="mb-5 flex items-center gap-2 text-xl font-bold text-slate-900">
+                    <Target className="h-5 w-5 text-[#FF8C42]" />
                     Yêu cầu
                   </h2>
                   <div className="space-y-2">
                     {course.requirements.map((req, i) => (
                       <div key={i} className="flex items-start gap-3">
-                        <WarningCircle className="w-4 h-4 text-[#FF8C42] shrink-0 mt-0.5" />
-                        <span className="text-sm text-white/85">{req}</span>
+                        <WarningCircle className="mt-0.5 h-4 w-4 shrink-0 text-[#FF8C42]" />
+                        <span className="text-sm text-slate-700">{req}</span>
                       </div>
                     ))}
                   </div>
                 </div>
 
                 {/* Target audience */}
-                <div className="rounded-3xl border border-white/12 bg-white/[0.04] p-6 backdrop-blur-sm">
-                  <h2 className="text-xl font-bold text-white mb-5 flex items-center gap-2">
-                    <Users className="w-5 h-5 text-[#FFD600]" />
+                <div className="glass-card p-6">
+                  <h2 className="mb-5 flex items-center gap-2 text-xl font-bold text-slate-900">
+                    <Users className="h-5 w-5 text-amber-500" />
                     Dành cho ai?
                   </h2>
                   <div className="space-y-2">
                     {course.targetAudience.map((aud, i) => (
                       <div key={i} className="flex items-start gap-3">
-                        <CheckCircle className="w-4 h-4 text-[#FFD600] shrink-0 mt-0.5" />
-                        <span className="text-sm text-white/85">{aud}</span>
+                        <CheckCircle className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
+                        <span className="text-sm text-slate-700">{aud}</span>
                       </div>
                     ))}
                   </div>
@@ -985,13 +988,13 @@ export function CourseDetail() {
 
                 {/* Tags */}
                 <div>
-                  <h3 className="text-sm font-semibold text-white/55 mb-3">Tags khóa học</h3>
+                  <h3 className="mb-3 text-sm font-semibold text-slate-600">Tags khóa học</h3>
                   <div className="flex flex-wrap gap-2">
                     {course.tags.map((tag) => (
                       <span
                         key={tag}
                         className="text-xs px-3 py-1.5 rounded-full font-medium"
-                        style={{ background: "rgba(110, 53, 232,0.15)", color: "#ddd6fe", border: "1px solid rgba(139, 77, 255, 0.35)" }}
+                        style={{ background: "rgba(110, 53, 232,0.08)", color: "#5b21b6", border: "1px solid rgba(139, 77, 255, 0.25)" }}
                       >
                         #{tag}
                       </span>
@@ -1003,27 +1006,26 @@ export function CourseDetail() {
 
             {/* ── Curriculum Tab ───────────────────────────── */}
             {activeTab === "curriculum" && (
-              <div className="overflow-hidden rounded-3xl border border-white/12 bg-white/[0.04] backdrop-blur-sm">
-                <div className="border-b border-white/10 p-6">
-                  <h2 className="mb-1 text-xl font-bold text-white">Nội dung khóa học</h2>
-                  <p className="text-sm text-white/55">
+              <div className="glass-card overflow-hidden">
+                <div className="border-b border-slate-200 bg-slate-50/80 p-6">
+                  <h2 className="mb-1 text-xl font-bold text-slate-900">Nội dung khóa học</h2>
+                  <p className="text-sm text-slate-600">
                     {course.lessonsCount} bài học · {formatDuration(course.duration)} · Cập nhật{" "}
                     {new Date(course.updatedAt).toLocaleDateString("vi-VN", { month: "long", year: "numeric" })}
                   </p>
                 </div>
 
-                <div className="divide-y divide-white/10">
+                <div className="divide-y divide-slate-100">
                   {displayedLessons.map((lesson, i) => (
                     <LessonRow key={lesson.id} lesson={lesson} index={i} />
                   ))}
                 </div>
 
                 {(course.lessons || []).length > 5 && (
-                  <div className="border-t border-white/10 p-4">
+                  <div className="border-t border-slate-200 p-4">
                     <button
                       onClick={() => setShowAllLessons(!showAllLessons)}
-                      className="w-full py-3 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 transition-all"
-                      style={{ color: "#6E35E8", background: "rgba(110, 53, 232,0.06)", border: "1px solid rgba(110, 53, 232,0.15)" }}
+                      className="flex w-full items-center justify-center gap-2 rounded-xl border border-violet-200 bg-violet-50/80 py-3 text-sm font-semibold text-[#6E35E8] transition-all hover:bg-violet-100"
                     >
                       {showAllLessons ? (
                         <>
@@ -1045,49 +1047,49 @@ export function CourseDetail() {
             {/* ── Instructor Tab ──────────────────────────── */}
             {activeTab === "instructor" && (
               <div className="space-y-6">
-                <div className="rounded-3xl border border-white/12 bg-white/[0.04] p-6 backdrop-blur-sm">
-                  <div className="flex items-start gap-5 mb-6">
+                <div className="glass-card p-6">
+                  <div className="mb-6 flex items-start gap-5">
                     <img
                       src={course.mentorAvatar}
                       alt={course.mentorName}
-                      className="h-20 w-20 rounded-2xl border-2 border-white/15 object-cover shadow-sm"
+                      className="h-20 w-20 rounded-2xl border-2 border-slate-200 object-cover shadow-sm"
                     />
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap mb-1">
-                        <h2 className="text-xl font-bold text-white">{course.mentorName}</h2>
-                        <SealCheck className="w-5 h-5 text-[#6E35E8]" />
+                    <div className="min-w-0 flex-1">
+                      <div className="mb-1 flex flex-wrap items-center gap-2">
+                        <h2 className="text-xl font-bold text-slate-900">{course.mentorName}</h2>
+                        <SealCheck className="h-5 w-5 text-[#6E35E8]" />
                         <span
-                          className="text-xs font-bold px-2.5 py-1 rounded-full"
+                          className="rounded-full px-2.5 py-1 text-xs font-bold"
                           style={{ background: "rgba(110, 53, 232,0.1)", color: "#6E35E8" }}
                         >
                           Mentor xác thực
                         </span>
                       </div>
-                      <p className="text-white/70 mb-1">{course.mentorTitle}</p>
-                      <p className="text-sm text-white/50">{course.mentorCompany}</p>
+                      <p className="mb-1 text-slate-700">{course.mentorTitle}</p>
+                      <p className="text-sm text-slate-500">{course.mentorCompany}</p>
                     </div>
                   </div>
 
-                  <div className="mb-6 grid grid-cols-3 gap-4 border-b border-white/10 pb-6">
+                  <div className="mb-6 grid grid-cols-3 gap-4 border-b border-slate-200 pb-6">
                     {[
-                      { icon: Star, value: course.rating, label: "Rating", color: "#FFD600" },
+                      { icon: Star, value: course.rating != null ? course.rating.toFixed(1) : "—", label: "Rating", color: "#FFD600" },
                       { icon: Users, value: `${course.studentsCount}+`, label: "Học viên", color: "#6E35E8" },
-                      { icon: BookOpen, value: "3", label: "Khóa học", color: "#c4ff47" },
+                      { icon: BookOpen, value: "3", label: "Khóa học", color: "#a78bfa" },
                     ].map((stat) => (
                       <div key={stat.label} className="text-center">
                         <div
-                          className="w-10 h-10 rounded-xl flex items-center justify-center mx-auto mb-2"
+                          className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-xl"
                           style={{ background: `${stat.color}15` }}
                         >
-                          <stat.icon className="w-5 h-5" style={{ color: stat.color }} />
+                          <stat.icon className="h-5 w-5" style={{ color: stat.color }} />
                         </div>
-                        <p className="font-bold text-white">{stat.value}</p>
-                        <p className="text-xs text-white/50">{stat.label}</p>
+                        <p className="font-bold text-slate-900">{stat.value}</p>
+                        <p className="text-xs text-slate-500">{stat.label}</p>
                       </div>
                     ))}
                   </div>
 
-                  <p className="text-sm text-white/70 leading-relaxed mb-5">
+                  <p className="mb-5 text-sm leading-relaxed text-slate-700">
                     {course.mentorName} là chuyên gia với hơn 10 năm kinh nghiệm trong ngành. Tại {course.mentorCompany}, 
                     {course.mentorName} đã dẫn dắt team và phỏng vấn hàng trăm ứng viên mỗi năm. 
                     Với niềm đam mê chia sẻ kiến thức, {course.mentorName} đã tạo ra các khóa học thực tế 
@@ -1110,7 +1112,7 @@ export function CourseDetail() {
 
             {/* ── Reviews Tab ──────────────────────────────── */}
             {activeTab === "reviews" && (
-              <ReviewsSection course={course} enrolled={enrolled} />
+              <ReviewsSection course={course} enrolled={hasPaidEnrollment} />
             )}
           </div>
 
@@ -1119,25 +1121,25 @@ export function CourseDetail() {
             <div className="sticky top-6 space-y-4">
               {/* Related courses */}
               {relatedCourses.length > 0 && (
-                <div className="rounded-3xl border border-white/12 bg-white/[0.04] p-5 backdrop-blur-sm">
-                  <h3 className="mb-4 font-bold text-white">Khóa học liên quan</h3>
+                <div className="glass-card p-5">
+                  <h3 className="mb-4 font-bold text-slate-900">Khóa học liên quan</h3>
                   <div className="space-y-4">
                     {relatedCourses.map((related) => (
                       <div
                         key={related.id}
-                        className="flex gap-3 cursor-pointer group"
+                        className="group flex cursor-pointer gap-3"
                         onClick={() => navigate(`/courses/${related.id}`)}
                       >
                         <img
                           src={related.thumbnail}
                           alt={related.title}
-                          className="w-16 h-12 rounded-xl object-cover shrink-0 group-hover:opacity-90 transition-opacity"
+                          className="h-12 w-16 shrink-0 rounded-xl object-cover transition-opacity group-hover:opacity-90"
                         />
-                        <div className="flex-1 min-w-0">
-                          <p className="line-clamp-2 text-sm font-semibold text-white transition-colors group-hover:text-violet-200 leading-snug">
+                        <div className="min-w-0 flex-1">
+                          <p className="line-clamp-2 text-sm font-semibold leading-snug text-slate-900 transition-colors group-hover:text-[#6E35E8]">
                             {related.title}
                           </p>
-                          <p className="mt-1 text-xs font-bold text-violet-200">{formatPrice(related.price)}</p>
+                          <p className="mt-1 text-xs font-bold text-[#6E35E8]">{formatPrice(related.price)}</p>
                         </div>
                       </div>
                     ))}
@@ -1145,7 +1147,7 @@ export function CourseDetail() {
                   <button
                     type="button"
                     onClick={() => navigate("/courses")}
-                    className="mt-4 w-full rounded-xl border border-violet-400/25 bg-violet-500/10 py-2.5 text-sm font-semibold text-violet-100 transition-all hover:bg-violet-500/18"
+                    className="mt-4 w-full rounded-xl border border-violet-200 bg-violet-50 py-2.5 text-sm font-semibold text-violet-900 transition-all hover:bg-violet-100"
                   >
                     Xem tất cả khóa học
                   </button>
@@ -1157,31 +1159,30 @@ export function CourseDetail() {
       </div>
 
       {/* ── Book Mentor Banner ───────────────────────────────── */}
-      <div className="mx-auto mb-10 max-w-7xl overflow-hidden rounded-3xl border border-white/12 bg-gradient-to-br from-violet-950/50 to-[#0c0818]/90 px-6 py-10 sm:px-8">
+      <div className="mx-auto mb-10 max-w-7xl overflow-hidden rounded-3xl border border-violet-200/60 bg-gradient-to-br from-violet-50 via-white to-slate-50 px-6 py-10 shadow-sm sm:px-8">
         <div className="flex flex-col items-center gap-6 md:flex-row">
           <div className="flex-1">
-            <div className="flex items-center gap-2 mb-3">
-              <GraduationCap className="w-5 h-5 text-[#c4ff47]" />
-              <span className="text-[#c4ff47] font-bold text-sm">BƯỚC TIẾP THEO</span>
+            <div className="mb-3 flex items-center gap-2">
+              <GraduationCap className="h-5 w-5 text-[#6E35E8]" />
+              <span className="text-sm font-bold tracking-wide text-[#6E35E8]">BƯỚC TIẾP THEO</span>
             </div>
-            <h2 className="text-2xl font-bold text-white mb-2">
+            <h2 className="mb-2 text-2xl font-bold text-slate-900">
               Sau khi học xong, book 1-1 với mentor
             </h2>
-            <p className="text-white/65 text-sm max-w-xl">
+            <p className="max-w-xl text-sm text-slate-600">
               Áp dụng kiến thức vào thực tế với phiên mentor 1-1: confirm những gì bạn đã học, 
               giải quyết câu hỏi còn thắc mắc, và nhận insider tips từ người trong ngành.
             </p>
           </div>
           <div className="flex items-center gap-4">
-            <img src={course.mentorAvatar} alt={course.mentorName} className="w-14 h-14 rounded-full object-cover border-2 border-white/20 shrink-0" />
+            <img src={course.mentorAvatar} alt={course.mentorName} className="h-14 w-14 shrink-0 rounded-full border-2 border-slate-200 object-cover" />
             <div>
-              <p className="text-white font-bold">{course.mentorName}</p>
-              <p className="text-white/55 text-sm">{course.mentorTitle}</p>
+              <p className="font-bold text-slate-900">{course.mentorName}</p>
+              <p className="text-sm text-slate-600">{course.mentorTitle}</p>
               <button
                 onClick={() => canTakeStudentActions && navigate(`/mentors/${course.mentorId}`)}
                 disabled={!canTakeStudentActions}
-                className="mt-2 px-5 py-2 rounded-xl font-bold text-sm transition-all hover:brightness-110"
-                style={{ background: "#c4ff47", color: "#1F1F1F", opacity: canTakeStudentActions ? 1 : 0.5 }}
+                className="mt-2 rounded-xl bg-gradient-to-br from-[#6E35E8] to-[#8B4DFF] px-5 py-2 text-sm font-bold text-white shadow-[0_6px_20px_rgba(110,53,232,0.3)] transition-all hover:shadow-[0_8px_26px_rgba(110,53,232,0.4)] disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {canTakeStudentActions ? "Đặt lịch ngay →" : "Mentor chỉ xem thông tin"}
               </button>
@@ -1189,6 +1190,7 @@ export function CourseDetail() {
           </div>
         </div>
       </div>
-    </div>
+      </div>
+    </MentorPageShell>
   );
 }

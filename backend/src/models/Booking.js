@@ -54,6 +54,8 @@ const bookingSchema = new Schema(
       default: "",
     },
     paymentRef: { type: String, default: "" },
+    /** Khách đã bấm “đã chuyển” và gửi mã tham chiếu CK (chờ admin xác nhận). */
+    transferSubmittedAt: { type: Date },
     paidAt: { type: Date },
 
     rescheduleHistory: [rescheduleEntrySchema],

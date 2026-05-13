@@ -57,7 +57,7 @@ const MAIN_GROUPS = [
   },
   {
     title: "Vận hành",
-    items: [{ to: "/admin/bookings", label: "Lịch hẹn", icon: Calendar }],
+    items: [{ to: "/admin/bookings", label: "Lịch hẹn & duyệt CK", icon: Calendar }],
   },
   {
     title: "Tài chính",
