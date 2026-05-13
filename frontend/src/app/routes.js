@@ -5,6 +5,7 @@ import { Login } from "./pages/auth/Login";
 import { Register } from "./pages/auth/Register";
 import { ForgotPassword } from "./pages/auth/ForgotPassword";
 import { ResetPassword } from "./pages/auth/ResetPassword";
+import { VerifyEmail } from "./pages/auth/VerifyEmail";
 import { Checkout } from "./pages/booking/Checkout";
 import { Dashboard } from "./pages/account/Dashboard";
 import { CVAnalysis } from "./pages/cv/CVAnalysis";
@@ -68,6 +69,7 @@ export const router = createHashRouter([
   { path: "/register", Component: Register },
   { path: "/forgot-password", Component: ForgotPassword },
   { path: "/reset-password", Component: ResetPassword },
+  { path: "/verify-email", Component: VerifyEmail },
   { path: "/checkout", Component: Checkout },
   { path: "/pricing", Component: Pricing },
   { path: "/payment-return", Component: PaymentReturn },

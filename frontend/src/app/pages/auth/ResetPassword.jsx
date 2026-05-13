@@ -23,136 +23,136 @@ export function ResetPassword() {
   const onSubmit = async (e) => {
     e.preventDefault();
     setError("");
+
     if (!token) {
-      setError("Thiếu token đặt lại mật khẩu.");
+      setError("Mã xác thực (token) không hợp lệ hoặc đã hết hạn. Vui lòng yêu cầu lại link mới.");
       return;
     }
-    if (!password || password.length < 6) {
-      setError("Mật khẩu cần ít nhất 6 ký tự.");
+    if (password.length < 6) {
+      setError("Mật khẩu mới phải có ít nhất 6 ký tự.");
       return;
     }
     if (password !== confirm) {
       setError("Mật khẩu xác nhận không khớp.");
       return;
     }
+
     setLoading(true);
     const res = await resetPassword(token, password);
     setLoading(false);
-    if (!res.success) {
-      setError(res.error || "Không thể đặt lại mật khẩu. Vui lòng thử lại.");
-      return;
+
+    if (res.success) {
+      setDone(true);
+    } else {
+      setError(res.error || "Có lỗi xảy ra. Vui lòng thử lại sau.");
     }
-    setDone(true);
   };
 
   return (
-    <div className="min-h-screen bg-[#fcfaff] text-gray-900 antialiased">
+    <div className="min-h-screen bg-[#fcfaff] text-gray-900 antialiased flex flex-col">
+      {/* Header */}
       <div
-        className="flex items-center justify-between px-10 h-20 border-b"
+        className="flex items-center justify-between px-10 h-20 border-b bg-white"
         style={{ borderColor: "rgba(110,53,232,0.1)" }}
       >
-        <button onClick={() => navigate("/")} className="flex items-center gap-2.5 group" aria-label="Về trang chủ">
+        <button onClick={() => navigate("/")} className="flex items-center gap-2.5 group">
           <BrandLogo />
         </button>
-        <Link to="/login" className="text-sm font-semibold" style={{ color: "#6E35E8" }}>
+        <Link to="/login" className="text-sm font-semibold text-[#6E35E8]">
           Đăng nhập
         </Link>
       </div>
 
-      <div className="mx-auto max-w-md px-6 py-12">
-        <button
-          type="button"
-          onClick={() => navigate(-1)}
-          className="mb-6 inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold text-gray-500 hover:bg-gray-100 hover:text-gray-900 transition-colors"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Quay lại
-        </button>
+      <div className="flex-1 flex items-center justify-center px-6 py-12">
+        <div className="max-w-md w-full">
+          <button
+            onClick={() => navigate("/login")}
+            className="mb-6 inline-flex items-center gap-2 text-sm font-bold text-gray-500 hover:text-gray-900 transition-colors"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Quay lại đăng nhập
+          </button>
 
-        <h1 className="mb-2 text-3xl font-black tracking-tight" style={{ letterSpacing: "-0.03em" }}>
-          Đặt lại mật khẩu
-        </h1>
-        <p className="mb-6 text-sm text-gray-600 leading-relaxed">
-          Tạo mật khẩu mới cho tài khoản của bạn. Sau khi đổi, mọi phiên đăng nhập cũ sẽ bị đăng xuất.
-        </p>
+          <div className="bg-white rounded-3xl border border-gray-200 p-8 shadow-sm">
+            <h1 className="text-3xl font-black mb-2 tracking-tight">Đặt lại mật khẩu</h1>
+            <p className="text-gray-500 text-sm mb-8 leading-relaxed">
+              Vui lòng nhập mật khẩu mới cho tài khoản của bạn.
+            </p>
 
-        {error && (
-          <div className="mb-5 flex items-start gap-3 rounded-2xl border border-red-300/40 bg-red-50 px-4 py-3 text-sm text-red-700">
-            <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0 text-red-500" />
-            <p className="font-medium">{error}</p>
-          </div>
-        )}
+            {error && (
+              <div className="mb-6 flex items-start gap-3 rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-700">
+                <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0 text-red-500" />
+                <p className="font-medium">{error}</p>
+              </div>
+            )}
 
-        {done ? (
-          <div className="rounded-3xl border border-emerald-200 bg-emerald-50 p-6">
-            <div className="flex items-start gap-3">
-              <CheckCircle2 className="h-6 w-6 text-emerald-600" />
-              <div>
-                <p className="font-bold text-emerald-900">Đổi mật khẩu thành công.</p>
-                <p className="mt-1 text-sm text-emerald-900/80 leading-relaxed">
-                  Bạn có thể đăng nhập lại bằng mật khẩu mới.
+            {done ? (
+              <div className="text-center py-4">
+                <div className="h-16 w-16 bg-emerald-50 rounded-full flex items-center justify-center mb-6 mx-auto">
+                  <CheckCircle2 className="h-8 w-8 text-emerald-600" />
+                </div>
+                <h2 className="text-2xl font-black mb-3">Thành công!</h2>
+                <p className="text-gray-600 mb-8">Mật khẩu của bạn đã được cập nhật thành công.</p>
+                <Link
+                  to="/login"
+                  className="w-full inline-flex items-center justify-center rounded-2xl px-6 py-4 text-base font-black text-white transition-all active:scale-[0.98]"
+                  style={{ background: "linear-gradient(135deg, #6E35E8, #9B6DFF)" }}
+                >
+                  Đăng nhập ngay
+                </Link>
+              </div>
+            ) : (
+              <form onSubmit={onSubmit} className="space-y-5">
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-2">Mật khẩu mới</label>
+                  <div className="relative">
+                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                    <input
+                      type="password"
+                      className={`${INPUT_CLS} pl-12`}
+                      placeholder="Ít nhất 6 ký tự"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-2">Xác nhận mật khẩu</label>
+                  <div className="relative">
+                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                    <input
+                      type="password"
+                      className={`${INPUT_CLS} pl-12`}
+                      placeholder="Nhập lại mật khẩu"
+                      value={confirm}
+                      onChange={(e) => setConfirm(e.target.value)}
+                      required
+                    />
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full rounded-2xl py-4 text-base font-black text-white transition-all active:scale-[0.98] disabled:opacity-60"
+                  style={{ background: "linear-gradient(135deg, #6E35E8, #9B6DFF)" }}
+                >
+                  {loading ? "Đang cập nhật..." : "Cập nhật mật khẩu"}
+                </button>
+              </form>
+            )}
+
+            {!token && !done && (
+              <div className="mt-8 p-4 bg-amber-50 rounded-2xl border border-amber-100">
+                <p className="text-xs text-amber-800 leading-relaxed">
+                  <strong>Lưu ý:</strong> Bạn cần truy cập trang này từ liên kết được gửi trong email để có mã xác thực hợp lệ.
                 </p>
               </div>
-            </div>
-            <div className="mt-5">
-              <Link
-                to="/login"
-                className="inline-flex items-center justify-center rounded-2xl px-5 py-3 text-sm font-black text-white"
-                style={{ background: "linear-gradient(135deg, #6E35E8, #9B6DFF)" }}
-              >
-                Đi đến đăng nhập
-              </Link>
-            </div>
-          </div>
-        ) : (
-          <form onSubmit={onSubmit} className="rounded-3xl border border-gray-200 bg-white p-6 shadow-sm">
-            <label className="block text-sm font-semibold text-gray-700 mb-1.5" htmlFor="rp-pass">
-              Mật khẩu mới
-            </label>
-            <div className="relative">
-              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-              <input
-                id="rp-pass"
-                type="password"
-                required
-                autoComplete="new-password"
-                className={`${INPUT_CLS} pl-12`}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Ít nhất 6 ký tự"
-              />
-            </div>
-
-            <label className="mt-4 block text-sm font-semibold text-gray-700 mb-1.5" htmlFor="rp-confirm">
-              Xác nhận mật khẩu
-            </label>
-            <input
-              id="rp-confirm"
-              type="password"
-              required
-              autoComplete="new-password"
-              className={INPUT_CLS}
-              value={confirm}
-              onChange={(e) => setConfirm(e.target.value)}
-              placeholder="Nhập lại mật khẩu"
-            />
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="mt-5 w-full rounded-2xl py-3.5 text-sm font-black text-white transition-all active:scale-[0.98] disabled:opacity-60"
-              style={{ background: "linear-gradient(135deg, #6E35E8, #9B6DFF)" }}
-            >
-              {loading ? "Đang cập nhật..." : "Cập nhật mật khẩu"}
-            </button>
-
-            {!token && (
-              <p className="mt-4 text-xs text-amber-700">
-                Thiếu token. Hãy mở link đặt lại mật khẩu được tạo từ trang “Quên mật khẩu”.
-              </p>
             )}
-          </form>
-        )}
+          </div>
+        </div>
       </div>
     </div>
   );
