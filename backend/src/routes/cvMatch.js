@@ -18,14 +18,28 @@ async function proxyToAnalyzer(path, files, res) {
   let response;
   try {
     response = await fetch(`${CV_ANALYZER_URL}${path}`, { method: "POST", body: form });
-  } catch {
+  } catch (err) {
+    console.error("[cvMatch] fetch failed:", CV_ANALYZER_URL, err?.message);
     return res.status(503).json({
       success: false,
-      error: "CV Analyzer service chưa chạy. Hãy khởi động: uvicorn main:app --reload (trong thư mục cv_jd_matching/)",
+      error:
+        "Không kết nối được service phân tích CV (Python). Trong thư mục cv_jd_matching chạy: python -m uvicorn main:app --reload --port 8000 (hoặc cài uvicorn vào PATH). Kiểm tra biến CV_ANALYZER_URL trong backend/.env.",
     });
   }
 
-  const data = await response.json();
+  const text = await response.text();
+  let data;
+  try {
+    data = text ? JSON.parse(text) : {};
+  } catch (parseErr) {
+    console.error("[cvMatch] analyzer non-JSON body:", response.status, text?.slice(0, 400), parseErr?.message);
+    return res.status(502).json({
+      success: false,
+      error:
+        "Service phân tích CV trả về dữ liệu không hợp lệ. Xem log terminal của FastAPI (cv_jd_matching) — thường do lỗi PDF, thiếu Ollama/API LLM, hoặc exception trong Python.",
+    });
+  }
+
   res.status(response.status).json(data);
 }
 
