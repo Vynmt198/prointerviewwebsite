@@ -3,6 +3,7 @@ import { useNavigate } from "react-router";
 import {
   ArrowRight,
   Heart,
+  Mail,
   ShieldCheck,
 } from "lucide-react";
 import { BrandLogo } from "../brand/BrandLogo";
@@ -43,7 +44,7 @@ const NAV_LINKS = {
     { label: "Phỏng vấn AI", path: "/interview" },
     { label: "Phân tích CV/JD", path: "/cv-analysis" },
     { label: "Mentor 1:1", path: "/mentors" },
-    { label: "Bảng điều khiển", path: "/dashboard" },
+    { label: "Khóa học", path: "/courses" },
   ],
   "Dịch vụ": [
     { label: "Bảng giá", path: "/pricing" },
@@ -59,6 +60,8 @@ const NAV_LINKS = {
   ],
 };
 
+const CONTACT_EMAIL = "prointerview.ai@gmail.com";
+
 const SOCIAL_LINKS = [
   { name: "Facebook",  href: "https://www.facebook.com/ProInterviewAI",         icon: FacebookIcon,  color: "#1877F2", bgLight: "rgba(24,119,242,0.08)",  bgDark: "rgba(24,119,242,0.1)"  },
   { name: "TikTok",   href: "https://www.tiktok.com/@prointerview",             icon: TiktokIcon,    color: "#010101", bgLight: "rgba(0,0,0,0.06)",       bgDark: "rgba(0,0,0,0.07)"      },
@@ -66,7 +69,7 @@ const SOCIAL_LINKS = [
 ];
 
 /* ══════════════════════════════════════════════════════════════
-   DARK variant — dùng ở /home (nền tối #0F0B1A)
+   DARK variant — trang nền tối (tùy chọn)
 ══════════════════════════════════════════════════════════════ */
 function FooterDark() {
   const navigate = useNavigate();
@@ -76,14 +79,15 @@ function FooterDark() {
     <footer
       className="relative overflow-hidden"
       style={{
-        background: "linear-gradient(180deg, #07060e 0%, #0a0618 55%, #12081f 100%)",
-        borderTop: "1px solid rgba(255,255,255,0.08)",
-        boxShadow: "0 -1px 0 rgba(196, 255, 71, 0.06)",
+        background:
+          "linear-gradient(180deg, #05040b 0%, #080614 48%, #0b0718 100%)",
+        borderTop: "1px solid rgba(110, 53, 232, 0.18)",
+        boxShadow: "0 -1px 0 rgba(0, 0, 0, 0.45)",
       }}
     >
-      {/* Đóm vàng — đặt thấp (chân trang), không dồn góc trên trái */}
+      {/* Ánh violet rất nhẹ — không làm sáng cả khối */}
       <div
-        className="pointer-events-none absolute z-0 h-[min(72vw,520px)] w-[min(72vw,520px)] rounded-full bg-[#d4ff00]/18 blur-[100px] sm:h-[520px] sm:w-[520px] sm:blur-[110px]"
+        className="pointer-events-none absolute z-0 h-[min(72vw,520px)] w-[min(72vw,520px)] rounded-full bg-[#5F00F0]/14 blur-[100px] sm:h-[520px] sm:w-[520px] sm:blur-[110px]"
         style={{ left: "-14%", top: "38%" }}
         aria-hidden
       />
@@ -93,13 +97,24 @@ function FooterDark() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-12 lg:gap-10">
           {/* Brand */}
           <div className="lg:col-span-2">
-            <div className="flex items-center gap-3 mb-2 -mt-5">
+            <div className="flex items-center gap-3 mb-1.5 -mt-5">
               <BrandLogo />
             </div>
             <p className="text-white/65 text-sm leading-relaxed mb-6" style={{ maxWidth: 320 }}>
               Nền tảng luyện phỏng vấn AI thông minh hàng đầu Việt Nam — giúp bạn tự tin chinh phục mọi cơ hội nghề nghiệp.
             </p>
-            
+
+            <div className="mb-6">
+              <p className="mb-2 text-xs font-bold uppercase tracking-[0.15em] text-white/40">Liên hệ</p>
+              <a
+                href={`mailto:${CONTACT_EMAIL}`}
+                className="inline-flex max-w-[min(100%,320px)] items-start gap-2 break-all text-sm font-semibold text-[#B4F500] transition-colors hover:text-white"
+              >
+                <Mail className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
+                {CONTACT_EMAIL}
+              </a>
+            </div>
+
             {/* Social links */}
             <div className="mb-6">
               <p className="text-white/40 text-xs uppercase tracking-[0.15em] mb-4 font-bold">Kết nối với chúng tôi</p>
@@ -118,8 +133,8 @@ function FooterDark() {
                       onMouseLeave={() => setHoveredSocial(null)}
                       className="w-11 h-11 rounded-xl flex items-center justify-center transition-all duration-300"
                       style={{
-                        background: isHovered ? s.color : "rgba(255,255,255,0.05)",
-                        border: `1.5px solid ${isHovered ? s.color : "rgba(255,255,255,0.1)"}`,
+                        background: isHovered ? s.color : "rgba(110, 53, 232, 0.08)",
+                        border: `1.5px solid ${isHovered ? s.color : "rgba(155, 109, 255, 0.2)"}`,
                         transform: isHovered ? "translateY(-4px)" : "none",
                         boxShadow: isHovered ? `0 8px 28px ${s.color}55` : "none",
                       }}
@@ -132,11 +147,14 @@ function FooterDark() {
             </div>
             
             {/* Security badge */}
-            <div 
+            <div
               className="inline-flex items-center gap-2.5 px-4 py-2.5 rounded-xl"
-              style={{ background: "rgba(16,185,129,0.1)", border: "1px solid rgba(16,185,129,0.2)" }}
+              style={{
+                background: "rgba(110, 53, 232, 0.12)",
+                border: "1px solid rgba(155, 109, 255, 0.28)",
+              }}
             >
-              <ShieldCheck className="w-5 h-5 text-emerald-400" />
+              <ShieldCheck className="h-5 w-5 shrink-0 text-[#B4F500]" />
               <span className="text-white/70 text-xs font-semibold">Bảo mật SSL 256-bit</span>
             </div>
           </div>
@@ -144,8 +162,8 @@ function FooterDark() {
           {/* Nav columns */}
           {Object.entries(NAV_LINKS).map(([section, links]) => (
             <div key={section}>
-              <h4 
-                className="text-white font-bold mb-5" 
+              <h4
+                className="mb-5 font-bold text-white/90"
                 style={{ fontSize: "0.9375rem", letterSpacing: "-0.01em" }}
               >
                 {section}
@@ -157,10 +175,9 @@ function FooterDark() {
                       onClick={() => link.path !== "#" && navigate(link.path)}
                       className="text-white/55 hover:text-white text-sm transition-all duration-200 text-left group flex items-center gap-2"
                     >
-                      <ArrowRight 
-                        className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition-all -translate-x-2 group-hover:translate-x-0" 
-                        style={{ color: "#c4ff47" }}
-                        
+                      <ArrowRight
+                        className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition-all -translate-x-2 group-hover:translate-x-0"
+                        style={{ color: "#B4F500" }}
                       />
                       <span className="group-hover:translate-x-1 transition-transform duration-200">
                         {link.label}
@@ -174,49 +191,14 @@ function FooterDark() {
         </div>
       </div>
 
-      {/* Facebook community strip */}
-      <div 
+      {/* Bottom bar */}
+      <div
         className="relative z-[1]"
-        style={{ 
-          borderTop: "1px solid rgba(255,255,255,0.06)", 
-          background: "linear-gradient(135deg, rgba(24,119,242,0.12) 0%, rgba(24,119,242,0.06) 100%)"
+        style={{
+          borderTop: "1px solid rgba(110, 53, 232, 0.14)",
+          background: "linear-gradient(180deg, #05040c 0%, #080612 100%)",
         }}
       >
-        <div className="max-w-7xl mx-auto px-6 py-5 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <div 
-              className="w-12 h-12 rounded-2xl flex items-center justify-center" 
-              style={{ 
-                background: "linear-gradient(135deg, #1877F2, #0E5FC0)",
-                boxShadow: "0 4px 20px rgba(24,119,242,0.4)"
-              }}
-            >
-              <FacebookIcon style={{ color: "#fff", width: 20, height: 20 }} />
-            </div>
-            <div>
-              <p className="text-white font-bold text-sm">Cộng đồng ProInterview</p>
-              <p className="text-white/50 text-xs">6,500+ thành viên • Chia sẻ kinh nghiệm mỗi ngày</p>
-            </div>
-          </div>
-          <a 
-            href="https://www.facebook.com/janetns.198/" 
-            target="_blank" 
-            rel="noopener noreferrer"
-            className="flex items-center gap-2.5 px-6 py-3 rounded-xl text-sm font-bold transition-all hover:scale-[1.05] active:scale-[0.98] whitespace-nowrap"
-            style={{ 
-              background: "#1877F2", 
-              color: "#fff", 
-              boxShadow: "0 6px 24px rgba(24,119,242,0.45)" 
-            }}
-          >
-            <FacebookIcon style={{ width: 17, height: 17 }} />
-            Tham gia ngay
-          </a>
-        </div>
-      </div>
-
-      {/* Bottom bar */}
-      <div className="relative z-[1]" style={{ borderTop: "1px solid rgba(255,255,255,0.05)", background: "rgba(0,0,0,0.2)" }}>
         <div className="max-w-7xl mx-auto px-6 py-5 flex flex-col sm:flex-row items-center justify-between gap-3">
           <p className="text-white/35 text-xs">
             © {new Date().getFullYear()} ProInterview. All rights reserved.
@@ -228,7 +210,7 @@ function FooterDark() {
             <span className="ml-1">🇻🇳</span>
           </div>
           <div className="flex items-center gap-2 text-white/35 text-xs">
-            <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            <div className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#B4F500]" />
             <span>24/7 Support Available</span>
           </div>
         </div>
@@ -238,10 +220,136 @@ function FooterDark() {
 }
 
 /* ══════════════════════════════════════════════════════════════
-   LIGHT variant — dùng ở dashboard/trang nội bộ (nền sáng)
+   LIGHT variant — cùng nền / chữ với trang home (#f3f0f9)
 ══════════════════════════════════════════════════════════════ */
 function FooterLight() {
-  return null;
+  const navigate = useNavigate();
+  const [hoveredSocial, setHoveredSocial] = useState(null);
+
+  return (
+    <footer className="relative overflow-hidden border-t border-violet-200/50 bg-[#f3f0f9]">
+      <div
+        className="pointer-events-none absolute z-0 h-[min(72vw,520px)] w-[min(72vw,520px)] rounded-full bg-[#6E35E8]/10 blur-[100px] sm:h-[520px] sm:w-[520px] sm:blur-[110px]"
+        style={{ left: "-14%", top: "38%" }}
+        aria-hidden
+      />
+
+      <div className="relative z-[1] mx-auto max-w-7xl px-6 py-16">
+        <div className="grid grid-cols-1 gap-12 md:grid-cols-2 lg:grid-cols-5 lg:gap-10">
+          <div className="lg:col-span-2">
+            <div className="-mt-5 mb-1 flex items-center gap-3">
+              <BrandLogo />
+            </div>
+            <p className="mb-6 max-w-[320px] text-sm leading-relaxed text-slate-600">
+              Nền tảng luyện phỏng vấn AI thông minh hàng đầu Việt Nam — giúp bạn tự tin chinh phục mọi cơ hội nghề nghiệp.
+            </p>
+
+            <div className="mb-6">
+              <p className="mb-2 text-xs font-bold uppercase tracking-[0.15em] text-slate-500">Liên hệ</p>
+              <a
+                href={`mailto:${CONTACT_EMAIL}`}
+                className="inline-flex max-w-[min(100%,320px)] items-start gap-2 break-all text-sm font-semibold text-[#6E35E8] underline-offset-2 transition-colors hover:text-[#5F00F0] hover:underline"
+              >
+                <Mail className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
+                {CONTACT_EMAIL}
+              </a>
+            </div>
+
+            <div className="mb-6">
+              <p className="mb-4 text-xs font-bold uppercase tracking-[0.15em] text-slate-500">
+                Kết nối với chúng tôi
+              </p>
+              <div className="flex gap-3">
+                {SOCIAL_LINKS.map((s) => {
+                  const Icon = s.icon;
+                  const isHovered = hoveredSocial === s.name;
+                  return (
+                    <a
+                      key={s.name}
+                      href={s.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      title={s.name}
+                      onMouseEnter={() => setHoveredSocial(s.name)}
+                      onMouseLeave={() => setHoveredSocial(null)}
+                      className="flex h-11 w-11 items-center justify-center rounded-xl transition-all duration-300"
+                      style={{
+                        background: isHovered ? s.color : "#ffffff",
+                        border: `1.5px solid ${isHovered ? s.color : "rgba(148, 163, 184, 0.35)"}`,
+                        transform: isHovered ? "translateY(-4px)" : "none",
+                        boxShadow: isHovered ? `0 8px 28px ${s.color}40` : "0 1px 2px rgba(15, 23, 42, 0.06)",
+                      }}
+                    >
+                      <Icon
+                        style={{
+                          color: isHovered ? "#fff" : "#475569",
+                          width: 19,
+                          height: 19,
+                        }}
+                      />
+                    </a>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="inline-flex items-center gap-2.5 rounded-xl border border-violet-200/80 bg-white/90 px-4 py-2.5 shadow-sm">
+              <ShieldCheck className="h-5 w-5 shrink-0 text-[#6E35E8]" />
+              <span className="text-xs font-semibold text-slate-700">Bảo mật SSL 256-bit</span>
+            </div>
+          </div>
+
+          {Object.entries(NAV_LINKS).map(([section, links]) => (
+            <div key={section}>
+              <h4
+                className="mb-5 font-bold text-slate-900"
+                style={{ fontSize: "0.9375rem", letterSpacing: "-0.01em" }}
+              >
+                {section}
+              </h4>
+              <ul className="space-y-3">
+                {links.map((link) => (
+                  <li key={link.label}>
+                    <button
+                      type="button"
+                      onClick={() => link.path !== "#" && navigate(link.path)}
+                      className="group flex items-center gap-2 text-left text-sm text-slate-600 transition-all duration-200 hover:text-[#6E35E8]"
+                    >
+                      <ArrowRight
+                        className="h-3.5 w-3.5 -translate-x-2 opacity-0 transition-all group-hover:translate-x-0 group-hover:opacity-100"
+                        style={{ color: "#B4F500" }}
+                      />
+                      <span className="transition-transform duration-200 group-hover:translate-x-1">
+                        {link.label}
+                      </span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="relative z-[1] border-t border-slate-200/90 bg-white/85">
+        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-3 px-6 py-5 sm:flex-row">
+          <p className="text-xs text-slate-500">
+            © {new Date().getFullYear()} ProInterview. All rights reserved.
+          </p>
+          <div className="flex items-center gap-1.5 text-xs text-slate-500">
+            <span>Made with</span>
+            <Heart className="h-3.5 w-3.5 animate-pulse text-red-500" />
+            <span>in Vietnam</span>
+            <span className="ml-1">🇻🇳</span>
+          </div>
+          <div className="flex items-center gap-2 text-xs text-slate-500">
+            <div className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#B4F500]" />
+            <span>24/7 Support Available</span>
+          </div>
+        </div>
+      </div>
+    </footer>
+  );
 }
 
 /* ── Public export ── */
