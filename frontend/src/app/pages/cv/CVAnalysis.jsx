@@ -89,6 +89,20 @@ function buildFd(
   return fd;
 }
 
+/** FastAPI trả `detail` (string hoặc mảng validation); Express dùng `error`. */
+function formatCvAnalyzerHttpError(status, body) {
+  const e = body ?? {};
+  if (typeof e.detail === "string" && e.detail.trim()) return e.detail.trim();
+  if (Array.isArray(e.detail)) {
+    const parts = e.detail
+      .map((d) => (d && typeof d === "object" && d.msg ? String(d.msg) : typeof d === "string" ? d : ""))
+      .filter(Boolean);
+    if (parts.length) return parts.join(" · ");
+  }
+  if (typeof e.error === "string" && e.error.trim()) return e.error.trim();
+  return `CV Analyzer lỗi ${status}`;
+}
+
 // ─── Constants ────────────────────────────────────────────────────────────────
 const FIELDS = [
   "IT / Công nghệ", "Marketing", "Tài chính / Kế toán", "Nhân sự",
@@ -390,8 +404,8 @@ export function CVAnalysis() {
           clearInterval(timer); setProgress(95); setLoadingStage(4);
 
           if (!pyRes.ok) {
-            const e = await pyRes.json().catch(() => ({}));
-            throw new Error(e.error || `CV Analyzer lỗi ${pyRes.status}`);
+            const errBody = await pyRes.json().catch(() => ({}));
+            throw new Error(formatCvAnalyzerHttpError(pyRes.status, errBody));
           }
 
           const raw = await pyRes.json();
