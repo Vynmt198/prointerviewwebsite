@@ -10,6 +10,44 @@ const interviewSessionSchema = new Schema(
     planAtTime: { type: String },
     questionsAllowed: { type: Number, default: 3 },
 
+    // Câu hỏi sinh bởi LLM — grounded in SHRM/DDI framework
+    questions: [
+      {
+        id: { type: String },
+        layer: { type: String, enum: ["theory", "project", "behavior"] },
+        seniority: { type: String, enum: ["intern", "junior", "middle", "senior"] },
+        // SHRM/DDI competency metadata
+        competencyId:           { type: String, default: "" },
+        competencyName:         { type: String, default: "" },
+        ddiKeyActionTargeted:   { type: String, default: "" },
+        shrmRubricExcellent:    { type: String, default: "" },
+        question: { type: String },
+        starGuidance: {
+          situation: [{ type: String }],
+          task:      [{ type: String }],
+          action:    [{ type: String }],
+          result:    [{ type: String }],
+        },
+        expectedKeywords: [{ type: String }],
+        deepDive:         [{ type: String }],
+      },
+    ],
+    inferredRole:      { type: String, default: "" },
+    inferredSeniority: { type: String, default: "" },
+    coverageScore: {
+      keywordScore: { type: Number, default: 0 },
+      skillScore:   { type: Number, default: 0 },
+    },
+
+    // Competency Profile — SHRM/DDI detection result (dùng cho accumulation & analytics)
+    competencyProfile: {
+      roleCategory:       { type: String, default: "" },
+      competencyIds:      [{ type: String }],
+      competencyCoverage: [{ type: String }],
+      detectedFromText:   [{ type: String }],
+      generatedAt:        { type: String, default: "" },
+    },
+
     answers: [
       {
         questionIndex: { type: Number },
@@ -32,10 +70,20 @@ const interviewSessionSchema = new Schema(
       perQuestion: [
         {
           questionIndex: { type: Number },
-          score: { type: Number },
-          badge: { type: String, enum: ["Xuất sắc", "Tốt", "Cần cải thiện"] },
-          strengths: [{ type: String }],
+          score:    { type: Number },   // 0–100, bằng overall5 * 20
+          badge:    { type: String, enum: ["Xuất sắc", "Tốt", "Cần cải thiện"] },
+          strengths:    [{ type: String }],
           improvements: [{ type: String }],
+          // Fields từ LLM evaluation (SHRM/DDI grounded)
+          scores: {
+            clarity:     { type: Number, default: 0 },
+            structure:   { type: Number, default: 0 },
+            relevance:   { type: Number, default: 0 },
+            credibility: { type: Number, default: 0 },
+          },
+          shrmLevel:  { type: String, default: "" },
+          suggestion: { type: String, default: "" },
+          overall5:   { type: Number, default: 0 },
         },
       ],
       isLockedForFree: { type: Boolean, default: false },
@@ -59,6 +107,9 @@ const interviewSessionSchema = new Schema(
 
 interviewSessionSchema.index({ userId: 1, createdAt: -1 });
 interviewSessionSchema.index({ status: 1 });
+// Accumulation queries: tìm sessions cùng role/competency để lấy few-shot examples
+interviewSessionSchema.index({ "competencyProfile.roleCategory": 1, status: 1, createdAt: -1 });
+interviewSessionSchema.index({ "competencyProfile.competencyIds": 1, status: 1 });
 
 export const InterviewSession =
   mongoose.models.InterviewSession ?? mongoose.model("InterviewSession", interviewSessionSchema);

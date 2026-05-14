@@ -104,12 +104,30 @@ const DEMO_SCORES    = [
   { criteria: "Credibility (Thuyết phục)",score:5, max: 10, status: "warn", note: "Thiếu số liệu KPI cụ thể." },
 ];
 const DEMO_SUGGESTIONS = [
-  { type: "add", priority: "high",   title: "Thêm Docker & AWS vào Kỹ năng",      reason: "JD yêu cầu Docker & AWS bắt buộc.",                   before: "Tools: Git, Webpack, Vite", after: "Tools: Git, Webpack, Docker, AWS (EC2, S3)" },
-  { type: "add", priority: "high",   title: "Đề cập CI/CD trong Kinh nghiệm",     reason: "JD yêu cầu CI/CD pipeline.",                          before: "• Quản lý source code qua Git", after: "• Quản lý Git, thiết lập CI/CD với GitHub Actions" },
-  { type: "add", priority: "medium", title: "Thêm PostgreSQL vào Database",        reason: "JD đề cập PostgreSQL là DB chính.",                    before: "Database: MySQL, MongoDB", after: "Database: MySQL, MongoDB, PostgreSQL" },
-  { type: "fix", priority: "high",   title: "Thêm số liệu vào mô tả thành tích",  reason: "Nhà tuyển dụng cần con số cụ thể.",                   before: "• Tối ưu hiệu năng React", after: "• Tối ưu React, giảm 40% load time, Lighthouse 65→92" },
-  { type: "fix", priority: "medium", title: "Viết lại Kinh nghiệm theo STAR",      reason: "Thiếu Situation, Action, Result.",                     before: "• Xây dựng REST API với Node.js", after: "• Thiết kế 12 API endpoints, 50k req/day, 99.9% uptime" },
-  { type: "remove", priority: "low", title: "Loại bỏ kỹ năng không liên quan JD", reason: "Photoshop/Illustrator làm phân tán khỏi vai trò FE.", before: "Others: Photoshop, Illustrator", after: "Others: Figma, Storybook, Jest" },
+  {
+    type: "fix", priority: "high",
+    title: "Cải thiện bullet: \"Tối ưu hiệu năng React cho trang chủ…\"",
+    reason: "Thêm STAR format · Nhúng từ khóa JD: performance, load time · Thêm số liệu KPI",
+    before: "• Tối ưu hiệu năng React cho trang chủ",
+    after:  "• Phân tích bottleneck trang chủ (LCP 4.2s), áp dụng lazy loading + code splitting, cải thiện Lighthouse 65→92 và giảm 40% load time.",
+    keywordsAdded: ["lazy loading", "code splitting", "Lighthouse"],
+    starCheck: { situation: true, action: true, result: true },
+    confidence: "high",
+  },
+  {
+    type: "fix", priority: "high",
+    title: "Cải thiện bullet: \"Xây dựng REST API với Node.js…\"",
+    reason: "Thiếu Result đo lường · Thêm từ khóa: scalability, uptime",
+    before: "• Xây dựng REST API với Node.js",
+    after:  "• Thiết kế và triển khai 12 RESTful endpoints (Node.js/Express), xử lý 50k req/day với 99.9% uptime.",
+    keywordsAdded: ["RESTful", "scalability", "uptime"],
+    starCheck: { situation: false, action: true, result: true },
+    confidence: "medium",
+  },
+  { type: "add", priority: "high",   title: "Thêm Docker & AWS vào Kỹ năng",      reason: "JD yêu cầu Docker & AWS bắt buộc.",                   before: "Tools: Git, Webpack, Vite", after: "Tools: Git, Webpack, Docker, AWS (EC2, S3)", keywordsAdded: [], starCheck: {}, confidence: null },
+  { type: "add", priority: "high",   title: "Đề cập CI/CD trong Kinh nghiệm",     reason: "JD yêu cầu CI/CD pipeline.",                          before: "• Quản lý source code qua Git", after: "• Quản lý Git, thiết lập CI/CD với GitHub Actions", keywordsAdded: [], starCheck: {}, confidence: null },
+  { type: "add", priority: "medium", title: "Thêm PostgreSQL vào Database",        reason: "JD đề cập PostgreSQL là DB chính.",                    before: "Database: MySQL, MongoDB", after: "Database: MySQL, MongoDB, PostgreSQL", keywordsAdded: [], starCheck: {}, confidence: null },
+  { type: "remove", priority: "low", title: "Loại bỏ kỹ năng không liên quan JD", reason: "Photoshop/Illustrator làm phân tán khỏi vai trò FE.", before: "Others: Photoshop, Illustrator", after: "Others: Figma, Storybook, Jest", keywordsAdded: [], starCheck: {}, confidence: null },
 ];
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -388,15 +406,38 @@ export function CVAnalysis() {
           const strengths  = matchedSkills.slice(0, 6).map(sk => `Có kỹ năng "${sk}" phù hợp với yêu cầu JD`);
           const weaknesses = missingSkills.slice(0, 6).map(sk => `Thiếu kỹ năng "${sk}" mà JD yêu cầu`);
 
-          // Map missing_skill_suggestions → UI suggestion format
-          const suggestions = (sugg.missing_skill_suggestions ?? []).map(item => ({
-            type:     "add",
-            priority: item.priority,
-            title:    `Bổ sung kỹ năng "${item.skill}"`,
-            reason:   item.reframe_tip !== "N/A" ? item.reframe_tip : item.acquisition_path,
-            before:   `Chưa có trong CV — ước tính ${item.estimated_effort}`,
-            after:    item.acquisition_path,
+          // Map rewritten_bullets → "fix" suggestions (hiển thị trước — high value)
+          const bulletSuggestions = (sugg.rewritten_bullets ?? []).map(b => ({
+            type:          "fix",
+            priority:      b.confidence === "high" ? "high" : b.confidence === "low" ? "low" : "medium",
+            title:         `Cải thiện bullet: "${(b.original ?? "").slice(0, 65)}${(b.original ?? "").length > 65 ? "…" : ""}"`,
+            reason:        b.changes_made?.length
+                             ? b.changes_made.join(" · ")
+                             : "Viết lại theo chuẩn STAR + nhúng từ khóa JD.",
+            before:        b.original  ?? "",
+            after:         b.rewritten ?? "",
+            keywordsAdded: b.keywords_added ?? [],
+            starCheck:     b.star_check     ?? {},
+            confidence:    b.confidence     ?? "medium",
           }));
+
+          // Map missing_skill_suggestions → "add" suggestions
+          const missSuggestions = (sugg.missing_skill_suggestions ?? []).map(item => ({
+            type:          "add",
+            priority:      item.priority,
+            title:         `Bổ sung kỹ năng "${item.skill}"`,
+            reason:        item.reframe_tip && item.reframe_tip !== "N/A"
+                             ? item.reframe_tip
+                             : item.acquisition_path,
+            before:        `Chưa có trong CV — ước tính ${item.estimated_effort ?? "không rõ"}`,
+            after:         item.acquisition_path,
+            keywordsAdded: [],
+            starCheck:     {},
+            confidence:    null,
+          }));
+
+          // Bullet rewrites trước, rồi mới skill gaps
+          const suggestions = [...bulletSuggestions, ...missSuggestions];
 
           data = {
             success: true,
@@ -413,10 +454,10 @@ export function CVAnalysis() {
                 credibility: s?.credibility?.score ?? 0,
               },
               scoreNotes: {
-                clarity:     s?.clarity?.reason     ?? (usedFallback ? "Cần Ollama để chấm điểm — chạy: ollama run mistral:7b" : ""),
-                structure:   s?.structure?.reason   ?? (usedFallback ? "Cần Ollama để chấm điểm — chạy: ollama run mistral:7b" : ""),
-                relevance:   s?.relevance?.reason   ?? (usedFallback ? `Ước tính từ keyword match: ${Math.round(m.match_score ?? 0)}%` : ""),
-                credibility: s?.credibility?.reason ?? (usedFallback ? "Cần Ollama để chấm điểm — chạy: ollama run mistral:7b" : ""),
+                clarity:     s?.clarity?.reason     ?? (usedFallback ? "Chỉ phân tích cơ bản — không có điểm AI chi tiết." : ""),
+                structure:   s?.structure?.reason   ?? (usedFallback ? "Chỉ phân tích cơ bản — không có điểm AI chi tiết." : ""),
+                relevance:   s?.relevance?.reason   ?? (usedFallback ? `Ước tính từ tỷ lệ khớp từ khóa: ${Math.round(m.match_score ?? 0)}%` : ""),
+                credibility: s?.credibility?.reason ?? (usedFallback ? "Chỉ phân tích cơ bản — không có điểm AI chi tiết." : ""),
               },
               strengths,
               weaknesses,
@@ -1247,7 +1288,7 @@ export function CVAnalysis() {
                 <div className="flex items-center justify-between border-b border-white/10 px-6 py-4" style={{ background: "rgba(110, 53, 232,0.08)" }}>
                   <div className="flex items-center gap-2.5">
                     <div className="flex h-8 w-8 items-center justify-center rounded-xl" style={{ background: "rgba(110, 53, 232,0.2)" }}><Lightbulb className="h-4 w-4 text-violet-200" /></div>
-                    <div><h3 className="text-sm font-semibold text-white">Gợi ý chỉnh sửa cụ thể</h3><p className="text-xs text-white/55">Mỗi gợi ý có lý do + ví dụ trước/sau</p></div>
+                    <div><h3 className="text-sm font-semibold text-white">Gợi ý chỉnh sửa cụ thể</h3><p className="text-xs text-white/55">Bullet rewrites (STAR + JD keywords) · Kỹ năng cần bổ sung</p></div>
                   </div>
                   <div className="flex items-center gap-2">
                     {highCount   > 0 && <span className="rounded-lg px-2.5 py-1 text-xs font-medium" style={{ background: "rgba(255,140,66,0.18)",  color: "#ffb088" }}>{highCount} Cao</span>}
@@ -1279,9 +1320,65 @@ export function CVAnalysis() {
                           <p className="text-[0.82rem] leading-relaxed text-white/70">{item.reason}</p>
                         </div>
                         {(item.before || item.after) && (
-                          <div className="grid md:grid-cols-2 gap-2">
-                            {item.before && <div className="rounded-xl p-3" style={{ background: "rgba(255,140,66,0.05)", border: "1px solid rgba(255,140,66,0.18)" }}><p className="mb-1.5 text-xs font-semibold text-[#ffb088]">✗ Hiện tại</p><code className="block whitespace-pre-wrap font-mono text-[0.76rem] leading-relaxed text-white/75">{item.before}</code></div>}
-                            {item.after  && <div className="rounded-xl p-3" style={{ background: "rgba(180,240,0,0.06)",  border: "1px solid rgba(180,240,0,0.22)"  }}><p className="mb-1.5 text-xs font-semibold text-[#c4ff47]">✓ Nên sửa thành</p><code className="block whitespace-pre-wrap font-mono text-[0.76rem] leading-relaxed text-white/75">{item.after}</code></div>}
+                          <div className="grid md:grid-cols-2 gap-2 mb-3">
+                            {item.before && (
+                              <div className="rounded-xl p-3" style={{ background: "rgba(255,140,66,0.05)", border: "1px solid rgba(255,140,66,0.18)" }}>
+                                <p className="mb-1.5 text-xs font-semibold text-[#ffb088]">✗ Hiện tại</p>
+                                <code className="block whitespace-pre-wrap font-mono text-[0.76rem] leading-relaxed text-white/75">{item.before}</code>
+                              </div>
+                            )}
+                            {item.after && (
+                              <div className="rounded-xl p-3" style={{ background: "rgba(180,240,0,0.06)", border: "1px solid rgba(180,240,0,0.22)" }}>
+                                <p className="mb-1.5 text-xs font-semibold text-[#c4ff47]">✓ Nên sửa thành</p>
+                                <code className="block whitespace-pre-wrap font-mono text-[0.76rem] leading-relaxed text-white/75">{item.after}</code>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                        {/* Bullet rewrite metadata — chỉ hiện cho type "fix" */}
+                        {isFix && (item.keywordsAdded?.length > 0 || item.starCheck || item.confidence) && (
+                          <div className="flex flex-wrap gap-3 pt-2 border-t border-white/8">
+                            {/* STAR check badges */}
+                            {item.starCheck && Object.keys(item.starCheck).length > 0 && (
+                              <div className="flex items-center gap-1.5">
+                                <span className="text-[10px] font-semibold text-white/45 uppercase tracking-wide mr-0.5">STAR:</span>
+                                {[["situation","S"],["action","A"],["result","R"]].map(([k,label]) => (
+                                  <span
+                                    key={k}
+                                    className="inline-flex items-center justify-center h-5 w-5 rounded-full text-[10px] font-bold"
+                                    style={item.starCheck[k]
+                                      ? { background: "rgba(180,240,0,0.18)", color: "#c4ff47", border: "1px solid rgba(180,240,0,0.35)" }
+                                      : { background: "rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.3)", border: "1px solid rgba(255,255,255,0.1)" }
+                                    }
+                                    title={item.starCheck[k] ? `${k} ✓` : `${k} thiếu`}
+                                  >{label}</span>
+                                ))}
+                              </div>
+                            )}
+                            {/* Keywords added */}
+                            {item.keywordsAdded?.length > 0 && (
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <span className="text-[10px] font-semibold text-white/45 uppercase tracking-wide">Keywords:</span>
+                                {item.keywordsAdded.map((kw, ki) => (
+                                  <span key={ki} className="inline-flex items-center gap-0.5 rounded-md px-1.5 py-0.5 text-[10px] font-semibold" style={{ background: "rgba(110,53,232,0.18)", color: "#c4b5fd", border: "1px solid rgba(110,53,232,0.3)" }}>
+                                    + {kw}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+                            {/* Confidence badge */}
+                            {item.confidence && (
+                              <span className="ml-auto text-[10px] font-semibold px-2 py-0.5 rounded-md"
+                                style={item.confidence === "high"
+                                  ? { background: "rgba(180,240,0,0.12)", color: "#86b800" }
+                                  : item.confidence === "medium"
+                                  ? { background: "rgba(255,214,0,0.1)", color: "#c9a800" }
+                                  : { background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.45)" }
+                                }
+                              >
+                                Độ tin cậy: {item.confidence === "high" ? "Cao" : item.confidence === "medium" ? "Trung bình" : "Thấp"}
+                              </span>
+                            )}
                           </div>
                         )}
                       </div>

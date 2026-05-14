@@ -10,6 +10,7 @@ import {
   PhoneOff as PhoneDisconnect,
   Clock,
   ChevronRight as CaretRight,
+  ChevronDown,
   Lock,
   Zap as Lightning,
   CheckCircle,
@@ -21,7 +22,7 @@ import {
 import { MOCK_INTERVIEW_QUESTIONS } from "../../data/mockData";
 import { getPlans, hasAuthCredentials } from "../../utils/auth";
 import { addInterviewRecord } from "../../utils/history";
-import { createInterviewSession, completeInterviewSession } from "../../utils/interviewsApi";
+import { saveAnswer, completeInterviewSession } from "../../utils/interviewsApi";
 import { QUESTIONS_FEEDBACK } from "./InterviewFeedback";
 
 /* ── Session storage key ─────────────────────────────────── */
@@ -101,8 +102,7 @@ function aggregateScoresFromFeedbackSlice(slice) {
   return { ...scores, overall };
 }
 
-/* ── Tất cả 5 câu hỏi ───────────────────────────────────── */
-const QUESTIONS = MOCK_INTERVIEW_QUESTIONS;
+/* ── QUESTIONS được resolve trong component từ location.state hoặc mock ── */
 
 /* ── Helpers ─────────────────────────────────────────────── */
 function formatTimer(s) {
@@ -449,6 +449,14 @@ export default function InterviewRoom() {
   const hrTitle = HR_TITLES[hrGender];
   const hrVideoUrl = HR_IDLE_URLS[hrGender];
 
+  // Câu hỏi từ LLM nếu có, fallback về mock
+  const apiQuestions = location.state?.questions;
+  const QUESTIONS = apiQuestions?.length
+    ? apiQuestions.map((q) => (typeof q === "string" ? q : q.question))
+    : MOCK_INTERVIEW_QUESTIONS;
+  // Giữ full objects để dùng cho STAR guidance sau này
+  const QUESTION_OBJECTS = apiQuestions?.length ? apiQuestions : null;
+
   const [phase, setPhase] = useState("ready");
   const [currentQ, setCurrentQ] = useState(0);
   const [isListening, setIsListening] = useState(false);
@@ -462,12 +470,14 @@ export default function InterviewRoom() {
   );
   const [hrPhase, setHrPhase] = useState("asking");
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [showStarHints, setShowStarHints] = useState(true);
 
   const recognitionRef = useRef(null);
   const isListeningRef = useRef(false);
   const transcriptRef = useRef("");
   const timerRef = useRef(null);
   const isNavigatingRef = useRef(false);
+  const questionStartTimeRef = useRef(Date.now());
 
   /* ── Timer ───────────────────────────────────────────────── */
   useEffect(() => {
@@ -482,6 +492,8 @@ export default function InterviewRoom() {
     setTranscript("");
     setInterimTranscript("");
     transcriptRef.current = "";
+    setShowStarHints(true);
+    questionStartTimeRef.current = Date.now();
   }, [currentQ]);
 
   useEffect(() => {
@@ -561,21 +573,36 @@ export default function InterviewRoom() {
     return updated;
   };
 
+  // Lưu 1 câu trả lời vào MongoDB — fire-and-forget, không block UI
+  const persistAnswer = (qIndex, updatedTranscripts) => {
+    const sessionId = location.state?.sessionId ?? null;
+    if (!sessionId || !hasAuthCredentials()) return;
+    const durationSeconds = Math.round((Date.now() - questionStartTimeRef.current) / 1000);
+    saveAnswer(sessionId, {
+      questionIndex: qIndex,
+      questionText: QUESTIONS[qIndex] ?? "",
+      transcript: updatedTranscripts[qIndex] ?? "",
+      durationSeconds: Math.max(0, durationSeconds),
+    }).catch(() => {});
+  };
+
   const goToFeedback = async (transcripts) => {
     isNavigatingRef.current = true;
     isListeningRef.current = false;
     recognitionRef.current?.abort();
     clearInterval(timerRef.current);
     sessionStorage.setItem(TRANSCRIPT_KEY, JSON.stringify(transcripts));
+    if (QUESTION_OBJECTS) {
+      sessionStorage.setItem("prointerview_question_objects", JSON.stringify(QUESTION_OBJECTS));
+    }
 
-    if (hasAuthCredentials()) {
+    // Session đã được tạo ở Interview.jsx — chỉ cần complete
+    const sessionId = location.state?.sessionId ?? null;
+    if (hasAuthCredentials() && sessionId) {
       try {
-        const created = await createInterviewSession(hrGender);
-        if (created.success && created.sessionId) {
-          await completeInterviewSession(created.sessionId);
-        }
+        await completeInterviewSession(sessionId);
       } catch {
-        /* vẫn lưu local + chuyển trang */
+        /* vẫn chuyển trang */
       }
     }
 
@@ -602,7 +629,7 @@ export default function InterviewRoom() {
       duration: durationMin,
     });
 
-    navigate("/interview/feedback");
+    navigate("/interview/feedback", { state: { sessionId } });
   };
 
   const handleNextQuestion = () => {
@@ -610,6 +637,7 @@ export default function InterviewRoom() {
     recognitionRef.current?.abort();
     setIsListening(false);
     const updated = saveCurrentTranscript();
+    persistAnswer(currentQ, updated);
 
     if (currentQ >= QUESTIONS.length - 1) {
       goToFeedback(updated);
@@ -627,6 +655,7 @@ export default function InterviewRoom() {
 
   const handleEndSession = () => {
     const updated = saveCurrentTranscript();
+    persistAnswer(currentQ, updated);
     goToFeedback(updated);
   };
 
@@ -871,9 +900,81 @@ export default function InterviewRoom() {
           >
             {currentQ + 1}
           </span>
-          <p className="text-white/90 text-sm leading-relaxed">{QUESTIONS[currentQ]}</p>
+          <div className="flex-1 min-w-0">
+            <p className="text-white/90 text-sm leading-relaxed">{QUESTIONS[currentQ]}</p>
+            {QUESTION_OBJECTS && (() => {
+              const layer = QUESTION_OBJECTS[currentQ]?.layer;
+              const layerMap = {
+                theory:   { label: "Lý thuyết",      color: "#60A5FA", bg: "rgba(96,165,250,0.15)",  border: "rgba(96,165,250,0.3)"  },
+                project:  { label: "Dự án",           color: "#34D399", bg: "rgba(52,211,153,0.15)",  border: "rgba(52,211,153,0.3)"  },
+                behavior: { label: "Hành vi · STAR",  color: "#FBBF24", bg: "rgba(251,191,36,0.15)", border: "rgba(251,191,36,0.3)" },
+              };
+              const lm = layerMap[layer];
+              if (!lm) return null;
+              return (
+                <span
+                  className="inline-block mt-1.5 px-2 py-0.5 rounded-full text-xs font-semibold"
+                  style={{ background: lm.bg, border: `1px solid ${lm.border}`, color: lm.color }}
+                >
+                  {lm.label}
+                </span>
+              );
+            })()}
+          </div>
         </div>
       </div>
+
+      {/* ── STAR guidance (behavior questions only) ──────────── */}
+      {QUESTION_OBJECTS && QUESTION_OBJECTS[currentQ]?.layer === "behavior" && (() => {
+        const sg = QUESTION_OBJECTS[currentQ]?.starGuidance;
+        const hasContent = sg && (sg.situation?.length || sg.task?.length || sg.action?.length || sg.result?.length);
+        if (!hasContent) return null;
+        return (
+          <div className="flex-shrink-0 px-5 py-2" style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
+            <div className="rounded-xl overflow-hidden" style={{ background: "rgba(251,191,36,0.05)", border: "1px solid rgba(251,191,36,0.18)" }}>
+              <button
+                onClick={() => setShowStarHints(p => !p)}
+                className="w-full flex items-center justify-between px-4 py-2 text-left transition-colors hover:bg-white/5"
+              >
+                <div className="flex items-center gap-2">
+                  <Star className="w-3.5 h-3.5 text-amber-400" />
+                  <span className="text-amber-300 text-xs font-semibold">Gợi ý STAR</span>
+                  <span className="text-amber-300/50 text-xs">— nhấn để {showStarHints ? "ẩn" : "xem"}</span>
+                </div>
+                <ChevronDown
+                  className="w-3.5 h-3.5 text-amber-400/50 transition-transform duration-200"
+                  style={{ transform: showStarHints ? "rotate(180deg)" : "rotate(0deg)" }}
+                />
+              </button>
+              {showStarHints && (
+                <div className="px-4 pb-3 grid grid-cols-2 gap-2" style={{ gridTemplateColumns: "repeat(4, 1fr)" }}>
+                  {[
+                    { key: "situation", label: "S · Tình huống", color: "#60A5FA" },
+                    { key: "task",      label: "T · Nhiệm vụ",   color: "#34D399" },
+                    { key: "action",    label: "A · Hành động",  color: "#F472B6" },
+                    { key: "result",    label: "R · Kết quả",    color: "#FBBF24" },
+                  ].map(({ key, label, color }) => {
+                    const hints = sg[key] ?? [];
+                    if (!hints.length) return null;
+                    return (
+                      <div
+                        key={key}
+                        className="rounded-lg p-2.5"
+                        style={{ background: "rgba(0,0,0,0.25)", border: `1px solid ${color}22` }}
+                      >
+                        <p className="text-xs font-semibold mb-1" style={{ color }}>{label}</p>
+                        {hints.slice(0, 2).map((h, i) => (
+                          <p key={i} className="text-white/50 text-xs leading-relaxed">· {h}</p>
+                        ))}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
+        );
+      })()}
 
       {/* ── Meeting panels ───────────────────────────────────── */}
       <div className="flex-1 flex gap-3 p-3 min-h-0">

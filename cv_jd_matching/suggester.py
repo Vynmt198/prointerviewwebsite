@@ -1,85 +1,25 @@
 """
-suggester.py — Ngày 3: Gợi ý chỉnh sửa CV theo STAR + JD keywords.
+suggester.py — Gợi ý chỉnh sửa CV theo STAR + JD keywords.
 
-Architecture: mirror scorer.py — dùng Ollama local, không cần API key.
 Gồm 3 tầng:
   1. rewrite_bullets()          — viết lại từng bullet theo STAR + embed JD keyword
   2. suggest_missing_skills()   — reframe tips + learning path cho missing skills
   3. generate_summary()         — executive summary tổng hợp
 
-Ollama phải đang chạy tại localhost:11434.
+Dùng cloud LLM (Groq/Gemini/OpenAI) nếu LLM_API_KEY set trong env,
+fallback về Ollama local nếu không có key.
 """
 
 import json
 import re
-import httpx
 from typing import Optional
 
-OLLAMA_URL   = "http://localhost:11434/api/generate"
-OLLAMA_MODEL = "mistral:7b"    # đổi thành llama3.2:3b nếu VRAM ít
+from llm_client import call_llm, extract_json
+from skill_taxonomy import enrich_missing_skills, build_taxonomy_context_for_prompt, infer_role_from_text
 
-SYSTEM_PROMPT = """You are an expert resume coach. You MUST respond with valid JSON only.
-No explanation, no markdown, no code fences. Pure JSON object."""
-
-
-# ══════════════════════════════════════════════════════════════════════════════
-# INTERNAL HELPERS (mirror scorer.py pattern)
-# ══════════════════════════════════════════════════════════════════════════════
-
-def _call_ollama(prompt: str, num_predict: int = 1200, timeout: int = 180) -> str:
-    """
-    Gọi Ollama /api/generate — stream=False để nhận full response 1 lần.
-    num_predict cao hơn scorer.py vì suggestion output dài hơn.
-    """
-    payload = {
-        "model":  OLLAMA_MODEL,
-        "prompt": f"{SYSTEM_PROMPT}\n\n{prompt}",
-        "stream": False,
-        "options": {
-            "temperature": 0.3,   # cao hơn scorer một chút để suggestion đa dạng hơn
-            "top_p": 0.9,
-            "num_predict": num_predict,
-        }
-    }
-
-    try:
-        r = httpx.post(OLLAMA_URL, json=payload, timeout=timeout)
-        r.raise_for_status()
-        return r.json()["response"]
-    except httpx.ConnectError:
-        raise ConnectionError(
-            "Không kết nối được Ollama. "
-            "Hãy chắc chắn Ollama đang chạy: 'ollama serve' hoặc mở app Ollama."
-        )
-    except httpx.TimeoutException:
-        raise TimeoutError(
-            f"Ollama không phản hồi sau {timeout}s. "
-            "Model đang load lần đầu hoặc prompt quá dài."
-        )
-
-
-def _parse_json(raw: str, fallback: dict) -> dict:
-    """
-    Parse JSON từ LLM output. Dùng regex fallback như scorer.py.
-    Nếu thất bại hoàn toàn thì trả fallback dict kèm _parse_error=True.
-    """
-    # Strip markdown fences nếu model vẫn thêm vào
-    cleaned = re.sub(r"```(?:json)?", "", raw).strip()
-
-    try:
-        return json.loads(cleaned)
-    except json.JSONDecodeError:
-        pass
-
-    # Tìm JSON block đầu tiên
-    m = re.search(r'\{[\s\S]*\}', cleaned)
-    if m:
-        try:
-            return json.loads(m.group())
-        except json.JSONDecodeError:
-            pass
-
-    return {**fallback, "_parse_error": True, "_raw": raw[:300]}
+_SYSTEM_PROMPT = """Bạn là chuyên gia tư vấn CV/hồ sơ xin việc cho người Việt Nam. Bạn PHẢI trả lời bằng JSON hợp lệ duy nhất.
+Không giải thích, không markdown, không code fence. Chỉ JSON object thuần.
+Tất cả nội dung văn bản PHẢI viết bằng tiếng Việt tự nhiên, chuyên nghiệp."""
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -92,12 +32,6 @@ def _build_bullet_prompt(
     scores: dict,
     jd_text: str,
 ) -> str:
-    """
-    Xây prompt rewrite bullets.
-    bullets: list[{id, original, section, company, matched_skills}]
-    scores:  output từ scorer.py (dùng để biết dimension nào yếu nhất)
-    """
-    # Xác định dimension yếu để ưu tiên fix
     weak_dims = [
         k for k in ("clarity", "structure", "relevance", "credibility")
         if scores.get(k, {}).get("score", 10) < 6.0
@@ -112,37 +46,38 @@ def _build_bullet_prompt(
     jd_snippet   = jd_text[:1200]
     bullets_json = json.dumps(bullets, ensure_ascii=False)
 
-    return f"""You are rewriting resume bullet points to be stronger.
+    return f"""Bạn đang viết lại các bullet point trong CV để mạnh hơn và phù hợp với JD.
 
-=== JOB DESCRIPTION (first 1200 chars) ===
+=== MÔ TẢ CÔNG VIỆC (1200 ký tự đầu) ===
 {jd_snippet}
 
-=== MISSING SKILLS (in JD but not in resume) ===
+=== KỸ NĂNG CÒN THIẾU (có trong JD nhưng không có trong CV) ===
 {missing_str}
 
-=== SCORING CONTEXT ===
+=== BỐI CẢNH ĐIỂM SỐ ===
 {weakness_note}
 
-=== RULES ===
-1. Follow STAR: Action verb → Situation/context (brief) → Measurable Result (numbers/% where possible)
-2. Embed JD keywords naturally — do NOT force irrelevant ones
-3. NEVER invent numbers or experiences that aren't implied by the original
-4. If result is unknown, write "driving X outcome" instead of making up a number
-5. Confidence = "high" if result is clear, "medium" if inferred, "low" if original lacks any result
+=== QUY TẮC ===
+1. Theo chuẩn STAR: Động từ hành động → Tình huống/bối cảnh (ngắn gọn) → Kết quả đo lường được (số liệu/% nếu có)
+2. Nhúng từ khóa từ JD một cách tự nhiên — KHÔNG ép từ khóa không liên quan
+3. TUYỆT ĐỐI KHÔNG bịa đặt con số hoặc kinh nghiệm không có trong bản gốc
+4. Nếu không biết kết quả, dùng cách diễn đạt như "góp phần cải thiện X"
+5. Viết lại bằng tiếng Việt tự nhiên, chuyên nghiệp
+6. Confidence = "high" nếu kết quả rõ ràng, "medium" nếu suy luận, "low" nếu bản gốc thiếu kết quả
 
-=== BULLETS TO REWRITE ===
+=== CÁC BULLET CẦN VIẾT LẠI ===
 {bullets_json}
 
-Respond with ONLY this JSON structure:
+Trả lời CHỈ với cấu trúc JSON (tất cả văn bản bằng tiếng Việt):
 {{
   "rewritten_bullets": [
     {{
-      "id": "<same id>",
-      "original": "<exact original>",
-      "rewritten": "<STAR rewrite with JD keywords>",
-      "changes_made": ["change 1", "change 2"],
+      "id": "<giữ nguyên id>",
+      "original": "<bản gốc chính xác>",
+      "rewritten": "<bản viết lại theo STAR + từ khóa JD, bằng tiếng Việt>",
+      "changes_made": ["thay đổi 1", "thay đổi 2"],
       "star_check": {{"situation": true, "action": true, "result": true}},
-      "keywords_added": ["kw1", "kw2"],
+      "keywords_added": ["từ_khóa1", "từ_khóa2"],
       "confidence": "high|medium|low"
     }}
   ]
@@ -156,24 +91,15 @@ def rewrite_bullets(
     jd_text: str,
     model: Optional[str] = None,
 ) -> dict:
-    """
-    Rewrite toàn bộ bullets trong 1 LLM call.
-    bullets: list[dict] từ Day 1 parser (có thể tự tạo nếu chưa có extractor riêng)
-
-    Returns: {"rewritten_bullets": [...]}
-    """
-    global OLLAMA_MODEL
-    if model:
-        OLLAMA_MODEL = model
-
+    """Rewrite toàn bộ bullets trong 1 LLM call. Returns {"rewritten_bullets": [...]}"""
     if not bullets:
         return {"rewritten_bullets": []}
 
-    prompt  = _build_bullet_prompt(bullets, missing_skills, scores, jd_text)
-    raw     = _call_ollama(prompt, num_predict=1500)
-    result  = _parse_json(raw, fallback={"rewritten_bullets": []})
+    prompt = _build_bullet_prompt(bullets, missing_skills, scores, jd_text)
+    raw    = call_llm(_SYSTEM_PROMPT, prompt, max_tokens=1500, temperature=0.3,
+                      ollama_model=model)
+    result = extract_json(raw, fallback={"rewritten_bullets": []})
 
-    # Sanity: đảm bảo mỗi bullet có đủ fields
     for b in result.get("rewritten_bullets", []):
         b.setdefault("keywords_added", [])
         b.setdefault("changes_made",   [])
@@ -191,39 +117,70 @@ def _build_missing_prompt(
     missing_skills: list[str],
     cv_text: str,
     jd_text: str,
+    taxonomy_context: str = "",
+    inferred_role: str = "",
 ) -> str:
-    cv_snippet = cv_text[:1800]
-    jd_snippet = jd_text[:800]
+    cv_snippet  = cv_text[:1600]
+    jd_snippet  = jd_text[:700]
+    role_line   = f"Vai trò xác định từ JD: **{inferred_role}**\n" if inferred_role else ""
 
-    return f"""You are a career coach advising a job candidate on skill gaps.
+    taxonomy_section = ""
+    if taxonomy_context:
+        taxonomy_section = f"""
+=== PHÂN TÍCH QUAN HỆ KỸ NĂNG (ESCO + O*NET) ===
+{role_line}{taxonomy_context}
 
-=== CANDIDATE'S RESUME (first 1800 chars) ===
+Chú thích:
+  🔴 BẮT BUỘC   = JD yêu cầu cứng, ứng viên sẽ bị loại nếu thiếu
+  🟡 QUAN TRỌNG = Tăng đáng kể cơ hội được chọn
+  🟢 CÓ THÊM TỐT = Điểm cộng, không bắt buộc
+  Dễ chuyển đổi  = Ứng viên đã có nền tảng liên quan — hãy ưu tiên tái diễn đạt
+  Cần học từ đầu = Cần lộ trình học rõ ràng hơn
+"""
+
+    return f"""Bạn là chuyên gia tư vấn nghề nghiệp hàng đầu đang tư vấn cho ứng viên Việt Nam.
+Nhiệm vụ: Đưa ra lời khuyên THỰC TẾ, CỤ THỂ để lấp đầy khoảng cách kỹ năng — không phải lời khuyên chung chung.
+{taxonomy_section}
+=== HỒ SƠ ỨNG VIÊN (trích 1600 ký tự) ===
 {cv_snippet}
 
-=== JOB DESCRIPTION (first 800 chars) ===
+=== MÔ TẢ CÔNG VIỆC (trích 700 ký tự) ===
 {jd_snippet}
 
-=== MISSING SKILLS ===
-{json.dumps(missing_skills)}
+=== KỸ NĂNG CÒN THIẾU CẦN XỬ LÝ ===
+{json.dumps(missing_skills, ensure_ascii=False)}
 
-For EACH missing skill, provide:
-- reframe_tip: How to reframe EXISTING resume experience to partially demonstrate this skill.
-  Be specific — reference actual content from the resume above.
-  Write exactly "N/A" if no existing experience applies at all.
-- acquisition_path: ONE concrete short-term action (course name, project idea, cert, contribution).
-  Be specific — not generic advice like "take an online course".
-- priority: "high" if clearly required by JD, "medium" if preferred, "low" if minor/nice-to-have
-- estimated_effort: "1 week" | "2 weeks" | "1 month" | "3 months" | "6+ months"
+Với MỖI kỹ năng còn thiếu, hãy cung cấp:
 
-Respond with ONLY this JSON:
+1. reframe_tip — Cách tái diễn đạt kinh nghiệm HIỆN CÓ trong CV để thể hiện một phần kỹ năng này.
+   • Nếu phân tích ESCO cho thấy "Dễ chuyển đổi": bắt buộc phải viết reframe cụ thể dựa vào kinh nghiệm trong CV.
+   • Ví dụ tốt: "Kinh nghiệm React của bạn (component lifecycle, state management) trực tiếp chuyển sang Vue — hãy thêm dòng 'Nền tảng JavaScript vững, có thể áp dụng vào Vue/Angular' vào phần kỹ năng."
+   • Ví dụ xấu (KHÔNG dùng): "Không áp dụng" hoặc "Chưa có kinh nghiệm liên quan."
+   • CHỈ ghi "Không áp dụng" khi thực sự không có BẤT KỲ kỹ năng liên quan nào trong CV.
+
+2. acquisition_path — Lộ trình học NGẮN HẠN cụ thể nhất có thể.
+   • Tên khóa học + nền tảng: "Khóa 'Docker for Developers' trên Udemy (8 giờ, dưới 300k)"
+   • Hoặc dự án thực hành: "Containerize dự án Django hiện tại của bạn bằng Docker + docker-compose"
+   • Hoặc chứng chỉ: "AWS Cloud Practitioner (CLF-C02) — ôn 2 tuần bằng Stephane Maarek trên Udemy"
+   • KHÔNG viết: "Tìm hiểu thêm về X" hoặc "Tham gia các khóa học trực tuyến".
+
+3. priority — Dựa vào phân tích O*NET ở trên:
+   "high" nếu BẮT BUỘC theo O*NET hoặc JD dùng từ "required/bắt buộc/must"
+   "medium" nếu QUAN TRỌNG theo O*NET hoặc JD dùng từ "preferred/ưu tiên"
+   "low" nếu CÓ THÊM TỐT hoặc không đề cập rõ trong JD
+
+4. estimated_effort — Thời gian thực tế để đạt mức "đủ dùng trong công việc":
+   "1 tuần" | "2 tuần" | "1 tháng" | "3 tháng" | "6+ tháng"
+
+Trả lời CHỈ với JSON (tất cả văn bản bằng tiếng Việt tự nhiên):
 {{
   "missing_skill_suggestions": [
     {{
-      "skill": "<skill name>",
-      "reframe_tip": "...",
-      "acquisition_path": "...",
+      "skill": "<tên kỹ năng>",
+      "reframe_tip": "<lời khuyên cụ thể hoặc 'Không áp dụng'>",
+      "acquisition_path": "<lộ trình học cụ thể với tên khóa/dự án>",
       "priority": "high|medium|low",
-      "estimated_effort": "..."
+      "estimated_effort": "<thời gian thực tế>"
     }}
   ]
 }}"""
@@ -233,21 +190,28 @@ def suggest_missing_skills(
     missing_skills: list[str],
     cv_text: str,
     jd_text: str,
+    candidate_skills: list[str] | None = None,
     model: Optional[str] = None,
 ) -> dict:
     """
-    Returns {"missing_skill_suggestions": [...]}
+    Returns {"missing_skill_suggestions": [...]}.
+    candidate_skills: danh sách kỹ năng ứng viên đã có (từ matching) — dùng cho ESCO transfer analysis.
     """
-    global OLLAMA_MODEL
-    if model:
-        OLLAMA_MODEL = model
-
     if not missing_skills:
         return {"missing_skill_suggestions": []}
 
-    prompt = _build_missing_prompt(missing_skills, cv_text, jd_text)
-    raw    = _call_ollama(prompt, num_predict=1200)
-    return _parse_json(raw, fallback={"missing_skill_suggestions": []})
+    # ── ESCO + O*NET enrichment ────────────────────────────────────────────
+    taxonomy_context = ""
+    inferred_role    = ""
+    if candidate_skills:
+        inferred_role   = infer_role_from_text(jd_text) or ""
+        enriched        = enrich_missing_skills(missing_skills, candidate_skills, jd_text, inferred_role or None)
+        taxonomy_context = build_taxonomy_context_for_prompt(enriched)
+
+    prompt = _build_missing_prompt(missing_skills, cv_text, jd_text, taxonomy_context, inferred_role)
+    raw    = call_llm(_SYSTEM_PROMPT, prompt, max_tokens=1400, temperature=0.25,
+                      ollama_model=model)
+    return extract_json(raw, fallback={"missing_skill_suggestions": []})
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -268,27 +232,28 @@ def _build_summary_prompt(
     total = len(matching) + len(missing)
     match_pct = round(len(matching) / total * 100) if total else 0
 
-    return f"""Write a concise executive summary (3-4 sentences) for a resume review.
+    return f"""Viết một nhận xét tổng quan ngắn gọn (3-4 câu) cho buổi đánh giá CV.
 
-Skill match: {match_pct}% ({len(matching)} matched, {len(missing)} missing)
-Bullets rewritten: {rewritten_count}
+Tỷ lệ khớp kỹ năng: {match_pct}% ({len(matching)} khớp, {len(missing)} còn thiếu)
+Số bullet đã viết lại: {rewritten_count}
 
-Dimension scores:
+Điểm số các tiêu chí:
 {score_lines}
 
-Top matching skills: {', '.join(matching[:8])}
-Critical missing skills: {', '.join(missing[:6])}
+Kỹ năng phù hợp nhất: {', '.join(matching[:8])}
+Kỹ năng thiếu quan trọng nhất: {', '.join(missing[:6])}
 
-Rules:
-- Tone: professional, honest, encouraging
-- Mention overall fit percentage
-- Name 2-3 specific strengths
-- Name 1-2 most critical gaps
-- End with one actionable next step
+Quy tắc:
+- Giọng văn: chuyên nghiệp, trung thực, khích lệ
+- Đề cập tỷ lệ phù hợp tổng thể
+- Nêu 2-3 điểm mạnh cụ thể
+- Nêu 1-2 khoảng cách kỹ năng cần ưu tiên
+- Kết bằng một bước hành động cụ thể
+- PHẢI viết bằng tiếng Việt
 
-Respond with ONLY this JSON:
+Trả lời CHỈ với JSON này:
 {{
-  "summary": "3-4 sentence executive summary here"
+  "summary": "nhận xét tổng quan 3-4 câu bằng tiếng Việt"
 }}"""
 
 
@@ -300,13 +265,10 @@ def generate_summary(
     model: Optional[str] = None,
 ) -> str:
     """Returns plain string summary."""
-    global OLLAMA_MODEL
-    if model:
-        OLLAMA_MODEL = model
-
     prompt = _build_summary_prompt(matching, missing, scores, rewritten_count)
-    raw    = _call_ollama(prompt, num_predict=300)
-    parsed = _parse_json(raw, fallback={"summary": raw[:400]})
+    raw    = call_llm(_SYSTEM_PROMPT, prompt, max_tokens=300, temperature=0.3,
+                      ollama_model=model)
+    parsed = extract_json(raw, fallback={"summary": raw[:400]})
     return parsed.get("summary", raw[:400])
 
 
@@ -326,40 +288,23 @@ def generate_suggestions(
     """
     Entry point chính — gọi từ FastAPI endpoint /analyze/suggestions.
 
-    Args:
-        cv_text:    raw text của CV (từ parse_pdf)
-        jd_text:    raw text của JD (từ parse_pdf)
-        cv_bullets: list[dict] mỗi dict gồm {id, original, section, company, matched_skills}
-                    — xem _extract_bullets_from_text() bên dưới nếu chưa có extractor
-        matching:   list skill đã match (từ compute_match)
-        missing:    list skill còn thiếu (từ compute_match)
-        scores:     dict output từ scorer.score_resume()
-        model:      Ollama model name (override OLLAMA_MODEL)
-
     Returns:
         {
           "rewritten_bullets":         [...],
           "missing_skill_suggestions": [...],
           "executive_summary":         "..."
         }
-
-    Raises:
-        ConnectionError: Ollama chưa chạy
-        TimeoutError:    Model load quá lâu
     """
-    global OLLAMA_MODEL
-    if model:
-        OLLAMA_MODEL = model
-
     print("  [suggester] Step 1/3 — Rewriting bullets...")
-    bullets_result = rewrite_bullets(cv_bullets, missing, scores, jd_text)
+    bullets_result = rewrite_bullets(cv_bullets, missing, scores, jd_text, model)
 
-    print("  [suggester] Step 2/3 — Generating missing skill suggestions...")
-    missing_result = suggest_missing_skills(missing, cv_text, jd_text)
+    print("  [suggester] Step 2/3 — Generating missing skill suggestions (ESCO+O*NET enriched)...")
+    missing_result = suggest_missing_skills(missing, cv_text, jd_text,
+                                            candidate_skills=matching, model=model)
 
     rewritten_count = len(bullets_result.get("rewritten_bullets", []))
     print(f"  [suggester] Step 3/3 — Generating summary ({rewritten_count} bullets rewritten)...")
-    summary = generate_summary(matching, missing, scores, rewritten_count)
+    summary = generate_summary(matching, missing, scores, rewritten_count, model)
 
     return {
         "rewritten_bullets":          bullets_result.get("rewritten_bullets", []),
@@ -369,16 +314,13 @@ def generate_suggestions(
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-# UTILITY — tự extract bullets nếu Day 1 chưa có bullet extractor riêng
+# UTILITY — tự extract bullets nếu parser chưa trả về structured bullets
 # ══════════════════════════════════════════════════════════════════════════════
 
 def extract_bullets_from_text(cv_text: str) -> list[dict]:
     """
-    Heuristic: tách các dòng bắt đầu bằng bullet char hoặc dash ra thành bullets.
-    Dùng làm fallback nếu parser chưa trả về structured bullets.
-
-    Format trả về tương thích với rewrite_bullets():
-    [{ id, original, section, company, matched_skills }]
+    Heuristic: tách các dòng bắt đầu bằng bullet char hoặc dash.
+    Format trả về tương thích với rewrite_bullets().
     """
     bullets = []
     current_section = "Experience"
@@ -398,29 +340,26 @@ def extract_bullets_from_text(cv_text: str) -> list[dict]:
     for i, line in enumerate(cv_text.splitlines()):
         line_stripped = line.strip()
 
-        # Phát hiện section header
         lower = line_stripped.lower()
         for kw, section in section_keywords.items():
             if kw in lower and len(line_stripped) < 40:
                 current_section = section
                 break
 
-        # Nhận diện bullet lines
         is_bullet = (
             line_stripped.startswith(("•", "-", "–", "▪", "*", "◦"))
             or (len(line_stripped) > 20 and line.startswith("  ") and line_stripped[0].isupper())
         )
 
         if is_bullet and len(line_stripped) > 15:
-            # Loại bỏ ký tự bullet đầu
             text = re.sub(r'^[•\-–▪\*◦]\s*', '', line_stripped)
             if text:
                 bullets.append({
                     "id":             f"b{str(i).zfill(3)}",
                     "original":       text,
                     "section":        current_section,
-                    "company":        "",          # có thể enrich sau
-                    "matched_skills": [],          # có thể enrich từ skill_extractor
+                    "company":        "",
+                    "matched_skills": [],
                 })
 
     return bullets
@@ -432,14 +371,12 @@ def extract_bullets_from_text(cv_text: str) -> list[dict]:
 
 if __name__ == "__main__":
     import sys
+    from llm_client import check_llm_health
 
-    # Quick health check
-    try:
-        r = httpx.get("http://localhost:11434/api/tags", timeout=5)
-        models = [m["name"] for m in r.json().get("models", [])]
-        print(f"✓ Ollama running. Models: {models}")
-    except Exception as e:
-        print(f"✗ Ollama not running: {e}")
+    health = check_llm_health()
+    print(json.dumps(health, indent=2, ensure_ascii=False))
+    if not health.get("running"):
+        print("LLM không khả dụng. Set LLM_API_KEY hoặc chạy Ollama.")
         sys.exit(1)
 
     sample_cv = """
@@ -462,7 +399,6 @@ if __name__ == "__main__":
     - Kubernetes and Docker
     - CI/CD (GitHub Actions or Jenkins)
     - System design: microservices, event-driven architecture
-    - Strong communication and mentoring skills
     Nice to have: TypeScript, GraphQL
     """
 
@@ -506,7 +442,6 @@ if __name__ == "__main__":
         print(f"  Reframe: {s['reframe_tip']}")
         print(f"  Learn:   {s['acquisition_path']}")
 
-    # Save output
     out = "day3_test_output.json"
     with open(out, "w", encoding="utf-8") as f:
         json.dump(result, f, ensure_ascii=False, indent=2)
