@@ -21,8 +21,13 @@ import {
   FileCheck,
   CloudUpload,
   FileStack,
+  AlertCircle,
+  CalendarDays,
+  Award,
 } from "lucide-react";
 import { getLatestCVAnalysis, getUploadedCV, saveUploadedCV } from "../../utils/history";
+import { hasAuthCredentials } from "../../utils/auth";
+import { generateInterviewQuestions, extractCvTextFromFile, createInterviewSession } from "../../utils/interviewsApi";
 
 const LEVELS = ["Thực tập sinh", "Mới ra trường", "Junior", "Trung cấp", "Senior"];
 const FIELDS_LIST = [
@@ -184,6 +189,8 @@ export function Interview() {
   const [form, setForm] = useState({ company: "", position: "", field: "", level: "" });
   const [fieldOpen, setFieldOpen] = useState(false);
   const [levelOpen, setLevelOpen] = useState(false);
+  const [generating, setGenerating] = useState(false);
+  const [extractWarning, setExtractWarning] = useState("");
 
   const latestCV = getLatestCVAnalysis();
   const storedCV = getUploadedCV();
@@ -198,7 +205,7 @@ export function Interview() {
   };
 
   const canProceedSetup =
-    option === "A" ||
+    (option === "A" && Boolean(latestCV)) ||
     (option === "B" &&
       ((inputMethod === "cv" && cvUploaded) ||
         (inputMethod === "form" &&
@@ -210,15 +217,98 @@ export function Interview() {
     setFlowStep(2);
   };
 
-  const handleStart = () => {
-    if (!canStart) return;
+  const handleStart = async () => {
+    if (!canStart || generating) return;
+    setGenerating(true);
+    setExtractWarning("");
+
+    let questions = null;
+    let result = null;
+    try {
+      let cvText = "";
+      let jdText = "";
+
+      if (option === "A" && latestCV) {
+        // Xây context có cấu trúc từ kết quả phân tích CV — chất lượng tốt hơn JSON dump
+        const parts = [
+          latestCV.position && `Vị trí ứng tuyển: ${latestCV.position}`,
+          latestCV.company  && `Công ty: ${latestCV.company}`,
+          latestCV.matchedKeywords?.length
+            && `Kỹ năng phù hợp với JD: ${latestCV.matchedKeywords.join(", ")}`,
+          latestCV.missingKeywords?.length
+            && `Kỹ năng còn thiếu: ${latestCV.missingKeywords.join(", ")}`,
+          latestCV.strengths?.length
+            && `Điểm mạnh:\n${latestCV.strengths.slice(0, 3).map(s => `- ${s}`).join("\n")}`,
+          latestCV.weaknesses?.length
+            && `Cần cải thiện:\n${latestCV.weaknesses.slice(0, 2).map(w => `- ${w}`).join("\n")}`,
+        ];
+        cvText = parts.filter(Boolean).join("\n\n");
+      } else if (option === "B" && inputMethod === "cv" && uploadedFile) {
+        const extracted = await extractCvTextFromFile(uploadedFile);
+        if (extracted.success && extracted.text) {
+          cvText = extracted.text;
+        } else {
+          // Báo lỗi nhưng vẫn tiếp tục với context tối thiểu từ tên file
+          setExtractWarning(
+            extracted.error ||
+            "Không thể trích xuất text từ CV (cần Python service đang chạy). " +
+            "AI sẽ tạo câu hỏi dựa trên tên file — chất lượng cá nhân hoá thấp hơn."
+          );
+          cvText = `Tên file CV: ${uploadedFile.name}`;
+        }
+      } else if (option === "B" && inputMethod === "form") {
+        jdText = [
+          form.position && `Vị trí: ${form.position}.`,
+          form.company  && `Công ty: ${form.company}.`,
+          form.field    && `Lĩnh vực: ${form.field}.`,
+          form.level    && `Level kinh nghiệm: ${form.level}.`,
+        ].filter(Boolean).join(" ");
+      }
+
+      result = await generateInterviewQuestions({
+        cvText,
+        jdText,
+        // Option A lấy position/field từ latestCV thay vì form
+        position: option === "A" ? (latestCV?.position || "") : form.position,
+        field:    option === "A" ? ""                          : form.field,
+        level:    option === "A" ? ""                          : form.level,
+      });
+
+      if (result?.success && result.questions?.length) {
+        questions = result.questions;
+      }
+    } catch {
+      // Fallback: InterviewRoom dùng MOCK_INTERVIEW_QUESTIONS
+    }
+
+    // Tạo session ngay sau khi có questions — trước khi vào phòng
+    // sessionId được truyền vào InterviewRoom để lưu từng câu trả lời
+    let sessionId = null;
+    if (hasAuthCredentials()) {
+      try {
+        const created = await createInterviewSession(hrGender, {
+          ...(questions                  && { questions }),
+          ...(result?.inferredRole       && { inferredRole: result.inferredRole }),
+          ...(result?.inferredSeniority  && { inferredSeniority: result.inferredSeniority }),
+          ...(result?.competencyProfile  && { competencyProfile: result.competencyProfile }),
+          ...(result?.coverageScore      && { coverageScore: result.coverageScore }),
+        });
+        if (created.success) sessionId = created.sessionId;
+      } catch {
+        // graceful degradation — phỏng vấn vẫn chạy, không lưu MongoDB
+      }
+    }
+
+    setGenerating(false);
 
     const interviewData = {
       option,
       inputMethod,
       hrGender,
+      questions,
+      sessionId,
       ...(option === "A" && { useLatestAnalysis: true, latestCV }),
-      ...(option === "B" && inputMethod === "cv" && { uploadedFile, storedCV }),
+      ...(option === "B" && inputMethod === "cv" && { storedCV }),
       ...(option === "B" && inputMethod === "form" && { form }),
     };
 
@@ -332,8 +422,9 @@ export function Interview() {
           <div className="mb-6 grid gap-4 sm:grid-cols-2">
             <button
               type="button"
-              onClick={() => { setOption("A"); setInputMethod(null); }}
-              className={`${optBase} ${option === "A" ? optOn : optIdle}`}
+              onClick={() => { if (latestCV) { setOption("A"); setInputMethod(null); } }}
+              disabled={!latestCV}
+              className={`${optBase} ${option === "A" ? optOn : optIdle} ${!latestCV ? "opacity-60 cursor-not-allowed" : ""}`}
             >
               {option === "A" && (
                 <div className="absolute right-3 top-3 flex h-7 w-7 items-center justify-center rounded-full border border-[#c4ff47]/40 bg-[#c4ff47] shadow-[0_2px_12px_rgba(196,255,71,0.35)]">
@@ -347,6 +438,50 @@ export function Interview() {
               <p className="text-xs leading-relaxed text-slate-600">
                 Sử dụng từ phiên phân tích CV/JD trước — AI hiểu rõ bạn nhất
               </p>
+              {latestCV ? (
+                <div
+                  className="mt-3 w-full rounded-xl border p-3 text-left"
+                  style={{ background: "rgba(220,252,231,0.7)", borderColor: "rgba(74,222,128,0.35)" }}
+                >
+                  <p className="mb-1.5 text-[10px] font-black uppercase tracking-widest text-emerald-600">
+                    Phân tích gần nhất
+                  </p>
+                  <p className="truncate text-xs font-bold text-slate-800">{latestCV.position || "—"}</p>
+                  {latestCV.company && (
+                    <p className="text-[11px] text-slate-500">{latestCV.company}</p>
+                  )}
+                  <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                    {latestCV.matchScore != null && (
+                      <span className="flex items-center gap-1 rounded-md border border-emerald-200 bg-emerald-100 px-1.5 py-0.5 text-[10px] font-bold text-emerald-700">
+                        <Award className="h-2.5 w-2.5" />
+                        {latestCV.matchScore}% phù hợp
+                      </span>
+                    )}
+                    {latestCV.date && (
+                      <span className="flex items-center gap-1 text-[10px] text-slate-400">
+                        <CalendarDays className="h-2.5 w-2.5" />
+                        {latestCV.date}
+                      </span>
+                    )}
+                  </div>
+                  {latestCV.matchedKeywords?.length > 0 && (
+                    <p className="mt-2 text-[10px] text-slate-500 leading-relaxed">
+                      <span className="font-semibold text-slate-600">Skills: </span>
+                      {latestCV.matchedKeywords.slice(0, 5).join(", ")}
+                      {latestCV.matchedKeywords.length > 5 && ` +${latestCV.matchedKeywords.length - 5}`}
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <div
+                  className="mt-3 w-full rounded-xl border border-amber-200/60 bg-amber-50/70 p-3 text-left"
+                >
+                  <p className="text-[11px] text-amber-700">
+                    Chưa có phân tích CV nào. Hãy dùng tính năng{" "}
+                    <span className="font-bold">CV Analysis</span> trước.
+                  </p>
+                </div>
+              )}
             </button>
 
             <button
@@ -715,18 +850,36 @@ export function Interview() {
 
         {flowStep === 2 && (
           <>
+            {extractWarning && (
+              <div className="mb-4 flex items-start gap-3 rounded-2xl border border-amber-300/60 bg-amber-50/90 p-4">
+                <AlertCircle className="h-4 w-4 flex-shrink-0 text-amber-500 mt-0.5" />
+                <div>
+                  <p className="text-xs font-bold text-amber-800 mb-0.5">Trích xuất CV không thành công</p>
+                  <p className="text-xs text-amber-700 leading-relaxed">{extractWarning}</p>
+                </div>
+              </div>
+            )}
             <button
               type="button"
               onClick={handleStart}
-              disabled={!canStart}
+              disabled={!canStart || generating}
               className={`flex w-full items-center justify-center gap-2.5 rounded-2xl py-4 text-sm font-black transition-all active:scale-[0.99] ${
-                canStart
+                canStart && !generating
                   ? "bg-gradient-to-r from-[#c4ff47] to-[#8fbc24] text-[#0a0814] shadow-[0_8px_28px_rgba(196,255,71,0.25)] hover:brightness-110"
                   : "cursor-not-allowed border border-white/10 bg-white/[0.04] text-zinc-500"
               }`}
             >
-              <Mic className="h-5 w-5" {...IS} strokeWidth={2} />
-              {canStart ? "Bắt đầu Phỏng vấn AI →" : "Chọn HR AI để bắt đầu"}
+              {generating ? (
+                <>
+                  <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                  AI đang tạo câu hỏi cá nhân hóa...
+                </>
+              ) : (
+                <>
+                  <Mic className="h-5 w-5" {...IS} strokeWidth={2} />
+                  {canStart ? "Bắt đầu Phỏng vấn AI →" : "Chọn HR AI để bắt đầu"}
+                </>
+              )}
             </button>
 
             <button

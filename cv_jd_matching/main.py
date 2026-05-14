@@ -12,6 +12,11 @@ import sys
 import tempfile
 import os
 from pathlib import Path
+from dotenv import load_dotenv
+
+_here = Path(__file__).parent
+load_dotenv(_here / ".env")                      # cv_jd_matching/.env (ưu tiên)
+load_dotenv(_here.parent / "backend" / ".env")   # backend/.env làm fallback
 
 sys.path.insert(0, str(Path(__file__).parent))
 
@@ -21,8 +26,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from pdf_parser import parse_pdf
 from skill_extractor import extract_skills
 from matcher import compute_match
-from scorer import score_resume, check_ollama_health
-from suggester import generate_suggestions, extract_bullets_from_text   # ← Day 3
+from scorer import score_resume
+from suggester import generate_suggestions, extract_bullets_from_text
+from llm_client import check_llm_health
 
 app = FastAPI(title="Resume Analyzer API", version="0.3.0")
 
@@ -67,9 +73,9 @@ async def _process_upload(label: str, upload: UploadFile) -> dict:
 # ── Endpoints ─────────────────────────────────────────────────────────────────
 
 @app.get("/health/ollama")
-def ollama_health(model: str = Query(default="mistral:7b")):
-    """Kiểm tra Ollama đang chạy và model đã pull chưa."""
-    return check_ollama_health(model)
+def ollama_health():
+    """Kiểm tra LLM provider (cloud hoặc Ollama) đang khả dụng."""
+    return check_llm_health()
 
 
 @app.post("/analyze")
@@ -212,3 +218,15 @@ async def analyze_suggestions(
         "resume_text": resume_data["text"],
         "jd_text":     jd_data["text"],
     }
+
+
+@app.post("/extract-text")
+async def extract_text(
+    file: UploadFile = File(...),
+):
+    """
+    Trích xuất text thuần từ PDF.
+    Dùng bởi backend Express (interviewsController) để chuẩn bị prompt LLM sinh câu hỏi.
+    """
+    data = await _process_upload("file", file)
+    return {"text": data["text"], "page_count": data["page_count"]}

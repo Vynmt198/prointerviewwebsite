@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router";
+import React, { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router";
 import {
   Star,
   TrendingUp as TrendUp,
@@ -16,18 +16,16 @@ import {
   BookOpen,
   ArrowLeft,
   Eye,
-  Frown as SmileyNervous,
-  Activity as PersonSimpleWalk,
   Volume2 as SpeakerHigh,
   MessageSquareText as ChatTeardropDots,
   Quote as Quotes,
-  Activity as WaveTriangle,
   GraduationCap,
   Lock,
   Zap as Lightning,
 } from "lucide-react";
 import { CourseRecommendations } from "../../components/courses/CourseRecommendations";
 import { getPlans } from "../../utils/auth";
+import { evaluateInterviewSession } from "../../utils/interviewsApi";
 
 const IS = { strokeWidth: 1.75, strokeLinecap: "round", strokeLinejoin: "round" };
 
@@ -85,19 +83,52 @@ const STAR_NAMES = {
   credibility: "Credibility (Thuyết phục)",
 };
 
-const BEHAVIORAL_SCORES = {
-  eyeContact:    { label: "Ánh mắt & giao tiếp", score: 3.5 },
-  nervousHabits: { label: "Thói quen lo lắng",   score: 4.0 },
-  posture:       { label: "Tư thế",               score: 4.5 },
-};
+// Từ đệm phổ biến trong tiếng Việt và tiếng Anh
+const FILLER_PATTERNS = [
+  /\bừm+\b/gi, /\bừ+\b/gi, /\bà+\b/gi, /\bờ+\b/gi, /\bơ+\b/gi,
+  /kiểu là/gi, /kiểu như/gi, /tức là/gi, /ý là/gi, /\bý kiến là\b/gi,
+  /\bum+\b/gi, /\buh+\b/gi, /\blike,?\s/gi, /you know/gi,
+  /thì là/gi, /\bnhỉ\b/gi, /\bnhé\b/gi,
+];
 
-const SPEAKING_SCORES = {
-  pace:        { label: "Tốc độ nói", score: 3.5 },
-  fillerWords: { label: "Từ đệm",     score: 3.0 },
-};
+function computeTranscriptMetrics(transcript = "", durationSeconds = 0) {
+  const trimmed = transcript.trim();
+  const words = trimmed ? trimmed.split(/\s+/).filter(Boolean) : [];
+  const wordCount = words.length;
+  const wpm = durationSeconds > 0 ? Math.round((wordCount / durationSeconds) * 60) : 0;
+
+  let fillerCount = 0;
+  for (const p of FILLER_PATTERNS) {
+    const m = trimmed.match(p);
+    if (m) fillerCount += m.length;
+  }
+  const fillerRatio = wordCount > 0 ? fillerCount / wordCount : 0;
+
+  // Score filler words: 5 = rất ít (<2%), 1 = nhiều (>15%)
+  const fillerScore =
+    fillerRatio < 0.02 ? 5.0 :
+    fillerRatio < 0.05 ? 4.0 :
+    fillerRatio < 0.10 ? 3.0 :
+    fillerRatio < 0.15 ? 2.0 : 1.0;
+
+  // Score pace: ideal 120–160 wpm; 0 nếu không có duration
+  const paceScore = wpm === 0 ? 0 :
+    (wpm >= 120 && wpm <= 160) ? 5.0 :
+    (wpm >= 100 && wpm <= 180) ? 4.0 :
+    (wpm >= 80  && wpm <= 200) ? 3.0 : 2.0;
+
+  // Score answer length: ideal 100–250 words
+  const lengthScore = wordCount === 0 ? 0 :
+    (wordCount >= 100 && wordCount <= 250) ? 5.0 :
+    (wordCount >= 60  && wordCount <= 300) ? 4.0 :
+    (wordCount >= 30  && wordCount <= 350) ? 3.0 : 2.0;
+
+  return { wordCount, wpm, fillerCount, fillerRatio, fillerScore, paceScore, lengthScore };
+}
 
 export function InterviewFeedback() {
-  const navigate = useNavigate();
+  const navigate   = useNavigate();
+  const location   = useLocation();
   const [expandedQ, setExpandedQ] = useState(null);
   const plans = getPlans();
   const isPro = plans.starterPro || plans.elitePro;
@@ -106,16 +137,101 @@ export function InterviewFeedback() {
   const [transcripts] = useState(() => {
     try {
       const raw = sessionStorage.getItem("prointerview_transcripts");
-      if (raw) return JSON.parse(raw) ;
+      if (raw) return JSON.parse(raw);
     } catch (_) {}
     return [];
   });
 
-  // Tất cả 5 câu — nhưng non-Pro chỉ được xem 3 câu đầu
-  const allQuestions = QUESTIONS_FEEDBACK;
+  // Read question objects (for question text mapping)
+  const [questionObjects] = useState(() => {
+    try {
+      const raw = sessionStorage.getItem("prointerview_question_objects");
+      if (raw) return JSON.parse(raw);
+    } catch (_) {}
+    return null;
+  });
+
+  // Real AI evaluation state
+  const [evaluating,   setEvaluating]   = useState(false);
+  const [evalError,    setEvalError]     = useState("");
+  const [realFeedback, setRealFeedback]  = useState(null);   // null = not loaded
+  const [sessionMeta,  setSessionMeta]   = useState({ position: "", duration: 0, overallComment: "" });
+
+  useEffect(() => {
+    const sessionId = location.state?.sessionId;
+    if (!sessionId) return;
+
+    setEvaluating(true);
+    const answers = transcripts.map((t, i) => ({ questionIndex: i, transcript: t || "" }));
+
+    evaluateInterviewSession(sessionId, answers)
+      .then(res => {
+        if (!res.success || !res.evaluation?.perQuestion?.length) {
+          setEvalError("Không thể tạo phản hồi AI. Đang hiển thị kết quả mẫu.");
+          return;
+        }
+        // Map sang format mà UI đang dùng: { q, scores, overall, strengths, improvements, suggestion }
+        const mapped = res.evaluation.perQuestion.map(evalQ => ({
+          q:            questionObjects?.[evalQ.questionIndex]?.question
+                          ?? QUESTIONS_FEEDBACK[evalQ.questionIndex]?.q
+                          ?? `Câu ${evalQ.questionIndex + 1}`,
+          scores:       evalQ.scores,
+          overall:      evalQ.overall,
+          shrmLevel:    evalQ.shrmLevel || "proficient",
+          strengths:    evalQ.strengths,
+          improvements: evalQ.improvements,
+          suggestion:   evalQ.suggestion,
+        }));
+        setRealFeedback(mapped);
+        setSessionMeta({
+          position:       res.inferredRole || "",
+          duration:       res.totalDurationSeconds
+                            ? Math.max(1, Math.round(res.totalDurationSeconds / 60))
+                            : 0,
+          overallComment: res.generalComment || "",
+        });
+      })
+      .catch(() => setEvalError("Lỗi kết nối. Đang hiển thị kết quả mẫu."))
+      .finally(() => setEvaluating(false));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Dùng real feedback nếu có, fallback về mock
+  const allQuestions = realFeedback ?? QUESTIONS_FEEDBACK;
   const visibleQuestions = isPro ? allQuestions : allQuestions.slice(0, FREE_LIMIT);
 
   const hasAnyTranscript = transcripts.some((t) => t && t.trim().length > 0);
+
+  // Compute real speaking metrics from transcript text
+  const allMetrics = transcripts.map(t => computeTranscriptMetrics(t));
+  const answeredMetrics = allMetrics.filter((_, i) => transcripts[i]?.trim().length > 0);
+  const hasSpeakingData = answeredMetrics.length > 0;
+  const avgWpm   = hasSpeakingData ? Math.round(answeredMetrics.reduce((s, m) => s + m.wpm, 0) / answeredMetrics.length) : 0;
+  const avgFillerScore  = hasSpeakingData ? answeredMetrics.reduce((s, m) => s + m.fillerScore, 0) / answeredMetrics.length : 0;
+  const avgLengthScore  = hasSpeakingData ? answeredMetrics.reduce((s, m) => s + m.lengthScore, 0) / answeredMetrics.length : 0;
+  const totalFillers    = hasSpeakingData ? answeredMetrics.reduce((s, m) => s + m.fillerCount, 0) : 0;
+  const avgWordCount    = hasSpeakingData ? Math.round(answeredMetrics.reduce((s, m) => s + m.wordCount, 0) / answeredMetrics.length) : 0;
+
+  // Derive speaking tips from actual metrics
+  const speakingTips = [];
+  if (hasSpeakingData) {
+    if (avgWpm > 160) speakingTips.push(`Giảm tốc độ nói xuống 130–150 từ/phút (hiện tại: ~${avgWpm} từ/phút)`);
+    else if (avgWpm > 0 && avgWpm < 100) speakingTips.push(`Tăng tốc độ nói lên 120–140 từ/phút (hiện tại: ~${avgWpm} từ/phút)`);
+    else if (avgWpm >= 100) speakingTips.push(`Tốc độ nói ổn định ~${avgWpm} từ/phút — duy trì trong khoảng 120–160`);
+    if (totalFillers > 5) speakingTips.push(`Luyện bỏ từ đệm (phát hiện ${totalFillers} lần) — thay bằng cách dừng ngắn`);
+    if (avgWordCount < 60) speakingTips.push(`Mở rộng câu trả lời hơn — mục tiêu 100–200 từ mỗi câu (trung bình: ${avgWordCount} từ)`);
+    else if (avgWordCount > 300) speakingTips.push(`Câu trả lời hơi dài (tb. ${avgWordCount} từ) — tập trung vào điểm chính, tránh lan man`);
+  }
+  if (speakingTips.length === 0) speakingTips.push("Luyện cấu trúc STAR để câu trả lời rõ ràng và thuyết phục hơn");
+
+  // SHRM level distribution from real evaluation
+  const shrmDistribution = realFeedback
+    ? {
+        excellent:  allQuestions.filter(q => q.shrmLevel === "excellent").length,
+        proficient: allQuestions.filter(q => q.shrmLevel === "proficient").length,
+        developing: allQuestions.filter(q => q.shrmLevel === "developing").length,
+      }
+    : null;
 
   const avgScores = STAR_LABELS.reduce((acc, key) => {
     acc[key] = visibleQuestions.reduce((sum, q) => sum + q.scores[key], 0) / visibleQuestions.length;
@@ -123,6 +239,14 @@ export function InterviewFeedback() {
   }, {});
 
   const overallAvg = visibleQuestions.reduce((sum, q) => sum + q.overall, 0) / visibleQuestions.length;
+
+  const weakAreas = realFeedback
+    ? STAR_LABELS
+        .map(key => ({ label: STAR_NAMES[key], avg: allQuestions.reduce((s, q) => s + (q.scores[key] || 0), 0) / allQuestions.length }))
+        .sort((a, b) => a.avg - b.avg)
+        .slice(0, 3)
+        .map(a => `${a.label} — ${a.avg.toFixed(1)}/5`)
+    : ["Structure (STAR) — 3.2/5", "Credibility — 3.4/5", "Từ đệm"];
 
   const renderStars = (score, max = 5) => (
     <div className="flex items-center gap-0.5">
@@ -148,12 +272,27 @@ export function InterviewFeedback() {
 
   return (
     <div className="pi-page-dashboard-bg relative min-h-full w-full overflow-hidden antialiased text-foreground">
+      {/* Loading overlay */}
+      {evaluating && (
+        <div className="absolute inset-0 z-50 flex flex-col items-center justify-center gap-4 bg-[#070510]/85 backdrop-blur-sm">
+          <div className="h-12 w-12 animate-spin rounded-full border-4 border-violet-400/30 border-t-violet-400" />
+          <p className="text-sm font-semibold text-white">Đang phân tích câu trả lời của bạn...</p>
+          <p className="text-xs text-white/55">AI đang đánh giá theo chuẩn SHRM/DDI</p>
+        </div>
+      )}
       <div className="pointer-events-none absolute inset-0 z-0">
         <div className="absolute -left-24 top-10 h-80 w-80 rounded-full bg-[#d4ff00]/45 blur-[130px]" />
         <div className="absolute -right-20 top-24 h-[22rem] w-[22rem] rounded-full bg-[#9447ff]/32 blur-[150px]" />
         <div className="absolute left-1/2 top-[30%] h-44 w-[55rem] -translate-x-1/2 bg-gradient-to-r from-[#d4ff00]/20 via-[#d4ff00]/8 to-[#9447ff]/20 blur-[95px]" />
       </div>
       <div className="relative z-10 mx-auto max-w-4xl p-6">
+      {/* Error banner */}
+      {evalError && (
+        <div className="mb-4 flex items-center gap-3 rounded-xl border border-amber-400/35 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
+          <Warning className="h-4 w-4 shrink-0 text-amber-400" />
+          <span>{evalError}</span>
+        </div>
+      )}
       {/* Header */}
       <div className="mb-8 flex items-start gap-3 sm:gap-4">
         <button
@@ -173,7 +312,7 @@ export function InterviewFeedback() {
             Kết quả phỏng vấn của bạn
           </h1>
           <p className="text-sm text-muted-foreground">
-            Frontend Developer @ Shopee · 32 phút ·{" "}
+            {sessionMeta.position || "Phỏng vấn AI"}{sessionMeta.duration > 0 ? ` · ${sessionMeta.duration} phút` : ""} ·{" "}
             {isPro ? allQuestions.length : FREE_LIMIT}/{allQuestions.length} câu hỏi
             {!isPro && (
               <span
@@ -221,78 +360,84 @@ export function InterviewFeedback() {
           </div>
         </div>
 
-        {/* Bottom: Behavioral + Speaking grid */}
+        {/* Bottom: SHRM Distribution + Speaking Metrics */}
         <div className="bg-white/10 border-t border-white/10 px-6 py-4 grid sm:grid-cols-2 gap-4">
-          {/* Behavioral Performance */}
+          {/* SHRM Level Distribution */}
           <div>
             <p className="mb-3 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-white/90">
-              <Eye className="h-3.5 w-3.5" /> Hiệu suất hành vi
+              <Eye className="h-3.5 w-3.5" /> Phân bổ chất lượng SHRM/DDI
             </p>
-            <div className="space-y-2">
-              {Object.values(BEHAVIORAL_SCORES).map((item) => {
-                const badge = scoreBadge(item.score);
-                return (
-                  <div key={item.label}>
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-xs text-white/92">{item.label}</span>
-                      <div className="flex items-center gap-2">
-                        <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${badge.cls}`}>{badge.label}</span>
-                        <span className="text-white font-bold text-xs">{item.score}/5</span>
+            {shrmDistribution ? (
+              <div className="space-y-2">
+                {[
+                  { key: "excellent",  label: "Xuất sắc",      color: "bg-emerald-400", cls: "bg-emerald-100 text-emerald-700" },
+                  { key: "proficient", label: "Đạt yêu cầu",   color: "bg-amber-400",   cls: "bg-amber-100 text-amber-700" },
+                  { key: "developing", label: "Cần cải thiện",  color: "bg-red-400",     cls: "bg-red-100 text-red-600" },
+                ].map(({ key, label, color, cls }) => {
+                  const count = shrmDistribution[key];
+                  const total = allQuestions.length || 1;
+                  return (
+                    <div key={key}>
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-xs text-white/92">{label}</span>
+                        <div className="flex items-center gap-2">
+                          <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${cls}`}>{count}/{total} câu</span>
+                        </div>
+                      </div>
+                      <div className="h-1.5 bg-white/20 rounded-full overflow-hidden">
+                        <div className={`h-full rounded-full ${color}`} style={{ width: `${(count / total) * 100}%` }} />
                       </div>
                     </div>
-                    <div className="h-1.5 bg-white/20 rounded-full overflow-hidden">
-                      <div
-                        className={`h-full rounded-full ${scoreColor(item.score)}`}
-                        style={{ width: `${(item.score / 5) * 100}%` }}
-                      />
-                    </div>
-                    <p className="mt-1 text-[11px] text-white/72">{item.detail}</p>
-                  </div>
-                );
-              })}
-            </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="space-y-2 opacity-60">
+                <p className="text-xs text-white/70 italic">Hoàn thành phỏng vấn với AI để xem phân tích SHRM.</p>
+              </div>
+            )}
           </div>
 
-          {/* Speaking Quality */}
+          {/* Real Speaking Metrics from Transcript */}
           <div>
             <p className="mb-3 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-white/90">
-              <SpeakerHigh className="h-3.5 w-3.5" /> Chất lượng lời nói
+              <SpeakerHigh className="h-3.5 w-3.5" /> Phân tích lời nói (từ transcript)
             </p>
-            <div className="space-y-2">
-              {Object.values(SPEAKING_SCORES).map((item) => {
-                const badge = scoreBadge(item.score);
-                return (
-                  <div key={item.label}>
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-xs text-white/92">{item.label}</span>
-                      <div className="flex items-center gap-2">
-                        <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${badge.cls}`}>{badge.label}</span>
-                        <span className="text-white font-bold text-xs">{item.score}/5</span>
+            {hasSpeakingData ? (
+              <div className="space-y-2">
+                {[
+                  { label: "Tốc độ nói (wpm)", score: avgFillerScore > 0 ? Math.min(5, (avgWpm / 160) * 5) : 0, detail: avgWpm > 0 ? `~${avgWpm} từ/phút` : "—" },
+                  { label: "Từ đệm",            score: avgFillerScore, detail: totalFillers > 0 ? `${totalFillers} lần phát hiện` : "Không phát hiện" },
+                  { label: "Độ dài câu trả lời",score: avgLengthScore, detail: `TB ${avgWordCount} từ/câu` },
+                ].map((item) => {
+                  const badge = scoreBadge(item.score);
+                  return (
+                    <div key={item.label}>
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-xs text-white/92">{item.label}</span>
+                        <div className="flex items-center gap-2">
+                          <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${badge.cls}`}>{badge.label}</span>
+                          <span className="text-white font-bold text-xs">{item.detail}</span>
+                        </div>
+                      </div>
+                      <div className="h-1.5 bg-white/20 rounded-full overflow-hidden">
+                        <div className={`h-full rounded-full ${scoreColor(item.score)}`} style={{ width: `${(item.score / 5) * 100}%` }} />
                       </div>
                     </div>
-                    <div className="h-1.5 bg-white/20 rounded-full overflow-hidden">
-                      <div
-                        className={`h-full rounded-full ${scoreColor(item.score)}`}
-                        style={{ width: `${(item.score / 5) * 100}%` }}
-                      />
-                    </div>
-                    <p className="mt-1 text-[11px] text-white/72">{item.detail}</p>
-                  </div>
-                );
-              })}
-            </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <p className="text-xs text-white/60 italic">Trả lời bằng giọng nói để xem phân tích lời nói.</p>
+            )}
 
-            {/* Quick tips */}
+            {/* Dynamic tips from real metrics */}
             <div className="mt-4 pt-3 border-t border-white/10">
               <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold text-white/90">
-                <ChatTeardropDots className="h-3.5 w-3.5" /> Nhận xét nhanh
+                <ChatTeardropDots className="h-3.5 w-3.5" /> Gợi ý cải thiện
               </p>
               <ul className="space-y-1">
-                {[
-                  "Giảm tốc độ nói xuống còn 140–160 từ/phút",
-                  "Luyện bỏ từ đệm bằng cách dừng thay vì nói 'ừm'",
-                  "Duy trì ánh mắt 60–70% thời gian trả lời",
-                ].map((tip, i) => (
+                {speakingTips.map((tip, i) => (
                   <li key={i} className="flex items-start gap-1.5 text-[11px] text-white/82">
                     <span className="text-[#B4F500] flex-shrink-0 mt-0.5">•</span>
                     {tip}
@@ -303,6 +448,17 @@ export function InterviewFeedback() {
           </div>
         </div>
       </div>
+
+      {/* AI overall comment */}
+      {sessionMeta.overallComment && (
+        <div className="mb-6 rounded-2xl border border-violet-300/25 bg-violet-500/10 px-5 py-4 backdrop-blur-sm">
+          <div className="mb-2 flex items-center gap-2">
+            <ChatTeardropDots className="h-4 w-4 text-violet-200" />
+            <p className="text-xs font-semibold uppercase tracking-wide text-violet-100">Nhận xét tổng quan từ AI</p>
+          </div>
+          <p className="text-sm leading-relaxed text-foreground/90">{sessionMeta.overallComment}</p>
+        </div>
+      )}
 
       {/* Per-question feedback */}
       <div className="mb-6">
@@ -573,7 +729,7 @@ export function InterviewFeedback() {
           subtitle="Dựa trên kết quả phỏng vấn, chúng tôi gợi ý các khóa học phù hợp nhất"
           variant="banner"
           maxCourses={3}
-          weakAreas={["Structure (STAR) — 3.2/5", "Credibility — 3.4/5", "Từ đệm"]}
+          weakAreas={weakAreas}
         />
       </div>
       </div>

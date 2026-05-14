@@ -1,154 +1,95 @@
 """
-scorer.py — Đánh giá CV theo 4 dimensions bằng Ollama local.
+scorer.py — Đánh giá CV theo 4 dimensions qua LLM (cloud hoặc Ollama).
 
-Không cần API key, không tốn tiền.
-Ollama phải đang chạy tại localhost:11434 trước khi gọi hàm này.
+Ưu tiên cloud (Groq/Gemini/OpenAI) nếu LLM_API_KEY được set trong env.
+Fallback về Ollama local nếu không có key.
 """
 
 import json
-import re
-import httpx
 from typing import Optional
 
-OLLAMA_URL  = "http://localhost:11434/api/generate"
-OLLAMA_MODEL = "mistral:7b"   # đổi thành llama3.2:3b nếu VRAM ít
+from llm_client import call_llm, extract_json, check_llm_health
 
 
 # ── Prompt builder ───────────────────────────────────────────────────────────
 
-SYSTEM_PROMPT = """You are an expert resume evaluator. You MUST respond with valid JSON only.
-No explanation, no markdown, no code fences. Pure JSON object."""
+_SYSTEM_PROMPT = """Bạn là chuyên gia đánh giá CV/hồ sơ xin việc. Bạn PHẢI trả lời bằng JSON hợp lệ duy nhất.
+Không giải thích, không markdown, không code fence. Chỉ JSON object thuần.
+Tất cả các trường văn bản (reason, summary, examples) PHẢI viết bằng tiếng Việt."""
 
 def build_scoring_prompt(cv_text: str, jd_text: str, matching: list, missing: list) -> str:
-    """
-    Gộp toàn bộ context vào 1 prompt → 1 LLM call duy nhất.
-    Trả về JSON với 4 dimension scores + lý do.
-    """
-    matching_str = ", ".join(matching[:20]) if matching else "none"
-    missing_str  = ", ".join(missing[:20])  if missing  else "none"
+    """Gộp toàn bộ context → 1 LLM call. Trả JSON 4 dimension scores + lý do tiếng Việt."""
+    matching_str = ", ".join(matching[:20]) if matching else "không có"
+    missing_str  = ", ".join(missing[:20])  if missing  else "không có"
 
-    return f"""Evaluate this resume against the job description.
+    return f"""Hãy đánh giá CV này so với mô tả công việc (JD).
 
-=== RESUME (first 2000 chars) ===
+=== HỒ SƠ CV (2000 ký tự đầu) ===
 {cv_text[:2000]}
 
-=== JOB DESCRIPTION (first 1500 chars) ===
+=== MÔ TẢ CÔNG VIỆC (1500 ký tự đầu) ===
 {jd_text[:1500]}
 
-=== SKILL ANALYSIS ===
-Matching skills: {matching_str}
-Missing skills: {missing_str}
+=== PHÂN TÍCH KỸ NĂNG ===
+Kỹ năng khớp: {matching_str}
+Kỹ năng còn thiếu: {missing_str}
 
-=== TASK ===
-Score the resume on these 4 dimensions (0.0 to 10.0 each):
+=== NHIỆM VỤ ===
+Chấm điểm CV theo 4 tiêu chí (thang 0.0 đến 10.0):
 
-1. CLARITY: Is the writing clear, concise, no vague buzzwords?
-   Check: specific language, no filler phrases like "responsible for" or "assisted with"
+1. RÕ RÀNG (CLARITY): Văn phong có rõ ràng, súc tích, không dùng từ ngữ mơ hồ?
+   Kiểm tra: ngôn ngữ cụ thể, tránh cụm từ chung chung như "phụ trách", "hỗ trợ"
 
-2. STRUCTURE (STAR): Do bullet points follow Situation→Action→Result?
-   Check: does each bullet have a measurable result (numbers, %, $, time)?
-   Score higher if >50% of bullets have quantified results.
+2. CẤU TRÚC STAR: Các bullet point có theo Tình huống→Hành động→Kết quả?
+   Kiểm tra: mỗi bullet có kết quả đo lường được không (con số, %, thời gian)?
+   Điểm cao hơn nếu >50% bullet có kết quả định lượng.
 
-3. RELEVANCE: How well does the resume match this specific job?
-   Check: skill overlap percentage, job title alignment, industry match.
-   Use matching/missing skill data above.
+3. PHÙ HỢP JD (RELEVANCE): CV có phù hợp với vị trí công việc này không?
+   Kiểm tra: % kỹ năng trùng khớp, tên vị trí, ngành nghề.
+   Dùng dữ liệu kỹ năng khớp/thiếu ở trên.
 
-4. CREDIBILITY: Are claims specific and verifiable?
-   Check: company names, tool names, specific metrics, certifications.
-   Penalize vague claims like "improved performance significantly".
+4. ĐỘ THUYẾT PHỤC (CREDIBILITY): Các tuyên bố có cụ thể và kiểm chứng được không?
+   Kiểm tra: tên công ty, tên công cụ, số liệu cụ thể, chứng chỉ.
+   Trừ điểm nếu tuyên bố mơ hồ như "cải thiện hiệu suất đáng kể".
 
-Respond ONLY with this exact JSON structure:
+Trả lời CHỈ với cấu trúc JSON sau (tất cả văn bản bằng tiếng Việt):
 {{
   "clarity": {{
     "score": 7.5,
-    "reason": "one sentence explanation",
-    "examples": ["specific quote or observation from resume"]
+    "reason": "một câu giải thích bằng tiếng Việt",
+    "examples": ["trích dẫn hoặc nhận xét cụ thể từ CV"]
   }},
   "structure": {{
     "score": 6.0,
-    "reason": "one sentence explanation",
+    "reason": "một câu giải thích bằng tiếng Việt",
     "star_found": true,
     "quantified_bullets": 3,
     "total_bullets": 8
   }},
   "relevance": {{
     "score": 8.0,
-    "reason": "one sentence explanation",
+    "reason": "một câu giải thích bằng tiếng Việt",
     "match_percentage": 65.0
   }},
   "credibility": {{
     "score": 7.0,
-    "reason": "one sentence explanation",
-    "examples": ["specific credible claim found"]
+    "reason": "một câu giải thích bằng tiếng Việt",
+    "examples": ["tuyên bố thuyết phục tìm được trong CV"]
   }},
   "overall": 7.1,
-  "summary": "2-3 sentence overall assessment"
+  "summary": "nhận xét tổng quan 2-3 câu bằng tiếng Việt"
 }}"""
 
 
-# ── Ollama caller ────────────────────────────────────────────────────────────
-
-def call_ollama(prompt: str, timeout: int = 120) -> str:
-    """
-    Gọi Ollama API (OpenAI-compatible endpoint).
-    Dùng stream=False để nhận toàn bộ response 1 lần.
-    """
-    payload = {
-        "model":  OLLAMA_MODEL,
-        "prompt": f"{SYSTEM_PROMPT}\n\n{prompt}",
-        "stream": False,
-        "options": {
-            "temperature": 0.1,   # thấp → output ổn định, ít hallucinate
-            "top_p": 0.9,
-            "num_predict": 800,   # đủ cho JSON output
-        }
-    }
-
-    try:
-        response = httpx.post(OLLAMA_URL, json=payload, timeout=timeout)
-        response.raise_for_status()
-        return response.json()["response"]
-    except httpx.ConnectError:
-        raise ConnectionError(
-            "Không kết nối được Ollama. "
-            "Hãy chắc chắn Ollama đang chạy: 'ollama serve' hoặc mở app Ollama."
-        )
-    except httpx.TimeoutException:
-        raise TimeoutError(f"Ollama không phản hồi sau {timeout}s. Model có thể đang load lần đầu.")
-
-
-# ── JSON parser ──────────────────────────────────────────────────────────────
-
-def parse_score_json(raw: str) -> dict:
-    """
-    Parse JSON từ LLM output. LLM đôi khi thêm text thừa trước/sau JSON.
-    Dùng regex để tìm phần JSON hợp lệ.
-    """
-    # Thử parse thẳng trước
-    try:
-        return json.loads(raw.strip())
-    except json.JSONDecodeError:
-        pass
-
-    # Tìm block JSON đầu tiên trong output
-    match = re.search(r'\{[\s\S]*\}', raw)
-    if match:
-        try:
-            return json.loads(match.group())
-        except json.JSONDecodeError:
-            pass
-
-    # Fallback: trả về scores mặc định kèm lỗi
-    return {
-        "clarity":     {"score": 0, "reason": "Parse error"},
-        "structure":   {"score": 0, "reason": "Parse error", "star_found": False,
-                        "quantified_bullets": 0, "total_bullets": 0},
-        "relevance":   {"score": 0, "reason": "Parse error", "match_percentage": 0},
-        "credibility": {"score": 0, "reason": "Parse error", "examples": []},
-        "overall":     0,
-        "summary":     "Could not parse model output. Raw: " + raw[:200],
-        "_parse_error": True,
-    }
+_SCORE_FALLBACK = {
+    "clarity":     {"score": 0, "reason": "Không thể phân tích"},
+    "structure":   {"score": 0, "reason": "Không thể phân tích", "star_found": False,
+                    "quantified_bullets": 0, "total_bullets": 0},
+    "relevance":   {"score": 0, "reason": "Không thể phân tích", "match_percentage": 0},
+    "credibility": {"score": 0, "reason": "Không thể phân tích", "examples": []},
+    "overall":     0,
+    "summary":     "Không thể phân tích kết quả từ AI.",
+}
 
 
 # ── Main entry point ─────────────────────────────────────────────────────────
@@ -166,13 +107,10 @@ def score_resume(
     Returns dict với scores theo 4 dimensions + overall + summary.
     Raises ConnectionError nếu Ollama chưa chạy.
     """
-    global OLLAMA_MODEL
-    if model:
-        OLLAMA_MODEL = model
-
     prompt   = build_scoring_prompt(cv_text, jd_text, matching, missing)
-    raw      = call_ollama(prompt)
-    scores   = parse_score_json(raw)
+    raw      = call_llm(_SYSTEM_PROMPT, prompt, max_tokens=900, temperature=0.1,
+                        ollama_model=model)
+    scores   = extract_json(raw, _SCORE_FALLBACK)
 
     # Tính overall nếu model không trả về
     if "overall" not in scores or scores["overall"] == 0:
@@ -185,32 +123,19 @@ def score_resume(
 
 # ── Health check helper ───────────────────────────────────────────────────────
 
-def check_ollama_health(model: str = OLLAMA_MODEL) -> dict:
-    """Kiểm tra Ollama đang chạy và model đã được pull chưa."""
-    try:
-        r = httpx.get("http://localhost:11434/api/tags", timeout=5)
-        models = [m["name"] for m in r.json().get("models", [])]
-        return {
-            "running": True,
-            "model_available": any(model in m for m in models),
-            "available_models": models,
-        }
-    except Exception as e:
-        return {"running": False, "error": str(e), "model_available": False}
+def check_ollama_health(model: str = None) -> dict:
+    """Delegate to llm_client unified health check."""
+    return check_llm_health()
 
 
 # ── CLI test ──────────────────────────────────────────────────────────────────
 if __name__ == "__main__":
-    print("Checking Ollama health...")
+    print("Checking LLM health...")
     health = check_ollama_health()
-    print(json.dumps(health, indent=2))
+    print(json.dumps(health, indent=2, ensure_ascii=False))
 
-    if not health["running"]:
-        print("\nOllama chưa chạy! Mở PowerShell và chạy: ollama serve")
-        exit(1)
-
-    if not health["model_available"]:
-        print(f"\nModel chưa được pull! Chạy: ollama pull {OLLAMA_MODEL}")
+    if not health.get("running"):
+        print("\nLLM không khả dụng. Set LLM_API_KEY hoặc chạy Ollama.")
         exit(1)
 
     print("\nRunning test scoring...")
