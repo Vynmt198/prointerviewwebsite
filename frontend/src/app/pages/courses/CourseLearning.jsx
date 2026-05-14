@@ -42,139 +42,156 @@ const NOTES_KEY = (courseId, lessonId) =>
   `prointerview_course_notes_${courseId}_${lessonId}`;
 
 /* ── Video Player ────────────────────────────────────────────── */
-function VideoPlayer({
-  lesson,
-  thumbnail,
-  isPlaying,
-  onTogglePlay,
-}) {
-  const [progress, setProgress] = useState(0);
-  const [hovered, setHovered] = useState(false);
+function VideoPlayer({ lesson, thumbnail }) {
+  const videoRef = React.useRef(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const [volume, setVolume] = useState(1);
+  const [isMuted, setIsMuted] = useState(false);
+  const [showControls, setShowControls] = useState(true);
 
-  useEffect(() => {
-    setProgress(0);
-    let timer;
-    if (isPlaying) {
-      timer = setInterval(() => {
-        setProgress((p) => {
-          if (p >= 100) { clearInterval(timer); return 100; }
-          return p + (100 / (lesson.duration * 4));
-        });
-      }, 250);
+  const togglePlay = () => {
+    if (videoRef.current) {
+      if (isPlaying) videoRef.current.pause();
+      else videoRef.current.play();
+      setIsPlaying(!isPlaying);
     }
-    return () => clearInterval(timer);
-  }, [isPlaying, lesson.id, lesson.duration]);
+  };
+
+  const onTimeUpdate = () => {
+    setCurrentTime(videoRef.current.currentTime);
+  };
+
+  const onLoadedMetadata = () => {
+    setDuration(videoRef.current.duration);
+  };
+
+  const handleSeek = (e) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const clickedPct = x / rect.width;
+    const newTime = clickedPct * duration;
+    videoRef.current.currentTime = newTime;
+    setCurrentTime(newTime);
+  };
+
+  const formatTime = (seconds) => {
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    const s = Math.floor(seconds % 60);
+    if (h > 0) return `${h}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+    return `${m}:${String(s).padStart(2, "0")}`;
+  };
 
   return (
-    <div
-      className="relative w-full bg-black overflow-hidden rounded-lg"
+    <div 
+      className="relative w-full bg-black overflow-hidden rounded-2xl group shadow-2xl" 
       style={{ aspectRatio: "16/9" }}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
+      onMouseMove={() => {
+        setShowControls(true);
+        clearTimeout(window.controlsTimeout);
+        window.controlsTimeout = setTimeout(() => isPlaying && setShowControls(false), 3000);
+      }}
     >
-      {/* Thumbnail / BG */}
-      <img
-        src={thumbnail}
-        alt={lesson.title}
-        className="absolute inset-0 w-full h-full object-cover opacity-30"
+      <video
+        ref={videoRef}
+        src={lesson.videoUrl}
+        poster={thumbnail}
+        className="w-full h-full object-contain"
+        onTimeUpdate={onTimeUpdate}
+        onLoadedMetadata={onLoadedMetadata}
+        onClick={togglePlay}
+        onPlay={() => setIsPlaying(true)}
+        onPause={() => setIsPlaying(false)}
+        playsInline
       />
-      <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-transparent to-black/60" />
 
-      {/* Preview badge */}
-      {lesson.isPreview && (
-        <div
-          className="absolute top-4 left-4 text-xs font-bold px-3 py-1.5 rounded-full z-10"
-          style={{ background: "#c4ff47", color: "#1F1F1F" }}
-        >
-          ▶ Xem miễn phí
-        </div>
-      )}
-
-      {/* Lesson info overlay top-right */}
-      <div className="absolute top-4 right-4 z-10">
-        <div
-          className="text-xs font-semibold px-3 py-1.5 rounded-full flex items-center gap-1.5"
-          style={{ background: "rgba(0,0,0,0.6)", color: "rgba(255,255,255,0.85)" }}
-        >
-          <Clock className="w-3.5 h-3.5" />
-          {formatDuration(lesson.duration)}
-        </div>
-      </div>
-
-      {/* Center play/pause */}
-      <button
-        onClick={onTogglePlay}
-        className="absolute inset-0 flex items-center justify-center z-10 cursor-pointer group"
+      {/* Overlay controls */}
+      <div 
+        className={`absolute inset-0 flex flex-col justify-end transition-opacity duration-300 ${showControls ? "opacity-100" : "opacity-0"}`}
+        style={{ background: "linear-gradient(to top, rgba(0,0,0,0.8), transparent 40%)" }}
       >
-        <div
-          className="w-20 h-20 rounded-full flex items-center justify-center shadow-2xl transition-all duration-200 group-hover:scale-110"
-          style={{
-            background: isPlaying
-              ? "rgba(255,255,255,0.15)"
-              : "rgba(110, 53, 232,0.9)",
-            backdropFilter: "blur(8px)",
-          }}
-        >
-          {isPlaying ? (
-            <PauseCircle className="w-10 h-10 text-white" />
-          ) : (
-            <PlayCircle className="w-10 h-10 text-white" />
-          )}
-        </div>
-      </button>
-
-      {/* Bottom bar (controls) */}
-      <div
-        className="absolute bottom-0 left-0 right-0 z-20 p-4 transition-all duration-200"
-        style={{
-          background: "linear-gradient(to top, rgba(0,0,0,0.85), transparent)",
-          opacity: hovered || isPlaying ? 1 : 0.5,
-        }}
-      >
-        {/* Seek bar */}
-        <div className="relative h-1.5 bg-white/20 rounded-full mb-3 cursor-pointer group">
-          <div
-            className="absolute left-0 top-0 h-full rounded-full transition-all duration-200"
-            style={{ width: `${progress}%`, background: "#c4ff47" }}
-          />
-          <div
-            className="absolute top-1/2 -translate-y-1/2 w-3 h-3 rounded-full shadow-md opacity-0 group-hover:opacity-100 transition-opacity"
-            style={{ left: `${progress}%`, transform: `translateX(-50%) translateY(-50%)`, background: "#c4ff47" }}
-          />
-        </div>
-
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <button onClick={onTogglePlay} className="text-white hover:text-[#c4ff47] transition-colors">
-              {isPlaying ? (
-                <PauseCircle className="w-5 h-5" />
-              ) : (
-                <PlayCircle className="w-5 h-5" />
-              )}
+        {/* Play center button (only when paused) */}
+        {!isPlaying && (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <button 
+              onClick={togglePlay}
+              className="w-20 h-20 rounded-full flex items-center justify-center bg-[#6E35E8] text-white shadow-2xl scale-100 hover:scale-110 transition-transform"
+            >
+              <PlayCircle className="w-12 h-12" />
             </button>
-            <button className="text-white/60 hover:text-white transition-colors">
-              <ArrowCounterClockwise className="w-4.5 h-4.5" />
-            </button>
-            <span className="text-white/70 text-xs">
-              {Math.floor((progress / 100) * lesson.duration)}:{String(Math.floor(((progress / 100) * lesson.duration * 60) % 60)).padStart(2, "0")} / {formatDuration(lesson.duration)}
-            </span>
           </div>
-          <div className="flex items-center gap-3">
-            <button className="text-white/60 hover:text-white transition-colors">
-              <SpeakerHigh className="w-4.5 h-4.5" />
-            </button>
-            <button className="text-white/60 hover:text-white transition-colors">
-              <Subtitles className="w-4.5 h-4.5" />
-            </button>
-            <button className="text-white/60 hover:text-white transition-colors">
-              <CornersOut className="w-4.5 h-4.5" />
-            </button>
+        )}
+
+        {/* Bottom controls bar */}
+        <div className="p-4 md:p-6 space-y-4">
+          {/* Progress Bar */}
+          <div 
+            className="h-1.5 w-full bg-white/20 rounded-full cursor-pointer relative group/progress"
+            onClick={handleSeek}
+          >
+            <div 
+              className="absolute top-0 left-0 h-full bg-[#c4ff47] rounded-full"
+              style={{ width: `${(currentTime / duration) * 100}%` }}
+            />
+            <div 
+              className="absolute top-1/2 -translate-y-1/2 w-4 h-4 bg-[#c4ff47] rounded-full shadow-lg scale-0 group-hover/progress:scale-100 transition-transform"
+              style={{ left: `${(currentTime / duration) * 100}%`, transform: "translate(-50%, -50%)" }}
+            />
+          </div>
+
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <button onClick={togglePlay} className="text-white hover:text-[#c4ff47] transition-colors">
+                {isPlaying ? <PauseCircle className="w-6 h-6" /> : <PlayCircle className="w-6 h-6" />}
+              </button>
+              
+              <div className="flex items-center gap-2 group/volume relative">
+                <button 
+                   onClick={() => {
+                     setIsMuted(!isMuted);
+                     videoRef.current.muted = !isMuted;
+                   }}
+                   className="text-white/80 hover:text-white"
+                >
+                  {isMuted || volume === 0 ? <SpeakerHigh className="w-5 h-5 opacity-50" /> : <SpeakerHigh className="w-5 h-5" />}
+                </button>
+                <input 
+                  type="range" 
+                  min="0" max="1" step="0.1" 
+                  value={isMuted ? 0 : volume}
+                  onChange={(e) => {
+                    const v = parseFloat(e.target.value);
+                    setVolume(v);
+                    videoRef.current.volume = v;
+                    videoRef.current.muted = v === 0;
+                    setIsMuted(v === 0);
+                  }}
+                  className="w-0 group-hover/volume:w-20 transition-all h-1 accent-[#c4ff47]"
+                />
+              </div>
+
+              <span className="text-white/80 text-xs font-mono">
+                {formatTime(currentTime)} / {formatTime(duration)}
+              </span>
+            </div>
+
+            <div className="flex items-center gap-4">
+              <button 
+                onClick={() => videoRef.current.requestFullscreen()}
+                className="text-white/80 hover:text-white transition-colors"
+              >
+                <CornersOut className="w-5 h-5" />
+              </button>
+            </div>
           </div>
         </div>
       </div>
     </div>
   );
 }
+
 
 /* ── Certificate Modal ────────────────────────────────────────── */
 function CertificateModal({

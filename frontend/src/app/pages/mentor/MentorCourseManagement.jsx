@@ -48,22 +48,30 @@ export function MentorCourseManagement() {
             setMyCourses([]);
             return;
          }
-         const mapped = res.courses.map((c) => ({
-            id: c._id,
-            title: c.title,
-            status: c.status || "draft",
-            students: c.stats?.enrollmentCount || 0,
-            rating: c.stats?.rating || 0,
-            earnings: c.stats?.totalRevenue || 0,
-            cover: c.thumbnail || "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&q=80&w=600",
-            level:
-               c.level === "basic"
-                  ? "Basic"
-                  : c.level === "intermediate"
-                    ? "Intermediate"
-                    : "Advanced",
-         }));
+         const mapped = res.courses.map((c) => {
+            let cover = c.thumbnail || "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&q=80&w=600";
+            if (c.thumbnail && !c.thumbnail.startsWith("http")) {
+               const baseUrl = import.meta.env.VITE_API_URL || "http://localhost:5000";
+               cover = `${baseUrl}/uploads/${c.thumbnail}`;
+            }
+            return {
+               id: c._id,
+               title: c.title,
+               status: c.status || "draft",
+               students: c.stats?.enrollmentCount || 0,
+               rating: c.stats?.rating || 0,
+               earnings: c.stats?.totalRevenue || 0,
+               cover,
+               level:
+                  c.level === "basic"
+                     ? "Basic"
+                     : c.level === "intermediate"
+                       ? "Intermediate"
+                       : "Advanced",
+            };
+         });
          setMyCourses(mapped);
+
       });
    }, [navigate, user]);
 
@@ -164,7 +172,14 @@ export function MentorCourseManagement() {
                   {filtered.map((course) => (
                      <div key={course.id} className="glass-card flex flex-col group h-full">
                         <div className="relative h-60 overflow-hidden">
-                           <img src={course.cover} className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" />
+                           <img 
+                              src={course.cover} 
+                              className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" 
+                              onError={(e) => {
+                                 e.target.src = "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&q=80";
+                              }}
+                           />
+
                            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
                            <div className="absolute top-6 left-6 flex gap-2">
                               <span className={`px-4 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest border ${

@@ -53,6 +53,7 @@ import {
    updateCourseDraft,
 } from "../../utils/courseApi";
 import { fetchMyMentorProfile } from "../../utils/mentorApi";
+import { uploadFile } from "../../utils/uploadApi";
 import { MentorPageShell } from "../../components/mentor/MentorPageShell";
 import { toast } from "sonner";
 
@@ -168,12 +169,12 @@ function LessonsTab({ lessons, onLessonsChange }) {
       );
    }, [lessons]);
 
-   const commit = (updater) =>
-      setEditList((prev) => {
-         const next = typeof updater === "function" ? updater(prev) : updater;
-         onLessonsChange?.(next);
-         return next;
-      });
+   const commit = (updater) => {
+      const next = typeof updater === "function" ? updater(editList) : updater;
+      setEditList(next);
+      onLessonsChange?.(next);
+   };
+
 
    const handleAddLesson = () => {
       const nextIndex = editList.length + 1;
@@ -225,10 +226,20 @@ function LessonsTab({ lessons, onLessonsChange }) {
       );
    };
 
-   const setLessonVideo = (lessonId, fileName) => {
-      commit((prev) =>
-         prev.map((lesson) => (lesson.id === lessonId ? { ...lesson, videoFileName: fileName } : lesson)),
-      );
+   const setLessonVideo = async (lessonId, file) => {
+      if (!file) return;
+      const loadingToast = toast.loading(`Đang upload video: ${file.name}...`);
+      const res = await uploadFile(file, "course-video");
+      toast.dismiss(loadingToast);
+
+      if (res.success) {
+         toast.success("Upload video thành công!");
+         commit((prev) =>
+            prev.map((lesson) => (lesson.id === lessonId ? { ...lesson, videoFileName: file.name, videoUrl: res.url } : lesson)),
+         );
+      } else {
+         toast.error(res.error || "Upload video thất bại.");
+      }
    };
 
    return (
@@ -289,7 +300,8 @@ function LessonsTab({ lessons, onLessonsChange }) {
                                     className="hidden"
                                     onChange={(e) => {
                                        const file = e.target.files?.[0];
-                                       setLessonVideo(lesson.id, file ? file.name : "");
+                                       if (file) setLessonVideo(lesson.id, file);
+
                                     }}
                                  />
                               </label>
@@ -459,7 +471,7 @@ function AnalyticsTab({ lessonStats }) {
    );
 }
 
-function buildCoursePayloadFromForm(form, chapters, thumbnailFileName) {
+function buildCoursePayloadFromForm(form, chapters, thumbnailUrl) {
    return {
       title: form.title,
       description: form.description,
@@ -468,7 +480,7 @@ function buildCoursePayloadFromForm(form, chapters, thumbnailFileName) {
       price: Number(form.price || 0),
       outcomes: form.outcomes,
       tags: form.tags,
-      thumbnail: thumbnailFileName || "",
+      thumbnail: thumbnailUrl || "",
       chapters: chapters.map((chapter) => ({
          title: chapter.title,
          lessons: (chapter.lessons || []).map((lesson) => ({
@@ -476,11 +488,12 @@ function buildCoursePayloadFromForm(form, chapters, thumbnailFileName) {
             duration: Number(lesson.duration || 0),
             isPreview: Boolean(lesson.isPreview),
             videoFileName: lesson.videoFileName || "",
-            videoUrl: lesson.videoFileName || "",
+            videoUrl: lesson.videoUrl || "",
          })),
       })),
    };
 }
+
 
 function mapTopicToCategory(topics = []) {
    const first = String(Array.isArray(topics) ? topics[0] || "" : "").toLowerCase();
@@ -501,7 +514,10 @@ function CreateCourseForm({ navigate, mentorRejectReason = "" }) {
       tags: "",
    });
    const [chapters, setChapters] = useState([]);
+   const [thumbnailUrl, setThumbnailUrl] = useState("");
    const [thumbnailFileName, setThumbnailFileName] = useState("");
+   const [isUploadingThumbnail, setIsUploadingThumbnail] = useState(false);
+
 
    const updateField = (key, value) => setForm(prev => ({ ...prev, [key]: value }));
    const updateOutcome = (index, value) =>
@@ -579,19 +595,30 @@ function CreateCourseForm({ navigate, mentorRejectReason = "" }) {
                  },
          ),
       );
-   const updateLessonVideo = (chapterId, lessonId, fileName) =>
-      setChapters(prev =>
-         prev.map(ch =>
-            ch.id !== chapterId
-               ? ch
-               : {
-                    ...ch,
-                    lessons: ch.lessons.map(lesson =>
-                       lesson.id === lessonId ? { ...lesson, videoFileName: fileName } : lesson,
-                    ),
-                 },
-         ),
-      );
+   const updateLessonVideo = async (chapterId, lessonId, file) => {
+      if (!file) return;
+      const loadingToast = toast.loading(`Đang upload video: ${file.name}...`);
+      const res = await uploadFile(file, "course-video");
+      toast.dismiss(loadingToast);
+
+      if (res.success) {
+         toast.success("Upload video thành công!");
+         setChapters(prev =>
+            prev.map(ch =>
+               ch.id !== chapterId
+                  ? ch
+                  : {
+                        ...ch,
+                        lessons: ch.lessons.map(lesson =>
+                           lesson.id === lessonId ? { ...lesson, videoFileName: file.name, videoUrl: res.url } : lesson,
+                        ),
+                     },
+            ),
+         );
+      } else {
+         toast.error(res.error || "Upload video thất bại.");
+      }
+   };
    const removeLesson = (chapterId, lessonId) =>
       setChapters(prev =>
          prev.map(ch =>
@@ -604,6 +631,7 @@ function CreateCourseForm({ navigate, mentorRejectReason = "" }) {
          ),
       );
    const removeChapter = (id) => setChapters(prev => prev.filter(ch => ch.id !== id));
+
 
    const filledOutcomes = form.outcomes.filter(o => o.trim().length > 0).length;
    const validationMessages = [];
@@ -874,7 +902,7 @@ function CreateCourseForm({ navigate, mentorRejectReason = "" }) {
                                                    className="hidden"
                                                    onChange={(e) => {
                                                       const file = e.target.files?.[0];
-                                                      updateLessonVideo(chapter.id, lesson.id, file ? file.name : "");
+                                                      if (file) updateLessonVideo(chapter.id, lesson.id, file);
                                                    }}
                                                 />
                                              </label>
@@ -905,9 +933,19 @@ function CreateCourseForm({ navigate, mentorRejectReason = "" }) {
                                  type="file"
                                  accept="image/png,image/jpeg,image/webp"
                                  className="hidden"
-                                 onChange={(e) => {
+                                  onChange={async (e) => {
                                     const file = e.target.files?.[0];
-                                    setThumbnailFileName(file ? file.name : "");
+                                    if (!file) return;
+                                    setIsUploadingThumbnail(true);
+                                    const res = await uploadFile(file, "course-thumbnail");
+                                    setIsUploadingThumbnail(false);
+                                    if (res.success) {
+                                       setThumbnailUrl(res.url);
+                                       setThumbnailFileName(file.name);
+                                       toast.success("Đã upload ảnh bìa!");
+                                    } else {
+                                       toast.error(res.error || "Upload ảnh thất bại.");
+                                    }
                                  }}
                               />
                            </label>
@@ -960,7 +998,7 @@ function CreateCourseForm({ navigate, mentorRejectReason = "" }) {
                         <div className="flex gap-3">
                            <button
                               onClick={async () => {
-                                 const payload = buildCoursePayloadFromForm(form, chapters, thumbnailFileName);
+                                 const payload = buildCoursePayloadFromForm(form, chapters, thumbnailUrl);
                                  const r = await createCourseDraft(payload);
                                  if (!r.success) {
                                     toast.error(r.error || "Không thể lưu nháp.");
@@ -975,7 +1013,7 @@ function CreateCourseForm({ navigate, mentorRejectReason = "" }) {
                            </button>
                            <button
                               onClick={async () => {
-                                 const payload = buildCoursePayloadFromForm(form, chapters, thumbnailFileName);
+                                 const payload = buildCoursePayloadFromForm(form, chapters, thumbnailUrl);
                                  const r = await createCourseDraft(payload);
                                  if (!r.success) {
                                     toast.error(r.error || "Không thể tạo khóa học.");
@@ -1013,7 +1051,10 @@ export function MentorCourseEdit() {
    const [course, setCourse] = useState(null);
    const [loading, setLoading] = useState(!isCreateMode);
    const [editableLessons, setEditableLessons] = useState([]);
+   const [thumbnailUrl, setThumbnailUrl] = useState("");
+   const [isUploadingThumbnail, setIsUploadingThumbnail] = useState(false);
    const [mentorRejectReason, setMentorRejectReason] = useState("");
+
 
    useEffect(() => {
       fetchMyMentorProfile().then((res) => {
@@ -1114,7 +1155,41 @@ export function MentorCourseEdit() {
             {/* Navigation Hero */}
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-10 mb-20">
                <div className="flex items-center gap-10">
-                  <img src={course.thumbnail} className="w-40 h-28 rounded-3xl object-cover ring-8 ring-white/5 shadow-2xl" />
+                  <div className="relative group/thumb">
+                     <img src={thumbnailUrl || course.thumbnail} className="w-40 h-28 rounded-3xl object-cover ring-8 ring-white/5 shadow-2xl" />
+                     <label className="absolute inset-0 flex items-center justify-center bg-black/60 opacity-0 group-hover/thumb:opacity-100 transition-opacity rounded-3xl cursor-pointer">
+                        <div className="text-center">
+                           {isUploadingThumbnail ? (
+                              <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent mx-auto" />
+                           ) : (
+                              <>
+                                 <Upload size={20} className="text-white mx-auto mb-1" />
+                                 <span className="text-[8px] font-black text-white uppercase tracking-widest">Đổi ảnh</span>
+                              </>
+                           )}
+                        </div>
+                        <input
+                           type="file"
+                           accept="image/*"
+                           className="hidden"
+                           disabled={isUploadingThumbnail}
+                           onChange={async (e) => {
+                              const file = e.target.files?.[0];
+                              if (!file) return;
+                              setIsUploadingThumbnail(true);
+                              const res = await uploadFile(file, "course-thumbnail");
+                              setIsUploadingThumbnail(false);
+                              if (res.success) {
+                                 setThumbnailUrl(res.url);
+                                 toast.success("Đã upload ảnh mới!");
+                              } else {
+                                 toast.error(res.error || "Upload thất bại");
+                              }
+                           }}
+                        />
+                     </label>
+                  </div>
+
                   <div>
                      <button onClick={() => navigate("/mentor/courses")} className="text-[10px] font-black text-primary-fixed uppercase tracking-widest mb-4 flex items-center gap-2 hover:translate-x-1 transition-transform">
                         <ArrowLeft size={14} /> Quản lý khóa học
@@ -1188,7 +1263,8 @@ export function MentorCourseEdit() {
                                  title: l.title,
                                  duration: Number(l.duration || 0),
                                  isPreview: Boolean(l.isPreview),
-                                 videoUrl: l.videoFileName || "",
+                                 videoUrl: l.videoUrl || l.videoFileName || "",
+
                               })),
                            },
                         ];
@@ -1200,9 +1276,10 @@ export function MentorCourseEdit() {
                            price: course.raw?.price || 0,
                            outcomes: course.raw?.whatYoullLearn || [],
                            tags: course.raw?.tags || [],
-                           thumbnail: course.raw?.thumbnail || "",
+                           thumbnail: thumbnailUrl || course.raw?.thumbnail || "",
                            chapters,
                         };
+
                         const saved = await updateCourseDraft(course.id, payload);
                         if (!saved.success) {
                            toast.error(saved.error || "Không thể lưu thay đổi trước khi gửi duyệt.");
