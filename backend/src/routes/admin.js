@@ -17,6 +17,12 @@ adminRouter.get("/users", AdminController.getAllUsers);
 adminRouter.patch("/users/:id/status", AdminController.toggleUserStatus);
 
 adminRouter.get("/bookings", AdminController.getAllBookings);
+adminRouter.get("/system/transaction-support", AdminController.getTransactionSupport);
+adminRouter.get("/finance/courses", AdminController.getCourseFinanceSummary);
+adminRouter.patch("/bookings/:id/confirm-transfer-payment", AdminController.confirmBookingTransferPayment);
+adminRouter.get("/enrollments/pending-transfer", AdminController.getPendingEnrollmentTransfers);
+adminRouter.patch("/enrollments/:id/confirm-transfer-payment", AdminController.confirmEnrollmentTransferPayment);
+adminRouter.post("/payments/normalize-transfer-refs", AdminController.normalizeTransferReferences);
 adminRouter.patch("/bookings/:id/status", AdminController.updateBookingStatus);
 adminRouter.get("/payouts", AdminController.getPayoutRequests);
 adminRouter.patch("/payouts/:id/approve", AdminController.approvePayoutRequest);

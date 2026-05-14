@@ -5,6 +5,7 @@ import { User } from "../models/User.js";
 import { Notification } from "../models/Notification.js";
 import { Payment } from "../models/Payment.js";
 import { ensureMentorProfilesForAllMentorUsers } from "./mentorProfileService.js";
+import { recordAdminTransferSuccess, recordTransferPending, recordTransferSubmitted } from "./paymentsService.js";
 const MONGO_ERR = "MongoDB chưa kết nối. Kiểm tra MONGO_URI trong .env.";
 const MENTOR_CANCEL_MIN_HOURS = 2;
 
@@ -160,9 +161,16 @@ function mapPaymentMethod(method) {
   const m = String(method ?? "").toLowerCase();
   if (m === "momo") return "momo";
   if (m === "zalopay") return "zalopay";
+  if (m === "vnpay") return "vnpay";
   if (m === "visa" || m === "card") return "card";
-  if (m === "vnpay" || m === "transfer") return "transfer";
+  if (m === "transfer" || m === "bank" || m === "bank_transfer" || m === "ck") return "transfer";
   return "card";
+}
+
+function extractOrderPart(value) {
+  const s = String(value || "").trim();
+  if (!s) return "";
+  return s.split("|")[0].trim().slice(0, 120);
 }
 
 const SESSION_TYPES = new Set(["mock_interview", "cv_review", "career_consulting", "custom"]);
@@ -309,12 +317,13 @@ export async function createBooking(userId, body) {
       ? body.timezone.trim()
       : "Asia/Ho_Chi_Minh";
 
-  const paymentRef =
+  const paymentRefCandidate =
     typeof body.orderNum === "string"
-      ? body.orderNum.trim().slice(0, 120)
+      ? body.orderNum
       : typeof body.paymentRef === "string"
-        ? body.paymentRef.trim().slice(0, 120)
+        ? body.paymentRef
         : "";
+  const paymentRef = extractOrderPart(paymentRefCandidate);
 
   const doc = await Booking.create({
     userId: uid,
@@ -336,6 +345,23 @@ export async function createBooking(userId, body) {
     paymentRef,
     paidAt: paymentStatus === "paid" ? new Date() : undefined,
   });
+
+  // Nếu user chọn CK, tạo ledger pending ngay (để admin/finance nhìn thấy và đồng bộ về sau)
+  if (doc.paymentStatus === "pending" && doc.paymentMethod === "transfer") {
+    const ledgerAmt = Math.round(Number(doc.totalAmount ?? doc.price ?? 0));
+    if (ledgerAmt > 0) {
+      const ledger = await recordTransferPending({
+        userId: doc.userId,
+        type: "booking",
+        referenceModel: "Booking",
+        referenceId: doc._id,
+        amount: ledgerAmt,
+      });
+      if (!ledger.ok && !ledger.idempotent) {
+        console.error("[createBooking] ledger:", ledger.error);
+      }
+    }
+  }
 
   return {
     ok: true,
@@ -388,6 +414,11 @@ export function toPublicBooking(doc, mentorLean) {
     paymentStatus: b.paymentStatus,
     paymentMethod: b.paymentMethod,
     paymentRef: b.paymentRef ?? "",
+    transferSubmittedAt: b.transferSubmittedAt ?? null,
+    transferConfirmedAt: b.transferConfirmedAt ?? null,
+    transferConfirmedBy: b.transferConfirmedBy ? String(b.transferConfirmedBy) : "",
+    transferForceConfirm: Boolean(b.transferForceConfirm),
+    transferForceNote: b.transferForceNote ?? "",
     rescheduleHistory: Array.isArray(b.rescheduleHistory) ? b.rescheduleHistory : [],
     cancelReason: b.cancelReason ?? "",
     cancelledBy: b.cancelledBy ?? "",
@@ -462,6 +493,150 @@ export async function getMentorBooking(mentorUserId, rawId) {
     .lean();
   if (!row) return { ok: false, status: 404, error: "Không tìm thấy booking." };
   return { ok: true, booking: toPublicBooking(row) };
+}
+
+/**
+ * Khách xác nhận đã chuyển khoản. `reference` tuỳ chọn (FT…); có thể gửi trùng mã đơn (nội dung QR) — không lưu trùng lặp trong paymentRef.
+ */
+export async function submitBankTransferReference(userId, rawId, body) {
+  if (!isMongoReady()) return { ok: false, status: 503, error: MONGO_ERR };
+  const uid = String(userId).trim();
+  if (!mongoose.isValidObjectId(uid)) return { ok: false, status: 401, error: "Phiên đăng nhập không hợp lệ." };
+  const q = bookingQueryForUser(rawId);
+  if (!q) return { ok: false, status: 400, error: "Thiếu id booking." };
+
+  const refRaw = String(body?.reference ?? body?.transferReference ?? "").trim();
+
+  const booking = await Booking.findOne({ userId: uid, ...q });
+  if (!booking) return { ok: false, status: 404, error: "Không tìm thấy booking." };
+  if (booking.paymentMethod !== "transfer") {
+    return { ok: false, status: 400, error: "Booking này không dùng hình thức chuyển khoản." };
+  }
+  if (booking.paymentStatus !== "pending") {
+    return { ok: false, status: 400, error: "Thanh toán đã được xử lý." };
+  }
+
+  // Chuẩn mới: mỗi giao dịch chỉ giữ một nội dung chuyển khoản duy nhất (mã đơn gốc).
+  const orderPart = extractOrderPart(booking.paymentRef) || extractOrderPart(refRaw) || String(booking._id).slice(-8);
+  booking.paymentRef = orderPart.slice(0, 120);
+  booking.transferSubmittedAt = new Date();
+  await booking.save();
+
+  // Đồng bộ ledger (payments) để admin/finance không phải nhìn 2 nguồn.
+  // Nếu chưa có pending vì data cũ, cố gắng tạo lại rồi mới cập nhật metadata.
+  const ledgerAmt = Math.round(Number(booking.totalAmount ?? booking.price ?? 0));
+  if (ledgerAmt > 0) {
+    const ensure = await recordTransferPending({
+      userId: booking.userId,
+      type: "booking",
+      referenceModel: "Booking",
+      referenceId: booking._id,
+      amount: ledgerAmt,
+    });
+    if (!ensure.ok && !ensure.idempotent) {
+      console.error("[submitBankTransferReference] ensure ledger:", ensure.error);
+    } else {
+      const meta = await recordTransferSubmitted({
+        userId: booking.userId,
+        type: "booking",
+        referenceId: booking._id,
+        paymentRef: booking.paymentRef,
+        submittedAt: booking.transferSubmittedAt,
+      });
+      if (!meta.ok) {
+        console.error("[submitBankTransferReference] ledger meta:", meta.error);
+      }
+    }
+  }
+
+  await booking.populate({ path: "userId", select: "name email avatar" });
+  const mentor = await Mentor.findById(booking.mentorId).select("name title company avatar publicId").lean();
+  return { ok: true, booking: toPublicBooking(booking, mentor) };
+}
+
+/**
+ * Admin xác nhận đã nhận tiền CK — giống thanh toán thành công qua cổng.
+ */
+export async function confirmBankTransferPaymentByAdmin(bookingId, options = {}) {
+  if (!isMongoReady()) return { ok: false, status: 503, error: MONGO_ERR };
+  if (!mongoose.isValidObjectId(bookingId)) {
+    return { ok: false, status: 400, error: "id booking không hợp lệ." };
+  }
+  const force = Boolean(options?.force);
+  const forceNote = String(options?.forceNote || "").trim();
+  if (force && forceNote.length < 3) {
+    return { ok: false, status: 400, error: "Xác nhận ngoại lệ cần lý do rõ ràng (ít nhất 3 ký tự)." };
+  }
+
+  const session = await mongoose.startSession();
+  try {
+    await session.withTransaction(async () => {
+      const booking = await Booking.findById(bookingId).session(session);
+      if (!booking) throw new Error("ERR_404");
+      if (booking.paymentMethod !== "transfer") throw new Error("ERR_METHOD");
+      if (booking.paymentStatus === "paid") throw new Error("ERR_ALREADY_PAID");
+      if (booking.paymentStatus !== "pending") throw new Error("ERR_STATUS");
+      if (!force && !booking.transferSubmittedAt) throw new Error("ERR_NO_SUBMIT");
+
+      const ledgerAmt = Math.round(Number(booking.totalAmount ?? booking.price ?? 0));
+      if (ledgerAmt > 0) {
+        const ledger = await recordAdminTransferSuccess({
+          userId: booking.userId,
+          type: "booking",
+          referenceModel: "Booking",
+          referenceId: booking._id,
+          amount: ledgerAmt,
+          adminUserId: options?.adminUserId || "",
+          forceConfirm: force,
+          forceNote,
+          session,
+        });
+        if (!ledger.ok && !ledger.idempotent) {
+          throw new Error(`ERR_LEDGER:${ledger.error || "unknown"}`);
+        }
+      }
+
+      booking.paymentStatus = "paid";
+      booking.status = "confirmed";
+      booking.paidAt = new Date();
+      booking.transferConfirmedAt = booking.paidAt;
+      booking.transferConfirmedBy =
+        options?.adminUserId && mongoose.isValidObjectId(String(options.adminUserId)) ? options.adminUserId : undefined;
+      booking.transferForceConfirm = force;
+      booking.transferForceNote = force ? forceNote.slice(0, 500) : "";
+      await booking.save({ session });
+    });
+  } catch (error) {
+    await session.endSession();
+    const msg = String(error?.message || "");
+    if (msg.includes("Transaction numbers are only allowed")) {
+      return {
+        ok: false,
+        status: 503,
+        error: "Hạ tầng MongoDB chưa hỗ trợ transaction (cần replica set).",
+      };
+    }
+    if (msg === "ERR_404") return { ok: false, status: 404, error: "Không tìm thấy booking." };
+    if (msg === "ERR_METHOD") return { ok: false, status: 400, error: "Chỉ áp dụng cho booking thanh toán chuyển khoản." };
+    if (msg === "ERR_ALREADY_PAID") return { ok: false, status: 400, error: "Booking đã được đánh dấu đã thanh toán." };
+    if (msg === "ERR_STATUS") return { ok: false, status: 400, error: "Trạng thái thanh toán không cho phép xác nhận." };
+    if (msg === "ERR_NO_SUBMIT") {
+      return { ok: false, status: 400, error: "User chưa báo đã chuyển khoản. Bật override để xác nhận ngoại lệ." };
+    }
+    if (msg.startsWith("ERR_LEDGER:")) {
+      console.error("[confirmBankTransferPaymentByAdmin]", msg);
+      return { ok: false, status: 500, error: "Không thể ghi nhận giao dịch thanh toán. Vui lòng thử lại." };
+    }
+    console.error("[confirmBankTransferPaymentByAdmin]", error?.message || error);
+    return { ok: false, status: 500, error: "Không thể xác nhận thanh toán lúc này." };
+  }
+  await session.endSession();
+
+  const booking = await Booking.findById(bookingId)
+    .populate({ path: "mentorId", select: "name title company avatar publicId" })
+    .populate({ path: "userId", select: "name email avatar" });
+  if (!booking) return { ok: false, status: 404, error: "Không tìm thấy booking." };
+  return { ok: true, booking: toPublicBooking(booking) };
 }
 
 export async function confirmMentorBooking(mentorUserId, rawId) {

@@ -321,7 +321,7 @@ export function Pricing() {
         </div>
       </section>
 
-      <Footer variant="dark" />
+      <Footer variant="light" />
     </div>
   );
 }

@@ -1,46 +1,177 @@
+import mongoose from "mongoose";
 import { Enrollment } from "../models/Enrollment.js";
 import { Course } from "../models/Course.js";
+import { enrollmentAccessGranted } from "../helpers/enrollmentAccess.js";
+import { recordTransferPending, recordTransferSubmitted } from "../services/paymentsService.js";
+
+function genOrderRef() {
+  return `PI${Math.floor(Math.random() * 900000 + 100000)}`;
+}
+
+function extractOrderPart(value) {
+  const s = String(value || "").trim();
+  if (!s) return "";
+  return s.split("|")[0].trim().slice(0, 120);
+}
+
+function mergePaymentRef(orderPart, refRaw) {
+  const order = extractOrderPart(orderPart);
+  const fallback = extractOrderPart(refRaw);
+  return (order || fallback).slice(0, 120);
+}
 
 export const EnrollmentController = {
-  // Ghi danh khóa học
   enroll: async (req, res) => {
     try {
       const { id: courseId } = req.params;
       const userId = req.userId;
 
-      // Kiểm tra khóa học tồn tại
       const course = await Course.findById(courseId);
       if (!course) return res.status(404).json({ success: false, error: "Không tìm thấy khóa học" });
 
-      // Kiểm tra đã ghi danh chưa
+      const price = Number(course.price || 0);
       const existing = await Enrollment.findOne({ userId, courseId });
+
       if (existing) {
-        return res.json({ success: true, message: "Bạn đã ghi danh khóa học này rồi", enrollment: existing });
+        if (enrollmentAccessGranted(existing)) {
+          return res.json({ success: true, message: "Bạn đã ghi danh khóa học này rồi", enrollment: existing });
+        }
+        const bodyPm = String(req.body?.paymentMethod || "").trim();
+        if (price > 0 && bodyPm === "transfer") {
+          const orderPart = extractOrderPart(existing.paymentRef) || String(existing._id).slice(-8);
+          return res.json({
+            success: true,
+            enrollment: existing,
+            orderNum: orderPart,
+            awaitingPayment: true,
+          });
+        }
+        return res.status(400).json({
+          success: false,
+          error: "Ghi danh đang chờ thanh toán. Mở lại trang thanh toán để hoàn tất chuyển khoản.",
+        });
       }
+
+      if (price <= 0) {
+        const enrollment = await Enrollment.create({
+          userId,
+          courseId,
+          pricePaid: 0,
+          paymentStatus: "paid",
+          paymentMethod: "",
+          lastAccessedAt: new Date(),
+        });
+        return res.status(201).json({ success: true, enrollment });
+      }
+
+      const pm = String(req.body?.paymentMethod || "").trim();
+      if (pm !== "transfer") {
+        return res.status(400).json({
+          success: false,
+          error: "Khóa học có phí. Vui lòng thanh toán chuyển khoản qua trang thanh toán.",
+          requiresPayment: true,
+          price,
+        });
+      }
+
+      const clientOrder = extractOrderPart(req.body?.orderNum);
+      const orderRef = clientOrder || genOrderRef();
 
       const enrollment = await Enrollment.create({
         userId,
         courseId,
-        pricePaid: course.price || 0,
-        lastAccessedAt: new Date()
+        pricePaid: price,
+        paymentStatus: "pending",
+        paymentMethod: "transfer",
+        paymentRef: orderRef,
+        lastAccessedAt: new Date(),
       });
 
-      res.status(201).json({ success: true, enrollment });
+      // Ledger pending cho CK khóa học
+      const ledgerAmt = Math.round(Number(enrollment.pricePaid ?? 0));
+      if (ledgerAmt > 0) {
+        const ledger = await recordTransferPending({
+          userId: enrollment.userId,
+          type: "course",
+          referenceModel: "Enrollment",
+          referenceId: enrollment._id,
+          amount: ledgerAmt,
+        });
+        if (!ledger.ok && !ledger.idempotent) {
+          console.error("[enroll] ledger:", ledger.error);
+        }
+      }
+
+      return res.status(201).json({ success: true, enrollment, orderNum: enrollment.paymentRef });
     } catch (error) {
       res.status(500).json({ success: false, error: error.message });
     }
   },
 
-  // Lấy danh sách khóa học của tôi
+  submitTransfer: async (req, res) => {
+    try {
+      const { id: enrollmentId } = req.params;
+      const userId = req.userId;
+      if (!mongoose.isValidObjectId(enrollmentId)) {
+        return res.status(400).json({ success: false, error: "id ghi danh không hợp lệ." });
+      }
+
+      const enrollment = await Enrollment.findOne({ _id: enrollmentId, userId });
+      if (!enrollment) return res.status(404).json({ success: false, error: "Không tìm thấy ghi danh." });
+      if (enrollment.paymentStatus === "paid" || enrollmentAccessGranted(enrollment)) {
+        return res.status(400).json({ success: false, error: "Thanh toán đã được xử lý." });
+      }
+      if (enrollment.paymentMethod !== "transfer") {
+        return res.status(400).json({ success: false, error: "Ghi danh này không dùng chuyển khoản." });
+      }
+
+      const refRaw = String(req.body?.reference ?? req.body?.transferReference ?? "").trim();
+      const orderPart = String(enrollment.paymentRef || "").trim() || String(enrollment._id).slice(-8);
+      enrollment.paymentRef = mergePaymentRef(orderPart, refRaw);
+      enrollment.transferSubmittedAt = new Date();
+      await enrollment.save();
+
+      // Đồng bộ ledger (payments) tương tự booking CK.
+      const ledgerAmt = Math.round(Number(enrollment.pricePaid ?? 0));
+      if (ledgerAmt > 0) {
+        const ensure = await recordTransferPending({
+          userId: enrollment.userId,
+          type: "course",
+          referenceModel: "Enrollment",
+          referenceId: enrollment._id,
+          amount: ledgerAmt,
+        });
+        if (!ensure.ok && !ensure.idempotent) {
+          console.error("[submitTransfer] ensure ledger:", ensure.error);
+        } else {
+          const meta = await recordTransferSubmitted({
+            userId: enrollment.userId,
+            type: "course",
+            referenceId: enrollment._id,
+            paymentRef: enrollment.paymentRef,
+            submittedAt: enrollment.transferSubmittedAt,
+          });
+          if (!meta.ok) {
+            console.error("[submitTransfer] ledger meta:", meta.error);
+          }
+        }
+      }
+
+      res.json({ success: true, enrollment });
+    } catch (error) {
+      res.status(500).json({ success: false, error: error.message });
+    }
+  },
+
   getMyEnrollments: async (req, res) => {
     try {
       const enrollments = await Enrollment.find({ userId: req.userId })
         .populate({
           path: "courseId",
-          populate: { 
-            path: "mentorId", 
-            populate: { path: "userId", select: "name avatar" }
-          }
+          populate: {
+            path: "mentorId",
+            populate: { path: "userId", select: "name avatar" },
+          },
         })
         .sort({ updatedAt: -1 });
 
@@ -50,7 +181,6 @@ export const EnrollmentController = {
     }
   },
 
-  // Cập nhật tiến độ học tập (đánh dấu bài đã học)
   updateProgress: async (req, res) => {
     try {
       const { id: enrollmentId } = req.params;
@@ -59,25 +189,35 @@ export const EnrollmentController = {
 
       const enrollment = await Enrollment.findOne({ _id: enrollmentId, userId });
       if (!enrollment) return res.status(404).json({ success: false, error: "Hồ sơ ghi danh không tồn tại" });
+      if (!enrollmentAccessGranted(enrollment)) {
+        return res.status(403).json({ success: false, error: "Hoàn tất thanh toán khóa học để cập nhật tiến độ." });
+      }
 
       if (isCompleted) {
-        // Thêm vào list completed nếu chưa có
         if (!enrollment.completedLessons.includes(lessonId)) {
           enrollment.completedLessons.push(lessonId);
         }
       } else {
-        // Xóa khỏi list completed
-        enrollment.completedLessons = enrollment.completedLessons.filter(id => id.toString() !== lessonId.toString());
+        enrollment.completedLessons = enrollment.completedLessons.filter(
+          (id) => id.toString() !== lessonId.toString(),
+        );
       }
 
       enrollment.lastLessonId = lessonId;
       enrollment.lastAccessedAt = new Date();
-      
-      // Tính % tiến độ (giả định FE gửi số bài hoặc lấy từ course)
+
       const course = await Course.findById(enrollment.courseId);
-      if (course && course.sections) {
+      if (course) {
         let totalLessons = 0;
-        course.sections.forEach(s => totalLessons += (s.lessons?.length || 0));
+        if (Array.isArray(course.modules) && course.modules.length > 0) {
+          course.modules.forEach((m) => {
+            totalLessons += m.lessons?.length || 0;
+          });
+        } else if (Array.isArray(course.sections) && course.sections.length > 0) {
+          course.sections.forEach((s) => {
+            totalLessons += s.lessons?.length || 0;
+          });
+        }
         if (totalLessons > 0) {
           enrollment.progressPercent = Math.round((enrollment.completedLessons.length / totalLessons) * 100);
         }
@@ -90,7 +230,6 @@ export const EnrollmentController = {
     }
   },
 
-  // Lấy hoặc tạo chứng chỉ
   getCertificate: async (req, res) => {
     try {
       const { id: enrollmentId } = req.params;
@@ -101,28 +240,28 @@ export const EnrollmentController = {
         .populate("userId", "name");
 
       if (!enrollment) return res.status(404).json({ success: false, error: "Hồ sơ ghi danh không tồn tại" });
+      if (!enrollmentAccessGranted(enrollment)) {
+        return res.status(403).json({ success: false, error: "Hoàn tất thanh toán khóa học để nhận chứng chỉ." });
+      }
 
       const course = enrollment.courseId;
       if (!course) return res.status(404).json({ success: false, error: "Không tìm thấy thông tin khóa học" });
 
-      // Kiểm tra khóa học có hỗ trợ chứng chỉ không
       if (course.settings && course.settings.certificateEnabled === false) {
         return res.status(400).json({ success: false, error: "Khóa học này không cấp chứng chỉ" });
       }
 
-      // Kiểm tra xem đã đủ điều kiện nhận chứng chỉ chưa (ví dụ: tiến độ >= 100%)
       if (enrollment.progressPercent < 100 && !enrollment.isCompleted) {
         return res.status(400).json({ success: false, error: "Bạn cần hoàn thành 100% khóa học để nhận chứng chỉ" });
       }
 
-      // Nếu chưa có certificateUrl thì tạo mới
       if (!enrollment.certificateUrl) {
         const certCode = `CERT-${enrollmentId.toString().slice(-6).toUpperCase()}-${Date.now().toString().slice(-4)}`;
-        enrollment.certificateUrl = `https://prointerview.vn/certificates/${certCode}.pdf`; // Mock URL
+        enrollment.certificateUrl = `https://prointerview.vn/certificates/${certCode}.pdf`;
         enrollment.certificateIssuedAt = new Date();
         enrollment.isCompleted = true;
         if (!enrollment.completedAt) enrollment.completedAt = new Date();
-        
+
         await enrollment.save();
       }
 
@@ -133,11 +272,11 @@ export const EnrollmentController = {
           issuedAt: enrollment.certificateIssuedAt,
           courseTitle: course.title,
           studentName: enrollment.userId?.name || "Học viên",
-          code: enrollment.certificateUrl.split("/").pop().replace(".pdf", "")
-        }
+          code: enrollment.certificateUrl.split("/").pop().replace(".pdf", ""),
+        },
       });
     } catch (error) {
       res.status(500).json({ success: false, error: error.message });
     }
-  }
+  },
 };

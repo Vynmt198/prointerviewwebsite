@@ -91,6 +91,10 @@ const userSchema = new Schema(
     resetPasswordTokenHash: { type: String, select: false, default: "" },
     resetPasswordExpiresAt: { type: Date, select: false, default: null },
 
+    /** Xác thực email */
+    emailVerificationTokenHash: { type: String, select: false, default: "" },
+    emailVerificationExpiresAt: { type: Date, select: false, default: null },
+
     /**
      * Refresh token (thiết bị): chỉ lưu hash; token gửi client = `sessionId:secret` (opaque).
      * select: false — không lôi nhầm vào toPublicUser.

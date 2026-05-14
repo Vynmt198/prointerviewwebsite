@@ -5,13 +5,10 @@ import {
   Sparkles as Sparkle,
   Sparkles,
   Check,
-  CheckCircle,
   CheckCircle2,
   Lock,
   ShieldCheck,
-  CreditCard,
-  BadgeCheck as SealCheck,
-  AlertCircle as Warning,
+  AlertCircle,
   Tag,
   Phone,
   Copy,
@@ -19,16 +16,15 @@ import {
   Clock,
   Video,
   Users,
-  Chrome as GoogleLogo,
-  ExternalLink as ArrowSquareOut,
-  ArrowRight,
+  BookOpen,
+  Landmark,
 } from "lucide-react";
-import { setActivePlan, activateAllPlans, isLoggedIn, refreshUserProfile } from "../../utils/auth";
-import { activatePlanRequest } from "../../utils/plansApi";
+import { isLoggedIn } from "../../utils/auth";
 import { fetchMentor } from "../../utils/mentorApi";
-import { saveBooking, genMeetLink } from "../../utils/bookings";
-import { createBooking } from "../../utils/bookingsApi";
-import { initiatePayment } from "../../utils/paymentsApi";
+import { genMeetLink } from "../../utils/bookings";
+import { createBooking, submitBookingTransferReference } from "../../utils/bookingsApi";
+import { fetchCourseById } from "../../utils/courseApi";
+import { enrollmentApi } from "../../utils/enrollmentApi";
 
 /* ─── Plan meta ─────────────────────────────────────────── */
 
@@ -57,6 +53,45 @@ function fmt(n) {
   return new Intl.NumberFormat("vi-VN").format(n) + "đ";
 }
 
+/** Hiển thị trên checkout CK — Vite: .env / .env.local (dev) hoặc env trên host build (Vercel) + redeploy. */
+const BANK_TRANSFER = {
+  bankName: import.meta.env.VITE_BANK_TRANSFER_NAME || "",
+  accountNumber: import.meta.env.VITE_BANK_TRANSFER_ACCOUNT || "",
+  accountOwner: import.meta.env.VITE_BANK_TRANSFER_OWNER || "",
+};
+
+/** Mã ngân hàng cho VietQR (img.vietqr.io). VD: TPB = TPBank, VCB = Vietcombank. */
+function inferVietQrBankId() {
+  const explicit = import.meta.env.VITE_VIETQR_BANK_ID;
+  if (explicit && String(explicit).trim()) return String(explicit).trim().toUpperCase();
+  const name = (BANK_TRANSFER.bankName || "").toLowerCase();
+  if (
+    name.includes("tiên phong") ||
+    name.includes("tien phong") ||
+    name.includes("tpbank") ||
+    name.includes("tp bank")
+  ) {
+    return "TPB";
+  }
+  return "";
+}
+
+/** Ảnh QR VietQR: quét trong app NH — thường điền sẵn STK, số tiền, nội dung. */
+function buildVietQrImageUrl(bankId, accountDigits, amountVnd, addInfo) {
+  const bid = String(bankId || "").trim().toUpperCase();
+  const acc = String(accountDigits || "").replace(/\D/g, "");
+  const amt = Math.round(Number(amountVnd) || 0);
+  if (!bid || !acc || amt <= 0) return null;
+  const add = encodeURIComponent(String(addInfo || "").slice(0, 50));
+  return `https://img.vietqr.io/image/${bid}-${acc}-compact2.png?amount=${amt}&addInfo=${add}`;
+}
+
+function extractOrderPart(value) {
+  const s = String(value || "").trim();
+  if (!s) return "";
+  return s.split("|")[0].trim();
+}
+
 /* ─── CopyBtn ────────────────────────────────────────────── */
 function CopyBtn({ text }) {
   const [copied, setCopied] = useState(false);
@@ -69,42 +104,6 @@ function CopyBtn({ text }) {
       {copied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
       {copied ? "Đã sao chép" : "Sao chép"}
     </button>
-  );
-}
-
-/* ─── Mock QR ────────────────────────────────────────────── */
-function MockQR({ color }) {
-  const pattern = [
-    [1,1,1,1,1,1,1,0,1,0,0,1,0,1,1,1,1,1,1,1,1],
-    [1,0,0,0,0,0,1,0,0,1,1,0,1,0,1,0,0,0,0,0,1],
-    [1,0,1,1,1,0,1,0,1,0,0,1,0,0,1,0,1,1,1,0,1],
-    [1,0,1,1,1,0,1,0,0,1,1,0,1,0,1,0,1,1,1,0,1],
-    [1,0,1,1,1,0,1,0,1,0,0,1,0,0,1,0,1,1,1,0,1],
-    [1,0,0,0,0,0,1,0,0,1,0,1,1,0,1,0,0,0,0,0,1],
-    [1,1,1,1,1,1,1,0,1,0,1,0,1,0,1,1,1,1,1,1,1],
-    [0,0,0,0,0,0,0,0,1,0,0,1,0,1,0,0,0,0,0,0,0],
-    [0,1,1,0,1,0,1,1,0,1,1,0,1,0,0,1,1,0,1,0,1],
-    [1,0,0,1,0,0,0,0,1,0,0,1,1,0,1,0,0,1,0,1,0],
-    [0,1,0,0,1,1,1,1,0,1,1,0,0,1,0,1,0,0,1,0,1],
-    [1,0,1,1,0,0,0,0,1,0,0,1,0,0,1,0,1,1,0,1,0],
-    [0,1,1,0,1,1,1,0,0,1,1,0,1,1,0,1,1,0,1,1,1],
-    [0,0,0,0,0,0,0,0,1,1,0,1,0,0,0,1,0,0,0,1,0],
-    [1,1,1,1,1,1,1,0,0,0,1,0,1,0,1,0,1,0,0,1,1],
-    [1,0,0,0,0,0,1,0,1,1,0,1,0,1,0,1,0,1,1,0,1],
-    [1,0,1,1,1,0,1,0,0,0,1,0,1,0,1,0,0,0,1,0,0],
-    [1,0,1,1,1,0,1,1,1,1,0,1,0,1,0,1,1,1,0,1,1],
-    [1,0,1,1,1,0,1,0,1,0,1,0,0,1,1,0,0,0,1,0,0],
-    [1,0,0,0,0,0,1,0,0,1,0,1,1,0,0,1,1,1,0,1,1],
-    [1,1,1,1,1,1,1,0,1,0,1,0,0,1,1,0,0,0,1,0,1],
-  ];
-  return (
-    <div className="inline-block p-3 card-premium">
-      <div style={{ display: "grid", gridTemplateColumns: `repeat(21, 1fr)`, gap: "1.5px" }}>
-        {pattern.flat().map((cell, i) => (
-          <div key={i} style={{ width: 9, height: 9, borderRadius: 1, background: cell ? color : "transparent" }} />
-        ))}
-      </div>
-    </div>
   );
 }
 
@@ -168,10 +167,14 @@ export function Checkout() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
 
-  /* ── Booking vs Plan mode ─────────────────────────────── */
+  /* ── Booking / Course / Plan mode ─────────────────────────────── */
   const isBooking = searchParams.get("type") === "booking";
+  const isCourse = searchParams.get("type") === "course";
+  const courseId = searchParams.get("courseId") ?? "";
+  const isPaidCheckout = isBooking || isCourse;
   const mentorId = searchParams.get("mentorId") ?? "";
   const [bookingMentor, setBookingMentor] = React.useState(null);
+  const [courseInfo, setCourseInfo] = React.useState(null);
 
   React.useEffect(() => {
     if (!isBooking || !mentorId) {
@@ -183,6 +186,17 @@ export function Checkout() {
       if (m) setBookingMentor(m);
     });
   }, [isBooking, mentorId]);
+
+  React.useEffect(() => {
+    if (!isCourse || !courseId) {
+      setCourseInfo(null);
+      return;
+    }
+    setCourseInfo(null);
+    void fetchCourseById(courseId).then((r) => {
+      if (r.success && r.course) setCourseInfo(r.course);
+    });
+  }, [isCourse, courseId]);
 
   const bookingPrice = Number(searchParams.get("price") ?? bookingMentor?.price ?? 0);
   const bookingDate = searchParams.get("date") ?? "";
@@ -197,11 +211,13 @@ export function Checkout() {
   const price = urlPlanPrice > 0
     ? urlPlanPrice
     : (billing === "yearly" ? plan.yearlyPrice : plan.monthlyPrice);
-  const baseTotal = isBooking ? bookingPrice : plan.monthlyPrice;
-  const total = isBooking ? bookingPrice : price; // never multiply by 12 — price is always the per-period amount shown on the card
+  const courseUrlPrice = Number(searchParams.get("price") ?? "0");
+  const coursePriceNum = isCourse ? Number((courseInfo?.price ?? courseUrlPrice) || 0) : 0;
+  const baseTotal = isBooking ? bookingPrice : isCourse ? coursePriceNum : plan.monthlyPrice;
+  const total = isBooking ? bookingPrice : isCourse ? coursePriceNum : price; // never multiply by 12 — price is always the per-period amount shown on the card
 
-  const orderNum = useMemo(() => `PI${Math.floor(Math.random() * 900000 + 100000)}`, []);
-  const meetLink = useMemo(() => genMeetLink(orderNum), [orderNum]);
+  const [transferOrderNum, setTransferOrderNum] = useState(() => `PI${Math.floor(Math.random() * 900000 + 100000)}`);
+  const meetLink = useMemo(() => genMeetLink(transferOrderNum), [transferOrderNum]);
 
   /* ── Read all booking params from URL ── */
   const bookingPosition = searchParams.get("position") ?? "";
@@ -209,114 +225,61 @@ export function Checkout() {
   const bookingCvFile = searchParams.get("cvFile") || null;
   const bookingJdFile = searchParams.get("jdFile") || null;
 
-  const [method, setMethod] = useState("visa");
   const [appStep, setAppStep] = useState("checkout");
-  const [progress, setProgress] = useState(0);
+  const [bankBookingId, setBankBookingId] = useState(null);
+  const [bankEnrollmentId, setBankEnrollmentId] = useState(null);
+  const [transferBusy, setTransferBusy] = useState(false);
 
-  /* Card form state */
-  const [cardNum, setCardNum] = useState("");
-  const [cardName, setCardName] = useState("");
-  const [expiry, setExpiry] = useState("");
-  const [cvv, setCvv] = useState("");
-  const [savedCard, setSavedCard] = useState(null);
   const [cardError, setCardError] = useState("");
 
   /* Coupon */
   const [coupon, setCoupon] = useState("");
   const [couponApplied, setCouponApplied] = useState(false);
-  const discount = couponApplied ? Math.round(total * 0.1) : 0;
+  const discount = isCourse ? 0 : couponApplied ? Math.round(total * 0.1) : 0;
+  const payAmount = total - discount;
 
-  /* Processing */
+  const vietQrBankId = useMemo(() => inferVietQrBankId(), []);
+  const vietQrUrl = useMemo(
+    () => buildVietQrImageUrl(vietQrBankId, BANK_TRANSFER.accountNumber, payAmount, transferOrderNum),
+    [vietQrBankId, transferOrderNum, payAmount],
+  );
+  const [vietQrLoadFailed, setVietQrLoadFailed] = useState(false);
   useEffect(() => {
-    if (appStep !== "processing") return;
-    setProgress(0);
-    const iv = setInterval(() => setProgress((p) => Math.min(p + 2, 100)), 40);
-    const tm = setTimeout(() => {
-      clearInterval(iv);
-      if (!isBooking) {
-        void (async () => {
-          if (isLoggedIn() && ["starterPro", "elitePro"].includes(planKey)) {
-            const months = billing === "yearly" ? 12 : 1;
-            const plan = planKey === "elitePro" ? "elite_pro" : "starter_pro";
-            await activatePlanRequest({ plan, months }).catch(() => {});
-            await refreshUserProfile();
-          }
-          if (planKey === "all") activateAllPlans();
-          else if (["textPro", "voicePro", "cvPro"].includes(planKey)) setActivePlan(planKey);
-          else if (["starterPro", "elitePro"].includes(planKey)) setActivePlan(planKey);
-          setAppStep("success");
-        })();
-      } else if (bookingMentor) {
-        void (async () => {
-          const endTime = bookingTime
-            ? String(parseInt(bookingTime.split(":")[0], 10) + 1).padStart(2, "0") + ":00"
-            : "";
-          const paymentMethod = method === "momo" ? "momo" : method === "vnpay" ? "transfer" : "card";
-          let backendId = null;
-          if (isLoggedIn()) {
-            const apiRes = await createBooking({
-              mentorId: bookingMentor.id,
-              date: bookingDate,
-              timeSlot: bookingTime,
-              sessionType: "mock_interview",
-              position: bookingPosition,
-              note: bookingNote,
-              cvFile: bookingCvFile || "",
-              jdFile: bookingJdFile || "",
-              price: bookingPrice,
-              durationMinutes: 60,
-              meetingLink: meetLink,
-              orderNum,
-              paymentStatus: "paid",
-              paymentMethod,
-            });
-            if (apiRes.success && apiRes.booking?.id) backendId = apiRes.booking.id;
-            else if (!apiRes.success) console.warn("createBooking:", apiRes.error);
-          }
-          saveBooking({
-            orderNum,
-            sessionId: backendId || orderNum,
-            mentorId: bookingMentor.id,
-            mentorName: bookingMentor.name,
-            mentorTitle: bookingMentor.title,
-            mentorCompany: bookingMentor.company,
-            mentorAvatar: bookingMentor.avatar,
-            date: bookingDate,
-            time: bookingTime,
-            endTime,
-            price: bookingPrice,
-            meetLink,
-            position: bookingPosition,
-            note: bookingNote,
-            cvFile: bookingCvFile,
-            jdFile: bookingJdFile,
-            status: "confirmed",
-            backendId,
-          });
-          setAppStep("success");
-        })();
-      } else {
-        setAppStep("success");
+    setVietQrLoadFailed(false);
+  }, [vietQrUrl]);
+
+  const submitTransferReference = async () => {
+    if (isBooking) {
+      if (!bankBookingId) {
+        setCardError("Thiếu mã booking. Hãy quay lại bước thanh toán và tạo lịch lại.");
+        return;
       }
-    }, 2600);
-    return () => { clearInterval(iv); clearTimeout(tm); };
-  }, [
-    appStep,
-    planKey,
-    isBooking,
-    bookingMentor,
-    bookingDate,
-    bookingTime,
-    bookingPrice,
-    orderNum,
-    meetLink,
-    bookingPosition,
-    bookingNote,
-    bookingCvFile,
-    bookingJdFile,
-    method,
-    billing,
-  ]);
+    } else if (isCourse) {
+      if (!bankEnrollmentId) {
+        setCardError("Thiếu mã ghi danh. Hãy quay lại bước thanh toán.");
+        return;
+      }
+    } else {
+      return;
+    }
+    setTransferBusy(true);
+    setCardError("");
+    try {
+      let ok = false;
+      if (isBooking) {
+        const res = await submitBookingTransferReference(bankBookingId, transferOrderNum || "");
+        ok = res.success;
+        if (!ok) setCardError(res.error || "Không lưu được.");
+      } else {
+        const res = await enrollmentApi.submitEnrollmentTransfer(bankEnrollmentId, transferOrderNum || "");
+        ok = res.success;
+        if (!ok) setCardError(res.error || "Không lưu được.");
+      }
+      if (ok) setAppStep("transfer_submitted");
+    } finally {
+      setTransferBusy(false);
+    }
+  };
 
   const handlePay = async () => {
     if (!isLoggedIn()) {
@@ -326,191 +289,224 @@ export function Checkout() {
       return;
     }
 
-    if (isBooking) {
-      if (!bookingMentor || !bookingDate || !bookingTime) {
-        setCardError("Thiếu thông tin đặt lịch. Hãy quay lại bước đặt lịch với mentor.");
+    if (!isPaidCheckout) {
+      setCardError(
+        "Thanh toán chuyển khoản trên trang này chỉ dành cho đặt lịch mentor hoặc mua khóa học có phí. Mua gói Pro vui lòng quay lại trang Gói cước hoặc liên hệ hỗ trợ.",
+      );
+      return;
+    }
+
+    if (isCourse) {
+      if (!courseId) {
+        setCardError("Thiếu mã khóa học.");
         return;
       }
-    }
-
-    if (method === "vnpay") {
-       setAppStep("processing");
-       setCardError("");
-
-       let bId = null;
-       // Nếu là booking, tạo bản ghi booking trước với trạng thái pending
-       if (isBooking) {
-         try {
-           const apiRes = await createBooking({
-             mentorId: bookingMentor.id,
-             date: bookingDate,
-             timeSlot: bookingTime,
-             sessionType: "mock_interview",
-             position: bookingPosition,
-             note: bookingNote,
-             cvFile: bookingCvFile || "",
-             jdFile: bookingJdFile || "",
-             price: bookingPrice,
-             durationMinutes: 60,
-             meetingLink: meetLink,
-             orderNum,
-             paymentStatus: "pending",
-             paymentMethod: "vnpay",
-           });
-           if (apiRes.success && apiRes.booking?.id) {
-             bId = apiRes.booking.id;
-           } else {
-             setAppStep("checkout");
-             setCardError(apiRes.error || "Không thể tạo lịch hẹn.");
-             return;
-           }
-         } catch (e) {
-           setAppStep("checkout");
-           setCardError("Lỗi hệ thống khi tạo lịch hẹn.");
-           return;
-         }
-       }
-
-       const payload = {
-         type: isBooking ? "booking" : "subscription",
-         provider: "vnpay",
-         amount: total - discount,
-         ...(isBooking ? { bookingId: bId } : { planKey: planKey })
-       };
-
-       const res = await initiatePayment(payload);
-       if (res.success && res.payUrl) {
-         window.location.href = res.payUrl;
-       } else {
-         setAppStep("checkout");
-         setCardError(res.error || "Không thể khởi tạo thanh toán VNPay.");
-       }
-       return;
-    }
-
-    if (method === "visa" && !savedCard) {
-      if (cardNum.replace(/\s/g, "").length < 16) return setCardError("Số thẻ không hợp lệ");
-      if (!cardName.trim()) return setCardError("Vui lòng nhập tên chủ thẻ");
-      if (expiry.length < 5) return setCardError("Ngày hết hạn không hợp lệ");
-      if (cvv.length < 3) return setCardError("CVV không hợp lệ");
+      if (!courseInfo) {
+        setCardError("Đang tải thông tin khóa học…");
+        return;
+      }
+      const expected = Number(courseInfo.price ?? 0);
+      if (!Number.isFinite(expected) || expected <= 0) {
+        setCardError("Khóa học miễn phí không cần thanh toán tại đây. Hãy đăng ký trực tiếp trên trang khóa học.");
+        return;
+      }
+      if (courseUrlPrice > 0 && Math.round(expected) !== Math.round(courseUrlPrice)) {
+        setCardError("Giá khóa học không khớp. Hãy tải lại trang chi tiết khóa và thử lại.");
+        return;
+      }
       setCardError("");
+      try {
+        const apiRes = await enrollmentApi.enroll(courseId, { paymentMethod: "transfer", orderNum: transferOrderNum });
+        const eid = apiRes.enrollment?._id || apiRes.enrollment?.id;
+        if (apiRes.success && eid) {
+          const serverOrder = extractOrderPart(apiRes.orderNum || apiRes.enrollment?.paymentRef);
+          if (serverOrder) setTransferOrderNum(serverOrder);
+          setBankEnrollmentId(String(eid));
+          setAppStep("awaiting_transfer");
+        } else {
+          setCardError(apiRes.error || "Không thể tạo ghi danh chờ chuyển khoản.");
+        }
+      } catch {
+        setCardError("Lỗi hệ thống khi ghi danh.");
+      }
+      return;
     }
-    setAppStep("processing");
+
+    if (!bookingMentor || !bookingDate || !bookingTime) {
+      setCardError("Thiếu thông tin đặt lịch. Hãy quay lại bước đặt lịch với mentor.");
+      return;
+    }
+
+    setCardError("");
+    try {
+      const apiRes = await createBooking({
+        mentorId: bookingMentor.id,
+        date: bookingDate,
+        timeSlot: bookingTime,
+        sessionType: "mock_interview",
+        position: bookingPosition,
+        note: bookingNote,
+        cvFile: bookingCvFile || "",
+        jdFile: bookingJdFile || "",
+        price: bookingPrice,
+        durationMinutes: 60,
+        meetingLink: meetLink,
+        orderNum: transferOrderNum,
+        paymentStatus: "pending",
+        paymentMethod: "transfer",
+      });
+      if (apiRes.success && apiRes.booking?.id) {
+        const serverOrder = extractOrderPart(apiRes.booking?.paymentRef);
+        if (serverOrder) setTransferOrderNum(serverOrder);
+        setBankBookingId(apiRes.booking.id);
+        setAppStep("awaiting_transfer");
+      } else {
+        setCardError(apiRes.error || "Không thể tạo lịch chờ chuyển khoản.");
+      }
+    } catch {
+      setCardError("Lỗi hệ thống khi tạo lịch hẹn.");
+    }
   };
 
-  /* ── Success ── */
-  if (appStep === "success") {
+  /* ── Chờ chuyển khoản / đã gửi mã CK ── */
+  if (appStep === "awaiting_transfer" || appStep === "transfer_submitted") {
+    const submitted = appStep === "transfer_submitted";
+    const hasBank = BANK_TRANSFER.bankName && BANK_TRANSFER.accountNumber;
     return (
       <div className="min-h-screen bg-[#07060E] text-white relative overflow-hidden flex items-center justify-center p-6">
-        <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-secondary/10 blur-[150px] rounded-full -translate-y-1/2 translate-x-1/2 pointer-events-none"></div>
-        <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-primary-fixed/5 blur-[150px] rounded-full translate-y-1/2 -translate-x-1/2 pointer-events-none"></div>
-
-        <div className="max-w-xl w-full text-center fade-in relative z-10">
-          <div className="w-24 h-24 rounded-[32px] bg-primary-fixed flex items-center justify-center mx-auto mb-8 shadow-[0_20px_50px_rgba(196, 255, 71,0.3)] scale-110">
-            <SealCheck className="w-12 h-12 text-black" />
-          </div>
-
-          <h1 className="text-4xl font-black tracking-tighter text-white mb-4">Payment Success 🎉</h1>
-          <p className="text-white/40 text-sm mb-12">Your order <span className="font-black text-white">#{orderNum}</span> has been confirmed and activated.</p>
-
-          <div className="glass-panel p-8 mb-12 text-left relative overflow-hidden group">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-primary-fixed/5 blur-3xl rounded-full"></div>
-            <div className="flex items-center gap-6">
-              <div className="w-14 h-14 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center group-hover:scale-110 transition-transform">
-                <Sparkles className="w-6 h-6 text-primary-fixed" />
-              </div>
-              <div>
-                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 mb-1">Active Plan</p>
-                <p className="text-xl font-black text-white">
-                  {isBooking ? `1-1 with ${bookingMentor?.name ?? "mentor"}` : plan.name}
-                </p>
-                <p className="text-[10px] font-bold text-primary-fixed mt-1">Status: Active ✓</p>
-              </div>
+        <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-secondary/10 blur-[150px] rounded-full -translate-y-1/2 translate-x-1/2 pointer-events-none" />
+        <div className="max-w-lg w-full glass-panel p-8 md:p-10 fade-in relative z-10">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-12 h-12 rounded-2xl bg-primary-fixed/15 border border-primary-fixed/30 flex items-center justify-center">
+              <Landmark className="w-6 h-6 text-primary-fixed" />
+            </div>
+            <div>
+              <h1 className="text-xl font-black tracking-tight">
+                {submitted ? "Đã ghi nhận chuyển khoản" : "Chuyển khoản ngân hàng"}
+              </h1>
+              <p className="text-[10px] font-bold uppercase tracking-widest text-white/45">
+                Mã đơn: {transferOrderNum} · {fmt(payAmount)}
+              </p>
             </div>
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <button 
-              onClick={() => navigate("/dashboard")} 
-              className="px-10 h-14 rounded-full bg-primary-fixed text-black font-black uppercase tracking-widest text-xs shadow-[0_10px_30px_rgba(196, 255, 71,0.2)] hover:scale-105 transition-all"
-            >
-              Go to Dashboard →
-            </button>
-            <button 
-              onClick={() => window.location.href = "/"} 
-              className="px-10 h-14 rounded-full bg-white/5 border border-white/10 text-white font-black uppercase tracking-widest text-xs hover:bg-white/10 transition-all"
-            >
-              Back Home
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
+          {!hasBank && (
+            <p className="mb-4 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-xs text-amber-100 leading-relaxed">
+              Cấu hình <span className="font-mono">VITE_BANK_TRANSFER_NAME</span>,{" "}
+              <span className="font-mono">VITE_BANK_TRANSFER_ACCOUNT</span>,{" "}
+              <span className="font-mono">VITE_BANK_TRANSFER_OWNER</span>: trên máy dùng{" "}
+              <span className="font-mono">frontend/.env</span> hoặc <span className="font-mono">.env.local</span>; trên
+              Vercel vào <span className="font-semibold">Settings → Environment Variables</span> rồi{" "}
+              <span className="font-semibold">Redeploy</span> (Vite chỉ nhúng biến lúc build).
+            </p>
+          )}
 
-  /* ── Processing ── */
-  if (appStep === "processing") {
-    return (
-      <div className="min-h-screen bg-[#07060E] flex items-center justify-center p-6 relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-secondary/10 blur-[150px] rounded-full -translate-y-1/2 translate-x-1/2 pointer-events-none"></div>
-        <div className="text-center max-w-sm w-full fade-in relative z-10">
-          <div className="w-24 h-24 rounded-[32px] bg-white/5 border border-white/10 flex items-center justify-center mx-auto mb-8 relative group">
-            <div className="absolute inset-0 rounded-[32px] bg-primary-fixed/20 blur-2xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
-            <svg className="absolute inset-0 w-full h-full -rotate-90 scale-90" viewBox="0 0 100 100">
-              <circle cx="50" cy="50" r="45" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="6" />
-              <circle cx="50" cy="50" r="45" fill="none" stroke="#c4ff47" strokeWidth="6"
-                strokeDasharray="282.7"
-                strokeDashoffset={282.7 * (1 - progress / 100)}
-                strokeLinecap="round"
-                style={{ transition: "stroke-dashoffset 0.1s linear" }}
+          {hasBank && !submitted && (
+            <div className="mb-6 space-y-3 rounded-2xl border border-white/10 bg-white/[0.04] p-5 text-sm">
+              <div className="flex justify-between gap-4">
+                <span className="text-white/50">Ngân hàng</span>
+                <span className="font-bold text-right">{BANK_TRANSFER.bankName}</span>
+              </div>
+              <div className="flex justify-between gap-4">
+                <span className="text-white/50">Số TK</span>
+                <span className="font-mono font-black">{BANK_TRANSFER.accountNumber}</span>
+              </div>
+              <div className="flex justify-between gap-4">
+                <span className="text-white/50">Chủ TK</span>
+                <span className="font-bold text-right">{BANK_TRANSFER.accountOwner}</span>
+              </div>
+              <div className="flex flex-wrap items-center justify-between gap-2 border-t border-white/10 pt-3">
+                <span className="text-white/50">Nội dung CK</span>
+                <CopyBtn text={transferOrderNum} />
+              </div>
+              <p className="text-[11px] text-primary-fixed font-bold">Ghi đúng nội dung: {transferOrderNum}</p>
+            </div>
+          )}
+
+          {hasBank && !submitted && vietQrUrl && !vietQrLoadFailed && (
+            <div className="mb-6 flex flex-col items-center rounded-2xl border border-primary-fixed/25 bg-primary-fixed/[0.07] p-5">
+              <p className="mb-1 text-center text-[10px] font-black uppercase tracking-widest text-primary-fixed">
+                Quét mã QR (VietQR)
+              </p>
+              <p className="mb-4 text-center text-[11px] text-white/55 leading-relaxed">
+                Mở app ngân hàng → Quét mã QR. Thường sẽ điền sẵn số tiền và nội dung{" "}
+                <span className="font-semibold text-white">{transferOrderNum}</span>.
+              </p>
+              <img
+                src={vietQrUrl}
+                alt="Mã QR chuyển khoản VietQR"
+                className="max-w-[280px] w-full rounded-xl bg-white p-2 shadow-lg"
+                loading="lazy"
+                onError={() => setVietQrLoadFailed(true)}
               />
-            </svg>
-            <Lock className="w-8 h-8 text-primary-fixed relative z-10" />
+              <p className="mt-4 text-center text-[11px] text-white/50 leading-relaxed">
+                Sau khi chuyển xong, bấm <span className="font-semibold text-white/80">Tôi đã chuyển khoản</span> bên dưới. Admin đối soát theo{" "}
+                <span className="font-semibold text-white/80">số tiền + một nội dung chuyển khoản duy nhất</span> (đã gắn trong QR).
+              </p>
+            </div>
+          )}
+          {hasBank && !submitted && vietQrUrl && vietQrLoadFailed && (
+            <p className="mb-4 rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 text-center text-xs text-white/65">
+              Không tải được mã QR. Bạn vẫn có thể chuyển thủ công theo STK và nội dung ở trên.
+            </p>
+          )}
+
+          {!submitted && (
+            <>
+              {cardError && <p className="mb-3 text-xs text-red-400">{cardError}</p>}
+              <button
+                type="button"
+                disabled={transferBusy}
+                onClick={submitTransferReference}
+                className="w-full h-14 rounded-2xl bg-primary-fixed text-black font-black uppercase tracking-widest text-xs disabled:opacity-50"
+              >
+                {transferBusy ? "Đang gửi..." : "Tôi đã chuyển khoản"}
+              </button>
+            </>
+          )}
+
+          {submitted && (
+            <p className="mb-6 text-sm text-white/70 leading-relaxed">
+              Hệ thống đã ghi nhận bạn đã hoàn tất bước chuyển khoản. Admin sẽ đối soát theo{" "}
+              <span className="text-white font-semibold">số tiền + nội dung mã đơn</span> rồi{" "}
+              <span className="text-white font-semibold">xác nhận thanh toán</span> trong admin →{" "}
+              {isCourse ? "Ghi danh khóa học" : "Lịch hẹn"}.
+            </p>
+          )}
+
+          <div className="mt-6 flex flex-wrap gap-3">
+            <button
+              type="button"
+              onClick={() => navigate(isCourse ? "/courses" : "/dashboard")}
+              className="flex-1 min-w-[140px] h-12 rounded-xl bg-white/10 border border-white/15 text-[10px] font-black uppercase tracking-widest hover:bg-white/15"
+            >
+              {isCourse ? "Về Khóa học" : "Về Dashboard"}
+            </button>
+            {!submitted && (
+              <button
+                type="button"
+                onClick={() => {
+                  setAppStep("checkout");
+                  setBankBookingId(null);
+                  setBankEnrollmentId(null);
+                }}
+                className="flex-1 min-w-[140px] h-12 rounded-xl border border-white/15 text-[10px] font-black uppercase tracking-widest text-white/70 hover:text-white"
+              >
+                Quay lại
+              </button>
+            )}
           </div>
-          <h2 className="text-2xl font-black tracking-tighter text-white mb-2">Securing Payment</h2>
-          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 mb-8">Please do not close this window</p>
-          
-          <div className="w-full h-1.5 bg-white/5 rounded-full overflow-hidden mb-3">
-            <div className="h-full bg-gradient-to-r from-secondary to-primary-fixed transition-all duration-300 shadow-[0_0_20px_rgba(196, 255, 71,0.5)]" style={{ width: `${progress}%` }} />
-          </div>
-          <p className="text-[10px] font-black tracking-[0.2em] text-primary-fixed">{progress}% COMPLETE</p>
         </div>
       </div>
     );
   }
 
   /* ── Checkout UI ── */
-  const momoRef = `PI_MOMO_${orderNum}`;
-  const vnpayRef = `VNPAY_${orderNum}`;
-
-  const methodTabs = [
-    { id: "visa", label: "Thẻ quốc tế", sub: "Visa / Mastercard" },
-    { id: "momo", label: "MoMo", sub: "Ví điện tử" },
-    { id: "vnpay", label: "VNPay", sub: "Internet Banking" },
-  ];
-
   return (
     <div className="min-h-screen overflow-x-hidden bg-[#07060E] text-white antialiased">
       <style>{`
         @keyframes fadeIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
         .fade-in { animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) both; }
-        .card-input { 
-          background: rgba(255,255,255,0.03); 
-          border: 1px solid rgba(255,255,255,0.08); 
-          border-radius: 12px; 
-          padding: 12px 16px; 
-          font-size: 0.9rem; 
-          width: 100%; 
-          color: white; 
-          transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-        .card-input:focus { 
-          outline: none; 
-          border-color: #c4ff47; 
-          background: rgba(255,255,255,0.06);
-          box-shadow: 0 0 20px rgba(196, 255, 71,0.1);
-        }
-        .card-input::placeholder { color: rgba(255,255,255,0.2); }
         .glass-panel {
           background: rgba(255,255,255,0.03);
           backdrop-filter: blur(20px);
@@ -573,239 +569,52 @@ export function Checkout() {
               </div>
 
               <div className="p-8">
-                {/* Payment method heading */}
-                <h2 className="text-2xl font-black tracking-tighter text-white mb-8">
-                  Choose payment method
+                <h2 className="text-2xl font-black tracking-tighter text-white mb-4">
+                  Thanh toán chuyển khoản
                 </h2>
-
-                {/* Method tabs */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-                  {methodTabs.map((m) => {
-                    const active = method === m.id;
-                    return (
-                      <button
-                        key={m.id}
-                        onClick={() => { setMethod(m.id); setCardError(""); setSavedCard(null); }}
-                        className={`group relative flex flex-col items-center justify-center py-6 rounded-3xl transition-all duration-500 gap-2 border ${
-                          active 
-                            ? "bg-white/10 border-primary-fixed shadow-[0_0_30px_rgba(196, 255, 71,0.1)] scale-[1.02] z-10" 
-                            : "bg-white/5 border-white/5 hover:border-white/20"
-                        }`}
-                      >
-                        {/* Method icon */}
-                        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mb-2 transition-all duration-500 ${
-                          active ? "bg-primary-fixed text-black" : "bg-white/5 text-white/40 group-hover:bg-white/10"
-                        }`}>
-                          {m.id === "visa" && <CreditCard className="w-6 h-6" />}
-                          {m.id === "momo" && <span className="text-sm font-black italic">M</span>}
-                          {m.id === "vnpay" && <span className="text-[10px] font-black italic">VNP</span>}
-                        </div>
-                        
-                        <div className="text-center">
-                          <p className={`text-[10px] font-black uppercase tracking-[0.2em] mb-1 ${active ? "text-primary-fixed" : "text-white/40"}`}>{m.label}</p>
-                          <p className="text-[10px] text-white/20 font-medium">{m.sub}</p>
-                        </div>
-
-                        {active && (
-                          <div className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-primary-fixed rounded-full flex items-center justify-center shadow-lg border-4 border-[#07060E]">
-                            <CheckCircle2 className="w-3 h-3 text-black" />
-                          </div>
-                        )}
-                      </button>
-                    );
-                  })}
+                <div className="mb-8 flex flex-col gap-4 rounded-3xl border border-primary-fixed/35 bg-primary-fixed/[0.06] p-6 sm:flex-row sm:items-center sm:text-left text-center">
+                  <div className="mx-auto flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-primary-fixed text-black shadow-lg sm:mx-0">
+                    <Landmark className="h-7 w-7" />
+                  </div>
+                  <div className="min-w-0 flex-1 space-y-2">
+                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary-fixed">
+                      CK ngân hàng — admin xác nhận
+                    </p>
+                    <p className="text-sm leading-relaxed text-white/60">
+                      {isBooking
+                        ? "Bước tiếp theo hiển thị STK, mã QR VietQR và nội dung mã đơn. Sau khi chuyển, bấm xác nhận; admin đối soát sao kê rồi kích hoạt lịch."
+                        : isCourse
+                          ? "Bước tiếp theo hiển thị STK, mã QR VietQR và nội dung mã đơn. Sau khi chuyển, bấm xác nhận; admin đối soát sao kê rồi kích hoạt ghi danh khóa học."
+                          : "Trang thanh toán này chỉ hỗ trợ chuyển khoản khi đặt lịch mentor hoặc mua khóa học có phí."}
+                    </p>
+                  </div>
                 </div>
 
-                {/* Pay button */}
+                {cardError && (
+                  <div className="mb-6 flex items-start gap-3 rounded-2xl border border-red-500/25 bg-red-500/10 px-4 py-3 text-xs font-bold text-red-300">
+                    <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+                    <span>{cardError}</span>
+                  </div>
+                )}
+
                 <button
+                  type="button"
                   onClick={handlePay}
-                  className="w-full h-16 rounded-3xl font-black text-sm uppercase tracking-[0.2em] flex items-center justify-center gap-3 mb-8 transition-all hover:scale-[1.02] active:scale-[0.98] shadow-2xl"
+                  disabled={!isPaidCheckout}
+                  className="mb-4 flex h-16 w-full items-center justify-center gap-3 rounded-3xl text-sm font-black uppercase tracking-[0.2em] text-black shadow-2xl transition-all hover:scale-[1.02] active:scale-[0.98] disabled:pointer-events-none disabled:opacity-40"
                   style={{
-                    background: method === "momo" ? "linear-gradient(135deg,#A50064,#D4007A)"
-                      : method === "vnpay" ? "linear-gradient(135deg,#0060AC,#003D7A)"
-                      : "linear-gradient(135deg,#6E35E8,#9B6DFF)",
-                    boxShadow: "0 20px 40px rgba(110,53,232,0.3)",
+                    background: "linear-gradient(135deg,#166534,#14532d)",
+                    boxShadow: "0 20px 40px rgba(22,101,52,0.35)",
                   }}
                 >
-                  <Lock className="w-5 h-5" />
-                  Pay {fmt(total - discount)}
+                  <Lock className="h-5 w-5" />
+                  {isPaidCheckout ? `Tiếp tục — ${fmt(payAmount)}` : "Chọn luồng thanh toán"}
                 </button>
 
-                {/* ── VISA: saved cards + card form ── */}
-                {method === "visa" && (
-                  <div className="fade-in space-y-6">
-                    {/* Saved cards */}
-                    <div>
-                      <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 mb-4">Saved Cards</p>
-                      <div className="space-y-3">
-                        {[
-                          { id: "mc-1420", brand: "MC", num: "1420", color: "#EB001B" },
-                          { id: "visa-2020", brand: "VISA", num: "2020", color: "#1A1F71" },
-                        ].map((card) => (
-                          <label
-                            key={card.id}
-                            className={`flex items-center gap-4 px-6 py-4 rounded-2xl cursor-pointer transition-all border ${
-                              savedCard === card.id ? "bg-white/10 border-primary-fixed" : "bg-white/5 border-white/5 hover:border-white/10"
-                            }`}
-                          >
-                            <input
-                              type="radio"
-                              name="savedCard"
-                              checked={savedCard === card.id}
-                              onChange={() => setSavedCard(card.id)}
-                              className="w-4 h-4 accent-primary-fixed"
-                            />
-                            <span
-                              className="text-[10px] font-black px-2 py-0.5 rounded bg-white/5 border border-white/10"
-                              style={{ color: card.color }}
-                            >
-                              {card.brand}
-                            </span>
-                            <span className="text-sm text-white/60 font-mono tracking-widest flex-1">
-                              XXXX – {card.num}
-                            </span>
-                             {savedCard === card.id && <CheckCircle2 className="w-4 h-4 text-primary-fixed" />}
-                          </label>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* OR divider */}
-                    <div className="flex items-center gap-4">
-                      <div className="flex-1 h-px bg-white/5" />
-                      <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/20">OR NEW CARD</span>
-                      <div className="flex-1 h-px bg-white/5" />
-                    </div>
-
-                    {/* Card form */}
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="col-span-2">
-                        <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-white/40 mb-2">Card Number</label>
-                        <div className="relative">
-                          <input
-                            className="card-input pr-12"
-                            placeholder="0000 0000 0000 0000"
-                            value={cardNum}
-                            maxLength={19}
-                            onChange={(e) => {
-                              const raw = e.target.value.replace(/\D/g, "").slice(0, 16);
-                              setCardNum(raw.replace(/(.{4})/g, "$1 ").trim());
-                              setCardError(""); setSavedCard(null);
-                            }}
-                          />
-                          <div className="absolute right-4 top-1/2 -translate-y-1/2">
-                            <CreditCard className={`w-5 h-5 ${cardNum.replace(/\s/g,"").length === 16 ? "text-primary-fixed" : "text-white/20"}`} />
-                          </div>
-                        </div>
-                      </div>
-                      <div className="col-span-2">
-                        <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-white/40 mb-2">Card Holder Name</label>
-                        <input
-                          className="card-input"
-                          placeholder="EX: NGUYEN VAN A"
-                          value={cardName}
-                          onChange={(e) => { setCardName(e.target.value.toUpperCase()); setCardError(""); setSavedCard(null); }}
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-white/40 mb-2">Expiry Date</label>
-                        <input
-                          className="card-input"
-                          placeholder="MM/YY"
-                          value={expiry}
-                          maxLength={5}
-                          onChange={(e) => {
-                            let v = e.target.value.replace(/\D/g, "").slice(0, 4);
-                            if (v.length >= 3) v = v.slice(0, 2) + "/" + v.slice(2);
-                            setExpiry(v); setCardError(""); setSavedCard(null);
-                          }}
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-white/40 mb-2">CVC / CVV</label>
-                        <input
-                          className="card-input"
-                          placeholder="•••"
-                          value={cvv}
-                          maxLength={4}
-                          type="password"
-                          onChange={(e) => { setCvv(e.target.value.replace(/\D/g, "").slice(0, 4)); setCardError(""); setSavedCard(null); }}
-                        />
-                      </div>
-                    </div>
-
-                    {cardError && (
-                      <div className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-500 text-xs font-bold">
-                        <Warning className="w-4 h-4" />
-                        {cardError}
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* ── MoMo panel ── */}
-                {method === "momo" && (
-                  <div className="fade-in">
-                    <div className="rounded-3xl p-8 mb-6 bg-[#A50064]/5 border border-[#A50064]/20 relative overflow-hidden">
-                      <div className="absolute top-0 right-0 w-32 h-32 bg-[#A50064]/10 blur-3xl rounded-full"></div>
-                      <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#A50064] mb-6 text-center">Scan QR code via MoMo app</p>
-                      <div className="flex justify-center mb-8"><MockQR color="#A50064" /></div>
-                      
-                      <div className="space-y-4">
-                        {[
-                          { label: "Momo Phone", value: "0901 234 567", copy: true },
-                          { label: "Account Name", value: "PROINTERVIEW CORP", copy: false },
-                          { label: "Amount", value: fmt(total - discount), copy: true },
-                          { label: "Reference", value: momoRef, copy: true },
-                        ].map((r) => (
-                          <div key={r.label} className="flex items-center justify-between gap-4 py-3 border-b border-[#A50064]/10">
-                            <div>
-                              <p className="text-[8px] font-black uppercase tracking-widest text-[#A50064]/60 mb-1">{r.label}</p>
-                              <p className="text-sm font-bold text-white">{r.value}</p>
-                            </div>
-                            {r.copy && <CopyBtn text={r.value} />}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                    <div className="flex items-start gap-4 px-6 py-4 rounded-2xl bg-white/5 border border-white/5 text-[10px] font-bold text-white/40">
-                      <Warning className="w-4 h-4 text-primary-fixed flex-shrink-0" />
-                      Please include the Reference code in your transfer for instant activation.
-                    </div>
-                  </div>
-                )}
-
-                {/* ── VNPay panel ── */}
-                {method === "vnpay" && (
-                  <div className="fade-in">
-                    <div className="rounded-3xl p-8 mb-6 bg-[#0060AC]/5 border border-[#0060AC]/20 relative overflow-hidden">
-                      <div className="absolute top-0 right-0 w-32 h-32 bg-[#0060AC]/10 blur-3xl rounded-full"></div>
-                      <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#0060AC] mb-6 text-center">Scan QR code via Bank app</p>
-                      <div className="flex justify-center mb-8"><MockQR color="#0060AC" /></div>
-                      
-                      <div className="space-y-4">
-                        ={[
-                          { label: "Bank", value: "Vietcombank (VCB)", copy: false },
-                          { label: "Account Num", value: "1234 5678 9012 3456", copy: true },
-                          { label: "Account Holder", value: "PROINTERVIEW CORP", copy: false },
-                          { label: "Amount", value: fmt(total - discount), copy: true },
-                          { label: "Reference", value: vnpayRef, copy: true },
-                        ].map((r) => (
-                          <div key={r.label} className="flex items-center justify-between gap-4 py-3 border-b border-[#0060AC]/10">
-                            <div>
-                              <p className="text-[8px] font-black uppercase tracking-widest text-[#0060AC]/60 mb-1">{r.label}</p>
-                              <p className="text-sm font-bold text-white">{r.value}</p>
-                            </div>
-                            {r.copy && <CopyBtn text={r.value} />}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                    <div className="flex items-start gap-4 px-6 py-4 rounded-2xl bg-white/5 border border-white/5 text-[10px] font-bold text-white/40">
-                      <Warning className="w-4 h-4 text-primary-fixed flex-shrink-0" />
-                      Activation typically takes 1-5 minutes during business hours.
-                    </div>
-                  </div>
+                {isPaidCheckout && (
+                  <p className="mb-2 text-center text-[11px] leading-relaxed text-white/45">
+                    Bạn sẽ nhận STK, mã QR và nội dung đơn; sau khi chuyển, bấm xác nhận ở bước tiếp theo.
+                  </p>
                 )}
 
                 {/* Security note */}
@@ -824,7 +633,7 @@ export function Checkout() {
               {/* Summary header */}
               <div className="px-8 py-6 border-b border-white/5 bg-white/5">
                 <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 mb-1">Order Summary</p>
-                <p className="text-xl font-black text-white tracking-tighter">#{orderNum}</p>
+                <p className="text-xl font-black text-white tracking-tighter">#{transferOrderNum}</p>
               </div>
 
               {isBooking ? (
@@ -854,12 +663,32 @@ export function Checkout() {
                         { icon: Clock, label: "Time", value: bookingTime || "" },
                         { icon: Video, label: "Platform", value: "Google Meet" },
                         { icon: Users, label: "Type", value: "60 mins · 1-1" },
-                      ].map((row) => (
+                      ].map((row) => {
+                        const RowIcon = row.icon;
+                        return (
                         <div key={row.label} className="flex justify-between items-center text-xs">
-                          <span className="text-white/40 font-black uppercase tracking-widest flex items-center gap-2"><row.icon className="w-3.5 h-3.5 text-primary-fixed" />{row.label}</span>
+                          <span className="text-white/40 font-black uppercase tracking-widest flex items-center gap-2"><RowIcon className="w-3.5 h-3.5 text-primary-fixed" />{row.label}</span>
                           <span className="text-white font-bold">{row.value}</span>
                         </div>
-                      ))}
+                        );
+                      })}
+                    </div>
+                  </div>
+                </>
+              ) : isCourse ? (
+                <>
+                  <div className="px-8 py-6 border-b border-white/5">
+                    <div className="flex items-start gap-4">
+                      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-white/10 bg-white/5">
+                        <BookOpen className="h-6 w-6 text-primary-fixed" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-[10px] font-black uppercase tracking-widest text-white/40">Khóa học</p>
+                        <p className="text-sm font-bold text-white leading-snug">{courseInfo?.title || "Đang tải…"}</p>
+                        <p className="mt-2 text-xs leading-relaxed text-white/50">
+                          Sau khi admin xác nhận thanh toán, bạn vào học từ trang Khóa học → Khóa của tôi.
+                        </p>
+                      </div>
                     </div>
                   </div>
                 </>
@@ -929,13 +758,13 @@ export function Checkout() {
                   <span className="text-white/40">Base Amount</span>
                   <span className="text-white/80 font-bold">{fmt(baseTotal)}</span>
                 </div>
-                {billing === "yearly" && (
+                {billing === "yearly" && !isCourse && (
                   <div className="flex justify-between items-center text-xs">
                     <span className="text-white/40">Yearly Discount</span>
                     <span className="text-[#c4ff47] font-bold">−{fmt(baseTotal - total)}</span>
                   </div>
                 )}
-                {couponApplied && (
+                {couponApplied && !isCourse && (
                   <div className="flex justify-between items-center text-xs">
                     <span className="text-white/40">Coupon Discount (10%)</span>
                     <span className="text-[#c4ff47] font-bold">−{fmt(discount)}</span>

@@ -240,6 +240,39 @@ export async function resetPassword(token, password) {
   }
 }
 
+export async function verifyEmail(token) {
+  try {
+    const res = await fetch(apiUrl(`/api/auth/verify-email?token=${encodeURIComponent(token)}`), {
+      method: "GET",
+      headers: jsonHeaders,
+    });
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      return { success: false, error: body.error || `Xác thực thất bại (${res.status}).` };
+    }
+    return { success: true, message: body.message };
+  } catch {
+    return { success: false, error: "Không kết nối được backend." };
+  }
+}
+
+export async function resendVerification(email) {
+  try {
+    const res = await fetch(apiUrl("/api/auth/resend-verification"), {
+      method: "POST",
+      headers: jsonHeaders,
+      body: JSON.stringify({ email }),
+    });
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      return { success: false, error: body.error || `Gửi lại thất bại (${res.status}).` };
+    }
+    return { success: true, message: body.message, verifyToken: body.verifyToken };
+  } catch {
+    return { success: false, error: "Không kết nối được backend." };
+  }
+}
+
 export async function restoreSession() {
   const hasAccess = !!getAccessToken();
   const hasRefresh = !!getRefreshToken();

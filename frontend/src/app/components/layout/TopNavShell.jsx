@@ -1,25 +1,32 @@
 import React from "react";
 
-export function TopNavShell({ variant = "dark", scrolled = true, children }) {
+export function TopNavShell({ variant = "light", scrolled = true, children }) {
   const isDark = variant === "dark";
 
-  const navStyle = isDark
-    ? {
-        background: scrolled ? "rgba(7, 6, 14, 0.88)" : "transparent",
-        backdropFilter: scrolled ? "blur(16px)" : "none",
-        WebkitBackdropFilter: scrolled ? "blur(16px)" : "none",
-        borderBottom: scrolled ? "1px solid rgba(255,255,255,0.06)" : "none",
-      }
-    : {
-        background: scrolled ? "rgba(255, 255, 255, 0.9)" : "transparent",
-        backdropFilter: scrolled ? "blur(16px)" : "none",
-        WebkitBackdropFilter: scrolled ? "blur(16px)" : "none",
-        borderBottom: scrolled ? "1px solid rgba(148,71,255,0.12)" : "none",
-        boxShadow: scrolled ? "0 8px 24px rgba(148,71,255,0.08)" : "none",
-      };
-
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 h-16 px-5 transition-all duration-300" style={navStyle}>
+    <nav
+      className="fixed top-4 left-1/2 -translate-x-1/2 w-[95%] max-w-6xl z-[100] flex justify-between items-center px-8 h-12 transition-all duration-500"
+      style={
+        isDark
+          ? {
+              background: "rgba(18, 10, 38, 0.78)",
+              backdropFilter: "blur(20px)",
+              WebkitBackdropFilter: "blur(20px)",
+              border: "1px solid rgba(148, 120, 255, 0.28)",
+              borderRadius: "40px 10px 40px 10px",
+              boxShadow: "0 4px 28px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(110, 53, 232, 0.15) inset",
+            }
+          : {
+              background: "rgba(255, 255, 255, 0.94)",
+              backdropFilter: "blur(20px)",
+              WebkitBackdropFilter: "blur(20px)",
+              border: "2px solid rgba(186, 165, 255, 0.55)",
+              borderRadius: "40px 10px 40px 10px",
+              boxShadow:
+                "0 0 0 1px rgba(255,255,255,0.9) inset, 0 4px 28px rgba(110, 53, 232, 0.12), 0 2px 10px rgba(0,0,0,0.04)",
+            }
+      }
+    >
       {children}
     </nav>
   );

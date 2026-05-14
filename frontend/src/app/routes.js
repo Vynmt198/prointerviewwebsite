@@ -5,6 +5,7 @@ import { Login } from "./pages/auth/Login";
 import { Register } from "./pages/auth/Register";
 import { ForgotPassword } from "./pages/auth/ForgotPassword";
 import { ResetPassword } from "./pages/auth/ResetPassword";
+import { VerifyEmail } from "./pages/auth/VerifyEmail";
 import { Checkout } from "./pages/booking/Checkout";
 import { Dashboard } from "./pages/account/Dashboard";
 import { CVAnalysis } from "./pages/cv/CVAnalysis";
@@ -45,6 +46,7 @@ import { AdminDashboard } from "./pages/admin/AdminDashboard.jsx";
 import { AdminMentors } from "./pages/admin/AdminMentors.jsx";
 import { AdminUsers } from "./pages/admin/AdminUsers.jsx";
 import { AdminBookings } from "./pages/admin/AdminBookings.jsx";
+import { AdminCoursePayments } from "./pages/admin/AdminCoursePayments.jsx";
 import { AdminMentorsPending } from "./pages/admin/AdminMentorsPending.jsx";
 import {
   AdminUserDetail,
@@ -68,6 +70,7 @@ export const router = createHashRouter([
   { path: "/register", Component: Register },
   { path: "/forgot-password", Component: ForgotPassword },
   { path: "/reset-password", Component: ResetPassword },
+  { path: "/verify-email", Component: VerifyEmail },
   { path: "/checkout", Component: Checkout },
   { path: "/pricing", Component: Pricing },
   { path: "/payment-return", Component: PaymentReturn },
@@ -92,6 +95,7 @@ export const router = createHashRouter([
       { path: "transactions", Component: AdminTransactions },
       { path: "payouts", Component: AdminPayouts },
       { path: "bookings", Component: AdminBookings },
+      { path: "course-payments", Component: AdminCoursePayments },
       { path: "bookings/:id", Component: AdminBookingDetail },
       { path: "content/questions", Component: AdminContentQuestions },
       { path: "content/videos", Component: AdminContentVideos },

@@ -1,5 +1,9 @@
 import mongoose from "mongoose";
+import * as bookingsService from "../services/bookingsService.js";
+import * as paymentsService from "../services/paymentsService.js";
+import { normalizeTransferRefs } from "../services/normalizeTransferRefsService.js";
 import { PayoutRequest } from "../models/PayoutRequest.js";
+import { Enrollment } from "../models/Enrollment.js";
 const User = mongoose.model("User");
 const Mentor = mongoose.model("Mentor");
 const Booking = mongoose.model("Booking");
@@ -170,6 +174,215 @@ export const AdminController = {
 
       await booking.save();
       res.json({ success: true, booking });
+    } catch (error) {
+      res.status(500).json({ success: false, error: error.message });
+    }
+  },
+
+  /** Xác nhận đã nhận tiền chuyển khoản (booking paymentMethod = transfer, paymentStatus = pending). */
+  confirmBookingTransferPayment: async (req, res) => {
+    try {
+      const { id } = req.params;
+      const force = Boolean(req.body?.force || req.body?.override);
+      const forceNote = String(req.body?.forceNote || req.body?.note || "").trim();
+      const result = await bookingsService.confirmBankTransferPaymentByAdmin(id, {
+        force,
+        forceNote,
+        adminUserId: req.userId || "",
+      });
+      if (!result.ok) {
+        return res.status(result.status).json({ success: false, error: result.error });
+      }
+      res.json({ success: true, booking: result.booking });
+    } catch (error) {
+      res.status(500).json({ success: false, error: error.message });
+    }
+  },
+
+  getPendingEnrollmentTransfers: async (_req, res) => {
+    try {
+      const enrollments = await Enrollment.find({
+        paymentMethod: "transfer",
+        paymentStatus: "pending",
+      })
+        .populate("userId", "name email")
+        .populate("courseId", "title price")
+        .sort({ updatedAt: -1 })
+        .limit(200)
+        .lean();
+      res.json({ success: true, enrollments });
+    } catch (error) {
+      res.status(500).json({ success: false, error: error.message });
+    }
+  },
+
+  /** Tổng quan học phí khóa học (CK) cho admin Tài chính / Giao dịch */
+  getCourseFinanceSummary: async (_req, res) => {
+    try {
+      const pendAgg = await Enrollment.aggregate([
+        { $match: { paymentMethod: "transfer", paymentStatus: "pending", pricePaid: { $gt: 0 } } },
+        { $group: { _id: null, total: { $sum: "$pricePaid" }, count: { $sum: 1 } } },
+      ]);
+      const paidAgg = await Enrollment.aggregate([
+        { $match: { paymentStatus: "paid", pricePaid: { $gt: 0 } } },
+        { $group: { _id: null, total: { $sum: "$pricePaid" }, count: { $sum: 1 } } },
+      ]);
+
+      const pendingList = await Enrollment.find({
+        paymentMethod: "transfer",
+        paymentStatus: "pending",
+        pricePaid: { $gt: 0 },
+      })
+        .populate("userId", "name email")
+        .populate("courseId", "title price")
+        .sort({ updatedAt: -1 })
+        .limit(40)
+        .lean();
+
+      const recentPaidRows = await Enrollment.find({ paymentStatus: "paid", pricePaid: { $gt: 0 } })
+        .populate("userId", "name email")
+        .populate("courseId", "title")
+        .sort({ paidAt: -1, updatedAt: -1 })
+        .limit(50)
+        .lean();
+
+      res.json({
+        success: true,
+        courseFinance: {
+          pendingTransferCount: pendAgg[0]?.count || 0,
+          pendingTransferAmount: pendAgg[0]?.total || 0,
+          paidCollectedCount: paidAgg[0]?.count || 0,
+          paidCollectedAmount: paidAgg[0]?.total || 0,
+          pendingList,
+          recentPaidRows,
+        },
+      });
+    } catch (error) {
+      res.status(500).json({ success: false, error: error.message });
+    }
+  },
+
+  confirmEnrollmentTransferPayment: async (req, res) => {
+    try {
+      const { id } = req.params;
+      const force = Boolean(req.body?.force || req.body?.override);
+      const forceNote = String(req.body?.forceNote || req.body?.note || "").trim();
+      if (!mongoose.isValidObjectId(id)) {
+        return res.status(400).json({ success: false, error: "id ghi danh không hợp lệ." });
+      }
+      const enrollment = await Enrollment.findById(id);
+      if (!enrollment) return res.status(404).json({ success: false, error: "Không tìm thấy ghi danh." });
+      if (enrollment.paymentMethod !== "transfer") {
+        return res.status(400).json({ success: false, error: "Ghi danh này không dùng chuyển khoản." });
+      }
+      if (enrollment.paymentStatus !== "pending") {
+        return res.status(400).json({ success: false, error: "Trạng thái thanh toán không cho phép xác nhận." });
+      }
+      if (force && forceNote.length < 3) {
+        return res.status(400).json({ success: false, error: "Xác nhận ngoại lệ cần lý do rõ ràng (ít nhất 3 ký tự)." });
+      }
+      const session = await mongoose.startSession();
+      try {
+        await session.withTransaction(async () => {
+          const row = await Enrollment.findById(id).session(session);
+          if (!row) throw new Error("ERR_404");
+          if (row.paymentMethod !== "transfer") throw new Error("ERR_METHOD");
+          if (row.paymentStatus !== "pending") throw new Error("ERR_STATUS");
+          if (!force && !row.transferSubmittedAt) throw new Error("ERR_NO_SUBMIT");
+
+          const courseAmt = Math.round(Number(row.pricePaid ?? 0));
+          if (courseAmt > 0) {
+            const ledger = await paymentsService.recordAdminTransferSuccess({
+              userId: row.userId,
+              type: "course",
+              referenceModel: "Enrollment",
+              referenceId: row._id,
+              amount: courseAmt,
+              adminUserId: req.userId || "",
+              forceConfirm: force,
+              forceNote,
+              session,
+            });
+            if (!ledger.ok && !ledger.idempotent) {
+              throw new Error(`ERR_LEDGER:${ledger.error || "unknown"}`);
+            }
+          }
+
+          row.paymentStatus = "paid";
+          row.paidAt = new Date();
+          row.transferConfirmedAt = row.paidAt;
+          row.transferConfirmedBy = req.userId && mongoose.isValidObjectId(String(req.userId)) ? req.userId : undefined;
+          row.transferForceConfirm = force;
+          row.transferForceNote = force ? forceNote.slice(0, 500) : "";
+          await row.save({ session });
+        });
+      } catch (error) {
+        await session.endSession();
+        const msg = String(error?.message || "");
+        if (msg.includes("Transaction numbers are only allowed")) {
+          return res.status(503).json({
+            success: false,
+            error: "Hạ tầng MongoDB chưa hỗ trợ transaction (cần replica set).",
+          });
+        }
+        if (msg === "ERR_404") return res.status(404).json({ success: false, error: "Không tìm thấy ghi danh." });
+        if (msg === "ERR_METHOD") {
+          return res.status(400).json({ success: false, error: "Ghi danh này không dùng chuyển khoản." });
+        }
+        if (msg === "ERR_STATUS") {
+          return res.status(400).json({ success: false, error: "Trạng thái thanh toán không cho phép xác nhận." });
+        }
+        if (msg === "ERR_NO_SUBMIT") {
+          return res.status(400).json({
+            success: false,
+            error: "User chưa báo đã chuyển khoản. Bật override để xác nhận ngoại lệ.",
+          });
+        }
+        if (msg.startsWith("ERR_LEDGER:")) {
+          console.error("[confirmEnrollmentTransferPayment]", msg);
+          return res.status(500).json({
+            success: false,
+            error: "Không thể ghi nhận giao dịch thanh toán. Vui lòng thử lại.",
+          });
+        }
+        console.error("[confirmEnrollmentTransferPayment]", error?.message || error);
+        return res.status(500).json({ success: false, error: "Không thể xác nhận thanh toán lúc này." });
+      }
+      await session.endSession();
+
+      const populated = await Enrollment.findById(enrollment._id)
+        .populate("userId", "name email")
+        .populate("courseId", "title price");
+      res.json({ success: true, enrollment: populated });
+    } catch (error) {
+      res.status(500).json({ success: false, error: error.message });
+    }
+  },
+
+  normalizeTransferReferences: async (req, res) => {
+    try {
+      const dryRun = Boolean(req.body?.dryRun);
+      const result = await normalizeTransferRefs({ dryRun });
+      res.json({ success: true, ...result });
+    } catch (error) {
+      res.status(500).json({ success: false, error: error.message });
+    }
+  },
+
+  getTransactionSupport: async (_req, res) => {
+    try {
+      const hello = await mongoose.connection.db.admin().command({ hello: 1 });
+      const setName = String(hello?.setName || "").trim();
+      const msg = String(hello?.msg || "").trim();
+      const supported = Boolean(setName) || msg === "isdbgrid";
+      res.json({
+        success: true,
+        mongo: {
+          transactionSupported: supported,
+          topology: msg === "isdbgrid" ? "sharded-cluster" : setName ? "replica-set" : "standalone",
+          setName: setName || null,
+        },
+      });
     } catch (error) {
       res.status(500).json({ success: false, error: error.message });
     }

@@ -11,6 +11,7 @@ bookingsRouter.get("/mentor/list", authJwt, requireMentor, BookingsController.li
 bookingsRouter.get("/mentor/:id", authJwt, requireMentor, BookingsController.getByIdForMentor);
 bookingsRouter.patch("/mentor/:id/reschedule", authJwt, requireMentor, BookingsController.rescheduleForMentor);
 bookingsRouter.patch("/mentor/:id/cancel", authJwt, requireMentor, BookingsController.cancelForMentor);
+bookingsRouter.patch("/:id/submit-transfer", authJwt, BookingsController.submitTransfer);
 bookingsRouter.patch("/:id/confirm", authJwt, requireMentor, BookingsController.confirmForMentor);
 bookingsRouter.patch("/:id/complete", authJwt, requireMentor, BookingsController.completeForMentor);
 bookingsRouter.patch("/:id/notes", authJwt, requireMentor, BookingsController.updateNotesForMentor);

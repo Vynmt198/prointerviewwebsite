@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { refreshUserProfile } from "../../utils/auth";
+import { apiUrl } from "../../utils/api.js";
 
 export function PaymentReturn() {
   const [searchParams] = useSearchParams();
@@ -50,7 +51,7 @@ export function PaymentReturn() {
         // Chủ động gọi backend để verify và cập nhật database ngay lập tức (Xử lý vấn đề localhost không nhận được IPN)
         try {
           // Gửi toàn bộ query params sang backend để verify hash và cập nhật trạng thái
-          const verifyRes = await fetch(`${import.meta.env.VITE_API_URL || ""}/api/payments/vnpay/vnpay-return?${combinedParams.toString()}`);
+          const verifyRes = await fetch(apiUrl(`/api/payments/vnpay/vnpay-return?${combinedParams.toString()}`));
           const verifyData = await verifyRes.json();
           if (verifyData.success) {
              console.log("Xác thực và cập nhật database thành công.");

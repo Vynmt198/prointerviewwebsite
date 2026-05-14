@@ -156,4 +156,20 @@ export class BookingsController {
       next(err);
     }
   }
+
+  static async submitTransfer(req, res, next) {
+    try {
+      const result = await bookingsService.submitBankTransferReference(
+        req.userId,
+        req.params.id,
+        req.body ?? {},
+      );
+      if (!result.ok) {
+        return res.status(result.status).json({ success: false, error: result.error });
+      }
+      res.json({ success: true, booking: result.booking });
+    } catch (err) {
+      next(err);
+    }
+  }
 }

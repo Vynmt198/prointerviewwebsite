@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router";
 import {
-  Sparkles as Sparkle,
-  Sparkles,
   Mic as Microphone,
   FileText,
   Users,
@@ -28,6 +26,7 @@ import {
   BadgeCheck as SealCheck,
   GraduationCap,
   PlayCircle,
+  Tag,
 } from "lucide-react";
 import { COURSES_DATA } from "../../data/coursesData";
 import { navigateToInterview, requireLoginNavigate } from "../../utils/authGate";
@@ -35,6 +34,60 @@ import { Footer } from "../../components/layout/Footer";
 import { TopNavShell } from "../../components/layout/TopNavShell";
 import { RecommendedJourney } from "../../components/home/RecommendedJourney";
 import { BrandLogo } from "../../components/brand/BrandLogo";
+
+function SparkleGlyph({ className = "", style, tone = "brand" }) {
+  const mainStart = "#5F00F0";
+  const mainEnd = "#4B18CC";
+  const coreStart = "#99FF00";
+  const coreEnd = "#63D800";
+  const accentColor = "#C7ADFF";
+
+  return (
+    <svg
+      viewBox="0 0 64 64"
+      className={className}
+      style={style}
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
+    >
+      <defs>
+        <linearGradient id={`sparkle-main-${tone}`} x1="7" y1="8" x2="55" y2="56" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor={mainStart} />
+          <stop offset="1" stopColor={mainEnd} />
+        </linearGradient>
+        <linearGradient id={`sparkle-core-${tone}`} x1="24" y1="23" x2="40" y2="39" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor={coreStart} />
+          <stop offset="1" stopColor={coreEnd} />
+        </linearGradient>
+      </defs>
+      <path
+        d="M32 1.5C31.4 12.9 30 21.4 26.7 26.7C21.4 30 12.9 31.4 1.5 32C12.9 32.6 21.4 34 26.7 37.3C30 42.6 31.4 51.1 32 62.5C32.6 51.1 34 42.6 37.3 37.3C42.6 34 51.1 32.6 62.5 32C51.1 31.4 42.6 30 37.3 26.7C34 21.4 32.6 12.9 32 1.5Z"
+        fill={`url(#sparkle-main-${tone})`}
+      />
+      <path
+        d="M32 9.3C31 17.2 29.5 23.8 26.2 26.2C23.8 29.5 17.2 31 9.3 32C17.2 33 23.8 34.5 26.2 37.8C29.5 40.2 31 46.8 32 54.7C33 46.8 34.5 40.2 37.8 37.8C40.2 34.5 46.8 33 54.7 32C46.8 31 40.2 29.5 37.8 26.2C34.5 23.8 33 17.2 32 9.3Z"
+        fill="rgba(255,255,255,0.18)"
+      />
+      <path
+        d="M32 21.6C31.55 26.55 30.74 28.97 29.46 30.12C28.31 31.4 25.89 32.21 22.54 32.66C25.89 33.11 28.31 33.92 29.46 35.2C30.74 36.35 31.55 38.77 32 42.12C32.45 38.77 33.26 36.35 34.54 35.2C35.69 33.92 38.11 33.11 41.46 32.66C38.11 32.21 35.69 31.4 34.54 30.12C33.26 28.97 32.45 26.55 32 21.6Z"
+        fill={`url(#sparkle-core-${tone})`}
+      />
+      <path
+        d="M52.2 12.8V19.2M49 16H55.4"
+        stroke={accentColor}
+        strokeWidth="2.4"
+        strokeLinecap="round"
+      />
+      <path
+        d="M8.6 38.4H13.4"
+        stroke={accentColor}
+        strokeWidth="2.4"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
 
 /* ─── Data ──────────────────────────────────────────────── */
 const FEATURES = [
@@ -79,8 +132,8 @@ const FEATURES = [
     accentClass: "from-sky-400 to-blue-600",
     bgClass: "bg-sky-50 dark:bg-sky-950/30",
     dotColor: "#38BDF8",
-    borderHover: "rgba(56,189,248,0.5)",
-    bgHover: "rgba(56,189,248,0.07)",
+    borderHover: "rgba(167,139,250,0.)",
+    bgHover: "rgba(167,139,250,0.)",
     title: "Theo Dõi Tiến Bộ",
     desc: "Bảng điều khiển cá nhân hóa với biểu đồ tiến bộ, lịch sử phỏng vấn và lộ trình kỹ năng cụ thể.",
     route: "/dashboard",
@@ -112,10 +165,10 @@ const STEPS = [
   },
   {
     step: "04",
-    icon: TrendUp,
-    title: "Theo dõi tiến độ",
-    desc: "Hệ thống hóa lộ trình phát triển và đo lường sự thăng tiến qua từng buổi tập.",
-    color: "#b8f600",
+    icon: GraduationCap,
+    title: "Khóa học",
+    desc: "Học lộ trình từ mentor chuyên gia: video bài giảng, bài tập thực hành và feedback để nâng kỹ năng phỏng vấn.",
+    color: "#7000ff",
   },
 ];
 
@@ -166,33 +219,41 @@ const NAV_LINKS = [
   { label: "Bảng giá", href: "#pricing" },
 ];
 
-/** Hero: video + viền trắng + thẻ feedback chồng góc (không lồng thêm khung tím bên ngoài). */
+/** Hero: video + viền tím mỏng + khoảng cách giữa viền và video + thẻ feedback. */
 function HeroInterviewVideoCard() {
   return (
-    <div className="relative mx-auto w-full max-w-[min(100%,300px)] sm:max-w-[350px] lg:max-w-[380px] lg:justify-self-end">
+    <div className="relative mx-auto w-full max-w-[min(100%,268px)] sm:max-w-[300px] lg:max-w-[332px] lg:justify-self-end">
       <div
-        className="relative overflow-hidden rounded-[20px] border-[8px] border-white shadow-[0_20px_48px_-16px_rgba(15,23,42,0.4)] sm:rounded-[22px] sm:border-[10px]"
-        style={{ aspectRatio: "19 / 20" }}
+        className="rounded-[22px] p-2 sm:p-2.5"
+        style={{
+          border: "1.5px solid rgba(95, 0, 240, 0.4)",
+          boxShadow: "0 12px 32px rgba(15,23,42,0.1)",
+        }}
       >
-        <video
-          autoPlay
-          loop
-          muted
-          playsInline
-          className="h-full w-full object-cover"
-        >
-          <source src={HOME_AI_DEMO_VIDEO} type="video/mp4" />
-        </video>
         <div
-          className="absolute bottom-3 left-3 z-10 flex max-w-[calc(100%-1.5rem)] items-center gap-2.5 rounded-full border-2 border-white bg-white py-2.5 pl-2.5 pr-3.5 shadow-[0_10px_32px_-8px_rgba(15,23,42,0.4)] sm:bottom-4 sm:left-4 sm:gap-3 sm:py-3 sm:pl-3 sm:pr-4"
-          role="status"
+          className="relative overflow-hidden rounded-[16px] sm:rounded-[18px] bg-slate-100"
+          style={{ aspectRatio: "19 / 20" }}
         >
-          <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-600 ring-2 ring-emerald-200/90 sm:size-9">
-            <Check className="size-4 stroke-[2.5]" />
-          </span>
-          <div className="min-w-0">
-            <p className="text-[12px] font-black leading-tight text-slate-900 sm:text-[13px]">Bạn làm tốt lắm!</p>
-            <p className="text-[10px] font-medium text-slate-500 sm:text-[11px]">AI Feedback vừa xong</p>
+          <video
+            autoPlay
+            loop
+            muted
+            playsInline
+            className="h-full w-full object-cover"
+          >
+            <source src={HOME_AI_DEMO_VIDEO} type="video/mp4" />
+          </video>
+          <div
+            className="absolute bottom-3 left-3 z-10 flex max-w-[calc(100%-1.5rem)] items-center gap-2 rounded-full border-2 border-white bg-white py-2 pl-2 pr-3 shadow-[0_8px_24px_-10px_rgba(15,23,42,0.35)] sm:bottom-4 sm:left-4 sm:gap-2.5 sm:py-2.5 sm:pl-2.5 sm:pr-3.5"
+            role="status"
+          >
+            <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-600 ring-2 ring-emerald-200/90 sm:size-8">
+              <Check className="size-3.5 stroke-[2.5]" />
+            </span>
+            <div className="min-w-0">
+              <p className="text-[11px] font-black leading-tight text-slate-900 sm:text-[12px]">Bạn làm tốt lắm!</p>
+              <p className="text-[9px] font-medium text-slate-500 sm:text-[10px]">Phản hồi AI vừa xong</p>
+            </div>
           </div>
         </div>
       </div>
@@ -202,43 +263,45 @@ function HeroInterviewVideoCard() {
 
 /** Mock cửa sổ phỏng vấn AI + video + overlay (section Interview Preview). */
 function InterviewDemoMockup() {
-  const glow = "-inset-6 blur-3xl";
-  const shell = "p-1 sm:p-1.5 rounded-[28px]";
-  const inner = "rounded-[24px]";
-  const chrome = "flex items-center justify-between px-5 py-3.5";
+  const glow = "-inset-4 blur-3xl";
+  const shell = "p-1 sm:p-1.5 rounded-[24px]";
+  const inner = "rounded-[20px]";
+  const chrome = "flex items-center justify-between px-4 py-3";
   const titleSz = "text-xs";
-  const topBar = "p-4";
-  const bottomWrap = "p-5";
-  const bubble = "p-4";
-  const qLead = "text-xs mb-1.5";
-  const qBody = "text-sm leading-relaxed";
-  const statsGrid = "grid grid-cols-3 gap-2 mt-3";
-  const statCell = "flex items-center gap-2 px-2.5 py-2 rounded-lg";
+  const topBar = "p-3";
+  const bottomWrap = "p-4";
+  const bubble = "p-3";
+  const qLead =
+    "text-[12px] mb-1.5 font-bold tracking-wide text-[#5F00F0] [text-shadow:0_1px_0_rgba(255,255,255,0.92)]";
+  const qBody =
+    "text-[13px] sm:text-sm font-semibold leading-snug text-slate-900 [text-shadow:0_1px_0_rgba(255,255,255,0.95),0_0_18px_rgba(255,255,255,0.65)]";
+  const statsGrid = "grid grid-cols-3 gap-1.5 mt-2";
+  const statCell = "flex items-center gap-1.5 px-2 py-1.5 rounded-lg";
   const statIcon = "w-3.5 h-3.5";
-  const statTxt = "text-xs font-medium";
+  const statTxt = "text-[12px] font-semibold";
 
   return (
-    <div className="relative">
+    <div className="relative mx-auto w-full max-w-[560px] scale-[0.96] origin-center lg:max-w-[620px] lg:scale-[0.92]">
       <div
-        className={`absolute ${glow} rounded-[32px] opacity-50 pointer-events-none`}
+        className={`absolute ${glow} rounded-[32px] opacity-0 pointer-events-none`}
         style={{
           background:
-            "radial-gradient(circle, rgba(196,255,71,0.2) 0%, rgba(110, 53, 232,0.35) 45%, transparent 70%)",
+            "radial-gradient(circle, rgba(167,139,250,0.) 0%, rgba(110, 53, 232,0.35) 45%, transparent 70%)",
         }}
         aria-hidden
       />
       <div className={`glass-card ${shell}`}>
         <div
-          className={`relative ${inner} overflow-hidden border-0 bg-[#07060e]/95`}
+          className={`relative ${inner} overflow-hidden border-0 bg-[#ffffff]/95`}
           style={{
-            boxShadow: "0 24px 64px rgba(0,0,0,0.5), 0 0 0 1px rgba(196,255,71,0.08) inset",
+            boxShadow: "0 24px 64px rgba(0,0,0,0.5), 0 0 0 1px rgba(167,139,250,0.) inset",
           }}
         >
           <div
             className={chrome}
             style={{
-              background: "#0A0816",
-              borderBottom: "1px solid rgba(255,255,255,0.07)",
+              background: "#ffffff",
+              borderBottom: "1px solid rgba(0,0,0,0.03)",
             }}
           >
             <div className="flex gap-1.5">
@@ -248,7 +311,7 @@ function InterviewDemoMockup() {
             </div>
             <div className="flex min-w-0 flex-1 items-center justify-center gap-2 px-2">
               <div className="h-1.5 w-1.5 shrink-0 rounded-full sm:h-2 sm:w-2" style={{ background: "rgba(110, 53, 232,0.6)" }} />
-              <span className={`truncate font-medium ${titleSz}`} style={{ color: "rgba(255,255,255,0.35)" }}>
+              <span className={`truncate font-medium ${titleSz}`} style={{ color: "rgba(15,23,42,0.5)" }}>
                 ProInterview — Phỏng vấn AI
               </span>
             </div>
@@ -260,7 +323,7 @@ function InterviewDemoMockup() {
             </div>
           </div>
 
-          <div className="relative bg-[#0A0816]" style={{ aspectRatio: "16/10" }}>
+          <div className="relative bg-[#ffffff]" style={{ aspectRatio: "16/10" }}>
             <div className="absolute inset-0 flex items-center justify-center">
               <video
                 autoPlay
@@ -268,22 +331,30 @@ function InterviewDemoMockup() {
                 muted
                 playsInline
                 className="h-full w-full object-cover"
-                style={{ opacity: 0.95 }}
               >
                 <source src={HOME_AI_DEMO_VIDEO} type="video/mp4" />
               </video>
             </div>
 
             <div className="pointer-events-none absolute inset-0">
+              {/* Che watermark góc phải dưới video (HeyGen) */}
               <div
-                className={`absolute left-0 right-0 top-0 flex items-center justify-between ${topBar}`}
+                className="absolute bottom-0 right-0 z-[1] h-[24%] w-[40%] max-w-[11rem] min-h-[3.25rem] sm:max-w-[13rem]"
                 style={{
-                  background: "linear-gradient(to bottom, rgba(18,11,46,0.92), transparent)",
+                  background:
+                    "linear-gradient(to top left, rgba(255,255,255,0.98) 0%, rgba(255,255,255,0.72) 35%, rgba(255,255,255,0.2) 72%, transparent 100%)",
+                }}
+                aria-hidden
+              />
+              <div
+                className={`absolute left-0 right-0 top-0 z-[3] flex items-center justify-between ${topBar}`}
+                style={{
+                  background: "linear-gradient(to bottom, rgba(255,255,255,0.28) 0%, rgba(255,255,255,0.06) 45%, transparent 100%)",
                 }}
               >
                 <div className="flex items-center gap-2">
                   <div className="h-1.5 w-1.5 animate-pulse rounded-full sm:h-2 sm:w-2" style={{ background: "#FF5F57" }} />
-                  <span className="font-semibold text-white text-xs">
+                  <span className="font-semibold text-foreground text-xs">
                     Đang phỏng vấn
                   </span>
                 </div>
@@ -300,35 +371,28 @@ function InterviewDemoMockup() {
               </div>
 
               <div
-                className={`absolute bottom-0 left-0 right-0 ${bottomWrap}`}
+                className={`absolute bottom-0 left-0 right-0 z-[2] ${bottomWrap}`}
                 style={{
-                  background: "linear-gradient(to top, rgba(18,11,46,0.95), transparent)",
+                  background:
+                    "linear-gradient(to top, rgba(248,250,252,0.72) 0%, rgba(255,255,255,0.18) 38%, transparent 68%)",
                 }}
               >
                 <div
                   className={bubble}
                   style={{
-                    background: "rgba(110, 53, 232,0.15)",
-                    border: "1px solid rgba(110, 53, 232,0.35)",
-                    backdropFilter: "blur(12px)",
+                    background: "rgba(255,255,255,0.52)",
+                    border: "1px solid rgba(255,255,255,0.55)",
+                    backdropFilter: "blur(14px)",
+                    WebkitBackdropFilter: "blur(14px)",
                     borderRadius: "12px",
+                    boxShadow: "0 8px 28px rgba(15, 23, 42, 0.12)",
                   }}
                 >
-                  <div className="flex items-start gap-2 sm:gap-3">
-                    <div
-                      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg"
-                      style={{
-                        background: "linear-gradient(135deg, #6E35E8, #9B6DFF)",
-                      }}
-                    >
-                      <Sparkle className="h-4 w-4 text-white" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className={`font-semibold text-white/50 ${qLead}`}>Câu hỏi 2/5</p>
-                      <p className={`text-white ${qBody}`}>
-                        Hãy kể về một lần bạn phải giải quyết xung đột trong nhóm. Bạn đã xử lý như thế nào?
-                      </p>
-                    </div>
+                  <div className="min-w-0">
+                    <p className={qLead}>Câu hỏi 2/5</p>
+                    <p className={qBody}>
+                      Hãy kể về một lần bạn phải giải quyết xung đột trong nhóm. Bạn đã xử lý như thế nào?
+                    </p>
                   </div>
                 </div>
 
@@ -342,12 +406,13 @@ function InterviewDemoMockup() {
                       key={i}
                       className={statCell}
                       style={{
-                        background: "rgba(255,255,255,0.06)",
-                        border: "1px solid rgba(255,255,255,0.08)",
+                        background: "rgba(255,255,255,0.94)",
+                        border: "1px solid rgba(15,23,42,0.12)",
+                        boxShadow: "0 2px 8px rgba(15,23,42,0.08)",
                       }}
                     >
                       <item.icon className={`${statIcon} shrink-0`} style={{ color: item.color }} />
-                      <span className={statTxt} style={{ color: "rgba(255,255,255,0.6)" }}>
+                      <span className={statTxt} style={{ color: "rgb(15, 23, 42)" }}>
                         {item.label}
                       </span>
                     </div>
@@ -365,29 +430,25 @@ function InterviewDemoMockup() {
 export function Home() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [activeSection, setActiveSection] = useState("");
   const navigate = useNavigate();
 
   const handleFeatureClick = (route) => requireLoginNavigate(navigate, route);
   const renderSectionSticks = (sticks) => (
-    <div className="pointer-events-none absolute inset-0 z-[5] hidden lg:block" aria-hidden>
+    <div className="pointer-events-none absolute inset-0 z-[1] hidden md:block" aria-hidden>
       {sticks.map((s, idx) => (
-        <Sparkles
+        <SparkleGlyph
           key={`section-stick-${idx}`}
-          className="absolute text-slate-400"
-          strokeWidth={1.45}
-          strokeLinecap="butt"
-          strokeLinejoin="miter"
-          strokeMiterlimit={12}
+          className="absolute"
           style={{
             left: `${s.x}%`,
             top: `${s.y}%`,
             width: `${s.size}px`,
             height: `${s.size}px`,
-            opacity: s.opacity,
-            filter: "drop-shadow(0 0 8px rgba(148,163,184,0.24))",
-            transform: `rotate(${
-              typeof s.tilt === "number" ? s.tilt : idx % 4 === 0 ? 0 : idx % 4 === 1 ? -18 : idx % 4 === 2 ? 24 : -30
-            }deg)`,
+            opacity: 1,
+            filter: "drop-shadow(0 1px 2px rgba(15,23,42,0.12)) drop-shadow(0 0 8px rgba(95,0,240,0.35))",
+            transform: `rotate(${typeof s.tilt === "number" ? s.tilt : idx % 4 === 0 ? 0 : idx % 4 === 1 ? -18 : idx % 4 === 2 ? 24 : -30
+              }deg)`,
           }}
         />
       ))}
@@ -395,10 +456,30 @@ export function Home() {
   );
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 20);
-    window.addEventListener("scroll", onScroll, {
-      passive: true,
-    });
+    const sectionIds = ["features", "courses", "mentors", "pricing"];
+
+    const onScroll = () => {
+      const y = window.scrollY;
+      setScrolled(y > 20);
+
+      if (y < 300) {
+        setActiveSection("");
+        return;
+      }
+
+      // Find the section whose top is closest above the viewport midpoint
+      const mid = window.innerHeight * 0.5;
+      let found = "";
+      for (const id of sectionIds) {
+        const el = document.getElementById(id);
+        if (!el) continue;
+        const rect = el.getBoundingClientRect();
+        if (rect.top <= mid) found = "#" + id;
+      }
+      setActiveSection(found);
+    };
+
+    window.addEventListener("scroll", onScroll, { passive: true });
 
     // Check for scrollTo param
     const params = new URLSearchParams(window.location.search);
@@ -408,7 +489,6 @@ export function Home() {
         const el = document.getElementById(scrollTarget);
         if (el) {
           el.scrollIntoView({ behavior: "smooth" });
-          // Clean up URL
           window.history.replaceState({}, document.title, window.location.pathname);
         }
       }, 500);
@@ -419,11 +499,7 @@ export function Home() {
 
   return (
     <div
-      className="min-h-screen selection:bg-[#B4F500]/30 selection:text-white font-sans overflow-x-hidden relative"
-      style={{
-        background: "#020202",
-        color: "#fff",
-      }}
+      className="min-h-screen selection:bg-violet-100 selection:text-violet-900 font-sans overflow-x-hidden relative bg-[#f3f0f9] text-slate-900"
     >
       <style>{`
         /* Lưới ô vuông cực nét từ ảnh mẫu */
@@ -439,7 +515,7 @@ export function Home() {
         }
         
         .cute-glass {
-          background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.03));
+          background: linear-gradient(180deg, rgba(0,0,0,0.03), rgba(0,0,0,0.03));
           border: 1px solid rgba(255,255,255,0.1);
           backdrop-filter: blur(14px);
           box-shadow: 0 12px 40px rgba(0,0,0,0.28);
@@ -447,13 +523,13 @@ export function Home() {
         .cute-pill {
           border-radius: 999px;
           border: 1px solid rgba(255,255,255,0.12);
-          background: rgba(255,255,255,0.05);
+          background: rgba(0,0,0,0.03);
         }
         .cute-card {
           position: relative;
           border-radius: 24px;
-          border: 1px solid rgba(255,255,255,0.08);
-          background: linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.025));
+          border: 1px solid rgba(0,0,0,0.03);
+          background: linear-gradient(180deg, rgba(0,0,0,0.03), rgba(255,255,255,0.025));
           transform-style: preserve-3d;
           transition: transform .28s ease, border-color .25s ease, box-shadow .25s ease;
         }
@@ -508,10 +584,37 @@ export function Home() {
           font-weight: 850;
           line-height: 1.08;
         }
+        .home-page-violet-ambient {
+          position: absolute;
+          inset: 0;
+          z-index: 0;
+          min-height: 100%;
+          pointer-events: none;
+          background-color: #f3f0f9;
+          background-image:
+            radial-gradient(ellipse 130% 58% at 50% 108%, rgba(45, 22, 72, 0.075), transparent 58%),
+            radial-gradient(ellipse 42% 36% at 93% 4%, rgba(72, 32, 185, 0.17), transparent 52%),
+            radial-gradient(ellipse 40% 34% at 4% 97%, rgba(58, 22, 145, 0.135), transparent 50%),
+            radial-gradient(ellipse 38% 32% at 88% 94%, rgba(68, 30, 168, 0.125), transparent 48%),
+            radial-gradient(ellipse 82% 68% at 50% 46%, rgba(255, 255, 255, 0.5), transparent 62%),
+            radial-gradient(ellipse 125% 95% at 88% -5%, rgba(110, 53, 232, 0.125), transparent 56%),
+            radial-gradient(ellipse 105% 90% at -8% 100%, rgba(95, 0, 240, 0.095), transparent 54%),
+            radial-gradient(ellipse 100% 85% at 38% 38%, rgba(155, 109, 255, 0.072), transparent 60%),
+            radial-gradient(ellipse 90% 75% at 85% 95%, rgba(110, 53, 232, 0.058), transparent 55%),
+            linear-gradient(
+              180deg,
+              rgba(255, 255, 255, 0.48) 0%,
+              rgba(255, 255, 255, 0.06) 16%,
+              rgba(210, 200, 232, 0.28) 38%,
+              rgba(225, 216, 242, 0.16) 52%,
+              rgba(198, 186, 222, 0.24) 68%,
+              rgba(255, 255, 255, 0.36) 100%
+            );
+        }
         .sticker-badge {
           border-radius: 999px;
           border: 1px solid rgba(255,255,255,0.24);
-          background: rgba(18,11,46,0.78);
+          background: rgba(255,255,255,0.8);
           backdrop-filter: blur(10px);
           box-shadow: 0 10px 24px rgba(0,0,0,0.25);
         }
@@ -592,253 +695,187 @@ export function Home() {
         }
         .font-headline {
           letter-spacing: -0.045em;
-          text-shadow: 0 2px 24px rgba(0,0,0,0.35);
+          text-shadow: none;
         }
         .glass-card {
-          background: linear-gradient(145deg, rgba(255,255,255,0.07) 0%, rgba(255,255,255,0.02) 100%);
-          backdrop-filter: blur(48px);
+          background: #ffffff;
+          backdrop-filter: none;
           border-radius: 28px;
-          border: 1px solid rgba(255, 255, 255, 0.1);
-          transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.35s ease, box-shadow 0.45s ease;
+          border: 2px solid rgba(95, 0, 240, 0.32);
+          transition: transform 0.35s ease, border-color 0.25s ease, box-shadow 0.35s ease;
           position: relative;
           overflow: hidden;
+          box-shadow: 0 4px 18px rgba(15, 23, 42, 0.06);
         }
         .glass-card::before {
           content: '';
           position: absolute;
           inset: 0;
-          background: linear-gradient(125deg, rgba(236,72,153,0.08) 0%, transparent 42%, rgba(196, 255, 71,0.06) 100%);
+          background: transparent;
           pointer-events: none;
-          opacity: 0.85;
+          opacity: 0;
         }
         .glass-card:hover {
-          border-color: rgba(196, 255, 71, 0.42);
-          transform: translateY(-4px) rotate(-0.2deg);
-          box-shadow:
-            0 24px 48px rgba(0,0,0,0.45),
-            0 0 0 1px rgba(196, 255, 71, 0.12) inset,
-            0 0 48px -6px rgba(196, 255, 71, 0.28),
-            0 0 36px -10px rgba(167, 139, 250, 0.22);
+          border-color: rgba(95, 0, 240, 0.48);
+          transform: translateY(-2px);
+          box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
         }
-        .section-ambient {
-          position: absolute;
-          border-radius: 999px;
-          pointer-events: none;
-          filter: blur(120px);
-          opacity: 0.85;
+        #pricing > .max-w-7xl > .grid > .glass-card {
+          overflow: visible !important;
         }
-        /* Loang nền toàn trang — mask loại vùng góc trên trái để không làm chìm logo */
-        .home-global-ambient {
-          position: fixed;
-          inset: 0;
-          z-index: -2;
-          pointer-events: none;
+        @keyframes testimonial-marquee {
+          0% {
+            transform: translateX(0);
+          }
+          100% {
+            transform: translateX(-50%);
+          }
+        }
+        @keyframes testimonial-marquee-rev {
+          0% {
+            transform: translateX(-50%);
+          }
+          100% {
+            transform: translateX(0);
+          }
+        }
+        .testimonial-marquee-row {
           overflow: hidden;
-          mask-image: radial-gradient(
-            ellipse 300px 96px at 0px 0px,
-            transparent 0%,
-            transparent 58%,
-            rgba(255, 255, 255, 0.92) 100%
-          );
-          -webkit-mask-image: radial-gradient(
-            ellipse 300px 96px at 0px 0px,
-            transparent 0%,
-            transparent 58%,
-            rgba(255, 255, 255, 0.92) 100%
-          );
-          mask-mode: alpha;
-          -webkit-mask-mode: alpha;
+          width: 100%;
         }
-        @media (min-width: 640px) {
-          .home-global-ambient {
-            mask-image: radial-gradient(
-              ellipse 340px 104px at 0px 0px,
-              transparent 0%,
-              transparent 58%,
-              rgba(255, 255, 255, 0.94) 100%
-            );
-            -webkit-mask-image: radial-gradient(
-              ellipse 340px 104px at 0px 0px,
-              transparent 0%,
-              transparent 58%,
-              rgba(255, 255, 255, 0.94) 100%
-            );
+        .testimonial-marquee-row:hover .testimonial-marquee-track {
+          animation-play-state: paused;
+        }
+        .testimonial-marquee-track {
+          display: flex;
+          width: max-content;
+          gap: 1.25rem;
+          animation: testimonial-marquee 44s linear infinite;
+        }
+        .testimonial-marquee-track--alt {
+          animation: testimonial-marquee-rev 56s linear infinite;
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .testimonial-marquee-track,
+          .testimonial-marquee-track--alt {
+            animation: none !important;
           }
         }
       `}</style>
 
-      {/* Nền loang toàn cục (trừ vùng logo nhờ .home-global-ambient) */}
-      <div className="home-global-ambient" aria-hidden>
-        <div
-          className="absolute -top-[8%] right-[-14%] h-[min(92vw,780px)] w-[min(92vw,780px)] rounded-full opacity-[0.42] blur-[110px]"
-          style={{
-            background:
-              "radial-gradient(circle at 38% 42%, rgba(110,53,232,0.55) 0%, rgba(139,92,246,0.18) 42%, transparent 70%)",
-          }}
-        />
-        <div
-          className="absolute top-[28%] right-[6%] h-[min(70vw,520px)] w-[min(70vw,520px)] rounded-full opacity-[0.28] blur-[100px]"
-          style={{
-            background:
-              "radial-gradient(circle at 50% 50%, rgba(196,255,71,0.22) 0%, rgba(180,245,0,0.08) 45%, transparent 72%)",
-          }}
-        />
-        <div
-          className="absolute bottom-[-12%] left-[8%] h-[min(85vw,640px)] w-[min(85vw,640px)] rounded-full opacity-[0.32] blur-[115px]"
-          style={{
-            background:
-              "radial-gradient(circle at 45% 40%, rgba(56,189,248,0.16) 0%, rgba(110,53,232,0.12) 48%, transparent 74%)",
-          }}
-        />
-        <div
-          className="absolute bottom-[8%] right-[-8%] h-[min(75vw,560px)] w-[min(75vw,560px)] rounded-full opacity-[0.26] blur-[105px]"
-          style={{
-            background:
-              "radial-gradient(circle at 55% 55%, rgba(244,114,182,0.14) 0%, rgba(110,53,232,0.1) 50%, transparent 72%)",
-          }}
-        />
-        <div
-          className="absolute top-[48%] left-[22%] h-[min(90vw,680px)] w-[min(90vw,680px)] -translate-x-1/2 rounded-full opacity-[0.18] blur-[130px]"
-          style={{
-            background:
-              "radial-gradient(circle at 50% 50%, rgba(167,139,250,0.2) 0%, transparent 65%)",
-          }}
-        />
-      </div>
+      <div className="home-page-violet-ambient" aria-hidden />
 
       {/* ═══ NAVBAR ════════════════════════════════════════ */}
-      <TopNavShell variant="dark" scrolled={scrolled}>
-        <div className="mx-auto flex h-16 max-w-7xl items-center gap-6">
-          {/* Logo */}
-          <div
-            className="-ml-2 flex shrink-0 cursor-pointer items-center gap-2.5 sm:-ml-3"
-            onClick={() =>
-              window.scrollTo({ top: 0, behavior: "smooth" })
-            }
-          >
-            <BrandLogo />
-          </div>
+      {/* ═══ NAVBAR ════════════════════════════════════════ */}
+      <TopNavShell variant="light" scrolled={scrolled}>
 
-          {/* Desktop nav links */}
-          <div className="hidden md:flex items-center gap-1 ml-12">
-            {NAV_LINKS.map((l) => (
-              <a
-                key={l.label}
-                href={l.href}
-                className="px-3 py-2 rounded-full text-sm font-semibold text-white/70 hover:text-white transition-all cursor-pointer border border-transparent hover:border-white/10 hover:bg-white/8 whitespace-nowrap"
-                onClick={(e) => {
-                  e.preventDefault();
-                  document
-                    .querySelector(l.href)
-                    ?.scrollIntoView({ behavior: "smooth" });
-                }}
-              >
-                {l.label}
-              </a>
-            ))}
-          </div>
+        {/* Logo */}
+        <div
+          className="flex shrink-0 cursor-pointer items-center gap-2"
+          onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+        >
+          <BrandLogo />
+        </div>
 
-          {/* Right side */}
-          <div className="ml-auto flex items-center gap-2.5">
-            {/* Try button — always visible */}
-            <button
-              type="button"
-              onClick={() => navigateToInterview(navigate)}
-              className="hidden sm:inline-flex items-center gap-1.5 px-5 py-2 rounded-xl text-sm font-bold transition-all hover:brightness-110 active:scale-95 shadow-[0_0_24px_rgba(180,245,0,0.3)] whitespace-nowrap"
-              style={{
-                background:
-                  "linear-gradient(135deg, #B4F500, #80C800)",
-                color: "#120B2E",
+        {/* Desktop nav links */}
+        <div className="hidden md:flex items-center gap-6">
+          {NAV_LINKS.map((l) => (
+            <a
+              key={l.label}
+              href={l.href}
+              className="relative py-1 text-sm transition-all duration-300 cursor-pointer whitespace-nowrap"
+              style={{ 
+                color: activeSection === l.href ? "#6E35E8" : "rgb(71,85,105)",
+                fontWeight: activeSection === l.href ? "800" : "600"
+              }}
+              onClick={(e) => {
+                e.preventDefault();
+                document.querySelector(l.href)?.scrollIntoView({ behavior: "smooth" });
               }}
             >
-              <Lightning className="w-4 h-4 text-[#120B2E]" fill="currentColor" />
-              Trải nghiệm thử
-            </button>
-
-            {/* Auth buttons */}
-            <button
-              onClick={() => navigate("/login")}
-              className="hidden sm:inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold text-white/80 hover:text-white hover:bg-white/10 transition-colors whitespace-nowrap"
-            >
-              <SignIn className="w-4 h-4" />
-              Đăng nhập
-            </button>
-            <button
-              onClick={() => navigate("/register")}
-              className="hidden sm:inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-bold border border-white/20 text-white hover:bg-white/10 hover:border-white/30 transition-colors whitespace-nowrap"
-            >
-              <UserPlus className="w-4 h-4" />
-              Đăng ký
-            </button>
-
-            {/* Mobile hamburger */}
-            <button
-              className="md:hidden p-2 rounded-lg text-white/70 hover:text-white hover:bg-white/8 transition-colors"
-              onClick={() => setMobileOpen(!mobileOpen)}
-            >
-              {mobileOpen ? (
-                <X className="w-5 h-5" />
-              ) : (
-                <List className="w-5 h-5" />
-              )}
-            </button>
-          </div>
+              {l.label}
+              <span
+                className={`absolute -bottom-1 left-0 w-full h-[3px] rounded-full transition-all duration-300 ${
+                  activeSection === l.href ? "opacity-100 scale-x-100" : "opacity-0 scale-x-0"
+                }`}
+                style={{ 
+                  background: "#C4FF47",
+                  boxShadow: "0 0 12px rgba(196, 255, 71, 0.8)" 
+                }}
+              />
+            </a>
+          ))}
         </div>
+
+        {/* Right side */}
+        <div className="flex items-center gap-3">
+          {/* Đăng nhập */}
+          <button
+            onClick={() => navigate("/login")}
+            className="hidden sm:inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-semibold border border-slate-200 bg-white text-slate-700 transition-all hover:bg-slate-50 whitespace-nowrap"
+          >
+            <SignIn className="w-3.5 h-3.5" />
+            Đăng nhập
+          </button>
+
+          {/* Đăng ký */}
+          <button
+            onClick={() => navigate("/register")}
+            className="hidden sm:inline-flex items-center gap-1.5 px-5 py-1.5 rounded-full text-sm font-semibold transition-all hover:scale-105 active:scale-95 whitespace-nowrap"
+            style={{
+              background: "#fff",
+              color: "#6E35E8",
+              border: "1.5px solid #6E35E8",
+            }}
+          >
+            <UserPlus className="w-3.5 h-3.5" />
+            Đăng ký
+          </button>
+
+          {/* Mobile hamburger */}
+          <button
+            className="md:hidden p-2 rounded-lg text-slate-600 hover:bg-slate-100 transition-colors"
+            onClick={() => setMobileOpen(!mobileOpen)}
+          >
+            {mobileOpen ? <X className="w-5 h-5" /> : <List className="w-5 h-5" />}
+          </button>
+        </div>
+
 
         {/* Mobile menu */}
         {mobileOpen && (
           <div
-            className="md:hidden border-t"
-            style={{
-              background: "rgba(18,11,46,0.97)",
-              borderColor: "rgba(255,255,255,0.08)",
-            }}
+            className="md:hidden absolute top-[72px] left-4 right-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-lg"
           >
-            <div className="mx-auto flex max-w-7xl flex-col gap-1 py-4">
+            <div className="flex flex-col gap-1">
               {NAV_LINKS.map((l) => (
                 <a
                   key={l.label}
                   href={l.href}
-                  className="px-4 py-2.5 rounded-lg text-sm text-white/70 hover:text-white hover:bg-white/8 transition-colors"
+                  className="px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-700 hover:bg-violet-50 hover:text-violet-700 transition-colors"
                   onClick={(e) => {
                     e.preventDefault();
                     setMobileOpen(false);
-                    document
-                      .querySelector(l.href)
-                      ?.scrollIntoView({ behavior: "smooth" });
+                    document.querySelector(l.href)?.scrollIntoView({ behavior: "smooth" });
                   }}
                 >
                   {l.label}
                 </a>
               ))}
-              <div
-                className="mt-3 pt-3 border-t flex flex-col gap-2"
-                style={{
-                  borderColor: "rgba(255,255,255,0.08)",
-                }}
-              >
+              <div className="mt-2 pt-2 border-t border-slate-100 flex flex-col gap-2">
                 <button
                   onClick={() => navigate("/login")}
-                  className="flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-medium border border-white/15 text-white hover:bg-white/8 transition-colors"
+                  className="flex items-center justify-center gap-2 py-2.5 rounded-full text-sm font-semibold text-slate-700 border border-slate-200 hover:bg-slate-50 transition-colors"
                 >
-                  <SignIn className="w-4 h-4" />{" "}
-                  Đăng nhập
+                  <SignIn className="w-4 h-4" /> Đăng nhập
                 </button>
                 <button
                   type="button"
-                  onClick={() => {
-                    setMobileOpen(false);
-                    navigateToInterview(navigate);
-                  }}
-                  className="flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold"
-                  style={{
-                    background:
-                      "linear-gradient(135deg, #B4F500, #8fbc24)",
-                    color: "#120B2E",
-                  }}
+                  onClick={() => { setMobileOpen(false); navigateToInterview(navigate); }}
+                  className="flex items-center justify-center gap-2 py-2.5 rounded-full text-sm font-bold"
+                  style={{ background: "linear-gradient(135deg, #B4F500, #8fbc24)", color: "#120B2E" }}
                 >
-                  <Lightning className="w-4 h-4 text-[#120B2E]" />{" "}
-                  Trải nghiệm thử miễn phí
+                  <Lightning className="w-4 h-4" /> Trải nghiệm thử miễn phí
                 </button>
               </div>
             </div>
@@ -847,97 +884,42 @@ export function Home() {
       </TopNavShell>
 
       {/* ═══ HERO ═══════════════════════════════════════════ */}
-      <section className="relative flex min-h-[100dvh] flex-col justify-start overflow-hidden px-5 pb-10 pt-24 lg:min-h-screen lg:pb-12 lg:pt-28">
+      <section className="relative z-10 flex h-screen max-h-screen flex-col justify-start overflow-hidden px-10 sm:px-16 lg:px-24 pt-36">
         {renderSectionSticks([
-          { x: 5, y: 11, size: 34, opacity: 0.48 },
-          { x: 93, y: 13, size: 40, opacity: 0.55 },
-          { x: 3, y: 50, size: 28, opacity: 0.4 },
-          { x: 92, y: 80, size: 32, opacity: 0.46 },
+          { x: 5, y: 11, size: 38, opacity: 0.48 },
+          { x: 93, y: 13, size: 44, opacity: 0.55 },
+          { x: 3, y: 50, size: 32, opacity: 0.4 },
+          { x: 92, y: 80, size: 36, opacity: 0.46 },
         ])}
-        {/* BG gradient mesh — tránh loang mạnh góc trên trái (vùng logo/nav) */}
-        <div
-          className="absolute inset-0"
-          style={{
-            background:
-              "radial-gradient(ellipse 88% 68% at 86% -8%, rgba(110,53,232,0.52) 0%, transparent 70%), radial-gradient(ellipse 72% 48% at 80% 84%, rgba(180,245,0,0.16) 0%, transparent 64%), radial-gradient(ellipse 62% 44% at 68% 32%, rgba(196,255,71,0.1) 0%, transparent 72%), #04050a",
-          }}
-        />
-        {/* Ambient glows để nền hero bớt tối — lệch phải / giữa, không đặt trọng tâm gần góc trái */}
-        <div
-          className="absolute top-[30%] left-[58%] w-[min(92vw,680px)] max-w-[680px] -translate-x-1/2 h-[360px] rounded-full blur-[120px] pointer-events-none sm:left-[60%]"
-          style={{
-            background:
-              "radial-gradient(circle, rgba(180,245,0,0.2) 0%, rgba(110,53,232,0.14) 52%, transparent 78%)",
-          }}
-          aria-hidden
-        />
-        <div
-          className="absolute top-0 left-0 right-0 h-[160px] pointer-events-none"
-          style={{
-            background:
-              "linear-gradient(to bottom, rgba(4,5,10,0.98) 0%, rgba(4,5,10,0.86) 40%, rgba(4,5,10,0) 100%)",
-          }}
-          aria-hidden
-        />
-        <div
-          className="absolute top-[18%] right-[8%] w-[420px] h-[420px] rounded-full blur-[120px] pointer-events-none"
-          style={{
-            background:
-              "radial-gradient(circle, rgba(167,139,250,0.24) 0%, rgba(167,139,250,0.08) 48%, transparent 78%)",
-          }}
-          aria-hidden
-        />
-        {/* Noise grain */}
-        <div
-          className="absolute inset-0 opacity-[0.03]"
-          style={{
-            backgroundImage:
-              "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E\")",
-            backgroundRepeat: "repeat",
-            backgroundSize: "200px",
-          }}
-          aria-hidden
-        />
-        {/* Grid overlay từ snippet mẫu */}
-        <div
-          className="absolute inset-0 opacity-[0.04]"
-          style={{
-            backgroundImage:
-              "linear-gradient(rgba(255,255,255,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.5) 1px, transparent 1px)",
-            backgroundSize: "80px 80px",
-          }}
-          aria-hidden
-        />
 
         {/* Hero content — 2 cột lg: copy trái + video/mockup phải */}
         <div className="relative z-10 mx-auto w-full max-w-7xl">
-          <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1.05fr)_minmax(260px,440px)] lg:grid-rows-[auto_auto] lg:items-start lg:gap-x-14 lg:gap-y-5 xl:gap-x-16">
+          <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1.1fr)_minmax(200px,300px)] lg:grid-rows-[auto_auto] lg:items-center lg:gap-x-6 lg:gap-y-4">
             <div className="order-1 text-left lg:col-start-1 lg:row-start-1">
               <div
-                className="mb-5 inline-flex items-center gap-2 rounded-full border px-4 py-2 text-xs font-bold cute-glass hero-badge-animated lg:mb-5"
+                className="mb-4 inline-flex items-center gap-2 rounded-full border-2 px-3 py-1.5 text-xs font-bold bg-white"
                 style={{
-                  background: "rgba(110, 53, 232,0.15)",
-                  borderColor: "rgba(110, 53, 232,0.35)",
-                  color: "#B89DFF",
+                  borderColor: "rgba(95, 0, 240, 0.42)",
+                  color: "#5B21B6",
                 }}
               >
-                <Sparkle className="w-3.5 h-3.5" />
+                <SparkleGlyph className="w-3.5 h-3.5" />
                 Nền tảng luyện phỏng vấn với AI
               </div>
 
               <h1
-                className="mb-4 py-2 font-headline text-white leading-[1.08] tracking-tighter cute-heading lg:mb-5"
+                className="mb-3 font-headline text-slate-900 leading-[1.1] tracking-tighter cute-heading"
                 style={{
-                  fontSize: "clamp(2rem, 5.5vw, 3.5rem)",
+                  fontSize: "clamp(2.55rem, 5.6vw, 3.85rem)",
                 }}
               >
-                <span className="text-white">
+                <span className="text-slate-900">
                   Phỏng vấn{" "}
                 </span>
                 <span
                   className="hero-title-animated hero-orbit-text"
                   style={{
-                    background: "linear-gradient(135deg, #B4F500 0%, #6E35E8 100%)",
+                    background: "linear-gradient(135deg, #5F00F0 0%, #6E35E8 45%, #9B6DFF 100%)",
                     WebkitBackgroundClip: "text",
                     WebkitTextFillColor: "transparent",
                     backgroundClip: "text",
@@ -946,30 +928,28 @@ export function Home() {
                 >
                   1:1 với AI
                 </span>
-                <span className="text-white"> qua mô phỏng hội thoại thông minh</span>
+                <span className="text-slate-900"> qua mô phỏng hội thoại thông minh</span>
               </h1>
 
               <p
-                className="mb-6 max-w-2xl leading-relaxed text-white/55 lg:mb-7"
-                style={{ fontSize: "1rem" }}
+                className="mb-5 max-w-2xl leading-relaxed text-slate-600 font-medium"
+                style={{ fontSize: "0.9rem" }}
               >
                 ProInterview phân tích CV/JD, tạo câu hỏi phỏng vấn
                 cá nhân hóa, và kết nối bạn với Mentor HR thực tế từ
                 Shopee, Vingroup, FPT và hơn 200 công ty hàng đầu.
               </p>
 
-              <div className="mb-6 flex flex-col gap-3.5 sm:flex-row sm:justify-start lg:mb-0">
+              <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:justify-start">
                 <button
                   type="button"
                   onClick={() => navigateToInterview(navigate)}
-                  className="inline-flex items-center justify-center gap-2.5 px-8 py-4 rounded-full font-black transition-all hover:brightness-110 active:scale-[0.98] hover:-translate-y-0.5"
+                  className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full font-black transition-all hover:brightness-105 active:scale-[0.98] hover:-translate-y-0.5"
                   style={{
-                    background:
-                      "linear-gradient(135deg, #B4F500, #8fbc24)",
-                    color: "#1a1a1a",
-                    fontSize: "0.9375rem",
-                    boxShadow:
-                      "0 0 40px rgba(196, 255, 71,0.3), 0 8px 24px rgba(0,0,0,0.3)",
+                    background: "linear-gradient(135deg, #B4F500, #93D600)",
+                    color: "#0f172a",
+                    fontSize: "0.875rem",
+                    boxShadow: "0 8px 22px rgba(15, 23, 42, 0.1)",
                   }}
                 >
                   <Lightning className="w-5 h-5" />
@@ -977,46 +957,54 @@ export function Home() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => requireLoginNavigate(navigate, "/mentors")}
-                  className="inline-flex items-center justify-center gap-2.5 px-8 py-4 rounded-full font-semibold transition-all hover:bg-white/12 hover:-translate-y-0.5"
+                  onClick={() => navigate("/pricing")}
+                  className="inline-flex items-center justify-center gap-1.5 px-5 py-2.5 rounded-full text-sm font-bold transition-all hover:bg-violet-50 active:scale-95 bg-white text-slate-800"
                   style={{
-                    background: "rgba(255,255,255,0.07)",
-                    color: "rgba(255,255,255,0.85)",
-                    fontSize: "0.9375rem",
-                    border: "1px solid rgba(255,255,255,0.14)",
-                    backdropFilter: "blur(8px)",
+                    border: "1px solid rgba(95, 0, 240, 0.38)",
+                    boxShadow: "none",
                   }}
                 >
-                  <Users className="w-5 h-5" />
-                  Tìm Mentor ngay
+                  <Tag className="w-4 h-4 text-[#6E35E8]" />
+                  Xem giá
                 </button>
               </div>
             </div>
 
             {/* Cột phải: căn đáy hàng 1 để video không “bay” quá cao so với copy */}
-            <div className="order-3 mt-6 flex w-full justify-start lg:order-2 lg:col-start-2 lg:row-start-1 lg:mt-0 lg:flex lg:justify-end lg:self-end">
+            <div className="order-3 flex w-full justify-start lg:order-2 lg:col-start-2 lg:row-start-1 lg:flex lg:justify-end lg:self-center">
               <HeroInterviewVideoCard />
             </div>
 
             {/* Thanh stats — full width, căn giữa; khoảng cách trên lg gọn để còn trong 1 màn */}
-            <div className="order-2 mt-6 flex w-full justify-center lg:order-3 lg:col-span-2 lg:col-start-1 lg:row-start-2 lg:mt-5">
-              <div className="glass-card w-full max-w-xl p-2.5 sm:max-w-3xl sm:p-3 lg:max-w-4xl">
+            <div className="order-2 mt-6 flex w-full justify-center lg:order-3 lg:col-span-2 lg:col-start-1 lg:row-start-2 lg:mt-6">
+              <div
+                className="glass-card w-full max-w-xl px-2.5 py-3 sm:max-w-3xl sm:px-3 sm:py-3.5 lg:max-w-4xl"
+                style={{
+                  background: "#ffffff",
+                  border: "1px solid rgba(95, 0, 240, 0.32)",
+                  boxShadow: "0 4px 16px rgba(15, 23, 42, 0.06)",
+                }}
+              >
                 <div className="relative z-[1] grid grid-cols-2 gap-2 sm:gap-3 md:grid-cols-4">
                   {STATS.map((s, i) => (
                     <div
                       key={i}
-                      className="rounded-2xl border border-white/[0.08] bg-white/[0.04] px-2.5 py-3 text-center sm:px-3 sm:py-4 md:py-3.5"
+                      className="rounded-xl bg-white px-2 py-2.5 text-center sm:px-3 sm:py-3.5"
+                      style={{
+                        border: "1px solid rgba(95, 0, 240, 0.22)",
+                        boxShadow: "none",
+                      }}
                     >
                       <div
-                        className="mb-1 font-black text-white"
+                        className="mb-1.5 font-black text-transparent bg-clip-text bg-gradient-to-r from-[#5F00F0] to-[#9B6DFF]"
                         style={{
-                          fontSize: "clamp(1.25rem, 3.5vw, 1.5rem)",
+                          fontSize: "clamp(1rem, 2.5vw, 1.25rem)",
                           letterSpacing: "-0.03em",
                         }}
                       >
                         {s.value}
                       </div>
-                      <div className="text-[11px] font-semibold leading-snug text-white/45">
+                      <div className="text-[11px] font-semibold leading-snug text-slate-600">
                         {s.label}
                       </div>
                     </div>
@@ -1027,14 +1015,6 @@ export function Home() {
           </div>
         </div>
 
-        {/* Bottom fade — hòa vào gradient trang */}
-        <div
-          className="absolute bottom-0 left-0 right-0 h-28 pointer-events-none"
-          style={{
-            background: "linear-gradient(to top, #07060e, transparent)",
-          }}
-          aria-hidden
-        />
       </section>
 
 
@@ -1042,74 +1022,75 @@ export function Home() {
       {/* ═══ HOW IT WORKS ════════════════════════════════════ */}
       <section
         id="features"
-        className="relative min-h-screen flex flex-col justify-center py-12 overflow-hidden border-t border-white/[0.06]"
-        style={{ background: "#080808" }}
+        className="relative z-10 h-screen max-h-screen flex flex-col justify-center overflow-hidden pt-6 md:pt-8 lg:pt-10"
       >
-        <div className="section-ambient w-[520px] h-[520px] -top-32 left-[14%] bg-[#B4F500]/[0.14]" aria-hidden />
-        <div className="section-ambient w-[560px] h-[560px] top-[38%] right-[-180px] bg-[#6E35E8]/[0.2]" aria-hidden />
         {renderSectionSticks([
           { x: 10, y: 16, size: 34, opacity: 0.45 },
           { x: 88, y: 20, size: 40, opacity: 0.55 },
           { x: 82, y: 78, size: 32, opacity: 0.44 },
         ])}
-        {/* Nền phẳng (xen kẽ với section có lưới) */}
-        <div className="absolute top-0 left-[18%] w-[500px] h-[500px] bg-[#B4F500]/[0.09] blur-[120px] rounded-full -translate-y-1/2" aria-hidden />
-        <div className="absolute bottom-0 right-0 w-[500px] h-[500px] bg-[#6E35E8]/12 blur-[120px] rounded-full translate-x-1/2 translate-y-1/2" aria-hidden />
-
-        <div className="max-w-7xl mx-auto px-6 relative z-10 w-full py-8">
-          <div className="text-center mb-14">
+        <div className="max-w-7xl mx-auto px-6 relative z-10 w-full py-2">
+          <div className="text-center mb-6 pt-5">
             <div className="flex justify-center mb-5">
-              <span className="h-1 w-10 rounded-full bg-gradient-to-r from-[#B4F500] to-emerald-400" />
+              <span className="h-1 w-10 rounded-full bg-gradient-to-r from-[#6E35E8] to-[#9B6DFF]" />
             </div>
-            <h2 className="text-4xl md:text-6xl text-white mb-4 leading-[1.1] py-2 cute-heading font-headline tracking-tighter">
-              Quy trình tinh gọn,<br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#B4F500] via-fuchsia-300 to-violet-300">kết quả đột phá</span>
+            <h2 className="text-3xl md:text-5xl text-slate-900 mb-3 leading-[1.1] py-1 cute-heading font-headline tracking-tighter font-black">
+              Chuẩn bị thông minh<br />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#5F00F0] to-[#7A35FF]">phỏng vấn bản lĩnh</span>
             </h2>
-            <p className="text-zinc-400 text-lg max-w-2xl mx-auto leading-relaxed">
-              Sẵn sàng chinh phục mọi nhà tuyển dụng với lộ trình chuẩn bị được cá nhân hóa bởi trí tuệ nhân tạo.
+            <p className="text-slate-600 text-lg max-w-2xl mx-auto leading-relaxed font-medium">
+              Cá nhân hóa lộ trình luyện tập bằng AI để tăng khả năng chinh phục nhà tuyển dụng.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
             {STEPS.map((s, i) => (
               <div
                 key={i}
-                className={`glass-card group p-6 sm:p-8 relative overflow-hidden transition-[border-color,box-shadow] duration-300 ${i === 1
-                  ? "border-[#B4F500]/35 shadow-[0_0_0_1px_rgba(196,255,71,0.12)_inset]"
+                className={`glass-card group p-4 sm:p-5 relative overflow-hidden transition-[border-color,box-shadow] duration-300 ${i === 1
+                  ? "border-[#6E35E8]/35 shadow-[0_0_0_1px_rgba(167,139,250,0.12)_inset]"
                   : i === 2
                     ? "border-violet-400/35 shadow-[0_0_0_1px_rgba(167,139,250,0.15)_inset]"
-                    : "border-white/[0.12]"
+                    : "border-black/[0.05]"
                   }`}
+                style={i === 1 ? {
+                  background: "linear-gradient(180deg, rgba(244,238,255,0.98) 0%, rgba(237,228,255,0.96) 100%)",
+                  borderColor: "rgba(95,0,240,0.42)",
+                  boxShadow: "0 18px 36px rgba(95,0,240,0.24), 0 2px 12px rgba(15,23,42,0.1), 0 0 0 1px rgba(95,0,240,0.18) inset",
+                } : {
+                  background: "linear-gradient(180deg, rgba(255,255,255,0.98) 0%, rgba(248,245,255,0.97) 100%)",
+                  boxShadow: "0 12px 26px rgba(15,23,42,0.09), 0 2px 10px rgba(95,0,240,0.08)",
+                }}
               >
                 <div className="relative z-[1]">
                   {/* Hàng nhãn cố định — tránh absolute đè lên icon */}
                   <div className="mb-3 min-h-[30px] flex items-center justify-start">
                     {(i === 1 || i === 2) && (
-                      <span
+                    <span
                         className={`inline-flex px-2 py-1 text-[10px] sm:text-[11px] font-bold tracking-wide rounded-md border ${i === 1
-                          ? "border-[#B4F500]/55 bg-[#B4F500]/18 text-[#e8ffc4] shadow-[0_0_14px_rgba(196,255,71,0.22)]"
-                          : "border-violet-400/55 bg-violet-950/95 text-violet-50 shadow-[0_0_14px_rgba(139,92,246,0.28)]"
+                          ? "border-[#6E35E8]/60 bg-[#6E35E8]/24 text-[#5F00F0] shadow-[0_0_14px_rgba(95,0,240,0.22)]"
+                          : "border-violet-200 bg-violet-100 text-violet-800 shadow-sm"
                           }`}
                       >
                         {i === 1 ? "Nổi bật" : "Gợi ý mentor"}
                       </span>
                     )}
                   </div>
-                  <div className="absolute top-0 right-0 p-4 opacity-[0.06] group-hover:opacity-[0.14] transition-opacity pointer-events-none">
-                    <span className="text-6xl font-black italic text-white">{s.step}</span>
+                  <div className={`absolute top-0 right-0 p-4 transition-opacity pointer-events-none ${i === 1 ? "opacity-[0.22]" : "opacity-[0.18] group-hover:opacity-[0.26]"}`}>
+                    <span className={`text-6xl font-black italic ${i === 1 ? "text-[#5F00F0]/40" : "text-[#5F00F0]/30"}`}>{s.step}</span>
                   </div>
 
                   <div
-                    className={`relative w-14 h-14 rounded-2xl flex items-center justify-center mb-8 transition-all duration-500 shadow-xl float-icon parallax-layer ${i % 2 === 0
-                      ? "bg-[#B4F500] text-[#0a0a0c] shadow-[0_0_24px_rgba(196,255,71,0.25)]"
-                      : "bg-white/5 text-[#B4F500] border border-white/10 group-hover:bg-[#B4F500]/15 group-hover:border-[#B4F500]/35"
+                    className={`relative w-10 h-10 rounded-xl flex items-center justify-center mb-4 transition-all duration-500 shadow-lg ${i % 2 === 0
+                      ? "bg-[#6E35E8] text-[#ffffff] shadow-[0_0_24px_rgba(167,139,250,0.)]"
+                      : "bg-white/5 text-[#6E35E8] border border-white/10 group-hover:bg-[#6E35E8]/15 group-hover:border-[#6E35E8]/35"
                       }`}
                   >
-                    <s.icon className="h-7 w-7" />
+                    <s.icon className="h-5 w-5" />
                   </div>
 
-                  <h3 className="text-xl font-bold mb-3 text-white parallax-layer font-headline tracking-tight">{s.title}</h3>
-                  <p className="text-white/45 text-sm leading-relaxed">
+                  <h3 className="text-base font-extrabold mb-1.5 text-slate-900 font-headline tracking-tight">{s.title}</h3>
+                  <p className="text-slate-600 text-xs leading-relaxed font-medium whitespace-pre-line">
                     {s.desc}
                   </p>
                 </div>
@@ -1118,18 +1099,23 @@ export function Home() {
           </div>
 
           {/* CTA Section */}
-          <div className="mt-16 flex flex-col items-center">
+          <div className="mt-6 flex flex-col items-center">
             <button
               onClick={() => handleFeatureClick("/dashboard")}
-              className="group relative bg-primary-fixed text-on-primary-fixed px-12 py-5 rounded-full font-black text-xl tracking-tight uppercase transition-all duration-500 hover:scale-105 active:scale-95 shadow-[0_20px_50px_rgba(196,255,71,0.22)]"
+              className="group relative px-8 py-3 rounded-full font-black text-base tracking-tight uppercase transition-all duration-500 hover:scale-105 active:scale-95"
+              style={{
+                background: "linear-gradient(135deg, #B4F500, #8FBC24)",
+                color: "#1F2937",
+                boxShadow: "0 10px 24px rgba(143,188,36,0.42), 0 2px 10px rgba(15,23,42,0.1)",
+              }}
             >
               Bắt đầu ngay
               <div className="absolute inset-0 rounded-full bg-white opacity-0 group-hover:opacity-20 transition-opacity"></div>
             </button>
             <div className="mt-6 flex items-center gap-4">
-              <span className="w-12 h-px bg-white/10"></span>
-              <span className="text-white/40 text-[10px] uppercase tracking-[0.2em] font-bold">Không cần thẻ tín dụng</span>
-              <span className="w-12 h-px bg-white/10"></span>
+              <span className="w-12 h-px bg-slate-200" />
+              <span className="text-slate-500 text-[10px] uppercase tracking-[0.2em] font-bold">Không cần thẻ tín dụng</span>
+              <span className="w-12 h-px bg-slate-200" />
             </div>
           </div>
         </div>
@@ -1137,36 +1123,21 @@ export function Home() {
 
       {/* ═══ INTERVIEW PREVIEW ═══════════════════════════════ */}
       <section
-        className="border-t border-white/[0.07] bg-transparent relative"
-        style={{
-          padding: "64px 0",
-          overflow: "hidden",
-        }}
+        className="relative z-10 h-screen max-h-screen flex flex-col justify-center overflow-x-hidden overflow-y-visible"
       >
-        <div className="section-ambient w-[480px] h-[480px] -top-24 left-[-80px] bg-[#6E35E8]/[0.15]" aria-hidden />
-        <div className="section-ambient w-[460px] h-[460px] bottom-[-140px] right-[0] bg-[#B4F500]/[0.1]" aria-hidden />
         {renderSectionSticks([
           { x: 14, y: 24, size: 32, opacity: 0.42 },
           { x: 91, y: 16, size: 42, opacity: 0.56 },
           { x: 88, y: 72, size: 34, opacity: 0.46 },
         ])}
-        <div
-          className="pointer-events-none absolute inset-0 opacity-[0.05]"
-          style={{
-            backgroundImage:
-              "linear-gradient(rgba(255,255,255,0.35) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.35) 1px, transparent 1px)",
-            backgroundSize: "32px 32px",
-          }}
-          aria-hidden
-        />
-        <div className="max-w-7xl mx-auto px-5 relative z-10">
-          <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+        <div className="max-w-7xl mx-auto px-5 relative z-10 w-full py-2">
+          <div className="grid lg:grid-cols-2 gap-5 lg:gap-8 items-center">
             {/* Left copy */}
-            <div className="glass-card p-6 sm:p-8 lg:p-10">
+            <div className="glass-card !overflow-visible p-4 sm:p-5 lg:p-6">
               <div className="relative z-[1]">
-                <div className="mb-5 h-1 w-10 rounded-full bg-gradient-to-r from-[#B4F500] to-fuchsia-400" aria-hidden />
+                <div className="mb-4 h-1 w-10 rounded-full bg-gradient-to-r from-[#6E35E8] to-[#9B6DFF]" aria-hidden />
                 <span
-                  className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold mb-6 border border-violet-400/30 bg-violet-500/10 text-violet-200"
+                  className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full text-[11px] font-semibold mb-4 border border-violet-400/30 bg-violet-500/10 text-violet-700"
                 >
                   <Microphone
                     className="w-3.5 h-3.5"
@@ -1174,21 +1145,21 @@ export function Home() {
                   Phòng phỏng vấn ảo
                 </span>
                 <h2
-                  className="text-white mb-5 leading-tight cute-heading"
+                  className="text-slate-900 mb-2 leading-[1.42] cute-heading"
                   style={{
-                    fontSize: "clamp(1.875rem, 4vw, 2.5rem)",
+                    fontSize: "clamp(1.55rem, 2.95vw, 2.2rem)",
                   }}
                 >
                   Trải nghiệm phỏng vấn{" "}
-                  <span style={{ color: "#B4F500" }}>
-                    như thật
+                  <span className="font-headline text-[#5F00F0]">
+                    như thật với AI
                   </span>
                 </h2>
                 <p
-                  className="mb-8 leading-relaxed"
+                  className="mb-6 leading-relaxed"
                   style={{
-                    color: "rgba(255,255,255,0.45)",
-                    fontSize: "1.05rem",
+                    color: "#475569",
+                    fontSize: "0.98rem",
                   }}
                 >
                   Phòng phỏng vấn ảo với AI phỏng vấn viên, phản
@@ -1196,30 +1167,29 @@ export function Home() {
                   tiết từng câu trả lời theo mô hình STAR.
                 </p>
 
-                <ul className="space-y-3.5 mb-10">
+                <ul className="space-y-2 mb-5">
                   {[
                     "AI hỏi 5 câu hỏi cá nhân hóa theo JD",
                     "Nhận diện giọng nói tự động",
-                    "Phản hồi tức thì sau mỗi câu trả lời",
                     "Phân tích chi tiết theo mô hình STAR",
                   ].map((item, i) => (
                     <li
                       key={i}
-                      className="flex items-center gap-3"
-                      style={{ color: "rgba(255,255,255,0.7)" }}
+                      className="flex items-start gap-2.5"
+                      style={{ color: "#334155" }}
                     >
                       <div
-                        className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0"
+                        className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full"
                         style={{
-                          background: "rgba(196, 255, 71,0.15)",
+                          background: "rgba(110, 53, 232,0.08)",
                         }}
                       >
                         <Check
-                          className="w-3 h-3"
-                          style={{ color: "#B4F500" }}
+                          className="h-3 w-3 shrink-0"
+                          style={{ color: "#6E35E8" }}
                         />
                       </div>
-                      <span className="text-sm">{item}</span>
+                      <span className="min-w-0 flex-1 text-[13px] leading-relaxed">{item}</span>
                     </li>
                   ))}
                 </ul>
@@ -1227,12 +1197,11 @@ export function Home() {
                 <button
                   type="button"
                   onClick={() => navigateToInterview(navigate)}
-                  className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-semibold transition-all hover:brightness-110 hover:-translate-y-0.5"
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full font-semibold transition-all hover:brightness-110 hover:-translate-y-0.5"
                   style={{
-                    background:
-                      "linear-gradient(135deg, #B4F500, #8fbc24)",
-                    color: "#1a1a1a",
-                    boxShadow: "0 0 28px rgba(196, 255, 71,0.25)",
+                    background: "linear-gradient(135deg, #B4F500, #93D600)",
+                    color: "#0f172a",
+                    boxShadow: "0 8px 20px rgba(15,23,42,0.08)",
                   }}
                 >
                   Thử ngay miễn phí
@@ -1249,61 +1218,58 @@ export function Home() {
       {/* ═══ COURSES SECTION ═════════════════════════════════ */}
       <section
         id="courses"
-        className="relative min-h-screen flex flex-col justify-center py-20 overflow-hidden border-t border-white/[0.06]"
-        style={{ background: "#080808" }}
+        className="relative z-10 h-screen max-h-screen flex flex-col justify-center overflow-x-hidden overflow-y-visible pt-2 md:pt-3 lg:pt-4"
       >
-        <div className="section-ambient w-[620px] h-[620px] -top-44 right-[-180px] bg-[#6E35E8]/[0.18]" aria-hidden />
-        <div className="section-ambient w-[540px] h-[540px] bottom-[-200px] left-[-160px] bg-[#B4F500]/[0.12]" aria-hidden />
         {renderSectionSticks([
-          { x: 12, y: 14, size: 34, opacity: 0.44 },
-          { x: 90, y: 26, size: 46, opacity: 0.58 },
-          { x: 8, y: 76, size: 30, opacity: 0.4 },
-          { x: 84, y: 84, size: 36, opacity: 0.5 },
+          { x: 90, y: 8, size: 32, opacity: 0.44 },
+          { x: 94, y: 38, size: 36, opacity: 0.5 },
+          { x: 6, y: 86, size: 28, opacity: 0.38 },
+          { x: 82, y: 78, size: 34, opacity: 0.46 },
         ])}
-        <div className="absolute top-0 right-[-100px] w-[500px] h-[500px] bg-[#B4F500]/[0.06] blur-[130px] rounded-full" aria-hidden />
-        <div className="absolute bottom-[-100px] left-[-100px] w-[600px] h-[600px] bg-[#6E35E8]/12 blur-[150px] rounded-full" aria-hidden />
 
-        <div className="max-w-7xl mx-auto px-6 relative z-10 w-full py-12">
-          <div className="flex flex-col md:flex-row items-end gap-10 mb-12">
+        <div className="max-w-7xl mx-auto px-6 relative z-10 w-full translate-y-3 py-3.5 md:translate-y-4">
+          <div className="flex flex-col md:flex-row items-end gap-3.5 mb-4">
             <div className="md:w-2/3">
-              <div className="h-1 w-10 rounded-full bg-gradient-to-r from-[#B4F500] to-emerald-400 mb-4" aria-hidden />
-              <span className="font-bold uppercase tracking-[0.2em] text-[10px] mb-3 block text-[#B4F500] drop-shadow-[0_0_12px_rgba(196,255,71,0.25)]">
+              <div className="h-1 w-10 rounded-full bg-gradient-to-r from-[#6E35E8] to-[#9B6DFF] mb-3" aria-hidden />
+              <span className="font-bold uppercase tracking-[0.2em] text-[10px] mb-2 block text-[#6E35E8] drop-shadow-[0_0_12px_rgba(167,139,250,0.)]">
                 Nền tảng học
               </span>
-              <h2 className="text-4xl md:text-6xl font-black tracking-tighter leading-[0.95] text-white mb-6">
-                Học từ chuyên gia,<br />
-                <span className="text-primary-fixed">sửa lỗi ngay.</span>
+              <h2 className="text-[1.35rem] font-black tracking-tighter text-slate-900 mb-2 leading-[1.06] sm:text-2xl md:text-[2.38rem] md:leading-[1.08]">
+                Học từ chuyên gia
+                <span className="mt-0 block font-headline text-[#5F00F0]">
+                  sửa lỗi ngay
+                </span>
               </h2>
-              <p className="text-lg text-zinc-400 leading-relaxed max-w-xl">
+              <p className="text-sm text-slate-600 leading-relaxed max-w-xl">
                 Nâng tầm sự nghiệp với feedback trực tiếp từ Mentor hàng đầu. Hoàn thiện từng câu trả lời thông qua bài tập thực tế.
               </p>
             </div>
             <div className="w-full md:w-1/3 flex justify-end">
               <div className="glass-card !rounded-full px-2 py-1.5 flex items-center gap-3 min-w-0 max-w-full">
                 <div className="relative z-[1] flex items-center gap-3 w-full">
-                  <div className="flex -space-x-3 px-2">
+                  <div className="flex -space-x-3 px-1.5">
                     {[1, 2, 3].map(i => (
-                      <img key={i} src={`https://i.pravatar.cc/100?img=${i + 10}`} alt="Student" className="w-8 h-8 rounded-full border-2 border-white/15 object-cover" />
+                      <img key={i} src={`https://i.pravatar.cc/100?img=${i + 10}`} alt="Student" className="h-8 w-8 rounded-full border-2 border-white/15 object-cover" />
                     ))}
                   </div>
-                  <span className="pr-4 pl-1 text-[11px] font-bold text-[#B4F500]">10k+ Học viên</span>
+                  <span className="pr-3 pl-0.5 text-[11px] font-bold text-[#6E35E8]">10k+ Học viên</span>
                 </div>
               </div>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5 mb-4">
             {COURSES_DATA.slice(0, 3).map((course, idx) => (
               <div
                 key={course.id}
                 onClick={() =>
                   handleFeatureClick(`/courses/${course.id}`)
                 }
-                className="group glass-card overflow-hidden cursor-pointer !rounded-[28px]"
+                className="group glass-card flex h-full min-h-0 cursor-pointer flex-col overflow-hidden !rounded-[24px]"
               >
-                <div className="relative z-[1]">
+                <div className="relative z-[1] flex min-h-0 flex-1 flex-col">
                   {/* Thumbnail */}
-                  <div className="relative h-48 overflow-hidden">
+                  <div className="relative h-[7.75rem] shrink-0 overflow-hidden">
                     <img
                       src={course.thumbnail}
                       alt={course.title}
@@ -1311,54 +1277,63 @@ export function Home() {
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
 
-                    <div className="absolute top-4 left-4 flex gap-2">
-                      <span className="bg-secondary/90 backdrop-blur-md text-white px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">
+                    <div className="absolute top-3.5 left-3.5 flex items-center gap-2">
+                      <span className="inline-flex items-center justify-center bg-black/55 px-2.5 py-1 text-[10px] font-bold uppercase leading-none tracking-wider text-white backdrop-blur-md rounded-full">
                         {course.category}
                       </span>
-                      <span className="bg-black/60 backdrop-blur-md text-white px-3 py-1 rounded-full text-[10px] font-medium flex items-center gap-1.5">
-                        <span className="material-symbols-outlined text-sm">schedule</span>
+                      <span className="inline-flex items-center justify-center gap-1 bg-black/60 px-2.5 py-1 text-[10px] font-medium leading-none text-white backdrop-blur-md rounded-full">
+                        <span className="material-symbols-outlined text-[13px] leading-none">schedule</span>
                         {Math.floor(course.duration / 60)}h {course.duration % 60}m
                       </span>
                     </div>
                     {idx === 0 && (
-                      <span className="absolute top-4 right-4 px-2.5 py-1 text-[10px] font-black tracking-wide uppercase sticker-badge text-primary-fixed">
+                      <span className="absolute top-3.5 right-3.5 inline-flex items-center justify-center rounded-full bg-[#6E35E8] px-2 py-1 text-[10px] font-black uppercase leading-none tracking-wide text-white shadow-md">
                         New
                       </span>
                     )}
 
                     <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-500 scale-90 group-hover:scale-100">
-                      <div className="w-14 h-14 rounded-full bg-primary-fixed/90 flex items-center justify-center shadow-2xl shadow-primary-fixed/30 transform transition-transform border border-white/20 float-icon-delay parallax-layer">
-                        <PlayCircle className="w-7 h-7 text-on-primary-fixed translate-x-0.5" />
+                      <div className="w-[3.35rem] h-[3.35rem] rounded-full flex items-center justify-center shadow-2xl transform transition-transform border-2 border-white/90 float-icon-delay parallax-layer"
+                        style={{ background: "linear-gradient(135deg, #B4F500, #93D600)" }}
+                      >
+                        <PlayCircle className="w-[1.4rem] h-[1.4rem] text-slate-900 translate-x-0.5" />
                       </div>
                     </div>
                   </div>
 
-                  <div className="p-7">
-                    <h3 className="text-xl font-bold mb-5 text-white group-hover:text-primary-fixed transition-colors leading-tight line-clamp-2 parallax-layer">
+                  <div className="flex flex-1 flex-col p-4">
+                    <h3 className="mb-2.5 min-h-[2.7rem] line-clamp-2 break-words text-[0.9375rem] font-bold leading-snug text-slate-900 transition-colors sm:min-h-[2.75rem] group-hover:text-[#6E35E8]">
                       {course.title}
                     </h3>
 
-                    <div className="flex items-center gap-3 mb-6">
+                    <div className="mb-2.5 flex min-h-[2.5rem] shrink-0 items-center gap-2">
                       <img
                         src={course.mentorAvatar}
                         alt={course.mentorName}
-                        className="w-10 h-10 rounded-xl object-cover border border-white/10"
+                        className="h-10 w-10 shrink-0 rounded-xl border border-slate-200 object-cover"
                       />
-                      <div>
-                        <p className="text-sm font-bold text-white">{course.mentorName}</p>
-                        <span className="text-[9px] uppercase tracking-[0.15em] font-black text-zinc-400">
+                      <div className="flex min-w-0 flex-col justify-center gap-0.5">
+                        <p className="text-sm font-bold leading-tight text-slate-900">{course.mentorName}</p>
+                        <span className="text-[9px] font-black uppercase leading-none tracking-[0.15em] text-slate-500">
                           Mentor duyệt
                         </span>
                       </div>
                     </div>
 
-                    <div className="flex items-center justify-between pt-4 border-t border-white/10">
-                      <div className="flex items-center gap-2">
-                        <span className="material-symbols-outlined text-primary-fixed text-lg" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
-                        <span className="font-bold text-white text-sm">{course.rating}</span>
-                        <span className="text-white/35 text-xs">({(course.reviewsCount || 0) + 700})</span>
+                    <div className="mt-auto flex items-center justify-between gap-3 border-t border-slate-100 pt-3.5">
+                      <div className="flex min-w-0 flex-1 items-center gap-1.5">
+                        <span
+                          className="material-symbols-outlined shrink-0 text-[1.125rem] leading-none text-amber-500"
+                          style={{ fontVariationSettings: "'FILL' 1" }}
+                        >
+                          star
+                        </span>
+                        <span className="text-sm font-bold leading-none text-slate-800">{course.rating}</span>
+                        <span className="truncate text-xs leading-none text-slate-500">
+                          ({(course.reviewsCount || 0) + 700})
+                        </span>
                       </div>
-                      <div className="text-lg font-black text-primary-fixed">
+                      <div className="shrink-0 text-lg font-black leading-none tabular-nums text-[#5F00F0]">
                         {new Intl.NumberFormat("vi-VN", {
                           style: "currency",
                           currency: "VND",
@@ -1375,9 +1350,15 @@ export function Home() {
             <button
               type="button"
               onClick={() => requireLoginNavigate(navigate, "/courses")}
-              className="px-10 py-3.5 rounded-full border border-white/15 text-white font-bold hover:bg-white/[0.06] hover:border-[#B4F500]/35 transition-all text-sm"
+              className="group relative px-10 py-3.5 rounded-full font-bold text-sm transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]"
+              style={{
+                background: "linear-gradient(135deg, #B4F500, #8FBC24)",
+                color: "#120B2E",
+                boxShadow: "0 10px 24px rgba(143,188,36,0.42), 0 2px 10px rgba(15,23,42,0.1)",
+              }}
             >
               Xem tất cả khóa học
+              <span className="pointer-events-none absolute inset-0 rounded-full bg-white opacity-0 transition-opacity group-hover:opacity-20" aria-hidden />
             </button>
           </div>
         </div>
@@ -1388,75 +1369,52 @@ export function Home() {
       {/* ═══ TESTIMONIALS ═══════════════════════════════════ */}
       <section
         id="mentors"
-        className="min-h-screen relative overflow-hidden border-t border-white/[0.07]"
-        style={{ background: "#020202" }}
+        className="relative z-10 h-screen max-h-screen overflow-hidden"
       >
-        <div className="section-ambient w-[560px] h-[560px] top-[6%] left-[-180px] bg-[#B4F500]/[0.1]" aria-hidden />
-        <div className="section-ambient w-[620px] h-[620px] bottom-[-220px] right-[-120px] bg-[#6E35E8]/[0.2]" aria-hidden />
         {renderSectionSticks([
-          { x: 10, y: 20, size: 36, opacity: 0.5 },
-          { x: 86, y: 18, size: 42, opacity: 0.54 },
-          { x: 16, y: 80, size: 30, opacity: 0.38 },
+          { x: 78, y: 12, size: 34, opacity: 0.46 },
+          { x: 92, y: 52, size: 36, opacity: 0.5 },
+          { x: 10, y: 86, size: 30, opacity: 0.38 },
         ])}
-        <div
-          className="pointer-events-none absolute inset-0 opacity-[0.05]"
-          style={{
-            backgroundImage:
-              "linear-gradient(rgba(255,255,255,0.35) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.35) 1px, transparent 1px)",
-            backgroundSize: "32px 32px",
-          }}
-          aria-hidden
-        />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-[#B4F500]/[0.04] blur-[150px] rounded-full opacity-60 pointer-events-none" aria-hidden />
-
-        <div className="max-w-7xl mx-auto px-5 lg:px-8 py-20 lg:py-24 relative z-10">
-          <div className="grid lg:grid-cols-12 gap-10 lg:gap-8 items-center lg:translate-y-5">
+        <div className="max-w-7xl mx-auto px-5 lg:px-8 py-0 h-full flex flex-col justify-center relative z-10">
+          <div className="grid lg:grid-cols-12 gap-6 lg:gap-6 items-start">
             <div className="lg:col-span-5">
-              <h2 className="text-white mb-6 cute-heading text-3xl md:text-5xl leading-[1.08]">
-                Người dùng nói gì về{" "}
-                <span
-                  style={{
-                    background: "linear-gradient(135deg, #6E35E8, #B4F500)",
-                    WebkitBackgroundClip: "text",
-                    WebkitTextFillColor: "transparent",
-                    backgroundClip: "text",
-                  }}
-                >
-                  ProInterview
-                </span>
+              <h2 className="text-slate-900 mb-0 cute-heading flex flex-col items-start gap-0 text-[1.65rem] leading-none sm:text-3xl md:text-4xl lg:text-[2.55rem]">
+                <span className="block leading-none tracking-tight">Người dùng nói gì về</span>
+                <img
+                  src="/Logo.png"
+                  alt="ProInterview"
+                  className="-mb-2.5 -ml-[1.1rem] -mt-[1.08em] block h-[7.35rem] w-auto max-w-[min(100%,36rem)] object-contain object-left object-top contrast-[1.06] sm:-mb-3 sm:-ml-[1.2rem] sm:h-[8.15rem] sm:-mt-[1.14em] md:-mb-3.5 md:h-[9.1rem] md:-ml-[1.35rem] md:-mt-[1.14em] lg:-mb-4 lg:h-[10rem] lg:-ml-[1.4rem] lg:-mt-[1.18em]"
+                  decoding="async"
+                />
               </h2>
-              <p className="text-zinc-300/80 text-base md:text-lg leading-relaxed max-w-xl">
+              <p className="mt-0 text-slate-600 text-[0.9375rem] leading-relaxed max-w-xl">
                 Kết hợp AI thông minh và mạng lưới Mentor thực chiến để giúp bạn bứt tốc qua mọi vòng phỏng vấn.
                 Đây là phản hồi thật từ học viên đã nhận offer.
               </p>
 
-              <div className="mt-8 flex items-center gap-4">
+              <div className="mt-4 flex items-center gap-3">
                 <div className="flex -space-x-3">
                   {TESTIMONIALS.map((t) => (
                     <div
                       key={`avatar-${t.name}`}
-                      className={`w-10 h-10 rounded-full bg-gradient-to-br ${t.grad} border-2 border-[#020202] flex items-center justify-center text-[11px] font-black text-white`}
+                      className={`w-9 h-9 rounded-full bg-gradient-to-br ${t.grad} border-2 border-white flex items-center justify-center text-[11px] font-black text-white shadow-sm`}
                     >
                       {t.avatar}
                     </div>
                   ))}
                 </div>
-                <p className="text-sm text-zinc-300">
-                  <span className="text-[#B4F500] font-black">500+</span> ứng viên đã thành công
+                <p className="text-[0.9375rem] text-slate-600">
+                  <span className="text-[#6E35E8] font-black">500+</span> ứng viên đã thành công
                 </p>
               </div>
             </div>
 
             <div className="lg:col-span-7">
-              <div className="flex justify-center mb-2 -mt-3">
-                <div className="scale-[1.62] origin-center">
-                  <BrandLogo />
-                </div>
-              </div>
-              <div className="mb-4">
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#B4F500]/12 border border-[#B4F500]/35 text-[10px] uppercase tracking-[0.2em] text-[#e8ffc4] font-black shadow-[0_0_24px_rgba(196,255,71,0.18)]">
-                  <Sparkles className="size-3 text-[#B4F500]" />
-                  Bình luận nổi bật
+              <div className="mb-3">
+                <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-violet-50 border border-violet-200 text-[11px] uppercase tracking-[0.18em] text-[#5B21B6] font-black">
+                  <SparkleGlyph className="size-3.5" />
+                  Đánh giá nổi bật
                 </div>
               </div>
               <div
@@ -1466,44 +1424,47 @@ export function Home() {
                   WebkitMaskImage: "linear-gradient(to right, transparent 0%, black 12%, black 88%, transparent 100%)",
                 }}
               >
-                <div className="space-y-4">
-                  <div className="flex flex-col sm:flex-row gap-4 sm:gap-5 sm:-translate-x-6">
-                    {TESTIMONIALS.map((t) => (
-                      <div key={`row1-${t.name}`} className="min-w-0 sm:min-w-[230px] flex-1 bg-white/[0.08] border border-white/20 rounded-2xl p-4 backdrop-blur-sm shadow-[0_12px_35px_rgba(0,0,0,0.35)]">
-                        <div className="flex items-center gap-2 mb-2">
-                          <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${t.grad} flex items-center justify-center`}>
-                            <CheckCircle2 className="size-4 text-white" />
+                <div className="space-y-5">
+                  <div className="testimonial-marquee-row">
+                    <div className="testimonial-marquee-track">
+                      {[...TESTIMONIALS, ...TESTIMONIALS].map((t, i) => (
+                        <div
+                          key={`marq1-${i}-${t.name}`}
+                          className="shrink-0 w-[min(17.5rem,calc(100vw-3rem))] sm:w-[15.5rem] bg-white border border-slate-200 rounded-2xl p-5 shadow-sm"
+                        >
+                          <div className="flex items-center gap-2.5 mb-2.5">
+                            <div className={`w-9 h-9 shrink-0 rounded-lg bg-gradient-to-br ${t.grad} flex items-center justify-center`}>
+                              <CheckCircle2 className="size-[1.125rem] text-white" />
+                            </div>
+                            <p className="text-[11px] sm:text-xs uppercase tracking-widest text-[#6E35E8] font-black leading-tight">{t.tag}</p>
                           </div>
-                          <p className="text-[10px] uppercase tracking-widest text-[#B4F500] font-black">{t.tag}</p>
+                          <p className="text-[0.9375rem] sm:text-base text-slate-700 leading-snug line-clamp-2">"{t.text}"</p>
                         </div>
-                        <p className="text-sm text-zinc-200 line-clamp-2">"{t.text}"</p>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
                   </div>
 
-                  <div className="flex flex-col sm:flex-row gap-4 sm:gap-5 sm:translate-x-8">
-                    {TESTIMONIALS.map((t) => (
-                      <div key={`row2-${t.role}`} className="min-w-0 sm:min-w-[230px] flex-1 bg-white/[0.08] border border-white/20 rounded-2xl p-4 backdrop-blur-sm shadow-[0_12px_35px_rgba(0,0,0,0.35)]">
-                        <div className="flex gap-1 mb-2">
-                          {[...Array(t.stars)].map((_, j) => (
-                            <Star key={`${t.name}-s-${j}`} className="size-3.5 text-yellow-400 fill-yellow-400" />
-                          ))}
+                  <div className="testimonial-marquee-row">
+                    <div className="testimonial-marquee-track testimonial-marquee-track--alt">
+                      {[...TESTIMONIALS, ...TESTIMONIALS].map((t, i) => (
+                        <div
+                          key={`marq2-${i}-${t.name}`}
+                          className="shrink-0 w-[min(17.5rem,calc(100vw-3rem))] sm:w-[15.5rem] bg-white border border-slate-200 rounded-2xl p-5 shadow-sm"
+                        >
+                          <div className="flex gap-1 mb-2.5">
+                            {[...Array(t.stars)].map((_, j) => (
+                              <Star key={`${t.name}-s-${i}-${j}`} className="size-4 text-yellow-400 fill-yellow-400" />
+                            ))}
+                          </div>
+                          <p className="text-[0.9375rem] sm:text-base text-slate-700 leading-snug line-clamp-2 mb-2.5">"{t.text}"</p>
+                          <p className="text-sm text-slate-600 font-semibold">{t.name}</p>
                         </div>
-                        <p className="text-sm text-zinc-200 line-clamp-2 mb-2">"{t.text}"</p>
-                        <p className="text-[11px] text-zinc-400 font-semibold">{t.name}</p>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
                   </div>
-
                 </div>
-                <div className="pointer-events-none absolute inset-y-0 left-0 w-14 bg-gradient-to-r from-[#020202] via-[#020202]/70 to-transparent blur-md" />
-                <div className="pointer-events-none absolute inset-y-0 right-0 w-14 bg-gradient-to-l from-[#020202] via-[#020202]/70 to-transparent blur-md" />
-              </div>
-              <div className="hidden lg:block absolute right-4 top-14 opacity-30">
-                <Sparkle className="size-10 text-[#B4F500]" />
-              </div>
-              <div className="hidden lg:block absolute right-24 bottom-10 opacity-25">
-                <Sparkles className="size-12 text-violet-400" />
+                <div className="pointer-events-none absolute inset-y-0 left-0 w-14 bg-gradient-to-r from-[#f3f0f9] via-[#f3f0f9]/70 to-transparent blur-md" />
+                <div className="pointer-events-none absolute inset-y-0 right-0 w-14 bg-gradient-to-l from-[#f3f0f9] via-[#f3f0f9]/70 to-transparent blur-md" />
               </div>
             </div>
           </div>
@@ -1513,48 +1474,41 @@ export function Home() {
       {/* ═══ PRICING SECTION ═════════════════════════════════════ */}
       <section
         id="pricing"
-        className="min-h-screen flex flex-col justify-center py-24 relative overflow-hidden bg-transparent border-t border-white/[0.06]"
+        className="relative z-10 h-screen max-h-screen flex flex-col justify-center overflow-hidden"
       >
-        <div className="section-ambient w-[620px] h-[620px] -top-44 left-[-180px] bg-[#6E35E8]/[0.16]" aria-hidden />
-        <div className="section-ambient w-[560px] h-[560px] bottom-[-180px] right-[-160px] bg-[#B4F500]/[0.12]" aria-hidden />
         {renderSectionSticks([
-          { x: 12, y: 16, size: 34, opacity: 0.44 },
-          { x: 90, y: 22, size: 44, opacity: 0.58 },
-          { x: 86, y: 78, size: 36, opacity: 0.48 },
+          { x: 10, y: 20, size: 30, opacity: 0.44 },
+          { x: 82, y: 28, size: 32, opacity: 0.5 },
+          { x: 78, y: 74, size: 32, opacity: 0.46 },
         ])}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-24 w-[600px] h-[300px] bg-[#B4F500]/[0.08] blur-[120px] rounded-full pointer-events-none" aria-hidden />
 
-        <div className="max-w-7xl mx-auto px-6 relative z-10 w-full py-12">
-          <header className="text-center mb-10">
-            <div className="flex justify-center mb-4">
-              <span className="h-1 w-10 rounded-full bg-gradient-to-r from-[#B4F500] to-emerald-400" />
+        <div className="max-w-7xl mx-auto px-6 relative z-10 w-full">
+          <header className="text-center mb-6">
+            <div className="flex justify-center mb-3">
+              <span className="h-1 w-10 rounded-full bg-gradient-to-r from-[#6E35E8] to-[#9B6DFF]" />
             </div>
-            <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#B4F500]/12 border border-[#B4F500]/35 text-[#e8ffc4] text-[10px] font-black tracking-widest uppercase mb-4 shadow-[0_0_20px_rgba(196,255,71,0.12)]">
-              <Sparkles className="size-3 text-[#B4F500]" />
-              Đầu tư cho tương lai
-            </span>
-            <h2 className="text-3xl md:text-5xl font-black font-headline tracking-tighter mb-3 leading-tight text-white">
-              Bảng giá <span className="text-primary-fixed">linh hoạt</span>
+            <h2 className="text-2xl md:text-3xl font-black font-headline tracking-tighter mb-2 leading-tight text-slate-900">
+            Sẵn sàng hơn cho <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#5F00F0] to-[#9B6DFF]">mọi buổi phỏng vấn</span>
             </h2>
-            <p className="text-zinc-400 max-w-xl mx-auto text-base">
-              Chọn gói giải pháp phù hợp với lộ trình sự nghiệp của bạn.
+            <p className="text-slate-600 max-w-xl mx-auto text-sm">
+            Chọn gói phù hợp để luyện tập, cải thiện và sẵn sàng chinh phục nhà tuyển dụng.
             </p>
           </header>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 items-stretch">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-5 items-stretch">
             {/* Free Tier */}
-            <div className="glass-card p-8 !rounded-[28px] flex flex-col h-full group">
+            <div className="glass-card p-5 !rounded-[20px] flex flex-col h-full group">
               <div className="relative z-[1] flex flex-col flex-1">
-                <div className="mb-6">
-                  <h3 className="font-headline font-bold text-lg mb-1 text-white">Cơ bản (Free)</h3>
+                <div className="mb-3">
+                  <h3 className="font-headline font-bold text-lg mb-1 text-slate-900">Free</h3>
                   <div className="flex items-baseline gap-1">
-                    <span className="text-3xl font-black font-headline text-white">0đ</span>
+                    <span className="text-2xl font-black font-headline text-slate-900">0đ</span>
                     <span className="text-zinc-500 text-xs">/tháng</span>
                   </div>
                 </div>
-                <ul className="space-y-3 mb-8 flex-grow">
-                  {["2 buổi AI Interview thử nghiệm", "3 lần phân tích CV/JD", "10 câu hỏi mẫu theo ngành"].map((f, i) => (
-                    <li key={i} className="flex items-start gap-2 text-sm text-zinc-300">
+                <ul className="space-y-2 mb-4 flex-grow">
+                  {["3/5 câu hỏi phỏng vấn cùng AI", "1 lần phân tích CV/JD", "Bộ câu hỏi phỏng vấn theo ngành nghề"].map((f, i) => (
+                    <li key={i} className="flex items-start gap-2 text-sm text-slate-700">
                       <CheckCircle2 className="size-4 shrink-0 text-secondary" />
                       {f}
                     </li>
@@ -1563,7 +1517,7 @@ export function Home() {
                 <button
                   type="button"
                   onClick={() => requireLoginNavigate(navigate, "/dashboard")}
-                  className="w-full py-3 rounded-full border border-white/10 text-white font-bold text-sm hover:bg-white/5 transition-all mt-auto"
+                  className="w-full py-3 rounded-full border border-slate-200 bg-white text-slate-900 font-bold text-sm hover:bg-slate-50 transition-all mt-auto"
                 >
                   Bắt đầu ngay
                 </button>
@@ -1571,21 +1525,18 @@ export function Home() {
             </div>
 
             {/* Pro Tier */}
-            <div className="relative glass-card p-8 !rounded-[28px] flex flex-col h-full border-2 border-primary-fixed md:scale-[1.04] z-10 shadow-[0_18px_45px_rgba(196,255,71,0.18)] !overflow-visible">
-              <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary-fixed text-on-primary-fixed px-3 py-0.5 rounded-full text-[10px] font-black tracking-widest uppercase z-[2] shadow-[0_0_20px_rgba(196,255,71,0.35)]">
-                PHỔ BIẾN NHẤT
-              </div>
-              <div className="relative z-[1] flex flex-col flex-1 pt-2">
-                <div className="mb-6">
-                  <h3 className="font-headline font-bold text-lg mb-1 text-white">Chuyên nghiệp (Pro)</h3>
+            <div className="glass-card p-5 !rounded-[20px] flex flex-col h-full group">
+              <div className="relative z-[1] flex flex-col flex-1">
+                <div className="mb-3">
+                  <h3 className="font-headline font-bold text-lg mb-1 text-slate-900">Pro</h3>
                   <div className="flex items-baseline gap-1">
-                    <span className="text-3xl font-black font-headline text-white">79.000đ</span>
-                    <span className="text-zinc-400 text-xs">/tháng</span>
+                    <span className="text-2xl font-black font-headline text-slate-900">79.000đ</span>
+                    <span className="text-slate-500 text-xs">/tháng</span>
                   </div>
                 </div>
-                <ul className="space-y-3 mb-8 flex-grow">
+                <ul className="space-y-2 mb-4 flex-grow">
                   {["10 buổi AI Interview/tháng", "Nhận diện giọng nói AI", "20 lần phân tích CV/JD", "Phản hồi chi tiết từng câu"].map((f, i) => (
-                    <li key={i} className="flex items-start gap-2 text-sm font-bold text-white">
+                    <li key={i} className="flex items-start gap-2 text-sm text-slate-700">
                       <CheckCircle2 className="size-4 shrink-0 text-primary-fixed" />
                       {f}
                     </li>
@@ -1599,7 +1550,12 @@ export function Home() {
                       "/checkout?plan=starterPro&billing=monthly&planPrice=79000",
                     )
                   }
-                  className="w-full py-3 rounded-full bg-primary-fixed text-on-primary-fixed font-black text-sm shadow-[0px_0px_20px_rgba(191,255,0,0.3)] hover:brightness-110 transition-all mt-auto"
+                  className="w-full py-3 rounded-full font-black text-sm transition-all mt-auto hover:brightness-105"
+                  style={{
+                    background: "linear-gradient(135deg, #B4F500, #93D600)",
+                    color: "#0f172a",
+                    boxShadow: "0 8px 20px rgba(15,23,42,0.1)",
+                  }}
                 >
                   Nâng cấp Pro
                 </button>
@@ -1607,18 +1563,21 @@ export function Home() {
             </div>
 
             {/* Elite Tier */}
-            <div className="glass-card p-8 !rounded-[28px] flex flex-col h-full border border-secondary/40 group !overflow-visible">
-              <div className="relative z-[1] flex flex-col flex-1">
-                <div className="mb-6">
-                  <h3 className="font-headline font-bold text-lg mb-1 text-secondary-fixed">Thượng hạng (Elite)</h3>
+            <div className="relative glass-card p-5 !rounded-[20px] flex flex-col h-full border-2 border-primary-fixed z-10 !overflow-visible group">
+              <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary-fixed text-on-primary-fixed px-3 py-0.5 rounded-full text-[10px] font-black tracking-widest uppercase z-[2] shadow-[0_0_20px_rgba(167,139,250,0.)]">
+                PHỔ BIẾN NHẤT
+              </div>
+              <div className="relative z-[1] flex flex-col flex-1 pt-1">
+                <div className="mb-3">
+                  <h3 className="font-headline font-bold text-lg mb-1 text-secondary-fixed">Elite</h3>
                   <div className="flex items-baseline gap-1">
-                    <span className="text-3xl font-black font-headline text-white">99.000đ</span>
+                    <span className="text-2xl font-black font-headline text-slate-900">99.000đ</span>
                     <span className="text-zinc-500 text-xs">/tháng</span>
                   </div>
                 </div>
-                <ul className="space-y-3 mb-8 flex-grow">
+                <ul className="space-y-2 mb-4 flex-grow">
                   {["AI Interview KHÔNG GIỚI HẠN", "Phân tích hành vi & tư thế", "Nhận diện giọng nói Turbo", "Hỗ trợ ưu tiên 24/7"].map((f, i) => (
-                    <li key={i} className="flex items-start gap-2 text-sm font-bold text-white">
+                    <li key={i} className="flex items-start gap-2 text-sm text-slate-700">
                       <ShieldCheck className="size-4 shrink-0 text-secondary-fixed" />
                       {f}
                     </li>
@@ -1632,7 +1591,12 @@ export function Home() {
                       "/checkout?plan=elitePro&billing=monthly&planPrice=99000",
                     )
                   }
-                  className="w-full py-3 rounded-full border border-secondary/50 text-secondary-fixed font-bold text-sm hover:bg-secondary/10 transition-all mt-auto"
+                  className="w-full py-3 rounded-full font-bold text-sm transition-all mt-auto hover:brightness-105"
+                  style={{
+                    background: "linear-gradient(135deg, #B4F500, #93D600)",
+                    color: "#0f172a",
+                    boxShadow: "0 8px 20px rgba(15,23,42,0.1)",
+                  }}
                 >
                   Nâng cấp Elite
                 </button>
@@ -1641,15 +1605,21 @@ export function Home() {
           </div>
 
           {/* CTA Section */}
-          <div className="mt-14 glass-card p-8 sm:p-10 !rounded-[28px] text-center relative overflow-hidden">
+          <div className="mt-4 glass-card py-3 px-4 sm:py-3.5 sm:px-5 !rounded-[20px] text-center relative overflow-hidden">
             <div className="relative z-[1]">
-              <h2 className="text-3xl font-headline font-black mb-4 text-white">Bạn vẫn còn băn khoăn?</h2>
-              <p className="text-zinc-400 mb-8 max-w-xl mx-auto">Thử gói Free để trải nghiệm sức mạnh của AI. Không cần thẻ tín dụng.</p>
-              <div className="flex flex-col md:flex-row items-center justify-center gap-6">
+              <h2 className="text-base sm:text-lg font-headline font-black mb-0.5 text-slate-900">Sẵn sàng cho buổi phỏng vấn tiếp theo?</h2>
+              <p className="text-slate-600 mb-2 text-sm max-w-xl mx-auto leading-snug">Trải nghiệm miễn phí và bắt đầu luyện tập cùng AI ngay hôm nay.
+              </p>
+              <div className="flex items-center justify-center">
                 <button
                   type="button"
                   onClick={() => requireLoginNavigate(navigate, "/dashboard")}
-                  className="bg-primary-fixed text-on-primary-fixed font-black px-10 py-3 rounded-full hover:scale-105 transition-all shadow-[0_0_28px_rgba(196,255,71,0.25)]"
+                  className="font-black px-7 py-2 rounded-full text-sm hover:scale-105 transition-all"
+                  style={{
+                    background: "linear-gradient(135deg, #B4F500, #93D600)",
+                    color: "#0f172a",
+                    boxShadow: "0 8px 20px rgba(15,23,42,0.1)",
+                  }}
                 >
                   Bắt đầu miễn phí
                 </button>
@@ -1660,7 +1630,7 @@ export function Home() {
       </section>
 
       {/* ═══ FOOTER ══════════════════════════════════════════ */}
-      <Footer variant="dark" />
+      <Footer variant="light" />
     </div>
   );
 }

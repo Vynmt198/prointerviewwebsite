@@ -10,7 +10,42 @@ export class AuthController {
       if (!result.ok) {
         return res.status(result.status).json({ success: false, error: result.error });
       }
-      res.status(201).json({ success: true });
+      res.status(201).json({ 
+        success: true, 
+        message: "Đăng ký thành công. Vui lòng kiểm tra email để xác thực tài khoản.",
+        verifyUrl: result.verifyUrl, // Cho dev
+        verifyToken: result.verifyToken 
+      });
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  static async verifyEmail(req, res, next) {
+    try {
+      const { token } = req.query;
+      const result = await authService.verifyEmailToken(token);
+      if (!result.ok) {
+        return res.status(result.status).json({ success: false, error: result.error });
+      }
+      res.json({ success: true, message: "Xác thực email thành công! Bạn có thể đăng nhập ngay bây giờ." });
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  static async resendVerification(req, res, next) {
+    try {
+      const { email } = req.body;
+      const result = await authService.requestEmailVerification(email);
+      if (!result.ok) {
+        return res.status(result.status).json({ success: false, error: result.error });
+      }
+      res.json({ 
+        success: true, 
+        message: "Đã gửi lại email xác thực. Vui lòng kiểm tra hộp thư của bạn.",
+        verifyToken: result.verifyToken // Cho dev
+      });
     } catch (err) {
       next(err);
     }
@@ -155,11 +190,13 @@ export class AuthController {
   static async forgotPassword(req, res, next) {
     try {
       const result = await authService.requestPasswordReset(req.body?.email, req);
-      // Luôn 200 để tránh leak email tồn tại.
-      const payload = { success: true };
-      if (result?.resetUrl) payload.resetUrl = result.resetUrl;
-      if (result?.resetToken) payload.resetToken = result.resetToken;
-      res.json(payload);
+      // Trả về success: true kèm message để người dùng biết mail đã được gửi.
+      res.json({ 
+        success: true, 
+        message: "Nếu email tồn tại trong hệ thống, một liên kết đặt lại mật khẩu đã được gửi đi.",
+        resetUrl: result?.resetUrl, // Cho dev
+        resetToken: result?.resetToken // Cho dev
+      });
     } catch (err) {
       next(err);
     }

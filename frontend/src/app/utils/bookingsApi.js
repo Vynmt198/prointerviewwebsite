@@ -1,4 +1,5 @@
 import { authFetch, hasAuthCredentials } from "./auth.js";
+import { apiUrl } from "./api.js";
 
 const jsonHeaders = {
   Accept: "application/json",
@@ -94,6 +95,14 @@ export async function cancelBooking(id, body = {}) {
   return authedSend("DELETE", `/api/bookings/${encodeURIComponent(id)}`, body);
 }
 
+/** Khách báo đã CK; `reference` tuỳ chọn (FT…). Có thể gửi mã đơn hoặc để trống — VietQR đã gắn nội dung. */
+export async function submitBookingTransferReference(bookingId, reference) {
+  if (!bookingId) return { success: false, error: "Thiếu id booking." };
+  return authedSend("PATCH", `/api/bookings/${encodeURIComponent(bookingId)}/submit-transfer`, {
+    reference: String(reference ?? "").trim(),
+  });
+}
+
 export async function rescheduleBooking(id, body) {
   if (!id) return { success: false, error: "Thiếu id." };
   return authedSend("PATCH", `/api/bookings/${encodeURIComponent(id)}/reschedule`, body ?? {});
@@ -112,7 +121,7 @@ export async function mentorCancelBooking(id, body = {}) {
 export async function fetchBookedSlots(mentorId) {
   if (!mentorId) return { success: false, error: "Thiếu mentorId." };
   try {
-    const res = await fetch(`${import.meta.env.VITE_API_URL}/api/bookings/mentor/${encodeURIComponent(mentorId)}/booked-slots`);
+    const res = await fetch(apiUrl(`/api/bookings/mentor/${encodeURIComponent(mentorId)}/booked-slots`));
     const body = await res.json().catch(() => ({}));
     if (!res.ok) return { success: false, error: body.error || "Lỗi tải lịch bận." };
     return { success: true, booked: body.booked ?? {} };

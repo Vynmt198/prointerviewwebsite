@@ -4,6 +4,7 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { OAuth2Client } from "google-auth-library";
 import { User, toPublicUser } from "../models/User.js";
+import * as emailService from "./emailService.js";
 
 const SALT_ROUNDS = 10;
 const MIN_PASSWORD = 6;
@@ -11,6 +12,7 @@ const MAX_AUTH_SESSIONS = 10;
 const MAX_FAILED_LOGINS = 5;
 const LOCKOUT_MINUTES = 15;
 const RESET_TOKEN_MINUTES = 20;
+const VERIFY_TOKEN_DAYS = 3;
 
 function sha256Hex(input) {
   return crypto.createHash("sha256").update(String(input ?? ""), "utf8").digest("hex");
@@ -235,11 +237,15 @@ export async function requestPasswordReset(emailRaw, req) {
   await user.save();
 
   const isProd = String(process.env.NODE_ENV || "").toLowerCase() === "production";
+  const origin = typeof process.env.CORS_ORIGIN === "string" ? process.env.CORS_ORIGIN.split(",")[0].trim() : "http://localhost:5173";
+  const resetUrl = `${origin.replace(/\/$/, "")}/#/reset-password?token=${encodeURIComponent(token)}`;
+
+  // Gửi email thực tế
+  await emailService.sendResetPasswordEmail(user.email, user.name, resetUrl);
+
   if (isProd) return { ok: true };
 
-  // Dev convenience: FE có thể hiển thị link reset.
-  const origin = typeof process.env.CORS_ORIGIN === "string" ? process.env.CORS_ORIGIN.trim() : "http://localhost:5173";
-  const resetUrl = `${origin.replace(/\/$/, "")}/reset-password?token=${encodeURIComponent(token)}`;
+  // Dev convenience: FE có thể hiển thị link reset trực tiếp trong response
   return { ok: true, resetToken: token, resetUrl };
 }
 
@@ -326,19 +332,93 @@ export async function registerUser(body) {
 
   try {
     const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
-    await User.create({
+    
+    // Tạo token xác thực email
+    const verifyToken = crypto.randomBytes(32).toString("hex");
+    const verifyTokenHash = sha256Hex(verifyToken);
+    const verifyExpiresAt = new Date(Date.now() + VERIFY_TOKEN_DAYS * 24 * 60 * 60 * 1000);
+
+    const newUser = await User.create({
       email: trimmedEmail,
       passwordHash,
       name: trimmedName,
       role: userRole,
+      emailVerificationTokenHash: verifyTokenHash,
+      emailVerificationExpiresAt: verifyExpiresAt,
+      isEmailVerified: false,
     });
-    return { ok: true };
+
+    // Gửi email xác thực
+    const origin = typeof process.env.CORS_ORIGIN === "string" ? process.env.CORS_ORIGIN.split(",")[0].trim() : "http://localhost:5173";
+    const verifyUrl = `${origin.replace(/\/$/, "")}/#/verify-email?token=${encodeURIComponent(verifyToken)}`;
+    
+    await emailService.sendVerificationEmail(trimmedEmail, trimmedName, verifyUrl);
+
+    return { ok: true, verifyToken: verifyToken }; // Trả về token ở dev để dễ test
   } catch (err) {
     if (err.code === 11000) {
       return { ok: false, status: 409, error: "Email này đã được đăng ký. Vui lòng đăng nhập." };
     }
     throw err;
   }
+}
+
+/**
+ * Xác thực email bằng token
+ */
+export async function verifyEmailToken(token) {
+  if (!token) return { ok: false, status: 400, error: "Thiếu token xác thực." };
+
+  const tokenHash = sha256Hex(token);
+  const user = await User.findOne({
+    emailVerificationTokenHash: tokenHash,
+    emailVerificationExpiresAt: { $gt: new Date() },
+  }).select("+emailVerificationTokenHash +emailVerificationExpiresAt");
+
+  if (!user) {
+    return { ok: false, status: 400, error: "Link xác thực không hợp lệ hoặc đã hết hạn." };
+  }
+
+  user.isEmailVerified = true;
+  user.emailVerificationTokenHash = "";
+  user.emailVerificationExpiresAt = null;
+  await user.save();
+
+  return { ok: true };
+}
+
+/**
+ * Gửi lại email xác thực
+ */
+export async function requestEmailVerification(emailRaw) {
+  const email = typeof emailRaw === "string" ? emailRaw.trim().toLowerCase() : "";
+  if (!email) return { ok: false, status: 400, error: "Thiếu email." };
+
+  const user = await User.findOne({ email }).select("+emailVerificationTokenHash +emailVerificationExpiresAt");
+  if (!user) {
+    return { ok: false, status: 404, error: "Không tìm thấy tài khoản với email này." };
+  }
+
+  if (user.isEmailVerified) {
+    return { ok: false, status: 400, error: "Email này đã được xác thực trước đó." };
+  }
+
+  // Tạo token mới
+  const verifyToken = crypto.randomBytes(32).toString("hex");
+  const verifyTokenHash = sha256Hex(verifyToken);
+  const verifyExpiresAt = new Date(Date.now() + VERIFY_TOKEN_DAYS * 24 * 60 * 60 * 1000);
+
+  user.emailVerificationTokenHash = verifyTokenHash;
+  user.emailVerificationExpiresAt = verifyExpiresAt;
+  await user.save();
+
+  // Gửi email
+  const origin = typeof process.env.CORS_ORIGIN === "string" ? process.env.CORS_ORIGIN.split(",")[0].trim() : "http://localhost:5173";
+  const verifyUrl = `${origin.replace(/\/$/, "")}/#/verify-email?token=${encodeURIComponent(verifyToken)}`;
+  
+  await emailService.sendVerificationEmail(user.email, user.name, verifyUrl);
+
+  return { ok: true, verifyToken: verifyToken };
 }
 
 export async function loginUser(body, req) {

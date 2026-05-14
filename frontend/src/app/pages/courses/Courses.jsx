@@ -31,6 +31,7 @@ import {
 import { fetchCourses } from "../../utils/courseApi";
 import { enrollmentApi } from "../../utils/enrollmentApi";
 import { normalizeCourseStats } from "../../utils/courseStats";
+import { enrollmentAccessGranted } from "../../utils/enrollmentAccess.js";
 
 const CATEGORIES = [
   "Tất cả",
@@ -252,7 +253,7 @@ function RecentActivity({
 }) {
   const navigate = useNavigate();
   const inProgress = items.filter(
-    (i) => i.progressPct > 0 && !i.isCompleted,
+    (i) => i.hasPaidAccess && i.progressPct > 0 && !i.isCompleted,
   );
   if (inProgress.length === 0) return null;
 
@@ -384,7 +385,9 @@ export function Courses() {
               },
               completedLessons: e.completedLessons || [],
               progressPct: pct,
-              isCompleted: pct === 100
+              isCompleted: pct === 100,
+              hasPaidAccess: enrollmentAccessGranted(e),
+              coursePrice: Number(c.price ?? 0),
             };
           });
         setEnrolledCourses(mapped);
@@ -661,14 +664,14 @@ export function Courses() {
                             />
                             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
 
-                            <div className="absolute top-4 left-4 flex gap-2">
-                              <span className="bg-secondary/90 backdrop-blur-md text-white px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">
+                            <div className="absolute top-4 left-4 flex items-center gap-2">
+                              <span className="inline-flex items-center justify-center bg-secondary/90 px-3 py-1 text-[10px] font-bold uppercase leading-none tracking-wider text-white backdrop-blur-md rounded-full">
                                 {course.category}
                               </span>
                             </div>
 
                             <div className="absolute top-4 right-4">
-                              <span className="bg-black/40 backdrop-blur-md text-white/90 px-3 py-1 rounded-full text-[10px] font-bold border border-white/10">
+                              <span className="inline-flex items-center justify-center border border-white/10 bg-black/40 px-3 py-1 text-[10px] font-bold uppercase leading-none text-white/90 backdrop-blur-md rounded-full">
                                 {course.level}
                               </span>
                             </div>
@@ -802,7 +805,15 @@ export function Courses() {
                       <EnrolledCourseCard
                         key={item.course.id}
                         item={item}
-                        onContinue={() => navigate(`/courses/${item.course.id}/learn`)}
+                        onContinue={() => {
+                          if (item.hasPaidAccess) {
+                            navigate(`/courses/${item.course.id}/learn`);
+                          } else {
+                            navigate(
+                              `/checkout?type=course&courseId=${item.course.id}&price=${Math.round(item.coursePrice || 0)}`,
+                            );
+                          }
+                        }}
                       />
                     ))}
                   </div>

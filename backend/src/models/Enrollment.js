@@ -19,6 +19,16 @@ const enrollmentSchema = new Schema(
 
     pricePaid: { type: Number, default: 0 },
     paymentRef: { type: String, default: "" },
+    /** pending = chờ CK; paid = đã học được (hoặc khóa miễn phí). Bản ghi cũ không có field → coi như paid. */
+    paymentStatus: { type: String, enum: ["pending", "paid"], required: false },
+    paymentMethod: { type: String, default: "" },
+    transferSubmittedAt: { type: Date },
+    /** Audit admin xác nhận CK */
+    transferConfirmedAt: { type: Date },
+    transferConfirmedBy: { type: Schema.Types.ObjectId, ref: "User" },
+    transferForceConfirm: { type: Boolean, default: false },
+    transferForceNote: { type: String, default: "" },
+    paidAt: { type: Date },
   },
   { collection: "enrollments", timestamps: true }
 );
