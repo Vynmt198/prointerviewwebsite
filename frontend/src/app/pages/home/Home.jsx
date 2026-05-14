@@ -165,10 +165,10 @@ const STEPS = [
   },
   {
     step: "04",
-    icon: TrendUp,
-    title: "Theo dõi tiến độ",
-    desc: "Hệ thống hóa quá trình luyện tập,\ntheo dõi sự tiến bộ qua từng buổi phỏng vấn.",
-    color: "#b8f600",
+    icon: GraduationCap,
+    title: "Khóa học",
+    desc: "Học lộ trình từ mentor chuyên gia: video bài giảng, bài tập thực hành và feedback để nâng kỹ năng phỏng vấn.",
+    color: "#7000ff",
   },
 ];
 
@@ -222,7 +222,7 @@ const NAV_LINKS = [
 /** Hero: video + viền tím mỏng + khoảng cách giữa viền và video + thẻ feedback. */
 function HeroInterviewVideoCard() {
   return (
-    <div className="relative mx-auto w-full max-w-[min(100%,240px)] sm:max-w-[270px] lg:max-w-[300px] lg:justify-self-end">
+    <div className="relative mx-auto w-full max-w-[min(100%,268px)] sm:max-w-[300px] lg:max-w-[332px] lg:justify-self-end">
       <div
         className="rounded-[22px] p-2 sm:p-2.5"
         style={{
@@ -271,12 +271,14 @@ function InterviewDemoMockup() {
   const topBar = "p-3";
   const bottomWrap = "p-4";
   const bubble = "p-3";
-  const qLead = "text-[11px] mb-1";
-  const qBody = "text-xs leading-relaxed";
+  const qLead =
+    "text-[12px] mb-1.5 font-bold tracking-wide text-[#5F00F0] [text-shadow:0_1px_0_rgba(255,255,255,0.92)]";
+  const qBody =
+    "text-[13px] sm:text-sm font-semibold leading-snug text-slate-900 [text-shadow:0_1px_0_rgba(255,255,255,0.95),0_0_18px_rgba(255,255,255,0.65)]";
   const statsGrid = "grid grid-cols-3 gap-1.5 mt-2";
   const statCell = "flex items-center gap-1.5 px-2 py-1.5 rounded-lg";
   const statIcon = "w-3.5 h-3.5";
-  const statTxt = "text-[11px] font-medium";
+  const statTxt = "text-[12px] font-semibold";
 
   return (
     <div className="relative mx-auto w-full max-w-[560px] scale-[0.96] origin-center lg:max-w-[620px] lg:scale-[0.92]">
@@ -329,17 +331,25 @@ function InterviewDemoMockup() {
                 muted
                 playsInline
                 className="h-full w-full object-cover"
-                style={{ opacity: 0.95 }}
               >
                 <source src={HOME_AI_DEMO_VIDEO} type="video/mp4" />
               </video>
             </div>
 
             <div className="pointer-events-none absolute inset-0">
+              {/* Che watermark góc phải dưới video (HeyGen) */}
               <div
-                className={`absolute left-0 right-0 top-0 flex items-center justify-between ${topBar}`}
+                className="absolute bottom-0 right-0 z-[1] h-[24%] w-[40%] max-w-[11rem] min-h-[3.25rem] sm:max-w-[13rem]"
                 style={{
-                  background: "linear-gradient(to bottom, rgba(255,255,255,0.8), transparent)",
+                  background:
+                    "linear-gradient(to top left, rgba(255,255,255,0.98) 0%, rgba(255,255,255,0.72) 35%, rgba(255,255,255,0.2) 72%, transparent 100%)",
+                }}
+                aria-hidden
+              />
+              <div
+                className={`absolute left-0 right-0 top-0 z-[3] flex items-center justify-between ${topBar}`}
+                style={{
+                  background: "linear-gradient(to bottom, rgba(255,255,255,0.28) 0%, rgba(255,255,255,0.06) 45%, transparent 100%)",
                 }}
               >
                 <div className="flex items-center gap-2">
@@ -361,35 +371,28 @@ function InterviewDemoMockup() {
               </div>
 
               <div
-                className={`absolute bottom-0 left-0 right-0 ${bottomWrap}`}
+                className={`absolute bottom-0 left-0 right-0 z-[2] ${bottomWrap}`}
                 style={{
-                  background: "linear-gradient(to top, rgba(255,255,255,0.8), transparent)",
+                  background:
+                    "linear-gradient(to top, rgba(248,250,252,0.72) 0%, rgba(255,255,255,0.18) 38%, transparent 68%)",
                 }}
               >
                 <div
                   className={bubble}
                   style={{
-                    background: "rgba(110, 53, 232,0.15)",
-                    border: "1px solid rgba(110, 53, 232,0.35)",
-                    backdropFilter: "blur(12px)",
+                    background: "rgba(255,255,255,0.52)",
+                    border: "1px solid rgba(255,255,255,0.55)",
+                    backdropFilter: "blur(14px)",
+                    WebkitBackdropFilter: "blur(14px)",
                     borderRadius: "12px",
+                    boxShadow: "0 8px 28px rgba(15, 23, 42, 0.12)",
                   }}
                 >
-                  <div className="flex items-start gap-2 sm:gap-3">
-                    <div
-                      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg"
-                      style={{
-                        background: "linear-gradient(135deg, #6E35E8, #9B6DFF)",
-                      }}
-                    >
-                      <SparkleGlyph className="h-4 w-4" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className={`font-semibold text-slate-600 ${qLead}`}>Câu hỏi 2/5</p>
-                      <p className={`text-slate-900 ${qBody}`}>
-                        Hãy kể về một lần bạn phải giải quyết xung đột trong nhóm. Bạn đã xử lý như thế nào?
-                      </p>
-                    </div>
+                  <div className="min-w-0">
+                    <p className={qLead}>Câu hỏi 2/5</p>
+                    <p className={qBody}>
+                      Hãy kể về một lần bạn phải giải quyết xung đột trong nhóm. Bạn đã xử lý như thế nào?
+                    </p>
                   </div>
                 </div>
 
@@ -403,13 +406,13 @@ function InterviewDemoMockup() {
                       key={i}
                       className={statCell}
                       style={{
-                        background: "rgba(255,255,255,0.82)",
-                        border: "1px solid rgba(15,23,42,0.1)",
-                        boxShadow: "0 1px 0 rgba(255,255,255,0.9) inset",
+                        background: "rgba(255,255,255,0.94)",
+                        border: "1px solid rgba(15,23,42,0.12)",
+                        boxShadow: "0 2px 8px rgba(15,23,42,0.08)",
                       }}
                     >
                       <item.icon className={`${statIcon} shrink-0`} style={{ color: item.color }} />
-                      <span className={statTxt} style={{ color: "rgba(15,23,42,0.82)" }}>
+                      <span className={statTxt} style={{ color: "rgb(15, 23, 42)" }}>
                         {item.label}
                       </span>
                     </div>
@@ -891,10 +894,10 @@ export function Home() {
 
         {/* Hero content — 2 cột lg: copy trái + video/mockup phải */}
         <div className="relative z-10 mx-auto w-full max-w-7xl">
-          <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1.1fr)_minmax(200px,300px)] lg:grid-rows-[auto_auto] lg:items-center lg:gap-x-6 lg:gap-y-3">
+          <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1.1fr)_minmax(200px,300px)] lg:grid-rows-[auto_auto] lg:items-center lg:gap-x-6 lg:gap-y-4">
             <div className="order-1 text-left lg:col-start-1 lg:row-start-1">
               <div
-                className="mb-3 inline-flex items-center gap-2 rounded-full border-2 px-3 py-1.5 text-xs font-bold bg-white"
+                className="mb-4 inline-flex items-center gap-2 rounded-full border-2 px-3 py-1.5 text-xs font-bold bg-white"
                 style={{
                   borderColor: "rgba(95, 0, 240, 0.42)",
                   color: "#5B21B6",
@@ -905,9 +908,9 @@ export function Home() {
               </div>
 
               <h1
-                className="mb-2 font-headline text-slate-900 leading-[1.08] tracking-tighter cute-heading"
+                className="mb-3 font-headline text-slate-900 leading-[1.1] tracking-tighter cute-heading"
                 style={{
-                  fontSize: "clamp(2.2rem, 5vw, 3.4rem)",
+                  fontSize: "clamp(2.55rem, 5.6vw, 3.85rem)",
                 }}
               >
                 <span className="text-slate-900">
@@ -929,7 +932,7 @@ export function Home() {
               </h1>
 
               <p
-                className="mb-4 max-w-2xl leading-relaxed text-slate-600 font-medium"
+                className="mb-5 max-w-2xl leading-relaxed text-slate-600 font-medium"
                 style={{ fontSize: "0.9rem" }}
               >
                 ProInterview phân tích CV/JD, tạo câu hỏi phỏng vấn
@@ -937,7 +940,7 @@ export function Home() {
                 Shopee, Vingroup, FPT và hơn 200 công ty hàng đầu.
               </p>
 
-              <div className="mb-4 flex flex-col gap-2.5 sm:flex-row sm:justify-start">
+              <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:justify-start">
                 <button
                   type="button"
                   onClick={() => navigateToInterview(navigate)}
@@ -973,9 +976,9 @@ export function Home() {
             </div>
 
             {/* Thanh stats — full width, căn giữa; khoảng cách trên lg gọn để còn trong 1 màn */}
-            <div className="order-2 mt-5 flex w-full justify-center lg:order-3 lg:col-span-2 lg:col-start-1 lg:row-start-2 lg:mt-5">
+            <div className="order-2 mt-6 flex w-full justify-center lg:order-3 lg:col-span-2 lg:col-start-1 lg:row-start-2 lg:mt-6">
               <div
-                className="glass-card w-full max-w-xl p-2.5 sm:max-w-3xl sm:p-3 lg:max-w-4xl"
+                className="glass-card w-full max-w-xl px-2.5 py-3 sm:max-w-3xl sm:px-3 sm:py-3.5 lg:max-w-4xl"
                 style={{
                   background: "#ffffff",
                   border: "1px solid rgba(95, 0, 240, 0.32)",
@@ -986,14 +989,14 @@ export function Home() {
                   {STATS.map((s, i) => (
                     <div
                       key={i}
-                      className="rounded-xl px-2 py-2 text-center sm:px-3 sm:py-2.5 bg-white"
+                      className="rounded-xl bg-white px-2 py-2.5 text-center sm:px-3 sm:py-3.5"
                       style={{
                         border: "1px solid rgba(95, 0, 240, 0.22)",
                         boxShadow: "none",
                       }}
                     >
                       <div
-                        className="mb-1 font-black text-transparent bg-clip-text bg-gradient-to-r from-[#5F00F0] to-[#9B6DFF]"
+                        className="mb-1.5 font-black text-transparent bg-clip-text bg-gradient-to-r from-[#5F00F0] to-[#9B6DFF]"
                         style={{
                           fontSize: "clamp(1rem, 2.5vw, 1.25rem)",
                           letterSpacing: "-0.03em",
@@ -1019,7 +1022,7 @@ export function Home() {
       {/* ═══ HOW IT WORKS ════════════════════════════════════ */}
       <section
         id="features"
-        className="relative z-10 h-screen max-h-screen flex flex-col justify-center overflow-hidden"
+        className="relative z-10 h-screen max-h-screen flex flex-col justify-center overflow-hidden pt-6 md:pt-8 lg:pt-10"
       >
         {renderSectionSticks([
           { x: 10, y: 16, size: 34, opacity: 0.45 },
@@ -1120,8 +1123,7 @@ export function Home() {
 
       {/* ═══ INTERVIEW PREVIEW ═══════════════════════════════ */}
       <section
-        className="relative z-10 h-screen max-h-screen flex flex-col justify-center"
-        style={{ overflow: "hidden" }}
+        className="relative z-10 h-screen max-h-screen flex flex-col justify-center overflow-x-hidden overflow-y-visible"
       >
         {renderSectionSticks([
           { x: 14, y: 24, size: 32, opacity: 0.42 },
@@ -1131,7 +1133,7 @@ export function Home() {
         <div className="max-w-7xl mx-auto px-5 relative z-10 w-full py-2">
           <div className="grid lg:grid-cols-2 gap-5 lg:gap-8 items-center">
             {/* Left copy */}
-            <div className="glass-card p-4 sm:p-5 lg:p-6">
+            <div className="glass-card !overflow-visible p-4 sm:p-5 lg:p-6">
               <div className="relative z-[1]">
                 <div className="mb-4 h-1 w-10 rounded-full bg-gradient-to-r from-[#6E35E8] to-[#9B6DFF]" aria-hidden />
                 <span
@@ -1143,13 +1145,13 @@ export function Home() {
                   Phòng phỏng vấn ảo
                 </span>
                 <h2
-                  className="text-slate-900 mb-2 leading-tight cute-heading"
+                  className="text-slate-900 mb-2 leading-[1.42] cute-heading"
                   style={{
-                    fontSize: "clamp(1.35rem, 2.6vw, 1.9rem)",
+                    fontSize: "clamp(1.55rem, 2.95vw, 2.2rem)",
                   }}
                 >
                   Trải nghiệm phỏng vấn{" "}
-                  <span className="inline-block bg-gradient-to-r from-[#5F00F0] via-[#6E35E8] to-[#9B6DFF] bg-clip-text text-transparent">
+                  <span className="font-headline text-[#5F00F0]">
                     như thật với AI
                   </span>
                 </h2>
@@ -1169,26 +1171,25 @@ export function Home() {
                   {[
                     "AI hỏi 5 câu hỏi cá nhân hóa theo JD",
                     "Nhận diện giọng nói tự động",
-                    "Phản hồi tức thì sau mỗi câu trả lời",
                     "Phân tích chi tiết theo mô hình STAR",
                   ].map((item, i) => (
                     <li
                       key={i}
-                      className="flex items-center gap-2.5"
+                      className="flex items-start gap-2.5"
                       style={{ color: "#334155" }}
                     >
                       <div
-                        className="w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0"
+                        className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full"
                         style={{
                           background: "rgba(110, 53, 232,0.08)",
                         }}
                       >
                         <Check
-                          className="w-3 h-3"
+                          className="h-3 w-3 shrink-0"
                           style={{ color: "#6E35E8" }}
                         />
                       </div>
-                      <span className="text-[13px]">{item}</span>
+                      <span className="min-w-0 flex-1 text-[13px] leading-relaxed">{item}</span>
                     </li>
                   ))}
                 </ul>
@@ -1217,7 +1218,7 @@ export function Home() {
       {/* ═══ COURSES SECTION ═════════════════════════════════ */}
       <section
         id="courses"
-        className="relative z-10 h-screen max-h-screen flex flex-col justify-center overflow-hidden"
+        className="relative z-10 h-screen max-h-screen flex flex-col justify-center overflow-x-hidden overflow-y-visible pt-2 md:pt-3 lg:pt-4"
       >
         {renderSectionSticks([
           { x: 90, y: 8, size: 32, opacity: 0.44 },
@@ -1226,17 +1227,17 @@ export function Home() {
           { x: 82, y: 78, size: 34, opacity: 0.46 },
         ])}
 
-        <div className="max-w-7xl mx-auto px-6 relative z-10 w-full py-3.5">
+        <div className="max-w-7xl mx-auto px-6 relative z-10 w-full translate-y-3 py-3.5 md:translate-y-4">
           <div className="flex flex-col md:flex-row items-end gap-3.5 mb-4">
             <div className="md:w-2/3">
               <div className="h-1 w-10 rounded-full bg-gradient-to-r from-[#6E35E8] to-[#9B6DFF] mb-3" aria-hidden />
               <span className="font-bold uppercase tracking-[0.2em] text-[10px] mb-2 block text-[#6E35E8] drop-shadow-[0_0_12px_rgba(167,139,250,0.)]">
                 Nền tảng học
               </span>
-              <h2 className="text-2xl md:text-[2.15rem] font-black tracking-tighter leading-[0.95] text-slate-900 mb-2">
-                Học từ chuyên gia,<br />
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#5F00F0] to-[#9B6DFF]">
-                  sửa lỗi ngay.
+              <h2 className="text-[1.35rem] font-black tracking-tighter text-slate-900 mb-2 leading-[1.06] sm:text-2xl md:text-[2.38rem] md:leading-[1.08]">
+                Học từ chuyên gia
+                <span className="mt-0 block font-headline text-[#5F00F0]">
+                  sửa lỗi ngay
                 </span>
               </h2>
               <p className="text-sm text-slate-600 leading-relaxed max-w-xl">
@@ -1264,11 +1265,11 @@ export function Home() {
                 onClick={() =>
                   handleFeatureClick(`/courses/${course.id}`)
                 }
-                className="group glass-card overflow-hidden cursor-pointer !rounded-[24px]"
+                className="group glass-card flex h-full min-h-0 cursor-pointer flex-col overflow-hidden !rounded-[24px]"
               >
-                <div className="relative z-[1]">
+                <div className="relative z-[1] flex min-h-0 flex-1 flex-col">
                   {/* Thumbnail */}
-                  <div className="relative h-[7.75rem] overflow-hidden">
+                  <div className="relative h-[7.75rem] shrink-0 overflow-hidden">
                     <img
                       src={course.thumbnail}
                       alt={course.title}
@@ -1276,17 +1277,17 @@ export function Home() {
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
 
-                    <div className="absolute top-3.5 left-3.5 flex gap-2">
-                      <span className="bg-black/55 backdrop-blur-md text-white px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider">
+                    <div className="absolute top-3.5 left-3.5 flex items-center gap-2">
+                      <span className="inline-flex items-center justify-center bg-black/55 px-2.5 py-1 text-[10px] font-bold uppercase leading-none tracking-wider text-white backdrop-blur-md rounded-full">
                         {course.category}
                       </span>
-                      <span className="bg-black/60 backdrop-blur-md text-white px-2.5 py-0.5 rounded-full text-[10px] font-medium flex items-center gap-1">
-                        <span className="material-symbols-outlined text-[13px]">schedule</span>
+                      <span className="inline-flex items-center justify-center gap-1 bg-black/60 px-2.5 py-1 text-[10px] font-medium leading-none text-white backdrop-blur-md rounded-full">
+                        <span className="material-symbols-outlined text-[13px] leading-none">schedule</span>
                         {Math.floor(course.duration / 60)}h {course.duration % 60}m
                       </span>
                     </div>
                     {idx === 0 && (
-                      <span className="absolute top-3.5 right-3.5 rounded-full bg-[#6E35E8] px-2 py-0.5 text-[10px] font-black tracking-wide uppercase text-white shadow-md">
+                      <span className="absolute top-3.5 right-3.5 inline-flex items-center justify-center rounded-full bg-[#6E35E8] px-2 py-1 text-[10px] font-black uppercase leading-none tracking-wide text-white shadow-md">
                         New
                       </span>
                     )}
@@ -1300,32 +1301,39 @@ export function Home() {
                     </div>
                   </div>
 
-                  <div className="p-4">
-                    <h3 className="text-[0.9375rem] font-bold mb-2.5 text-slate-900 transition-colors leading-snug line-clamp-2 group-hover:text-[#6E35E8]">
+                  <div className="flex flex-1 flex-col p-4">
+                    <h3 className="mb-2.5 min-h-[2.7rem] line-clamp-2 break-words text-[0.9375rem] font-bold leading-snug text-slate-900 transition-colors sm:min-h-[2.75rem] group-hover:text-[#6E35E8]">
                       {course.title}
                     </h3>
 
-                    <div className="flex items-center gap-2 mb-2.5">
+                    <div className="mb-2.5 flex min-h-[2.5rem] shrink-0 items-center gap-2">
                       <img
                         src={course.mentorAvatar}
                         alt={course.mentorName}
-                        className="w-10 h-10 rounded-xl object-cover border border-slate-200"
+                        className="h-10 w-10 shrink-0 rounded-xl border border-slate-200 object-cover"
                       />
-                      <div>
-                        <p className="text-sm font-bold text-slate-900">{course.mentorName}</p>
-                        <span className="text-[9px] uppercase tracking-[0.15em] font-black text-slate-500">
+                      <div className="flex min-w-0 flex-col justify-center gap-0.5">
+                        <p className="text-sm font-bold leading-tight text-slate-900">{course.mentorName}</p>
+                        <span className="text-[9px] font-black uppercase leading-none tracking-[0.15em] text-slate-500">
                           Mentor duyệt
                         </span>
                       </div>
                     </div>
 
-                    <div className="flex items-center justify-between pt-3.5 border-t border-slate-100">
-                      <div className="flex items-center gap-2">
-                        <span className="material-symbols-outlined text-amber-500 text-[1.05rem]" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
-                        <span className="font-bold text-slate-800 text-sm">{course.rating}</span>
-                        <span className="text-slate-500 text-xs">({(course.reviewsCount || 0) + 700})</span>
+                    <div className="mt-auto flex items-center justify-between gap-3 border-t border-slate-100 pt-3.5">
+                      <div className="flex min-w-0 flex-1 items-center gap-1.5">
+                        <span
+                          className="material-symbols-outlined shrink-0 text-[1.125rem] leading-none text-amber-500"
+                          style={{ fontVariationSettings: "'FILL' 1" }}
+                        >
+                          star
+                        </span>
+                        <span className="text-sm font-bold leading-none text-slate-800">{course.rating}</span>
+                        <span className="truncate text-xs leading-none text-slate-500">
+                          ({(course.reviewsCount || 0) + 700})
+                        </span>
                       </div>
-                      <div className="text-lg font-black text-[#5F00F0]">
+                      <div className="shrink-0 text-lg font-black leading-none tabular-nums text-[#5F00F0]">
                         {new Intl.NumberFormat("vi-VN", {
                           style: "currency",
                           currency: "VND",
@@ -1371,16 +1379,16 @@ export function Home() {
         <div className="max-w-7xl mx-auto px-5 lg:px-8 py-0 h-full flex flex-col justify-center relative z-10">
           <div className="grid lg:grid-cols-12 gap-6 lg:gap-6 items-start">
             <div className="lg:col-span-5">
-              <h2 className="text-slate-900 mb-0 cute-heading text-2xl md:text-3xl flex flex-col items-start gap-0 leading-none">
+              <h2 className="text-slate-900 mb-0 cute-heading flex flex-col items-start gap-0 text-[1.65rem] leading-none sm:text-3xl md:text-4xl lg:text-[2.55rem]">
                 <span className="block leading-none tracking-tight">Người dùng nói gì về</span>
                 <img
                   src="/Logo.png"
                   alt="ProInterview"
-                  className="-ml-3.5 -mt-[1.05em] block h-[5.75rem] w-auto max-w-[min(100%,30rem)] object-contain object-left object-top contrast-[1.06] sm:-ml-4 sm:h-[6.35rem] sm:-mt-[1.12em] md:h-[7.15rem] md:-ml-[1.125rem] md:-mt-[1.18em] lg:h-[7.85rem] lg:-ml-5 lg:-mt-[1.22em]"
+                  className="-mb-2.5 -ml-[1.1rem] -mt-[1.08em] block h-[7.35rem] w-auto max-w-[min(100%,36rem)] object-contain object-left object-top contrast-[1.06] sm:-mb-3 sm:-ml-[1.2rem] sm:h-[8.15rem] sm:-mt-[1.14em] md:-mb-3.5 md:h-[9.1rem] md:-ml-[1.35rem] md:-mt-[1.14em] lg:-mb-4 lg:h-[10rem] lg:-ml-[1.4rem] lg:-mt-[1.18em]"
                   decoding="async"
                 />
               </h2>
-              <p className="text-slate-600 text-[0.9375rem] leading-relaxed max-w-xl mt-1.5">
+              <p className="mt-0 text-slate-600 text-[0.9375rem] leading-relaxed max-w-xl">
                 Kết hợp AI thông minh và mạng lưới Mentor thực chiến để giúp bạn bứt tốc qua mọi vòng phỏng vấn.
                 Đây là phản hồi thật từ học viên đã nhận offer.
               </p>
@@ -1406,7 +1414,7 @@ export function Home() {
               <div className="mb-3">
                 <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-violet-50 border border-violet-200 text-[11px] uppercase tracking-[0.18em] text-[#5B21B6] font-black">
                   <SparkleGlyph className="size-3.5" />
-                  Bình luận nổi bật
+                  Đánh giá nổi bật
                 </div>
               </div>
               <div
@@ -1492,7 +1500,7 @@ export function Home() {
             <div className="glass-card p-5 !rounded-[20px] flex flex-col h-full group">
               <div className="relative z-[1] flex flex-col flex-1">
                 <div className="mb-3">
-                  <h3 className="font-headline font-bold text-lg mb-1 text-slate-900">Cơ bản (Free)</h3>
+                  <h3 className="font-headline font-bold text-lg mb-1 text-slate-900">Free</h3>
                   <div className="flex items-baseline gap-1">
                     <span className="text-2xl font-black font-headline text-slate-900">0đ</span>
                     <span className="text-zinc-500 text-xs">/tháng</span>
@@ -1517,13 +1525,10 @@ export function Home() {
             </div>
 
             {/* Pro Tier */}
-            <div className="relative glass-card p-5 !rounded-[20px] flex flex-col h-full border-2 border-primary-fixed z-10 !overflow-visible">
-              <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary-fixed text-on-primary-fixed px-3 py-0.5 rounded-full text-[10px] font-black tracking-widest uppercase z-[2] shadow-[0_0_20px_rgba(167,139,250,0.)]">
-                PHỔ BIẾN NHẤT
-              </div>
-              <div className="relative z-[1] flex flex-col flex-1 pt-1">
+            <div className="glass-card p-5 !rounded-[20px] flex flex-col h-full group">
+              <div className="relative z-[1] flex flex-col flex-1">
                 <div className="mb-3">
-                  <h3 className="font-headline font-bold text-lg mb-1 text-slate-900">Chuyên nghiệp (Pro)</h3>
+                  <h3 className="font-headline font-bold text-lg mb-1 text-slate-900">Pro</h3>
                   <div className="flex items-baseline gap-1">
                     <span className="text-2xl font-black font-headline text-slate-900">79.000đ</span>
                     <span className="text-slate-500 text-xs">/tháng</span>
@@ -1531,7 +1536,7 @@ export function Home() {
                 </div>
                 <ul className="space-y-2 mb-4 flex-grow">
                   {["10 buổi AI Interview/tháng", "Nhận diện giọng nói AI", "20 lần phân tích CV/JD", "Phản hồi chi tiết từng câu"].map((f, i) => (
-                    <li key={i} className="flex items-start gap-2 text-sm font-bold text-slate-800">
+                    <li key={i} className="flex items-start gap-2 text-sm text-slate-700">
                       <CheckCircle2 className="size-4 shrink-0 text-primary-fixed" />
                       {f}
                     </li>
@@ -1558,10 +1563,13 @@ export function Home() {
             </div>
 
             {/* Elite Tier */}
-            <div className="glass-card p-5 !rounded-[20px] flex flex-col h-full border border-secondary/40 group !overflow-visible">
-              <div className="relative z-[1] flex flex-col flex-1">
+            <div className="relative glass-card p-5 !rounded-[20px] flex flex-col h-full border-2 border-primary-fixed z-10 !overflow-visible group">
+              <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary-fixed text-on-primary-fixed px-3 py-0.5 rounded-full text-[10px] font-black tracking-widest uppercase z-[2] shadow-[0_0_20px_rgba(167,139,250,0.)]">
+                PHỔ BIẾN NHẤT
+              </div>
+              <div className="relative z-[1] flex flex-col flex-1 pt-1">
                 <div className="mb-3">
-                  <h3 className="font-headline font-bold text-lg mb-1 text-secondary-fixed">Thượng hạng (Elite)</h3>
+                  <h3 className="font-headline font-bold text-lg mb-1 text-secondary-fixed">Elite</h3>
                   <div className="flex items-baseline gap-1">
                     <span className="text-2xl font-black font-headline text-slate-900">99.000đ</span>
                     <span className="text-zinc-500 text-xs">/tháng</span>
@@ -1569,7 +1577,7 @@ export function Home() {
                 </div>
                 <ul className="space-y-2 mb-4 flex-grow">
                   {["AI Interview KHÔNG GIỚI HẠN", "Phân tích hành vi & tư thế", "Nhận diện giọng nói Turbo", "Hỗ trợ ưu tiên 24/7"].map((f, i) => (
-                    <li key={i} className="flex items-start gap-2 text-sm font-bold text-slate-800">
+                    <li key={i} className="flex items-start gap-2 text-sm text-slate-700">
                       <ShieldCheck className="size-4 shrink-0 text-secondary-fixed" />
                       {f}
                     </li>
@@ -1622,7 +1630,7 @@ export function Home() {
       </section>
 
       {/* ═══ FOOTER ══════════════════════════════════════════ */}
-      <Footer variant="dark" />
+      <Footer variant="light" />
     </div>
   );
 }
