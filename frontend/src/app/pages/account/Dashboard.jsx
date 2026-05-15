@@ -333,17 +333,17 @@ export function Dashboard() {
             initial={{ opacity: 0, x: -24 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ type: "spring", stiffness: 120, damping: 18 }}
-            className="flex min-w-0 flex-1 items-center gap-4 sm:gap-6"
+            className="flex min-w-0 flex-1 items-center gap-4 sm:gap-5"
           >
             <div className="relative shrink-0">
-              <div className="relative flex h-[4.6rem] w-[4.6rem] items-center justify-center overflow-hidden rounded-[20px] border-[3px] border-[#7a23e5] bg-[#f8f5ff] text-2xl font-black text-[#7a23e5] shadow-[0_10px_24px_rgba(122,35,229,0.25)] sm:h-20 sm:w-20 sm:text-3xl">
+              <div className="relative flex h-16 w-16 items-center justify-center overflow-hidden rounded-2xl border-2 border-[#6E35E8] bg-[#f8f5ff] text-lg font-black text-[#6E35E8] shadow-[0_8px_18px_rgba(110,53,232,0.18)] sm:h-[4.5rem] sm:w-[4.5rem] sm:text-xl">
                 <span className="relative z-10 tracking-tight">{initials}</span>
               </div>
             </div>
             <div className="min-w-0">
-              <h1 className="mb-2 font-headline text-4xl font-black tracking-tighter text-slate-900 sm:text-5xl md:text-6xl break-words">
+              <h1 className="mb-1.5 font-headline text-2xl font-black tracking-tight text-slate-900 sm:text-3xl break-words">
                 <span className="text-slate-900">Chào, </span>
-                <span className="text-violet-700">{fullName}</span>
+                <span className="text-[#6E35E8]">{fullName}</span>
                 <span className="text-slate-900">!</span>
               </h1>
               <p className="max-w-xl text-base font-medium leading-relaxed text-slate-600 sm:text-lg">

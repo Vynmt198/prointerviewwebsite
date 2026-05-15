@@ -108,7 +108,7 @@ export function AppSidebar() {
               onClick={() => navigate(getBrandClickPath())}
               className="
                 !overflow-visible h-14 min-h-14 rounded-none cursor-pointer py-1
-                hover:bg-white/5 active:bg-white/10
+                hover:bg-sidebar-accent active:bg-sidebar-accent/80
                 data-[active=true]:bg-transparent
                 group-data-[collapsible=icon]:!h-10 group-data-[collapsible=icon]:!w-10
                 group-data-[collapsible=icon]:!min-h-10 group-data-[collapsible=icon]:!min-w-10
@@ -117,7 +117,7 @@ export function AppSidebar() {
                 group-data-[collapsible=icon]:focus-visible:ring-0
                 group-data-[collapsible=icon]:!overflow-visible
                 group-data-[collapsible=icon]:px-0
-                px-4
+                px-3
               "
             >
               {/* Full wordmark (expanded) + circular mark (collapsed) */}
@@ -143,10 +143,7 @@ export function AppSidebar() {
         </SidebarMenu>
 
         {/* divider */}
-        <div
-          className="mx-3 h-px group-data-[collapsible=icon]:mx-2"
-          style={{ background: "rgba(255,255,255,0.08)" }}
-        />
+        <div className="mx-3 h-px bg-sidebar-border group-data-[collapsible=icon]:mx-2" />
       </SidebarHeader>
 
       {/* ════════════ CONTENT ════════════ */}
@@ -156,7 +153,7 @@ export function AppSidebar() {
         <SidebarGroup className="p-0">
           <SidebarGroupLabel
             className="
-              mb-1 px-2 uppercase text-white/30
+              mb-1 px-2 uppercase text-sidebar-foreground/45
               group-data-[collapsible=icon]:hidden
             "
             style={{ fontSize: "0.6rem", fontWeight: 700, letterSpacing: "0.1em" }}
@@ -176,7 +173,8 @@ export function AppSidebar() {
                         tooltip={item.title}
                         onClick={() => navigate(item.url)}
                         className="
-                            h-10 rounded-xl gap-3 transition-all
+                            h-10 rounded-xl gap-3 transition-all text-sidebar-foreground/75
+                            hover:bg-sidebar-accent hover:text-sidebar-accent-foreground
                             group-data-[collapsible=icon]:!justify-center
                             group-data-[collapsible=icon]:!w-10
                             group-data-[collapsible=icon]:!mx-auto
@@ -189,12 +187,11 @@ export function AppSidebar() {
                               color: "#fff",
                               boxShadow: "0 4px 12px rgba(110,53,232,0.35)",
                             }
-                            : { color: "rgba(255,255,255,0.55)" }
+                            : undefined
                         }
                       >
                         <item.icon
-                          className="size-[18px] shrink-0"
-                          style={{ color: active ? "#fff" : "rgba(255,255,255,0.55)" }}
+                          className={`size-[18px] shrink-0 ${active ? "text-white" : "text-sidebar-foreground/70"}`}
                         />
                         <span
                           className="text-[0.8125rem] truncate group-data-[collapsible=icon]:hidden"
@@ -222,7 +219,8 @@ export function AppSidebar() {
                         tooltip={item.title}
                         onClick={() => navigate(item.url)}
                         className="
-                            h-10 rounded-xl gap-3 transition-all
+                            h-10 rounded-xl gap-3 transition-all text-sidebar-foreground/75
+                            hover:bg-sidebar-accent hover:text-sidebar-accent-foreground
                             group-data-[collapsible=icon]:!justify-center
                             group-data-[collapsible=icon]:!w-10
                             group-data-[collapsible=icon]:!mx-auto
@@ -235,12 +233,11 @@ export function AppSidebar() {
                               color: "#fff",
                               boxShadow: "0 4px 12px rgba(110,53,232,0.35)",
                             }
-                            : { color: "rgba(255,255,255,0.55)" }
+                            : undefined
                         }
                       >
                         <item.icon
-                          className="size-[18px] shrink-0"
-                          style={{ color: active ? "#fff" : "rgba(255,255,255,0.55)" }}
+                          className={`size-[18px] shrink-0 ${active ? "text-white" : "text-sidebar-foreground/70"}`}
                         />
                         <span
                           className="text-[0.8125rem] truncate group-data-[collapsible=icon]:hidden"
@@ -264,16 +261,13 @@ export function AppSidebar() {
         </SidebarGroup>
 
         {/* ── Divider ─────────────────────────── */}
-        <div
-          className="my-3 h-px group-data-[collapsible=icon]:mx-0 mx-1"
-          style={{ background: "rgba(255,255,255,0.07)" }}
-        />
+        <div className="mx-1 my-3 h-px bg-sidebar-border group-data-[collapsible=icon]:mx-0" />
 
         {/* ── Secondary group ─────────────────── */}
         <SidebarGroup className="p-0">
           <SidebarGroupLabel
             className="
-              mb-1 px-2 uppercase text-white/30
+              mb-1 px-2 uppercase text-sidebar-foreground/45
               group-data-[collapsible=icon]:hidden
             "
             style={{ fontSize: "0.6rem", fontWeight: 700, letterSpacing: "0.1em" }}
@@ -292,7 +286,8 @@ export function AppSidebar() {
                       tooltip={item.title}
                       onClick={() => navigate(item.url)}
                       className="
-                        h-10 rounded-xl gap-3 transition-all
+                        h-10 rounded-xl gap-3 transition-all text-sidebar-foreground/75
+                        hover:bg-sidebar-accent hover:text-sidebar-accent-foreground
                         group-data-[collapsible=icon]:!justify-center
                         group-data-[collapsible=icon]:!w-10
                         group-data-[collapsible=icon]:!mx-auto
@@ -305,12 +300,11 @@ export function AppSidebar() {
                             color: "#fff",
                             boxShadow: "0 4px 12px rgba(110,53,232,0.35)",
                           }
-                          : { color: "rgba(255,255,255,0.55)" }
+                          : undefined
                       }
                     >
                       <item.icon
-                        className="size-[18px] shrink-0"
-                        style={{ color: active ? "#fff" : "rgba(255,255,255,0.55)" }}
+                        className={`size-[18px] shrink-0 ${active ? "text-white" : "text-sidebar-foreground/70"}`}
                       />
                       <span
                         className="text-[0.8125rem] truncate group-data-[collapsible=icon]:hidden"
@@ -330,31 +324,25 @@ export function AppSidebar() {
         {!isMentor && !isElite && (
           <div className="mt-auto pt-3 group-data-[collapsible=icon]:hidden">
             <div
-              className="rounded-2xl p-3.5"
-              style={{
-                background: "linear-gradient(135deg, rgba(110,53,232,0.22) 0%, rgba(139,77,255,0.12) 100%)",
-                border: "1px solid rgba(196, 255, 71,0.22)",
-              }}
+              className="rounded-2xl border border-[rgba(110,53,232,0.2)] bg-white/75 p-3.5 shadow-sm backdrop-blur-sm"
             >
-              <div className="flex items-center gap-2.5 mb-3">
+              <div className="mb-3 flex items-center gap-2.5">
                 <div
-                  className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0"
-                  style={{ background: "rgba(196, 255, 71,0.12)" }}
+                  className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[rgba(180,245,0,0.2)]"
                 >
-                  <Zap className="w-3.5 h-3.5" style={{ color: "#c4ff47" }} />
+                  <Zap className="h-3.5 w-3.5 text-[#5a9e00]" />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-white text-xs font-bold truncate">{upgradeTitle}</p>
-                  <p className="text-white/40 text-[10px] truncate">{upgradeHint}</p>
+                  <p className="truncate text-xs font-bold text-slate-900">{upgradeTitle}</p>
+                  <p className="truncate text-[10px] text-slate-500">{upgradeHint}</p>
                 </div>
               </div>
               <button
                 onClick={() => navigate("/pricing")}
-                className="w-full py-1.5 rounded-xl text-xs font-bold transition-all hover:brightness-110 active:scale-[0.97]"
+                className="w-full rounded-xl py-1.5 text-xs font-bold text-[#0f172a] transition-all hover:scale-[1.02] active:scale-[0.97]"
                 style={{
-                  background: "#c4ff47",
-                  color: "#120B2E",
-                  boxShadow: "0 3px 14px rgba(196, 255, 71,0.32)",
+                  background: "linear-gradient(135deg, #B4F500, #93D600)",
+                  boxShadow: "0 8px 20px rgba(15,23,42,0.1)",
                 }}
               >
                 {upgradeButton}
@@ -369,10 +357,9 @@ export function AppSidebar() {
             <button
               onClick={() => navigate("/pricing")}
               title={upgradeTitle}
-              className="w-10 h-10 rounded-xl flex items-center justify-center transition-all hover:brightness-110"
-              style={{ background: "rgba(196, 255, 71,0.12)", border: "1px solid rgba(196, 255, 71,0.22)" }}
+              className="flex h-10 w-10 items-center justify-center rounded-xl border border-[rgba(110,53,232,0.22)] bg-[rgba(180,245,0,0.15)] transition-all hover:bg-[rgba(180,245,0,0.28)]"
             >
-              <Zap className="w-4 h-4" style={{ color: "#c4ff47" }} />
+              <Zap className="h-4 w-4 text-[#5a9e00]" />
             </button>
           </div>
         )}
@@ -380,10 +367,7 @@ export function AppSidebar() {
       </SidebarContent>
 
       {/* ════════════ FOOTER / USER ════════════ */}
-      <div
-        className="mx-2 h-px"
-        style={{ background: "rgba(255,255,255,0.08)" }}
-      />
+      <div className="mx-2 h-px bg-sidebar-border" />
 
       <SidebarFooter className="p-2">
         <SidebarMenu>
@@ -392,20 +376,14 @@ export function AppSidebar() {
               <DropdownMenuTrigger asChild>
                 <button
                   className="
-                    flex w-full items-center gap-3 rounded-xl px-3 py-2 h-11
-                    transition-all focus:outline-none cursor-pointer
-                    group-data-[collapsible=icon]:justify-center
-                    group-data-[collapsible=icon]:w-10
+                    flex h-11 w-full cursor-pointer items-center gap-3 rounded-xl px-3 py-2
+                    transition-all focus:outline-none
+                    bg-sidebar-accent/50 hover:bg-sidebar-accent
                     group-data-[collapsible=icon]:mx-auto
+                    group-data-[collapsible=icon]:w-10
+                    group-data-[collapsible=icon]:justify-center
                     group-data-[collapsible=icon]:px-0
                   "
-                  style={{ background: "rgba(255,255,255,0.05)" }}
-                  onMouseEnter={(e) => {
-                    (e.currentTarget).style.background = "rgba(255,255,255,0.09)";
-                  }}
-                  onMouseLeave={(e) => {
-                    (e.currentTarget).style.background = "rgba(255,255,255,0.05)";
-                  }}
                 >
                   {/* Avatar */}
                   <div
@@ -420,17 +398,17 @@ export function AppSidebar() {
                   </div>
 
                   {/* Name + email — hidden when collapsed */}
-                  <div className="flex-1 min-w-0 group-data-[collapsible=icon]:hidden">
-                    <p className="text-white truncate font-medium" style={{ fontSize: "0.78rem" }}>
+                  <div className="min-w-0 flex-1 group-data-[collapsible=icon]:hidden">
+                    <p className="truncate font-medium text-slate-900" style={{ fontSize: "0.78rem" }}>
                       {displayName}
                     </p>
-                    <p className="text-white/35 truncate" style={{ fontSize: "0.65rem" }}>
+                    <p className="truncate text-slate-500" style={{ fontSize: "0.65rem" }}>
                       {user?.email || "Gói Miễn phí"}
                     </p>
                   </div>
 
                   <ChevronsUpDown
-                    className="size-3 text-white/25 shrink-0 group-data-[collapsible=icon]:hidden"
+                    className="size-3 shrink-0 text-slate-400 group-data-[collapsible=icon]:hidden"
                   />
                 </button>
               </DropdownMenuTrigger>

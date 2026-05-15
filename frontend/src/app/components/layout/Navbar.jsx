@@ -98,24 +98,24 @@ export function Navbar() {
     <header
       className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b px-5 antialiased backdrop-blur-xl"
       style={{
-        background: "rgba(255, 255, 255, 0.95)",
-        borderColor: "rgba(122,35,229,0.18)",
-        boxShadow: "0 1px 0 rgba(122,35,229,0.08)",
+        background: "rgba(255, 255, 255, 0.92)",
+        borderColor: "rgba(186, 165, 255, 0.45)",
+        boxShadow: "0 1px 0 rgba(110, 53, 232, 0.08), 0 4px 20px rgba(110, 53, 232, 0.06)",
       }}
     >
-      <SidebarTrigger className="rounded-lg text-[#7a23e5]/70 transition-colors hover:bg-[#7a23e5]/10 hover:text-[#7a23e5]" />
+      <SidebarTrigger className="rounded-lg text-[#6E35E8]/75 transition-colors hover:bg-[#6E35E8]/10 hover:text-[#6E35E8]" />
 
-      <div className="h-6 w-px shrink-0 bg-[#7a23e5]/20" />
+      <div className="h-6 w-px shrink-0 bg-[#6E35E8]/20" />
 
       <div className="min-w-0 flex flex-col gap-0">
         <h1
-          className="truncate text-[#7a23e5]"
+          className="truncate text-[#6E35E8]"
           style={{ fontSize: "0.9375rem", fontWeight: 700, lineHeight: 1.2, letterSpacing: "-0.015em" }}
         >
           {pageInfo.label}
         </h1>
         {pageInfo.sub && (
-          <p className="hidden truncate text-xs text-[#8CAF2F] sm:block">{pageInfo.sub}</p>
+          <p className="hidden truncate text-xs text-slate-500 sm:block">{pageInfo.sub}</p>
         )}
       </div>
 
@@ -128,12 +128,12 @@ export function Navbar() {
               type="button"
               className="relative inline-flex size-9 items-center justify-center rounded-xl transition-all focus:outline-none"
               style={{
-                background: notifOpen ? "rgba(122,35,229,0.12)" : "transparent",
-                border: notifOpen ? "1px solid rgba(122,35,229,0.28)" : "1px solid transparent",
+                background: notifOpen ? "rgba(110,53,232,0.1)" : "transparent",
+                border: notifOpen ? "1px solid rgba(110,53,232,0.25)" : "1px solid transparent",
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.background = "rgba(122,35,229,0.1)";
-                e.currentTarget.style.border = "1px solid rgba(122,35,229,0.24)";
+                e.currentTarget.style.background = "rgba(110,53,232,0.08)";
+                e.currentTarget.style.border = "1px solid rgba(110,53,232,0.2)";
               }}
               onMouseLeave={(e) => {
                 if (!notifOpen) {
@@ -142,7 +142,7 @@ export function Navbar() {
                 }
               }}
             >
-              <Bell className="h-5 w-5 text-[#7a23e5]/75" />
+              <Bell className="h-5 w-5 text-[#6E35E8]/75" />
               {unreadCount > 0 && (
                 <span
                   className="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full font-bold text-[#1d1a26]"
@@ -160,44 +160,43 @@ export function Navbar() {
 
           <DropdownMenuContent
             align="end"
-            className="w-80 overflow-hidden border border-white/10 bg-[#160f36] p-0 text-white shadow-2xl"
+            className="w-80 overflow-hidden border border-slate-200/90 bg-white p-0 text-slate-900 shadow-xl"
           >
             <div
-              className="flex items-center justify-between px-4 py-3"
-              style={{ borderBottom: "1px solid rgba(255,255,255,0.08)" }}
+              className="flex items-center justify-between border-b border-slate-100 px-4 py-3"
             >
-              <span className="text-sm font-semibold text-white">Thông báo</span>
+              <span className="text-sm font-semibold text-slate-900">Thông báo</span>
               <span
-                className="rounded-full px-2 py-0.5 text-xs font-semibold"
-                style={{ background: "rgba(196, 255, 71,0.15)", color: "#c5f076" }}
+                className="rounded-full px-2 py-0.5 text-xs font-semibold text-[#0f172a]"
+                style={{ background: "linear-gradient(135deg, #B4F500, #93D600)" }}
               >
                 {unreadCount} mới
               </span>
             </div>
 
-            <div className="py-1 max-h-[400px] overflow-y-auto">
+            <div className="max-h-[400px] overflow-y-auto py-1">
               {notifications.length === 0 && (
-                <div className="px-4 py-8 text-center text-zinc-500 text-xs">Không có thông báo mới</div>
+                <div className="px-4 py-8 text-center text-xs text-slate-500">Không có thông báo mới</div>
               )}
               {notifications.map((n) => (
                 <DropdownMenuItem
                   key={n._id}
                   onClick={() => handleRead(n._id)}
-                  className="flex cursor-pointer items-start gap-3 px-4 py-3 focus:bg-white/8"
+                  className="flex cursor-pointer items-start gap-3 px-4 py-3 focus:bg-violet-50"
                 >
                   <div
                     className="mt-1.5 h-2 w-2 shrink-0 rounded-full"
                     style={{
-                      background: !n.isRead ? (n.type === "payment" ? "#c4ff47" : "#6E35E8") : "transparent",
-                      border: !n.isRead ? "none" : "1px solid rgba(255,255,255,0.2)",
+                      background: !n.isRead ? (n.type === "payment" ? "#93D600" : "#6E35E8") : "transparent",
+                      border: !n.isRead ? "none" : "1px solid rgba(148, 163, 184, 0.5)",
                     }}
                   />
                   <div className="min-w-0 flex-1">
-                    <p className={`truncate text-sm ${!n.isRead ? "font-bold text-white" : "font-medium text-white/70"}`}>
+                    <p className={`truncate text-sm ${!n.isRead ? "font-bold text-slate-900" : "font-medium text-slate-600"}`}>
                       {n.title}
                     </p>
-                    <p className="mt-0.5 text-xs leading-relaxed text-white/50">{n.message}</p>
-                    <p className="mt-1 text-[10px] text-white/35">
+                    <p className="mt-0.5 text-xs leading-relaxed text-slate-500">{n.message}</p>
+                    <p className="mt-1 text-[10px] text-slate-400">
                       {new Date(n.createdAt).toLocaleDateString("vi-VN")}
                     </p>
                   </div>
@@ -205,10 +204,10 @@ export function Navbar() {
               ))}
             </div>
 
-            <div style={{ borderTop: "1px solid rgba(255,255,255,0.08)" }}>
+            <div className="border-t border-slate-100">
               <button
                 type="button"
-                className="w-full py-3 text-xs font-semibold text-[#c4f06a] transition-colors hover:bg-white/6"
+                className="w-full py-3 text-xs font-semibold text-[#6E35E8] transition-colors hover:bg-violet-50"
               >
                 Xem tất cả thông báo
               </button>
