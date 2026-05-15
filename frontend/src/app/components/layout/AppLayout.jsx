@@ -6,18 +6,24 @@ import { Navbar } from "./Navbar";
 
 export function AppLayout() {
   return (
-    <div className="relative min-h-svh w-full overflow-x-hidden bg-[#120B2E] text-foreground antialiased">
+    <div
+      className="app-user-shell relative min-h-svh w-full overflow-x-hidden bg-[#f3f0f9] text-slate-900 antialiased selection:bg-violet-100 selection:text-violet-900"
+      style={{
+        fontFamily: "'Lexend', 'Plus Jakarta Sans', system-ui, sans-serif",
+      }}
+    >
+      <div className="app-shell-ambient" aria-hidden />
       <SidebarProvider
         className="relative z-[1] flex min-h-svh w-full bg-transparent"
         style={{
-          "--sidebar-width": "260px",
-          "--sidebar-width-icon": "64px",
+          "--sidebar-width": "228px",
+          "--sidebar-width-icon": "56px",
         }}
       >
         <AppSidebar />
         <SidebarInset className="relative z-[1] flex min-h-svh flex-1 flex-col bg-transparent shadow-none md:peer-data-[variant=inset]:shadow-none md:peer-data-[variant=inset]:m-0 md:peer-data-[variant=inset]:rounded-none">
           <Navbar />
-          <div className="relative z-[1] flex-1 min-h-0">
+          <div className="relative z-[1] min-h-0 flex-1">
             <Outlet />
           </div>
         </SidebarInset>

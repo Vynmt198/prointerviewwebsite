@@ -9,12 +9,12 @@ import {
   Brain,
   Star,
   ShieldCheck,
-  Sparkles,
   Mail,
 } from "lucide-react";
 import { registerUser, getBrandClickPath } from "../../utils/auth";
 import { GoogleSignInBlock } from "../../components/auth/GoogleSignInBlock";
 import { BrandLogo } from "../../components/brand/BrandLogo";
+import { SparkleGlyph } from "../../components/decor/SparkleGlyph.jsx";
 
 const PERKS = [
   "3 buổi phỏng vấn AI miễn phí ngay sau đăng ký",
@@ -34,18 +34,17 @@ function pwStrength(pw) {
 const STRENGTH_COLORS = ["#FF8C42", "#FFB800", "#22c55e"];
 const STRENGTH_LABELS = ["Yếu", "Trung bình", "Mạnh"];
 
-const INPUT_CLS =
-  "w-full px-4 py-3.5 rounded-xl border border-gray-200 text-base outline-none transition-all " +
+/** Form đăng ký: ô hơi thấp hơn Login để vừa một màn hình */
+const INPUT_REG_CLS =
+  "w-full px-4 py-3 rounded-xl border border-gray-200 text-base outline-none transition-all " +
   "focus:border-[#6E35E8] focus:ring-2 focus:ring-[#6E35E8]/15 text-gray-900 placeholder-gray-400 " +
   "bg-white hover:bg-gray-50/50";
+/** % = tâm sticker; kích thước lệch — nằm trong vùng inset của lớp nền */
 const AUTH_STICKS = [
-  { x: 5, y: 9, size: 18, color: "#5B21B6", glow: "rgba(91,33,182,0.34)", opacity: 0.62 },
-  { x: 72, y: 8, size: 16, color: "#9EDB00", glow: "rgba(158,219,0,0.42)", opacity: 0.56 },
-  { x: 6, y: 88, size: 20, color: "#5B21B6", glow: "rgba(91,33,182,0.36)", opacity: 0.58 },
-  { x: 58, y: 10, size: 30, color: "#9EDB00", glow: "rgba(158,219,0,0.52)", opacity: 0.66 },
-  { x: 52, y: 34, size: 18, color: "#5B21B6", glow: "rgba(91,33,182,0.32)", opacity: 0.52 },
-  { x: 96, y: 8, size: 44, color: "#9EDB00", glow: "rgba(158,219,0,0.56)", opacity: 0.7 },
-  { x: 96, y: 90, size: 22, color: "#5B21B6", glow: "rgba(91,33,182,0.36)", opacity: 0.58 },
+  { x: 14, y: 22, size: 26 },
+  { x: 82, y: 20, size: 36 },
+  { x: 18, y: 72, size: 22 },
+  { x: 80, y: 74, size: 30 },
 ];
 
 export function Register() {
@@ -131,24 +130,22 @@ export function Register() {
       style={{ fontFamily: "'Lexend', 'Plus Jakarta Sans', system-ui, sans-serif" }}
     >
       {/* ── LEFT ───────────────────────────────────────────── */}
-      <div className="flex-1 flex flex-col h-full bg-[#fcfaff]">
-        <div className="pointer-events-none absolute inset-0 z-20">
-          {AUTH_STICKS.map((s, i) => (
-            <Sparkles
-              key={`register-stick-${i}`}
-              className="absolute hidden md:block"
-              strokeWidth={1.45}
-              strokeLinecap="butt"
-              strokeLinejoin="miter"
-              strokeMiterlimit={12}
+      <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden bg-[#fcfaff]">
+        <div className="pointer-events-none absolute inset-4 z-0 hidden md:block md:inset-6" aria-hidden>
+          {AUTH_STICKS.map((s, idx) => (
+            <SparkleGlyph
+              key={`register-stick-${idx}`}
+              className="absolute"
               style={{
                 left: `${s.x}%`,
                 top: `${s.y}%`,
                 width: `${s.size}px`,
                 height: `${s.size}px`,
-                color: s.color,
-                opacity: s.opacity,
-                filter: `drop-shadow(0 0 8px ${s.glow})`,
+                opacity: 1,
+                filter: "drop-shadow(0 1px 2px rgba(15,23,42,0.12)) drop-shadow(0 0 8px rgba(95,0,240,0.35))",
+                transform: `translate(-50%, -50%) rotate(${
+                  typeof s.tilt === "number" ? s.tilt : idx % 4 === 0 ? 0 : idx % 4 === 1 ? -18 : idx % 4 === 2 ? 24 : -30
+                }deg)`,
               }}
             />
           ))}
@@ -156,7 +153,7 @@ export function Register() {
 
         {/* Top bar */}
         <div
-          className="flex-shrink-0 flex items-center justify-between px-10 h-20 border-b relative"
+          className="relative z-10 flex h-20 flex-shrink-0 items-center justify-between border-b px-10"
           style={{ borderColor: "rgba(110,53,232,0.1)" }}
         >
           <button onClick={() => navigate(getBrandClickPath())} className="flex items-center gap-2.5 group">
@@ -171,20 +168,20 @@ export function Register() {
         </div>
 
         {/* Form — centered within panel */}
-        <div className="flex-1 flex items-center justify-center px-10 overflow-y-auto py-4">
-          <div className="w-full max-w-sm">
+        <div className="relative z-10 flex min-h-0 flex-1 flex-col items-center justify-center overflow-y-auto px-8 py-2 sm:px-10">
+          <div className="w-full max-w-sm shrink-0">
 
-            <h1 className="text-gray-900 mb-1"
-              style={{ fontSize: "1.875rem", fontWeight: 750, letterSpacing: "-0.025em" }}>
+            <h1 className="text-gray-900 mb-0.5"
+              style={{ fontSize: "1.625rem", fontWeight: 750, letterSpacing: "-0.025em" }}>
               Tạo tài khoản
             </h1>
-            <p className="text-gray-500 text-sm mb-2">
-              Miễn phí · Không cần thẻ tín dụng · 3 buổi AI ngay lập tức
+            <p className="text-gray-500 text-xs sm:text-sm mb-2">
+              Miễn phí · 3 buổi AI · Không cần thẻ
             </p>
 
             {/* Error */}
             {error && (
-              <div className={`mb-4 flex items-start gap-3 rounded-2xl border px-4 py-3 text-sm ${errorIsGoogleEnvHint
+              <div className={`mb-3 flex items-start gap-2 rounded-xl border px-3 py-2 text-sm ${errorIsGoogleEnvHint
                   ? "border-amber-400/25 bg-amber-50 text-amber-800"
                   : "border-red-300/40 bg-red-50 text-red-700"
                 }`}>
@@ -198,28 +195,28 @@ export function Register() {
             <form onSubmit={handleRegister} className="space-y-2">
               {/* Name */}
               <div>
-                <label htmlFor="reg-name" className="block text-sm font-semibold text-gray-700 mb-1.5">Họ và tên</label>
+                <label htmlFor="reg-name" className="mb-1 block text-xs font-semibold text-gray-700 sm:text-sm">Họ và tên</label>
                 <input id="reg-name" type="text" placeholder="Nguyễn Văn A"
                   value={form.name} onChange={(e) => handleChange("name", e.target.value)}
-                  required className={INPUT_CLS} />
+                  required className={INPUT_REG_CLS} />
               </div>
 
               {/* Email */}
               <div>
-                <label htmlFor="reg-email" className="block text-sm font-semibold text-gray-700 mb-1.5">Email</label>
+                <label htmlFor="reg-email" className="mb-1 block text-xs font-semibold text-gray-700 sm:text-sm">Email</label>
                 <input id="reg-email" type="email" placeholder="email@example.com"
                   value={form.email} onChange={(e) => handleChange("email", e.target.value)}
-                  required className={INPUT_CLS} />
+                  required className={INPUT_REG_CLS} />
               </div>
 
               {/* Password */}
               <div>
-                <label htmlFor="reg-password" className="block text-sm font-semibold text-gray-700 mb-1.5">Mật khẩu</label>
+                <label htmlFor="reg-password" className="mb-1 block text-xs font-semibold text-gray-700 sm:text-sm">Mật khẩu</label>
                 <div className="relative">
                   <input id="reg-password" type={showPass ? "text" : "password"}
                     placeholder="Tối thiểu 6 ký tự"
                     value={form.password} onChange={(e) => handleChange("password", e.target.value)}
-                    required minLength={6} className={`${INPUT_CLS} pr-12`} />
+                    required minLength={6} className={`${INPUT_REG_CLS} pr-12`} />
                   <button type="button" onClick={() => setShowPass(!showPass)}
                     className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
                     aria-label={showPass ? "Ẩn" : "Hiện"}>
@@ -227,12 +224,12 @@ export function Register() {
                   </button>
                 </div>
                 {form.password.length > 0 && (
-                  <div className="mt-2 flex gap-1.5 items-center">
+                  <div className="mt-1 flex items-center gap-1.5">
                     {[1, 2, 3].map((lvl) => (
-                      <div key={lvl} className="flex-1 h-1 rounded-full transition-all duration-300"
+                      <div key={lvl} className="h-0.5 flex-1 rounded-full transition-all duration-300"
                         style={{ background: strength >= lvl ? STRENGTH_COLORS[strength - 1] : "#E5E7EB" }} />
                     ))}
-                    <span className="text-xs font-semibold ml-1" style={{ color: STRENGTH_COLORS[strength - 1] }}>
+                    <span className="ml-0.5 text-[10px] font-semibold sm:text-xs" style={{ color: STRENGTH_COLORS[strength - 1] }}>
                       {STRENGTH_LABELS[strength - 1]}
                     </span>
                   </div>
@@ -242,17 +239,17 @@ export function Register() {
 
               {form.role === "admin" && (
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">Mã mời quản trị</label>
+                  <label className="mb-1 block text-xs font-semibold text-gray-700 sm:text-sm">Mã mời quản trị</label>
                   <input type="password" autoComplete="off" placeholder="ADMIN_INVITE_CODE"
                     value={form.adminInviteCode} onChange={(e) => handleChange("adminInviteCode", e.target.value)}
-                    className={INPUT_CLS} />
+                    className={INPUT_REG_CLS} />
                 </div>
               )}
 
               {/* Terms */}
-              <label className="flex items-start gap-3 cursor-pointer">
+              <label className="flex cursor-pointer items-start gap-2">
                 <button type="button" onClick={() => setAgreed(!agreed)}
-                  className="flex items-center justify-center flex-shrink-0 rounded-md border-2 transition-all mt-0.5"
+                  className="mt-0.5 flex flex-shrink-0 items-center justify-center rounded-md border-2 transition-all"
                   style={{
                     width: "18px", height: "18px",
                     background: agreed ? "linear-gradient(135deg,#6E35E8,#8B4DFF)" : "transparent",
@@ -260,16 +257,16 @@ export function Register() {
                   }}>
                   {agreed && <Check className="w-3 h-3 text-white" strokeWidth={3} />}
                 </button>
-                <span className="text-sm text-gray-500 leading-relaxed">
-                  Tôi đồng ý với{" "}
+                <span className="text-xs leading-snug text-gray-500 sm:text-sm">
+                  Tôi đồng ý{" "}
                   <a href="#" className="font-semibold text-[#6E35E8] hover:underline">Điều khoản</a>{" "}và{" "}
-                  <a href="#" className="font-semibold text-[#6E35E8] hover:underline">Chính sách bảo mật</a>.
+                  <a href="#" className="font-semibold text-[#6E35E8] hover:underline">Bảo mật</a>.
                 </span>
               </label>
 
               {/* Submit */}
               <button type="submit" disabled={loading || !agreed}
-                className="w-full py-3.5 rounded-xl font-bold text-base text-white transition-all hover:brightness-110 active:scale-[0.98] disabled:opacity-50"
+                className="w-full rounded-full py-3 text-sm font-bold text-white transition-all hover:brightness-110 active:scale-[0.98] disabled:opacity-50 sm:text-base"
                 style={{
                   background: "linear-gradient(135deg, #6E35E8, #9B6DFF)",
                   boxShadow: agreed ? "0 4px 20px rgba(110,53,232,0.3)" : "none",
@@ -279,35 +276,25 @@ export function Register() {
                     <span className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
                     Đang tạo tài khoản...
                   </span>
-                  : "Tạo tài khoản miễn phí"}
+                  : "Tạo tài khoản"}
               </button>
             </form>
 
             {/* Divider */}
-            <div className="flex items-center gap-3 my-3">
+            <div className="my-3 flex items-center gap-3 sm:my-4">
               <div className="flex-1 h-px bg-gray-100" />
-              <span className="text-xs text-gray-400 font-medium">hoặc</span>
+              <span className="text-xs font-medium text-gray-400">hoặc</span>
               <div className="flex-1 h-px bg-gray-100" />
             </div>
 
             <GoogleSignInBlock onError={setError} />
 
-            {/* Privacy */}
-            <div className="mt-3 rounded-xl p-3 flex gap-3"
-              style={{ background: "rgba(110,53,232,0.04)", border: "1px solid rgba(110,53,232,0.1)" }}>
-              <ShieldCheck className="w-4 h-4 flex-shrink-0 text-[#6E35E8] mt-0.5" strokeWidth={2} />
-              <div>
-                <p className="text-[13px] font-bold text-gray-700 mb-1.5">Cam kết bảo vệ dữ liệu</p>
-                <div className="grid grid-cols-2 gap-x-4 gap-y-1">
-                  {["Mã hóa dữ liệu an toàn", "Không chia sẻ bên thứ ba", "Xóa tài khoản bất cứ lúc", "Tuân thủ GDPR"].map((t) => (
-                    <div key={t} className="flex items-center gap-1.5 text-xs text-gray-500">
-                      <Check className="w-3 h-3 flex-shrink-0 text-[#6E35E8]" strokeWidth={3} />
-                      {t}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
+            <p className="mt-3 flex items-start justify-center gap-1.5 text-center text-[11px] leading-snug text-gray-500">
+              <ShieldCheck className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-[#6E35E8]" strokeWidth={2} />
+              <span>
+                Mã hóa an toàn · Không bán dữ liệu.
+              </span>
+            </p>
 
           </div>
         </div>
@@ -316,27 +303,27 @@ export function Register() {
       {/* ── RIGHT ──────────────────────────────────────────── */}
       <div
         className="hidden lg:flex flex-col flex-1 h-full relative overflow-hidden"
-        style={{ background: "linear-gradient(150deg, #F3EEFF 0%, #EEF4FF 40%, #FFFBF0 100%)" }}
+        style={{ background: "linear-gradient(165deg, #FAF8FF 0%, #F0E8FF 42%, #E6E0FF 100%)" }}
       >
         <div className="absolute -top-20 -right-20 w-96 h-96 rounded-full opacity-25 blur-3xl pointer-events-none"
           style={{ background: "radial-gradient(circle, #6E35E8 0%, transparent 70%)" }} />
-        <div className="absolute bottom-0 left-0 w-80 h-80 rounded-full opacity-20 blur-3xl pointer-events-none"
-          style={{ background: "radial-gradient(circle, #B4F500 0%, transparent 70%)" }} />
+        <div className="absolute -bottom-24 -left-16 w-[22rem] h-[22rem] rounded-full opacity-20 blur-3xl pointer-events-none"
+          style={{ background: "radial-gradient(circle, #9B6DFF 0%, transparent 72%)" }} />
 
-        {/* Badge */}
-        <div className="absolute top-8 left-8">
-          <div className="flex items-center gap-2 bg-white rounded-2xl px-4 py-2.5 shadow-lg"
-            style={{ border: "1px solid rgba(180,245,0,0.35)" }}>
-            <div className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: "#B4F500" }}>
-              <Check className="w-3 h-3 text-gray-900" strokeWidth={3} />
+        {/* Badge + card: badge trong luồng flex để không đè lên thẻ khi căn giữa dọc */}
+        <div className="relative z-10 flex min-h-0 flex-1 flex-col px-10 pb-6 pt-8">
+          <div className="mb-4 shrink-0 self-start">
+            <div className="flex items-center gap-2 rounded-2xl bg-white px-4 py-2.5 shadow-lg"
+              style={{ border: "1px solid rgba(180,245,0,0.35)" }}>
+              <div className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full" style={{ background: "#B4F500" }}>
+                <Check className="h-3 w-3 text-gray-900" strokeWidth={3} />
+              </div>
+              <span className="text-sm font-semibold text-gray-700">Miễn phí hoàn toàn</span>
             </div>
-            <span className="text-gray-700 text-sm font-semibold">Miễn phí hoàn toàn</span>
           </div>
-        </div>
 
-        {/* Main card + social proof */}
-        <div className="flex-1 flex flex-col items-center justify-center px-10 relative z-10">
-          <div className="bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl mb-6"
+          <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-5">
+          <div className="bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl"
             style={{ border: "1px solid rgba(110,53,232,0.08)" }}>
             <div className="flex items-center gap-3 mb-5 pb-5"
               style={{ borderBottom: "1px solid rgba(110,53,232,0.08)" }}>
@@ -365,18 +352,18 @@ export function Register() {
 
             <button type="button"
               onClick={() => document.getElementById("reg-name")?.focus()}
-              className="w-full py-3 rounded-xl text-sm font-bold text-white flex items-center justify-center gap-1.5 transition-all hover:brightness-110 active:scale-[0.98]"
+              className="flex w-full items-center justify-center gap-1.5 rounded-full py-3 text-sm font-black text-[#0f172a] transition-all hover:scale-105 active:scale-[0.98]"
               style={{
-                background: "linear-gradient(135deg, #6E35E8, #9B6DFF)",
-                boxShadow: "0 4px 16px rgba(110,53,232,0.3)",
+                background: "linear-gradient(135deg, #B4F500, #93D600)",
+                boxShadow: "0 8px 20px rgba(15,23,42,0.1)",
               }}>
               Bắt đầu miễn phí →
             </button>
           </div>
 
           {/* Social proof */}
-          <div className="text-center">
-            <p className="text-gray-700 mb-3 font-bold" style={{ fontSize: "1.15rem", letterSpacing: "-0.02em" }}>
+          <div className="shrink-0 text-center">
+            <p className="mb-2 font-bold text-gray-700" style={{ fontSize: "1.15rem", letterSpacing: "-0.02em" }}>
               <span style={{ color: "#6E35E8" }}>10,000+</span> ứng viên đã tin dùng
             </p>
             <div className="flex items-center justify-center gap-2">
@@ -392,9 +379,8 @@ export function Register() {
               <span className="text-gray-600 text-sm font-semibold">4.8</span>
             </div>
           </div>
+          </div>
         </div>
-
-        <div className="flex-shrink-0 px-10 pb-6 relative z-10 text-center" />
       </div>
     </div>
   );

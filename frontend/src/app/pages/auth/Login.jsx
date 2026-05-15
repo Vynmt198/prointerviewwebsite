@@ -9,7 +9,6 @@ import {
   Brain,
   Mic as Microphone,
   Star,
-  Sparkles,
 } from "lucide-react";
 import {
   loginUser,
@@ -19,6 +18,7 @@ import {
 } from "../../utils/auth";
 import { GoogleSignInBlock } from "../../components/auth/GoogleSignInBlock";
 import { BrandLogo } from "../../components/brand/BrandLogo";
+import { SparkleGlyph } from "../../components/decor/SparkleGlyph.jsx";
 
 const INPUT_CLS =
   "w-full px-4 py-3.5 rounded-xl border border-gray-200 text-base outline-none transition-all " +
@@ -47,14 +47,12 @@ const TESTIMONIALS = [
     tagColor: "#FF8C42",
   },
 ];
+/** % = tâm sticker; kích thước lệch — nằm trong vùng inset của lớp nền */
 const AUTH_STICKS = [
-  { x: 5, y: 9, size: 18, color: "#5B21B6", glow: "rgba(91,33,182,0.34)", opacity: 0.62 },
-  { x: 72, y: 8, size: 16, color: "#9EDB00", glow: "rgba(158,219,0,0.42)", opacity: 0.56 },
-  { x: 6, y: 88, size: 20, color: "#5B21B6", glow: "rgba(91,33,182,0.36)", opacity: 0.58 },
-  { x: 58, y: 10, size: 30, color: "#9EDB00", glow: "rgba(158,219,0,0.52)", opacity: 0.66 },
-  { x: 52, y: 34, size: 18, color: "#5B21B6", glow: "rgba(91,33,182,0.32)", opacity: 0.52 },
-  { x: 96, y: 8, size: 44, color: "#9EDB00", glow: "rgba(158,219,0,0.56)", opacity: 0.7 },
-  { x: 96, y: 90, size: 22, color: "#5B21B6", glow: "rgba(91,33,182,0.36)", opacity: 0.58 },
+  { x: 14, y: 22, size: 26 },
+  { x: 82, y: 20, size: 36 },
+  { x: 18, y: 72, size: 22 },
+  { x: 80, y: 74, size: 30 },
 ];
 
 export function Login() {
@@ -94,24 +92,22 @@ export function Login() {
       style={{ fontFamily: "'Lexend', 'Plus Jakarta Sans', system-ui, sans-serif" }}
     >
       {/* ── LEFT: Form ─────────────────────────────────────── */}
-      <div className="flex-1 flex flex-col h-full bg-[#fcfaff]">
-        <div className="pointer-events-none absolute inset-0 z-20">
-          {AUTH_STICKS.map((s, i) => (
-            <Sparkles
-              key={`login-stick-${i}`}
-              className="absolute hidden md:block"
-              strokeWidth={1.45}
-              strokeLinecap="butt"
-              strokeLinejoin="miter"
-              strokeMiterlimit={12}
+      <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden bg-[#fcfaff]">
+        <div className="pointer-events-none absolute inset-4 z-0 hidden md:block md:inset-6" aria-hidden>
+          {AUTH_STICKS.map((s, idx) => (
+            <SparkleGlyph
+              key={`login-stick-${idx}`}
+              className="absolute"
               style={{
                 left: `${s.x}%`,
                 top: `${s.y}%`,
                 width: `${s.size}px`,
                 height: `${s.size}px`,
-                color: s.color,
-                opacity: s.opacity,
-                filter: `drop-shadow(0 0 8px ${s.glow})`,
+                opacity: 1,
+                filter: "drop-shadow(0 1px 2px rgba(15,23,42,0.12)) drop-shadow(0 0 8px rgba(95,0,240,0.35))",
+                transform: `translate(-50%, -50%) rotate(${
+                  typeof s.tilt === "number" ? s.tilt : idx % 4 === 0 ? 0 : idx % 4 === 1 ? -18 : idx % 4 === 2 ? 24 : -30
+                }deg)`,
               }}
             />
           ))}
@@ -119,7 +115,7 @@ export function Login() {
 
         {/* Top bar */}
         <div
-          className="flex-shrink-0 flex items-center justify-between px-10 h-20 border-b relative"
+          className="relative z-10 flex h-20 flex-shrink-0 items-center justify-between border-b px-10"
           style={{ borderColor: "rgba(110,53,232,0.1)" }}
         >
           <button onClick={() => navigate(getBrandClickPath())} className="flex items-center gap-2.5 group">
@@ -134,7 +130,7 @@ export function Login() {
         </div>
 
         {/* Form — centered */}
-        <div className="flex-1 flex items-center justify-center px-10 overflow-hidden">
+        <div className="relative z-10 flex flex-1 items-center justify-center overflow-hidden px-10">
           <div className="w-full max-w-sm">
 
             <h1 className="text-gray-900 mb-1"
@@ -241,13 +237,13 @@ export function Login() {
       {/* ── RIGHT: Visual panel ─────────────────────────────── */}
         <div
           className="hidden lg:flex flex-col flex-1 h-full relative overflow-hidden"
-        style={{ background: "linear-gradient(150deg, #F3EEFF 0%, #EEF4FF 40%, #FFF5EC 100%)" }}
+        style={{ background: "linear-gradient(165deg, #FAF8FF 0%, #F0E8FF 42%, #E6E0FF 100%)" }}
       >
-        {/* Blobs */}
-        <div className="absolute -top-20 -right-20 w-96 h-96 rounded-full opacity-30 blur-3xl pointer-events-none"
+        {/* Blobs — chỉ tím, không vàng/cam */}
+        <div className="absolute -top-20 -right-20 w-96 h-96 rounded-full opacity-25 blur-3xl pointer-events-none"
           style={{ background: "radial-gradient(circle, #6E35E8 0%, transparent 70%)" }} />
-        <div className="absolute -bottom-20 -left-20 w-80 h-80 rounded-full opacity-20 blur-3xl pointer-events-none"
-          style={{ background: "radial-gradient(circle, #FFB800 0%, transparent 70%)" }} />
+        <div className="absolute -bottom-24 -left-16 w-[22rem] h-[22rem] rounded-full opacity-20 blur-3xl pointer-events-none"
+          style={{ background: "radial-gradient(circle, #9B6DFF 0%, transparent 72%)" }} />
 
         {/* Rating badge */}
         <div className="absolute top-8 right-8">
@@ -261,11 +257,10 @@ export function Login() {
           </div>
         </div>
 
-        {/* Center content */}
-        <div className="flex-1 flex flex-col items-center justify-center px-10 relative z-10">
-
+        <div className="relative z-10 flex min-h-0 flex-1 flex-col items-center overflow-y-auto px-10 pb-10 pt-28">
+          <div className="flex w-full max-w-sm flex-col gap-6">
           {/* Testimonial card */}
-          <div className="bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl mb-4"
+          <div className="w-full rounded-3xl bg-white p-8 shadow-2xl"
             style={{ border: "1px solid rgba(110,53,232,0.08)" }}>
             <div className="text-4xl leading-none mb-3" style={{ color: "#9B6DFF", fontFamily: "Georgia, serif" }}>"</div>
             <p className="text-gray-700 text-sm leading-relaxed font-medium mb-5">{t.quote}</p>
@@ -281,15 +276,15 @@ export function Login() {
             </div>
           </div>
 
-          {/* Tag bubble */}
-          <div className="self-end mr-4 mb-8">
-            <div className="rounded-2xl px-4 py-2 text-white text-sm font-bold shadow-lg"
+          <div className="flex justify-end pr-1">
+            <div className="rounded-2xl px-4 py-2 text-sm font-bold text-white shadow-lg"
               style={{ background: `linear-gradient(135deg, ${t.tagColor}, ${t.tagColor}cc)` }}>
               {t.tag}
             </div>
           </div>
 
           {/* Stats */}
+          <div>
           <p className="text-gray-700 mb-5 font-bold text-center" style={{ fontSize: "1.2rem", letterSpacing: "-0.02em" }}>
             Tham gia cùng <span style={{ color: "#6E35E8" }}>10,000+</span> ứng viên<br />
             đã thành công với ProInterview
@@ -309,6 +304,8 @@ export function Login() {
                 <p className="text-xs text-gray-400 leading-tight">{label}</p>
               </div>
             ))}
+          </div>
+          </div>
           </div>
         </div>
 
