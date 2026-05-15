@@ -10,13 +10,26 @@ function vnd(amount) {
   return `${Number(amount || 0).toLocaleString("vi-VN")} đ`;
 }
 
+function copyAdminText(text, successMsg = "Đã sao chép.") {
+  const t = String(text || "").trim();
+  if (!t) {
+    toast.error("Không có nội dung để sao chép.");
+    return;
+  }
+  void navigator.clipboard.writeText(t).then(
+    () => toast.success(successMsg),
+    () => toast.error("Trình duyệt không cho phép sao chép."),
+  );
+}
+
 function statusLabel(status) {
   const key = String(status || "").toLowerCase();
   if (key === "pending") return "Chờ duyệt";
   if (key === "course_pending_ck") return "Chờ xác nhận chuyển khoản";
   if (key === "confirmed") return "Đã xác nhận";
   if (key === "completed") return "Hoàn thành";
-  if (key === "approved" || key === "paid") return "Đã duyệt";
+  if (key === "approved") return "Đã duyệt — chờ CK";
+  if (key === "paid") return "Đã chuyển khoản";
   if (key === "cancelled") return "Đã hủy";
   if (key === "rejected") return "Đã từ chối";
   if (key === "failed") return "Thất bại";
@@ -415,6 +428,12 @@ export function AdminPayouts() {
     reasonKey: "account_invalid",
     note: "",
   });
+  const [markPaidModal, setMarkPaidModal] = useState({
+    open: false,
+    payoutId: "",
+    transferRef: "",
+    note: "",
+  });
 
   const loadRows = async () => {
     setLoading(true);
@@ -433,7 +452,22 @@ export function AdminPayouts() {
     const res = await adminApi.approvePayout(id);
     setBusyId("");
     if (!res.success) return toast.error(res.error || "Không duyệt được yêu cầu.");
-    toast.success("Đã duyệt yêu cầu rút tiền.");
+    toast.success("Đã duyệt. Hãy chuyển khoản cho cố vấn rồi bấm “Đã chuyển khoản”.");
+    loadRows();
+  };
+
+  const confirmMarkPaid = async () => {
+    const id = markPaidModal.payoutId;
+    if (!id) return;
+    setBusyId(id);
+    const res = await adminApi.markPayoutPaid(id, {
+      transferRef: String(markPaidModal.transferRef || "").trim(),
+      note: String(markPaidModal.note || "").trim(),
+    });
+    setBusyId("");
+    if (!res.success) return toast.error(res.error || "Không ghi nhận được đã chi.");
+    toast.success("Đã ghi nhận đã chuyển khoản cho cố vấn.");
+    setMarkPaidModal({ open: false, payoutId: "", transferRef: "", note: "" });
     loadRows();
   };
 
@@ -458,14 +492,18 @@ export function AdminPayouts() {
 
   const filteredRows = rows.filter((r) => (filter === "all" ? true : r.status === filter));
   const pendingCount = rows.filter((r) => r.status === "pending").length;
-  const approvedCount = rows.filter((r) => r.status === "approved" || r.status === "paid").length;
+  const approvedAwaitCkCount = rows.filter((r) => r.status === "approved").length;
+  const paidCount = rows.filter((r) => r.status === "paid").length;
   const rejectedCount = rows.filter((r) => r.status === "rejected").length;
 
   const statusBadge = (status) => {
     if (status === "pending") {
       return "bg-orange-500/10 text-orange-900 border border-orange-400/25";
     }
-    if (status === "approved" || status === "paid") {
+    if (status === "approved") {
+      return "bg-amber-500/10 text-amber-900 border border-amber-400/25";
+    }
+    if (status === "paid") {
       return "bg-emerald-500/10 text-emerald-800 border border-emerald-400/25";
     }
     if (status === "rejected") {
@@ -477,20 +515,24 @@ export function AdminPayouts() {
   return (
     <AdminPanel
       title="Rút tiền cố vấn"
-      description="Danh sách yêu cầu rút tiền — Approve / Reject payout, lịch sử đã thanh toán."
+      description="Duyệt yêu cầu rút tiền → chuyển khoản thủ công cho cố vấn → ghi nhận đã chi (đồng bộ trạng thái với màn Tài chính mentor)."
     >
       {loading ? (
         <p className="text-sm text-slate-500">Đang tải yêu cầu rút tiền...</p>
       ) : (
         <div className="space-y-4">
-          <div className="grid gap-3 md:grid-cols-3">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <div className="rounded-2xl border border-orange-400/25 bg-orange-500/10 p-4">
               <p className="text-xs text-orange-900/80">Chờ duyệt</p>
               <p className="text-2xl font-black text-orange-900 mt-1">{pendingCount}</p>
             </div>
+            <div className="rounded-2xl border border-amber-400/25 bg-amber-500/10 p-4">
+              <p className="text-xs text-amber-900/80">Đã duyệt — chờ CK</p>
+              <p className="text-2xl font-black text-amber-900 mt-1">{approvedAwaitCkCount}</p>
+            </div>
             <div className="rounded-2xl border border-emerald-400/25 bg-emerald-500/10 p-4">
-              <p className="text-xs text-emerald-800/80">Đã duyệt</p>
-              <p className="text-2xl font-black text-emerald-800 mt-1">{approvedCount}</p>
+              <p className="text-xs text-emerald-800/80">Đã chuyển khoản</p>
+              <p className="text-2xl font-black text-emerald-800 mt-1">{paidCount}</p>
             </div>
             <div className="rounded-2xl border border-red-400/25 bg-red-500/10 p-4">
               <p className="text-xs text-red-800/80">Từ chối</p>
@@ -502,7 +544,8 @@ export function AdminPayouts() {
             {[
               { id: "all", label: "Tất cả" },
               { id: "pending", label: "Chờ duyệt" },
-              { id: "approved", label: "Đã duyệt" },
+              { id: "approved", label: "Chờ chuyển khoản" },
+              { id: "paid", label: "Đã chi" },
               { id: "rejected", label: "Đã từ chối" },
             ].map((item) => (
               <button
@@ -522,18 +565,56 @@ export function AdminPayouts() {
           {filteredRows.map((row) => {
             const mentorName = row?.mentorId?.name || row?.mentorId?.userId?.name || "Cố vấn";
             const isPending = row.status === "pending";
+            const isApproved = row.status === "approved";
             const busy = busyId === row._id;
+            const acct = String(row.payoutAccount?.accountNumber || "").trim();
+            const bankName = String(row.payoutAccount?.bankName || "").trim();
+            const acctName = String(row.payoutAccount?.accountName || "").trim();
+            const ckLine = [bankName, acct, acctName].filter(Boolean).join(" · ");
             return (
               <div key={row._id} className="rounded-2xl border border-slate-200 bg-gradient-to-br from-slate-50 to-white p-5">
                 <div className="flex flex-wrap items-center justify-between gap-4">
-                  <div>
+                  <div className="min-w-0 flex-1">
                     <p className="text-slate-900 font-black">{mentorName}</p>
-                    <p className="text-xs text-slate-500">
-                      {row.payoutAccount?.bankName} - ****{String(row.payoutAccount?.accountNumber || "").slice(-4)}
+                    <p className="mt-2 text-[10px] font-black uppercase tracking-widest text-slate-500">
+                      Tài khoản nhận tiền (để chuyển khoản)
                     </p>
-                    <p className="text-xs text-slate-500 mt-1">
-                      {new Date(row.requestedAt || row.createdAt).toLocaleString("vi-VN")}
+                    <p className="text-sm font-semibold text-slate-800">{bankName || "—"}</p>
+                    <p className="mt-1 font-mono text-sm font-black tracking-wide text-slate-900 break-all">
+                      STK: {acct || "—"}
                     </p>
+                    {acctName ? (
+                      <p className="mt-0.5 text-xs text-slate-600">
+                        Chủ TK: <span className="font-semibold text-slate-800">{acctName}</span>
+                      </p>
+                    ) : null}
+                    {acct ? (
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        <button
+                          type="button"
+                          onClick={() => copyAdminText(acct, "Đã sao chép số tài khoản.")}
+                          className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-[10px] font-black uppercase tracking-wider text-slate-700 hover:bg-slate-50"
+                        >
+                          Sao chép STK
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => copyAdminText(ckLine, "Đã sao chép dòng đối soát.")}
+                          className="rounded-lg border border-violet-200 bg-violet-50 px-3 py-1.5 text-[10px] font-black uppercase tracking-wider text-violet-900 hover:bg-violet-100"
+                        >
+                          Sao chép cả dòng
+                        </button>
+                      </div>
+                    ) : null}
+                    <p className="text-xs text-slate-500 mt-2">
+                      Yêu cầu: {new Date(row.requestedAt || row.createdAt).toLocaleString("vi-VN")}
+                    </p>
+                    {row.status === "paid" && row.paidAt ? (
+                      <p className="text-xs text-emerald-800 mt-1">
+                        Đã chi: {new Date(row.paidAt).toLocaleString("vi-VN")}
+                        {row.transferRef ? ` · ND: ${row.transferRef}` : ""}
+                      </p>
+                    ) : null}
                   </div>
                   <div className="text-right">
                     <p className="text-lg font-black text-slate-900">{vnd(row.amount)}</p>
@@ -548,7 +629,7 @@ export function AdminPayouts() {
                   </p>
                 )}
                 {isPending && (
-                  <div className="mt-3 flex gap-2">
+                  <div className="mt-3 flex flex-wrap gap-2">
                     <button
                       disabled={busy}
                       onClick={() => handleReject(row._id)}
@@ -561,7 +642,25 @@ export function AdminPayouts() {
                       onClick={() => handleApprove(row._id)}
                       className="rounded-xl border border-emerald-400/25 bg-emerald-500/10 px-4 py-2 text-xs font-black uppercase tracking-wider text-emerald-800 disabled:opacity-50"
                     >
-                      {busy ? "..." : "Duyệt"}
+                      {busy ? "..." : "Duyệt yêu cầu"}
+                    </button>
+                  </div>
+                )}
+                {isApproved && (
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <button
+                      disabled={busy}
+                      onClick={() =>
+                        setMarkPaidModal({
+                          open: true,
+                          payoutId: String(row._id),
+                          transferRef: "",
+                          note: "",
+                        })
+                      }
+                      className="rounded-xl border border-violet-400/25 bg-violet-500/10 px-4 py-2 text-xs font-black uppercase tracking-wider text-violet-900 disabled:opacity-50"
+                    >
+                      Đã chuyển khoản cho mentor
                     </button>
                   </div>
                 )}
@@ -635,17 +734,72 @@ export function AdminPayouts() {
           </motion.div>
         )}
       </AnimatePresence>
+      <AnimatePresence>
+        {markPaidModal.open && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+            onClick={() => {
+              if (busyId === markPaidModal.payoutId) return;
+              setMarkPaidModal({ open: false, payoutId: "", transferRef: "", note: "" });
+            }}
+          >
+            <motion.div
+              initial={{ scale: 0.96, y: 16, opacity: 0 }}
+              animate={{ scale: 1, y: 0, opacity: 1 }}
+              exit={{ scale: 0.96, y: 16, opacity: 0 }}
+              className="w-full max-w-lg rounded-3xl border border-slate-200 bg-white p-6"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <h4 className="text-xl font-black text-slate-900">Ghi nhận đã chuyển khoản</h4>
+              <p className="text-sm text-slate-500 mt-2">
+                Sau khi bạn đã CK thủ công cho cố vấn, xác nhận để mentor thấy trạng thái &quot;Đã chuyển khoản&quot; trên
+                màn Tài chính.
+              </p>
+              <label className="mt-4 block text-[10px] font-black uppercase tracking-widest text-slate-500">
+                Nội dung / mã tham chiếu CK (tuỳ chọn)
+              </label>
+              <input
+                type="text"
+                value={markPaidModal.transferRef}
+                onChange={(e) => setMarkPaidModal((prev) => ({ ...prev, transferRef: e.target.value }))}
+                className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-900 outline-none focus:border-violet-400"
+                placeholder="Ví dụ: FT… hoặc nội dung sao kê"
+              />
+              <label className="mt-4 block text-[10px] font-black uppercase tracking-widest text-slate-500">
+                Ghi chú nội bộ (tuỳ chọn)
+              </label>
+              <textarea
+                value={markPaidModal.note}
+                onChange={(e) => setMarkPaidModal((prev) => ({ ...prev, note: e.target.value }))}
+                className="mt-2 w-full min-h-20 rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-900 outline-none focus:border-violet-400"
+                placeholder="Ghi chú cho lịch sử admin…"
+              />
+              <div className="mt-5 grid grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  disabled={Boolean(busyId)}
+                  onClick={() => setMarkPaidModal({ open: false, payoutId: "", transferRef: "", note: "" })}
+                  className="rounded-xl border border-slate-200 bg-slate-50 py-3 text-xs font-black uppercase tracking-wider text-slate-800 disabled:opacity-50"
+                >
+                  Hủy
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void confirmMarkPaid()}
+                  disabled={busyId === markPaidModal.payoutId}
+                  className="rounded-xl border border-emerald-300 bg-emerald-50 py-3 text-xs font-black uppercase tracking-wider text-emerald-800 disabled:opacity-50"
+                >
+                  {busyId === markPaidModal.payoutId ? "Đang xử lý..." : "Xác nhận đã chi"}
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </AdminPanel>
-  );
-}
-
-export function AdminBookings() {
-  return (
-    <AdminPanel
-      title="Lịch hẹn và phiên làm việc"
-      description="Người dùng, cố vấn, ngày giờ, loại buổi, trạng thái, giá — lọc và tìm kiếm."
-      bullets={["Thống kê: lịch hẹn theo tháng, tỷ lệ hoàn thành/hủy", "Xu hướng và top cố vấn theo lịch hẹn"]}
-    />
   );
 }
 

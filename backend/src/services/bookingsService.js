@@ -6,6 +6,7 @@ import { Notification } from "../models/Notification.js";
 import { Payment } from "../models/Payment.js";
 import { ensureMentorProfilesForAllMentorUsers } from "./mentorProfileService.js";
 import { recordAdminTransferSuccess, recordTransferPending, recordTransferSubmitted } from "./paymentsService.js";
+import { tryCreditMentorForCompletedBooking } from "./mentorEarningsService.js";
 const MONGO_ERR = "MongoDB chưa kết nối. Kiểm tra MONGO_URI trong .env.";
 const MENTOR_CANCEL_MIN_HOURS = 2;
 
@@ -688,6 +689,12 @@ export async function completeMentorBooking(mentorUserId, rawId) {
   booking.status = "completed";
   booking.completedAt = new Date();
   await booking.save();
+
+  const credit = await tryCreditMentorForCompletedBooking(booking._id);
+  if (!credit.ok) {
+    console.error("[completeMentorBooking] mentor earnings:", credit.error || credit);
+  }
+
   await booking.populate({ path: "userId", select: "name email avatar" });
   return { ok: true, booking: toPublicBooking(booking) };
 }

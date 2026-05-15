@@ -26,6 +26,7 @@ adminRouter.post("/payments/normalize-transfer-refs", AdminController.normalizeT
 adminRouter.patch("/bookings/:id/status", AdminController.updateBookingStatus);
 adminRouter.get("/payouts", AdminController.getPayoutRequests);
 adminRouter.patch("/payouts/:id/approve", AdminController.approvePayoutRequest);
+adminRouter.patch("/payouts/:id/mark-paid", AdminController.markPayoutPaid);
 adminRouter.patch("/payouts/:id/reject", AdminController.rejectPayoutRequest);
 adminRouter.get("/courses/pending", AdminController.getPendingCourses);
 adminRouter.patch("/courses/:id/approve", AdminController.approveCourse);

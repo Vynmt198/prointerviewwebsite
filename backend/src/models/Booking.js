@@ -72,6 +72,8 @@ const bookingSchema = new Schema(
     mentorNotes: { type: String, default: "" },
     reviewId: { type: Schema.Types.ObjectId, ref: "Review" },
     completedAt: { type: Date },
+    /** Đã ghi có thu nhập vào ví mentor (tránh cộng trùng). */
+    mentorEarningsCreditedAt: { type: Date },
   },
   { collection: "bookings", timestamps: true }
 );

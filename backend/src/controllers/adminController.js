@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 import * as bookingsService from "../services/bookingsService.js";
 import * as paymentsService from "../services/paymentsService.js";
+import { tryCreditMentorForPaidEnrollment, tryCreditMentorForCompletedBooking } from "../services/mentorEarningsService.js";
 import { normalizeTransferRefs } from "../services/normalizeTransferRefsService.js";
 import { PayoutRequest } from "../models/PayoutRequest.js";
 import { Enrollment } from "../models/Enrollment.js";
@@ -173,6 +174,14 @@ export const AdminController = {
       }
 
       await booking.save();
+
+      if (nextStatus === "completed") {
+        const credit = await tryCreditMentorForCompletedBooking(booking._id);
+        if (!credit.ok) {
+          console.error("[updateBookingStatus] mentor earnings:", credit.error || credit);
+        }
+      }
+
       res.json({ success: true, booking });
     } catch (error) {
       res.status(500).json({ success: false, error: error.message });
@@ -350,6 +359,11 @@ export const AdminController = {
       }
       await session.endSession();
 
+      const credit = await tryCreditMentorForPaidEnrollment(enrollment._id);
+      if (!credit.ok) {
+        console.error("[confirmEnrollmentTransferPayment] mentor earnings:", credit.error || credit);
+      }
+
       const populated = await Enrollment.findById(enrollment._id)
         .populate("userId", "name email")
         .populate("courseId", "title price");
@@ -510,11 +524,38 @@ export const AdminController = {
       payout.note = String(req.body?.note || "").trim();
       await payout.save();
 
+      res.json({ success: true, payout });
+    } catch (error) {
+      res.status(500).json({ success: false, error: error.message });
+    }
+  },
+
+  /** Sau khi admin chuyển khoản thủ công cho mentor — chỉ từ trạng thái `approved`. */
+  markPayoutPaid: async (req, res) => {
+    try {
+      const { id } = req.params;
+      const transferRef = String(req.body?.transferRef || "").trim().slice(0, 500);
+      const noteExtra = String(req.body?.note || "").trim().slice(0, 2000);
+      const payout = await PayoutRequest.findById(id);
+      if (!payout) return res.status(404).json({ success: false, error: "Không tìm thấy yêu cầu rút tiền." });
+      if (payout.status !== "approved") {
+        return res.status(400).json({
+          success: false,
+          error: "Chỉ xác nhận đã chuyển khoản khi yêu cầu đã được duyệt (chưa ghi nhận chi).",
+        });
+      }
+      payout.status = "paid";
+      payout.paidAt = new Date();
+      payout.transferRef = transferRef;
+      if (noteExtra) {
+        const prev = String(payout.note || "").trim();
+        payout.note = prev ? `${prev}\n${noteExtra}` : noteExtra;
+      }
+      await payout.save();
+
       await Mentor.updateOne(
         { _id: payout.mentorId },
-        {
-          $inc: { "finance.pendingBalance": -Number(payout.amount || 0) },
-        },
+        { $inc: { "finance.pendingBalance": -Number(payout.amount || 0) } },
       );
 
       res.json({ success: true, payout });

@@ -1,11 +1,17 @@
 import { useEffect, useState } from "react";
 import { BookOpen } from "lucide-react";
+import { AnimatePresence, motion } from "motion/react";
 import { toast } from "sonner";
 import { adminApi } from "../../utils/adminApi";
 
 export function AdminCoursePayments() {
   const [pendingEnrollments, setPendingEnrollments] = useState([]);
   const [enrollBusyId, setEnrollBusyId] = useState("");
+  const [overrideModal, setOverrideModal] = useState({
+    open: false,
+    enrollmentId: "",
+    forceNote: "Đã đối soát thủ công qua sao kê ngân hàng.",
+  });
 
   const loadPendingEnrollments = async () => {
     const res = await adminApi.getPendingEnrollmentTransfers();
@@ -16,26 +22,7 @@ export function AdminCoursePayments() {
     }
   };
 
-  const confirmEnrollmentTransfer = async (row) => {
-    const enrollmentId = row?._id;
-    if (!enrollmentId) return;
-
-    const needsOverride = !row?.transferSubmittedAt;
-    let forceNote = "";
-    if (needsOverride) {
-      const ok = window.confirm(
-        "Người dùng chưa bấm “Tôi đã chuyển khoản” (chưa có thời gian gửi xác nhận). Bạn vẫn muốn xác nhận ngoại lệ không?",
-      );
-      if (!ok) return;
-      forceNote = String(
-        window.prompt("Nhập lý do xác nhận ngoại lệ (bắt buộc):", "Đã đối soát thủ công qua sao kê ngân hàng.") || "",
-      ).trim();
-      if (forceNote.length < 3) {
-        toast.error("Cần nhập lý do ngoại lệ tối thiểu 3 ký tự.");
-        return;
-      }
-    }
-
+  const executeConfirmEnrollmentTransfer = async (enrollmentId, needsOverride, forceNote) => {
     setEnrollBusyId(enrollmentId);
     const res = await adminApi.confirmEnrollmentTransferPayment(
       enrollmentId,
@@ -48,6 +35,34 @@ export function AdminCoursePayments() {
     }
     toast.success("Đã kích hoạt ghi danh khóa học.");
     setPendingEnrollments((prev) => prev.filter((e) => String(e._id) !== String(enrollmentId)));
+  };
+
+  const confirmEnrollmentTransfer = async (row) => {
+    const enrollmentId = row?._id;
+    if (!enrollmentId) return;
+
+    const needsOverride = !row?.transferSubmittedAt;
+    if (needsOverride) {
+      setOverrideModal({
+        open: true,
+        enrollmentId: String(enrollmentId),
+        forceNote: "Đã đối soát thủ công qua sao kê ngân hàng.",
+      });
+      return;
+    }
+    await executeConfirmEnrollmentTransfer(String(enrollmentId), false, "");
+  };
+
+  const confirmOverrideEnrollmentTransfer = async () => {
+    const enrollmentId = String(overrideModal.enrollmentId || "").trim();
+    const forceNote = String(overrideModal.forceNote || "").trim();
+    if (!enrollmentId) return;
+    if (forceNote.length < 3) {
+      toast.error("Cần nhập lý do ngoại lệ tối thiểu 3 ký tự.");
+      return;
+    }
+    setOverrideModal((prev) => ({ ...prev, open: false, enrollmentId: "" }));
+    await executeConfirmEnrollmentTransfer(enrollmentId, true, forceNote);
   };
 
   useEffect(() => {
@@ -128,6 +143,55 @@ export function AdminCoursePayments() {
           </table>
         </div>
       </div>
+
+      <AnimatePresence>
+        {overrideModal.open && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm"
+            onClick={() => setOverrideModal((prev) => ({ ...prev, open: false, enrollmentId: "" }))}
+          >
+            <motion.div
+              initial={{ scale: 0.96, y: 16, opacity: 0 }}
+              animate={{ scale: 1, y: 0, opacity: 1 }}
+              exit={{ scale: 0.96, y: 16, opacity: 0 }}
+              className="w-full max-w-lg rounded-3xl border border-slate-200 bg-white p-6 shadow-xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <h4 className="text-xl font-black text-slate-900">Xác nhận ngoại lệ chuyển khoản</h4>
+              <p className="mt-2 text-sm text-slate-600">
+                Người dùng chưa bấm <span className="font-semibold">“Tôi đã chuyển khoản”</span>. Hãy nhập lý do để lưu
+                audit trước khi xác nhận học phí khóa học.
+              </p>
+              <textarea
+                value={overrideModal.forceNote}
+                onChange={(e) => setOverrideModal((prev) => ({ ...prev, forceNote: e.target.value }))}
+                className="mt-4 min-h-24 w-full rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-900 outline-none focus:border-violet-400"
+                placeholder="Ví dụ: Đã đối soát thủ công theo sao kê ngân hàng."
+              />
+              <div className="mt-5 grid grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={() => setOverrideModal((prev) => ({ ...prev, open: false, enrollmentId: "" }))}
+                  className="rounded-xl border border-slate-200 bg-slate-50 py-3 text-xs font-black uppercase tracking-wider text-slate-800"
+                >
+                  Không xác nhận
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void confirmOverrideEnrollmentTransfer()}
+                  disabled={enrollBusyId === overrideModal.enrollmentId}
+                  className="rounded-xl border border-emerald-300 bg-emerald-50 py-3 text-xs font-black uppercase tracking-wider text-emerald-700 disabled:opacity-50"
+                >
+                  {enrollBusyId === overrideModal.enrollmentId ? "Đang xử lý..." : "Xác nhận ngoại lệ"}
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
