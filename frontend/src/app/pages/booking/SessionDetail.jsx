@@ -13,7 +13,7 @@ import {
   Sparkles as Sparkle,
   BellRing as BellRinging,
   ShieldCheck,
-  ExternalLink as ArrowSquareOut,
+  ExternalLink,
   Timer,
   StickyNote as Notepad,
   CheckCircle,
@@ -28,12 +28,18 @@ import {
   X,
   CircleDollarSign as CurrencyCircleDollar,
 } from "lucide-react";
+import { AnimatePresence, motion } from "motion/react";
+import { toast } from "sonner";
 import { getBookingById, getReview } from "../../utils/bookings";
 import { isLoggedIn } from "../../utils/auth";
-import { fetchBookingById } from "../../utils/bookingsApi";
+import { cancelBooking, fetchBookingById } from "../../utils/bookingsApi";
 import { apiBookingToLocal } from "../../utils/bookingMappers";
 
 /* ─── Types ────────────────────────────────────────────── */
+
+function isMongoObjectId(value) {
+  return typeof value === "string" && /^[a-f\d]{24}$/i.test(value.trim());
+}
 
 /* ─── Helpers ──────────────────────────────────────────── */
 function CopyBtn({ text, label = "Sao chép" }) {
@@ -199,6 +205,12 @@ export function SessionDetail() {
     return null;
   }, [id, apiBooking]);
 
+  const mongoBookingId = useMemo(() => {
+    if (!sessionData) return "";
+    const raw = sessionData.backendId || sessionData.sessionId;
+    return isMongoObjectId(raw) ? String(raw).trim() : "";
+  }, [sessionData]);
+
   const sessionLoading =
     isLoggedIn() && apiBooking === undefined && !getBookingById(id);
 
@@ -210,6 +222,7 @@ export function SessionDetail() {
     sessionData?.date ?? "02/03/2026",
     sessionData?.time ?? "14:00"
   );
+  const hoursLeft = totalSec / 3600;
 
   /* ── Session state logic ── */
   const autoState = totalSec <= 0 ? "done" : totalSec <= 3600 ? "live" : "upcoming";
@@ -230,6 +243,9 @@ export function SessionDetail() {
 
   /* ── Notes ── */
   const [notes, setNotes] = useState("");
+  const [cancelModalOpen, setCancelModalOpen] = useState(false);
+  const [cancelReason, setCancelReason] = useState("");
+  const [cancelBusy, setCancelBusy] = useState(false);
 
   /* ── Rating / Feedback ── */
   const [rating, setRating] = useState(0);
@@ -246,6 +262,36 @@ export function SessionDetail() {
     "Gợi ý cải thiện cụ thể",
     "Tốc độ phù hợp, không áp lực",
   ];
+
+  const canCancelOnServer = Boolean(
+    mongoBookingId &&
+      isLoggedIn() &&
+      sessionData &&
+      !["cancelled", "done", "no_show", "completed"].includes(String(sessionData.status || "")),
+  );
+
+  const handleConfirmCancelBooking = async () => {
+    if (!mongoBookingId) return;
+    setCancelBusy(true);
+    const res = await cancelBooking(mongoBookingId, {
+      reason: String(cancelReason || "").trim(),
+    });
+    setCancelBusy(false);
+    if (!res.success) {
+      toast.error(res.error || "Không hủy được lịch.");
+      return;
+    }
+    const refund = res.cancellationPolicy?.refundPercent;
+    const paid = sessionData?.paymentStatus === "paid";
+    const extra =
+      paid && typeof refund === "number"
+        ? ` Hoàn tiền dự kiến: ${refund}% theo chính sách hệ thống.`
+        : "";
+    toast.success(`Đã hủy lịch.${extra}`);
+    setCancelModalOpen(false);
+    setCancelReason("");
+    navigate("/dashboard");
+  };
 
   if (sessionLoading) {
     return (
@@ -602,46 +648,65 @@ export function SessionDetail() {
                 <p className={`text-xs ${paymentMeta.noteClass}`}>{paymentMeta.note}</p>
               </div>
 
-              {/* Cancel button with refund policy */}
+              {/* Cancel booking (API) + refund policy — khớp backend bookingsService.cancelMyBooking */}
               <div className="space-y-3">
-                <button
-                  onClick={() => {
-                    if (window.confirm('Bạn có chắc muốn hủy buổi phỏng vấn này không?\n\n' + 
-                      (totalSec > 172800 ? '✓ Hủy trước 48 giờ: Hoàn 100%' : 
-                       totalSec > 86400 ? '• Hủy trong 24-48h: Hoàn 50%' : 
-                       '✗ Hủy trong 24h: Không hoàn tiền'))) {
-                      // TODO: Implement cancel booking logic
-                      alert('Đã gửi yêu cầu hủy. Chúng tôi sẽ liên hệ trong vòng 24h.');
-                    }
-                  }}
-                  className="w-full py-3 rounded-xl text-sm font-semibold transition-all border flex items-center justify-center gap-2 card-premium animate-fade-in" style={{ color: "#6B7280" }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.borderColor = "#EF4444";
-                    e.currentTarget.style.color = "#EF4444";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.borderColor = "#E5E7EB";
-                    e.currentTarget.style.color = "#6B7280";
-                  }}
-                >
-                  <X className="w-4 h-4" />
-                  Hủy buổi phỏng vấn
-                </button>
+                {canCancelOnServer ? (
+                  <button
+                    type="button"
+                    onClick={() => setCancelModalOpen(true)}
+                    className="w-full py-3 rounded-xl text-sm font-semibold transition-all border flex items-center justify-center gap-2 card-premium animate-fade-in"
+                    style={{ color: "#6B7280" }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.borderColor = "#EF4444";
+                      e.currentTarget.style.color = "#EF4444";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.borderColor = "#E5E7EB";
+                      e.currentTarget.style.color = "#6B7280";
+                    }}
+                  >
+                    <X className="w-4 h-4" />
+                    Hủy buổi phỏng vấn
+                  </button>
+                ) : (
+                  <p className="rounded-xl border border-dashed border-gray-200 bg-gray-50 px-3 py-2 text-center text-xs text-gray-500">
+                    {isLoggedIn()
+                      ? "Chỉ lịch đặt trên tài khoản (từ trang cố vấn) mới hủy được tự động qua hệ thống."
+                      : "Đăng nhập và mở lịch từ mục Đặt lịch để hủy online."}
+                  </p>
+                )}
 
-                {/* Refund info based on time */}
                 <div className="rounded-xl p-3 space-y-1.5" style={{ background: "#F9FAFB" }}>
                   <div className="flex items-center gap-2">
-                    <CircleDollarSign className="w-4 h-4 flex-shrink-0" style={{ color: totalSec > 172800 ? "#10b981" : totalSec > 86400 ? "#f59e0b" : "#ef4444" }} />
-                    <p className="text-xs font-semibold" style={{ color: totalSec > 172800 ? "#10b981" : totalSec > 86400 ? "#f59e0b" : "#ef4444" }}>
-                      {totalSec > 172800 ? "Hoàn 100% nếu hủy ngay" : 
-                       totalSec > 86400 ? "Hoàn 50% nếu hủy ngay" : 
-                       "Không hoàn tiền nếu hủy"}
+                    <CircleDollarSign
+                      className="w-4 h-4 flex-shrink-0"
+                      style={{
+                        color: hoursLeft > 24 ? "#10b981" : hoursLeft > 2 ? "#f59e0b" : "#ef4444",
+                      }}
+                    />
+                    <p
+                      className="text-xs font-semibold"
+                      style={{
+                        color: hoursLeft > 24 ? "#10b981" : hoursLeft > 2 ? "#f59e0b" : "#ef4444",
+                      }}
+                    >
+                      {hoursLeft > 24
+                        ? "Hoàn 100% (nếu đã thanh toán) nếu hủy ngay"
+                        : hoursLeft > 2
+                          ? "Hoàn 50% (nếu đã thanh toán) nếu hủy ngay"
+                          : "Không hoàn tiền nếu đã thanh toán"}
                     </p>
                   </div>
                   <ul className="text-xs text-gray-500 space-y-0.5 ml-6">
-                    <li className={totalSec > 172800 ? "text-emerald-600" : ""}>• Hủy trước 48h: Hoàn 100%</li>
-                    <li className={totalSec > 86400 && totalSec <= 172800 ? "text-amber-600" : ""}>• Hủy 24-48h: Hoàn 50%</li>
-                    <li className={totalSec <= 86400 ? "text-red-600" : ""}>• Hủy trong 24h: Không hoàn</li>
+                    <li className={hoursLeft > 24 ? "text-emerald-600" : ""}>
+                      • Trước hơn 24 giờ so với giờ hẹn: hoàn 100%
+                    </li>
+                    <li className={hoursLeft > 2 && hoursLeft <= 24 ? "text-amber-600" : ""}>
+                      • Trong khoảng 2–24 giờ trước giờ hẹn: hoàn 50%
+                    </li>
+                    <li className={hoursLeft <= 2 ? "text-red-600" : ""}>
+                      • Trong 2 giờ trước giờ hẹn: không hoàn
+                    </li>
                   </ul>
                   <p className="text-xs text-gray-400 pt-2 border-t border-gray-200">
                     Liên hệ <strong className="text-gray-600">support@prointerview.vn</strong> để đổi lịch miễn phí
@@ -988,6 +1053,64 @@ export function SessionDetail() {
         </div>
         );
       })()}
+
+      <AnimatePresence>
+        {cancelModalOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm"
+            onClick={() => {
+              if (!cancelBusy) setCancelModalOpen(false);
+            }}
+          >
+            <motion.div
+              initial={{ scale: 0.96, y: 16, opacity: 0 }}
+              animate={{ scale: 1, y: 0, opacity: 1 }}
+              exit={{ scale: 0.96, y: 16, opacity: 0 }}
+              className="w-full max-w-lg rounded-3xl border border-slate-200 bg-white p-6 shadow-xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <h4 className="text-xl font-black text-slate-900">Hủy lịch phỏng vấn?</h4>
+              <p className="mt-2 text-sm text-slate-600">
+                {hoursLeft > 24
+                  ? "Theo chính sách hiện tại: nếu đã thanh toán, bạn được hoàn 100%."
+                  : hoursLeft > 2
+                    ? "Trong khoảng 2–24 giờ trước giờ hẹn: nếu đã thanh toán, hoàn 50%."
+                    : "Trong 2 giờ trước giờ hẹn: không hoàn tiền nếu đã thanh toán."}
+              </p>
+              <textarea
+                value={cancelReason}
+                onChange={(e) => setCancelReason(e.target.value)}
+                className="mt-4 min-h-24 w-full rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-900 outline-none focus:border-violet-400"
+                placeholder="Lý do hủy (tuỳ chọn)"
+              />
+              <div className="mt-5 grid grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  disabled={cancelBusy}
+                  onClick={() => {
+                    setCancelModalOpen(false);
+                    setCancelReason("");
+                  }}
+                  className="rounded-xl border border-slate-200 bg-slate-50 py-3 text-xs font-black uppercase tracking-wider text-slate-800 disabled:opacity-50"
+                >
+                  Giữ lịch
+                </button>
+                <button
+                  type="button"
+                  disabled={cancelBusy}
+                  onClick={() => void handleConfirmCancelBooking()}
+                  className="rounded-xl border border-red-300 bg-red-50 py-3 text-xs font-black uppercase tracking-wider text-red-700 disabled:opacity-50"
+                >
+                  {cancelBusy ? "Đang xử lý…" : "Xác nhận hủy"}
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

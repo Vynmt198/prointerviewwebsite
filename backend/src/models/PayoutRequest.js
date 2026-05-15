@@ -21,6 +21,8 @@ const payoutRequestSchema = new Schema(
     reviewedAt: { type: Date, default: null },
     reviewedBy: { type: Schema.Types.ObjectId, ref: "User", default: null },
     rejectReason: { type: String, default: "" },
+    paidAt: { type: Date, default: null },
+    transferRef: { type: String, default: "" },
     provider: { type: String, default: "manual" },
     providerRef: { type: String, default: "" },
     note: { type: String, default: "" },

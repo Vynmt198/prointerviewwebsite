@@ -87,6 +87,11 @@ export const adminApi = {
       method: "PATCH",
       body: JSON.stringify({ reason }),
     }),
+  markPayoutPaid: (id, body = {}) =>
+    authedFetch(`/api/admin/payouts/${id}/mark-paid`, {
+      method: "PATCH",
+      body: JSON.stringify(body ?? {}),
+    }),
   getPendingCourses: () => authedFetch("/api/admin/courses/pending"),
   approveCourse: (id) =>
     authedFetch(`/api/admin/courses/${id}/approve`, {
