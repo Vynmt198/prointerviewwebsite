@@ -63,7 +63,7 @@ ${generalNotes || "Không có ghi chú thêm."}
     const res = await updateMentorNotes(sessionId, { notes: combinedNotes });
     setSaving(false);
 
-    if (res.ok) {
+    if (res.success) {
       setShowSuccess(true);
       setTimeout(() => {
         navigate("/mentor/schedule");
