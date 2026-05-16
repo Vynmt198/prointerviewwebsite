@@ -8,34 +8,30 @@ import dns from "node:dns";
 const getTransporter = () => {
   const user = process.env.MAIL_USER;
   const pass = process.env.MAIL_PASS;
+  const host = process.env.MAIL_HOST || "smtp.sendgrid.net";
+  const port = Number(process.env.MAIL_PORT) || 587;
 
   if (!user || !pass) {
     console.error("[EmailService] MAIL_USER or MAIL_PASS is missing!");
   }
 
-  // ÉP DÙNG IP SỐ ĐỂ CHẶN ĐỨNG IPV6
-  const host = "74.125.136.108"; 
-  const port = 587;
-
-  console.log(`[EmailService] IP FORCE ATTEMPT: Connecting to IPv4 ${host}:${port}`);
+  console.log(`[EmailService] RELAY MODE: Connecting to ${host}:${port}`);
   
   return nodemailer.createTransport({
     host,
     port,
-    secure: false, // STARTTLS cho cổng 587
+    secure: port === 465,
     auth: {
       user: user,
       pass: pass,
     },
     tls: {
-      servername: "smtp.gmail.com",
       rejectUnauthorized: false,
       minVersion: "TLSv1.2"
     },
-    connectionTimeout: 40000, 
-    greetingTimeout: 40000,
-    socketTimeout: 60000,
-    family: 4
+    connectionTimeout: 30000,
+    greetingTimeout: 30000,
+    socketTimeout: 45000,
   });
 };
 
