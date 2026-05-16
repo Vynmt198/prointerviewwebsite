@@ -9,24 +9,27 @@ const getTransporter = () => {
   const user = process.env.MAIL_USER;
   const pass = process.env.MAIL_PASS;
 
-  console.log(`[EmailService] GMAIL STANDARDIZED: Connecting to smtp.gmail.com:587`);
+  console.log(`[EmailService] FINAL DNS OVERRIDE: Hard-locking to IPv4 74.125.136.108`);
   
   return nodemailer.createTransport({
     host: "smtp.gmail.com",
-    port: 587,
-    secure: false, // TLS
+    port: 465,
+    secure: true,
     auth: {
       user: user,
       pass: pass,
     },
+    // ĐÁNH LỪA HỆ THỐNG: Bất kể tìm domain nào cũng trả về IP số này
+    lookup: (hostname, options, callback) => {
+      callback(null, "74.125.136.108", 4);
+    },
     tls: {
+      servername: "smtp.gmail.com",
       rejectUnauthorized: false,
     },
-    // Ép dùng IPv4 nhưng cho phép Node.js tự xử lý DNS nếu IP trực tiếp bị chặn
-    family: 4,
-    connectionTimeout: 30000,
-    greetingTimeout: 30000,
-    socketTimeout: 30000,
+    connectionTimeout: 40000, 
+    greetingTimeout: 40000,
+    socketTimeout: 40000,
   });
 };
 
