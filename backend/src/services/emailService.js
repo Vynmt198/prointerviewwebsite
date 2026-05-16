@@ -10,32 +10,31 @@ const getTransporter = () => {
   const pass = process.env.MAIL_PASS;
 
   if (!user || !pass) {
-    console.error("[EmailService] CRITICAL: MAIL_USER or MAIL_PASS is missing in environment variables!");
+    console.error("[EmailService] MAIL_USER or MAIL_PASS is missing!");
   }
 
-  // Ép sử dụng địa chỉ IP IPv4 của Google để tuyệt đối không dính IPv6
-  const host = "74.125.136.108"; 
-  const port = 465;
+  // Chuyển sang cổng 587 (STARTTLS) - Hy vọng Render không chặn cổng này
+  const host = "smtp.googlemail.com"; 
+  const port = 587;
 
-  console.log(`[EmailService] FINAL ATTEMPT: Connecting to IPv4 ${host}:${port} as ${user || "UNKNOWN"}`);
+  console.log(`[EmailService] LAST GMAIL TRY: Connecting to ${host}:${port} (STARTTLS + IPv4)`);
   
   return nodemailer.createTransport({
     host,
     port,
-    secure: true,
+    secure: false, // false cho cổng 587
     auth: {
       user: user,
       pass: pass,
     },
     tls: {
-      servername: "smtp.gmail.com",
       rejectUnauthorized: false,
       minVersion: "TLSv1.2"
     },
-    connectionTimeout: 30000,
-    greetingTimeout: 30000,
-    socketTimeout: 45000,
-    family: 4
+    connectionTimeout: 60000, // Tăng lên hẳn 1 phút
+    greetingTimeout: 60000,
+    socketTimeout: 60000,
+    family: 4 // Vẫn ép IPv4 để tránh ENETUNREACH
   });
 };
 
