@@ -51,25 +51,31 @@ export function MentorSessionFeedback() {
     if (saving) return;
     setSaving(true);
     
-    const combinedNotes = `
+    try {
+      const combinedNotes = `
 Điểm mạnh: ${strengths || "Đang cập nhật"}
 Cần cải thiện: ${weaknesses || "Đang cập nhật"}
 Lời khuyên: ${advice || "Đang cập nhật"}
 
 Nhận xét chi tiết:
 ${generalNotes || "Không có ghi chú thêm."}
-    `.trim();
+      `.trim();
 
-    const res = await updateMentorNotes(sessionId, { notes: combinedNotes });
-    setSaving(false);
-
-    if (res.success) {
-      setShowSuccess(true);
-      setTimeout(() => {
-        navigate("/mentor/schedule");
-      }, 3000);
-    } else {
-      toast.error("Có lỗi xảy ra khi lưu đánh giá.");
+      const res = await updateMentorNotes(sessionId, { notes: combinedNotes });
+      
+      if (res.success) {
+        setShowSuccess(true);
+        setTimeout(() => {
+          navigate("/mentor/schedule");
+        }, 3000);
+      } else {
+        toast.error(res.error || "Có lỗi xảy ra khi lưu đánh giá.");
+      }
+    } catch (error) {
+      console.error("Submit error:", error);
+      toast.error("Lỗi kết nối máy chủ khi gửi báo cáo.");
+    } finally {
+      setSaving(false);
     }
   };
 

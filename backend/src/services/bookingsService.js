@@ -780,16 +780,10 @@ export async function updateMentorNotes(mentorUserId, rawId, body) {
   const student = booking.userId;
   const mentorData = booking.mentorId;
   
-  const logMsg = `\n--- [${new Date().toISOString()}] Update Notes ---
-Booking: ${booking._id}
-Student: ${student ? student.email : "NULL"}
-Mentor: ${mentorData ? mentorData.name : "NULL"}
-Notes: ${notes.substring(0, 30)}...
-`;
-  fs.appendFileSync("debug_mail.log", logMsg);
+  console.log(`[updateMentorNotes] Booking: ${booking._id}, Student: ${student ? student.email : "NULL"}`);
 
   if (student && student.email) {
-    fs.appendFileSync("debug_mail.log", `Attempting to send email to ${student.email}\n`);
+    console.log(`Attempting to send email to ${student.email}`);
     // 1. Tạo thông báo trên Web
     try {
       await Notification.create({
@@ -804,9 +798,9 @@ Notes: ${notes.substring(0, 30)}...
         },
         isRead: false
       });
-      fs.appendFileSync("debug_mail.log", `Web notification created.\n`);
+      console.log(`Web notification created.`);
     } catch (err) {
-      fs.appendFileSync("debug_mail.log", `Notification error: ${err.message}\n`);
+      console.error(`Notification error: ${err.message}`);
     }
 
     // 2. Gửi Email
@@ -818,12 +812,12 @@ Notes: ${notes.substring(0, 30)}...
         booking.sessionType,
         notes
       );
-      fs.appendFileSync("debug_mail.log", `Email result: ${JSON.stringify(emailRes)}\n`);
+      console.log(`Email result: ${JSON.stringify(emailRes)}`);
     } catch (err) {
-      fs.appendFileSync("debug_mail.log", `Email error: ${err.message}\n`);
+      console.error(`Email error: ${err.message}`);
     }
   } else {
-    fs.appendFileSync("debug_mail.log", `SKIP EMAIL: Student or Email is missing.\n`);
+    console.log(`SKIP EMAIL: Student or Email is missing.`);
   }
 
   return { ok: true, booking: toPublicBooking(booking) };
