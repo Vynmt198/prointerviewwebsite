@@ -6,6 +6,7 @@ Kết hợp 3 phương pháp:
   3. RapidFuzz      — fuzzy match bắt typo và biến thể
 """
 
+from __future__ import annotations
 import json
 import re
 from pathlib import Path

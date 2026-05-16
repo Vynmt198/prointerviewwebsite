@@ -35,12 +35,23 @@ export function GoogleSignInBlock({ onError }) {
 
   const onCredential = useCallback(
     async (response) => {
+      console.log("[GoogleSignIn] Credential response received:", response ? "Yes" : "No");
       onError?.("");
       const cred = response?.credential;
-      if (!cred) { onError?.("Không nhận được phản hồi từ Google."); return; }
+      if (!cred) { 
+        console.error("[GoogleSignIn] No credential in response");
+        onError?.("Không nhận được phản hồi từ Google."); 
+        return; 
+      }
+      console.log("[GoogleSignIn] Sending credential to backend...");
       const result = await loginWithGoogleCredential(cred);
-      if (!result.success) { onError?.(result.error); return; }
+      console.log("[GoogleSignIn] Backend result:", result);
+      if (!result.success) { 
+        onError?.(result.error); 
+        return; 
+      }
       const user = getUser();
+      console.log("[GoogleSignIn] Login successful, user:", user?.email);
       navigate(getPostLoginPath(user, params.get("redirect")));
     },
     [navigate, onError, params],

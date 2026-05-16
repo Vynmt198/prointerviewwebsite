@@ -13,6 +13,7 @@ Env vars (dùng chung với backend Node.js):
 Nếu không set env → tự động dùng Ollama tại localhost:11434.
 """
 
+from __future__ import annotations
 import os
 import json
 import re

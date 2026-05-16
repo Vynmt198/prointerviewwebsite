@@ -49,7 +49,7 @@ function toMentorMeeting(booking) {
     id: booking.id || booking._id || "",
     status: booking.status || "",
     mentee: {
-      name: booking.customerName || "Học viên",
+      name: booking.customerName || booking.customerEmail || "Thành viên",
       avatar: booking.customerAvatar || DEFAULT_AVATAR,
       level: "Mentee",
     },
