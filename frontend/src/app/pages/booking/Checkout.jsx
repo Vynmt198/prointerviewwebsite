@@ -362,7 +362,9 @@ export function Checkout() {
         setBankBookingId(apiRes.booking.id);
         setAppStep("awaiting_transfer");
       } else {
-        setCardError(apiRes.error || "Không thể tạo lịch chờ chuyển khoản.");
+        const msg = apiRes.error || "Không thể tạo lịch chờ chuyển khoản.";
+        console.warn("[POST /api/bookings]", msg);
+        setCardError(msg);
       }
     } catch {
       setCardError("Lỗi hệ thống khi tạo lịch hẹn.");

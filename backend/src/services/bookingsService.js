@@ -8,6 +8,7 @@ import { ensureMentorProfilesForAllMentorUsers } from "./mentorProfileService.js
 import { recordAdminTransferSuccess, recordTransferPending, recordTransferSubmitted } from "./paymentsService.js";
 import { tryCreditMentorForCompletedBooking } from "./mentorEarningsService.js";
 import { runInTransaction } from "../helpers/dbHelper.js";
+import { resolveStoredUploadUrl } from "../utils/resolveStoredUploadUrl.js";
 
 const MONGO_ERR = "MongoDB chưa kết nối. Kiểm tra MONGO_URI trong .env.";
 const MENTOR_CANCEL_MIN_HOURS = 2;
@@ -143,6 +144,16 @@ function getMentorSlotsForDate(mentor, dateRaw) {
   return null;
 }
 
+/** Chỉ ép khung giờ khi mentor đã khai báo availableSlots hoặc recurringSchedule. */
+function mentorHasExplicitSchedule(mentor) {
+  const slots = mentor?.availableSlots;
+  const map = slots && typeof slots === "object" ? slots : {};
+  const keys =
+    slots instanceof Map ? [...slots.keys()] : Object.keys(map);
+  const recurring = Array.isArray(mentor?.recurringSchedule) ? mentor.recurringSchedule : [];
+  return keys.length > 0 || recurring.length > 0;
+}
+
 function buildNotes(body) {
   const direct = typeof body.notes === "string" ? body.notes.trim() : "";
   if (direct) return direct.slice(0, 8000);
@@ -220,11 +231,18 @@ export async function createBooking(userId, body) {
   if (!mentorAccount || mentorAccount.role !== "mentor" || mentorAccount.isActive === false) {
     return { ok: false, status: 404, error: "Mentor không khả dụng để đặt lịch." };
   }
-  if (mentor.isActive === false || mentor.isVerified !== true) {
+  if (mentor.isActive === false) {
     return {
       ok: false,
       status: 400,
-      error: "Mentor chưa được duyệt hoặc đang tạm ngưng. Liên hệ quản trị để kích hoạt.",
+      error: "Mentor đang tạm ngưng. Liên hệ quản trị để kích hoạt.",
+    };
+  }
+  if (mentor.isVerified === false) {
+    return {
+      ok: false,
+      status: 400,
+      error: "Mentor chưa được duyệt. Admin cần phê duyệt tại /admin/mentors/pending.",
     };
   }
   // Mentor đã duyệt nhưng còn available=false (đăng ký cũ / chưa sync) — tự bật lại.
@@ -245,8 +263,11 @@ export async function createBooking(userId, body) {
     return { ok: false, status: 400, error: "Thiếu date." };
   }
   const dateNormalized = normalizeBookingDate(rawDate);
+  if (!dateNormalized || !/^\d{2}\/\d{2}(\/\d{4})?$/.test(dateNormalized)) {
+    return { ok: false, status: 400, error: "Ngày đặt lịch không hợp lệ (dùng DD/MM/YYYY)." };
+  }
   const allowedSlots = getMentorSlotsForDate(mentor, dateNormalized);
-  if (Array.isArray(allowedSlots)) {
+  if (mentorHasExplicitSchedule(mentor) && Array.isArray(allowedSlots)) {
     if (allowedSlots.length === 0) {
       return { ok: false, status: 400, error: "Mentor không mở lịch cho ngày này." };
     }
@@ -275,18 +296,6 @@ export async function createBooking(userId, body) {
     ? mentor.sessionTypes.find((x) => x && x.type === sessionType)
     : null;
   if (st && typeof st.price === "number" && st.price > 0) basePrice = st.price;
-
-  const bodyPrice = Number(body.price);
-  if (Number.isFinite(bodyPrice) && bodyPrice > 0 && basePrice > 0) {
-    const drift = Math.abs(bodyPrice - basePrice) / basePrice;
-    if (drift > 0.15) {
-      return {
-        ok: false,
-        status: 400,
-        error: `Giá mentor đã đổi (hiện ${Math.round(basePrice).toLocaleString("vi-VN")}đ). Vui lòng tải lại trang đặt lịch.`,
-      };
-    }
-  }
 
   const platformRate = parseFeeRate(process.env.BOOKING_PLATFORM_FEE_RATE, 0.15);
   const vatRate = parseFeeRate(process.env.BOOKING_VAT_RATE, 0.1);
@@ -410,12 +419,12 @@ export function toPublicBooking(doc, mentorLean) {
     userId: cust?._id ? String(cust._id) : String(b.userId || ""),
     customerName: cust?.name || "",
     customerEmail: cust?.email || "",
-    customerAvatar: cust?.avatar || "",
+    customerAvatar: resolveStoredUploadUrl(cust?.avatar || ""),
     mentorId: mentorPublicId,
     mentorName: m?.name ?? "",
     mentorTitle: m?.title ?? "",
     mentorCompany: m?.company ?? "",
-    mentorAvatar: m?.avatar ?? "",
+    mentorAvatar: resolveStoredUploadUrl(m?.avatar ?? ""),
     mentorEmail: mentorEmail,
     date: b.date,
     timeSlot: b.timeSlot,

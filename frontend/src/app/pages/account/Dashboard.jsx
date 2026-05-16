@@ -2,13 +2,11 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router";
 import { motion, AnimatePresence } from "motion/react";
 import { getUser, isLoggedIn, getDisplayName, getInitials } from "../../utils/auth";
-import { getCVAnalysisHistory, getStoredInterviewHistory } from "../../utils/history";
 import { toast } from "sonner";
 import { getAllBookings, parseDateMs } from "../../utils/bookings";
 import { listBookings, cancelBooking } from "../../utils/bookingsApi";
 import { fetchDashboardStats } from "../../utils/dashboardApi";
 import { apiBookingToLocal } from "../../utils/bookingMappers";
-import { SKILLS_DATA } from "../../data/mockData";
 import { MentorPageShell } from "../../components/mentor/MentorPageShell";
 
 /** Google Material Symbols Outlined — same family as mock (index.html loads the font). */
@@ -46,15 +44,6 @@ function getCancellationPolicy(dateStr, timeStr) {
   if (hoursUntil <= 24) return { feePercent: 50, refundPercent: 50 };
   return { feePercent: 0, refundPercent: 100 };
 }
-
-/** Nhãn hiển thị cho skill seed (Dashboard). */
-const SKILL_DISPLAY = {
-  Clarity: "Clarity (Mạch lạc)",
-  Structure: "Structure (Cấu trúc)",
-  Relevance: "Relevance (Độ liên quan)",
-  Credibility: "Credibility (Độ tin cậy)",
-  Communication: "Communication (Giao tiếp)",
-};
 
 function getTimeUntilSessionLabel(dateStr, timeStr) {
   const [d, m, y] = String(dateStr || "").split("/").map(Number);
@@ -192,6 +181,23 @@ function getPaymentBadge(paymentStatus, status) {
   };
 }
 
+function LearningStreakCard({ days, loading }) {
+  const streakLabel = loading ? "—" : `${days} ngày`;
+
+  return (
+    <div className="dashboard-glass-soft flex w-full min-w-0 items-center justify-between gap-3 rounded-2xl p-4 sm:max-w-[240px] sm:p-5 lg:shrink-0">
+      <div className="min-w-0">
+        <p className="mb-0.5 text-[10px] font-black uppercase tracking-widest text-slate-500/60">
+          Hành trình học
+        </p>
+        <h3 className="text-lg font-black text-slate-900 sm:text-xl">{streakLabel}</h3>
+      </div>
+      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#bff365]">
+        <MsIcon name="local_fire_department" filled size={18} className="text-[#131f00]" />
+      </div>
+    </div>
+  );
+}
 
 export function Dashboard() {
   const navigate = useNavigate();
@@ -201,14 +207,10 @@ export function Dashboard() {
 
   const [upcomingSessions, setUpcomingSessions] = useState([]);
   const [cancellingBooking, setCancellingBooking] = useState(null);
-  const [cvHistory, setCvHistory] = useState(() => getCVAnalysisHistory());
-  const [interviewHistory, setInterviewHistory] = useState(() => getStoredInterviewHistory());
-  const [serverStats, setServerStats] = useState(null);
-  const [statsFetched, setStatsFetched] = useState(false);
+  const [streakStats, setStreakStats] = useState(null);
+  const [streakLoading, setStreakLoading] = useState(false);
 
   const loadData = async () => {
-    setInterviewHistory(getStoredInterviewHistory());
-    setCvHistory(getCVAnalysisHistory());
     const all = getAllBookings();
     const now = Date.now();
     const skipStatus = new Set(["cancelled", "completed", "no_show", "done"]);
@@ -222,15 +224,16 @@ export function Dashboard() {
     });
 
     if (!isLoggedIn()) {
-      setServerStats(null);
-      setStatsFetched(false);
+      setStreakStats(null);
+      setStreakLoading(false);
       setUpcomingSessions(upcomingFromLocal);
       return;
     }
 
-    const [statsRes, listRes] = await Promise.all([fetchDashboardStats(), listBookings()]);
-    setServerStats(statsRes.success ? statsRes.stats : null);
-    setStatsFetched(true);
+    setStreakLoading(true);
+    const [listRes, statsRes] = await Promise.all([listBookings(), fetchDashboardStats()]);
+    setStreakLoading(false);
+    setStreakStats(statsRes.success ? statsRes.stats : null);
 
     const mergeKey = (b) => String(b?.backendId || b?.paymentRef || b?.orderNum || "");
     const map = new Map();
@@ -287,23 +290,6 @@ export function Dashboard() {
     }
   };
 
-  const useServerStats = statsFetched && serverStats != null;
-  const totalInterviews = useServerStats ? serverStats.interviewSessionsCompleted : interviewHistory.length;
-  const avgStar = useServerStats
-    ? (Number(serverStats.interviewAverageScore) || 0).toFixed(1)
-    : interviewHistory.length > 0
-      ? (interviewHistory.reduce((a, i) => a + i.overall, 0) / interviewHistory.length).toFixed(1)
-      : "0.0";
-  const totalCVAnalyses = useServerStats ? serverStats.cvAnalysesCount : cvHistory.length;
-  const bestMatch = useServerStats
-    ? Math.round(Number(serverStats.cvBestMatchScore) || 0)
-    : cvHistory.length > 0
-      ? Math.max(...cvHistory.map((i) => i.matchScore))
-      : 0;
-
-  const skillStrengths = [...SKILLS_DATA].sort((a, b) => b.value - a.value).slice(0, 2);
-  const skillWeaknesses = [...SKILLS_DATA].sort((a, b) => a.value - b.value).slice(0, 2);
-
   return (
     <MentorPageShell bottomPad="pb-20">
       <style>{`
@@ -337,19 +323,25 @@ export function Dashboard() {
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
-          className="flex items-center gap-4"
+          className="flex flex-col gap-4 lg:flex-row lg:items-stretch lg:justify-between"
         >
-          <div className="dashboard-glass-soft flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border-2 border-[#6E35E8]/20 shadow-md shadow-[#6E35E8]/5 sm:h-16 sm:w-16">
-            <span className="text-lg font-black tracking-tight text-[#6E35E8] sm:text-xl">{initials}</span>
+          <div className="flex min-w-0 items-center gap-4">
+            <div className="dashboard-glass-soft flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border-2 border-[#6E35E8]/20 shadow-md shadow-[#6E35E8]/5 sm:h-16 sm:w-16">
+              <span className="text-lg font-black tracking-tight text-[#6E35E8] sm:text-xl">{initials}</span>
+            </div>
+            <div className="min-w-0">
+              <h1 className="break-words text-xl font-black leading-tight text-slate-900 sm:text-2xl">
+                Chào, <span className="text-[#6E35E8]">{fullName}!</span>
+              </h1>
+              <p className="mt-1 text-sm font-medium text-slate-600/90">
+                Sẵn sàng chinh phục mục tiêu phỏng vấn hôm nay?
+              </p>
+            </div>
           </div>
-          <div className="min-w-0">
-            <h1 className="break-words text-xl font-black leading-tight text-slate-900 sm:text-2xl">
-              Chào, <span className="text-[#6E35E8]">{fullName}!</span>
-            </h1>
-            <p className="mt-1 text-sm font-medium text-slate-600/90">
-              Sẵn sàng chinh phục mục tiêu phỏng vấn hôm nay?
-            </p>
-          </div>
+          <LearningStreakCard
+            days={streakStats?.learningStreakDays ?? 0}
+            loading={streakLoading}
+          />
         </motion.div>
 
         <motion.button
@@ -422,7 +414,7 @@ export function Dashboard() {
         </motion.div>
 
         <motion.div className="grid grid-cols-12 gap-4 items-start lg:gap-5">
-          <div className="col-span-12 space-y-6 lg:col-span-8">
+          <div className="col-span-12">
             <div
               className={`glass-card p-5 sm:p-6 bg-gradient-to-br from-white to-slate-50 border-slate-200 flex flex-col overflow-hidden ${
                 upcomingSessions.length === 0
@@ -520,111 +512,8 @@ export function Dashboard() {
                  </button>
                )}
             </div>
-
-            <div className="space-y-2 mt-1">
-              <p className="text-[11px] font-black text-slate-700 px-1 leading-tight">Số liệu từ lịch sử trên máy bạn.</p>
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 items-stretch">
-                <LushMetric
-                  label="Phiên phỏng vấn AI"
-                  value={totalInterviews}
-                  icon="mic"
-                  accent="violet"
-                  color="#a78bfa"
-                  caption="Số buổi PV thử với AI đã hoàn thành và được lưu."
-                />
-                <LushMetric
-                  label="Điểm trung bình"
-                  value={avgStar}
-                  icon="track_changes"
-                  accent="lime"
-                  color="#84cc16"
-                  caption="TB điểm AI chấm (≈0–5) qua các phiên đã lưu."
-                />
-                <LushMetric
-                  label="Lượt phân tích CV"
-                  value={totalCVAnalyses}
-                  icon="description"
-                  accent="cyan"
-                  color="#06b6d4"
-                  caption="Số lần chạy phân tích CV so với JD."
-                />
-                <LushMetric
-                  label="Khớp JD (cao nhất)"
-                  value={totalCVAnalyses === 0 ? "—" : `${bestMatch}%`}
-                  icon="psychology"
-                  accent="sunset"
-                  color="#f97316"
-                  caption="% khớp JD cao nhất trong các lần phân tích; chưa có lượt → “—”."
-                />
-              </div>
-            </div>
-
-            {/* INSIGHTS (Removed AI Advice as requested) */}
-            <div className="glass-card p-5 sm:p-6 border-slate-200 bg-white">
-               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
-                  <div className="space-y-4">
-                     <h4 className="text-[10px] font-black text-secondary tracking-widest uppercase flex items-center gap-2">
-                        <div className="w-1 h-3 bg-secondary"></div> Thế mạnh hiện tại
-                     </h4>
-                     <ul className="space-y-3">
-                        {skillStrengths.map((s) => (
-                          <li
-                            key={s.id}
-                            className="flex items-center gap-3 text-sm font-bold text-slate-800 group hover:text-secondary transition-colors cursor-default"
-                          >
-                            <div className="w-1.5 h-1.5 rounded-full bg-secondary shrink-0" />
-                            <span className="min-w-0 flex-1">
-                              {SKILL_DISPLAY[s.skill] || s.skill}{" "}
-                              <span className="text-zinc-500 font-semibold">({s.value}%)</span>
-                            </span>
-                          </li>
-                        ))}
-                     </ul>
-                  </div>
-                  <div className="space-y-4">
-                     <h4 className="text-[10px] font-black text-primary-fixed tracking-widest uppercase flex items-center gap-2">
-                        <div className="w-1 h-3 bg-primary-fixed"></div> Điểm cần cải thiện
-                     </h4>
-                     <ul className="space-y-3">
-                        {skillWeaknesses.map((s) => (
-                          <li
-                            key={s.id}
-                            className="flex items-center gap-3 text-sm font-bold text-slate-800 group hover:text-primary-fixed transition-colors cursor-default"
-                          >
-                            <div className="w-1.5 h-1.5 rounded-full bg-primary-fixed shrink-0" />
-                            <span className="min-w-0 flex-1">
-                              {SKILL_DISPLAY[s.skill] || s.skill}{" "}
-                              <span className="text-zinc-500 font-semibold">({s.value}%)</span>
-                            </span>
-                          </li>
-                        ))}
-                     </ul>
-                  </div>
-               </div>
-            </div>
           </div>
 
-          <div className="col-span-12 lg:col-span-4">
-            <div className="dashboard-glass-soft flex h-full min-h-0 flex-col justify-between rounded-2xl p-5 sm:p-6">
-              <div className="flex items-start justify-between gap-2">
-                <div>
-                  <p className="mb-0.5 text-[10px] font-black uppercase tracking-widest text-slate-500/60">
-                    Hành trình học
-                  </p>
-                  <h3 className="text-lg font-black text-slate-900 sm:text-xl">12 Days Streak</h3>
-                </div>
-                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#bff365]">
-                  <MsIcon name="local_fire_department" filled size={18} className="text-[#131f00]" />
-                </div>
-              </div>
-              <div className="mt-5 space-y-2">
-                <div className="h-2 w-full rounded-full bg-slate-200">
-                  <div className="h-full w-[80%] rounded-full bg-[#6E35E8]" />
-                </div>
-                <p className="text-[11px] text-slate-500/60">3 ngày nữa để lên hạng mới!</p>
-              </div>
-            </div>
-          </div>
         </motion.div>
       </motion.div>
 
@@ -656,66 +545,6 @@ function FeatureCard({ title, desc, icon, iconWellClass, hoverBorder, onClick })
         <p className="text-xs text-slate-500 leading-snug">{desc}</p>
       </div>
     </button>
-  );
-}
-
-/** Pastel circle + saturated glyph (same hue), như mock UI. */
-const metricIconPastel = {
-  violet: {
-    well: "rounded-full border-2 border-violet-300/90 bg-violet-100 shadow-sm",
-    glyph: "text-violet-700",
-  },
-  lime: {
-    well: "rounded-full border-2 border-lime-400/80 bg-lime-100 shadow-sm",
-    glyph: "text-emerald-800",
-  },
-  cyan: {
-    well: "rounded-full border-2 border-cyan-300/90 bg-cyan-50 shadow-sm",
-    glyph: "text-cyan-900",
-  },
-  sunset: {
-    well: "rounded-full border-2 border-orange-300/90 bg-orange-100 shadow-sm",
-    glyph: "text-orange-800",
-  },
-};
-
-function LushMetric({ label, value, icon, accent, color, caption }) {
-  const pair = metricIconPastel[accent] || metricIconPastel.violet;
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 14 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ type: "spring", stiffness: 140, damping: 18 }}
-      title={caption}
-      className="glass-card p-4 sm:p-5 group flex flex-col items-stretch text-left min-h-[180px]"
-    >
-      <div className="flex flex-col items-center text-center sm:items-start sm:text-left w-full">
-        <div className="glow-halo mb-4 mx-auto sm:mx-0">
-          <div
-            className={`flex h-14 w-14 items-center justify-center group-hover:scale-110 group-hover:rotate-3 transition-all duration-400 ${pair.well}`}
-          >
-            <MsIcon name={icon} size={28} className={pair.glyph} />
-          </div>
-        </div>
-        <p className="text-[11px] font-black text-slate-500 uppercase tracking-[0.08em] mb-1 w-full leading-snug">{label}</p>
-        <h4
-          className="text-xl sm:text-2xl font-black tracking-tighter transition-all group-hover:scale-[1.02] w-full text-slate-900"
-          style={{
-            backgroundImage: `linear-gradient(135deg, #0f172a 0%, ${color} 140%)`,
-            WebkitBackgroundClip: "text",
-            WebkitTextFillColor: "transparent",
-            backgroundClip: "text",
-          }}
-        >
-          {value}
-        </h4>
-      </div>
-      {caption ? (
-        <p className="mt-4 pt-3 border-t border-slate-200 text-xs leading-snug text-slate-600 font-medium">
-          {caption}
-        </p>
-      ) : null}
-    </motion.div>
   );
 }
 

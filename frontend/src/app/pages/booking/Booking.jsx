@@ -25,6 +25,7 @@ import { fetchMentor, fetchMentorAvailability } from "../../utils/mentorApi";
 import { fetchBookedSlots } from "../../utils/bookingsApi";
 import { getSuggestedBookingData, getCVAnalysisHistory } from "../../utils/history";
 import { MentorPageShell } from "../../components/mentor/MentorPageShell";
+import { avatarSrc } from "../../utils/mediaUrl";
 
 const VI_DAY_SHORT = ["CN", "T2", "T3", "T4", "T5", "T6", "T7"];
 const VI_DAY_FULL = ["Chủ nhật", "Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5", "Thứ 6", "Thứ 7"];
@@ -321,7 +322,15 @@ export function Booking() {
         </div>
 
         <div className="mb-6 flex items-center gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-          <img src={mentor.avatar} alt={mentor.name} className="h-12 w-12 flex-shrink-0 rounded-xl object-cover ring-1 ring-slate-200" />
+          <img
+            src={avatarSrc(mentor.avatar)}
+            alt={mentor.name}
+            className="h-12 w-12 flex-shrink-0 rounded-xl object-cover ring-1 ring-slate-200"
+            onError={(e) => {
+              e.currentTarget.onerror = null;
+              e.currentTarget.src = avatarSrc("");
+            }}
+          />
           <div className="min-w-0">
             <p className="truncate text-sm font-bold text-slate-900">{mentor.name}</p>
             <p className="truncate text-xs text-slate-600">
