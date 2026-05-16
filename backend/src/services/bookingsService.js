@@ -803,19 +803,18 @@ export async function updateMentorNotes(mentorUserId, rawId, body) {
       console.error(`Notification error: ${err.message}`);
     }
 
-    // 2. Gửi Email
-    try {
-      const emailRes = await sendMentorFeedbackEmail(
-        student.email,
-        student.name || "Bạn",
-        mentorData?.name || "Mentor",
-        booking.sessionType,
-        notes
-      );
-      console.log(`Email result: ${JSON.stringify(emailRes)}`);
-    } catch (err) {
-      console.error(`Email error: ${err.message}`);
-    }
+    // 2. Gửi Email (Bất đồng bộ - Không chờ đợi để tránh treo UI)
+    sendMentorFeedbackEmail(
+      student.email,
+      student.name || "Bạn",
+      mentorData?.name || "Mentor",
+      booking.sessionType,
+      notes
+    ).then(emailRes => {
+      console.log(`Email background result: ${JSON.stringify(emailRes)}`);
+    }).catch(err => {
+      console.error(`Email background error: ${err.message}`);
+    });
   } else {
     console.log(`SKIP EMAIL: Student or Email is missing.`);
   }
