@@ -20,18 +20,22 @@ export async function authJwt(req, res, next) {
   try {
     const payload = jwt.verify(token, secret);
     if (!payload.sub) {
+      console.warn("[Auth] Token missing sub payload");
       return res.status(401).json({ success: false, error: "Token không hợp lệ" });
     }
     const u = await User.findById(payload.sub).select("isActive tokenVersion").lean();
     if (!u) {
+      console.warn(`[Auth] User not found in DB: ${payload.sub}. Có thể DB local và server khác nhau.`);
       return res.status(401).json({ success: false, error: "Tài khoản không tồn tại." });
     }
     if (u.isActive === false) {
+      console.warn(`[Auth] User is inactive: ${payload.sub}`);
       return res.status(403).json({ success: false, error: "Tài khoản đã bị khóa." });
     }
     const expectedTv = u.tokenVersion ?? 0;
     const tokenTv = typeof payload.tv === "number" ? payload.tv : 0;
     if (tokenTv !== expectedTv) {
+      console.warn(`[Auth] Token version mismatch. User: ${payload.sub}, Expected: ${expectedTv}, Token: ${tokenTv}`);
       return res.status(401).json({
         success: false,
         error: "Phiên đăng nhập đã kết thúc. Vui lòng đăng nhập lại.",
@@ -39,7 +43,8 @@ export async function authJwt(req, res, next) {
     }
     req.userId = payload.sub;
     next();
-  } catch {
+  } catch (err) {
+    console.error(`[Auth] JWT Verify Error: ${err.message}`);
     return res.status(401).json({ success: false, error: "Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại." });
   }
 }

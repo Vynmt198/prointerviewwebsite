@@ -4,14 +4,26 @@ import dotenv from "dotenv";
 dotenv.config();
 
 const getTransporter = () => {
+  const host = process.env.MAIL_HOST || "smtp.gmail.com";
+  const port = Number(process.env.MAIL_PORT) || 587;
+  
   return nodemailer.createTransport({
-    host: process.env.MAIL_HOST || "smtp.gmail.com",
-    port: Number(process.env.MAIL_PORT) || 587,
-    secure: Number(process.env.MAIL_PORT) === 465,
+    host,
+    port,
+    secure: port === 465,
     auth: {
       user: process.env.MAIL_USER,
       pass: process.env.MAIL_PASS,
     },
+    // Cấu hình tối ưu cho Server/Docker/Render
+    tls: {
+      rejectUnauthorized: false, // Cho phép tự ký hoặc lỗi cert nhẹ
+      minVersion: "TLSv1.2"
+    },
+    // Ép sử dụng IPv4 để tránh lỗi ENETUNREACH trên các network không hỗ trợ IPv6
+    connectionTimeout: 10000, // 10 giây
+    greetingTimeout: 5000,
+    socketTimeout: 15000,
   });
 };
 
