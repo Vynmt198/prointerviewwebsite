@@ -38,7 +38,7 @@ export default function App() {
         />
         <div className="relative z-10 flex flex-col items-center gap-5">
           <img
-            src="/logo-mark.png?v=8"
+            src="/logo-mark.png?v=9"
             alt="ProInterview"
             className="h-16 w-auto object-contain sm:h-20"
           />
