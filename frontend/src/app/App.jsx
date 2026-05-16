@@ -25,28 +25,27 @@ export default function App() {
   }, []);
 
   if (!sessionChecked) {
-    // Minimal full-screen loader — matches brand purple
     return (
-      <div
-        className="min-h-screen flex items-center justify-center"
-        style={{ background: "#120B2E" }}
-      >
-        <div className="flex flex-col items-center gap-4">
+      <div className="relative flex min-h-screen items-center justify-center bg-[#f3f0f9]">
+        <div
+          className="pointer-events-none absolute inset-0"
+          style={{
+            backgroundImage:
+              "linear-gradient(rgba(110, 53, 232, 0.045) 1px, transparent 1px), linear-gradient(90deg, rgba(110, 53, 232, 0.045) 1px, transparent 1px)",
+            backgroundSize: "64px 64px",
+          }}
+          aria-hidden
+        />
+        <div className="relative z-10 flex flex-col items-center gap-5">
+          <img
+            src="/logo-mark.png?v=1"
+            alt="ProInterview"
+            className="h-16 w-auto object-contain sm:h-20"
+          />
           <div
-            className="flex h-12 w-12 items-center justify-center rounded-2xl"
-            style={{
-              background: "linear-gradient(135deg, #6E35E8, #8B4DFF)",
-              boxShadow: "0 0 24px rgba(110,53,232,0.35)",
-            }}
-          >
-            <img src="/favicon-192.png?v=6" alt="ProInterview" className="h-10 w-10 object-contain" />
-          </div>
-          <div
-            className="h-6 w-6 animate-spin rounded-full border-2 border-t-transparent"
-            style={{
-              borderColor: "rgba(196, 255, 71,0.45)",
-              borderTopColor: "transparent",
-            }}
+            className="h-7 w-7 animate-spin rounded-full border-2 border-[#6E35E8]/25 border-t-[#6E35E8]"
+            role="status"
+            aria-label="Đang tải"
           />
         </div>
       </div>
