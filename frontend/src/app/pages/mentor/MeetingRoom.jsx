@@ -128,7 +128,7 @@ export function MeetingRoom() {
     if (!window.confirm("Bạn có chắc chắn muốn kết thúc và hoàn thành buổi học này?")) return;
     const res = await completeMentorBooking(sessionId);
     if (res.success) {
-      navigate("/mentor/dashboard");
+      navigate(`/mentor/session-feedback/${sessionId}`);
     } else {
       alert(res.error || "Không thể kết thúc buổi học.");
     }

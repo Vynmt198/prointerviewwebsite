@@ -39,6 +39,7 @@ import { MentorCourseManagement } from "./pages/mentor/MentorCourseManagement";
 import { MentorCourseEdit } from "./pages/mentor/MentorCourseEdit";
 import { MentorPeerReview } from "./pages/mentor/MentorPeerReview";
 import { MentorArea } from "./pages/mentor/MentorArea";
+import { MentorSessionFeedback } from "./pages/mentor/MentorSessionFeedback";
 import { Pricing } from "./pages/home/Pricing";
 import { AdminLayout } from "./pages/admin/AdminLayout.jsx";
 import { adminLoader } from "./pages/admin/adminLoader.js";
@@ -133,6 +134,7 @@ export const router = createHashRouter([
           { path: "analytics", Component: MentorAnalytics },
           { path: "reviews", Component: MentorReviews },
           { path: "meeting-detail/:sessionId", Component: MentorMeetingDetail },
+          { path: "session-feedback/:sessionId", Component: MentorSessionFeedback },
           { path: "courses", Component: MentorCourseManagement },
           { path: "courses/:id/edit", Component: MentorCourseEdit },
           { path: "peer-review", Component: MentorPeerReview },
