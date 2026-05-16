@@ -6,21 +6,36 @@ dotenv.config();
 import dns from "node:dns";
 
 const getTransporter = () => {
-  console.log(`[EmailService] Using Nodemailer GMAIL service strategy...`);
+  const user = process.env.MAIL_USER;
+  const pass = process.env.MAIL_PASS;
+
+  if (!user || !pass) {
+    console.error("[EmailService] CRITICAL: MAIL_USER or MAIL_PASS is missing in environment variables!");
+  }
+
+  // Ép sử dụng địa chỉ IP IPv4 của Google để tuyệt đối không dính IPv6
+  const host = "74.125.136.108"; 
+  const port = 465;
+
+  console.log(`[EmailService] FINAL ATTEMPT: Connecting to IPv4 ${host}:${port} as ${user || "UNKNOWN"}`);
   
   return nodemailer.createTransport({
-    service: 'gmail',
+    host,
+    port,
+    secure: true,
     auth: {
-      user: process.env.MAIL_USER,
-      pass: process.env.MAIL_PASS,
+      user: user,
+      pass: pass,
     },
     tls: {
+      servername: "smtp.gmail.com",
       rejectUnauthorized: false,
       minVersion: "TLSv1.2"
     },
-    connectionTimeout: 40000, 
-    greetingTimeout: 40000,
-    socketTimeout: 60000,
+    connectionTimeout: 30000,
+    greetingTimeout: 30000,
+    socketTimeout: 45000,
+    family: 4
   });
 };
 
