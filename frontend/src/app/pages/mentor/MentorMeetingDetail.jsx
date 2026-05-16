@@ -515,7 +515,10 @@ export function MentorMeetingDetail() {
                        </>
                     ) : (
                        <>
-                          <button className="w-full py-5 rounded-3xl bg-primary-fixed text-black text-[10px] font-black uppercase tracking-widest shadow-[0_15px_40px_rgba(196, 255, 71,0.32)] hover:scale-105 transition-all flex items-center justify-center gap-2">
+                          <button 
+                            onClick={() => navigate(`/mentor/session-feedback/${meeting.id}`)}
+                            className="w-full py-5 rounded-3xl bg-primary-fixed text-black text-[10px] font-black uppercase tracking-widest shadow-[0_15px_40px_rgba(196, 255, 71,0.32)] hover:scale-105 transition-all flex items-center justify-center gap-2"
+                          >
                              <TrendingUp size={16} /> Gửi feedback bổ sung
                           </button>
                           <button className="w-full py-5 rounded-3xl bg-slate-50 border border-slate-200 text-[10px] font-black uppercase tracking-widest hover:bg-slate-100 transition-all flex items-center justify-center gap-2">
