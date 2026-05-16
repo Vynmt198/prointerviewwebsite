@@ -4,11 +4,12 @@ import dotenv from "dotenv";
 dotenv.config();
 
 const getTransporter = () => {
-  const host = process.env.MAIL_HOST || "smtp.gmail.com";
+  // Sử dụng googlemail.com thường ổn định hơn trên các server cloud
+  const host = process.env.MAIL_HOST || "smtp.googlemail.com";
   const port = Number(process.env.MAIL_PORT) || 465;
   const secure = port === 465 || process.env.MAIL_SECURE === "true";
 
-  console.log(`[EmailService] Attempting connection to ${host}:${port} (Secure: ${secure})`);
+  console.log(`[EmailService] Connecting to ${host}:${port} (Forcing IPv4)`);
   
   return nodemailer.createTransport({
     host,
@@ -22,11 +23,11 @@ const getTransporter = () => {
       rejectUnauthorized: false,
       minVersion: "TLSv1.2"
     },
-    // Tăng timeout lên 30s vì Render network đôi khi phản hồi chậm
+    // Các thiết lập quan trọng để vượt qua tường lửa của Render
     connectionTimeout: 30000, 
     greetingTimeout: 30000,
     socketTimeout: 45000,
-    // Ép sử dụng IPv4 để tránh lỗi ENETUNREACH/Timeout trên các network không hỗ trợ IPv6
+    // Ép sử dụng IPv4 (Cực kỳ quan trọng để fix ENETUNREACH)
     family: 4,
   });
 };
