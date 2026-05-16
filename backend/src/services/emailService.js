@@ -6,29 +6,21 @@ dotenv.config();
 import dns from "node:dns";
 
 const getTransporter = () => {
-  // Dùng thẳng địa chỉ IP IPv4 của Google để Render không thể tìm đến IPv6
-  const host = "74.125.136.108"; 
-  const port = 465;
-
-  console.log(`[EmailService] ULTIMATE FIX: Connecting directly to IPv4 ${host}:${port}`);
+  console.log(`[EmailService] Using Nodemailer GMAIL service strategy...`);
   
   return nodemailer.createTransport({
-    host,
-    port,
-    secure: true,
+    service: 'gmail',
     auth: {
       user: process.env.MAIL_USER,
       pass: process.env.MAIL_PASS,
     },
     tls: {
-      // Vì dùng IP nên phải khai báo servername để chứng chỉ SSL vẫn hợp lệ
-      servername: "smtp.gmail.com",
       rejectUnauthorized: false,
       minVersion: "TLSv1.2"
     },
-    connectionTimeout: 30000, 
-    greetingTimeout: 30000,
-    socketTimeout: 45000,
+    connectionTimeout: 40000, 
+    greetingTimeout: 40000,
+    socketTimeout: 60000,
   });
 };
 

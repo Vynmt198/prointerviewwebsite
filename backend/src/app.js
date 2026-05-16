@@ -33,6 +33,29 @@ export function createApp() {
     ? process.env.CORS_ORIGIN.split(",").map((s) => s.trim()).filter(Boolean)
     : true;
 
+  // Route chẩn đoán Email
+  app.get("/api/test-email", async (req, res) => {
+    try {
+      const { sendVerificationEmail } = await import("./services/emailService.js");
+      const result = await sendVerificationEmail(
+        process.env.MAIL_USER || "test@example.com",
+        "Tester",
+        "https://prointerview.ai/verify-test"
+      );
+      res.json({
+        message: "Email test result",
+        success: result.ok,
+        error: result.error || null,
+        env: {
+          MAIL_USER: process.env.MAIL_USER ? "HIDDEN" : "MISSING",
+          MAIL_PASS: process.env.MAIL_PASS ? "HIDDEN" : "MISSING",
+        }
+      });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
   app.use(
     cors({
       origin: corsOrigins,
