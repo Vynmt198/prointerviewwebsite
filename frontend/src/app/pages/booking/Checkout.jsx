@@ -198,7 +198,7 @@ export function Checkout() {
     });
   }, [isCourse, courseId]);
 
-  const bookingPrice = Number(searchParams.get("price") ?? bookingMentor?.price ?? 0);
+  const bookingPrice = Number(bookingMentor?.price ?? searchParams.get("price") ?? 0);
   const bookingDate = searchParams.get("date") ?? "";
   const bookingTime = searchParams.get("time") ?? "";
 
@@ -342,6 +342,7 @@ export function Checkout() {
       const apiRes = await createBooking({
         mentorId: bookingMentor.id,
         date: bookingDate,
+        time: bookingTime,
         timeSlot: bookingTime,
         sessionType: "mock_interview",
         position: bookingPosition,

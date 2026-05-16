@@ -23,6 +23,7 @@ yarn-error.log*
 
 # scratch
 scratch/
+.favicon-pillow/
 
 # misc
 *.local
