@@ -46,6 +46,7 @@ export const AdminController = {
       const update = isActive
         ? {
             isActive: true,
+            available: true,
             isVerified: true,
             verifiedAt: new Date(),
             "adminReview.status": "approved",
@@ -53,7 +54,7 @@ export const AdminController = {
             "adminReview.reviewedAt": new Date(),
             "adminReview.reviewedBy": req.userId || null,
           }
-        : { isActive: false };
+        : { isActive: false, available: false };
 
       const mentor = await Mentor.findByIdAndUpdate(id, update, { new: true });
 
@@ -83,6 +84,7 @@ export const AdminController = {
         id,
         {
           isActive: false,
+          available: false,
           isVerified: false,
           verifiedAt: null,
           "adminReview.status": "rejected",

@@ -111,5 +111,23 @@ export async function ensureMentorProfilesForAllMentorUsers() {
       console.error("[ensureMentorProfilesForAllMentorUsers]", u.email, e?.message || e);
     }
   }
-  return { ok: true, created, errors, totalMentorUsers: users.length };
+  // Mentor đã duyệt nhưng còn available=false (đăng ký cũ) — bật lại để nhận booking.
+  const repaired = await Mentor.updateMany(
+    {
+      userId: { $exists: true, $ne: null },
+      isActive: true,
+      isVerified: true,
+      available: false,
+      "adminReview.status": "approved",
+    },
+    { $set: { available: true } },
+  );
+
+  return {
+    ok: true,
+    created,
+    errors,
+    totalMentorUsers: users.length,
+    repairedAvailable: repaired.modifiedCount ?? 0,
+  };
 }

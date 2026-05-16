@@ -209,15 +209,9 @@ export async function createBooking(userId, body) {
   const or = [{ publicId: mentorKey }];
   if (mongoose.isValidObjectId(mentorKey)) or.push({ _id: mentorKey });
 
-  const mentor = await Mentor.findOne({ $or: or }).lean();
+  let mentor = await Mentor.findOne({ $or: or }).lean();
   if (!mentor) {
     return { ok: false, status: 404, error: "Không tìm thấy mentor." };
-  }
-  if (mentor.available === false) {
-    return { ok: false, status: 400, error: "Mentor hiện không nhận booking." };
-  }
-  if (mentor.isActive === false) {
-    return { ok: false, status: 400, error: "Mentor hiện không nhận booking." };
   }
   if (!mentor.userId) {
     return { ok: false, status: 404, error: "Mentor chưa có tài khoản đăng nhập — không thể đặt lịch." };
@@ -225,6 +219,18 @@ export async function createBooking(userId, body) {
   const mentorAccount = await User.findById(mentor.userId).select("role isActive").lean();
   if (!mentorAccount || mentorAccount.role !== "mentor" || mentorAccount.isActive === false) {
     return { ok: false, status: 404, error: "Mentor không khả dụng để đặt lịch." };
+  }
+  if (mentor.isActive === false || mentor.isVerified !== true) {
+    return {
+      ok: false,
+      status: 400,
+      error: "Mentor chưa được duyệt hoặc đang tạm ngưng. Liên hệ quản trị để kích hoạt.",
+    };
+  }
+  // Mentor đã duyệt nhưng còn available=false (đăng ký cũ / chưa sync) — tự bật lại.
+  if (mentor.available === false) {
+    await Mentor.updateOne({ _id: mentor._id }, { $set: { available: true } });
+    mentor = { ...mentor, available: true };
   }
 
   const timeSlot = String(body.timeSlot ?? body.time ?? "").trim();
@@ -273,11 +279,11 @@ export async function createBooking(userId, body) {
   const bodyPrice = Number(body.price);
   if (Number.isFinite(bodyPrice) && bodyPrice > 0 && basePrice > 0) {
     const drift = Math.abs(bodyPrice - basePrice) / basePrice;
-    if (drift > 0.05) {
+    if (drift > 0.15) {
       return {
         ok: false,
         status: 400,
-        error: "Giá gửi lên không khớp với mentor. Vui lòng tải lại trang đặt lịch.",
+        error: `Giá mentor đã đổi (hiện ${Math.round(basePrice).toLocaleString("vi-VN")}đ). Vui lòng tải lại trang đặt lịch.`,
       };
     }
   }
