@@ -98,3 +98,47 @@ export async function sendResetPasswordEmail(to, name, resetUrl) {
     return { ok: false, error: error.message };
   }
 }
+/**
+ * Gửi email thông báo có nhận xét mới từ Mentor
+ */
+export async function sendMentorFeedbackEmail(to, studentName, mentorName, sessionType, feedback) {
+  const typeText = sessionType === "mock_interview" ? "Phỏng vấn giả định" : "Tư vấn lộ trình";
+  
+  const mailOptions = {
+    from: process.env.MAIL_FROM || '"ProInterview" <noreply@prointerview.com>',
+    to,
+    subject: `Nhận xét mới từ Mentor ${mentorName}`,
+    html: `
+      <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden;">
+        <div style="background-color: #6d28d9; padding: 24px; text-align: center;">
+          <h1 style="color: white; margin: 0; font-size: 24px;">Nhận xét & Đánh giá</h1>
+        </div>
+        <div style="padding: 32px; background-color: #ffffff; color: #333333; line-height: 1.6;">
+          <p style="font-size: 18px; margin-top: 0;">Chào <strong>${studentName}</strong>,</p>
+          <p>Mentor <strong>${mentorName}</strong> vừa gửi nhận xét cho buổi học <strong>${typeText}</strong> của bạn.</p>
+          
+          <div style="background-color: #f3f4f6; padding: 20px; border-radius: 8px; margin: 24px 0; border-left: 4px solid #6d28d9;">
+            <p style="margin: 0; font-style: italic; color: #4b5563;">"${feedback}"</p>
+          </div>
+          
+          <p>Bạn có thể đăng nhập vào hệ thống để xem chi tiết và phản hồi nếu cần thiết.</p>
+          
+          <div style="text-align: center; margin: 32px 0;">
+            <a href="${process.env.FRONTEND_URL || 'https://prointerview.vn'}/dashboard" style="background-color: #6d28d9; color: white; padding: 14px 28px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 16px; display: inline-block;">Xem trên Website</a>
+          </div>
+          
+          <hr style="border: 0; border-top: 1px solid #eeeeee; margin: 32px 0;">
+          <p style="font-size: 12px; color: #999999; text-align: center; margin-bottom: 0;">Đây là email tự động, vui lòng không phản hồi email này.</p>
+        </div>
+      </div>
+    `,
+  };
+
+  try {
+    await transporter.sendMail(mailOptions);
+    return { ok: true };
+  } catch (error) {
+    console.error("[emailService] sendMentorFeedbackEmail error:", error);
+    return { ok: false, error: error.message };
+  }
+}

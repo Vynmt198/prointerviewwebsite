@@ -22,6 +22,7 @@ const notificationSchema = new Schema(
         "course_enrolled",
         "course_completed",
         "certificate_ready",
+        "feedback",
         "system",
       ],
       required: true,

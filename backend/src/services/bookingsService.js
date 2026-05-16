@@ -764,6 +764,44 @@ export async function updateMentorNotes(mentorUserId, rawId, body) {
     { path: "userId", select: "name email avatar" },
     { path: "mentorId", select: "name title company avatar publicId userId", populate: { path: "userId", select: "email" } }
   ]);
+
+  // Gửi thông báo & email cho học viên
+  const student = booking.userId;
+  const mentorData = booking.mentorId;
+  
+  if (student && student.email) {
+    // 1. Tạo thông báo trên Web
+    try {
+      await Notification.create({
+        userId: student._id,
+        title: "Nhận xét mới từ Mentor",
+        body: `Mentor ${mentorData?.name || "của bạn"} đã gửi nhận xét cho buổi học ${booking.sessionType === "mock_interview" ? "Phỏng vấn giả định" : "Tư vấn lộ trình"}.`,
+        type: "feedback",
+        metadata: {
+          bookingId: booking._id,
+          mentorId: mentorData?._id,
+          actionUrl: `/session/${booking._id}`
+        },
+        isRead: false
+      });
+    } catch (err) {
+      console.error("[updateMentorNotes] Notification error:", err.message);
+    }
+
+    // 2. Gửi Email
+    try {
+      await sendMentorFeedbackEmail(
+        student.email,
+        student.name || "Bạn",
+        mentorData?.name || "Mentor",
+        booking.sessionType,
+        notes
+      );
+    } catch (err) {
+      console.error("[updateMentorNotes] Email error:", err.message);
+    }
+  }
+
   return { ok: true, booking: toPublicBooking(booking) };
 
 }
