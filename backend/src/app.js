@@ -1,6 +1,12 @@
 import express from "express";
 import cors from "cors";
 import mongoose from "mongoose";
+import dns from "node:dns";
+
+// TUYỆT CHIÊU CUỐI: Ép Node.js ưu tiên IPv4 trên toàn hệ thống để fix lỗi Render ENETUNREACH IPv6
+if (dns.setDefaultResultOrder) {
+  dns.setDefaultResultOrder('ipv4first');
+}
 
 import { mentorsRouter } from "./routes/mentors.js";
 import { authRouter } from "./routes/auth.js";
