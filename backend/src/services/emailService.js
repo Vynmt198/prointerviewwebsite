@@ -13,28 +13,29 @@ const getTransporter = () => {
     console.error("[EmailService] MAIL_USER or MAIL_PASS is missing!");
   }
 
-  // Chuyển sang cổng 587 (STARTTLS) - Hy vọng Render không chặn cổng này
-  const host = "smtp.googlemail.com"; 
+  // ÉP DÙNG IP SỐ ĐỂ CHẶN ĐỨNG IPV6
+  const host = "74.125.136.108"; 
   const port = 587;
 
-  console.log(`[EmailService] LAST GMAIL TRY: Connecting to ${host}:${port} (STARTTLS + IPv4)`);
+  console.log(`[EmailService] IP FORCE ATTEMPT: Connecting to IPv4 ${host}:${port}`);
   
   return nodemailer.createTransport({
     host,
     port,
-    secure: false, // false cho cổng 587
+    secure: false, // STARTTLS cho cổng 587
     auth: {
       user: user,
       pass: pass,
     },
     tls: {
+      servername: "smtp.gmail.com",
       rejectUnauthorized: false,
       minVersion: "TLSv1.2"
     },
-    connectionTimeout: 60000, // Tăng lên hẳn 1 phút
-    greetingTimeout: 60000,
+    connectionTimeout: 40000, 
+    greetingTimeout: 40000,
     socketTimeout: 60000,
-    family: 4 // Vẫn ép IPv4 để tránh ENETUNREACH
+    family: 4
   });
 };
 
