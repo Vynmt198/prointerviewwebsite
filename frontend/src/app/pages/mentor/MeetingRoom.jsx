@@ -19,7 +19,7 @@ import {
 import { motion } from "motion/react";
 import { getUser } from "../../utils/auth";
 import { getMeetingBySession, joinMeeting, createMeetingSession } from "../../utils/meetings";
-import { fetchBookingById, fetchMentorBookingById } from "../../utils/bookingsApi";
+import { fetchBookingById, fetchMentorBookingById, completeMentorBooking } from "../../utils/bookingsApi";
 
 
 export function MeetingRoom() {
@@ -123,6 +123,16 @@ export function MeetingRoom() {
   const handleEndCall = () => {
     navigate(user?.role === "mentor" ? "/mentor/dashboard" : "/dashboard");
   };
+  
+  const handleCompleteSession = async () => {
+    if (!window.confirm("Bạn có chắc chắn muốn kết thúc và hoàn thành buổi học này?")) return;
+    const res = await completeMentorBooking(sessionId);
+    if (res.success) {
+      navigate("/mentor/dashboard");
+    } else {
+      alert(res.error || "Không thể kết thúc buổi học.");
+    }
+  };
 
   const formatTime = (seconds) => {
     const m = Math.floor(seconds / 60);
@@ -211,14 +221,26 @@ export function MeetingRoom() {
              </div>
           </div>
 
-         <div className="flex items-center gap-3">
-            <button className="p-3 rounded-xl bg-white/5 text-white/60 hover:text-white hover:bg-white/10 transition-all">
-               <Settings size={18} />
-            </button>
-            <button onClick={handleEndCall} className="flex items-center gap-3 px-6 py-3 rounded-xl bg-rose-600 text-white text-[10px] font-black uppercase tracking-widest hover:bg-rose-500 transition-all shadow-lg shadow-rose-900/20">
-               <LogOut size={16} /> Rời phòng
-            </button>
-         </div>
+          <div className="flex items-center gap-3">
+             <button className="p-3 rounded-xl bg-white/5 text-white/60 hover:text-white hover:bg-white/10 transition-all">
+                <Settings size={18} />
+             </button>
+             
+             {user?.role === "mentor" ? (
+               <div className="flex items-center gap-3">
+                  <button onClick={handleEndCall} className="flex items-center gap-3 px-5 py-3 rounded-xl bg-white/10 text-white text-[10px] font-black uppercase tracking-widest hover:bg-white/20 transition-all">
+                     Rời phòng
+                  </button>
+                  <button onClick={handleCompleteSession} className="flex items-center gap-3 px-6 py-3 rounded-xl bg-[#c4ff47] text-slate-900 text-[10px] font-black uppercase tracking-widest hover:scale-[1.02] active:scale-[0.98] transition-all shadow-lg shadow-[#c4ff47]/20">
+                     <ShieldCheck size={16} /> Kết thúc buổi học
+                  </button>
+               </div>
+             ) : (
+               <button onClick={handleEndCall} className="flex items-center gap-3 px-6 py-3 rounded-xl bg-rose-600 text-white text-[10px] font-black uppercase tracking-widest hover:bg-rose-500 transition-all shadow-lg shadow-rose-900/20">
+                  <LogOut size={16} /> Rời phòng
+               </button>
+             )}
+          </div>
       </div>
 
       {/* Main View Area (Jitsi Iframe) */}

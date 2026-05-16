@@ -211,10 +211,11 @@ export function Dashboard() {
     setCvHistory(getCVAnalysisHistory());
     const all = getAllBookings();
     const now = Date.now();
-    const skipStatus = new Set(["cancelled", "completed", "no_show", "done"]);
+    const skipStatus = new Set(["cancelled", "no_show"]);
     const upcomingFromLocal = all.filter((b) => {
-      if (b.status === "rescheduled" || b.status === "cancelled" || b.status === "done") return false;
+      if (b.status === "rescheduled" || b.status === "cancelled") return false;
       if (skipStatus.has(b.status)) return false;
+      if (b.status === "done" && b.reviewId) return false;
       const [d, m, y] = b.date.split("/").map(Number);
       const [h] = b.time.split(":").map(Number);
       const ts = new Date(y, m - 1, d, h).getTime();
@@ -237,7 +238,7 @@ export function Dashboard() {
     if (listRes.success && Array.isArray(listRes.bookings)) {
       const apiRows = listRes.bookings
         .map(apiBookingToLocal)
-        .filter((b) => b && !skipStatus.has(b.status));
+        .filter((b) => b && (!skipStatus.has(b.status) && !(b.status === "done" && b.reviewId)));
       for (const b of apiRows) {
         const k = mergeKey(b);
         if (k) map.set(k, b);
@@ -469,7 +470,7 @@ export function Dashboard() {
                                    <span className="text-xl font-black text-slate-400">{s.mentorName[0]}</span>
                                 )}
                              </div>
-                             {s.status === "confirmed" && (
+                             {(s.status === "confirmed" || (s.status === "done" && !s.reviewId)) && (
                                 <div className="absolute -top-1 -right-1 w-4 h-4 bg-emerald-500 rounded-full border-2 border-[#0E0922] shadow-[0_0_10px_rgba(16,185,129,0.5)]" />
                              )}
                           </div>
@@ -496,20 +497,31 @@ export function Dashboard() {
                           </div>
                        </div>
                        
-                       {s.status === "confirmed" && (
-                         <div className="mt-4 pt-3 border-t border-slate-200 flex gap-2">
-                            <button className="flex-1 h-10 rounded-xl bg-secondary text-black font-black text-[10px] uppercase tracking-widest hover:scale-[1.02] active:scale-[0.98] transition-all shadow-[0_10px_30px_rgba(232,121,249,0.2)]" onClick={() => navigate(`/meeting/${s.sessionId || s.backendId || s.id}`)}>
-                               Vào phòng phỏng vấn
-                            </button>
-                            <button 
-                              onClick={() => setCancellingBooking(s)}
-                              className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-red-200 bg-red-50 transition-all hover:border-red-400 hover:bg-red-100"
-                              title="Hủy lịch hẹn (không hoàn tiền)"
-                            >
-                               <MsIcon name="cancel" size={22} className="text-red-700" />
-                            </button>
-                         </div>
-                       )}
+                       {(s.status === "confirmed" || (s.status === "done" && !s.reviewId)) && (
+                          <div className="mt-4 pt-3 border-t border-slate-200 flex gap-2">
+                             {s.status === "confirmed" ? (
+                               <>
+                                 <button className="flex-1 h-10 rounded-xl bg-secondary text-black font-black text-[10px] uppercase tracking-widest hover:scale-[1.02] active:scale-[0.98] transition-all shadow-[0_10px_30px_rgba(232,121,249,0.2)]" onClick={() => navigate(`/meeting/${s.sessionId || s.backendId || s.id}`)}>
+                                    Vào phòng phỏng vấn
+                                 </button>
+                                 <button 
+                                   onClick={() => setCancellingBooking(s)}
+                                   className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-red-200 bg-red-50 transition-all hover:border-red-400 hover:bg-red-100"
+                                   title="Hủy lịch hẹn (không hoàn tiền)"
+                                 >
+                                    <MsIcon name="cancel" size={22} className="text-red-700" />
+                                 </button>
+                               </>
+                             ) : (
+                               <button 
+                                 onClick={() => navigate(`/review/${s.sessionId || s.backendId || s.id}`)}
+                                 className="flex-1 h-10 rounded-xl bg-[#bff365] text-slate-900 font-black text-[10px] uppercase tracking-widest hover:scale-[1.02] active:scale-[0.98] transition-all shadow-[0_10px_30px_rgba(191,243,101,0.2)]"
+                               >
+                                  Gửi đánh giá Mentor
+                               </button>
+                             )}
+                          </div>
+                        )}
                     </div>
                  ))}
                </div>

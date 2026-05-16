@@ -129,3 +129,7 @@ export async function fetchBookedSlots(mentorId) {
     return { success: false, error: "Không kết nối được backend." };
   }
 }
+export async function completeMentorBooking(id) {
+  if (!id) return { success: false, error: "Thiếu id." };
+  return authedSend("PATCH", `/api/bookings/${encodeURIComponent(id)}/complete`, {});
+}
