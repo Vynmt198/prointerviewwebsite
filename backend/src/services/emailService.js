@@ -176,3 +176,17 @@ export async function sendMentorFeedbackEmail(to, studentName, mentorName, sessi
     }
   });
 }
+
+// Kiểm tra cấu hình mail ngay khi server khởi động
+try {
+  const initTransporter = getTransporter();
+  initTransporter.verify(function (error, success) {
+    if (error) {
+      console.error("❌ LỖI CẤU HÌNH MAIL TRÊN SERVER:", error);
+    } else {
+      console.log("✔️ Server đã sẵn sàng gửi mail!");
+    }
+  });
+} catch (error) {
+  console.error("❌ LỖI KHỞI TẠO MAIL TRANSPORTER:", error);
+}
