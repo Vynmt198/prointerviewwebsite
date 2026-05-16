@@ -134,7 +134,6 @@ export const router = createHashRouter([
           { path: "analytics", Component: MentorAnalytics },
           { path: "reviews", Component: MentorReviews },
           { path: "meeting-detail/:sessionId", Component: MentorMeetingDetail },
-          { path: "session-feedback/:sessionId", Component: MentorSessionFeedback },
           { path: "courses", Component: MentorCourseManagement },
           { path: "courses/:id/edit", Component: MentorCourseEdit },
           { path: "peer-review", Component: MentorPeerReview },
@@ -143,6 +142,7 @@ export const router = createHashRouter([
       },
 
       { path: "meeting/:sessionId", Component: MeetingRoom },
+      { path: "mentor/session-feedback/:sessionId", Component: MentorSessionFeedback },
 
       { path: "courses", Component: Courses },
       { path: "courses/:id", Component: CourseDetail },
