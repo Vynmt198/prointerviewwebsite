@@ -3,13 +3,14 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
+import dns from "node:dns";
+
 const getTransporter = () => {
-  // Sử dụng googlemail.com thường ổn định hơn trên các server cloud
-  const host = process.env.MAIL_HOST || "smtp.googlemail.com";
+  const host = process.env.MAIL_HOST || "smtp.gmail.com";
   const port = Number(process.env.MAIL_PORT) || 465;
   const secure = port === 465 || process.env.MAIL_SECURE === "true";
 
-  console.log(`[EmailService] Connecting to ${host}:${port} (Forcing IPv4)`);
+  console.log(`[EmailService] NUCLEAR FIX: Forcing IPv4 DNS for ${host}:${port}`);
   
   return nodemailer.createTransport({
     host,
@@ -19,16 +20,19 @@ const getTransporter = () => {
       user: process.env.MAIL_USER,
       pass: process.env.MAIL_PASS,
     },
+    // Can thiệp sâu vào DNS để chặn hoàn toàn IPv6 từ gốc
+    lookup: (hostname, options, callback) => {
+      dns.lookup(hostname, { family: 4 }, (err, address, family) => {
+        callback(err, address, family);
+      });
+    },
     tls: {
       rejectUnauthorized: false,
       minVersion: "TLSv1.2"
     },
-    // Các thiết lập quan trọng để vượt qua tường lửa của Render
     connectionTimeout: 30000, 
     greetingTimeout: 30000,
     socketTimeout: 45000,
-    // Ép sử dụng IPv4 (Cực kỳ quan trọng để fix ENETUNREACH)
-    family: 4,
   });
 };
 
