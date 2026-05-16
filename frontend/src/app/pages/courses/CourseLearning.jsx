@@ -30,6 +30,7 @@ import { fetchCourseById, fetchLessonContent } from "../../utils/courseApi";
 import { enrollmentApi } from "../../utils/enrollmentApi";
 import { toast } from "sonner";
 import { enrollmentAccessGranted } from "../../utils/enrollmentAccess.js";
+import { mediaSrc } from "../../utils/mediaUrl";
 
 /* ── Helpers ────────────────────────────────────────────────── */
 const formatDuration = (minutes) => {
@@ -96,7 +97,7 @@ function VideoPlayer({ lesson, thumbnail }) {
     >
       <video
         ref={videoRef}
-        src={lesson.videoUrl}
+        src={mediaSrc(lesson.videoUrl)}
         poster={thumbnail}
         className="w-full h-full object-contain"
         onTimeUpdate={onTimeUpdate}

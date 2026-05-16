@@ -2,6 +2,7 @@ import { Course } from "../models/Course.js";
 import { Enrollment } from "../models/Enrollment.js";
 import { Mentor } from "../models/Mentor.js";
 import { enrollmentAccessGranted } from "../helpers/enrollmentAccess.js";
+import { serializeCourseForApi } from "../utils/resolveStoredUploadUrl.js";
 
 function normalizeCoursePayload(body = {}) {
   const chapters = Array.isArray(body.chapters) ? body.chapters : [];
@@ -66,8 +67,10 @@ export const CoursesController = {
         })
         .sort({ createdAt: -1 });
       
-      // Map to flat structure for FE if needed, or FE handles nested
-      res.json({ success: true, courses });
+      res.json({
+        success: true,
+        courses: courses.map((c) => serializeCourseForApi(c)),
+      });
     } catch (error) {
       res.status(500).json({ success: false, error: error.message });
     }
@@ -85,7 +88,7 @@ export const CoursesController = {
       if (!course) {
         return res.status(404).json({ success: false, error: "Khóa học không tồn tại" });
       }
-      res.json({ success: true, course });
+      res.json({ success: true, course: serializeCourseForApi(course) });
     } catch (error) {
       res.status(500).json({ success: false, error: error.message });
     }

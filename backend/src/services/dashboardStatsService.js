@@ -3,6 +3,9 @@ import { User } from "../models/User.js";
 import { Booking } from "../models/Booking.js";
 import { CVAnalysis } from "../models/CVAnalysis.js";
 import { InterviewSession } from "../models/InterviewSession.js";
+import { Enrollment } from "../models/Enrollment.js";
+import { Activity } from "../models/Activity.js";
+import { computeLearningStreak, toVnDayKey } from "../utils/learningStreak.js";
 
 const MONGO_ERR = "MongoDB chưa kết nối. Kiểm tra MONGO_URI trong .env.";
 
@@ -47,6 +50,9 @@ export async function getDashboardStats(userId) {
     .lean();
   const bestMatchScore = bestCv?.result?.matchScore != null ? Number(bestCv.result.matchScore) : 0;
 
+  const activeDayKeys = await collectLearningActiveDays(uid);
+  const streak = computeLearningStreak(activeDayKeys);
+
   return {
     ok: true,
     stats: {
@@ -59,6 +65,39 @@ export async function getDashboardStats(userId) {
       cvBestMatchScore: bestMatchScore,
       mentorBookingsTotal: bookingsTotal,
       mentorBookingsActive: bookingsUpcoming,
+      learningStreakDays: streak.days,
+      learningStreakNextMilestone: streak.nextMilestone,
+      learningStreakDaysUntilNext: streak.daysUntilNextMilestone,
+      learningStreakProgressPercent: streak.progressPercent,
     },
   };
+}
+
+async function collectLearningActiveDays(userId) {
+  const keys = new Set();
+  const add = (d) => {
+    if (!d) return;
+    const t = new Date(d);
+    if (Number.isFinite(t.getTime())) keys.add(toVnDayKey(t));
+  };
+
+  const [sessions, analyses, enrollments, activities] = await Promise.all([
+    InterviewSession.find({ userId, status: "completed" })
+      .select("completedAt updatedAt")
+      .lean()
+      .limit(400),
+    CVAnalysis.find({ userId }).select("createdAt").lean().limit(400),
+    Enrollment.find({ userId, lastAccessedAt: { $ne: null } })
+      .select("lastAccessedAt")
+      .lean()
+      .limit(200),
+    Activity.find({ userId }).select("createdAt").lean().limit(400),
+  ]);
+
+  for (const s of sessions) add(s.completedAt || s.updatedAt);
+  for (const c of analyses) add(c.createdAt);
+  for (const e of enrollments) add(e.lastAccessedAt);
+  for (const a of activities) add(a.createdAt);
+
+  return keys;
 }
