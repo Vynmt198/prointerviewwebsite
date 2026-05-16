@@ -6,27 +6,23 @@ dotenv.config();
 import dns from "node:dns";
 
 const getTransporter = () => {
-  const host = process.env.MAIL_HOST || "smtp.gmail.com";
-  const port = Number(process.env.MAIL_PORT) || 465;
-  const secure = port === 465 || process.env.MAIL_SECURE === "true";
+  // Dùng thẳng địa chỉ IP IPv4 của Google để Render không thể tìm đến IPv6
+  const host = "74.125.136.108"; 
+  const port = 465;
 
-  console.log(`[EmailService] NUCLEAR FIX: Forcing IPv4 DNS for ${host}:${port}`);
+  console.log(`[EmailService] ULTIMATE FIX: Connecting directly to IPv4 ${host}:${port}`);
   
   return nodemailer.createTransport({
     host,
     port,
-    secure,
+    secure: true,
     auth: {
       user: process.env.MAIL_USER,
       pass: process.env.MAIL_PASS,
     },
-    // Can thiệp sâu vào DNS để chặn hoàn toàn IPv6 từ gốc
-    lookup: (hostname, options, callback) => {
-      dns.lookup(hostname, { family: 4 }, (err, address, family) => {
-        callback(err, address, family);
-      });
-    },
     tls: {
+      // Vì dùng IP nên phải khai báo servername để chứng chỉ SSL vẫn hợp lệ
+      servername: "smtp.gmail.com",
       rejectUnauthorized: false,
       minVersion: "TLSv1.2"
     },
