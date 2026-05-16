@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useLocation } from "react-router";
+import { useNavigate, useLocation } from "react-router";
 import { Bell } from "lucide-react";
 import { fetchNotifications, markNotificationAsRead } from "../../utils/notificationApi";
 
@@ -62,6 +62,7 @@ const MOCK_NOTIFICATIONS = [
 ];
 
 export function Navbar() {
+  const navigate = useNavigate();
   const location = useLocation();
   const [notifOpen, setNotifOpen] = useState(false);
   const [notifications, setNotifications] = useState([]);
@@ -79,12 +80,41 @@ export function Navbar() {
     return () => clearInterval(interval);
   }, []);
 
-  const handleRead = (id) => {
+  const handleRead = (notif) => {
+    const id = notif._id;
     markNotificationAsRead(id).then(res => {
       if (res.success) {
         setNotifications(prev => prev.map(n => n._id === id ? { ...n, isRead: true } : n));
       }
     });
+
+    // Close the dropdown
+    setNotifOpen(false);
+
+    // 1. Prioritize actionUrl from metadata
+    const actionUrl = notif.metadata?.actionUrl || notif.actionUrl;
+    if (actionUrl) {
+       navigate(actionUrl);
+       return;
+    }
+
+    // 2. Handle feedback type specifically
+    const bookingId = notif.metadata?.bookingId || notif.bookingId;
+    if (bookingId && (notif.type === "feedback" || notif.title?.toLowerCase().includes("nhận xét") || notif.body?.toLowerCase().includes("nhận xét"))) {
+       navigate(`/session/${bookingId}`);
+       return;
+    }
+
+    // 3. General booking navigation
+    if (bookingId && (notif.type?.includes("booking") || notif.title?.toLowerCase().includes("buổi học"))) {
+       navigate(`/session/${bookingId}`);
+       return;
+    }
+
+    // 4. Default fallbacks
+    if (notif.type === "payment") {
+       navigate("/dashboard");
+    }
   };
 
 
@@ -181,7 +211,7 @@ export function Navbar() {
               {notifications.map((n) => (
                 <DropdownMenuItem
                   key={n._id}
-                  onClick={() => handleRead(n._id)}
+                  onClick={() => handleRead(n)}
                   className="flex cursor-pointer items-start gap-3 px-4 py-3 focus:bg-violet-50"
                 >
                   <div

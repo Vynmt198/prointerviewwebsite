@@ -1,29 +1,33 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router";
-import { motion } from "motion/react";
 import { 
+  ArrowLeft, 
   Star, 
+  Clock, 
+  CheckCircle2, 
+  User, 
   Send, 
-  Trophy, 
-  Target, 
-  Lightbulb, 
-  ArrowLeft,
   Sparkles,
-  ShieldCheck,
-  User,
-  Clock
+  Target,
+  Trophy,
+  Lightbulb,
+  MessageSquare
 } from "lucide-react";
-import { fetchMentorBookingById, updateMentorNotes } from "../../utils/bookingsApi";
+import { motion, AnimatePresence } from "motion/react";
+import { toast } from "sonner";
 import { MentorPageShell } from "../../components/mentor/MentorPageShell";
+import { fetchMentorBookingById, updateMentorNotes } from "../../utils/bookingsApi";
 
 export function MentorSessionFeedback() {
   const { sessionId } = useParams();
   const navigate = useNavigate();
+  
+  const [booking, setBooking] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [booking, setBooking] = useState(null);
-  
-  // Feedback States
+  const [showSuccess, setShowSuccess] = useState(false);
+
+  // Form states
   const [rating, setRating] = useState(5);
   const [strengths, setStrengths] = useState("");
   const [weaknesses, setWeaknesses] = useState("");
@@ -31,208 +35,197 @@ export function MentorSessionFeedback() {
   const [generalNotes, setGeneralNotes] = useState("");
 
   useEffect(() => {
-    const loadBooking = async () => {
+    let active = true;
+    (async () => {
       const res = await fetchMentorBookingById(sessionId);
-      if (res.success) {
+      if (!active) return;
+      if (res.success && res.booking) {
         setBooking(res.booking);
-        // Pre-fill if exists
-        if (res.booking.mentorNotes) {
-           setGeneralNotes(res.booking.mentorNotes);
-        }
-      } else {
-        alert("Không tìm thấy thông tin buổi học.");
-        navigate("/mentor/dashboard");
       }
       setLoading(false);
-    };
-    loadBooking();
-  }, [sessionId, navigate]);
+    })();
+    return () => { active = false; };
+  }, [sessionId]);
 
   const handleSubmit = async () => {
+    if (saving) return;
     setSaving(true);
     
-    // Combine fields into one notes block for backend
     const combinedNotes = `
-🎯 Đánh giá chung: ${rating}/5 sao
-💪 Điểm mạnh: ${strengths || "N/A"}
-🚀 Cần cải thiện: ${weaknesses || "N/A"}
-💡 Lời khuyên: ${advice || "N/A"}
+Điểm mạnh: ${strengths || "Đang cập nhật"}
+Cần cải thiện: ${weaknesses || "Đang cập nhật"}
+Lời khuyên: ${advice || "Đang cập nhật"}
 
-📝 Nhận xét chi tiết:
+Nhận xét chi tiết:
 ${generalNotes || "Không có ghi chú thêm."}
     `.trim();
 
     const res = await updateMentorNotes(sessionId, { notes: combinedNotes });
-    
-    if (res.success) {
-      alert("Đã gửi đánh giá thành công! Học viên sẽ nhận được thông báo ngay lập tức.");
-      navigate("/mentor/dashboard");
-    } else {
-      alert(res.error || "Gửi đánh giá thất bại.");
-    }
     setSaving(false);
+
+    if (res.ok) {
+      setShowSuccess(true);
+      setTimeout(() => {
+        navigate("/mentor/schedule");
+      }, 3000);
+    } else {
+      toast.error("Có lỗi xảy ra khi lưu đánh giá.");
+    }
   };
 
-  if (loading) return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50">
-       <motion.div animate={{ rotate: 360 }} transition={{ duration: 2, repeat: Infinity }}>
-          <Sparkles className="text-violet-600" size={40} />
-       </motion.div>
-    </div>
-  );
+  if (loading) {
+    return (
+      <MentorPageShell>
+        <div className="p-20 text-center font-medium text-slate-400">Đang tải thông tin...</div>
+      </MentorPageShell>
+    );
+  }
 
   return (
-    <MentorPageShell>
-      <div className="max-w-4xl mx-auto p-6 pt-12 pb-32">
-        {/* Header Navigation */}
-        <button 
-          onClick={() => navigate("/mentor/dashboard")}
-          className="flex items-center gap-2 text-zinc-500 hover:text-slate-900 transition-colors mb-8 group"
+    <MentorPageShell bottomPad="pb-32">
+      <div className="relative z-10 p-10 max-w-4xl mx-auto pt-20">
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="space-y-10"
         >
-          <ArrowLeft size={18} className="group-hover:-translate-x-1 transition-transform" />
-          <span className="text-xs font-black uppercase tracking-widest">Quay lại Dashboard</span>
-        </button>
-
-        <div className="relative mb-12">
-          <h1 className="text-4xl font-black text-slate-900 tracking-tighter uppercase italic">
-            Đánh giá <span className="text-violet-600">Học viên</span>
-          </h1>
-          <p className="text-zinc-500 font-medium mt-2">Gửi nhận xét và hướng dẫn để học viên phát triển tốt hơn sau buổi phỏng vấn.</p>
-        </div>
-
-        {/* Student Mini Card */}
-        {booking && (
-          <div className="bg-white rounded-[32px] p-6 border border-slate-200 shadow-sm mb-10 flex items-center gap-6">
-             <div className="w-16 h-16 rounded-2xl bg-violet-100 flex items-center justify-center overflow-hidden border-2 border-white shadow-md">
-                {booking.customerAvatar ? (
-                  <img src={booking.customerAvatar} alt={booking.customerName} className="w-full h-full object-cover" />
-                ) : (
-                  <User size={30} className="text-violet-400" />
-                )}
-             </div>
-             <div>
-                <h3 className="text-xl font-black text-slate-900 tracking-tight leading-none mb-1">{booking.customerName}</h3>
-                <div className="flex items-center gap-4 text-zinc-500">
-                   <p className="text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5">
-                      <Clock size={14} className="text-violet-500" /> {booking.date} · {booking.time}
-                   </p>
-                   <span className="w-1 h-1 rounded-full bg-slate-300" />
-                   <p className="text-[10px] font-black uppercase tracking-widest text-violet-600">
-                      {booking.sessionType === "mock_interview" ? "Phỏng vấn giả định" : "Tư vấn lộ trình"}
-                   </p>
-                </div>
-             </div>
-             <div className="ml-auto">
-                <span className="px-4 py-2 rounded-xl bg-emerald-50 text-emerald-600 text-[10px] font-black uppercase tracking-widest border border-emerald-100 flex items-center gap-2">
-                   <ShieldCheck size={14} /> Đã hoàn thành
-                </span>
-             </div>
+          {/* Header Section */}
+          <div className="flex items-center justify-between mb-16">
+            <button 
+              onClick={() => navigate(-1)} 
+              className="group flex items-center gap-3 text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 hover:text-slate-900 transition-all"
+            >
+              <ArrowLeft size={16} className="transition-transform group-hover:-translate-x-1" /> Quay lại
+            </button>
+            <div className="h-px flex-1 bg-gradient-to-r from-transparent via-slate-200 to-transparent mx-10" />
+            <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em]">Session Feedback</span>
           </div>
-        )}
 
-        <div className="space-y-8">
-          {/* Overall Rating */}
-          <section className="bg-white rounded-[40px] p-10 border border-slate-200 shadow-sm relative overflow-hidden group">
-             <div className="absolute top-0 right-0 p-10 opacity-[0.03] group-hover:opacity-10 transition-opacity">
-                <Trophy size={140} className="text-yellow-500" />
-             </div>
-             <h5 className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.3em] mb-8">Đánh giá năng lực tổng quát</h5>
-             <div className="flex gap-4">
-                {[1, 2, 3, 4, 5].map((s) => (
-                  <button 
-                    key={s} 
-                    onClick={() => setRating(s)}
-                    className="group/star relative transition-all"
-                  >
-                    <Star 
-                      size={48} 
-                      className={`${s <= rating ? "fill-yellow-400 text-yellow-400" : "text-slate-200"} transition-all group-hover/star:scale-110`} 
+          <div className="text-center space-y-4 mb-20">
+            <h1 className="text-6xl font-black text-slate-900 tracking-tighter leading-none">
+              Đánh giá <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-violet-600">chuyên sâu</span>
+            </h1>
+            <p className="text-slate-500 font-medium text-lg">Ghi nhận tiến trình và định hướng cho học viên</p>
+          </div>
+
+          <div className="space-y-12">
+            <div className="grid lg:grid-cols-12 gap-10">
+              {/* Mentee Sidebar */}
+              <div className="lg:col-span-4">
+                <div className="sticky top-24 space-y-6">
+                  <div className="bg-white rounded-[2.5rem] p-8 shadow-[0_20px_50px_rgba(0,0,0,0.04)] border border-slate-100 text-center">
+                    <img 
+                      src={booking?.customerAvatar || "https://i.pravatar.cc/150?u=mentee"} 
+                      alt={booking?.customerName}
+                      className="w-24 h-24 rounded-[32px] mx-auto mb-6 object-cover ring-8 ring-slate-50 shadow-inner"
                     />
-                    {s <= rating && (
-                      <motion.div 
-                        layoutId="star-glow"
-                        className="absolute inset-0 bg-yellow-400/20 blur-xl rounded-full"
-                      />
-                    )}
+                    <h3 className="text-xl font-black text-slate-900 tracking-tight">{booking?.customerName}</h3>
+                    <p className="text-[10px] font-black text-indigo-500 uppercase tracking-widest mt-2">Học viên</p>
+                    
+                    <div className="mt-8 pt-8 border-t border-slate-50 space-y-4">
+                      <div className="text-left">
+                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Vị trí phỏng vấn</p>
+                        <p className="text-xs font-bold text-slate-700">{booking?.sessionType === "mock_interview" ? "Phỏng vấn giả định" : "Tư vấn lộ trình"}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Main Form */}
+              <div className="lg:col-span-8 space-y-8">
+                {/* Structured Sections */}
+                <div className="grid md:grid-cols-2 gap-8">
+                  <div className="bg-white rounded-[2.5rem] p-10 shadow-[0_20px_50px_rgba(0,0,0,0.04)] border border-slate-100">
+                    <h5 className="text-[10px] font-black text-emerald-500 uppercase tracking-[0.3em] mb-6">ĐIỂM MẠNH</h5>
+                    <textarea 
+                      value={strengths}
+                      onChange={(e) => setStrengths(e.target.value)}
+                      placeholder="Nội dung..."
+                      className="w-full h-40 bg-slate-50/30 rounded-2xl p-4 text-sm font-semibold text-slate-700 border border-transparent focus:border-emerald-100 focus:bg-white outline-none transition-all resize-none"
+                    />
+                  </div>
+
+                  <div className="bg-white rounded-[2.5rem] p-10 shadow-[0_20px_50px_rgba(0,0,0,0.04)] border border-slate-100">
+                    <h5 className="text-[10px] font-black text-rose-500 uppercase tracking-[0.3em] mb-6">CẦN CẢI THIỆN</h5>
+                    <textarea 
+                      value={weaknesses}
+                      onChange={(e) => setWeaknesses(e.target.value)}
+                      placeholder="Nội dung..."
+                      className="w-full h-40 bg-slate-50/30 rounded-2xl p-4 text-sm font-semibold text-slate-700 border border-transparent focus:border-rose-100 focus:bg-white outline-none transition-all resize-none"
+                    />
+                  </div>
+                </div>
+
+                <div className="bg-white rounded-[2.5rem] p-10 shadow-[0_20px_50px_rgba(0,0,0,0.04)] border border-slate-100">
+                  <h5 className="text-[10px] font-black text-amber-500 uppercase tracking-[0.3em] mb-6">LỜI KHUYÊN PHÁT TRIỂN</h5>
+                  <textarea 
+                    value={advice}
+                    onChange={(e) => setAdvice(e.target.value)}
+                    placeholder="Định hướng tiếp theo cho học viên..."
+                    className="w-full h-40 bg-slate-50/30 rounded-2xl p-6 text-sm font-semibold text-slate-700 border border-transparent focus:border-amber-100 focus:bg-white outline-none transition-all resize-none"
+                  />
+                </div>
+
+                {/* Detailed Analysis */}
+                <div className="bg-gradient-to-br from-slate-900 to-indigo-950 rounded-[2.5rem] p-12 shadow-2xl shadow-indigo-900/20 text-white">
+                  <h5 className="text-[10px] font-black text-indigo-300 uppercase tracking-[0.3em] mb-8">PHÂN TÍCH CHI TIẾT</h5>
+                  <textarea 
+                    value={generalNotes}
+                    onChange={(e) => setGeneralNotes(e.target.value)}
+                    placeholder="Ghi chú bổ sung khác..."
+                    className="w-full h-60 bg-white/5 backdrop-blur-md rounded-3xl p-8 text-sm font-medium text-indigo-50 border border-white/10 focus:border-white/20 outline-none transition-all resize-none"
+                  />
+                </div>
+
+                {/* Action */}
+                <div className="pt-10 flex justify-end">
+                  <button
+                    onClick={handleSubmit}
+                    disabled={saving}
+                    className="px-12 py-5 rounded-[2rem] bg-indigo-600 text-white text-xs font-black uppercase tracking-[0.3em] shadow-2xl shadow-indigo-600/30 hover:bg-indigo-700 hover:-translate-y-1 transition-all disabled:opacity-50"
+                  >
+                    {saving ? "Đang xử lý..." : "Xác nhận gửi báo cáo"}
                   </button>
-                ))}
-                <span className="ml-4 text-3xl font-black text-slate-900 tracking-tighter">{rating}.0 / 5</span>
-             </div>
-          </section>
-
-          {/* Detailed Feedback Sections */}
-          <div className="grid md:grid-cols-2 gap-8">
-             <div className="bg-white rounded-[40px] p-10 border border-slate-200 shadow-sm">
-                <div className="flex items-center gap-3 mb-6 text-emerald-600">
-                   <Trophy size={20} />
-                   <h5 className="text-[10px] font-black uppercase tracking-[0.2em]">Điểm mạnh</h5>
                 </div>
-                <textarea 
-                  value={strengths}
-                  onChange={(e) => setStrengths(e.target.value)}
-                  placeholder="Học viên đã làm tốt điều gì? (vd: Kiến thức nền tảng, Kỹ năng giao tiếp...)"
-                  className="w-full h-40 bg-slate-50 rounded-3xl p-6 text-sm font-medium border-none focus:ring-2 focus:ring-emerald-200 outline-none transition-all placeholder:opacity-50"
-                />
-             </div>
+              </div>
+            </div>
+          </div>
+        </motion.div>
 
-             <div className="bg-white rounded-[40px] p-10 border border-slate-200 shadow-sm">
-                <div className="flex items-center gap-3 mb-6 text-rose-500">
-                   <Target size={20} />
-                   <h5 className="text-[10px] font-black uppercase tracking-[0.2em]">Cần cải thiện</h5>
+        {/* Success Overlay */}
+        <AnimatePresence>
+          {showSuccess && (
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-[100] bg-white/80 backdrop-blur-xl flex items-center justify-center p-6"
+            >
+              <motion.div 
+                initial={{ scale: 0.9, y: 20 }}
+                animate={{ scale: 1, y: 0 }}
+                className="bg-white rounded-[3rem] p-12 shadow-2xl border border-slate-100 text-center max-w-sm w-full"
+              >
+                <div className="w-24 h-24 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-8">
+                  <CheckCircle2 size={48} />
                 </div>
-                <textarea 
-                  value={weaknesses}
-                  onChange={(e) => setWeaknesses(e.target.value)}
-                  placeholder="Những lỗ hổng kiến thức hoặc kỹ năng cần khắc phục ngay..."
-                  className="w-full h-40 bg-slate-50 rounded-3xl p-6 text-sm font-medium border-none focus:ring-2 focus:ring-rose-200 outline-none transition-all placeholder:opacity-50"
-                />
-             </div>
-          </div>
-
-          <section className="bg-white rounded-[40px] p-10 border border-slate-200 shadow-sm">
-             <div className="flex items-center gap-3 mb-6 text-violet-600">
-                <Lightbulb size={20} />
-                <h5 className="text-[10px] font-black uppercase tracking-[0.2em]">Lời khuyên & Lộ trình</h5>
-             </div>
-             <textarea 
-                value={advice}
-                onChange={(e) => setAdvice(e.target.value)}
-                placeholder="Lời khuyên để học viên phát triển tốt hơn trong tương lai..."
-                className="w-full h-40 bg-slate-50 rounded-3xl p-6 text-sm font-medium border-none focus:ring-2 focus:ring-violet-200 outline-none transition-all placeholder:opacity-50"
-             />
-          </section>
-
-          <section className="bg-white rounded-[40px] p-10 border border-slate-200 shadow-sm border-dashed">
-             <h5 className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.2em] mb-6">Ghi chú thêm (Tùy chọn)</h5>
-             <textarea 
-                value={generalNotes}
-                onChange={(e) => setGeneralNotes(e.target.value)}
-                placeholder="Bất kỳ thông tin bổ sung nào khác..."
-                className="w-full h-32 bg-transparent text-sm font-medium border-none focus:ring-0 outline-none transition-all"
-             />
-          </section>
-
-          {/* Action Button */}
-          <div className="pt-8">
-             <button 
-                onClick={handleSubmit}
-                disabled={saving}
-                className="w-full py-6 rounded-[30px] bg-slate-900 text-[#c4ff47] text-[12px] font-black uppercase tracking-[0.2em] hover:scale-[1.02] active:scale-[0.98] transition-all shadow-2xl flex items-center justify-center gap-4 disabled:opacity-50"
-             >
-                {saving ? (
-                   <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1 }}>
-                      <Sparkles size={20} />
-                   </motion.div>
-                ) : (
-                   <Send size={20} />
-                )}
-                {saving ? "Đang gửi đánh giá..." : "Hoàn thành & Gửi đánh giá cho học viên"}
-             </button>
-             <p className="text-center text-[10px] font-medium text-zinc-400 mt-6 uppercase tracking-widest">
-                Thông tin này sẽ được gửi đến tài khoản & email của học viên
-             </p>
-          </div>
-        </div>
+                <h2 className="text-3xl font-extrabold text-slate-900 mb-4 tracking-tight">Tuyệt vời!</h2>
+                <p className="text-slate-500 font-medium leading-relaxed mb-8">
+                  Đánh giá của bạn đã được gửi đi thành công. Cảm ơn bạn đã đồng hành cùng học viên.
+                </p>
+                <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
+                  <motion.div 
+                    initial={{ width: 0 }}
+                    animate={{ width: "100%" }}
+                    transition={{ duration: 2.5 }}
+                    className="h-full bg-emerald-500"
+                  />
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </MentorPageShell>
   );

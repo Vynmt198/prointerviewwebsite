@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { useParams, useNavigate } from "react-router";
+import { motion, AnimatePresence } from "motion/react";
 import {
   ArrowLeft,
   Calendar,
@@ -10,7 +11,8 @@ import {
   Star,
   MessageSquareText as ChatText,
   FileText,
-  Sparkles as Sparkle,
+  Sparkles,
+  Bell,
   BellRing as BellRinging,
   ShieldCheck,
   ExternalLink,
@@ -21,14 +23,13 @@ import {
   Chrome as GoogleLogo,
   Trophy,
   ThumbsUp,
-  PartyPopper as Confetti,
+  PartyPopper,
   AlertCircle as WarningCircle,
-  Zap as Lightning,
+  Zap,
   User,
   X,
-  CircleDollarSign as CurrencyCircleDollar,
+  CircleDollarSign,
 } from "lucide-react";
-import { AnimatePresence, motion } from "motion/react";
 import { toast } from "sonner";
 import { getBookingById, getReview } from "../../utils/bookings";
 import { isLoggedIn } from "../../utils/auth";
@@ -226,7 +227,9 @@ export function SessionDetail() {
 
   /* ── Session state logic ── */
   const autoState = totalSec <= 0 ? "done" : totalSec <= 3600 ? "live" : "upcoming";
-  const state = demoState; // use demo for now
+  
+  // Trạng thái thực tế: Ưu tiên status từ server, nếu không có mới dùng autoState theo thời gian
+  const state = sessionData?.status === "done" ? "done" : autoState;
   const paymentMeta = getPaymentMeta(sessionData?.paymentStatus);
 
   /* ── Checklist ── */
@@ -884,74 +887,156 @@ export function SessionDetail() {
             </div>
 
             {/* Review CTA */}
-            {existingReview ? (
-              <div className="bg-white rounded-2xl border-2 shadow-sm overflow-hidden"
-                style={{ borderColor: "rgba(180,240,0,0.4)", boxShadow: "0 4px 20px rgba(180,240,0,0.08)" }}>
-                <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between"
-                  style={{ background: "rgba(180,240,0,0.06)" }}>
-                  <div className="flex items-center gap-2">
-                    <PartyPopper className="w-4 h-4" style={{ color: "#4a7a00" }} />
-                    <span className="font-bold text-gray-800 text-sm">Bạn đã đánh giá buổi này</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    {[1,2,3,4,5].map(i => (
-                      <Star key={i} style={{ width:16, height:16, color: i <= existingReview.overallRating ? "#FFD600" : "#E5E7EB" }}
-                        fill={i <= existingReview.overallRating ? "#FFD600" : "none"} />
-                    ))}
-                  </div>
+            {sessionData?.isReviewed ? (
+              <motion.div 
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+                className="bg-white rounded-[2.5rem] p-12 shadow-[0_30px_70px_rgba(0,0,0,0.03)] border border-slate-100 text-center relative overflow-hidden group"
+              >
+                <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-indigo-50/40 to-violet-50/20 blur-[100px] -z-10 group-hover:scale-125 transition-transform duration-1000" />
+                
+                <div className="w-24 h-24 rounded-[2rem] bg-indigo-50/50 flex items-center justify-center mx-auto mb-8 shadow-inner">
+                  <motion.div
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ delay: 0.4, type: "spring", stiffness: 200 }}
+                  >
+                    <CheckCircle className="w-12 h-12 text-indigo-500" />
+                  </motion.div>
                 </div>
-                <div className="p-5">
-                  {existingReview.highlights.length > 0 && (
-                    <div className="flex flex-wrap gap-2 mb-3">
-                      {existingReview.highlights.map(h => (
-                        <span key={h} className="text-xs px-2.5 py-1.5 rounded-lg font-medium"
-                          style={{ background: "rgba(110, 53, 232,0.08)", color: "#6E35E8" }}>{h}</span>
-                      ))}
-                    </div>
-                  )}
-                  {existingReview.text && (
-                    <p className="text-sm text-gray-600 leading-relaxed italic border-l-2 pl-3 mb-3"
-                      style={{ borderColor: "#6E35E8" }}>"{existingReview.text}"</p>
-                  )}
-                  <button onClick={() => navigate(`/review/${sessionData.sessionId}`)}
-                    className="text-xs font-medium px-3 py-1.5 rounded-lg transition-all"
-                    style={{ background: "rgba(110, 53, 232,0.08)", color: "#6E35E8" }}>
-                    Chỉnh sửa đánh giá →
-                  </button>
+                
+                <h3 className="text-2xl font-black text-slate-900 mb-4 tracking-tight">Cảm ơn bạn đã đóng góp! ✨</h3>
+                <p className="text-slate-500 text-base font-medium mb-10 leading-relaxed max-w-md mx-auto">
+                  Đánh giá của bạn đã được gửi thành công. Những chia sẻ này giúp cộng đồng ngày càng phát triển hơn.
+                </p>
+                
+                <div className="flex items-center justify-center gap-2 px-8 py-4 bg-slate-50/80 rounded-[1.5rem] w-fit mx-auto border border-slate-100 transition-colors hover:bg-slate-100">
+                  <Star className="w-4 h-4 text-amber-400" fill="currentColor" />
+                  <span className="text-[11px] font-black text-slate-500 uppercase tracking-[0.2em]">Đã hoàn thành đánh giá</span>
                 </div>
-              </div>
+              </motion.div>
             ) : (
-              <div className="bg-white rounded-2xl border-2 shadow-sm overflow-hidden"
-                style={{ borderColor: "rgba(110, 53, 232,0.18)", boxShadow: "0 4px 24px rgba(110, 53, 232,0.10)" }}>
-                <div className="p-7 flex flex-col items-center text-center gap-4">
-                  <div className="w-16 h-16 rounded-2xl flex items-center justify-center"
-                    style={{ background: "linear-gradient(135deg,rgba(255,214,0,0.15),rgba(110, 53, 232,0.12))" }}>
-                    <Star className="w-8 h-8" style={{ color: "#FFD600" }} fill="#FFD600" />
+              <div className="bg-white rounded-[2.5rem] p-12 shadow-[0_30px_70px_rgba(0,0,0,0.03)] border border-slate-100 relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-indigo-50/40 to-violet-50/20 blur-[100px] -z-10" />
+                
+                <div className="flex flex-col items-center text-center">
+                  <div className="w-20 h-20 rounded-[1.8rem] flex items-center justify-center mb-8 shadow-lg shadow-amber-900/5 bg-white border border-amber-50"
+                    style={{ background: "linear-gradient(135deg,rgba(255,214,0,0.08),rgba(255,214,0,0.02))" }}>
+                    <Star className="w-10 h-10" style={{ color: "#FFD600" }} fill="#FFD600" />
                   </div>
-                  <div>
-                    <h3 className="font-black text-gray-900 mb-1.5" style={{ fontSize: "1.15rem" }}>
-                      Đánh giá {sessionData.mentorName}
+                  
+                  <div className="mb-10">
+                    <h3 className="text-2xl font-black text-slate-900 mb-3 tracking-tight">
+                      Bạn thấy buổi phỏng vấn thế nào?
                     </h3>
-                    <p className="text-gray-500 text-sm leading-relaxed">
-                      Chia sẻ trải nghiệm — giúp mentor cải thiện và học viên khác chọn đúng người.
+                    <p className="text-slate-500 text-base font-medium leading-relaxed max-w-md">
+                      Chia sẻ trải nghiệm giúp <span className="text-indigo-600 font-bold">{sessionData.mentorName}</span> và cộng đồng.
                     </p>
                   </div>
-                  <div className="flex gap-1.5">
+
+                  {/* Interactive Star Picker */}
+                  <div className="flex gap-4 mb-12">
                     {[1,2,3,4,5].map(i => (
-                      <Star key={i} style={{ width:32, height:32, color: "#E5E7EB" }} />
+                      <button
+                        key={i}
+                        onClick={() => navigate(`/review/${sessionData.sessionId}`, { state: { initialRating: i } })}
+                        className="transition-all hover:scale-125 active:scale-90 group"
+                      >
+                        <Star 
+                          className="w-14 h-14 transition-all duration-300" 
+                          fill="none" 
+                          style={{ color: "#F1F5F9" }} 
+                          onMouseEnter={(e) => {
+                            const siblings = e.currentTarget.parentElement.parentElement.querySelectorAll('svg');
+                            siblings.forEach((s, idx) => {
+                              if (idx < i) {
+                                s.style.color = "#FFD600";
+                                s.setAttribute('fill', '#FFD600');
+                                s.style.filter = "drop-shadow(0 0 8px rgba(255,214,0,0.4))";
+                              }
+                            });
+                          }}
+                          onMouseLeave={(e) => {
+                            const siblings = e.currentTarget.parentElement.parentElement.querySelectorAll('svg');
+                            siblings.forEach((s) => {
+                              s.style.color = "#F1F5F9";
+                              s.setAttribute('fill', 'none');
+                              s.style.filter = "none";
+                            });
+                          }}
+                        />
+                      </button>
                     ))}
                   </div>
+
                   <button
                     onClick={() => navigate(`/review/${sessionData.sessionId}`)}
-                    className="w-full py-4 rounded-2xl font-black text-base transition-all active:scale-[0.97]"
-                    style={{ background: "linear-gradient(135deg,#6E35E8,#8B4DFF)", color:"#fff", boxShadow:"0 6px 20px rgba(110, 53, 232,0.30)" }}>
-                    <Star className="inline w-5 h-5 mr-2 mb-0.5" fill="currentColor" />
-                    Viết đánh giá ngay
+                    className="w-full py-6 rounded-[2rem] font-black text-lg text-white shadow-2xl shadow-indigo-900/20 transition-all hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-3"
+                    style={{ background: "linear-gradient(135deg, #6E35E8, #8B4DFF)" }}
+                  >
+                    Viết đánh giá ngay <CaretRight className="w-5 h-5" />
                   </button>
-                  <p className="text-xs text-gray-400">Chỉ mất 1–2 phút · Giúp ích rất nhiều cho cộng đồng</p>
+                  
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mt-8">
+                    Chỉ mất 1 phút · Đánh giá của bạn rất quan trọng
+                  </p>
                 </div>
               </div>
             )}
+
+            {/* Luxury Minimalist Mentor Feedback */}
+            <div className="space-y-10">
+              <div className="relative overflow-hidden bg-white rounded-[2.5rem] p-10 shadow-[0_20px_50px_rgba(0,0,0,0.04)] border border-slate-100">
+                <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-indigo-50/50 to-violet-50/30 blur-3xl -z-10" />
+                
+                <div className="mb-10">
+                  <h5 className="text-[10px] font-black text-indigo-500 uppercase tracking-[0.3em] mb-3">KẾT QUẢ ĐÁNH GIÁ</h5>
+                  <h2 className="text-2xl font-black text-slate-900 tracking-tight">Nhận xét từ chuyên gia</h2>
+                </div>
+                
+                <div className="space-y-1">
+                  {(() => {
+                    const raw = sessionData.mentorNotes || "";
+                    if (!raw) return (
+                      <div className="py-10 text-center bg-slate-50/50 rounded-3xl border border-dashed border-slate-200">
+                        <p className="text-sm text-slate-400 font-semibold tracking-tight">Mentor đang hoàn thiện bản đánh giá chuyên sâu cho bạn...</p>
+                      </div>
+                    );
+                    
+                    const sections = raw.split(/\n/);
+                    return sections.map((line, idx) => {
+                      const trimmed = line.trim();
+                      if (!trimmed) return null;
+                      
+                      const cleanLine = trimmed.replace(/^[🎯💪🚀💡📝]\s*/, "");
+                      
+                      if (cleanLine.includes(":")) {
+                         const [title, ...contentParts] = cleanLine.split(":");
+                         const content = contentParts.join(":").trim();
+                         return (
+                           <div key={idx} className="group py-6 first:pt-0 last:pb-0 border-b border-slate-50 last:border-0">
+                             <div className="flex items-baseline gap-5">
+                                <div className="w-1.5 h-1.5 rounded-full bg-indigo-400 group-hover:scale-150 transition-transform" />
+                                <div className="flex-1">
+                                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">{title}</p>
+                                  <p className="text-base font-bold text-slate-800 leading-relaxed tracking-tight">{content}</p>
+                                </div>
+                             </div>
+                           </div>
+                         );
+                      }
+
+                      return (
+                        <div key={idx} className="py-4 first:pt-0 last:pb-0">
+                          <p className="text-sm font-semibold text-slate-600 leading-relaxed">{cleanLine}</p>
+                        </div>
+                      );
+                    });
+                  })()}
+                </div>
+              </div>
+            </div>
 
             {/* Next steps */}
             <div className="card-premium p-5">

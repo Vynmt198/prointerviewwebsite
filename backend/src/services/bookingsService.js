@@ -1,4 +1,6 @@
 import mongoose from "mongoose";
+import { sendMentorFeedbackEmail } from "./emailService.js";
+import fs from "fs";
 import { Booking } from "../models/Booking.js";
 import { Mentor } from "../models/Mentor.js";
 import { User } from "../models/User.js";
@@ -778,11 +780,16 @@ export async function updateMentorNotes(mentorUserId, rawId, body) {
   const student = booking.userId;
   const mentorData = booking.mentorId;
   
-  console.log("[updateMentorNotes] student:", student ? { id: student._id, email: student.email } : "null");
-  console.log("[updateMentorNotes] mentorData:", mentorData ? { id: mentorData._id, name: mentorData.name } : "null");
+  const logMsg = `\n--- [${new Date().toISOString()}] Update Notes ---
+Booking: ${booking._id}
+Student: ${student ? student.email : "NULL"}
+Mentor: ${mentorData ? mentorData.name : "NULL"}
+Notes: ${notes.substring(0, 30)}...
+`;
+  fs.appendFileSync("debug_mail.log", logMsg);
 
   if (student && student.email) {
-    console.log("[updateMentorNotes] Triggering alerts for student:", student.email);
+    fs.appendFileSync("debug_mail.log", `Attempting to send email to ${student.email}\n`);
     // 1. Tạo thông báo trên Web
     try {
       await Notification.create({
@@ -797,22 +804,26 @@ export async function updateMentorNotes(mentorUserId, rawId, body) {
         },
         isRead: false
       });
+      fs.appendFileSync("debug_mail.log", `Web notification created.\n`);
     } catch (err) {
-      console.error("[updateMentorNotes] Notification error:", err.message);
+      fs.appendFileSync("debug_mail.log", `Notification error: ${err.message}\n`);
     }
 
     // 2. Gửi Email
     try {
-      await sendMentorFeedbackEmail(
+      const emailRes = await sendMentorFeedbackEmail(
         student.email,
         student.name || "Bạn",
         mentorData?.name || "Mentor",
         booking.sessionType,
         notes
       );
+      fs.appendFileSync("debug_mail.log", `Email result: ${JSON.stringify(emailRes)}\n`);
     } catch (err) {
-      console.error("[updateMentorNotes] Email error:", err.message);
+      fs.appendFileSync("debug_mail.log", `Email error: ${err.message}\n`);
     }
+  } else {
+    fs.appendFileSync("debug_mail.log", `SKIP EMAIL: Student or Email is missing.\n`);
   }
 
   return { ok: true, booking: toPublicBooking(booking) };

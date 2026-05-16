@@ -72,5 +72,7 @@ export function apiBookingToLocal(b) {
     status: mapBookingStatus(b.status),
     paymentStatus: b.paymentStatus || "pending",
     paymentRef: ref,
+    mentorNotes: b.mentorNotes || "",
+    isReviewed: Boolean(b.reviewId),
   };
 }
