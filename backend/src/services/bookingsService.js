@@ -397,7 +397,7 @@ export function toPublicBooking(doc, mentorLean) {
     mentorEmail = m.userId;
   }
 
-  const cust = b.userId && typeof b.userId === "object" ? b.userId : null;
+  const cust = b.userId && typeof b.userId === "object" && (b.userId.email || b.userId.name) ? b.userId : null;
 
   return {
     id: String(b._id),
@@ -462,6 +462,7 @@ export async function listMyBookings(userId) {
 
   const rows = await Booking.find({ userId: uid })
     .sort({ createdAt: -1 })
+    .populate({ path: "userId", select: "name email avatar" })
     .populate({ 
       path: "mentorId", 
       select: "name title company avatar publicId userId",
@@ -499,6 +500,7 @@ export async function getMyBooking(userId, rawId) {
   if (!q) return { ok: false, status: 400, error: "Thiếu id booking." };
 
   const row = await Booking.findOne({ userId: uid, ...q })
+    .populate({ path: "userId", select: "name email avatar" })
     .populate({ 
       path: "mentorId", 
       select: "name title company avatar publicId userId",

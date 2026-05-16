@@ -498,7 +498,7 @@ export function Dashboard() {
                        
                        {s.status === "confirmed" && (
                          <div className="mt-4 pt-3 border-t border-slate-200 flex gap-2">
-                            <button className="flex-1 h-10 rounded-xl bg-secondary text-black font-black text-[10px] uppercase tracking-widest hover:scale-[1.02] active:scale-[0.98] transition-all shadow-[0_10px_30px_rgba(232,121,249,0.2)]">
+                            <button className="flex-1 h-10 rounded-xl bg-secondary text-black font-black text-[10px] uppercase tracking-widest hover:scale-[1.02] active:scale-[0.98] transition-all shadow-[0_10px_30px_rgba(232,121,249,0.2)]" onClick={() => navigate(`/meeting/${s.sessionId || s.backendId || s.id}`)}>
                                Vào phòng phỏng vấn
                             </button>
                             <button 

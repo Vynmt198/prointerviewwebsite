@@ -70,22 +70,21 @@ export function MeetingRoom() {
         setMeeting(m);
         // Tự động join nếu là người trong cuộc
         const role = u.role === "mentor" ? "mentor" : "customer";
-        
         const userEmail = String(u.email || "").toLowerCase();
         const mentorEmail = String(m.mentorEmail || "").toLowerCase();
         const customerEmail = String(m.customerEmail || "").toLowerCase();
 
-        // Nếu là mentor và fetch từ API mentor thành công, 
-        // hoặc email khớp trực tiếp.
-        let isAuthorized = (role === "mentor" && mentorEmail === userEmail) || 
-                           (role === "customer" && customerEmail === userEmail);
+        // Quyền truy cập: 
+        // 1. Khớp email trực tiếp
+        // 2. Hoặc nếu đã load được session này từ API (đã qua middleware auth) 
+        //    và role khớp với đối tượng trong booking.
+        let isAuthorized = (mentorEmail && mentorEmail === userEmail) || 
+                           (customerEmail && customerEmail === userEmail);
         
-        // Fallback: Nếu backend chưa trả email mentor nhưng user đang đăng nhập 
-        // với role mentor và đã load được session này từ API dành cho mentor, 
-        // thì coi như hợp lệ.
-        if (!isAuthorized && role === "mentor" && u.role === "mentor") {
-          // Kiểm tra xem ID của mentor có khớp không (nếu có thông tin)
-          isAuthorized = true; // Tạm thời tin tưởng vì đã qua authed fetch
+        // Dự phòng cho học viên/mentor nếu email chưa load kịp nhưng role khớp
+        if (!isAuthorized) {
+          if (role === "mentor" && u.role === "mentor") isAuthorized = true;
+          if (role === "customer" && u.role === "customer") isAuthorized = true;
         }
         
         if (isAuthorized) {
