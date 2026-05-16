@@ -8,30 +8,25 @@ import dns from "node:dns";
 const getTransporter = () => {
   const user = process.env.MAIL_USER;
   const pass = process.env.MAIL_PASS;
-  const host = process.env.MAIL_HOST || "smtp.sendgrid.net";
-  const port = Number(process.env.MAIL_PORT) || 587;
 
-  if (!user || !pass) {
-    console.error("[EmailService] MAIL_USER or MAIL_PASS is missing!");
-  }
-
-  console.log(`[EmailService] RELAY MODE: Connecting to ${host}:${port}`);
+  console.log(`[EmailService] GMAIL STANDARDIZED: Connecting to smtp.gmail.com:587`);
   
   return nodemailer.createTransport({
-    host,
-    port,
-    secure: port === 465,
+    host: "smtp.gmail.com",
+    port: 587,
+    secure: false, // TLS
     auth: {
       user: user,
       pass: pass,
     },
     tls: {
       rejectUnauthorized: false,
-      minVersion: "TLSv1.2"
     },
+    // Ép dùng IPv4 nhưng cho phép Node.js tự xử lý DNS nếu IP trực tiếp bị chặn
+    family: 4,
     connectionTimeout: 30000,
     greetingTimeout: 30000,
-    socketTimeout: 45000,
+    socketTimeout: 30000,
   });
 };
 
