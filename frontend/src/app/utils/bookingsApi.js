@@ -133,3 +133,8 @@ export async function completeMentorBooking(id) {
   if (!id) return { success: false, error: "Thiếu id." };
   return authedSend("PATCH", `/api/bookings/${encodeURIComponent(id)}/complete`, {});
 }
+
+export async function updateMentorNotes(id, body) {
+  if (!id) return { success: false, error: "Thiếu id." };
+  return authedSend("PATCH", `/api/bookings/${encodeURIComponent(id)}/notes`, body);
+}
