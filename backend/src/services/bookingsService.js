@@ -769,7 +769,11 @@ export async function updateMentorNotes(mentorUserId, rawId, body) {
   const student = booking.userId;
   const mentorData = booking.mentorId;
   
+  console.log("[updateMentorNotes] student:", student ? { id: student._id, email: student.email } : "null");
+  console.log("[updateMentorNotes] mentorData:", mentorData ? { id: mentorData._id, name: mentorData.name } : "null");
+
   if (student && student.email) {
+    console.log("[updateMentorNotes] Triggering alerts for student:", student.email);
     // 1. Tạo thông báo trên Web
     try {
       await Notification.create({

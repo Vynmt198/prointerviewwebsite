@@ -195,7 +195,7 @@ export function Navbar() {
                     <p className={`truncate text-sm ${!n.isRead ? "font-bold text-slate-900" : "font-medium text-slate-600"}`}>
                       {n.title}
                     </p>
-                    <p className="mt-0.5 text-xs leading-relaxed text-slate-500">{n.message}</p>
+                    <p className="mt-0.5 text-xs leading-relaxed text-slate-500">{n.body || n.message}</p>
                     <p className="mt-1 text-[10px] text-slate-400">
                       {new Date(n.createdAt).toLocaleDateString("vi-VN")}
                     </p>
