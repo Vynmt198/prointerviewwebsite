@@ -325,64 +325,115 @@ export function Dashboard() {
         .material-symbols-outlined.ms-filled {
           font-variation-settings: "FILL" 1, "wght" 600, "GRAD" 0, "opsz" 24;
         }
+        .dashboard-glass-soft {
+          background: rgba(255, 255, 255, 0.72);
+          backdrop-filter: blur(20px);
+          -webkit-backdrop-filter: blur(20px);
+          border: 1px solid rgba(204, 195, 216, 0.35);
+        }
       `}</style>
 
-      <div className="relative z-10 mx-auto max-w-7xl px-6 pb-10 pt-2 sm:px-8 sm:pt-3">
-        <div className="mb-10 flex flex-col justify-between gap-6 md:mb-14 md:flex-row md:items-end md:gap-8">
-          <motion.div
-            initial={{ opacity: 0, x: -24 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ type: "spring", stiffness: 120, damping: 18 }}
-            className="flex min-w-0 flex-1 items-center gap-4 sm:gap-5"
-          >
-            <div className="relative shrink-0">
-              <div className="relative flex h-16 w-16 items-center justify-center overflow-hidden rounded-2xl border-2 border-[#6E35E8] bg-[#f8f5ff] text-lg font-black text-[#6E35E8] shadow-[0_8px_18px_rgba(110,53,232,0.18)] sm:h-[4.5rem] sm:w-[4.5rem] sm:text-xl">
-                <span className="relative z-10 tracking-tight">{initials}</span>
-              </div>
-            </div>
-            <div className="min-w-0">
-              <h1 className="mb-1.5 font-headline text-2xl font-black tracking-tight text-slate-900 sm:text-3xl break-words">
-                <span className="text-slate-900">Chào, </span>
-                <span className="text-[#6E35E8]">{fullName}</span>
-                <span className="text-slate-900">!</span>
-              </h1>
-              <p className="max-w-xl text-base font-medium leading-relaxed text-slate-600 sm:text-lg">
-                Sẵn sàng chinh phục mục tiêu phỏng vấn hôm nay?
-              </p>
-            </div>
-          </motion.div>
-
-          <div className="w-full max-w-[330px] shrink-0 rounded-[22px] border border-lime-200 bg-white p-4 shadow-[0_10px_20px_rgba(15,23,42,0.08)] sm:p-5 md:w-[min(100%,330px)]">
-            <div className="flex justify-between items-start gap-3">
-              <div className="min-w-0">
-                <p className="text-[10px] font-black uppercase tracking-[0.14em] text-slate-500">Learning streak</p>
-                <p className="mt-1.5 text-[2rem] font-black text-slate-900">12 Days</p>
-              </div>
-              <div className="shrink-0 flex h-11 w-11 items-center justify-center rounded-full border-2 border-amber-300/90 bg-amber-100 shadow-sm">
-                <MsIcon name="local_fire_department" filled size={24} className="text-amber-800" />
-              </div>
-            </div>
-            <p className="text-xs text-slate-500 mt-1">Giữ nhịp luyện tập liên tục</p>
-            <div className="mt-4 h-2 rounded-full bg-slate-100 overflow-hidden">
-              <div className="h-full w-3/4 bg-gradient-to-r from-lime-300 to-violet-400" />
-            </div>
-            <p className="text-xs text-slate-500 mt-2">Còn 3 ngày để đạt mốc mới.</p>
+      <motion.div className="relative z-10 mx-auto max-w-6xl space-y-5 px-4 py-4 sm:px-6 sm:py-5">
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex items-center gap-4"
+        >
+          <div className="dashboard-glass-soft flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border-2 border-[#6E35E8]/20 shadow-md shadow-[#6E35E8]/5 sm:h-16 sm:w-16">
+            <span className="text-lg font-black tracking-tight text-[#6E35E8] sm:text-xl">{initials}</span>
           </div>
-        </div>
+          <div className="min-w-0">
+            <h1 className="break-words text-xl font-black leading-tight text-slate-900 sm:text-2xl">
+              Chào, <span className="text-[#6E35E8]">{fullName}!</span>
+            </h1>
+            <p className="mt-1 text-sm font-medium text-slate-600/90">
+              Sẵn sàng chinh phục mục tiêu phỏng vấn hôm nay?
+            </p>
+          </div>
+        </motion.div>
 
-        <div className="grid grid-cols-12 gap-8 lg:gap-10 items-start">
-          <div className="col-span-12 lg:col-span-8 space-y-10">
+        <motion.button
+          type="button"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.05 }}
+          onClick={() => navigate("/interview")}
+          className="group relative flex w-full flex-col items-center gap-4 overflow-hidden rounded-2xl bg-[#6E35E8] p-5 text-left shadow-xl shadow-[#6E35E8]/25 transition-transform hover:scale-[1.005] sm:p-6 md:flex-row md:gap-6"
+        >
+          <div className="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full bg-white/10 blur-3xl" />
+          <div className="relative z-10 flex-1">
+            <div className="mb-3 inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-white/10 px-3 py-1">
+              <span className="relative flex h-1.5 w-1.5">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#bfff3f] opacity-75" />
+                <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-[#bfff3f]" />
+              </span>
+              <span className="text-[10px] font-black uppercase tracking-widest text-white">Live AI Coach</span>
+            </div>
+            <h2 className="mb-2 text-xl font-black leading-snug text-white sm:text-2xl">
+              Luyện tập phỏng vấn thông minh với AI
+            </h2>
+            <p className="mb-4 max-w-xl text-sm leading-relaxed text-white/80">
+              Giả lập phỏng vấn 1-1, nhận đánh giá chi tiết và cải thiện kỹ năng cùng trợ lý ảo.
+            </p>
+            <span className="inline-flex items-center gap-2 rounded-full bg-[#bfff3f] px-5 py-2 text-sm font-black text-[#131f00] shadow-md transition-all group-hover:scale-105">
+              Luyện tập ngay
+              <MsIcon name="play_circle" size={20} className="text-[#131f00]" />
+            </span>
+          </div>
+          <div className="relative z-10 hidden shrink-0 items-center justify-center lg:flex">
+            <div className="flex h-28 w-28 animate-pulse items-center justify-center rounded-full bg-white/10">
+              <div className="flex h-20 w-20 items-center justify-center rounded-full bg-white/20">
+                <MsIcon name="mic" size={48} className="text-white" />
+              </div>
+            </div>
+          </div>
+        </motion.button>
+
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4"
+        >
+          <FeatureCard
+            title="Phân tích CV/JD"
+            desc="Tối ưu hồ sơ cho mọi vị trí tuyển dụng."
+            icon="description"
+            iconWellClass="bg-violet-100 text-[#6E35E8]"
+            hoverBorder="hover:border-[#6E35E8]/50"
+            onClick={() => navigate("/cv-analysis")}
+          />
+          <FeatureCard
+            title="Khóa học"
+            desc="Lộ trình học kỹ năng chuyên môn."
+            icon="school"
+            iconWellClass="bg-[#bff365] text-[#131f00]"
+            hoverBorder="hover:border-[#3b5700]/50"
+            onClick={() => navigate("/courses")}
+          />
+          <FeatureCard
+            title="Tìm Mentor"
+            desc="Kết nối với chuyên gia đầu ngành."
+            icon="group"
+            iconWellClass="bg-violet-100 text-[#5b598c]"
+            hoverBorder="hover:border-[#5b598c]/50"
+            onClick={() => navigate("/mentors")}
+          />
+        </motion.div>
+
+        <motion.div className="grid grid-cols-12 gap-4 items-start lg:gap-5">
+          <div className="col-span-12 space-y-6 lg:col-span-8">
             <div
-              className={`glass-card p-8 sm:p-10 bg-gradient-to-br from-white to-slate-50 border-slate-200 flex flex-col overflow-hidden ${
+              className={`glass-card p-5 sm:p-6 bg-gradient-to-br from-white to-slate-50 border-slate-200 flex flex-col overflow-hidden ${
                 upcomingSessions.length === 0
                   ? "min-h-0 h-auto"
-                  : "h-[300px] lg:h-[320px]"
+                  : "h-[220px] lg:h-[240px]"
               }`}
             >
                <div className="flex items-center justify-between mb-3">
                   <h3 className="text-sm font-black text-slate-900 uppercase tracking-[0.14em] flex items-center gap-3">
-                     <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border-2 border-violet-300/90 bg-violet-100 shadow-sm">
-                        <MsIcon name="calendar_month" size={20} className="text-violet-700" />
+                     <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2 border-violet-300/90 bg-violet-100 shadow-sm">
+                        <MsIcon name="calendar_month" size={18} className="text-violet-700" />
                      </div>
                      Lịch trình hành trình
                   </h3>
@@ -403,9 +454,8 @@ export function Dashboard() {
                        <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full border-2 border-slate-300/90 bg-slate-100 shadow-sm">
                           <MsIcon name="event_busy" size={32} className="text-slate-700" />
                        </div>
-                       <p className="text-zinc-500 text-[10px] font-black uppercase tracking-[0.3em] leading-loose">
-                          Sẵn sàng vận hành<br/>
-                          <span className="text-zinc-700 italic font-medium">Chưa có lịch hẹn nào được ghi nhận</span>
+                       <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">
+                          Chưa có lịch hẹn nào
                        </p>
                     </div>
                  ) : upcomingSessions.slice(0, 2).map((s, i) => (
@@ -510,7 +560,7 @@ export function Dashboard() {
             </div>
 
             {/* INSIGHTS (Removed AI Advice as requested) */}
-            <div className="glass-card p-8 sm:p-10 border-slate-200 bg-white">
+            <div className="glass-card p-5 sm:p-6 border-slate-200 bg-white">
                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
                   <div className="space-y-4">
                      <h4 className="text-[10px] font-black text-secondary tracking-widest uppercase flex items-center gap-2">
@@ -554,62 +604,29 @@ export function Dashboard() {
             </div>
           </div>
 
-          <aside className="col-span-12 lg:col-span-4 space-y-10">
-            <div className="space-y-4">
-               <button
-                  type="button"
-                  onClick={() => navigate("/interview")}
-                  className="w-full min-h-[300px] lg:min-h-[320px] text-left rounded-[30px] text-white p-7 sm:p-8 shadow-[0_18px_45px_rgba(124,58,237,0.3)] transition-transform hover:-translate-y-0.5 active:scale-[0.99] flex flex-col"
-                  style={{ background: "#6f35ff" }}
-               >
-                  <div
-                    className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-[0.14em]"
-                    style={{ background: "rgba(255,255,255,0.2)", color: "#ffffff" }}
-                  >
-                    Live session available
-                  </div>
-                  <h3 className="mt-4 text-3xl font-black tracking-tight">Phỏng vấn với AI</h3>
-                  <p className="mt-2 text-white/95 text-base max-w-md">
-                    Luyện với coach AI theo ngữ cảnh thực tế. Nhận feedback ngay và điểm kỹ thuật cho từng câu trả lời.
+          <div className="col-span-12 lg:col-span-4">
+            <div className="dashboard-glass-soft flex h-full min-h-0 flex-col justify-between rounded-2xl p-5 sm:p-6">
+              <div className="flex items-start justify-between gap-2">
+                <div>
+                  <p className="mb-0.5 text-[10px] font-black uppercase tracking-widest text-slate-500/60">
+                    Hành trình học
                   </p>
-                  <span
-                    className="mt-6 inline-flex items-center gap-2 px-5 py-3 rounded-full font-black text-sm"
-                    style={{ background: "#bfff3f", color: "#0f172a" }}
-                  >
-                    Bắt đầu phiên
-                    <MsIcon
-                      name="arrow_forward"
-                      size={22}
-                      className="text-[#0f172a]"
-                      style={{ fontVariationSettings: "'FILL' 0, 'wght' 700, 'GRAD' 0, 'opsz' 24" }}
-                    />
-                  </span>
-               </button>
-               
-               <div className="grid grid-cols-2 gap-4">
-                  <LushActionTile
-                    title="Phân tích CV"
-                    desc="So khớp CV với JD và gợi ý chỉnh sửa."
-                    onClick={() => navigate("/cv-analysis")}
-                    icon="description"
-                    accent="#22d3ee"
-                    iconWellClass="rounded-full border-2 border-cyan-300/90 bg-cyan-50 shadow-sm"
-                    iconGlyphClass="text-cyan-900"
-                  />
-                  <LushActionTile
-                    title="Tìm Mentor"
-                    desc="Đặt lịch 1-1 với mentor trong nghề."
-                    onClick={() => navigate("/mentors")}
-                    icon="person_search"
-                    accent="#c4ff47"
-                    iconWellClass="rounded-full border-2 border-violet-300/90 bg-violet-100 shadow-sm"
-                    iconGlyphClass="text-violet-700"
-                  />
-               </div>
+                  <h3 className="text-lg font-black text-slate-900 sm:text-xl">12 Days Streak</h3>
+                </div>
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#bff365]">
+                  <MsIcon name="local_fire_department" filled size={18} className="text-[#131f00]" />
+                </div>
+              </div>
+              <div className="mt-5 space-y-2">
+                <div className="h-2 w-full rounded-full bg-slate-200">
+                  <div className="h-full w-[80%] rounded-full bg-[#6E35E8]" />
+                </div>
+                <p className="text-[11px] text-slate-500/60">3 ngày nữa để lên hạng mới!</p>
+              </div>
             </div>
-          </aside>
-        </div>
-    </div>
+          </div>
+        </motion.div>
+      </motion.div>
 
       <AnimatePresence>
         {cancellingBooking && (
@@ -621,6 +638,24 @@ export function Dashboard() {
         )}
       </AnimatePresence>
     </MentorPageShell>
+  );
+}
+
+function FeatureCard({ title, desc, icon, iconWellClass, hoverBorder, onClick }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`flex cursor-pointer items-start gap-3 rounded-xl border border-slate-200/80 bg-white p-4 text-left shadow-sm transition-all hover:shadow-md ${hoverBorder}`}
+    >
+      <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${iconWellClass}`}>
+        <MsIcon name={icon} size={20} />
+      </div>
+      <div>
+        <h3 className="mb-0.5 text-sm font-black text-slate-900 sm:text-base">{title}</h3>
+        <p className="text-xs text-slate-500 leading-snug">{desc}</p>
+      </div>
+    </button>
   );
 }
 
@@ -652,7 +687,7 @@ function LushMetric({ label, value, icon, accent, color, caption }) {
       animate={{ opacity: 1, y: 0 }}
       transition={{ type: "spring", stiffness: 140, damping: 18 }}
       title={caption}
-      className="glass-card p-5 sm:p-6 group flex flex-col items-stretch text-left h-[252px]"
+      className="glass-card p-4 sm:p-5 group flex flex-col items-stretch text-left min-h-[180px]"
     >
       <div className="flex flex-col items-center text-center sm:items-start sm:text-left w-full">
         <div className="glow-halo mb-4 mx-auto sm:mx-0">
@@ -664,7 +699,7 @@ function LushMetric({ label, value, icon, accent, color, caption }) {
         </div>
         <p className="text-[11px] font-black text-slate-500 uppercase tracking-[0.08em] mb-1 w-full leading-snug">{label}</p>
         <h4
-          className="text-2xl sm:text-3xl font-black tracking-tighter transition-all group-hover:scale-[1.02] w-full text-slate-900"
+          className="text-xl sm:text-2xl font-black tracking-tighter transition-all group-hover:scale-[1.02] w-full text-slate-900"
           style={{
             backgroundImage: `linear-gradient(135deg, #0f172a 0%, ${color} 140%)`,
             WebkitBackgroundClip: "text",
