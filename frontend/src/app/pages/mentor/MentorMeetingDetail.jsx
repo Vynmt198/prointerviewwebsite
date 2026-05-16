@@ -427,7 +427,7 @@ export function MentorMeetingDetail() {
                     {!isCompleted ? (
                        <>
                          <button
-                            onClick={() => navigate(`/mentor/meeting/${meeting.id}`)}
+                            onClick={() => navigate(`/meeting/${meeting.id}`)}
                             disabled={busyAction !== ""}
                             className="w-full py-5 rounded-3xl bg-primary-fixed text-black text-[10px] font-black uppercase tracking-widest shadow-[0_15px_40px_rgba(196, 255, 71,0.32)] hover:scale-105 transition-all"
                          >

@@ -132,13 +132,16 @@ export const router = createHashRouter([
           { path: "finance", Component: MentorFinance },
           { path: "analytics", Component: MentorAnalytics },
           { path: "reviews", Component: MentorReviews },
-          { path: "meeting/:sessionId", Component: MeetingRoom },
           { path: "meeting-detail/:sessionId", Component: MentorMeetingDetail },
           { path: "courses", Component: MentorCourseManagement },
           { path: "courses/:id/edit", Component: MentorCourseEdit },
           { path: "peer-review", Component: MentorPeerReview },
+          { path: "meeting/:sessionId", loader: ({ params }) => redirect(`/meeting/${params.sessionId}`) },
         ],
       },
+
+      { path: "meeting/:sessionId", Component: MeetingRoom },
+
       { path: "courses", Component: Courses },
       { path: "courses/:id", Component: CourseDetail },
     ],

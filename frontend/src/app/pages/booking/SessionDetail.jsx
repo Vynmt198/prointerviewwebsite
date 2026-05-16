@@ -747,21 +747,20 @@ export function SessionDetail() {
             </div>
 
             {/* Join button */}
-            <a
-              href={sessionData.meetLink}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center justify-center gap-3 py-5 rounded-2xl text-white font-bold transition-all hover:opacity-95 active:scale-[0.98]"
+            <button
+              onClick={() => navigate(`/meeting/${id}`)}
+              className="w-full flex items-center justify-center gap-3 py-5 rounded-2xl text-white font-bold transition-all hover:opacity-95 active:scale-[0.98]"
               style={{
-                background: "#4285F4",
-                boxShadow: "0 8px 32px rgba(66,133,244,0.35)",
+                background: "#6E35E8",
+                boxShadow: "0 8px 32px rgba(110, 53, 232, 0.35)",
                 fontSize: "1.1rem",
               }}
             >
               <Video className="w-6 h-6" />
-              Tham gia Google Meet ngay
+              Vào phòng phỏng vấn ngay
               <ExternalLink className="w-5 h-5" />
-            </a>
+            </button>
+
 
             <div className="flex items-center gap-3 py-2 text-sm text-gray-500">
               <div className="flex-1 h-px bg-gray-200" />

@@ -7,6 +7,8 @@ import { Payment } from "../models/Payment.js";
 import { ensureMentorProfilesForAllMentorUsers } from "./mentorProfileService.js";
 import { recordAdminTransferSuccess, recordTransferPending, recordTransferSubmitted } from "./paymentsService.js";
 import { tryCreditMentorForCompletedBooking } from "./mentorEarningsService.js";
+import { runInTransaction } from "../helpers/dbHelper.js";
+
 const MONGO_ERR = "MongoDB chưa kết nối. Kiểm tra MONGO_URI trong .env.";
 const MENTOR_CANCEL_MIN_HOURS = 2;
 
@@ -376,28 +378,39 @@ export async function createBooking(userId, body) {
  */
 export function toPublicBooking(doc, mentorLean) {
   const b = doc.toObject ? doc.toObject() : { ...doc };
-  const m =
-    mentorLean && typeof mentorLean === "object"
-      ? mentorLean
-      : b.mentorId && typeof b.mentorId === "object" && "name" in b.mentorId
-        ? b.mentorId
-        : null;
-  const mentorPublicId =
-    m?.publicId ?? (m?._id ? String(m._id) : mongoose.isValidObjectId(b.mentorId) ? String(b.mentorId) : "");
-  const cust =
-    b.userId && typeof b.userId === "object" && b.userId !== null && "name" in b.userId ? b.userId : null;
+  
+  // Mentor info extraction
+  let m = mentorLean;
+  if (!m && b.mentorId && typeof b.mentorId === "object" && ("name" in b.mentorId || "userId" in b.mentorId)) {
+    m = b.mentorId;
+  }
+
+  const mentorPublicId = m?.publicId ?? (m?._id ? String(m._id) : (typeof b.mentorId === "string" ? b.mentorId : String(b.mentorId || "")));
+  
+  // Robust mentor email extraction
+  let mentorEmail = "";
+  if (m?.userId && typeof m.userId === "object" && m.userId.email) {
+    mentorEmail = m.userId.email;
+  } else if (m?.email) {
+    mentorEmail = m.email;
+  } else if (m?.userId && typeof m.userId === "string" && m.userId.includes("@")) {
+    mentorEmail = m.userId;
+  }
+
+  const cust = b.userId && typeof b.userId === "object" ? b.userId : null;
 
   return {
     id: String(b._id),
-    userId: cust ? String(cust._id) : String(b.userId),
-    customerName: cust?.name ?? "",
-    customerEmail: cust?.email ?? "",
-    customerAvatar: cust?.avatar ?? "",
+    userId: cust?._id ? String(cust._id) : String(b.userId || ""),
+    customerName: cust?.name || "",
+    customerEmail: cust?.email || "",
+    customerAvatar: cust?.avatar || "",
     mentorId: mentorPublicId,
     mentorName: m?.name ?? "",
     mentorTitle: m?.title ?? "",
     mentorCompany: m?.company ?? "",
     mentorAvatar: m?.avatar ?? "",
+    mentorEmail: mentorEmail,
     date: b.date,
     timeSlot: b.timeSlot,
     durationMinutes: b.durationMinutes,
@@ -449,8 +462,13 @@ export async function listMyBookings(userId) {
 
   const rows = await Booking.find({ userId: uid })
     .sort({ createdAt: -1 })
-    .populate({ path: "mentorId", select: "name title company avatar publicId" })
+    .populate({ 
+      path: "mentorId", 
+      select: "name title company avatar publicId userId",
+      populate: { path: "userId", select: "email" }
+    })
     .lean();
+
 
   return { ok: true, bookings: rows.map((row) => toPublicBooking(row)) };
 }
@@ -463,9 +481,14 @@ export async function listMentorBookings(mentorUserId) {
   }
   const rows = await Booking.find({ mentorId: mentor._id })
     .sort({ createdAt: -1 })
-    .populate({ path: "mentorId", select: "name title company avatar publicId" })
+    .populate({ 
+      path: "mentorId", 
+      select: "name title company avatar publicId userId",
+      populate: { path: "userId", select: "email" }
+    })
     .populate({ path: "userId", select: "name email avatar" })
     .lean();
+
   return { ok: true, bookings: rows.map((row) => toPublicBooking(row)) };
 }
 
@@ -476,8 +499,13 @@ export async function getMyBooking(userId, rawId) {
   if (!q) return { ok: false, status: 400, error: "Thiếu id booking." };
 
   const row = await Booking.findOne({ userId: uid, ...q })
-    .populate({ path: "mentorId", select: "name title company avatar publicId" })
+    .populate({ 
+      path: "mentorId", 
+      select: "name title company avatar publicId userId",
+      populate: { path: "userId", select: "email" }
+    })
     .lean();
+
   if (!row) return { ok: false, status: 404, error: "Không tìm thấy booking." };
   return { ok: true, booking: toPublicBooking(row) };
 }
@@ -490,8 +518,13 @@ export async function getMentorBooking(mentorUserId, rawId) {
 
   const row = await Booking.findOne({ _id: rawId, mentorId: mentor._id })
     .populate({ path: "userId", select: "name email avatar" })
-    .populate({ path: "mentorId", select: "name title company avatar publicId" })
+    .populate({ 
+      path: "mentorId", 
+      select: "name title company avatar publicId userId",
+      populate: { path: "userId", select: "email" }
+    })
     .lean();
+
   if (!row) return { ok: false, status: 404, error: "Không tìm thấy booking." };
   return { ok: true, booking: toPublicBooking(row) };
 }
@@ -569,9 +602,8 @@ export async function confirmBankTransferPaymentByAdmin(bookingId, options = {})
     return { ok: false, status: 400, error: "Xác nhận ngoại lệ cần lý do rõ ràng (ít nhất 3 ký tự)." };
   }
 
-  const session = await mongoose.startSession();
   try {
-    await session.withTransaction(async () => {
+    await runInTransaction(async (session) => {
       const booking = await Booking.findById(bookingId).session(session);
       if (!booking) throw new Error("ERR_404");
       if (booking.paymentMethod !== "transfer") throw new Error("ERR_METHOD");
@@ -608,15 +640,7 @@ export async function confirmBankTransferPaymentByAdmin(bookingId, options = {})
       await booking.save({ session });
     });
   } catch (error) {
-    await session.endSession();
     const msg = String(error?.message || "");
-    if (msg.includes("Transaction numbers are only allowed")) {
-      return {
-        ok: false,
-        status: 503,
-        error: "Hạ tầng MongoDB chưa hỗ trợ transaction (cần replica set).",
-      };
-    }
     if (msg === "ERR_404") return { ok: false, status: 404, error: "Không tìm thấy booking." };
     if (msg === "ERR_METHOD") return { ok: false, status: 400, error: "Chỉ áp dụng cho booking thanh toán chuyển khoản." };
     if (msg === "ERR_ALREADY_PAID") return { ok: false, status: 400, error: "Booking đã được đánh dấu đã thanh toán." };
@@ -631,10 +655,14 @@ export async function confirmBankTransferPaymentByAdmin(bookingId, options = {})
     console.error("[confirmBankTransferPaymentByAdmin]", error?.message || error);
     return { ok: false, status: 500, error: "Không thể xác nhận thanh toán lúc này." };
   }
-  await session.endSession();
+
 
   const booking = await Booking.findById(bookingId)
-    .populate({ path: "mentorId", select: "name title company avatar publicId" })
+    .populate({ 
+      path: "mentorId", 
+      select: "name title company avatar publicId userId",
+      populate: { path: "userId", select: "email" }
+    })
     .populate({ path: "userId", select: "name email avatar" });
   if (!booking) return { ok: false, status: 404, error: "Không tìm thấy booking." };
   return { ok: true, booking: toPublicBooking(booking) };
@@ -653,8 +681,12 @@ export async function confirmMentorBooking(mentorUserId, rawId) {
     return { ok: false, status: 400, error: "Không thể xác nhận booking ở trạng thái này." };
   }
   if (booking.status === "confirmed" || booking.status === "in_progress") {
-    await booking.populate({ path: "userId", select: "name email avatar" });
+    await booking.populate([
+      { path: "userId", select: "name email avatar" },
+      { path: "mentorId", select: "name title company avatar publicId userId", populate: { path: "userId", select: "email" } }
+    ]);
     return { ok: true, booking: toPublicBooking(booking) };
+
   }
   if (booking.status !== "pending") {
     return { ok: false, status: 400, error: "Chỉ xác nhận khi booking đang chờ duyệt (pending)." };
@@ -662,8 +694,12 @@ export async function confirmMentorBooking(mentorUserId, rawId) {
 
   booking.status = "confirmed";
   await booking.save();
-  await booking.populate({ path: "userId", select: "name email avatar" });
+  await booking.populate([
+    { path: "userId", select: "name email avatar" },
+    { path: "mentorId", select: "name title company avatar publicId userId", populate: { path: "userId", select: "email" } }
+  ]);
   return { ok: true, booking: toPublicBooking(booking) };
+
 }
 
 export async function completeMentorBooking(mentorUserId, rawId) {
@@ -695,7 +731,10 @@ export async function completeMentorBooking(mentorUserId, rawId) {
     console.error("[completeMentorBooking] mentor earnings:", credit.error || credit);
   }
 
-  await booking.populate({ path: "userId", select: "name email avatar" });
+  await booking.populate([
+    { path: "userId", select: "name email avatar" },
+    { path: "mentorId", select: "name title company avatar publicId userId", populate: { path: "userId", select: "email" } }
+  ]);
   return { ok: true, booking: toPublicBooking(booking) };
 }
 
@@ -713,8 +752,12 @@ export async function updateMentorNotes(mentorUserId, rawId, body) {
 
   booking.mentorNotes = notes;
   await booking.save();
-  await booking.populate({ path: "userId", select: "name email avatar" });
+  await booking.populate([
+    { path: "userId", select: "name email avatar" },
+    { path: "mentorId", select: "name title company avatar publicId userId", populate: { path: "userId", select: "email" } }
+  ]);
   return { ok: true, booking: toPublicBooking(booking) };
+
 }
 
 export async function cancelMyBooking(userId, rawId, body) {
@@ -844,8 +887,12 @@ export async function rescheduleMyBooking(userId, rawId, body) {
   if (booking.status !== "pending") booking.status = "confirmed";
   await booking.save();
 
-  const mentor = await Mentor.findById(booking.mentorId).lean();
-  return { ok: true, booking: toPublicBooking(booking, mentor) };
+  await booking.populate([
+    { path: "userId", select: "name email avatar" },
+    { path: "mentorId", select: "name title company avatar publicId userId", populate: { path: "userId", select: "email" } }
+  ]);
+  return { ok: true, booking: toPublicBooking(booking) };
+
 }
 
 export async function cancelMentorBooking(mentorUserId, rawId, body) {
@@ -884,8 +931,11 @@ export async function cancelMentorBooking(mentorUserId, rawId, body) {
   booking.cancelledAt = new Date();
   const refund = await refundBookingPaymentIfNeeded(booking);
   await booking.save();
-  await booking.populate({ path: "userId", select: "name email avatar" });
-  await booking.populate({ path: "mentorId", select: "name title company avatar publicId" });
+  await booking.populate([
+    { path: "userId", select: "name email avatar" },
+    { path: "mentorId", select: "name title company avatar publicId userId", populate: { path: "userId", select: "email" } }
+  ]);
+
   await notifyBookingOwner(booking.userId?._id || booking.userId, {
     type: "booking_cancelled",
     title: "Mentor đã hủy lịch hẹn",
@@ -963,8 +1013,11 @@ export async function rescheduleMentorBooking(mentorUserId, rawId, body) {
   booking.timeSlot = newSlot;
   if (booking.status !== "pending") booking.status = "confirmed";
   await booking.save();
-  await booking.populate({ path: "userId", select: "name email avatar" });
-  await booking.populate({ path: "mentorId", select: "name title company avatar publicId" });
+  await booking.populate([
+    { path: "userId", select: "name email avatar" },
+    { path: "mentorId", select: "name title company avatar publicId userId", populate: { path: "userId", select: "email" } }
+  ]);
+
   await notifyBookingOwner(booking.userId?._id || booking.userId, {
     type: "system",
     title: "Lịch hẹn đã được mentor dời",
