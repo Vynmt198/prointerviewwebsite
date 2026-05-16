@@ -57,14 +57,22 @@ export async function sendVerificationEmail(to, name, verifyUrl) {
     `,
   };
 
-  try {
-    const transporter = getTransporter();
-    await transporter.sendMail(mailOptions);
-    return { ok: true };
-  } catch (error) {
-    console.error("[emailService] sendVerificationEmail error:", error);
-    return { ok: false, error: error.message };
-  }
+  return new Promise((resolve) => {
+    try {
+      const transporter = getTransporter();
+      transporter.sendMail(mailOptions, (error, info) => {
+        if (error) {
+          console.error("[emailService] sendVerificationEmail error:", error);
+          resolve({ ok: false, error: error.message });
+        } else {
+          resolve({ ok: true, info });
+        }
+      });
+    } catch (error) {
+      console.error("[emailService] sendVerificationEmail exception:", error);
+      resolve({ ok: false, error: error.message });
+    }
+  });
 }
 
 /**
@@ -91,14 +99,22 @@ export async function sendResetPasswordEmail(to, name, resetUrl) {
     `,
   };
 
-  try {
-    const transporter = getTransporter();
-    await transporter.sendMail(mailOptions);
-    return { ok: true };
-  } catch (error) {
-    console.error("[emailService] sendResetPasswordEmail error:", error);
-    return { ok: false, error: error.message };
-  }
+  return new Promise((resolve) => {
+    try {
+      const transporter = getTransporter();
+      transporter.sendMail(mailOptions, (error, info) => {
+        if (error) {
+          console.error("[emailService] sendResetPasswordEmail error:", error);
+          resolve({ ok: false, error: error.message });
+        } else {
+          resolve({ ok: true, info });
+        }
+      });
+    } catch (error) {
+      console.error("[emailService] sendResetPasswordEmail exception:", error);
+      resolve({ ok: false, error: error.message });
+    }
+  });
 }
 
 /**
@@ -142,13 +158,21 @@ export async function sendMentorFeedbackEmail(to, studentName, mentorName, sessi
     `,
   };
 
-  try {
-    const transporter = getTransporter();
-    const info = await transporter.sendMail(mailOptions);
-    console.log("[EmailService] Feedback email sent successfully:", info.messageId);
-    return { ok: true };
-  } catch (error) {
-    console.error("[EmailService] Error sending feedback email:", error);
-    return { ok: false, error: error.message };
-  }
+  return new Promise((resolve) => {
+    try {
+      const transporter = getTransporter();
+      transporter.sendMail(mailOptions, (error, info) => {
+        if (error) {
+          console.error("[EmailService] Error sending feedback email:", error);
+          resolve({ ok: false, error: error.message });
+        } else {
+          console.log("[EmailService] Feedback email sent successfully:", info.messageId);
+          resolve({ ok: true, info });
+        }
+      });
+    } catch (error) {
+      console.error("[EmailService] Exception sending feedback email:", error);
+      resolve({ ok: false, error: error.message });
+    }
+  });
 }
