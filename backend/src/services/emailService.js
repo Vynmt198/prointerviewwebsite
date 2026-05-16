@@ -6,30 +6,17 @@ dotenv.config();
 import dns from "node:dns";
 
 const getTransporter = () => {
-  const user = process.env.MAIL_USER;
-  const pass = process.env.MAIL_PASS;
+  const user = process.env.MAIL_USER || process.env.EMAIL_USER;
+  const pass = process.env.MAIL_PASS || process.env.EMAIL_PASS;
 
-  console.log(`[EmailService] FINAL DNS OVERRIDE: Hard-locking to IPv4 74.125.136.108`);
-  
   return nodemailer.createTransport({
     host: "smtp.gmail.com",
-    port: 465,
-    secure: true,
+    port: 587,
+    secure: false,
     auth: {
       user: user,
       pass: pass,
     },
-    // ĐÁNH LỪA HỆ THỐNG: Bất kể tìm domain nào cũng trả về IP số này
-    lookup: (hostname, options, callback) => {
-      callback(null, "74.125.136.108", 4);
-    },
-    tls: {
-      servername: "smtp.gmail.com",
-      rejectUnauthorized: false,
-    },
-    connectionTimeout: 40000, 
-    greetingTimeout: 40000,
-    socketTimeout: 40000,
   });
 };
 
@@ -178,15 +165,12 @@ export async function sendMentorFeedbackEmail(to, studentName, mentorName, sessi
 }
 
 // Kiểm tra cấu hình mail ngay khi server khởi động
-try {
-  const initTransporter = getTransporter();
-  initTransporter.verify(function (error, success) {
-    if (error) {
-      console.error("❌ LỖI CẤU HÌNH MAIL TRÊN SERVER:", error);
-    } else {
-      console.log("✔️ Server đã sẵn sàng gửi mail!");
-    }
-  });
-} catch (error) {
-  console.error("❌ LỖI KHỞI TẠO MAIL TRANSPORTER:", error);
-}
+(async function verifyMailConfig() {
+  try {
+    const initTransporter = getTransporter();
+    await initTransporter.verify();
+    console.log("✔️ Server đã sẵn sàng gửi mail (SMTP OK)!");
+  } catch (error) {
+    console.error("❌ LỖI CẤU HÌNH MAIL TRÊN SERVER:", error);
+  }
+})();
