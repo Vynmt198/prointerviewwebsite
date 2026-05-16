@@ -1,10 +1,17 @@
-import React from "react";
-import { Outlet } from "react-router";
+import React, { useEffect } from "react";
+import { Outlet, useLocation } from "react-router";
 import { SidebarProvider, SidebarInset } from "../ui/sidebar";
 import { AppSidebar } from "./Sidebar";
 import { Navbar } from "./Navbar";
+import { resolveDocumentTitle } from "../../utils/documentTitle";
 
 export function AppLayout() {
+  const location = useLocation();
+
+  useEffect(() => {
+    document.title = resolveDocumentTitle(location.pathname);
+  }, [location.pathname]);
+
   return (
     <div
       className="app-user-shell relative min-h-svh w-full overflow-x-hidden bg-[#f3f0f9] text-slate-900 antialiased selection:bg-violet-100 selection:text-violet-900"

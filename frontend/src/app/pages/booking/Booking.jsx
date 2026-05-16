@@ -146,7 +146,7 @@ export function Booking() {
       type: "booking",
       mentorId: mentor.id,
       price: String(mentor.price),
-      date: selectedDayFull ?? selectedDay ?? "",
+      date: selectedDay ?? "",
       time: selectedTime ?? "",
       position: form.position,
       note: form.note,
@@ -198,6 +198,11 @@ export function Booking() {
     }
 
     const recurring = Array.isArray(av.recurringSchedule) ? av.recurringSchedule : [];
+    const slotMapKeys = Object.keys(av.availableSlots || {}).length;
+    // Chỉ chặn ngày (blockedDates) — không có lịch cụ thể → mở khung giờ mặc định (khớp backend).
+    if (!recurring.length && slotMapKeys === 0) {
+      return TIME_GROUPS.flatMap((g) => g.slots);
+    }
     if (!recurring.length) return [];
     const mentorDay = (day.dateObj.getDay() + 6) % 7; // Mon=0
     const row = recurring.find((r) => Number(r?.dayOfWeek) === mentorDay);

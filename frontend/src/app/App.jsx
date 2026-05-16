@@ -39,7 +39,7 @@ export default function App() {
               boxShadow: "0 0 24px rgba(110,53,232,0.35)",
             }}
           >
-            <span className="text-xl font-bold text-white">P</span>
+            <img src="/favicon-192.png?v=6" alt="ProInterview" className="h-10 w-10 object-contain" />
           </div>
           <div
             className="h-6 w-6 animate-spin rounded-full border-2 border-t-transparent"
