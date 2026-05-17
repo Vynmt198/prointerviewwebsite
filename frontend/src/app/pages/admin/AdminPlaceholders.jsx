@@ -571,7 +571,7 @@ export function AdminPayouts() {
             const bankName = String(row.payoutAccount?.bankName || "").trim();
             const acctName = String(row.payoutAccount?.accountName || "").trim();
             const ckLine = [bankName, acct, acctName].filter(Boolean).join(" · ");
-            return (
+  return (
               <div key={row._id} className="rounded-2xl border border-slate-200 bg-gradient-to-br from-slate-50 to-white p-5">
                 <div className="flex flex-wrap items-center justify-between gap-4">
                   <div className="min-w-0 flex-1">

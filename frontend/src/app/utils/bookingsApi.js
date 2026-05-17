@@ -62,7 +62,9 @@ function authedSend(method, path, payload) {
   })
     .then(async (res) => {
       const body = await res.json().catch(() => ({}));
-      if (!res.ok) return { success: false, error: body.error || `Lỗi ${res.status}` };
+      if (!res.ok) {
+        return { success: false, ...body, error: body.error || `Lỗi ${res.status}` };
+      }
       return { success: true, ...body };
     })
     .catch(() => ({ success: false, error: "Không kết nối được backend." }));
@@ -93,6 +95,29 @@ export async function fetchMentorBookingById(id) {
 export async function cancelBooking(id, body = {}) {
   if (!id) return { success: false, error: "Thiếu id." };
   return authedSend("DELETE", `/api/bookings/${encodeURIComponent(id)}`, body);
+}
+
+/** Bổ sung STK nhận hoàn khi `refund_pending` (vd. mentor hủy trước khi user khai báo STK). */
+export async function updateBookingRefundDestination(bookingId, body) {
+  if (!bookingId) return { success: false, error: "Thiếu id booking." };
+  return authedSend("PATCH", `/api/bookings/${encodeURIComponent(bookingId)}/refund-destination`, body);
+}
+
+/** HV chọn đổi lịch / đổi mentor / hoàn tiền sau khi mentor hủy (đã thanh toán). */
+export async function resolveMentorCancelBooking(bookingId, body) {
+  if (!bookingId) return { success: false, error: "Thiếu id booking." };
+  return authedSend("PATCH", `/api/bookings/${encodeURIComponent(bookingId)}/mentor-cancel-resolution`, body);
+}
+
+/** HV báo mentor no-show (sau giờ họp + 15 phút). */
+export async function reportBookingNoShow(bookingId, body = {}) {
+  if (!bookingId) return { success: false, error: "Thiếu id booking." };
+  return authedSend("POST", `/api/bookings/${encodeURIComponent(bookingId)}/report-no-show`, body);
+}
+
+export async function fetchRebookCredit(sourceBookingId) {
+  if (!sourceBookingId) return { success: false, error: "Thiếu id booking nguồn." };
+  return authedGet(`/api/bookings/${encodeURIComponent(sourceBookingId)}/rebook-credit`);
 }
 
 /** Khách báo đã CK; `reference` tuỳ chọn (FT…). Có thể gửi mã đơn hoặc để trống — VietQR đã gắn nội dung. */

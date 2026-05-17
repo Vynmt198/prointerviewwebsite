@@ -61,6 +61,8 @@ const mentorSchema = new Schema(
       profileViews: { type: Number, default: 0 },
       acceptanceRate: { type: Number, default: 100 },
       rebookingRate: { type: Number, default: 0 },
+      /** Số lần no-show (mentor không tham gia) — điều khoản vi phạm. */
+      noShowCount: { type: Number, default: 0 },
     },
 
     finance: {

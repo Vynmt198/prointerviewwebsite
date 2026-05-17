@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router";
 import { motion, AnimatePresence } from "motion/react";
 import { getUser, isLoggedIn, getDisplayName, getInitials } from "../../utils/auth";
@@ -6,7 +6,12 @@ import { toast } from "sonner";
 import { getAllBookings, parseDateMs } from "../../utils/bookings";
 import { listBookings, cancelBooking } from "../../utils/bookingsApi";
 import { fetchDashboardStats } from "../../utils/dashboardApi";
-import { apiBookingToLocal } from "../../utils/bookingMappers";
+import {
+  apiBookingToLocal,
+  buildMentorIssueAlerts,
+  buildRefundPendingAlerts,
+  groupMentorIssueAlerts,
+} from "../../utils/bookingMappers";
 import { MentorPageShell } from "../../components/mentor/MentorPageShell";
 
 /** Google Material Symbols Outlined — same family as mock (index.html loads the font). */
@@ -40,8 +45,8 @@ function getCancellationPolicy(dateStr, timeStr) {
     return { feePercent: 100, refundPercent: 0 };
   }
   const hoursUntil = (startAt.getTime() - Date.now()) / 3_600_000;
-  if (hoursUntil <= 2) return { feePercent: 100, refundPercent: 0 };
-  if (hoursUntil <= 24) return { feePercent: 50, refundPercent: 50 };
+  if (hoursUntil < 12) return { feePercent: 100, refundPercent: 0 };
+  if (hoursUntil < 24) return { feePercent: 50, refundPercent: 50 };
   return { feePercent: 0, refundPercent: 100 };
 }
 
@@ -67,102 +72,265 @@ function CancellationModal({ booking, onClose, onConfirm }) {
   const [reason, setReason] = useState("");
   const [customReason, setCustomReason] = useState("");
   const [loading, setLoading] = useState(false);
+  const [refundBankName, setRefundBankName] = useState("");
+  const [refundAccountNumber, setRefundAccountNumber] = useState("");
+  const [refundAccountHolder, setRefundAccountHolder] = useState("");
 
   const reasons = [
     "Trùng lịch đột xuất",
     "Muốn đổi Mentor khác",
     "Không còn nhu cầu",
-    "Khác"
+    "Khác",
   ];
 
+  const policy = booking ? getCancellationPolicy(booking.date, booking.time) : { feePercent: 100, refundPercent: 0 };
+  const needsRefundBank = Boolean(
+    booking &&
+      policy.refundPercent > 0 &&
+      ["paid", "partial_refund"].includes(String(booking.paymentStatus || "").toLowerCase()),
+  );
+
   const handleConfirm = async () => {
+    if (!booking) return;
     const finalReason = reason === "Khác" ? customReason : reason;
     if (!finalReason) {
       toast.error("Vui lòng chọn hoặc nhập lý do hủy.");
       return;
     }
+    if (needsRefundBank) {
+      const acct = String(refundAccountNumber || "").replace(/\D/g, "");
+      if (!String(refundBankName || "").trim() || acct.length < 6 || !String(refundAccountHolder || "").trim()) {
+        toast.error("Vui lòng điền đầy đủ ngân hàng, số tài khoản nhận hoàn và tên chủ tài khoản.");
+        return;
+      }
+    }
     setLoading(true);
-    await onConfirm(booking.backendId, finalReason);
+    await onConfirm(booking.backendId, finalReason, {
+      refundReceiveBankName: needsRefundBank ? String(refundBankName || "").trim() : "",
+      refundReceiveAccountNumber: needsRefundBank
+        ? String(refundAccountNumber || "").replace(/\D/g, "")
+        : "",
+      refundReceiveAccountHolder: needsRefundBank ? String(refundAccountHolder || "").trim() : "",
+    });
     setLoading(false);
   };
 
   if (!booking) return null;
-  const policy = getCancellationPolicy(booking.date, booking.time);
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/45 backdrop-blur-sm">
-      <motion.div 
-        initial={{ opacity: 0, scale: 0.9, y: 20 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        className="w-full max-w-md rounded-[28px] bg-white border border-slate-200 p-6 sm:p-7 shadow-[0_28px_80px_rgba(15,23,42,0.22)]"
-      >
-        <h3 className="text-xl font-black text-slate-900 mb-2 uppercase tracking-tight">Hủy lịch hẹn</h3>
-        <p className="text-sm text-slate-600 mb-6 font-medium leading-relaxed">
-          Buổi hẹn với <span className="text-violet-700 font-bold">{booking.mentorName}</span> vào {booking.date} lúc {booking.time} sẽ bị hủy.
-        </p>
-        <div className="mb-5 rounded-2xl border border-red-300 bg-red-50 px-4 py-3">
-          <p className="text-[11px] font-black uppercase tracking-[0.14em] text-red-600">Cảnh báo</p>
-          <p className="mt-1 text-sm font-semibold text-red-700">
-            {policy.feePercent === 100
-              ? "Hủy trong vòng 2 giờ trước lịch hẹn: mất 100% phí đã thanh toán (không hoàn tiền)."
-              : policy.feePercent === 50
-                ? "Hủy trong vòng 24 giờ trước lịch hẹn: mất 50% phí đã thanh toán."
-                : "Hủy trước 24 giờ: được hoàn lại 100% phí đã thanh toán."}
-          </p>
-        </div>
-        
-        <div className="space-y-3 mb-6">
-          <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-3">Lý do của bạn</p>
-          {reasons.map((r) => (
-            <button
-              key={r}
-              onClick={() => setReason(r)}
-              className={`w-full p-4 rounded-2xl text-left text-xs font-bold transition-all border ${
-                reason === r 
-                  ? "bg-violet-50 border-violet-300 text-violet-700" 
-                  : "bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100"
-              }`}
-            >
-              {r}
-            </button>
-          ))}
-          
-          <AnimatePresence>
-            {reason === "Khác" && (
-              <motion.textarea
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 80 }}
-                exit={{ opacity: 0, height: 0 }}
-                value={customReason}
-                onChange={(e) => setCustomReason(e.target.value)}
-                placeholder="Nhập lý do cụ thể..."
-                className="w-full bg-white border border-slate-200 rounded-2xl p-4 text-xs text-slate-700 placeholder:text-slate-400 focus:outline-none focus:border-violet-300 transition-all resize-none mt-2"
-              />
-            )}
-          </AnimatePresence>
-        </div>
+    <div className="fixed inset-0 z-[100] overflow-y-auto overscroll-y-contain bg-black/45 backdrop-blur-sm">
+      <div className="flex min-h-full items-center justify-center p-4 py-8 sm:p-6">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9, y: 20 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          className="grid w-full max-w-md max-h-[min(85dvh,calc(100vh-3rem))] grid-rows-[minmax(0,1fr)_auto] overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-[0_28px_80px_rgba(15,23,42,0.22)]"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="min-h-0 overflow-y-auto overscroll-contain px-5 pb-2 pt-5 sm:px-7 sm:pt-7">
+            <h3 className="text-xl font-black uppercase tracking-tight text-slate-900">Hủy lịch hẹn</h3>
+            <p className="mb-5 mt-2 text-sm font-medium leading-relaxed text-slate-600">
+              Buổi hẹn với <span className="font-bold text-violet-700">{booking.mentorName}</span> vào {booking.date} lúc{" "}
+              {booking.time} sẽ bị hủy.
+            </p>
+            <div className="mb-4 rounded-2xl border border-red-300 bg-red-50 px-4 py-3">
+              <p className="text-[11px] font-black uppercase tracking-[0.14em] text-red-600">Cảnh báo</p>
+              <p className="mt-1 text-sm font-semibold text-red-700">
+                {policy.feePercent === 100
+                  ? "Hủy trong vòng dưới 12 giờ trước buổi hẹn: không hoàn tiền (100% phí giữ lại)."
+                  : policy.feePercent === 50
+                    ? "Hủy từ 12 giờ đến dưới 24 giờ trước buổi: hoàn 50% phí đã thanh toán."
+                    : "Hủy từ 24 giờ trở lên trước buổi: hoàn 100% phí đã thanh toán."}
+              </p>
+            </div>
 
-        <div className="flex gap-4">
-          <button
-            onClick={onClose}
-            className="flex-1 h-12 rounded-2xl bg-slate-100 text-slate-600 font-black text-[10px] uppercase tracking-widest hover:bg-slate-200 transition-all"
-          >
-            Đóng
-          </button>
-          <button
-            onClick={handleConfirm}
-            disabled={loading}
-            className="flex-2 px-8 h-12 rounded-2xl bg-red-500 text-white font-black text-[10px] uppercase tracking-widest hover:bg-red-600 transition-all disabled:opacity-50"
-          >
-            {loading ? "Đang xử lý..." : "Xác nhận Hủy"}
-          </button>
-        </div>
-      </motion.div>
+            <div className="mb-4 space-y-2">
+              <p className="mb-2 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Lý do của bạn</p>
+              {reasons.map((r) => (
+                <button
+                  key={r}
+                  type="button"
+                  onClick={() => setReason(r)}
+                  className={`w-full rounded-2xl border p-3 text-left text-xs font-bold transition-all ${
+                    reason === r
+                      ? "border-violet-300 bg-violet-50 text-violet-700"
+                      : "border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100"
+                  }`}
+                >
+                  {r}
+                </button>
+              ))}
+
+              <AnimatePresence>
+                {reason === "Khác" && (
+                  <motion.textarea
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 80 }}
+                    exit={{ opacity: 0, height: 0 }}
+                    value={customReason}
+                    onChange={(e) => setCustomReason(e.target.value)}
+                    placeholder="Nhập lý do cụ thể..."
+                    className="mt-2 w-full resize-none rounded-2xl border border-slate-200 bg-white p-3 text-xs text-slate-700 outline-none transition-all placeholder:text-slate-400 focus:border-violet-300"
+                  />
+                )}
+              </AnimatePresence>
+            </div>
+
+            {needsRefundBank ? (
+              <div className="mb-2 space-y-2 rounded-2xl border border-sky-200 bg-sky-50/90 p-3 sm:p-4">
+                <p className="text-[10px] font-black uppercase tracking-[0.14em] text-sky-900">Tài khoản nhận hoàn tiền</p>
+                <p className="text-xs leading-snug text-sky-950/80">
+                  Tiền vào TK công ty — hệ thống không lưu STK nguồn. Điền STK nhận hoàn. Số tiền hoàn do hệ thống tính,
+                  không nhập tay.
+                </p>
+                <input
+                  type="text"
+                  value={refundBankName}
+                  onChange={(e) => setRefundBankName(e.target.value)}
+                  placeholder="Tên ngân hàng (vd. Vietcombank)"
+                  className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-xs text-slate-800 outline-none focus:border-violet-400"
+                />
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  autoComplete="off"
+                  value={refundAccountNumber}
+                  onChange={(e) => setRefundAccountNumber(e.target.value)}
+                  placeholder="Số tài khoản nhận hoàn"
+                  className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 font-mono text-xs text-slate-800 outline-none focus:border-violet-400"
+                />
+                <input
+                  type="text"
+                  autoComplete="name"
+                  value={refundAccountHolder}
+                  onChange={(e) => setRefundAccountHolder(e.target.value)}
+                  placeholder="Tên chủ tài khoản (in hoa, không dấu)"
+                  className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-xs text-slate-800 outline-none focus:border-violet-400"
+                />
+              </div>
+            ) : null}
+          </div>
+
+          <div className="border-t border-slate-100 bg-white px-5 py-4 sm:px-7">
+            <div className="flex gap-3 sm:gap-4">
+              <button
+                type="button"
+                onClick={onClose}
+                className="h-12 flex-1 rounded-2xl bg-slate-100 text-[10px] font-black uppercase tracking-widest text-slate-600 transition-all hover:bg-slate-200"
+              >
+                Đóng
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirm}
+                disabled={loading}
+                className="h-12 min-w-0 flex-1 rounded-2xl bg-red-500 px-4 text-[10px] font-black uppercase tracking-widest text-white transition-all hover:bg-red-600 disabled:opacity-50 sm:flex-[1.2]"
+              >
+                {loading ? "Đang xử lý..." : "Xác nhận Hủy"}
+              </button>
+            </div>
+          </div>
+        </motion.div>
+      </div>
     </div>
   );
 }
 
+const ALERT_DOT = {
+  violet: "bg-violet-500",
+  amber: "bg-amber-500",
+  rose: "bg-rose-500",
+  slate: "bg-slate-400",
+};
+
+function MentorIssueRow({ alert, onOpen }) {
+  const dot = ALERT_DOT[alert.tone] || ALERT_DOT.slate;
+  return (
+    <button
+      type="button"
+      onClick={() => onOpen(alert.sessionId)}
+      className="flex w-full items-center gap-3 rounded-xl border border-violet-200/60 bg-white/90 px-3 py-2.5 text-left transition hover:border-violet-300 hover:bg-white"
+    >
+      <span className={`h-2 w-2 shrink-0 rounded-full ${dot}`} aria-hidden />
+      <span className="min-w-0 flex-1">
+        <span className="block truncate text-xs font-bold text-slate-900">{alert.headline}</span>
+        <span className="block truncate text-[11px] text-slate-500">
+          {alert.date} {alert.time} · {alert.mentorName || "Mentor"}
+        </span>
+      </span>
+      <span className="shrink-0 text-[10px] font-black uppercase tracking-wide text-violet-800">{alert.cta} →</span>
+    </button>
+  );
+}
+
+/** Một khung gọn: ưu tiên hành động trước, buổi chỉ xem gộp thành 1 dòng mở rộng. */
+function MentorIssuesCompactPanel({ alerts, refundAlerts, onOpen }) {
+  const { action, info, total } = useMemo(() => groupMentorIssueAlerts(alerts), [alerts]);
+  const [infoOpen, setInfoOpen] = useState(false);
+  const count = total + refundAlerts.length;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="rounded-[22px] border-2 border-violet-300/80 bg-gradient-to-br from-violet-50 via-white to-violet-50/50 p-4 shadow-sm sm:p-5"
+    >
+      <div className="mb-3 flex items-start gap-3">
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border-2 border-violet-300 bg-violet-100">
+          <MsIcon name="event_busy" size={20} className="text-violet-800" />
+        </div>
+        <div className="min-w-0">
+          <p className="text-sm font-black uppercase tracking-wider text-violet-950">
+            Cần bạn xử lý ({count})
+          </p>
+          <p className="mt-0.5 text-[11px] leading-snug text-violet-950/70">
+            {action.length > 0
+              ? `${action.length} việc ưu tiên`
+              : refundAlerts.length > 0
+                ? "Điền STK để nhận hoàn"
+                : "Theo dõi buổi đã hủy"}
+            {info.length > 0 ? ` · ${info.length} buổi hủy` : ""}
+          </p>
+        </div>
+      </div>
+
+      <div className="space-y-1.5">
+        {action.map((a) => (
+          <MentorIssueRow key={a.alertId} alert={a} onOpen={onOpen} />
+        ))}
+
+        {refundAlerts.map((a) => (
+          <MentorIssueRow key={a.alertId} alert={a} onOpen={onOpen} />
+        ))}
+
+        {info.length === 1 ? (
+          <MentorIssueRow alert={info[0]} onOpen={onOpen} />
+        ) : info.length > 1 ? (
+          <>
+            <button
+              type="button"
+              onClick={() => setInfoOpen((v) => !v)}
+              className="flex w-full items-center justify-between rounded-xl border border-dashed border-slate-300 bg-slate-50/80 px-3 py-2 text-left text-xs text-slate-600 hover:bg-slate-50"
+            >
+              <span>
+                {info.length} buổi mentor hủy — {infoOpen ? "thu gọn" : "xem danh sách"}
+              </span>
+              <MsIcon name={infoOpen ? "expand_less" : "expand_more"} size={20} className="text-slate-500" />
+            </button>
+            {infoOpen ? info.map((a) => <MentorIssueRow key={a.alertId} alert={a} onOpen={onOpen} />) : null}
+          </>
+        ) : null}
+      </div>
+    </motion.div>
+  );
+}
+
 function getPaymentBadge(paymentStatus, status) {
+  if (paymentStatus === "refund_pending") {
+    return {
+      text: "Chờ hoàn CK",
+      className: "bg-amber-500/10 text-amber-400 border-amber-500/30",
+    };
+  }
   if (paymentStatus === "refunded") {
     return {
       text: "Đã hoàn tiền",
@@ -206,6 +374,8 @@ export function Dashboard() {
   const initials = getInitials(fullName);
 
   const [upcomingSessions, setUpcomingSessions] = useState([]);
+  const [mentorIssueAlerts, setMentorIssueAlerts] = useState([]);
+  const [refundPendingAlerts, setRefundPendingAlerts] = useState([]);
   const [cancellingBooking, setCancellingBooking] = useState(null);
   const [streakStats, setStreakStats] = useState(null);
   const [streakLoading, setStreakLoading] = useState(false);
@@ -228,6 +398,8 @@ export function Dashboard() {
       setStreakStats(null);
       setStreakLoading(false);
       setUpcomingSessions(upcomingFromLocal);
+      setMentorIssueAlerts([]);
+      setRefundPendingAlerts([]);
       return;
     }
 
@@ -238,7 +410,12 @@ export function Dashboard() {
 
     const mergeKey = (b) => String(b?.backendId || b?.paymentRef || b?.orderNum || "");
     const map = new Map();
+    let mentorAlerts = [];
+    let refundAlerts = [];
     if (listRes.success && Array.isArray(listRes.bookings)) {
+      mentorAlerts = buildMentorIssueAlerts(listRes.bookings);
+      const mentorIds = new Set(mentorAlerts.map((a) => a.sessionId));
+      refundAlerts = buildRefundPendingAlerts(listRes.bookings, mentorIds);
       const apiRows = listRes.bookings
         .map(apiBookingToLocal)
         .filter((b) => b && (!skipStatus.has(b.status) && !(b.status === "done" && b.reviewId)));
@@ -265,6 +442,8 @@ export function Dashboard() {
       return b.status === "confirmed";
     });
     setUpcomingSessions(upcoming);
+    setMentorIssueAlerts(mentorAlerts);
+    setRefundPendingAlerts(refundAlerts);
   };
 
   useEffect(() => {
@@ -273,16 +452,26 @@ export function Dashboard() {
     return () => window.removeEventListener("focus", loadData);
   }, []);
 
-  const handleCancelConfirm = async (id, reason) => {
-    const res = await cancelBooking(id, { reason });
+  const handleCancelConfirm = async (id, reason, refundDest = {}) => {
+    const res = await cancelBooking(id, { reason, ...refundDest });
     if (res.success) {
-      const fee = Number(res.cancellationPolicy?.feePercent ?? 0);
-      if (fee >= 100) {
-        toast.success("Đã hủy lịch. Phí giữ lại: 100%.");
-      } else if (fee >= 50) {
-        toast.success("Đã hủy lịch. Phí giữ lại: 50%.");
+      const pol = res.cancellationPolicy;
+      const refundAmt = Number(pol?.refundAmountVnd ?? 0);
+      const retained = Number(pol?.retainedAmountVnd ?? 0);
+      const pct = typeof pol?.refundPercent === "number" ? pol.refundPercent : null;
+      if (pol?.ledger === "cancelled_pending_transfer") {
+        toast.success("Đã hủy lịch. Giao dịch chờ chuyển khoản đã hủy — chưa thu tiền.");
+      } else if (refundAmt > 0) {
+        const tail = retained > 0 ? ` Giữ lại: ${Math.round(retained).toLocaleString("vi-VN")}₫.` : "";
+        toast.success(
+          `Đã hủy lịch. Yêu cầu hoàn ${Math.round(refundAmt).toLocaleString("vi-VN")}₫${pct != null ? ` (${pct}%)` : ""} đã ghi nhận.${tail} Admin sẽ CK hoàn — bạn được báo khi hoàn xong.`,
+        );
       } else {
-        toast.success("Đã hủy lịch. Hoàn phí 100%.");
+        toast.success(
+          pct === 0
+            ? "Đã hủy lịch. Theo chính sách, không hoàn tiền."
+            : "Đã hủy lịch.",
+        );
       }
       setCancellingBooking(null);
       loadData(); // Tải lại dữ liệu sau khi hủy
@@ -345,7 +534,7 @@ export function Dashboard() {
           />
         </motion.div>
 
-        <motion.button
+<motion.button
           type="button"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -415,7 +604,14 @@ export function Dashboard() {
         </motion.div>
 
         <motion.div className="grid grid-cols-12 gap-4 items-start lg:gap-5">
-          <div className="col-span-12">
+          <div className="col-span-12 space-y-4">
+            {mentorIssueAlerts.length > 0 || refundPendingAlerts.length > 0 ? (
+              <MentorIssuesCompactPanel
+                alerts={mentorIssueAlerts}
+                refundAlerts={refundPendingAlerts}
+                onOpen={(id) => navigate(`/session/${id}`)}
+              />
+            ) : null}
             <div
               className={`glass-card p-5 sm:p-6 bg-gradient-to-br from-white to-slate-50 border-slate-200 flex flex-col overflow-hidden ${
                 upcomingSessions.length === 0

@@ -259,6 +259,15 @@ export function MentorMeetingDetail() {
     }
     setActionModal("");
     setActionError("");
+    if (res.lateCancel) {
+      toast.success(
+        "Đã hủy buổi (< 24h). Học viên được hoàn 100% ưu tiên — cần điền STK trên trang buổi hẹn.",
+      );
+    } else if (res.refundPending) {
+      toast.success("Đã hủy. Yêu cầu hoàn tiền đã được ghi nhận.");
+    } else {
+      toast.success("Đã hủy. Học viên sẽ chọn đổi lịch, đổi mentor hoặc hoàn tiền trên trang buổi hẹn.");
+    }
     navigate("/mentor/schedule");
   };
 
@@ -608,6 +617,11 @@ export function MentorMeetingDetail() {
               onClick={(e) => e.stopPropagation()}
             >
               <h4 className="text-xl font-black text-slate-900 mb-3">Hủy buổi mentor</h4>
+              <p className="text-sm text-zinc-400 mb-2">
+                Trước buổi <strong className="text-zinc-600">≥ 24h</strong>: học viên chọn đổi lịch / đổi mentor / hoàn 100%.
+                <strong className="text-zinc-600"> Dưới 24h</strong>: hệ thống ưu tiên hoàn 100% (học viên điền STK). Sau giờ họp: dùng
+                báo no-show (học viên/admin).
+              </p>
               <p className="text-sm text-zinc-400 mb-4">Bạn cần nhập lý do trước khi hủy lịch.</p>
               <textarea
                 value={cancelReason}

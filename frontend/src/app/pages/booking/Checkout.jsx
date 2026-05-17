@@ -22,7 +22,7 @@ import {
 import { isLoggedIn } from "../../utils/auth";
 import { fetchMentor } from "../../utils/mentorApi";
 import { genMeetLink } from "../../utils/bookings";
-import { createBooking, submitBookingTransferReference } from "../../utils/bookingsApi";
+import { createBooking, fetchRebookCredit, submitBookingTransferReference } from "../../utils/bookingsApi";
 import { fetchCourseById } from "../../utils/courseApi";
 import { enrollmentApi } from "../../utils/enrollmentApi";
 
@@ -51,6 +51,15 @@ const PLANS = {
 
 function fmt(n) {
   return new Intl.NumberFormat("vi-VN").format(n) + "đ";
+}
+
+function mentorIdsMatch(a, b) {
+  const na = String(a || "").trim().toLowerCase();
+  const nb = String(b || "").trim().toLowerCase();
+  if (!na || !nb) return false;
+  if (na === nb) return true;
+  const core = (x) => (x.startsWith("u") ? x.slice(1) : x);
+  return core(na) === core(nb);
 }
 
 /** Hiển thị trên checkout CK — Vite: .env / .env.local (dev) hoặc env trên host build (Vercel) + redeploy. */
@@ -108,12 +117,13 @@ function CopyBtn({ text }) {
 }
 
 /* ─── Step indicator ─────────────────────────────────────── */
-const STEPS = ["THÔNG TIN", "THANH TOÁN", "XÁC NHẬN"];
+const STEPS_BOOKING = ["THÔNG TIN", "THANH TOÁN", "XÁC NHẬN"];
+const STEPS_REBOOK = ["TÓM TẮT", "XÁC NHẬN"];
 
-function StepBar({ current }) {
+function StepBar({ current, steps = STEPS_BOOKING }) {
   return (
     <div className="flex items-center justify-center mb-12">
-      {STEPS.map((label, i) => {
+      {steps.map((label, i) => {
         const done = i < current;
         const active = i === current;
         return (
@@ -147,7 +157,7 @@ function StepBar({ current }) {
               </span>
             </div>
             {/* Connector line */}
-            {i < STEPS.length - 1 && (
+            {i < steps.length - 1 && (
               <div
                 className={`h-px mx-6 mb-8 w-12 md:w-20 rounded-full transition-all duration-700 ${
                   i < current ? "bg-gradient-to-r from-secondary to-primary-fixed" : "bg-white/5"
@@ -157,6 +167,113 @@ function StepBar({ current }) {
           </div>
         );
       })}
+    </div>
+  );
+}
+
+const PAY_MODE = {
+  BANK: "bank",
+  REBOOK_LOADING: "rebook_loading",
+  REBOOK_READY: "rebook_ready",
+  REBOOK_SAME: "rebook_same",
+  REBOOK_LOW: "rebook_low",
+};
+
+function resolvePayMode(ctx) {
+  const { isBooking, rebookFrom, rebookCreditLoading, canUseRebookCredit, rebookSameMentor, rebookCreditTooLow } = ctx;
+  if (!isBooking || !rebookFrom) return PAY_MODE.BANK;
+  if (rebookCreditLoading) return PAY_MODE.REBOOK_LOADING;
+  if (rebookSameMentor) return PAY_MODE.REBOOK_SAME;
+  if (rebookCreditTooLow) return PAY_MODE.REBOOK_LOW;
+  if (canUseRebookCredit) return PAY_MODE.REBOOK_READY;
+  return PAY_MODE.BANK;
+}
+
+const PAY_HEADING = {
+  [PAY_MODE.BANK]: "Thanh toán chuyển khoản",
+  [PAY_MODE.REBOOK_READY]: "Xác nhận đặt lại",
+  [PAY_MODE.REBOOK_LOADING]: "Đổi mentor",
+  [PAY_MODE.REBOOK_SAME]: "Cần mentor khác",
+  [PAY_MODE.REBOOK_LOW]: "Credit chưa đủ",
+};
+
+function CheckoutPayPanel({ mode, fmt, rebookCreditVnd, bookingTotalEstimate, bookingMentor, rebookFrom, navigate }) {
+  if (mode === PAY_MODE.REBOOK_LOADING) {
+    return (
+      <div className="mb-6 flex items-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-xs text-white/70">
+        <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-primary-fixed" />
+        Đang kiểm tra credit…
+      </div>
+    );
+  }
+  if (mode === PAY_MODE.REBOOK_READY) {
+    return (
+      <div className="mb-6 rounded-2xl border border-violet-400/35 bg-violet-500/10 px-4 py-4 text-xs text-violet-100/90 leading-relaxed">
+        Dùng <strong className="text-white">{fmt(rebookCreditVnd)}</strong> đã trả cho buổi mới{" "}
+        <strong className="text-white">{fmt(bookingTotalEstimate)}</strong>. Bấm xác nhận — không CK lại.
+      </div>
+    );
+  }
+  if (mode === PAY_MODE.REBOOK_SAME) {
+    return (
+      <div className="mb-6 space-y-3 rounded-2xl border border-amber-500/35 bg-amber-500/10 px-4 py-4 text-xs text-amber-100/90">
+        <p>
+          Credit chỉ khi đặt <strong className="text-white">mentor khác</strong>
+          {bookingMentor?.name ? ` (không phải ${bookingMentor.name})` : ""}. Giữ mentor này → buổi cũ → «Đổi lịch».
+        </p>
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => navigate(`/mentors?rebookFrom=${encodeURIComponent(rebookFrom)}`)}
+            className="rounded-lg bg-[#c4ff47] px-3 py-2 text-[10px] font-black uppercase text-black"
+          >
+            Mentor khác
+          </button>
+          <button
+            type="button"
+            onClick={() => navigate(`/session/${encodeURIComponent(rebookFrom)}`)}
+            className="rounded-lg border border-white/25 px-3 py-2 text-[10px] font-black uppercase text-white"
+          >
+            Đổi lịch (buổi cũ)
+          </button>
+        </div>
+      </div>
+    );
+  }
+  if (mode === PAY_MODE.REBOOK_LOW) {
+    return (
+      <div className="mb-6 space-y-3 rounded-2xl border border-red-500/35 bg-red-500/10 px-4 py-4 text-xs text-red-100/90">
+        <p>
+          Credit {fmt(rebookCreditVnd)} — buổi {fmt(bookingTotalEstimate)} (thiếu{" "}
+          {fmt(bookingTotalEstimate - rebookCreditVnd)}).
+        </p>
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => navigate(`/mentors?rebookFrom=${encodeURIComponent(rebookFrom)}`)}
+            className="rounded-lg bg-[#6E35E8] px-3 py-2 text-[10px] font-black uppercase text-white"
+          >
+            Mentor khác
+          </button>
+          <button
+            type="button"
+            onClick={() => navigate(`/session/${encodeURIComponent(rebookFrom)}`)}
+            className="rounded-lg border border-white/25 px-3 py-2 text-[10px] font-black uppercase text-white"
+          >
+            Buổi cũ
+          </button>
+        </div>
+      </div>
+    );
+  }
+  return (
+    <div className="mb-6 flex gap-4 rounded-2xl border border-primary-fixed/30 bg-primary-fixed/[0.06] p-5">
+      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary-fixed text-black">
+        <Landmark className="h-6 w-6" />
+      </div>
+      <p className="text-xs leading-relaxed text-white/60">
+        Tiếp theo: STK + QR VietQR → chuyển khoản → «Đã chuyển» → admin kích hoạt lịch.
+      </p>
     </div>
   );
 }
@@ -224,6 +341,27 @@ export function Checkout() {
   const bookingNote = searchParams.get("note") ?? "";
   const bookingCvFile = searchParams.get("cvFile") || null;
   const bookingJdFile = searchParams.get("jdFile") || null;
+  const rebookFrom =
+    searchParams.get("rebookFrom") ||
+    (typeof sessionStorage !== "undefined" ? sessionStorage.getItem("prointerview_rebook_from") : "") ||
+    "";
+  const [rebookCredit, setRebookCredit] = React.useState(null);
+  const [rebookCreditLoading, setRebookCreditLoading] = React.useState(false);
+
+  React.useEffect(() => {
+    if (!isBooking || !rebookFrom) {
+      setRebookCredit(null);
+      setRebookCreditLoading(false);
+      return;
+    }
+    setRebookCreditLoading(true);
+    void fetchRebookCredit(rebookFrom)
+      .then((r) => {
+        if (r.success && r.credit?.available) setRebookCredit(r.credit);
+        else setRebookCredit(null);
+      })
+      .finally(() => setRebookCreditLoading(false));
+  }, [isBooking, rebookFrom]);
 
   const [appStep, setAppStep] = useState("checkout");
   const [bankBookingId, setBankBookingId] = useState(null);
@@ -237,6 +375,44 @@ export function Checkout() {
   const [couponApplied, setCouponApplied] = useState(false);
   const discount = isCourse ? 0 : couponApplied ? Math.round(total * 0.1) : 0;
   const payAmount = total - discount;
+  const bookingTotalEstimate = Math.round(isBooking ? payAmount : bookingPrice);
+
+  const rebookCreditVnd = Number(rebookCredit?.creditVnd || 0);
+  const rebookSameMentor = Boolean(
+    rebookCredit?.available &&
+      mentorId &&
+      (mentorIdsMatch(rebookCredit.excludeMentorId, mentorId) ||
+        mentorIdsMatch(rebookCredit.excludeMentorId, bookingMentor?.id)),
+  );
+  const canUseRebookCredit = Boolean(
+    rebookCredit?.available &&
+      !rebookSameMentor &&
+      bookingTotalEstimate > 0 &&
+      bookingTotalEstimate <= rebookCreditVnd &&
+      mentorId,
+  );
+  const rebookCreditTooLow = Boolean(
+    rebookFrom &&
+      rebookCredit?.available &&
+      !rebookSameMentor &&
+      bookingTotalEstimate > rebookCreditVnd,
+  );
+  const payMode = useMemo(
+    () =>
+      resolvePayMode({
+        isBooking,
+        rebookFrom,
+        rebookCreditLoading,
+        canUseRebookCredit,
+        rebookSameMentor,
+        rebookCreditTooLow,
+      }),
+    [isBooking, rebookFrom, rebookCreditLoading, canUseRebookCredit, rebookSameMentor, rebookCreditTooLow],
+  );
+  const payBlocked = payMode === PAY_MODE.REBOOK_SAME || payMode === PAY_MODE.REBOOK_LOW;
+  const showStepBar = payMode === PAY_MODE.BANK || payMode === PAY_MODE.REBOOK_READY;
+  const stepLabels = payMode === PAY_MODE.REBOOK_READY ? STEPS_REBOOK : STEPS_BOOKING;
+  const compactRebook = rebookFrom && payMode !== PAY_MODE.BANK;
 
   const vietQrBankId = useMemo(() => inferVietQrBankId(), []);
   const vietQrUrl = useMemo(
@@ -337,8 +513,47 @@ export function Checkout() {
       return;
     }
 
+    if (rebookCreditTooLow) {
+      setCardError(
+        `Buổi mới ${fmt(bookingTotalEstimate)} cao hơn credit ${fmt(rebookCreditVnd)}. Chọn mentor rẻ hơn hoặc hoàn tiền ở buổi cũ.`,
+      );
+      return;
+    }
+    if (rebookSameMentor) {
+      setCardError("Chọn mentor khác hoặc quay buổi cũ chọn «Đổi lịch».");
+      return;
+    }
+
     setCardError("");
     try {
+      if (canUseRebookCredit && rebookFrom) {
+        const apiRes = await createBooking({
+          mentorId: bookingMentor.id,
+          date: bookingDate,
+          timeSlot: bookingTime,
+          sessionType: "mock_interview",
+          position: bookingPosition,
+          note: bookingNote,
+          cvFile: bookingCvFile || "",
+          jdFile: bookingJdFile || "",
+          price: bookingPrice,
+          durationMinutes: 60,
+          meetingLink: meetLink,
+          applyRebookCreditFromBookingId: rebookFrom,
+        });
+        if (apiRes.success && apiRes.booking?.id) {
+          try {
+            sessionStorage.removeItem("prointerview_rebook_from");
+          } catch {
+            /* ignore */
+          }
+          navigate(`/session/${encodeURIComponent(apiRes.booking.id)}`);
+        } else {
+          setCardError(apiRes.error || "Không thể áp dụng credit đổi mentor.");
+        }
+        return;
+      }
+
       const apiRes = await createBooking({
         mentorId: bookingMentor.id,
         date: bookingDate,
@@ -550,48 +765,38 @@ export function Checkout() {
 
       <div className="max-w-6xl mx-auto px-4 py-8">
         {/* ── Step bar ── */}
-        <StepBar current={1} />
+        {showStepBar ? <StepBar current={1} steps={stepLabels} /> : null}
 
         <div className="lg:flex gap-6 items-start">
 
           {/* ══ LEFT PANEL ══ */}
           <div className="flex-1 mb-6 lg:mb-0">
             <div className="glass-panel overflow-hidden shadow-2xl">
-              {/* Account info bar */}
-              <div className="flex items-center justify-between px-8 py-4 border-b border-white/5 bg-white/5">
-                <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 rounded-2xl bg-[#c4ff47] flex items-center justify-center shadow-[0_0_20px_rgba(196, 255, 71,0.2)]">
+              {!compactRebook ? (
+                <div className="flex items-center gap-4 px-8 py-4 border-b border-white/5 bg-white/5">
+                  <div className="w-10 h-10 rounded-2xl bg-[#c4ff47] flex items-center justify-center">
                     <span className="text-sm font-black text-black">U</span>
                   </div>
                   <div>
-                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 mb-0.5">Account Info</p>
+                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40">Tài khoản</p>
                     <p className="text-sm font-bold text-white">user@prointerview.vn</p>
                   </div>
                 </div>
-                <button className="text-[10px] font-black uppercase tracking-[0.2em] text-primary-fixed hover:text-white transition-colors">Change</button>
-              </div>
+              ) : null}
 
               <div className="p-8">
                 <h2 className="text-2xl font-black tracking-tighter text-white mb-4">
-                  Thanh toán chuyển khoản
+                  {PAY_HEADING[payMode] || PAY_HEADING[PAY_MODE.BANK]}
                 </h2>
-                <div className="mb-8 flex flex-col gap-4 rounded-3xl border border-primary-fixed/35 bg-primary-fixed/[0.06] p-6 sm:flex-row sm:items-center sm:text-left text-center">
-                  <div className="mx-auto flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-primary-fixed text-black shadow-lg sm:mx-0">
-                    <Landmark className="h-7 w-7" />
-                  </div>
-                  <div className="min-w-0 flex-1 space-y-2">
-                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary-fixed">
-                      CK ngân hàng — admin xác nhận
-                    </p>
-                    <p className="text-sm leading-relaxed text-white/60">
-                      {isBooking
-                        ? "Bước tiếp theo hiển thị STK, mã QR VietQR và nội dung mã đơn. Sau khi chuyển, bấm xác nhận; admin đối soát sao kê rồi kích hoạt lịch."
-                        : isCourse
-                          ? "Bước tiếp theo hiển thị STK, mã QR VietQR và nội dung mã đơn. Sau khi chuyển, bấm xác nhận; admin đối soát sao kê rồi kích hoạt ghi danh khóa học."
-                          : "Trang thanh toán này chỉ hỗ trợ chuyển khoản khi đặt lịch mentor hoặc mua khóa học có phí."}
-                    </p>
-                  </div>
-                </div>
+                                <CheckoutPayPanel
+                  mode={payMode}
+                  fmt={fmt}
+                  rebookCreditVnd={rebookCreditVnd}
+                  bookingTotalEstimate={bookingTotalEstimate}
+                  bookingMentor={bookingMentor}
+                  rebookFrom={rebookFrom}
+                  navigate={navigate}
+                />
 
                 {cardError && (
                   <div className="mb-6 flex items-start gap-3 rounded-2xl border border-red-500/25 bg-red-500/10 px-4 py-3 text-xs font-bold text-red-300">
@@ -600,31 +805,38 @@ export function Checkout() {
                   </div>
                 )}
 
-                <button
-                  type="button"
-                  onClick={handlePay}
-                  disabled={!isPaidCheckout}
-                  className="mb-4 flex h-16 w-full items-center justify-center gap-3 rounded-3xl text-sm font-black uppercase tracking-[0.2em] text-black shadow-2xl transition-all hover:scale-[1.02] active:scale-[0.98] disabled:pointer-events-none disabled:opacity-40"
-                  style={{
-                    background: "linear-gradient(135deg,#166534,#14532d)",
-                    boxShadow: "0 20px 40px rgba(22,101,52,0.35)",
-                  }}
-                >
-                  <Lock className="h-5 w-5" />
-                  {isPaidCheckout ? `Tiếp tục — ${fmt(payAmount)}` : "Chọn luồng thanh toán"}
-                </button>
+                {!payBlocked ? (
+                  <button
+                    type="button"
+                    onClick={handlePay}
+                    disabled={!isPaidCheckout || payMode === PAY_MODE.REBOOK_LOADING}
+                    className="mb-4 flex h-16 w-full items-center justify-center gap-3 rounded-3xl text-sm font-black uppercase tracking-[0.2em] text-black shadow-2xl transition-all hover:scale-[1.02] active:scale-[0.98] disabled:pointer-events-none disabled:opacity-40"
+                    style={{
+                      background:
+                        payMode === PAY_MODE.REBOOK_READY
+                          ? "linear-gradient(135deg,#6E35E8,#5b21b6)"
+                          : "linear-gradient(135deg,#166534,#14532d)",
+                      boxShadow:
+                        payMode === PAY_MODE.REBOOK_READY
+                          ? "0 20px 40px rgba(110,53,232,0.35)"
+                          : "0 20px 40px rgba(22,101,52,0.35)",
+                    }}
+                  >
+                    <Lock className="h-5 w-5" />
+                    {payMode === PAY_MODE.REBOOK_READY
+                      ? "Xác nhận đặt lại"
+                      : isPaidCheckout
+                        ? `Tiếp tục — ${fmt(payAmount)}`
+                        : "Chọn luồng thanh toán"}
+                  </button>
+                ) : null}
 
-                {isPaidCheckout && (
-                  <p className="mb-2 text-center text-[11px] leading-relaxed text-white/45">
-                    Bạn sẽ nhận STK, mã QR và nội dung đơn; sau khi chuyển, bấm xác nhận ở bước tiếp theo.
-                  </p>
+                {!compactRebook && (
+                  <div className="flex items-center justify-center gap-3 text-[10px] font-black uppercase tracking-[0.2em] text-white/20 mt-8">
+                    <ShieldCheck className="w-4 h-4 text-primary-fixed" />
+                    Thanh toán được bảo mật SSL
+                  </div>
                 )}
-
-                {/* Security note */}
-                <div className="flex items-center justify-center gap-3 text-[10px] font-black uppercase tracking-[0.2em] text-white/20 mt-8">
-                  <ShieldCheck className="w-4 h-4 text-primary-fixed" />
-                  Your payment is secured with 256-bit SSL encryption
-                </div>
               </div>
             </div>
           </div>

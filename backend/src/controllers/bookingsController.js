@@ -112,11 +112,87 @@ export class BookingsController {
     }
   }
 
+  static async updateRefundDestination(req, res, next) {
+    try {
+      const result = await bookingsService.updateMyBookingRefundDestination(
+        req.userId,
+        req.params.id,
+        req.body ?? {},
+      );
+      if (!result.ok) {
+        return res.status(result.status).json({ success: false, error: result.error });
+      }
+      res.json({ success: true, booking: result.booking });
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  static async getRebookCredit(req, res, next) {
+    try {
+      const result = await bookingsService.getRebookCreditForUser(req.userId, req.params.id);
+      if (!result.ok) {
+        return res.status(result.status).json({ success: false, error: result.error });
+      }
+      res.json({ success: true, credit: result.credit });
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  static async reportNoShow(req, res, next) {
+    try {
+      const result = await bookingsService.processBookingNoShow(req.params.id, req.body ?? {}, {
+        markedBy: "user",
+        actorUserId: req.userId,
+      });
+      if (!result.ok) {
+        return res.status(result.status).json({ success: false, error: result.error });
+      }
+      res.json({
+        success: true,
+        booking: result.booking,
+        refundAmountVnd: result.refundAmountVnd,
+      });
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  static async resolveMentorCancel(req, res, next) {
+    try {
+      const result = await bookingsService.resolveMentorCancelBooking(
+        req.userId,
+        req.params.id,
+        req.body ?? {},
+      );
+      if (!result.ok) {
+        return res.status(result.status).json({
+          success: false,
+          error: result.error,
+          needRefundDestination: Boolean(result.needRefundDestination),
+        });
+      }
+      res.json({
+        success: true,
+        booking: result.booking,
+        resolution: result.resolution,
+        refundAmountVnd: result.refundAmountVnd,
+      });
+    } catch (err) {
+      next(err);
+    }
+  }
+
   static async cancel(req, res, next) {
     try {
       const result = await bookingsService.cancelMyBooking(req.userId, req.params.id, req.body ?? {});
       if (!result.ok) {
-        return res.status(result.status).json({ success: false, error: result.error });
+        return res.status(result.status).json({
+          success: false,
+          error: result.error,
+          needRefundDestination: Boolean(result.needRefundDestination),
+        });
       }
       res.json({ success: true, booking: result.booking, cancellationPolicy: result.cancellationPolicy });
     } catch (err) {
@@ -130,7 +206,12 @@ export class BookingsController {
       if (!result.ok) {
         return res.status(result.status).json({ success: false, error: result.error });
       }
-      res.json({ success: true, booking: result.booking });
+      res.json({
+        success: true,
+        booking: result.booking,
+        lateCancel: Boolean(result.lateCancel),
+        refundPending: Boolean(result.refundPending),
+      });
     } catch (err) {
       next(err);
     }

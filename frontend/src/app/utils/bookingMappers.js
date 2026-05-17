@@ -72,7 +72,129 @@ export function apiBookingToLocal(b) {
     status: mapBookingStatus(b.status),
     paymentStatus: b.paymentStatus || "pending",
     paymentRef: ref,
+    cancelledBy: b.cancelledBy || "",
+    mentorCancelResolution: b.mentorCancelResolution || "",
+    rebookCreditRemainderVnd: b.rebookCreditRemainderVnd ?? null,
+    cancelRefundAmountVnd: b.cancelRefundAmountVnd ?? null,
+    refundReceiveBankName: b.refundReceiveBankName || "",
+    refundReceiveAccountNumber: b.refundReceiveAccountNumber || "",
+    refundReceiveAccountHolder: b.refundReceiveAccountHolder || "",
     mentorNotes: b.mentorNotes || "",
     isReviewed: Boolean(b.reviewId),
   };
+}
+
+/**
+ * Cảnh báo trên Dashboard / thông báo — booking cần học viên xử lý sau mentor hủy / no-show.
+ * @param {object[]} bookings - raw từ GET /api/bookings
+ */
+export function buildMentorIssueAlerts(bookings = []) {
+  const alerts = [];
+  if (!Array.isArray(bookings)) return alerts;
+
+  for (const raw of bookings) {
+    const row = apiBookingToLocal(raw);
+    if (!row) continue;
+
+    const cancelledByMentor = String(raw.cancelledBy || "") === "mentor";
+    const st = String(raw.status || "").toLowerCase();
+    const res = String(raw.mentorCancelResolution || "");
+    const pst = String(raw.paymentStatus || "").toLowerCase();
+    const hasStk = String(raw.refundReceiveAccountNumber || "").replace(/\D/g, "").length >= 6;
+    const refundAmt = Number(raw.cancelRefundAmountVnd ?? raw.totalAmount ?? raw.price ?? 0);
+
+    if (cancelledByMentor && st === "cancelled" && res === "awaiting_user") {
+      alerts.push({
+        ...row,
+        alertId: `${row.sessionId}-choose`,
+        priority: 1,
+        tone: "violet",
+        headline: "Mentor đã hủy lịch hẹn",
+        detail: `Buổi ${row.date} lúc ${row.time} — chọn đổi lịch, đổi mentor hoặc hoàn 100%${refundAmt > 0 ? ` (${refundAmt.toLocaleString("vi-VN")}₫)` : ""}.`,
+        cta: "Chọn phương án ngay",
+      });
+      continue;
+    }
+
+    if (cancelledByMentor && st === "cancelled" && res === "late_cancel_refund") {
+      alerts.push({
+        ...row,
+        alertId: `${row.sessionId}-late`,
+        priority: 2,
+        tone: "amber",
+        headline: "Mentor hủy gấp (dưới 24 giờ)",
+        detail: hasStk
+          ? "Đã có STK nhận hoàn — chờ admin chuyển khoản."
+          : `Hoàn ưu tiên 100%${refundAmt > 0 ? ` (${refundAmt.toLocaleString("vi-VN")}₫)` : ""} — vui lòng điền tài khoản nhận hoàn.`,
+        cta: hasStk ? "Xem buổi hẹn" : "Điền STK nhận hoàn",
+      });
+      continue;
+    }
+
+    if (st === "no_show" || res === "no_show_refund") {
+      alerts.push({
+        ...row,
+        alertId: `${row.sessionId}-noshow`,
+        priority: 2,
+        tone: "rose",
+        headline: "Mentor không tham gia (no-show)",
+        detail: hasStk
+          ? "Buổi đã ghi no-show — chờ admin hoàn tiền CK."
+          : `Hoàn ưu tiên 100%${refundAmt > 0 ? ` (${refundAmt.toLocaleString("vi-VN")}₫)` : ""} — điền STK trên trang buổi hẹn.`,
+        cta: hasStk ? "Xem buổi hẹn" : "Điền STK nhận hoàn",
+      });
+      continue;
+    }
+
+    if (cancelledByMentor && st === "cancelled") {
+      alerts.push({
+        ...row,
+        alertId: `${row.sessionId}-cancelled`,
+        priority: 4,
+        tone: "slate",
+        headline: "Mentor đã hủy buổi hẹn",
+        detail: `Buổi ${row.date} lúc ${row.time} không còn hiệu lực.`,
+        cta: "Xem chi tiết",
+      });
+    }
+  }
+
+  alerts.sort((a, b) => (a.priority || 9) - (b.priority || 9));
+  return alerts;
+}
+
+/** Tách cảnh báo cần hành động ngay vs chỉ xem lại (gộp UI Dashboard). */
+export function groupMentorIssueAlerts(alerts = []) {
+  const action = [];
+  const info = [];
+  for (const a of alerts) {
+    if ((a.priority ?? 9) <= 2) action.push(a);
+    else info.push(a);
+  }
+  return { action, info, total: alerts.length };
+}
+
+/** Hoàn tiền chờ STK (mọi nguồn), trừ booking đã có trong mentorIssue. */
+export function buildRefundPendingAlerts(bookings = [], mentorIssueIds = new Set()) {
+  const alerts = [];
+  if (!Array.isArray(bookings)) return alerts;
+
+  for (const raw of bookings) {
+    if (String(raw?.paymentStatus || "").toLowerCase() !== "refund_pending") continue;
+    const row = apiBookingToLocal(raw);
+    if (!row || mentorIssueIds.has(row.sessionId)) continue;
+    const hasStk = String(raw.refundReceiveAccountNumber || "").replace(/\D/g, "").length >= 6;
+    if (hasStk) continue;
+
+    alerts.push({
+      ...row,
+      alertId: `${row.sessionId}-refund`,
+      priority: 3,
+      tone: "amber",
+      headline: "Chờ điền STK nhận hoàn",
+      detail: "Yêu cầu hoàn tiền đã ghi nhận — điền tài khoản để admin CK.",
+      cta: "Điền STK nhận hoàn",
+    });
+  }
+  return alerts;
 }
