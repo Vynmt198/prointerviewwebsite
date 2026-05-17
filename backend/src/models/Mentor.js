@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { resolveStoredUploadUrl } from "../utils/resolveStoredUploadUrl.js";
 
 const { Schema } = mongoose;
 
@@ -116,7 +117,7 @@ export function toPublicMentor(doc) {
     rating: stats.rating ?? 0,
     reviews: stats.reviewCount ?? 0,
     price: m.pricePerHour ?? 0,
-    avatar: m.avatar ?? "",
+    avatar: resolveStoredUploadUrl(m.avatar ?? ""),
     tags: Array.isArray(m.specialties) && m.specialties.length ? m.specialties : [],
     available: m.available !== false,
     bio: m.bio ?? "",

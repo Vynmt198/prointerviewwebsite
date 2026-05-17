@@ -1,3 +1,5 @@
+import { getPublicBaseUrl } from "../utils/publicBaseUrl.js";
+
 export const UploadController = {
   /** Upload ảnh đại diện */
   uploadAvatar: async (req, res) => {
@@ -5,7 +7,7 @@ export const UploadController = {
       if (!req.file) {
         return res.status(400).json({ success: false, error: "Không tìm thấy file" });
       }
-      const baseUrl = process.env.BACKEND_URL || "http://localhost:5000";
+      const baseUrl = getPublicBaseUrl(req);
       const fileUrl = `${baseUrl}/uploads/${req.file.filename}`;
       
       res.json({ 
@@ -24,7 +26,7 @@ export const UploadController = {
       if (!req.file) {
         return res.status(400).json({ success: false, error: "Không tìm thấy file" });
       }
-      const baseUrl = process.env.BACKEND_URL || "http://localhost:5000";
+      const baseUrl = getPublicBaseUrl(req);
       const fileUrl = `${baseUrl}/uploads/${req.file.filename}`;
       
       res.json({ 
@@ -44,7 +46,7 @@ export const UploadController = {
       if (!req.file) {
         return res.status(400).json({ success: false, error: "Không tìm thấy file" });
       }
-      const baseUrl = process.env.BACKEND_URL || "http://localhost:5000";
+      const baseUrl = getPublicBaseUrl(req);
       const fileUrl = `${baseUrl}/uploads/${req.file.filename}`;
       
       res.json({ 
@@ -67,7 +69,7 @@ export const UploadController = {
       }
       console.log(`[UploadController] File saved: ${req.file.filename}`);
 
-      const baseUrl = process.env.BACKEND_URL || "http://localhost:5000";
+      const baseUrl = getPublicBaseUrl(req);
       const fileUrl = `${baseUrl}/uploads/${req.file.filename}`;
       
       res.json({ 

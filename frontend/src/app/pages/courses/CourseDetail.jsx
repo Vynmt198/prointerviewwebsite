@@ -41,6 +41,8 @@ import { requireLoginNavigate } from "../../utils/authGate";
 import { MentorPageShell } from "../../components/mentor/MentorPageShell";
 import { normalizeCourseStats } from "../../utils/courseStats";
 import { enrollmentAccessGranted } from "../../utils/enrollmentAccess.js";
+import { mediaSrc, DEFAULT_COURSE_THUMB, avatarSrc } from "../../utils/mediaUrl";
+import { ImageWithFallback } from "../../components/figma/ImageWithFallback";
 
 import {
   Dialog,
@@ -427,9 +429,9 @@ function ReviewsSection({ course, enrolled }) {
           <div className="mt-4 space-y-5">
             {/* Course info quick reference */}
             <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 p-3">
-              <img
+              <ImageWithFallback
                 src={course.thumbnail}
-                alt={course.title}
+                alt=""
                 className="h-16 w-16 shrink-0 rounded-xl object-cover"
               />
               <div className="min-w-0 flex-1">
@@ -570,13 +572,13 @@ export function CourseDetail() {
           id: c._id,
           title: c.title,
           description: c.description,
-          thumbnail: c.thumbnail || "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&q=80",
+          thumbnail: mediaSrc(c.thumbnail, DEFAULT_COURSE_THUMB),
           category: c.topics?.[0] || "Kỹ năng khác",
           level: c.level === "basic" ? "Beginner" : c.level === "intermediate" ? "Intermediate" : "Advanced",
           mentorId: c.mentorId?._id,
           mentorUserId: c.mentorId?.userId?._id || "",
           mentorName: c.mentorId?.userId?.name || "Khuất danh",
-          mentorAvatar: c.mentorId?.userId?.avatar || "https://api.dicebear.com/7.x/avataaars/svg?seed=Lucky",
+          mentorAvatar: avatarSrc(c.mentorId?.userId?.avatar),
           mentorTitle: c.mentorId?.userId?.desiredPosition || "Chuyên gia",
           mentorCompany: c.mentorId?.userId?.currentCompany || "ProInterview",
           rating: stats.rating,
@@ -702,10 +704,10 @@ export function CourseDetail() {
                 </span>
               </div>
 
-              <h1 className="mb-4 text-3xl font-black leading-tight tracking-tighter text-slate-900 md:text-4xl">
+              <h1 className="app-page-title mb-3">
                 {course.title}
               </h1>
-              <p className="mb-6 max-w-2xl text-base font-semibold leading-relaxed text-slate-600">
+              <p className="app-page-subtitle mb-6">
                 {course.description}
               </p>
 
@@ -753,7 +755,7 @@ export function CourseDetail() {
             <div className="glass-card overflow-hidden shadow-[0_20px_50px_rgba(15,23,42,0.08)]">
               {/* Thumbnail preview */}
               <div className="relative h-48 overflow-hidden">
-                <img src={course.thumbnail} alt={course.title} className="w-full h-full object-cover" />
+                <ImageWithFallback src={course.thumbnail} alt="" className="w-full h-full object-cover" />
                 <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
                   <div
                     className="w-16 h-16 rounded-full flex items-center justify-center cursor-pointer hover:scale-105 transition-transform shadow-xl"

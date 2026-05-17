@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useLocation, useNavigate } from "react-router";
+import { useNavigate, useLocation } from "react-router";
 import { Bell } from "lucide-react";
 import { fetchNotifications, markNotificationAsRead } from "../../utils/notificationApi";
 
@@ -62,8 +62,8 @@ const MOCK_NOTIFICATIONS = [
 ];
 
 export function Navbar() {
-  const location = useLocation();
   const navigate = useNavigate();
+  const location = useLocation();
   const [notifOpen, setNotifOpen] = useState(false);
   const [notifications, setNotifications] = useState([]);
 
@@ -80,18 +80,40 @@ export function Navbar() {
     return () => clearInterval(interval);
   }, []);
 
-  const handleRead = (n) => {
-    const id = n?._id;
-    if (!id) return;
-    markNotificationAsRead(id).then((res) => {
+  const handleRead = (notif) => {
+    const id = notif._id;
+    markNotificationAsRead(id).then(res => {
       if (res.success) {
-        setNotifications((prev) => prev.map((item) => (item._id === id ? { ...item, isRead: true } : item)));
+        setNotifications(prev => prev.map(n => n._id === id ? { ...n, isRead: true } : n));
       }
     });
-    const actionUrl = n?.metadata?.actionUrl;
-    if (typeof actionUrl === "string" && actionUrl.trim()) {
-      setNotifOpen(false);
-      navigate(actionUrl.trim());
+
+    // Close the dropdown
+    setNotifOpen(false);
+
+    // 1. Prioritize actionUrl from metadata
+    const actionUrl = notif.metadata?.actionUrl || notif.actionUrl;
+    if (actionUrl) {
+       navigate(actionUrl);
+       return;
+    }
+
+    // 2. Handle feedback type specifically
+    const bookingId = notif.metadata?.bookingId || notif.bookingId;
+    if (bookingId && (notif.type === "feedback" || notif.title?.toLowerCase().includes("nhận xét") || notif.body?.toLowerCase().includes("nhận xét"))) {
+       navigate(`/session/${bookingId}`);
+       return;
+    }
+
+    // 3. General booking navigation
+    if (bookingId && (notif.type?.includes("booking") || notif.title?.toLowerCase().includes("buổi học"))) {
+       navigate(`/session/${bookingId}`);
+       return;
+    }
+
+    // 4. Default fallbacks
+    if (notif.type === "payment") {
+       navigate("/dashboard");
     }
   };
 

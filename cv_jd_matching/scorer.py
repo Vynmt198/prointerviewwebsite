@@ -5,6 +5,7 @@ scorer.py — Đánh giá CV theo 4 dimensions qua LLM (cloud hoặc Ollama).
 Fallback về Ollama local nếu không có key.
 """
 
+from __future__ import annotations
 import json
 from typing import Optional
 

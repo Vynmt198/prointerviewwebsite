@@ -108,9 +108,12 @@ export async function getMentorDashboard(userId) {
     mentorId: mentor._id,
     status: { $in: ["pending", "confirmed", "in_progress"] },
   })
+    .populate({ path: "userId", select: "name email avatar" })
     .sort({ date: 1, timeSlot: 1 })
     .limit(10)
     .lean();
+
+  const { toPublicBooking } = await import("./bookingsService.js");
 
   const reviews = await Review.find({ targetType: "mentor", targetId: mentor._id, isVisible: { $ne: false } })
     .select("rating")
@@ -125,7 +128,7 @@ export async function getMentorDashboard(userId) {
       completedSessions: completed,
       reviewCount,
       avgRating: Math.round(avgRating * 10) / 10,
-      upcomingBookings: upcoming,
+      upcomingBookings: upcoming.map(b => toPublicBooking(b)),
     },
   };
 }
@@ -511,7 +514,7 @@ export async function getMentorReviews(userId) {
     return {
       id: String(r._id),
       mentee: {
-        name: u.name || "Học viên",
+        name: u.name || u.email || "Thành viên",
         avatar: u.avatar || "",
       },
       position: u.desiredPosition || "",

@@ -8,6 +8,15 @@
           "value": "same-origin-allow-popups"
         }
       ]
+    },
+    {
+      "source": "/(favicon-32|favicon-192|apple-touch-icon|logo-mark)\\.png",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=0, must-revalidate"
+        }
+      ]
     }
   ]
 }

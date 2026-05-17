@@ -79,6 +79,8 @@ export function apiBookingToLocal(b) {
     refundReceiveBankName: b.refundReceiveBankName || "",
     refundReceiveAccountNumber: b.refundReceiveAccountNumber || "",
     refundReceiveAccountHolder: b.refundReceiveAccountHolder || "",
+    mentorNotes: b.mentorNotes || "",
+    isReviewed: Boolean(b.reviewId),
   };
 }
 

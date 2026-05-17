@@ -141,7 +141,9 @@ function toStartSlots(rangeSlots = []) {
 
 function AvailabilityModal({ onClose, availability, onSaved }) {
   const [workingHours, setWorkingHours] = useState(() => {
-    const recurring = Array.isArray(availability?.recurringSchedule) ? availability.recurringSchedule : [];
+    const hasData = availability && Array.isArray(availability.recurringSchedule);
+    const recurring = hasData ? availability.recurringSchedule : [];
+    
     const rows = recurring
       .filter((r) => Number.isFinite(Number(r?.dayOfWeek)))
       .map((r) => ({
@@ -149,12 +151,18 @@ function AvailabilityModal({ onClose, availability, onSaved }) {
         day: DAY_ROWS.find((d) => d.key === Number(r.dayOfWeek))?.label || `Thứ ${Number(r.dayOfWeek) + 2}`,
         slots: toRowSlots(Array.isArray(r.slots) ? r.slots : []),
       }));
-    return rows.length
-      ? rows.sort((a, b) => a.dayOfWeek - b.dayOfWeek)
-      : [
-          { dayOfWeek: 0, day: "Thứ 2", slots: ["09:00 - 11:00", "14:00 - 16:00"] },
-          { dayOfWeek: 2, day: "Thứ 4", slots: ["14:00 - 16:00"] },
-        ];
+
+    if (rows.length > 0) return rows.sort((a, b) => a.dayOfWeek - b.dayOfWeek);
+    
+    // Chỉ hiện mock data nếu thực sự chưa từng có dữ liệu (null/undefined)
+    if (!hasData) {
+      return [
+        { dayOfWeek: 0, day: "Thứ 2", slots: ["09:00 - 11:00", "14:00 - 16:00"] },
+        { dayOfWeek: 2, day: "Thứ 4", slots: ["14:00 - 16:00"] },
+      ];
+    }
+
+    return []; // Trả về mảng rỗng nếu người dùng đã chủ động xóa hết
   });
   const [saving, setSaving] = useState(false);
   const [newSlotDay, setNewSlotDay] = useState(0);
@@ -188,7 +196,6 @@ function AvailabilityModal({ onClose, availability, onSaved }) {
     setWorkingHours((prev) =>
       prev
         .map((row) => (row.dayOfWeek === dayOfWeek ? { ...row, slots: row.slots.filter((s) => s !== slot) } : row))
-        .filter((row) => row.slots.length > 0)
         .sort((a, b) => a.dayOfWeek - b.dayOfWeek),
     );
   };
@@ -246,48 +253,68 @@ function AvailabilityModal({ onClose, availability, onSaved }) {
                    <div className="w-24 shrink-0">
                       <p className="text-sm font-black text-slate-900 group-hover:text-primary-fixed transition-colors">{row.day}</p>
                    </div>
-                   <div className="flex-1 flex flex-wrap gap-2">
-                      {row.slots.map((s, i) => (
-                        <div key={i} className="px-4 py-2 rounded-xl bg-slate-50 border border-slate-200 text-[10px] font-black uppercase tracking-widest text-zinc-400 flex items-center gap-2 group/slot">
-                           {s} <X size={12} className="cursor-pointer hover:text-red-500" onClick={() => removeSlot(row.dayOfWeek, s)} />
-                        </div>
-                      ))}
-                   </div>
+                    <div className="flex-1 flex flex-wrap gap-2">
+                       {row.slots.map((s, i) => (
+                         <div key={i} className="group/item relative px-4 py-2 rounded-xl bg-slate-50 border border-slate-200 text-[10px] font-black uppercase tracking-widest text-zinc-500 flex items-center gap-3 transition-all hover:border-red-200 hover:bg-red-50/30">
+                            <span className="group-hover/item:text-slate-900 transition-colors">{s}</span>
+                            <button 
+                               onClick={() => removeSlot(row.dayOfWeek, s)}
+                               className="p-1 rounded-md hover:bg-red-500/10 text-zinc-400 hover:text-red-600 transition-all flex items-center justify-center"
+                               title="Xóa khung giờ này"
+                            >
+                               <X size={14} />
+                            </button>
+                         </div>
+                       ))}
+                       {row.slots.length === 0 && (
+                          <p className="text-[10px] italic text-zinc-400 font-medium py-2">Chưa có khung giờ nào cho ngày này.</p>
+                       )}
+                    </div>
                 </div>
               ))}
-              <div className="flex w-full flex-col gap-3 rounded-2xl border border-dashed border-slate-300 p-4 md:flex-row md:items-center">
-                <select
-                  value={newSlotDay}
-                  onChange={(e) => setNewSlotDay(Number(e.target.value))}
-                  className="px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-[11px] font-bold text-slate-900 outline-none"
-                >
-                  {DAY_ROWS.map((d) => (
-                    <option key={d.key} value={d.key} className="bg-[#161321] text-slate-900">
-                      {d.label}
-                    </option>
-                  ))}
-                </select>
-                <div className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Từ giờ</div>
-                <select
-                  value={newSlotRange}
-                  onChange={(e) => setNewSlotRange(e.target.value)}
-                  className="px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-[11px] font-bold text-slate-900 outline-none"
-                >
-                  {SLOT_OPTIONS.map((start) => {
-                    const range = toOneHourRange(start);
-                    return (
-                    <option key={range} value={range} className="bg-[#161321] text-slate-900">
-                      {range}
-                    </option>
-                  )})}
-                </select>
-                <button
-                  onClick={() => addSlot(newSlotDay, String(newSlotRange).split("-")[0].trim())}
-                  className="md:ml-auto px-4 py-2 rounded-xl bg-primary-fixed/10 border border-primary-fixed/20 text-primary-fixed text-[10px] font-black uppercase tracking-widest hover:bg-primary-fixed/20 transition-all flex items-center justify-center gap-2"
-                >
-                  <Plus size={12} /> Thêm slot rảnh
-                </button>
-              </div>
+
+               <div className="mt-8 p-6 rounded-[32px] bg-slate-50/50 border-2 border-dashed border-slate-200">
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4 text-center">Thêm khung giờ mới</p>
+                  <div className="flex flex-col md:flex-row items-center gap-4">
+                     <div className="flex-1 w-full grid grid-cols-2 gap-3">
+                        <div className="space-y-1.5">
+                           <p className="text-[9px] font-black text-violet-600 uppercase tracking-widest ml-3">Ngày trong tuần</p>
+                           <select
+                              value={newSlotDay}
+                              onChange={(e) => setNewSlotDay(Number(e.target.value))}
+                              className="w-full px-5 py-3 rounded-2xl bg-white border border-slate-200 text-xs font-bold text-slate-900 outline-none focus:border-violet-400 focus:ring-4 focus:ring-violet-500/5 transition-all"
+                           >
+                              {DAY_ROWS.map((d) => (
+                                 <option key={d.key} value={d.key}>{d.label}</option>
+                              ))}
+                           </select>
+                        </div>
+                        <div className="space-y-1.5">
+                           <p className="text-[9px] font-black text-violet-600 uppercase tracking-widest ml-3">Bắt đầu từ</p>
+                           <select
+                              value={newSlotRange}
+                              onChange={(e) => setNewSlotRange(e.target.value)}
+                              className="w-full px-5 py-3 rounded-2xl bg-white border border-slate-200 text-xs font-bold text-slate-900 outline-none focus:border-violet-400 focus:ring-4 focus:ring-violet-500/5 transition-all"
+                           >
+                              {SLOT_OPTIONS.map((start) => {
+                                 const range = toOneHourRange(start);
+                                 return (
+                                    <option key={range} value={range}>{range}</option>
+                                 )
+                              })}
+                           </select>
+                        </div>
+                     </div>
+                     <div className="md:pt-5 w-full md:w-auto">
+                        <button
+                           onClick={() => addSlot(newSlotDay, String(newSlotRange).split("-")[0].trim())}
+                           className="w-full md:w-auto px-8 py-3.5 rounded-2xl bg-violet-600 text-white text-[10px] font-black uppercase tracking-widest hover:bg-violet-700 hover:scale-[1.02] active:scale-[0.98] transition-all shadow-lg shadow-violet-200 flex items-center justify-center gap-2"
+                        >
+                           <Plus size={14} /> Thêm vào lịch
+                        </button>
+                     </div>
+                  </div>
+               </div>
            </div>
         </div>
 

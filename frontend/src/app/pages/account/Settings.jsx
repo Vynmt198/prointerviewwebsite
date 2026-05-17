@@ -1,3 +1,4 @@
+import { MentorPageShell } from "../../components/mentor/MentorPageShell";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router";
 import { motion } from "motion/react";
@@ -372,7 +373,7 @@ export function Settings() {
   };
 
   return (
-    <div className="relative min-h-screen overflow-x-hidden pb-32 font-sans antialiased bg-[#f8f4ff] text-slate-900 selection:bg-[rgba(122,35,229,0.18)] selection:text-slate-900">
+    <MentorPageShell bottomPad="pb-32">
       <style>{`
         .glass-card {
            background: #ffffff;
@@ -425,24 +426,7 @@ export function Settings() {
           50% { opacity: 0.7; transform: translate(2%, -2%) scale(1.05); }
           100% { opacity: 0.4; transform: translate(0,0) scale(1); }
         }
-        .pricing-grid {
-          position: fixed;
-          inset: 0;
-          z-index: -2;
-          pointer-events: none;
-          opacity: 1;
-          background-image:
-            linear-gradient(rgba(148,71,255,0.06) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(148,71,255,0.06) 1px, transparent 1px);
-          background-size: 64px 64px;
-        }
       `}</style>
-
-      <div className="pricing-grid" aria-hidden />
-      <div className="fixed inset-0 pointer-events-none -z-[3]" style={{ background: "#f8f4ff" }} />
-      <div className="fixed top-[-22%] left-[-12%] w-[760px] h-[760px] rounded-full pointer-events-none -z-0 bg-[#d4ff00]/48 blur-[135px]" />
-      <div className="fixed bottom-[-22%] right-[-10%] w-[820px] h-[820px] rounded-full pointer-events-none -z-0 bg-[#9447ff]/34 blur-[150px]" />
-      <div className="fixed left-0 right-0 top-[38%] h-[180px] pointer-events-none -z-0" style={{ background: "linear-gradient(90deg, rgba(212,255,0,0.14) 0%, rgba(148,71,255,0.22) 55%, rgba(148,71,255,0.1) 100%)", filter: "blur(32px)" }} />
 
       {/* ── Hero ── */}
       <header className="relative border-b border-slate-200 pb-10 pt-8 sm:pb-12 sm:pt-10">
@@ -456,10 +440,10 @@ export function Settings() {
           aria-hidden
         />
         <div className="relative z-10 mx-auto max-w-6xl px-6 sm:px-8">
-          <h1 className="font-headline mb-3 text-4xl font-black tracking-tighter text-slate-900 sm:text-5xl md:text-6xl">
+          <h1 className="font-headline app-page-title mb-2">
             Hệ thống Cài đặt
           </h1>
-          <p className="max-w-2xl text-sm leading-relaxed text-slate-600">
+          <p className="app-page-subtitle">
             Quản trị cấu hình bảo mật và cá nhân hóa trải nghiệm ProInterview Web.
           </p>
         </div>
@@ -513,6 +497,6 @@ export function Settings() {
             </main>
          </div>
       </div>
-    </div>
+    </MentorPageShell>
   );
 }

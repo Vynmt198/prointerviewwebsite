@@ -3,6 +3,7 @@ So sánh skills giữa CV và JD.
 Tính matching skills, missing skills, và match score %.
 """
 
+from __future__ import annotations
 from rapidfuzz import fuzz
 
 

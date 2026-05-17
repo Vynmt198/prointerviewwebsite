@@ -118,7 +118,7 @@ export function MentorProfile() {
                      <div className="mb-6 flex flex-wrap items-center gap-2">
                         <span className="rounded-xl border border-slate-200 bg-slate-100 px-4 py-1.5 text-[10px] font-black uppercase tracking-widest text-slate-700">{mentor.company}</span>
                      </div>
-                     <h1 className="font-headline mb-4 text-5xl font-black leading-none tracking-tighter text-slate-900 sm:text-6xl">{mentor.name}</h1>
+                     <h1 className="font-headline app-page-title mb-3 text-2xl sm:text-3xl">{mentor.name}</h1>
                      <p className="mb-8 text-xl font-medium text-slate-600">{mentor.title}</p>
                      <div className="grid grid-cols-2 gap-8 border-t border-slate-200 pt-8 md:grid-cols-3">
                         <div>

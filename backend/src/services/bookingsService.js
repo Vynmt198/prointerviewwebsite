@@ -1,4 +1,6 @@
 import mongoose from "mongoose";
+import { sendMentorFeedbackEmail } from "./emailService.js";
+import fs from "fs";
 import { Booking } from "../models/Booking.js";
 import { Mentor } from "../models/Mentor.js";
 import { User } from "../models/User.js";
@@ -7,6 +9,9 @@ import { Payment } from "../models/Payment.js";
 import { ensureMentorProfilesForAllMentorUsers } from "./mentorProfileService.js";
 import { recordAdminTransferSuccess, recordTransferPending, recordTransferSubmitted } from "./paymentsService.js";
 import { tryCreditMentorForCompletedBooking } from "./mentorEarningsService.js";
+import { runInTransaction } from "../helpers/dbHelper.js";
+import { resolveStoredUploadUrl } from "../utils/resolveStoredUploadUrl.js";
+
 /** Chính sách hủy (User): ≥24h trước buổi → hoàn 100%; 12–<24h → hoàn 50%; <12h → không hoàn. */
 function userCancellationFeePercent(hoursUntilStart) {
   if (!Number.isFinite(hoursUntilStart)) return 100;
@@ -376,6 +381,16 @@ function getMentorSlotsForDate(mentor, dateRaw) {
   return null;
 }
 
+/** Chỉ ép khung giờ khi mentor đã khai báo availableSlots hoặc recurringSchedule. */
+function mentorHasExplicitSchedule(mentor) {
+  const slots = mentor?.availableSlots;
+  const map = slots && typeof slots === "object" ? slots : {};
+  const keys =
+    slots instanceof Map ? [...slots.keys()] : Object.keys(map);
+  const recurring = Array.isArray(mentor?.recurringSchedule) ? mentor.recurringSchedule : [];
+  return keys.length > 0 || recurring.length > 0;
+}
+
 function buildNotes(body) {
   const direct = typeof body.notes === "string" ? body.notes.trim() : "";
   if (direct) return direct.slice(0, 8000);
@@ -509,15 +524,9 @@ export async function createBooking(userId, body) {
   const or = [{ publicId: mentorKey }];
   if (mongoose.isValidObjectId(mentorKey)) or.push({ _id: mentorKey });
 
-  const mentor = await Mentor.findOne({ $or: or }).lean();
+  let mentor = await Mentor.findOne({ $or: or }).lean();
   if (!mentor) {
     return { ok: false, status: 404, error: "Không tìm thấy mentor." };
-  }
-  if (mentor.available === false) {
-    return { ok: false, status: 400, error: "Mentor hiện không nhận booking." };
-  }
-  if (mentor.isActive === false) {
-    return { ok: false, status: 400, error: "Mentor hiện không nhận booking." };
   }
   if (!mentor.userId) {
     return { ok: false, status: 404, error: "Mentor chưa có tài khoản đăng nhập — không thể đặt lịch." };
@@ -525,6 +534,25 @@ export async function createBooking(userId, body) {
   const mentorAccount = await User.findById(mentor.userId).select("role isActive").lean();
   if (!mentorAccount || mentorAccount.role !== "mentor" || mentorAccount.isActive === false) {
     return { ok: false, status: 404, error: "Mentor không khả dụng để đặt lịch." };
+  }
+  if (mentor.isActive === false) {
+    return {
+      ok: false,
+      status: 400,
+      error: "Mentor đang tạm ngưng. Liên hệ quản trị để kích hoạt.",
+    };
+  }
+  if (mentor.isVerified === false) {
+    return {
+      ok: false,
+      status: 400,
+      error: "Mentor chưa được duyệt. Admin cần phê duyệt tại /admin/mentors/pending.",
+    };
+  }
+  // Mentor đã duyệt nhưng còn available=false (đăng ký cũ / chưa sync) — tự bật lại.
+  if (mentor.available === false) {
+    await Mentor.updateOne({ _id: mentor._id }, { $set: { available: true } });
+    mentor = { ...mentor, available: true };
   }
 
   const timeSlot = String(body.timeSlot ?? body.time ?? "").trim();
@@ -539,8 +567,11 @@ export async function createBooking(userId, body) {
     return { ok: false, status: 400, error: "Thiếu date." };
   }
   const dateNormalized = normalizeBookingDate(rawDate);
+  if (!dateNormalized || !/^\d{2}\/\d{2}(\/\d{4})?$/.test(dateNormalized)) {
+    return { ok: false, status: 400, error: "Ngày đặt lịch không hợp lệ (dùng DD/MM/YYYY)." };
+  }
   const allowedSlots = getMentorSlotsForDate(mentor, dateNormalized);
-  if (Array.isArray(allowedSlots)) {
+  if (mentorHasExplicitSchedule(mentor) && Array.isArray(allowedSlots)) {
     if (allowedSlots.length === 0) {
       return { ok: false, status: 400, error: "Mentor không mở lịch cho ngày này." };
     }
@@ -569,18 +600,6 @@ export async function createBooking(userId, body) {
     ? mentor.sessionTypes.find((x) => x && x.type === sessionType)
     : null;
   if (st && typeof st.price === "number" && st.price > 0) basePrice = st.price;
-
-  const bodyPrice = Number(body.price);
-  if (Number.isFinite(bodyPrice) && bodyPrice > 0 && basePrice > 0) {
-    const drift = Math.abs(bodyPrice - basePrice) / basePrice;
-    if (drift > 0.05) {
-      return {
-        ok: false,
-        status: 400,
-        error: "Giá gửi lên không khớp với mentor. Vui lòng tải lại trang đặt lịch.",
-      };
-    }
-  }
 
   const platformRate = parseFeeRate(process.env.BOOKING_PLATFORM_FEE_RATE, 0.15);
   /** VAT tách trong giá hiển thị (mentor.price), không cộng thêm lên số khách CK. */
@@ -763,28 +782,39 @@ export async function createBooking(userId, body) {
  */
 export function toPublicBooking(doc, mentorLean) {
   const b = doc.toObject ? doc.toObject() : { ...doc };
-  const m =
-    mentorLean && typeof mentorLean === "object"
-      ? mentorLean
-      : b.mentorId && typeof b.mentorId === "object" && "name" in b.mentorId
-        ? b.mentorId
-        : null;
-  const mentorPublicId =
-    m?.publicId ?? (m?._id ? String(m._id) : mongoose.isValidObjectId(b.mentorId) ? String(b.mentorId) : "");
-  const cust =
-    b.userId && typeof b.userId === "object" && b.userId !== null && "name" in b.userId ? b.userId : null;
+  
+  // Mentor info extraction
+  let m = mentorLean;
+  if (!m && b.mentorId && typeof b.mentorId === "object" && ("name" in b.mentorId || "userId" in b.mentorId)) {
+    m = b.mentorId;
+  }
+
+  const mentorPublicId = m?.publicId ?? (m?._id ? String(m._id) : (typeof b.mentorId === "string" ? b.mentorId : String(b.mentorId || "")));
+  
+  // Robust mentor email extraction
+  let mentorEmail = "";
+  if (m?.userId && typeof m.userId === "object" && m.userId.email) {
+    mentorEmail = m.userId.email;
+  } else if (m?.email) {
+    mentorEmail = m.email;
+  } else if (m?.userId && typeof m.userId === "string" && m.userId.includes("@")) {
+    mentorEmail = m.userId;
+  }
+
+  const cust = b.userId && typeof b.userId === "object" && (b.userId.email || b.userId.name) ? b.userId : null;
 
   return {
     id: String(b._id),
-    userId: cust ? String(cust._id) : String(b.userId),
-    customerName: cust?.name ?? "",
-    customerEmail: cust?.email ?? "",
-    customerAvatar: cust?.avatar ?? "",
+    userId: cust?._id ? String(cust._id) : String(b.userId || ""),
+    customerName: cust?.name || "",
+    customerEmail: cust?.email || "",
+    customerAvatar: resolveStoredUploadUrl(cust?.avatar || ""),
     mentorId: mentorPublicId,
     mentorName: m?.name ?? "",
     mentorTitle: m?.title ?? "",
     mentorCompany: m?.company ?? "",
-    mentorAvatar: m?.avatar ?? "",
+    mentorAvatar: resolveStoredUploadUrl(m?.avatar ?? ""),
+    mentorEmail: mentorEmail,
     date: b.date,
     timeSlot: b.timeSlot,
     durationMinutes: b.durationMinutes,
@@ -968,8 +998,14 @@ export async function listMyBookings(userId) {
 
   const rows = await Booking.find({ userId: uid })
     .sort({ createdAt: -1 })
-    .populate({ path: "mentorId", select: "name title company avatar publicId" })
+    .populate({ path: "userId", select: "name email avatar" })
+    .populate({ 
+      path: "mentorId", 
+      select: "name title company avatar publicId userId",
+      populate: { path: "userId", select: "email" }
+    })
     .lean();
+
 
   return { ok: true, bookings: rows.map((row) => toPublicBooking(row)) };
 }
@@ -982,9 +1018,14 @@ export async function listMentorBookings(mentorUserId) {
   }
   const rows = await Booking.find({ mentorId: mentor._id })
     .sort({ createdAt: -1 })
-    .populate({ path: "mentorId", select: "name title company avatar publicId" })
+    .populate({ 
+      path: "mentorId", 
+      select: "name title company avatar publicId userId",
+      populate: { path: "userId", select: "email" }
+    })
     .populate({ path: "userId", select: "name email avatar" })
     .lean();
+
   return { ok: true, bookings: rows.map((row) => toPublicBooking(row)) };
 }
 
@@ -995,8 +1036,14 @@ export async function getMyBooking(userId, rawId) {
   if (!q) return { ok: false, status: 400, error: "Thiếu id booking." };
 
   const row = await Booking.findOne({ userId: uid, ...q })
-    .populate({ path: "mentorId", select: "name title company avatar publicId" })
+    .populate({ path: "userId", select: "name email avatar" })
+    .populate({ 
+      path: "mentorId", 
+      select: "name title company avatar publicId userId",
+      populate: { path: "userId", select: "email" }
+    })
     .lean();
+
   if (!row) return { ok: false, status: 404, error: "Không tìm thấy booking." };
   return { ok: true, booking: toPublicBooking(row) };
 }
@@ -1009,8 +1056,13 @@ export async function getMentorBooking(mentorUserId, rawId) {
 
   const row = await Booking.findOne({ _id: rawId, mentorId: mentor._id })
     .populate({ path: "userId", select: "name email avatar" })
-    .populate({ path: "mentorId", select: "name title company avatar publicId" })
+    .populate({ 
+      path: "mentorId", 
+      select: "name title company avatar publicId userId",
+      populate: { path: "userId", select: "email" }
+    })
     .lean();
+
   if (!row) return { ok: false, status: 404, error: "Không tìm thấy booking." };
   return { ok: true, booking: toPublicBooking(row) };
 }
@@ -1088,9 +1140,8 @@ export async function confirmBankTransferPaymentByAdmin(bookingId, options = {})
     return { ok: false, status: 400, error: "Xác nhận ngoại lệ cần lý do rõ ràng (ít nhất 3 ký tự)." };
   }
 
-  const session = await mongoose.startSession();
   try {
-    await session.withTransaction(async () => {
+    await runInTransaction(async (session) => {
       const booking = await Booking.findById(bookingId).session(session);
       if (!booking) throw new Error("ERR_404");
       if (booking.paymentMethod !== "transfer") throw new Error("ERR_METHOD");
@@ -1127,15 +1178,7 @@ export async function confirmBankTransferPaymentByAdmin(bookingId, options = {})
       await booking.save({ session });
     });
   } catch (error) {
-    await session.endSession();
     const msg = String(error?.message || "");
-    if (msg.includes("Transaction numbers are only allowed")) {
-      return {
-        ok: false,
-        status: 503,
-        error: "Hạ tầng MongoDB chưa hỗ trợ transaction (cần replica set).",
-      };
-    }
     if (msg === "ERR_404") return { ok: false, status: 404, error: "Không tìm thấy booking." };
     if (msg === "ERR_METHOD") return { ok: false, status: 400, error: "Chỉ áp dụng cho booking thanh toán chuyển khoản." };
     if (msg === "ERR_ALREADY_PAID") return { ok: false, status: 400, error: "Booking đã được đánh dấu đã thanh toán." };
@@ -1150,10 +1193,14 @@ export async function confirmBankTransferPaymentByAdmin(bookingId, options = {})
     console.error("[confirmBankTransferPaymentByAdmin]", error?.message || error);
     return { ok: false, status: 500, error: "Không thể xác nhận thanh toán lúc này." };
   }
-  await session.endSession();
+
 
   const booking = await Booking.findById(bookingId)
-    .populate({ path: "mentorId", select: "name title company avatar publicId" })
+    .populate({ 
+      path: "mentorId", 
+      select: "name title company avatar publicId userId",
+      populate: { path: "userId", select: "email" }
+    })
     .populate({ path: "userId", select: "name email avatar" });
   if (!booking) return { ok: false, status: 404, error: "Không tìm thấy booking." };
   return { ok: true, booking: toPublicBooking(booking) };
@@ -1172,8 +1219,12 @@ export async function confirmMentorBooking(mentorUserId, rawId) {
     return { ok: false, status: 400, error: "Không thể xác nhận booking ở trạng thái này." };
   }
   if (booking.status === "confirmed" || booking.status === "in_progress") {
-    await booking.populate({ path: "userId", select: "name email avatar" });
+    await booking.populate([
+      { path: "userId", select: "name email avatar" },
+      { path: "mentorId", select: "name title company avatar publicId userId", populate: { path: "userId", select: "email" } }
+    ]);
     return { ok: true, booking: toPublicBooking(booking) };
+
   }
   if (booking.status !== "pending") {
     return { ok: false, status: 400, error: "Chỉ xác nhận khi booking đang chờ duyệt (pending)." };
@@ -1181,8 +1232,12 @@ export async function confirmMentorBooking(mentorUserId, rawId) {
 
   booking.status = "confirmed";
   await booking.save();
-  await booking.populate({ path: "userId", select: "name email avatar" });
+  await booking.populate([
+    { path: "userId", select: "name email avatar" },
+    { path: "mentorId", select: "name title company avatar publicId userId", populate: { path: "userId", select: "email" } }
+  ]);
   return { ok: true, booking: toPublicBooking(booking) };
+
 }
 
 export async function completeMentorBooking(mentorUserId, rawId) {
@@ -1214,7 +1269,10 @@ export async function completeMentorBooking(mentorUserId, rawId) {
     console.error("[completeMentorBooking] mentor earnings:", credit.error || credit);
   }
 
-  await booking.populate({ path: "userId", select: "name email avatar" });
+  await booking.populate([
+    { path: "userId", select: "name email avatar" },
+    { path: "mentorId", select: "name title company avatar publicId userId", populate: { path: "userId", select: "email" } }
+  ]);
   return { ok: true, booking: toPublicBooking(booking) };
 }
 
@@ -1232,8 +1290,57 @@ export async function updateMentorNotes(mentorUserId, rawId, body) {
 
   booking.mentorNotes = notes;
   await booking.save();
-  await booking.populate({ path: "userId", select: "name email avatar" });
+  await booking.populate([
+    { path: "userId", select: "name email avatar" },
+    { path: "mentorId", select: "name title company avatar publicId userId", populate: { path: "userId", select: "email" } }
+  ]);
+
+  // Gửi thông báo & email cho học viên
+  const student = booking.userId;
+  const mentorData = booking.mentorId;
+  
+  console.log(`[updateMentorNotes] Booking: ${booking._id}, Student: ${student ? student.email : "NULL"}`);
+
+  if (student && student.email) {
+    console.log(`Attempting to send email to ${student.email}`);
+    // 1. Tạo thông báo trên Web
+    try {
+      await Notification.create({
+        userId: student._id,
+        title: "Nhận xét mới từ Mentor",
+        body: `Mentor ${mentorData?.name || "của bạn"} đã gửi nhận xét cho buổi học ${booking.sessionType === "mock_interview" ? "Phỏng vấn giả định" : "Tư vấn lộ trình"}.`,
+        type: "feedback",
+        metadata: {
+          bookingId: booking._id,
+          mentorId: mentorData?._id,
+          actionUrl: `/session/${booking._id}`
+        },
+        isRead: false
+      });
+      console.log(`Web notification created.`);
+    } catch (err) {
+      console.error(`Notification error: ${err.message}`);
+    }
+
+    // 2. Gửi Email (Cần await để server không ngắt kết nối trước khi gửi xong trên production)
+    try {
+      const emailRes = await sendMentorFeedbackEmail(
+        student.email,
+        student.name || "Bạn",
+        mentorData?.name || "Mentor",
+        booking.sessionType,
+        notes
+      );
+      console.log(`Email send result: ${JSON.stringify(emailRes)}`);
+    } catch (err) {
+      console.error(`Email send error: ${err.message}`);
+    }
+  } else {
+    console.log(`SKIP EMAIL: Student or Email is missing.`);
+  }
+
   return { ok: true, booking: toPublicBooking(booking) };
+
 }
 
 export async function cancelMyBooking(userId, rawId, body) {
@@ -1453,8 +1560,12 @@ export async function rescheduleMyBooking(userId, rawId, body) {
   if (booking.status !== "pending") booking.status = "confirmed";
   await booking.save();
 
-  const mentor = await Mentor.findById(booking.mentorId).lean();
-  return { ok: true, booking: toPublicBooking(booking, mentor) };
+  await booking.populate([
+    { path: "userId", select: "name email avatar" },
+    { path: "mentorId", select: "name title company avatar publicId userId", populate: { path: "userId", select: "email" } }
+  ]);
+  return { ok: true, booking: toPublicBooking(booking) };
+
 }
 
 export async function cancelMentorBooking(mentorUserId, rawId, body) {
@@ -1541,8 +1652,10 @@ export async function cancelMentorBooking(mentorUserId, rawId, body) {
   }
 
   await booking.save();
-  await booking.populate({ path: "userId", select: "name email avatar" });
-  await booking.populate({ path: "mentorId", select: "name title company avatar publicId" });
+  await booking.populate([
+    { path: "userId", select: "name email avatar" },
+    { path: "mentorId", select: "name title company avatar publicId userId", populate: { path: "userId", select: "email" } },
+  ]);
 
   const notifyBody =
     paidBooking && paidTotal > 0 && isLateCancel
@@ -1933,8 +2046,11 @@ export async function rescheduleMentorBooking(mentorUserId, rawId, body) {
   booking.timeSlot = newSlot;
   if (booking.status !== "pending") booking.status = "confirmed";
   await booking.save();
-  await booking.populate({ path: "userId", select: "name email avatar" });
-  await booking.populate({ path: "mentorId", select: "name title company avatar publicId" });
+  await booking.populate([
+    { path: "userId", select: "name email avatar" },
+    { path: "mentorId", select: "name title company avatar publicId userId", populate: { path: "userId", select: "email" } }
+  ]);
+
   await notifyBookingOwner(booking.userId?._id || booking.userId, {
     type: "system",
     title: "Lịch hẹn đã được mentor dời",

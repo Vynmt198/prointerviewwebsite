@@ -1,6 +1,12 @@
 import express from "express";
 import cors from "cors";
 import mongoose from "mongoose";
+import dns from "node:dns";
+
+// TUYỆT CHIÊU CUỐI: Ép Node.js ưu tiên IPv4 trên toàn hệ thống để fix lỗi Render ENETUNREACH IPv6
+if (dns.setDefaultResultOrder) {
+  dns.setDefaultResultOrder('ipv4first');
+}
 
 import { mentorsRouter } from "./routes/mentors.js";
 import { authRouter } from "./routes/auth.js";
@@ -33,12 +39,41 @@ export function createApp() {
     ? process.env.CORS_ORIGIN.split(",").map((s) => s.trim()).filter(Boolean)
     : true;
 
+  // Route chẩn đoán Email
+  app.get("/api/test-email", async (req, res) => {
+    try {
+      const { sendVerificationEmail } = await import("./services/emailService.js");
+      const result = await sendVerificationEmail(
+        process.env.MAIL_USER || "test@example.com",
+        "Tester",
+        "https://prointerview.ai/verify-test"
+      );
+      res.json({
+        message: "Email test result",
+        success: result.ok,
+        error: result.error || null,
+        env: {
+          MAIL_USER: process.env.MAIL_USER ? "HIDDEN" : "MISSING",
+          MAIL_PASS: process.env.MAIL_PASS ? "HIDDEN" : "MISSING",
+        }
+      });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
   app.use(
     cors({
       origin: corsOrigins,
       credentials: false,
     }),
   );
+
+  // Fix lỗi "Cross-Origin-Opener-Policy" cho Google Login trên Render
+  app.use((_req, res, next) => {
+    res.setHeader("Cross-Origin-Opener-Policy", "same-origin-allow-popups");
+    next();
+  });
   app.use(express.json({ limit: "1mb" }));
   app.use("/public", cors(), express.static("public"));
   app.use("/uploads", cors(), express.static("public/uploads"));
@@ -48,7 +83,8 @@ export function createApp() {
   app.use((_req, res, next) => {
     res.setHeader("X-Content-Type-Options", "nosniff");
     res.setHeader("X-Frame-Options", "DENY");
-    res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
+    res.setHeader("Referrer-Policy", "no-referrer-when-downgrade");
+    res.setHeader("Cross-Origin-Opener-Policy", "same-origin-allow-popups");
     next();
   });
   

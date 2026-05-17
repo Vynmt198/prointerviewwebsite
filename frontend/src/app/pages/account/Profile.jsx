@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { MentorPageShell } from "../../components/mentor/MentorPageShell";
 import { useNavigate } from "react-router";
 import { motion, AnimatePresence } from "motion/react";
 import {
@@ -288,7 +289,7 @@ export function Profile() {
   }, [user?.email]);
 
   return (
-    <div className="relative min-h-screen overflow-x-hidden pb-20 font-sans antialiased bg-[#f8f4ff] text-slate-900 selection:bg-[rgba(122,35,229,0.18)] selection:text-slate-900">
+    <MentorPageShell bottomPad="pb-20">
       <style>{`
         .glass-card {
            background: #ffffff;
@@ -356,37 +357,18 @@ export function Profile() {
           50% { opacity: 0.7; transform: translate(2%, -2%) scale(1.05); }
           100% { opacity: 0.4; transform: translate(0,0) scale(1); }
         }
-        .pricing-grid {
-          position: fixed;
-          inset: 0;
-          z-index: -2;
-          pointer-events: none;
-          opacity: 1;
-          background-image:
-            linear-gradient(rgba(148,71,255,0.06) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(148,71,255,0.06) 1px, transparent 1px);
-          background-size: 64px 64px;
-        }
       `}</style>
-
-      <div className="pricing-grid" aria-hidden />
-      <div className="fixed inset-0 pointer-events-none -z-[3]" style={{ background: "#f8f4ff" }} />
-      <div className="fixed top-[-22%] left-[-12%] w-[760px] h-[760px] rounded-full pointer-events-none -z-0 bg-[#d4ff00]/48 blur-[135px]" />
-      <div className="fixed bottom-[-22%] right-[-10%] w-[820px] h-[820px] rounded-full pointer-events-none -z-0 bg-[#9447ff]/34 blur-[150px]" />
-      <div className="fixed left-0 right-0 top-[38%] h-[180px] pointer-events-none -z-0" style={{ background: "linear-gradient(90deg, rgba(212,255,0,0.14) 0%, rgba(148,71,255,0.22) 55%, rgba(148,71,255,0.1) 100%)", filter: "blur(32px)" }} />
       <div className="relative z-10 mx-auto max-w-6xl px-6 pb-8 pt-8 sm:px-8 sm:pt-10">
-        <div className="mb-10 flex flex-col justify-between gap-8 border-b border-slate-200 pb-10 md:mb-12 md:flex-row md:items-end">
-          <div className="min-w-0">
+        <div className="mb-10 border-b border-slate-200 pb-10 md:mb-12">
+          <div className="flex flex-col justify-between gap-6 md:flex-row md:items-end">
+          <div className="min-w-0 flex-1">
             <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.22em] text-slate-500">Tài khoản</p>
-            <h1 className="font-headline mb-2 text-4xl font-black tracking-tighter text-slate-900 sm:text-5xl md:text-6xl">
+            <h1 className="font-headline app-page-title mb-0">
               Hồ sơ cá nhân
             </h1>
-            <p className="max-w-lg text-sm leading-relaxed text-slate-600">
-              Trung tâm cấu hình và quản trị tài khoản tối ưu
-            </p>
           </div>
 
-          <div className="flex gap-4">
+          <div className="flex shrink-0 gap-4">
             {editing ? (
                <>
                  <button onClick={() => setEditing(false)} className="px-6 py-3 rounded-2xl bg-white border border-slate-300 text-slate-700 text-xs font-black uppercase tracking-widest hover:bg-slate-50 transition-all flex items-center gap-2">
@@ -402,6 +384,10 @@ export function Profile() {
                </button>
             )}
           </div>
+          </div>
+          <p className="app-page-subtitle mt-4">
+            Trung tâm cấu hình và quản trị tài khoản tối ưu
+          </p>
         </div>
 
         {/* Status messages */}
@@ -819,6 +805,6 @@ export function Profile() {
           </div>
         )}
       </AnimatePresence>
-    </div>
+    </MentorPageShell>
   );
 }
