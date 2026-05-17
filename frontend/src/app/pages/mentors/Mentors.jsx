@@ -1,3 +1,4 @@
+import { MentorPageShell } from "../../components/mentor/MentorPageShell";
 import React, { useState, useMemo, useRef, useEffect } from "react";
 import { useNavigate } from "react-router";
 import {
@@ -222,15 +223,8 @@ export function Mentors() {
   };
 
   return (
-    <div className="mentors-light pi-page-dashboard-bg relative min-h-full w-full overflow-hidden font-sans text-slate-900 antialiased selection:bg-[rgba(196,255,71,0.28)] selection:text-slate-900">
-      <div className="pointer-events-none fixed inset-0 z-0">
-        <div className="fixed top-[-22%] left-[-12%] h-[760px] w-[760px] rounded-full bg-[#d4ff00]/48 blur-[135px]" />
-        <div className="fixed bottom-[-22%] right-[-10%] h-[820px] w-[820px] rounded-full bg-[#9447ff]/34 blur-[150px]" />
-      </div>
+    <MentorPageShell className="mentors-light" bottomPad="pb-20">
       <style>{`
-        .mentors-light.pi-page-dashboard-bg {
-          background: linear-gradient(165deg, #f8f4ff 0%, #f5f8ff 45%, #f7f4ff 100%);
-        }
         .mentors-light .card-premium {
           background: linear-gradient(145deg, rgba(255,255,255,0.92) 0%, rgba(246,248,255,0.95) 100%) !important;
           border-color: rgba(148,71,255,0.16) !important;
@@ -275,13 +269,13 @@ export function Mentors() {
               Mentor 1:1
             </span>
           </div>
-          <h1 className="mb-4 max-w-4xl text-3xl font-black leading-[1.08] tracking-tight text-slate-900 sm:text-4xl md:text-5xl">
+          <h1 className="app-page-title mb-3">
             Tìm Mentor{" "}
             <span className="text-[#6E35E8]">
               phù hợp.
             </span>
           </h1>
-          <p className="mb-8 max-w-2xl text-base font-semibold leading-relaxed text-slate-600 sm:text-lg">
+          <p className="app-page-subtitle mb-8">
             Đặt lịch phỏng vấn 1-1 với các HR/Manager từ Shopee, Grab, VNG và 200+ công ty hàng đầu
           </p>
           <div className="flex flex-wrap gap-6">
@@ -535,6 +529,6 @@ export function Mentors() {
         </div>
       ))}
       </div>
-    </div>
+    </MentorPageShell>
   );
 }

@@ -142,7 +142,7 @@ export function MentorReview() {
             <Trophy className="w-10 h-10 text-indigo-500" />
           </div>
           
-          <h1 className="text-3xl font-black text-slate-900 mb-4 tracking-tight">
+          <h1 className="app-page-title mb-3">
             Đã lưu đánh giá! 🎉
           </h1>
           <p className="text-slate-500 mb-10 text-lg font-medium leading-relaxed max-w-md mx-auto">

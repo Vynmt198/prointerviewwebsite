@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
+import { MentorPageShell } from "../../components/mentor/MentorPageShell";
 import { useNavigate, useLocation } from "react-router";
 import {
   ArrowLeft,
@@ -215,17 +216,8 @@ export function AIGenderSelection() {
   };
 
   return (
-    <div className="ai-gender-light pi-page-dashboard-bg relative min-h-full w-full overflow-hidden px-6 pb-6 pt-3 font-sans antialiased sm:pt-4">
-      <div className="pointer-events-none fixed inset-0 -z-10">
-        <div className="fixed top-[-22%] left-[-12%] h-[760px] w-[760px] rounded-full bg-[#d4ff00]/48 blur-[135px]" />
-        <div className="fixed bottom-[-22%] right-[-10%] h-[820px] w-[820px] rounded-full bg-[#9447ff]/34 blur-[150px]" />
-      </div>
-      <style>{`
-        .ai-gender-light.pi-page-dashboard-bg {
-          background: linear-gradient(165deg, #f8f4ff 0%, #f5f8ff 45%, #f7f4ff 100%);
-        }
-      `}</style>
-      <div className="relative z-10 mx-auto w-full max-w-6xl">
+    <MentorPageShell className="ai-gender-light" bottomPad="pb-6">
+      <div className="relative z-10 mx-auto w-full max-w-6xl px-6 pt-3 sm:pt-4">
         <div className="mb-4">
           <button
             type="button"
@@ -256,7 +248,7 @@ export function AIGenderSelection() {
           <h1
             className="mb-2"
             style={{
-              fontSize: "2rem",
+              fontSize: "1.375rem",
               fontWeight: 700,
               letterSpacing: "-0.03em",
               color: P.text,
@@ -265,7 +257,7 @@ export function AIGenderSelection() {
           >
             Chọn HR AI của bạn
           </h1>
-          <p className="text-base" style={{ color: P.muted, maxWidth: "600px" }}>
+          <p className="app-page-subtitle" style={{ color: P.muted }}>
             Chọn giới tính HR AI và xem video giới thiệu trước khi bắt đầu phỏng vấn. Mỗi HR đều thân thiện và
             chuyên nghiệp
           </p>
@@ -560,6 +552,6 @@ export function AIGenderSelection() {
           )}
         </div>
       </div>
-    </div>
+    </MentorPageShell>
   );
 }

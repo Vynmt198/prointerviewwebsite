@@ -24,7 +24,7 @@ export function resolveStoredUploadUrl(value) {
   const rel = raw.startsWith("/uploads/")
     ? raw
     : `/uploads/${raw.replace(/^uploads\//, "").replace(/^\/+/, "")}`;
-  const base = publicBase();
+  const base = publicBase() || (process.env.NODE_ENV !== "production" ? "http://localhost:5000" : "");
   return base ? `${base}${rel}` : rel;
 }
 

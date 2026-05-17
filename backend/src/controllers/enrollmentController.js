@@ -3,6 +3,7 @@ import { Enrollment } from "../models/Enrollment.js";
 import { Course } from "../models/Course.js";
 import { enrollmentAccessGranted } from "../helpers/enrollmentAccess.js";
 import { recordTransferPending, recordTransferSubmitted } from "../services/paymentsService.js";
+import { serializeCourseForApi } from "../utils/resolveStoredUploadUrl.js";
 
 function genOrderRef() {
   return `PI${Math.floor(Math.random() * 900000 + 100000)}`;
@@ -175,7 +176,14 @@ export const EnrollmentController = {
         })
         .sort({ updatedAt: -1 });
 
-      res.json({ success: true, enrollments });
+      res.json({
+        success: true,
+        enrollments: enrollments.map((e) => {
+          const doc = e.toObject ? e.toObject() : e;
+          if (doc.courseId) doc.courseId = serializeCourseForApi(doc.courseId);
+          return doc;
+        }),
+      });
     } catch (error) {
       res.status(500).json({ success: false, error: error.message });
     }

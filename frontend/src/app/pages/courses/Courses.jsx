@@ -1,3 +1,4 @@
+import { MentorPageShell } from "../../components/mentor/MentorPageShell";
 import React, { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router";
 import {
@@ -32,6 +33,8 @@ import { fetchCourses } from "../../utils/courseApi";
 import { enrollmentApi } from "../../utils/enrollmentApi";
 import { normalizeCourseStats } from "../../utils/courseStats";
 import { enrollmentAccessGranted } from "../../utils/enrollmentAccess.js";
+import { mediaSrc, DEFAULT_COURSE_THUMB, avatarSrc } from "../../utils/mediaUrl";
+import { ImageWithFallback } from "../../components/figma/ImageWithFallback";
 
 const CATEGORIES = [
   "Tất cả",
@@ -150,9 +153,9 @@ function EnrolledCourseCard({
     <div className="glass-card rounded-2xl overflow-hidden group transition-all duration-500 hover:border-secondary/30 flex flex-col h-full">
       {/* Thumbnail */}
       <div className="relative h-48 overflow-hidden">
-        <img
+        <ImageWithFallback
           src={course.thumbnail}
-          alt={course.title}
+          alt=""
           className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
@@ -284,9 +287,9 @@ function RecentActivity({
               className="group p-5 rounded-2xl bg-white/5 border border-white/5 hover:border-secondary/30 transition-all cursor-pointer flex items-center gap-6"
             >
               <div className="relative w-20 h-20 rounded-xl overflow-hidden flex-shrink-0 group-hover:scale-105 transition-transform duration-500">
-                <img
+                <ImageWithFallback
                   src={course.thumbnail}
-                  alt={course.title}
+                  alt=""
                   className="w-full h-full object-cover"
                 />
                 <div className="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
@@ -344,11 +347,11 @@ export function Courses() {
             id: c._id,
             title: c.title,
             description: c.description,
-            thumbnail: c.thumbnail || "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&q=80",
+            thumbnail: mediaSrc(c.thumbnail, DEFAULT_COURSE_THUMB),
             category: c.topics?.[0] || "Kỹ năng khác",
             level: c.level === "basic" ? "Beginner" : c.level === "intermediate" ? "Intermediate" : "Advanced",
             mentorName: c.mentorId?.userId?.name || "Khuất danh",
-            mentorAvatar: c.mentorId?.userId?.avatar || "https://api.dicebear.com/7.x/avataaars/svg?seed=Lucky",
+            mentorAvatar: avatarSrc(c.mentorId?.userId?.avatar),
             mentorTitle: c.mentorId?.userId?.desiredPosition || "Chuyên gia",
             mentorCompany: c.mentorId?.userId?.currentCompany || "ProInterview",
             rating,
@@ -376,10 +379,10 @@ export function Courses() {
               course: {
                 id: c._id,
                 title: c.title,
-                thumbnail: c.thumbnail || "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&q=80",
+                thumbnail: mediaSrc(c.thumbnail, DEFAULT_COURSE_THUMB),
                 category: c.topics?.[0] || "Khóa học",
                 mentorName: c.mentorId?.userId?.name || "Giảng viên",
-                mentorAvatar: c.mentorId?.userId?.avatar || "https://api.dicebear.com/7.x/avataaars/svg?seed=Lucky",
+                mentorAvatar: avatarSrc(c.mentorId?.userId?.avatar),
                 mentorTitle: c.mentorId?.userId?.desiredPosition || "Chuyên gia",
                 lessons: lessons
               },
@@ -482,15 +485,8 @@ export function Courses() {
   };
 
   return (
-    <div className="courses-light pi-page-dashboard-bg relative min-h-full w-full overflow-hidden font-sans antialiased text-slate-900 selection:bg-[rgba(196,255,71,0.28)] selection:text-slate-900">
-      <div className="pointer-events-none fixed inset-0 z-0">
-        <div className="fixed top-[-22%] left-[-12%] h-[760px] w-[760px] rounded-full bg-[#d4ff00]/48 blur-[135px]" />
-        <div className="fixed bottom-[-22%] right-[-10%] h-[820px] w-[820px] rounded-full bg-[#9447ff]/34 blur-[150px]" />
-      </div>
+    <MentorPageShell className="courses-light" bottomPad="pb-20">
       <style>{`
-        .courses-light.pi-page-dashboard-bg {
-          background: linear-gradient(165deg, #f8f4ff 0%, #f5f8ff 45%, #f7f4ff 100%);
-        }
         .courses-light .glass-card,
         .courses-light .card-premium {
           background: linear-gradient(145deg, rgba(255,255,255,0.92) 0%, rgba(246,248,255,0.95) 100%) !important;
@@ -532,13 +528,13 @@ export function Courses() {
                 Thư viện kiến thức
               </span>
             </div>
-            <h1 className="mb-4 text-3xl font-black leading-[1.08] tracking-tight text-slate-900 sm:text-4xl md:text-5xl">
+            <h1 className="app-page-title mb-3">
               Luyện tập cùng{" "}
               <span className="text-[#6E35E8]">
                 Chuyên gia.
               </span>
             </h1>
-            <p className="max-w-2xl text-base font-semibold leading-relaxed text-slate-600 sm:text-lg">
+            <p className="app-page-subtitle">
               Trang bị kiến thức cốt lõi qua các video bài giảng ngắn gọn. Áp dụng ngay vào buổi phỏng vấn 1-1 với Mentor để được đánh giá trực tiếp.
             </p>
           </div>
@@ -657,9 +653,9 @@ export function Courses() {
                           className="group glass-card rounded-2xl overflow-hidden cursor-pointer transition-all duration-500 hover:-translate-y-2 hover:border-secondary/30"
                         >
                           <div className="relative h-56 overflow-hidden">
-                            <img
+                            <ImageWithFallback
                               src={course.thumbnail}
-                              alt={course.title}
+                              alt=""
                               className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                             />
                             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
@@ -747,7 +743,7 @@ export function Courses() {
                 <div>
                   <div className="mt-2 mb-6 flex flex-col justify-between gap-8 md:flex-row md:items-end">
                     <div>
-                      <h2 className="mb-4 text-4xl font-black tracking-tight text-slate-900">Lộ trình của bạn</h2>
+                      <h2 className="app-page-title mb-3">Lộ trình của bạn</h2>
                       <p className="max-w-xl text-slate-600">
                         Theo dõi tiến độ học tập và các chứng chỉ bạn đã đạt được trên hành trình chinh phục sự nghiệp.
                       </p>
@@ -838,6 +834,6 @@ export function Courses() {
         </div>
       </header>
 
-    </div>
+    </MentorPageShell>
   );
 }
