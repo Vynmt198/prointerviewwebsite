@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useLocation } from "react-router";
+import { useLocation, useNavigate } from "react-router";
 import { Bell } from "lucide-react";
 import { fetchNotifications, markNotificationAsRead } from "../../utils/notificationApi";
 
@@ -63,6 +63,7 @@ const MOCK_NOTIFICATIONS = [
 
 export function Navbar() {
   const location = useLocation();
+  const navigate = useNavigate();
   const [notifOpen, setNotifOpen] = useState(false);
   const [notifications, setNotifications] = useState([]);
 
@@ -79,12 +80,19 @@ export function Navbar() {
     return () => clearInterval(interval);
   }, []);
 
-  const handleRead = (id) => {
-    markNotificationAsRead(id).then(res => {
+  const handleRead = (n) => {
+    const id = n?._id;
+    if (!id) return;
+    markNotificationAsRead(id).then((res) => {
       if (res.success) {
-        setNotifications(prev => prev.map(n => n._id === id ? { ...n, isRead: true } : n));
+        setNotifications((prev) => prev.map((item) => (item._id === id ? { ...item, isRead: true } : item)));
       }
     });
+    const actionUrl = n?.metadata?.actionUrl;
+    if (typeof actionUrl === "string" && actionUrl.trim()) {
+      setNotifOpen(false);
+      navigate(actionUrl.trim());
+    }
   };
 
 
@@ -181,7 +189,7 @@ export function Navbar() {
               {notifications.map((n) => (
                 <DropdownMenuItem
                   key={n._id}
-                  onClick={() => handleRead(n._id)}
+                  onClick={() => handleRead(n)}
                   className="flex cursor-pointer items-start gap-3 px-4 py-3 focus:bg-violet-50"
                 >
                   <div
@@ -195,7 +203,7 @@ export function Navbar() {
                     <p className={`truncate text-sm ${!n.isRead ? "font-bold text-slate-900" : "font-medium text-slate-600"}`}>
                       {n.title}
                     </p>
-                    <p className="mt-0.5 text-xs leading-relaxed text-slate-500">{n.message}</p>
+                    <p className="mt-0.5 text-xs leading-relaxed text-slate-500">{n.body || n.message}</p>
                     <p className="mt-1 text-[10px] text-slate-400">
                       {new Date(n.createdAt).toLocaleDateString("vi-VN")}
                     </p>

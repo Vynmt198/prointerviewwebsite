@@ -16,6 +16,10 @@ bookingsRouter.patch("/:id/confirm", authJwt, requireMentor, BookingsController.
 bookingsRouter.patch("/:id/complete", authJwt, requireMentor, BookingsController.completeForMentor);
 bookingsRouter.patch("/:id/notes", authJwt, requireMentor, BookingsController.updateNotesForMentor);
 bookingsRouter.patch("/:id/reschedule", authJwt, BookingsController.reschedule);
+bookingsRouter.patch("/:id/refund-destination", authJwt, BookingsController.updateRefundDestination);
+bookingsRouter.patch("/:id/mentor-cancel-resolution", authJwt, BookingsController.resolveMentorCancel);
+bookingsRouter.post("/:id/report-no-show", authJwt, BookingsController.reportNoShow);
+bookingsRouter.get("/:id/rebook-credit", authJwt, BookingsController.getRebookCredit);
 bookingsRouter.post("/:id/review", authJwt, BookingsController.createReviewForBooking);
 bookingsRouter.get("/:id", authJwt, BookingsController.getById);
 bookingsRouter.delete("/:id", authJwt, BookingsController.cancel);

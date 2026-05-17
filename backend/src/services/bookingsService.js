@@ -7,11 +7,34 @@ import { Payment } from "../models/Payment.js";
 import { ensureMentorProfilesForAllMentorUsers } from "./mentorProfileService.js";
 import { recordAdminTransferSuccess, recordTransferPending, recordTransferSubmitted } from "./paymentsService.js";
 import { tryCreditMentorForCompletedBooking } from "./mentorEarningsService.js";
-const MONGO_ERR = "MongoDB chưa kết nối. Kiểm tra MONGO_URI trong .env.";
-const MENTOR_CANCEL_MIN_HOURS = 2;
+/** Chính sách hủy (User): ≥24h trước buổi → hoàn 100%; 12–<24h → hoàn 50%; <12h → không hoàn. */
+function userCancellationFeePercent(hoursUntilStart) {
+  if (!Number.isFinite(hoursUntilStart)) return 100;
+  if (hoursUntilStart < 0) return 100;
+  if (hoursUntilStart < 12) return 100;
+  if (hoursUntilStart < 24) return 50;
+  return 0;
+}
 
+const MONGO_ERR = "MongoDB chưa kết nối. Kiểm tra MONGO_URI trong .env.";
+/** Mentor chỉ được hủy khi còn ≥ 24h trước buổi (điều khoản sản phẩm). */
+const MENTOR_CANCEL_MIN_HOURS = 24;
 function isMongoReady() {
   return mongoose.connection.readyState === 1;
+}
+
+function parseRefundDestination(body) {
+  const bank =
+    typeof body?.refundReceiveBankName === "string" ? body.refundReceiveBankName.trim().slice(0, 80) : "";
+  const raw = typeof body?.refundReceiveAccountNumber === "string" ? body.refundReceiveAccountNumber : "";
+  const acct = String(raw).replace(/\D/g, "").slice(0, 24);
+  const holder =
+    typeof body?.refundReceiveAccountHolder === "string" ? body.refundReceiveAccountHolder.trim().slice(0, 120) : "";
+  return { bank, acct, holder };
+}
+
+function isValidRefundDestination({ bank, acct, holder }) {
+  return bank.length >= 2 && acct.length >= 6 && holder.length >= 2;
 }
 
 function parseFeeRate(envVal, fallback) {
@@ -56,8 +79,8 @@ async function notifyBookingOwner(userId, payload) {
 }
 
 async function refundBookingPaymentIfNeeded(booking) {
-  // Chỉ hoàn tiền khi booking đã paid.
-  if (String(booking.paymentStatus || "").toLowerCase() !== "paid") {
+  const ps = String(booking.paymentStatus || "").toLowerCase();
+  if (ps !== "paid" && ps !== "partial_refund") {
     return { refunded: false, amount: 0 };
   }
 
@@ -65,23 +88,235 @@ async function refundBookingPaymentIfNeeded(booking) {
     type: "booking",
     referenceModel: "Booking",
     referenceId: booking._id,
-    status: { $in: ["success", "pending"] },
+    status: { $in: ["success", "partial_refund"] },
   }).sort({ createdAt: -1 });
 
   if (!pay) {
-    // Không có bản ghi payment thì vẫn chuyển booking về refunded để phản ánh nghiệp vụ.
     booking.paymentStatus = "refunded";
     return { refunded: true, amount: Number(booking.totalAmount || booking.price || 0) };
   }
 
-  const refundAmount = Number(pay.amount || booking.totalAmount || booking.price || 0);
+  const refundAmount = Math.round(Number(pay.amount || booking.totalAmount || booking.price || 0));
   pay.status = "refunded";
   pay.refundedAt = new Date();
   pay.refundAmount = refundAmount;
+  const prev = pay.providerResponse && typeof pay.providerResponse === "object" ? pay.providerResponse : {};
+  pay.providerResponse = { ...prev, mentorCancelFullRefund: true, at: new Date().toISOString() };
   await pay.save();
 
   booking.paymentStatus = "refunded";
   return { refunded: true, amount: refundAmount };
+}
+
+function refundRequestAlreadyOnBooking(booking) {
+  const pst = String(booking?.paymentStatus || "").toLowerCase();
+  if (pst === "refund_pending" || pst === "refunded" || pst === "partial_refund") return true;
+  if (Number(booking?.cancelRefundAmountVnd || 0) > 0 && booking?.cancelledAt) return true;
+  return false;
+}
+
+function settlementForExistingRefund(booking, pay) {
+  const paidTotal = Math.round(Number(booking?.totalAmount ?? booking?.price ?? 0));
+  const ledgerAmount = pay ? Math.round(Number(pay.amount) || paidTotal) : paidTotal;
+  const refundAmountVnd = Math.round(
+    Number(booking?.cancelRefundAmountVnd ?? pay?.refundAmount ?? 0),
+  );
+  const retainedAmountVnd = Math.max(0, ledgerAmount - refundAmountVnd);
+  return {
+    refundAmountVnd,
+    retainedAmountVnd,
+    paidTotalVnd: ledgerAmount,
+    ledger: "refund_already_requested",
+  };
+}
+
+async function applyUserCancellationLedger(booking, refundPercent, { dryRun = false } = {}) {
+  const rp = Math.max(0, Math.min(100, Math.round(Number(refundPercent))));
+  const payStatus = String(booking.paymentStatus || "").toLowerCase();
+  if (!dryRun && refundRequestAlreadyOnBooking(booking)) {
+    const payExisting = await Payment.findOne({
+      type: "booking",
+      referenceModel: "Booking",
+      referenceId: booking._id,
+      provider: "transfer",
+    }).sort({ createdAt: -1 });
+    return settlementForExistingRefund(booking, payExisting);
+  }
+  if (["refund_pending", "refunded", "partial_refund"].includes(payStatus)) {
+    return settlementForExistingRefund(booking, null);
+  }
+  const paidBooking = payStatus === "paid";
+
+  const pay = await Payment.findOne({
+    type: "booking",
+    referenceModel: "Booking",
+    referenceId: booking._id,
+    provider: "transfer",
+  })
+    .sort({ createdAt: -1 });
+
+  if (pay) {
+    const st = String(pay.status || "");
+    if (st === "pending") {
+      if (!dryRun) {
+        pay.status = "cancelled";
+        pay.failureReason = "user_cancel_before_capture";
+        const prev = pay.providerResponse && typeof pay.providerResponse === "object" ? pay.providerResponse : {};
+        pay.providerResponse = { ...prev, cancelledAt: new Date().toISOString() };
+        await pay.save();
+      }
+      return { refundAmountVnd: 0, retainedAmountVnd: 0, paidTotalVnd: 0, ledger: "cancelled_pending_transfer" };
+    }
+  }
+
+  const paidTotal = Math.round(Number(booking.totalAmount ?? booking.price ?? 0));
+  let refundAmountVnd = Math.round((paidTotal * rp) / 100);
+  if (refundAmountVnd > paidTotal) refundAmountVnd = paidTotal;
+  let retainedAmountVnd = paidTotal - refundAmountVnd;
+
+  if (!paidBooking || paidTotal <= 0) {
+    return { refundAmountVnd: 0, retainedAmountVnd: 0, paidTotalVnd: paidTotal, ledger: "not_paid_no_settlement" };
+  }
+
+  if (!pay) {
+    return { refundAmountVnd, retainedAmountVnd, paidTotalVnd: paidTotal, ledger: "no_payment_row" };
+  }
+
+  const st = String(pay.status || "");
+  if (["refund_pending", "refunded", "partial_refund"].includes(st)) {
+    return settlementForExistingRefund(booking, pay);
+  }
+  if (st !== "success") {
+    return { refundAmountVnd, retainedAmountVnd, paidTotalVnd: paidTotal, ledger: `skip_payment_status_${st}` };
+  }
+
+  const ledgerAmount = Math.round(Number(pay.amount) || paidTotal);
+  const refundToRecord = Math.min(refundAmountVnd, ledgerAmount);
+  retainedAmountVnd = ledgerAmount - refundToRecord;
+
+  if (refundToRecord <= 0) {
+    if (!dryRun) {
+      const prev = pay.providerResponse && typeof pay.providerResponse === "object" ? pay.providerResponse : {};
+      pay.providerResponse = {
+        ...prev,
+        userCancelNoRefund: true,
+        retainedAmountVnd,
+        at: new Date().toISOString(),
+      };
+      await pay.save();
+    }
+    return { refundAmountVnd: 0, retainedAmountVnd, paidTotalVnd: ledgerAmount, ledger: "retained_all" };
+  }
+
+  const isFullRefund = refundToRecord >= ledgerAmount;
+  if (!dryRun) {
+    const prev = pay.providerResponse && typeof pay.providerResponse === "object" ? pay.providerResponse : {};
+    const providerResponse = {
+      ...prev,
+      userCancelRefundPercent: rp,
+      expectedBankRefundVnd: refundToRecord,
+      retainedAmountVnd,
+      settlementTarget: isFullRefund ? "refunded" : "partial_refund",
+      note: "Chờ admin CK hoàn — xác nhận qua PATCH /api/admin/bookings/:id/confirm-refund",
+      requestedAt: new Date().toISOString(),
+    };
+    const updatedPay = await Payment.findOneAndUpdate(
+      { _id: pay._id, status: "success" },
+      {
+        $set: {
+          refundAmount: refundToRecord,
+          status: "refund_pending",
+          refundedAt: null,
+          providerResponse,
+        },
+      },
+      { new: true },
+    );
+    if (!updatedPay) {
+      const latest = await Payment.findById(pay._id).lean();
+      if (latest && ["refund_pending", "refunded", "partial_refund"].includes(String(latest.status || ""))) {
+        return settlementForExistingRefund(booking, latest);
+      }
+      return {
+        refundAmountVnd: refundToRecord,
+        retainedAmountVnd,
+        paidTotalVnd: ledgerAmount,
+        ledger: `skip_payment_status_${String(latest?.status || st)}`,
+      };
+    }
+  }
+
+  return {
+    refundAmountVnd: refundToRecord,
+    retainedAmountVnd,
+    paidTotalVnd: ledgerAmount,
+    ledger: "refund_pending",
+  };
+}
+
+/** Hoàn phần chênh lẻch credit (mentor mới rẻ hơn số đã trả) — booking nguồn vẫn `paid` trên Payment success. */
+async function applyPartialBankRefundPending(booking, refundAmountVnd, { reason = "rebook_credit_remainder" } = {}) {
+  const refundToRecord = Math.round(Number(refundAmountVnd) || 0);
+  if (refundToRecord <= 0) {
+    return { refundAmountVnd: 0, retainedAmountVnd: 0, paidTotalVnd: 0, ledger: "no_remainder" };
+  }
+  const pay = await Payment.findOne({
+    type: "booking",
+    referenceModel: "Booking",
+    referenceId: booking._id,
+    provider: "transfer",
+    status: "success",
+  })
+    .sort({ createdAt: -1 });
+  if (!pay) {
+    return { refundAmountVnd: refundToRecord, retainedAmountVnd: 0, paidTotalVnd: 0, ledger: "no_payment_row" };
+  }
+  const ledgerAmount = Math.round(Number(pay.amount) || Number(booking.totalAmount) || 0);
+  const refund = Math.min(refundToRecord, ledgerAmount);
+  const retainedAmountVnd = ledgerAmount - refund;
+  const prev = pay.providerResponse && typeof pay.providerResponse === "object" ? pay.providerResponse : {};
+  const updatedPay = await Payment.findOneAndUpdate(
+    { _id: pay._id, status: "success" },
+    {
+      $set: {
+        refundAmount: refund,
+        status: "refund_pending",
+        refundedAt: null,
+        providerResponse: {
+          ...prev,
+          reason,
+          expectedBankRefundVnd: refund,
+          retainedAmountVnd,
+          settlementTarget: refund >= ledgerAmount ? "refunded" : "partial_refund",
+          note: "Hoàn phần credit thừa sau đổi mentor — admin CK qua confirm-refund",
+          requestedAt: new Date().toISOString(),
+        },
+      },
+    },
+    { new: true },
+  );
+  if (!updatedPay) {
+    return { refundAmountVnd: refund, retainedAmountVnd, paidTotalVnd: ledgerAmount, ledger: "skip_payment_update" };
+  }
+  booking.cancelRefundAmountVnd = refund;
+  booking.cancelRetainedAmountVnd = retainedAmountVnd;
+  booking.rebookCreditRemainderVnd = refund;
+  booking.paymentStatus = refund >= ledgerAmount ? "refund_pending" : "partial_refund";
+  return {
+    refundAmountVnd: refund,
+    retainedAmountVnd,
+    paidTotalVnd: ledgerAmount,
+    ledger: "refund_pending",
+  };
+}
+
+function deriveBookingPaymentStatusAfterUserCancel(settlement, bookingBefore) {
+  if (settlement.ledger === "cancelled_pending_transfer") return "failed";
+  if (settlement.refundAmountVnd > 0) return "refund_pending";
+  if (settlement.retainedAmountVnd > 0) return "paid";
+  const wasPending = String(bookingBefore?.paymentStatus || "").toLowerCase() === "pending";
+  if (wasPending || settlement.ledger === "not_paid_no_settlement") return "failed";
+  return "paid";
 }
 
 function parseDateParts(dateRaw) {
@@ -180,6 +415,73 @@ const SESSION_TYPES = new Set(["mock_interview", "cv_review", "career_consulting
  * @param {string} userId - JWT sub (User _id)
  * @param {object} body - Khớp payload từ Booking.jsx / Checkout
  */
+/** Thông tin credit đổi mentor (sau mentor hủy + HV chọn đổi mentor). */
+export async function getRebookCreditForUser(userId, rawId) {
+  if (!isMongoReady()) return { ok: false, status: 503, error: MONGO_ERR };
+  const uid = String(userId).trim();
+  const q = bookingQueryForUser(rawId);
+  if (!q) return { ok: false, status: 400, error: "Thiếu id booking." };
+
+  const booking = await Booking.findOne({ userId: uid, ...q }).select(
+    "mentorId mentorCancelResolution rebookCreditVnd rebookCreditStatus totalAmount price paymentStatus status cancelledBy",
+  );
+  if (!booking) return { ok: false, status: 404, error: "Không tìm thấy booking." };
+
+  const creditVnd = Math.round(Number(booking.rebookCreditVnd) || 0);
+  const available =
+    String(booking.rebookCreditStatus || "") === "available" &&
+    String(booking.mentorCancelResolution || "") === "change_mentor" &&
+    creditVnd > 0;
+
+  const mentor = await Mentor.findById(booking.mentorId).select("publicId").lean();
+  return {
+    ok: true,
+    credit: {
+      sourceBookingId: String(booking._id),
+      creditVnd,
+      available,
+      excludeMentorId: mentor?.publicId ? String(mentor.publicId) : String(booking.mentorId),
+      excludeMentorObjectId: String(booking.mentorId),
+    },
+  };
+}
+
+async function validateRebookCreditApply(uid, sourceBookingId, newMentorObjectId, newTotalAmount) {
+  if (!mongoose.isValidObjectId(sourceBookingId)) {
+    return { ok: false, status: 400, error: "Mã booking credit không hợp lệ." };
+  }
+  const source = await Booking.findOne({ _id: sourceBookingId, userId: uid });
+  if (!source) return { ok: false, status: 404, error: "Không tìm thấy booking nguồn credit." };
+  if (String(source.mentorCancelResolution || "") !== "change_mentor") {
+    return { ok: false, status: 400, error: "Booking nguồn chưa chọn đổi mentor." };
+  }
+  if (String(source.rebookCreditStatus || "") !== "available") {
+    return { ok: false, status: 400, error: "Credit đổi mentor đã được dùng hoặc không còn hiệu lực." };
+  }
+  const creditVnd = Math.round(Number(source.rebookCreditVnd) || 0);
+  if (creditVnd <= 0) {
+    return { ok: false, status: 400, error: "Không có số tiền credit để áp dụng." };
+  }
+  if (String(source.mentorId) === String(newMentorObjectId)) {
+    return {
+      ok: false,
+      status: 400,
+      error:
+        "Đổi mentor yêu cầu mentor khác. Muốn giữ mentor này, hãy chọn «Đổi lịch» (cùng mentor, giờ mới) trên trang buổi hẹn.",
+    };
+  }
+  const total = Math.round(Number(newTotalAmount) || 0);
+  if (total > creditVnd) {
+    return {
+      ok: false,
+      status: 400,
+      error: `Giá buổi mới (${total.toLocaleString("vi-VN")}₫) cao hơn số đã trả (${creditVnd.toLocaleString("vi-VN")}₫). Chọn mentor giá thấp hơn hoặc chọn hoàn tiền.`,
+    };
+  }
+  const remainderVnd = creditVnd - total;
+  return { ok: true, source, creditVnd, amountAppliedVnd: total, remainderVnd };
+}
+
 export async function createBooking(userId, body) {
   if (!isMongoReady()) {
     return { ok: false, status: 503, error: MONGO_ERR };
@@ -281,12 +583,13 @@ export async function createBooking(userId, body) {
   }
 
   const platformRate = parseFeeRate(process.env.BOOKING_PLATFORM_FEE_RATE, 0.15);
-  const vatRate = parseFeeRate(process.env.BOOKING_VAT_RATE, 0.1);
+  /** VAT tách trong giá hiển thị (mentor.price), không cộng thêm lên số khách CK. */
+  const vatRate = parseFeeRate(process.env.BOOKING_VAT_RATE, 0);
 
   const price = Math.round(basePrice);
   const platformFee = Math.round(price * platformRate);
-  const vat = Math.round(price * vatRate);
-  const totalAmount = price + vat;
+  const totalAmount = price;
+  const vat = vatRate > 0 ? Math.round((price * vatRate) / (1 + vatRate)) : 0;
 
   const dup = await Booking.findOne({
     mentorId: mentor._id,
@@ -304,8 +607,27 @@ export async function createBooking(userId, body) {
     return { ok: false, status: 409, error: "Khung giờ này đã được đặt. Chọn giờ khác." };
   }
 
+  const creditFromRaw =
+    typeof body.applyRebookCreditFromBookingId === "string"
+      ? body.applyRebookCreditFromBookingId.trim()
+      : typeof body.rebookFromBookingId === "string"
+        ? body.rebookFromBookingId.trim()
+        : "";
+  let rebookCreditSource = null;
+  let rebookCreditVndApplied = 0;
+  if (creditFromRaw) {
+    const creditCheck = await validateRebookCreditApply(uid, creditFromRaw, mentor._id, totalAmount);
+    if (!creditCheck.ok) return creditCheck;
+    rebookCreditSource = creditCheck.source;
+    rebookCreditVndApplied = creditCheck.creditVnd;
+  }
+
   const paymentStatusRaw = String(body.paymentStatus ?? "pending").toLowerCase();
-  const paymentStatus = paymentStatusRaw === "paid" ? "paid" : "pending";
+  let paymentStatus = rebookCreditSource
+    ? "paid"
+    : paymentStatusRaw === "paid"
+      ? "paid"
+      : "pending";
 
   let status = "pending";
   if (paymentStatus === "paid") {
@@ -342,10 +664,75 @@ export async function createBooking(userId, body) {
     vat,
     totalAmount,
     paymentStatus,
-    paymentMethod: mapPaymentMethod(body.paymentMethod ?? body.method),
+    paymentMethod: rebookCreditSource ? "transfer" : mapPaymentMethod(body.paymentMethod ?? body.method),
     paymentRef,
     paidAt: paymentStatus === "paid" ? new Date() : undefined,
+    creditSourceBookingId: rebookCreditSource?._id ?? undefined,
   });
+
+  if (rebookCreditSource) {
+    const appliedVnd = Math.round(Number(doc.totalAmount ?? doc.price ?? 0));
+    const remainderVnd = Math.max(0, rebookCreditVndApplied - appliedVnd);
+
+    rebookCreditSource.rebookCreditStatus = "consumed";
+    rebookCreditSource.rebookCreditUsedOnBookingId = doc._id;
+    let remainderSettlement = null;
+    if (remainderVnd > 0) {
+      remainderSettlement = await applyPartialBankRefundPending(rebookCreditSource, remainderVnd);
+    }
+    await rebookCreditSource.save();
+
+    const ledgerAmt = appliedVnd;
+    if (ledgerAmt > 0) {
+      try {
+        const pay = new Payment({
+          userId: doc.userId,
+          type: "booking",
+          referenceId: doc._id,
+          referenceModel: "Booking",
+          amount: ledgerAmt,
+          currency: "VND",
+          provider: "transfer",
+          providerRef: `rebook-credit-${String(doc._id)}`,
+          status: "success",
+          paidAt: new Date(),
+          providerResponse: {
+            channel: "rebook_credit",
+            sourceBookingId: String(rebookCreditSource._id),
+            creditAppliedVnd: rebookCreditVndApplied,
+            confirmedAt: new Date().toISOString(),
+            note: "Thanh toán bằng credit đổi mentor — không CK thêm",
+          },
+        });
+        await pay.save();
+      } catch (e) {
+        if (e?.code !== 11000) console.error("[createBooking] rebook credit payment:", e?.message || e);
+      }
+    }
+
+    if (remainderVnd > 0) {
+      await notifyBookingOwner(doc.userId, {
+        type: "system",
+        title: "Hoàn phần tiền thừa",
+        body: `Mentor mới rẻ hơn số đã trả. Còn ${remainderVnd.toLocaleString("vi-VN")}₫ cần hoàn — vui lòng điền STK trên trang buổi cũ (đã hủy).`,
+        metadata: {
+          bookingId: rebookCreditSource._id,
+          actionUrl: `/session/${rebookCreditSource._id}`,
+          refundAmountVnd: remainderVnd,
+        },
+      });
+    }
+
+    return {
+      ok: true,
+      booking: toPublicBooking(doc, mentor),
+      rebookCreditApplied: true,
+      creditSourceBookingId: String(rebookCreditSource._id),
+      creditAppliedVnd: appliedVnd,
+      creditRemainderVnd: remainderVnd,
+      needRefundDestinationForRemainder: remainderVnd > 0,
+    };
+  }
 
   // Nếu user chọn CK, tạo ledger pending ngay (để admin/finance nhìn thấy và đồng bộ về sau)
   if (doc.paymentStatus === "pending" && doc.paymentMethod === "transfer") {
@@ -424,9 +811,141 @@ export function toPublicBooking(doc, mentorLean) {
     cancelReason: b.cancelReason ?? "",
     cancelledBy: b.cancelledBy ?? "",
     cancelledAt: b.cancelledAt,
+    mentorCancelResolution: b.mentorCancelResolution ?? "",
+    mentorCancelResolutionAt: b.mentorCancelResolutionAt ?? null,
+    rebookCreditVnd: b.rebookCreditVnd ?? null,
+    rebookCreditStatus: b.rebookCreditStatus ?? "",
+    rebookCreditUsedOnBookingId: b.rebookCreditUsedOnBookingId ? String(b.rebookCreditUsedOnBookingId) : "",
+    rebookCreditRemainderVnd: b.rebookCreditRemainderVnd ?? null,
+    creditSourceBookingId: b.creditSourceBookingId ? String(b.creditSourceBookingId) : "",
+    cancelRefundAmountVnd: b.cancelRefundAmountVnd ?? null,
+    cancelRetainedAmountVnd: b.cancelRetainedAmountVnd ?? null,
+    cancelRefundPercent: b.cancelRefundPercent ?? null,
+    refundReceiveBankName: b.refundReceiveBankName ?? "",
+    refundReceiveAccountNumber: b.refundReceiveAccountNumber ?? "",
+    refundReceiveAccountHolder: b.refundReceiveAccountHolder ?? "",
+    refundCompletedAt: b.refundCompletedAt ?? null,
     createdAt: b.createdAt,
     updatedAt: b.updatedAt,
   };
+}
+
+/**
+ * Admin xác nhận đã CK hoàn cho HV (sau khi user hủy → refund_pending).
+ */
+export async function confirmBankRefundByAdmin(bookingId, options = {}) {
+  if (!isMongoReady()) return { ok: false, status: 503, error: MONGO_ERR };
+  if (!mongoose.isValidObjectId(bookingId)) {
+    return { ok: false, status: 400, error: "id booking không hợp lệ." };
+  }
+
+  const existing = await Booking.findById(bookingId).lean();
+  if (!existing) return { ok: false, status: 404, error: "Không tìm thấy booking." };
+
+  const pst0 = String(existing.paymentStatus || "").toLowerCase();
+  if (pst0 === "refunded" || pst0 === "partial_refund" || existing.refundCompletedAt) {
+    return { ok: false, status: 400, error: "Booking đã được đánh dấu hoàn tiền xong." };
+  }
+  if (pst0 !== "refund_pending") {
+    return { ok: false, status: 400, error: "Booking không ở trạng thái chờ hoàn tiền." };
+  }
+
+  const refundVnd = Math.round(Number(existing.cancelRefundAmountVnd || 0));
+  if (refundVnd <= 0) {
+    return { ok: false, status: 400, error: "Không có số tiền hoàn trên booking." };
+  }
+
+  const payRow = await Payment.findOne({
+    type: "booking",
+    referenceModel: "Booking",
+    referenceId: existing._id,
+    provider: "transfer",
+  }).sort({ createdAt: -1 });
+
+  if (!payRow) {
+    return { ok: false, status: 400, error: "Không tìm thấy giao dịch thanh toán để đối soát hoàn." };
+  }
+
+  const paySt0 = String(payRow.status || "");
+  if (paySt0 === "refunded" || paySt0 === "partial_refund") {
+    return { ok: false, status: 400, error: "Giao dịch đã được đánh dấu hoàn tiền." };
+  }
+  if (paySt0 !== "refund_pending") {
+    return { ok: false, status: 400, error: "Giao dịch không ở trạng thái chờ hoàn." };
+  }
+
+  const ledgerAmount = Math.round(Number(payRow.amount) || existing.totalAmount || existing.price || 0);
+  const retained = Math.round(Number(existing.cancelRetainedAmountVnd || 0));
+  const isFull = refundVnd >= ledgerAmount || retained <= 0;
+  const nextBookingPayStatus = isFull ? "refunded" : "partial_refund";
+  const nextPayStatus = isFull ? "refunded" : "partial_refund";
+  const now = new Date();
+  const adminId =
+    options?.adminUserId && mongoose.isValidObjectId(String(options.adminUserId))
+      ? options.adminUserId
+      : undefined;
+
+  const updatedPay = await Payment.findOneAndUpdate(
+    { _id: payRow._id, status: "refund_pending" },
+    {
+      $set: {
+        refundAmount: refundVnd,
+        refundedAt: now,
+        status: nextPayStatus,
+        providerResponse: {
+          ...(payRow.providerResponse && typeof payRow.providerResponse === "object"
+            ? payRow.providerResponse
+            : {}),
+          adminRefundConfirmedAt: now.toISOString(),
+          adminRefundConfirmedBy: String(options?.adminUserId || ""),
+        },
+      },
+    },
+    { new: true },
+  );
+  if (!updatedPay) {
+    return { ok: false, status: 409, error: "Hoàn tiền đã được xác nhận hoặc giao dịch không còn chờ hoàn." };
+  }
+
+  const booking = await Booking.findOneAndUpdate(
+    { _id: bookingId, paymentStatus: "refund_pending" },
+    {
+      $set: {
+        paymentStatus: nextBookingPayStatus,
+        refundCompletedAt: now,
+        refundCompletedBy: adminId,
+      },
+    },
+    { new: true },
+  );
+  if (!booking) {
+    await Payment.updateOne(
+      { _id: payRow._id },
+      { $set: { status: "refund_pending", refundedAt: null } },
+    );
+    const again = await Booking.findById(bookingId).lean();
+    if (
+      again &&
+      (again.refundCompletedAt ||
+        ["refunded", "partial_refund"].includes(String(again.paymentStatus || "").toLowerCase()))
+    ) {
+      return { ok: false, status: 400, error: "Booking đã được đánh dấu hoàn tiền xong." };
+    }
+    return { ok: false, status: 409, error: "Hoàn tiền đã được xác nhận hoặc không thể cập nhật booking." };
+  }
+
+  await notifyBookingOwner(booking.userId, {
+    type: "system",
+    title: "Đã hoàn tiền",
+    body: `Admin đã xác nhận chuyển khoản hoàn ${refundVnd.toLocaleString("vi-VN")}₫ cho lịch hẹn đã hủy.`,
+    metadata: { bookingId: String(booking._id), refundAmountVnd: refundVnd },
+  });
+
+  const populated = await Booking.findById(bookingId)
+    .populate({ path: "mentorId", select: "name title company avatar publicId" })
+    .populate({ path: "userId", select: "name email avatar" });
+
+  return { ok: true, booking: toPublicBooking(populated) };
 }
 
 function bookingQueryForUser(rawId) {
@@ -732,31 +1251,117 @@ export async function cancelMyBooking(userId, rawId, body) {
     return { ok: false, status: 400, error: "Không thể hủy booking ở trạng thái này." };
   }
 
-  const sessionAt = parseBookingDateTime(booking.date, booking.timeSlot);
-  const hoursUntilStart = sessionAt instanceof Date ? (sessionAt.getTime() - Date.now()) / 3_600_000 : Number.POSITIVE_INFINITY;
-  let feePercent = 0;
-  if (!Number.isFinite(hoursUntilStart) || hoursUntilStart <= 2) {
-    feePercent = 100;
-  } else if (hoursUntilStart <= 24) {
-    feePercent = 50;
+  const payStatusNow = String(booking.paymentStatus || "").toLowerCase();
+  if (payStatusNow === "refund_pending") {
+    return {
+      ok: false,
+      status: 400,
+      error: "Yêu cầu hoàn tiền đã được ghi nhận. Vui lòng chờ admin xử lý.",
+    };
+  }
+  if (payStatusNow === "refunded" || payStatusNow === "partial_refund") {
+    return { ok: false, status: 400, error: "Booking đã được xử lý hoàn tiền." };
+  }
+  if (Number(booking.cancelRefundAmountVnd || 0) > 0 && booking.cancelledAt) {
+    return {
+      ok: false,
+      status: 400,
+      error: "Yêu cầu hoàn tiền chỉ được gửi một lần cho mỗi lịch hẹn.",
+    };
   }
 
-  // Chỉ cập nhật trạng thái thanh toán khi booking đã thanh toán.
-  if (booking.paymentStatus === "paid" || booking.paymentStatus === "partial_refund" || booking.paymentStatus === "refunded") {
-    if (feePercent >= 100) {
-      booking.paymentStatus = "paid";
-    } else if (feePercent >= 50) {
-      booking.paymentStatus = "partial_refund";
-    } else {
-      booking.paymentStatus = "refunded";
-    }
+  const sessionAt = parseBookingDateTime(booking.date, booking.timeSlot);
+  const hoursUntilStart = sessionAt instanceof Date ? (sessionAt.getTime() - Date.now()) / 3_600_000 : Number.POSITIVE_INFINITY;
+  const feePercent = userCancellationFeePercent(hoursUntilStart);
+  const refundPercent = Math.max(0, 100 - feePercent);
+
+  let settlement = await applyUserCancellationLedger(booking, refundPercent, { dryRun: true });
+
+  if (
+    settlement.ledger === "not_paid_no_settlement" &&
+    String(booking.paymentMethod || "").toLowerCase() !== "transfer" &&
+    String(booking.paymentStatus || "").toLowerCase() === "paid"
+  ) {
+    const paidTotal = Math.round(Number(booking.totalAmount ?? booking.price ?? 0));
+    const refundAmountVnd = Math.min(Math.round((paidTotal * refundPercent) / 100), paidTotal);
+    const retainedAmountVnd = paidTotal - refundAmountVnd;
+    settlement = {
+      refundAmountVnd,
+      retainedAmountVnd,
+      paidTotalVnd: paidTotal,
+      ledger: "non_transfer_manual_reconcile",
+    };
   }
+
+  const dest = parseRefundDestination(body);
+  if (settlement.refundAmountVnd > 0 && !isValidRefundDestination(dest)) {
+    return {
+      ok: false,
+      status: 400,
+      error:
+        "Bạn được hoàn tiền theo chính sách. Vui lòng điền đầy đủ ngân hàng, số tài khoản (ít nhất 6 chữ số) và tên chủ tài khoản nhận hoàn.",
+      needRefundDestination: true,
+    };
+  }
+
+  settlement = await applyUserCancellationLedger(booking, refundPercent);
+
+  if (settlement.ledger === "refund_already_requested") {
+    return {
+      ok: false,
+      status: 400,
+      error: "Yêu cầu hoàn tiền chỉ được gửi một lần. Vui lòng chờ admin xử lý hoặc kiểm tra trạng thái lịch hẹn.",
+    };
+  }
+
+  if (
+    settlement.ledger === "not_paid_no_settlement" &&
+    String(booking.paymentMethod || "").toLowerCase() !== "transfer" &&
+    String(booking.paymentStatus || "").toLowerCase() === "paid"
+  ) {
+    const paidTotal = Math.round(Number(booking.totalAmount ?? booking.price ?? 0));
+    const refundAmountVnd = Math.min(Math.round((paidTotal * refundPercent) / 100), paidTotal);
+    const retainedAmountVnd = paidTotal - refundAmountVnd;
+    settlement = {
+      refundAmountVnd,
+      retainedAmountVnd,
+      paidTotalVnd: paidTotal,
+      ledger: "non_transfer_manual_reconcile",
+    };
+  }
+
+  booking.cancelRefundPercent = refundPercent;
+  booking.cancelRefundAmountVnd = settlement.refundAmountVnd;
+  booking.cancelRetainedAmountVnd = settlement.retainedAmountVnd;
+
+  if (settlement.refundAmountVnd > 0) {
+    booking.refundReceiveBankName = dest.bank;
+    booking.refundReceiveAccountNumber = dest.acct;
+    booking.refundReceiveAccountHolder = dest.holder;
+  }
+
+  const payStatusBefore = String(booking.paymentStatus || "").toLowerCase();
+  booking.paymentStatus = deriveBookingPaymentStatusAfterUserCancel(settlement, {
+    paymentStatus: payStatusBefore,
+  });
 
   booking.status = "cancelled";
   booking.cancelledBy = "user";
   booking.cancelReason = reason || "Người dùng hủy";
   booking.cancelledAt = new Date();
   await booking.save();
+
+  await notifyBookingOwner(booking.userId, {
+    type: "booking_cancelled",
+    title: "Đã hủy lịch hẹn",
+    body:
+      settlement.refundAmountVnd > 0
+        ? `Đã ghi nhận yêu cầu hoàn ${Math.round(settlement.refundAmountVnd).toLocaleString("vi-VN")}₫ (${refundPercent}%). Admin sẽ CK hoàn vào STK bạn đã khai báo; bạn sẽ được thông báo khi hoàn xong.`
+        : settlement.ledger === "cancelled_pending_transfer"
+          ? "Giao dịch chờ chuyển khoản đã được hủy — bạn chưa bị trừ tiền thành công."
+          : "Theo chính sách hủy, bạn không được hoàn tiền cho buổi này.",
+    metadata: { bookingId: String(booking._id), refundAmountVnd: settlement.refundAmountVnd },
+  });
 
   const mentor = await Mentor.findById(booking.mentorId).lean();
   return {
@@ -765,7 +1370,11 @@ export async function cancelMyBooking(userId, rawId, body) {
     cancellationPolicy: {
       hoursUntilStart: Number.isFinite(hoursUntilStart) ? Number(hoursUntilStart.toFixed(2)) : null,
       feePercent,
-      refundPercent: Math.max(0, 100 - feePercent),
+      refundPercent,
+      refundAmountVnd: settlement.refundAmountVnd,
+      retainedAmountVnd: settlement.retainedAmountVnd,
+      paidTotalVnd: settlement.paidTotalVnd,
+      ledger: settlement.ledger,
     },
   };
 }
@@ -866,49 +1475,410 @@ export async function cancelMentorBooking(mentorUserId, rawId, body) {
   }
 
   const startAt = parseBookingDateTime(booking.date, booking.timeSlot);
+  let hoursUntilStart = null;
   if (startAt && Number.isFinite(startAt.getTime())) {
     const diffMs = startAt.getTime() - Date.now();
-    const minMs = MENTOR_CANCEL_MIN_HOURS * 60 * 60 * 1000;
-    if (diffMs > 0 && diffMs < minMs) {
+    hoursUntilStart = diffMs / 3_600_000;
+    if (diffMs <= 0) {
       return {
         ok: false,
         status: 400,
-        error: `Không thể hủy khi còn dưới ${MENTOR_CANCEL_MIN_HOURS} giờ trước buổi hẹn.`,
+        error:
+          "Buổi đã qua giờ bắt đầu. Nếu mentor không tham gia, học viên báo no-show hoặc admin xử lý.",
       };
     }
   }
+
+  const payStatusBefore = String(booking.paymentStatus || "").toLowerCase();
+  if (payStatusBefore === "refund_pending") {
+    return {
+      ok: false,
+      status: 400,
+      error: "Yêu cầu hoàn tiền đã được ghi nhận. Vui lòng chờ admin xử lý.",
+    };
+  }
+  if (payStatusBefore === "refunded" || payStatusBefore === "partial_refund") {
+    return { ok: false, status: 400, error: "Booking đã được xử lý hoàn tiền." };
+  }
+
+  const paidBooking = payStatusBefore === "paid";
+  const paidTotal = Math.round(Number(booking.totalAmount ?? booking.price ?? 0));
+  const isLateCancel =
+    hoursUntilStart != null && hoursUntilStart > 0 && hoursUntilStart < MENTOR_CANCEL_MIN_HOURS;
 
   booking.status = "cancelled";
   booking.cancelledBy = "mentor";
   booking.cancelReason = reason;
   booking.cancelledAt = new Date();
-  const refund = await refundBookingPaymentIfNeeded(booking);
+  booking.mentorCancelResolutionAt = new Date();
+
+  if (paidBooking && paidTotal > 0 && isLateCancel) {
+    /** <24h: ưu tiên hoàn 100% — không chọn đổi lịch/đổi mentor. */
+    let settlement = await applyUserCancellationLedger(booking, 100);
+    if (settlement.ledger === "refund_already_requested") {
+      return { ok: false, status: 400, error: "Yêu cầu hoàn tiền chỉ được gửi một lần." };
+    }
+    booking.mentorCancelResolution = "late_cancel_refund";
+    booking.cancelRefundPercent = 100;
+    booking.cancelRefundAmountVnd = settlement.refundAmountVnd;
+    booking.cancelRetainedAmountVnd = settlement.retainedAmountVnd;
+    booking.paymentStatus = deriveBookingPaymentStatusAfterUserCancel(settlement, {
+      paymentStatus: payStatusBefore,
+    });
+  } else if (paidBooking && paidTotal > 0) {
+    /** ≥24h: HV chọn đổi lịch / đổi mentor / hoàn 100%. */
+    booking.mentorCancelResolution = "awaiting_user";
+    booking.cancelRefundPercent = 100;
+    booking.cancelRefundAmountVnd = paidTotal;
+    booking.cancelRetainedAmountVnd = 0;
+    booking.paymentStatus = "paid";
+  } else {
+    booking.mentorCancelResolution = "";
+    booking.cancelRefundPercent = null;
+    booking.cancelRefundAmountVnd = null;
+    booking.cancelRetainedAmountVnd = null;
+    if (payStatusBefore === "pending") booking.paymentStatus = "failed";
+  }
+
   await booking.save();
   await booking.populate({ path: "userId", select: "name email avatar" });
   await booking.populate({ path: "mentorId", select: "name title company avatar publicId" });
+
+  const notifyBody =
+    paidBooking && paidTotal > 0 && isLateCancel
+      ? `Mentor hủy khi còn dưới ${MENTOR_CANCEL_MIN_HOURS} giờ. Hoàn ưu tiên 100% (${paidTotal.toLocaleString("vi-VN")}₫) — vui lòng vào trang buổi hẹn để điền STK nhận hoàn.`
+      : paidBooking && paidTotal > 0
+        ? `Buổi ${booking.date} lúc ${booking.timeSlot} đã bị mentor hủy. Vui lòng vào trang buổi hẹn để chọn: đổi lịch, đổi mentor hoặc hoàn tiền 100% (${paidTotal.toLocaleString("vi-VN")}₫).`
+        : `Buổi hẹn ngày ${booking.date} lúc ${booking.timeSlot} đã bị hủy. Lý do: ${reason}`;
+
   await notifyBookingOwner(booking.userId?._id || booking.userId, {
     type: "booking_cancelled",
-    title: "Mentor đã hủy lịch hẹn",
-    body: `Buổi hẹn ngày ${booking.date} lúc ${booking.timeSlot} đã bị hủy. Lý do: ${reason}`,
+    title: isLateCancel ? "Mentor hủy gấp — hoàn tiền ưu tiên" : "Mentor đã hủy lịch hẹn",
+    body: notifyBody,
     metadata: {
       bookingId: booking._id,
       mentorId: booking.mentorId?._id || booking.mentorId,
       actionUrl: `/session/${booking._id}`,
+      refundAmountVnd: paidBooking ? paidTotal : 0,
+      lateCancel: isLateCancel,
     },
   });
-  if (refund.refunded) {
-    await notifyBookingOwner(booking.userId?._id || booking.userId, {
+
+  return {
+    ok: true,
+    booking: toPublicBooking(booking),
+    lateCancel: isLateCancel,
+    refundPending: String(booking.paymentStatus || "").toLowerCase() === "refund_pending",
+  };
+}
+
+async function incrementMentorNoShowViolation(mentorObjectId, bookingId, note = "") {
+  if (!mongoose.isValidObjectId(String(mentorObjectId || ""))) return;
+  await Mentor.findByIdAndUpdate(mentorObjectId, {
+    $inc: { "stats.noShowCount": 1 },
+  });
+  const mentorUser = await Mentor.findById(mentorObjectId).select("userId").lean();
+  if (mentorUser?.userId) {
+    await Notification.create({
+      userId: mentorUser.userId,
       type: "system",
-      title: "Hoàn tiền lịch hẹn",
-      body: `Bạn đã được hoàn ${Math.round(refund.amount).toLocaleString("vi-VN")} VND do mentor hủy lịch.`,
-      metadata: {
-        bookingId: booking._id,
-        mentorId: booking.mentorId?._id || booking.mentorId,
-        actionUrl: `/session/${booking._id}`,
-      },
+      title: "Ghi nhận no-show",
+      body: note || "Buổi hẹn bị đánh dấu mentor không tham gia — vi phạm đã được ghi vào hồ sơ.",
+      metadata: { bookingId, violation: "no_show" },
     });
   }
-  return { ok: true, booking: toPublicBooking(booking) };
+}
+
+/**
+ * Mentor no-show: hoàn 100% cho HV + tăng noShowCount trên hồ sơ mentor.
+ * @param {"admin"|"user"|"system"} markedBy
+ */
+export async function processBookingNoShow(rawId, body = {}, { markedBy = "admin", actorUserId = null } = {}) {
+  if (!isMongoReady()) return { ok: false, status: 503, error: MONGO_ERR };
+  if (!mongoose.isValidObjectId(rawId)) {
+    return { ok: false, status: 400, error: "id booking không hợp lệ." };
+  }
+
+  const booking = await Booking.findById(rawId);
+  if (!booking) return { ok: false, status: 404, error: "Không tìm thấy booking." };
+
+  if (booking.status === "no_show") {
+    const mentor = await Mentor.findById(booking.mentorId).lean();
+    return { ok: true, booking: toPublicBooking(booking, mentor), idempotent: true };
+  }
+
+  if (["cancelled", "completed"].includes(booking.status)) {
+    return {
+      ok: false,
+      status: 400,
+      error: "Không thể đánh no-show cho booking đã hủy hoặc đã hoàn thành.",
+    };
+  }
+
+  const startAt = parseBookingDateTime(booking.date, booking.timeSlot);
+  const graceMs = 15 * 60 * 1000;
+  if (startAt && Number.isFinite(startAt.getTime()) && startAt.getTime() + graceMs > Date.now()) {
+    return {
+      ok: false,
+      status: 400,
+      error: "Chỉ báo no-show sau khi buổi đã bắt đầu (tối thiểu 15 phút).",
+    };
+  }
+
+  if (markedBy === "user") {
+    const uid = String(actorUserId || "").trim();
+    if (String(booking.userId) !== uid) {
+      return { ok: false, status: 403, error: "Chỉ học viên của buổi hẹn mới được báo no-show." };
+    }
+  }
+
+  const payStatusBefore = String(booking.paymentStatus || "").toLowerCase();
+  const paidBooking = payStatusBefore === "paid";
+  const note = typeof body?.note === "string" ? body.note.trim().slice(0, 2000) : "";
+
+  booking.status = "no_show";
+  booking.cancelledBy = "mentor";
+  booking.cancelReason = note || "Mentor không tham gia buổi hẹn (no-show).";
+  booking.cancelledAt = booking.cancelledAt || new Date();
+  booking.mentorCancelResolution = "no_show_refund";
+  booking.mentorCancelResolutionAt = new Date();
+
+  let settlement = { refundAmountVnd: 0, ledger: "not_paid_no_settlement" };
+  if (paidBooking) {
+    settlement = await applyUserCancellationLedger(booking, 100);
+    if (settlement.ledger === "refund_already_requested") {
+      return { ok: false, status: 400, error: "Yêu cầu hoàn tiền đã được ghi nhận." };
+    }
+    booking.cancelRefundPercent = 100;
+    booking.cancelRefundAmountVnd = settlement.refundAmountVnd;
+    booking.cancelRetainedAmountVnd = settlement.retainedAmountVnd;
+    booking.paymentStatus = deriveBookingPaymentStatusAfterUserCancel(settlement, {
+      paymentStatus: payStatusBefore,
+    });
+  }
+
+  await booking.save();
+  await incrementMentorNoShowViolation(
+    booking.mentorId,
+    booking._id,
+    `No-show buổi ${booking.date} ${booking.timeSlot}${markedBy === "user" ? " (HV báo)" : ""}.`,
+  );
+
+  await notifyBookingOwner(booking.userId, {
+    type: "booking_cancelled",
+    title: "Mentor không tham gia (no-show)",
+    body: paidBooking
+      ? `Bạn được hoàn ưu tiên 100% (${Math.round(settlement.refundAmountVnd || 0).toLocaleString("vi-VN")}₫). Vui lòng điền STK nhận hoàn trên trang buổi hẹn.`
+      : "Buổi được ghi nhận mentor no-show. Liên hệ support nếu cần hỗ trợ.",
+    metadata: {
+      bookingId: booking._id,
+      actionUrl: `/session/${booking._id}`,
+      refundAmountVnd: settlement.refundAmountVnd || 0,
+    },
+  });
+
+  const mentor = await Mentor.findById(booking.mentorId).select("stats.noShowCount").lean();
+  return {
+    ok: true,
+    booking: toPublicBooking(booking, mentor),
+    refundAmountVnd: settlement.refundAmountVnd,
+    mentorNoShowCount: mentor?.stats?.noShowCount ?? null,
+  };
+}
+
+const MENTOR_CANCEL_RESOLUTION_CHOICES = new Set(["reschedule", "change_mentor", "refund"]);
+
+/** HV chọn phương án sau khi mentor hủy (đã thanh toán, ≥24h). */
+export async function resolveMentorCancelBooking(userId, rawId, body) {
+  if (!isMongoReady()) return { ok: false, status: 503, error: MONGO_ERR };
+  const uid = String(userId).trim();
+  const q = bookingQueryForUser(rawId);
+  if (!q) return { ok: false, status: 400, error: "Thiếu id booking." };
+
+  const choice = String(body?.choice || "").trim().toLowerCase();
+  if (!MENTOR_CANCEL_RESOLUTION_CHOICES.has(choice)) {
+    return {
+      ok: false,
+      status: 400,
+      error: "choice phải là reschedule, change_mentor hoặc refund.",
+    };
+  }
+
+  const booking = await Booking.findOne({ userId: uid, ...q });
+  if (!booking) return { ok: false, status: 404, error: "Không tìm thấy booking." };
+
+  if (String(booking.cancelledBy || "") !== "mentor" || booking.status !== "cancelled") {
+    return { ok: false, status: 400, error: "Booking không ở trạng thái chờ xử lý sau mentor hủy." };
+  }
+  if (String(booking.mentorCancelResolution || "") !== "awaiting_user") {
+    return { ok: false, status: 400, error: "Bạn đã chọn phương án xử lý cho lịch hẹn này." };
+  }
+  if (String(booking.paymentStatus || "").toLowerCase() !== "paid") {
+    return { ok: false, status: 400, error: "Chỉ áp dụng khi đã thanh toán." };
+  }
+
+  const now = new Date();
+  booking.mentorCancelResolution = choice;
+  booking.mentorCancelResolutionAt = now;
+
+  if (choice === "change_mentor") {
+    const creditVnd = Math.round(Number(booking.totalAmount ?? booking.price ?? 0));
+    booking.rebookCreditVnd = creditVnd > 0 ? creditVnd : null;
+    booking.rebookCreditStatus = creditVnd > 0 ? "available" : "";
+    await booking.save();
+    const mentor = await Mentor.findById(booking.mentorId).lean();
+    await notifyBookingOwner(booking.userId, {
+      type: "system",
+      title: "Đổi mentor — dùng số tiền đã trả",
+      body:
+        creditVnd > 0
+          ? `Bạn có ${creditVnd.toLocaleString("vi-VN")}₫ để đặt mentor khác (không cần CK lại nếu giá buổi mới ≤ số này).`
+          : "Hãy chọn mentor khác để đặt lịch mới.",
+      metadata: { bookingId: booking._id, actionUrl: `/mentors?rebookFrom=${booking._id}` },
+    });
+    return {
+      ok: true,
+      booking: toPublicBooking(booking, mentor),
+      resolution: choice,
+      rebookCreditVnd: creditVnd,
+    };
+  }
+
+  if (choice === "refund") {
+    const dest = parseRefundDestination(body);
+    if (!isValidRefundDestination(dest)) {
+      return {
+        ok: false,
+        status: 400,
+        error: "Vui lòng điền đầy đủ ngân hàng, số tài khoản (≥6 chữ số) và tên chủ tài khoản.",
+        needRefundDestination: true,
+      };
+    }
+    const refundPercent = 100;
+    let settlement = await applyUserCancellationLedger(booking, refundPercent);
+    if (settlement.ledger === "refund_already_requested") {
+      return { ok: false, status: 400, error: "Yêu cầu hoàn tiền chỉ được gửi một lần." };
+    }
+    booking.refundReceiveBankName = dest.bank;
+    booking.refundReceiveAccountNumber = dest.acct;
+    booking.refundReceiveAccountHolder = dest.holder;
+    booking.cancelRefundPercent = refundPercent;
+    booking.cancelRefundAmountVnd = settlement.refundAmountVnd;
+    booking.cancelRetainedAmountVnd = settlement.retainedAmountVnd;
+    booking.paymentStatus = deriveBookingPaymentStatusAfterUserCancel(settlement, {
+      paymentStatus: "paid",
+    });
+    await booking.save();
+    const mentor = await Mentor.findById(booking.mentorId).lean();
+    return {
+      ok: true,
+      booking: toPublicBooking(booking, mentor),
+      resolution: choice,
+      refundAmountVnd: settlement.refundAmountVnd,
+    };
+  }
+
+  /** reschedule — cùng mentor, slot mới */
+  const newDateRaw = typeof body?.newDate === "string" ? body.newDate.trim() : "";
+  const newTime = String(body?.newTimeSlot ?? body?.newTime ?? "").trim();
+  if (!newDateRaw || !newTime || !/^\d{1,2}:\d{2}$/.test(newTime)) {
+    return { ok: false, status: 400, error: "Thiếu newDate hoặc newTimeSlot (HH:mm) khi đổi lịch." };
+  }
+
+  const newDateNorm = normalizeBookingDate(newDateRaw);
+  const [th, tm] = newTime.split(":").map(Number);
+  const newSlot = `${String(th).padStart(2, "0")}:${String(tm || 0).padStart(2, "0")}`;
+  const mentorDoc = await Mentor.findById(booking.mentorId).select("availableSlots recurringSchedule blockedDates").lean();
+  const allowedSlots = getMentorSlotsForDate(mentorDoc, newDateNorm);
+  if (Array.isArray(allowedSlots)) {
+    if (allowedSlots.length === 0) return { ok: false, status: 400, error: "Mentor không mở lịch cho ngày này." };
+    if (!allowedSlots.includes(newSlot)) {
+      return { ok: false, status: 400, error: "Khung giờ mới không nằm trong lịch mentor mở." };
+    }
+  }
+  const rescheduleAt = parseBookingDateTime(newDateNorm, newSlot);
+  if (!rescheduleAt || Number.isNaN(rescheduleAt.getTime()) || rescheduleAt.getTime() <= Date.now()) {
+    return { ok: false, status: 400, error: "Ngày/giờ đổi lịch không hợp lệ." };
+  }
+  const dup = await Booking.findOne({
+    mentorId: booking.mentorId,
+    date: newDateNorm,
+    timeSlot: newSlot,
+    status: { $in: ["pending", "confirmed", "in_progress"] },
+    _id: { $ne: booking._id },
+  })
+    .select("_id")
+    .lean();
+  if (dup) return { ok: false, status: 409, error: "Khung giờ mới đã có người đặt." };
+
+  const entry = {
+    oldDate: booking.date,
+    oldTimeSlot: booking.timeSlot,
+    newDate: newDateNorm,
+    newTimeSlot: newSlot,
+    reason: "Học viên đổi lịch sau mentor hủy",
+    changedBy: "user",
+    changedAt: now,
+  };
+  booking.rescheduleHistory = [...(booking.rescheduleHistory || []), entry];
+  booking.date = newDateNorm;
+  booking.timeSlot = newSlot;
+  booking.status = "confirmed";
+  booking.cancelledBy = "";
+  booking.cancelReason = "";
+  booking.cancelledAt = null;
+  booking.cancelRefundPercent = null;
+  booking.cancelRefundAmountVnd = null;
+  booking.cancelRetainedAmountVnd = null;
+  await booking.save();
+
+  const mentor = await Mentor.findById(booking.mentorId).lean();
+  await notifyBookingOwner(booking.userId, {
+    type: "system",
+    title: "Đã đổi lịch buổi hẹn",
+    body: `Lịch mới: ${booking.date} lúc ${booking.timeSlot}. Buổi vẫn giữ nguyên thanh toán.`,
+    metadata: { bookingId: booking._id, actionUrl: `/session/${booking._id}` },
+  });
+  return { ok: true, booking: toPublicBooking(booking, mentor), resolution: choice };
+}
+
+/** HV bổ sung STK nhận hoàn khi mentor hủy (chưa có TK lúc hủy). */
+export async function updateMyBookingRefundDestination(userId, rawId, body) {
+  if (!isMongoReady()) return { ok: false, status: 503, error: MONGO_ERR };
+  const uid = String(userId).trim();
+  const q = bookingQueryForUser(rawId);
+  if (!q) return { ok: false, status: 400, error: "Thiếu id booking." };
+
+  const booking = await Booking.findOne({ userId: uid, ...q });
+  if (!booking) return { ok: false, status: 404, error: "Không tìm thấy booking." };
+
+  if (String(booking.paymentStatus || "").toLowerCase() !== "refund_pending") {
+    return {
+      ok: false,
+      status: 400,
+      error: "Chỉ cập nhật STK khi lịch đang chờ hoàn tiền.",
+    };
+  }
+  if (booking.refundCompletedAt) {
+    return { ok: false, status: 400, error: "Admin đã xác nhận hoàn tiền — không thể đổi STK." };
+  }
+
+  const dest = parseRefundDestination(body);
+  if (!isValidRefundDestination(dest)) {
+    return {
+      ok: false,
+      status: 400,
+      error: "Vui lòng điền đầy đủ ngân hàng, số tài khoản (≥6 chữ số) và tên chủ tài khoản.",
+    };
+  }
+
+  booking.refundReceiveBankName = dest.bank;
+  booking.refundReceiveAccountNumber = dest.acct;
+  booking.refundReceiveAccountHolder = dest.holder;
+  await booking.save();
+
+  const mentor = await Mentor.findById(booking.mentorId).lean();
+  return { ok: true, booking: toPublicBooking(booking, mentor) };
 }
 
 export async function rescheduleMentorBooking(mentorUserId, rawId, body) {

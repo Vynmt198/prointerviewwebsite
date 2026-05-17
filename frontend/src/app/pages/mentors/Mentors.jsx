@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useRef, useEffect } from "react";
-import { useNavigate } from "react-router";
+import { useNavigate, useSearchParams } from "react-router";
 import {
   Search as MagnifyingGlass,
   Star,
@@ -15,6 +15,7 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { fetchMentors } from "../../utils/mentorApi";
+import { fetchRebookCredit } from "../../utils/bookingsApi";
 import { FIELDS } from "../../data/mockData";
 
 const EXPERIENCE_OPTIONS = ["Tất cả", "1-3 năm", "4-6 năm", "7+ năm"];
@@ -28,6 +29,12 @@ const RATING_OPTIONS = ["Tất cả", "4.5+", "4.0+", "3.5+"];
 
 export function Mentors() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const rebookFrom =
+    searchParams.get("rebookFrom") ||
+    (typeof sessionStorage !== "undefined" ? sessionStorage.getItem("prointerview_rebook_from") : "") ||
+    "";
+  const [rebookCredit, setRebookCredit] = useState(null);
   const [search, setSearch] = useState("");
   const [selectedField, setSelectedField] = useState("Tất cả");
   const [selectedExp, setSelectedExp] = useState("Tất cả");
@@ -43,6 +50,22 @@ export function Mentors() {
   // Dropdown states
   const [openDropdown, setOpenDropdown] = useState(null);
   const dropdownRef = useRef(null);
+
+  useEffect(() => {
+    if (!rebookFrom) {
+      setRebookCredit(null);
+      return;
+    }
+    void fetchRebookCredit(rebookFrom).then((r) => {
+      if (r.success && r.credit?.available) setRebookCredit(r.credit);
+      else setRebookCredit(null);
+    });
+  }, [rebookFrom]);
+
+  const bookingPath = (mentorId) => {
+    const base = `/booking/${mentorId}`;
+    return rebookFrom ? `${base}?rebookFrom=${encodeURIComponent(rebookFrom)}` : base;
+  };
 
   useEffect(() => {
     fetchMentors()
@@ -263,6 +286,15 @@ export function Mentors() {
       `}</style>
       <header className="relative z-10 pb-2 pt-8 sm:pb-4 sm:pt-10">
         <div className="relative z-10 mx-auto max-w-7xl px-6 sm:px-8">
+          {rebookCredit?.available ? (
+            <div className="mb-6 rounded-2xl border border-violet-300 bg-violet-50/95 px-4 py-3 text-sm text-violet-950">
+              <p className="font-bold">Credit đổi mentor</p>
+              <p className="mt-1 text-xs leading-relaxed text-violet-900/90">
+                Bạn có <strong>{Number(rebookCredit.creditVnd || 0).toLocaleString("vi-VN")}₫</strong> từ lịch mentor đã
+                hủy. Chọn <strong>mentor khác</strong> — nếu giá buổi mới ≤ credit thì <strong>không cần chuyển khoản lại</strong>.
+              </p>
+            </div>
+          ) : null}
           <div className="mb-8">
           <div className="mb-4 flex items-center gap-3">
             <Users
@@ -523,7 +555,7 @@ export function Mentors() {
                   </div>
                   <button
                     type="button"
-                    onClick={(e) => { e.stopPropagation(); navigate(`/booking/${mentor.id}`); }}
+                    onClick={(e) => { e.stopPropagation(); navigate(bookingPath(mentor.id)); }}
                     className="rounded-xl bg-gradient-to-br from-[#6E35E8] to-[#8B4DFF] px-4 py-2 text-xs font-bold text-white shadow-md shadow-violet-900/40 transition-opacity hover:opacity-90"
                   >
                     Đặt lịch

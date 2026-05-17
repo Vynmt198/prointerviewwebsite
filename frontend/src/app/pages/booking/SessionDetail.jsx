@@ -32,8 +32,27 @@ import { AnimatePresence, motion } from "motion/react";
 import { toast } from "sonner";
 import { getBookingById, getReview } from "../../utils/bookings";
 import { isLoggedIn } from "../../utils/auth";
-import { cancelBooking, fetchBookingById } from "../../utils/bookingsApi";
+import {
+  cancelBooking,
+  fetchBookingById,
+  fetchBookedSlots,
+  reportBookingNoShow,
+  resolveMentorCancelBooking,
+  updateBookingRefundDestination,
+} from "../../utils/bookingsApi";
 import { apiBookingToLocal } from "../../utils/bookingMappers";
+import { MentorCancelSessionPanel } from "./MentorCancelSessionPanel";
+import { fetchMentorAvailability } from "../../utils/mentorApi";
+
+function toBookingDateFormat(input) {
+  const s = String(input || "").trim();
+  if (!s) return "";
+  const tail = s.includes(",") ? s.split(",").pop().trim() : s;
+  const parts = tail.split("/").map((p) => p.trim());
+  if (parts.length === 3) return `${parts[0].padStart(2, "0")}/${parts[1].padStart(2, "0")}/${parts[2]}`;
+  if (parts.length === 2) return `${parts[0].padStart(2, "0")}/${parts[1].padStart(2, "0")}`;
+  return tail;
+}
 
 /* ─── Types ────────────────────────────────────────────── */
 
@@ -92,6 +111,15 @@ function StarRating({ value, onChange }) {
 }
 
 function getPaymentMeta(paymentStatus) {
+  if (paymentStatus === "refund_pending") {
+    return {
+      title: "Chờ hoàn tiền",
+      titleClass: "text-amber-700",
+      note: "Admin sẽ chuyển khoản hoàn sau khi có STK nhận hoàn của bạn.",
+      noteClass: "text-amber-700",
+      iconClass: "text-amber-500",
+    };
+  }
   if (paymentStatus === "refunded") {
     return {
       title: "Đã hoàn tiền",
@@ -158,11 +186,12 @@ function useCountdown(targetDate, targetTime) {
   }, [target]);
 
   const totalSec = Math.max(0, Math.floor(diff / 1000));
+  const elapsedSinceStartSec = diff < 0 ? Math.floor(-diff / 1000) : 0;
   const days = Math.floor(totalSec / 86400);
   const hours = Math.floor((totalSec % 86400) / 3600);
   const minutes = Math.floor((totalSec % 3600) / 60);
   const seconds = totalSec % 60;
-  return { days, hours, minutes, seconds, totalSec };
+  return { days, hours, minutes, seconds, totalSec, elapsedSinceStartSec };
 }
 
 /* ─── Main Component ───────────────────────────────────── */
@@ -177,12 +206,11 @@ export function SessionDetail() {
       setApiBooking(null);
       return;
     }
-    const local = getBookingById(id);
-    if (local) {
+    if (!isLoggedIn()) {
       setApiBooking(null);
       return;
     }
-    if (!isLoggedIn()) {
+    if (!isMongoObjectId(id)) {
       setApiBooking(null);
       return;
     }
@@ -199,9 +227,11 @@ export function SessionDetail() {
   }, [id]);
 
   const sessionData = useMemo(() => {
-    const local = getBookingById(id);
-    if (local) return local;
     if (apiBooking && typeof apiBooking === "object") return apiBookingToLocal(apiBooking);
+    if (!isMongoObjectId(id)) {
+      const local = getBookingById(id);
+      if (local) return local;
+    }
     return null;
   }, [id, apiBooking]);
 
@@ -211,23 +241,53 @@ export function SessionDetail() {
     return isMongoObjectId(raw) ? String(raw).trim() : "";
   }, [sessionData]);
 
-  const sessionLoading =
-    isLoggedIn() && apiBooking === undefined && !getBookingById(id);
-
-  /* ── Demo state switcher (for demo purposes) ── */
-  const [demoState, setDemoState] = useState("upcoming");
+  const sessionLoading = isLoggedIn() && isMongoObjectId(id) && apiBooking === undefined;
 
   /* ── Countdown ── */
-  const { days, hours, minutes, seconds, totalSec } = useCountdown(
+  const { days, hours, minutes, seconds, totalSec, elapsedSinceStartSec } = useCountdown(
     sessionData?.date ?? "02/03/2026",
     sessionData?.time ?? "14:00"
   );
   const hoursLeft = totalSec / 3600;
+  const needsRefundBankDetails = Boolean(
+    sessionData &&
+      hoursLeft >= 12 &&
+      ["paid", "partial_refund"].includes(String(sessionData.paymentStatus || "").toLowerCase()),
+  );
 
   /* ── Session state logic ── */
   const autoState = totalSec <= 0 ? "done" : totalSec <= 3600 ? "live" : "upcoming";
-  const state = demoState; // use demo for now
   const paymentMeta = getPaymentMeta(sessionData?.paymentStatus);
+
+  const mentorActionMode = useMemo(() => {
+    if (!sessionData) return null;
+    const st = String(sessionData.status || "").toLowerCase();
+    const res = String(sessionData.mentorCancelResolution || "");
+    const byMentor = String(sessionData.cancelledBy || "") === "mentor";
+    if (st === "no_show" || res === "no_show_refund") return "no_show";
+    if (!byMentor) return null;
+    if (st === "cancelled" && res === "awaiting_user") return "choose";
+    if (st === "cancelled" && res === "late_cancel_refund") return "late_refund";
+    if (st === "cancelled" && res === "change_mentor") return "change_mentor_done";
+    if (st === "cancelled" && (res === "refund" || res === "reschedule")) return "resolution_done";
+    if (st === "cancelled") return "cancelled_generic";
+    return null;
+  }, [sessionData]);
+
+  const state = useMemo(() => {
+    if (mentorActionMode) return "mentor_action";
+    const st = String(sessionData?.status || "").toLowerCase();
+    if (st === "completed" || st === "done") return "done";
+    if (st === "no_show") return "mentor_action";
+    return autoState;
+  }, [mentorActionMode, sessionData?.status, autoState]);
+
+  useEffect(() => {
+    if (!sessionData) return;
+    if (sessionData.refundReceiveBankName) setRefundBankName(sessionData.refundReceiveBankName);
+    if (sessionData.refundReceiveAccountNumber) setRefundAccountNumber(sessionData.refundReceiveAccountNumber);
+    if (sessionData.refundReceiveAccountHolder) setRefundAccountHolder(sessionData.refundReceiveAccountHolder);
+  }, [sessionData?.sessionId]);
 
   /* ── Checklist ── */
   const [checklist, setChecklist] = useState([
@@ -246,6 +306,191 @@ export function SessionDetail() {
   const [cancelModalOpen, setCancelModalOpen] = useState(false);
   const [cancelReason, setCancelReason] = useState("");
   const [cancelBusy, setCancelBusy] = useState(false);
+  const [refundBankName, setRefundBankName] = useState("");
+  const [refundAccountNumber, setRefundAccountNumber] = useState("");
+  const [refundAccountHolder, setRefundAccountHolder] = useState("");
+  const [refundDestBusy, setRefundDestBusy] = useState(false);
+  const [mentorResolutionStep, setMentorResolutionStep] = useState("");
+  const [resolutionBusy, setResolutionBusy] = useState(false);
+  const [reportNoShowBusy, setReportNoShowBusy] = useState(false);
+  const [rescheduleDate, setRescheduleDate] = useState("");
+  const [rescheduleSlot, setRescheduleSlot] = useState("");
+  const [rescheduleSlotOptions, setRescheduleSlotOptions] = useState([]);
+  const [loadingRescheduleSlots, setLoadingRescheduleSlots] = useState(false);
+
+  const needsMentorCancelChoice = mentorActionMode === "choose" && Boolean(mongoBookingId && isLoggedIn());
+
+  useEffect(() => {
+    if (mentorResolutionStep !== "reschedule" || !sessionData?.mentorId) {
+      setRescheduleSlotOptions([]);
+      return;
+    }
+    let cancelled = false;
+    setLoadingRescheduleSlots(true);
+    void Promise.all([
+      fetchMentorAvailability(sessionData.mentorId),
+      fetchBookedSlots(sessionData.mentorId),
+    ]).then(([availability, bookedRes]) => {
+      if (cancelled) return;
+      setLoadingRescheduleSlots(false);
+      if (!availability?.availableSlots) {
+        setRescheduleSlotOptions([]);
+        return;
+      }
+      const bookedMap = bookedRes.success ? bookedRes.booked || {} : {};
+      const options = [];
+      for (const [date, slots] of Object.entries(availability.availableSlots || {})) {
+        const bookingDate = toBookingDateFormat(date);
+        for (const slot of Array.isArray(slots) ? slots : []) {
+          const taken = Array.isArray(bookedMap[date]) ? bookedMap[date].includes(slot) : false;
+          if (!taken) options.push({ date: bookingDate, slot, label: `${bookingDate} • ${slot}` });
+        }
+      }
+      options.sort((a, b) => `${a.date} ${a.slot}`.localeCompare(`${b.date} ${b.slot}`));
+      setRescheduleSlotOptions(options);
+      if (options.length > 0) {
+        setRescheduleDate(options[0].date);
+        setRescheduleSlot(options[0].slot);
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [mentorResolutionStep, sessionData?.mentorId]);
+
+  const handleResolveMentorCancel = async (choice) => {
+    if (!mongoBookingId) return;
+    if (choice === "change_mentor") {
+      setResolutionBusy(true);
+      const res = await resolveMentorCancelBooking(mongoBookingId, { choice: "change_mentor" });
+      setResolutionBusy(false);
+      if (!res.success) {
+        toast.error(res.error || "Không ghi nhận lựa chọn.");
+        return;
+      }
+      const credit = Number(res.rebookCreditVnd ?? res.booking?.rebookCreditVnd ?? 0);
+      toast.success(
+        credit > 0
+          ? `Đã kích hoạt credit ${credit.toLocaleString("vi-VN")}₫ — chọn mentor khác, không cần CK lại nếu giá ≤ credit.`
+          : "Hãy chọn mentor mới để đặt lịch.",
+      );
+      if (res.booking) setApiBooking(res.booking);
+      try {
+        sessionStorage.setItem("prointerview_rebook_from", mongoBookingId);
+      } catch {
+        /* ignore */
+      }
+      navigate(`/mentors?rebookFrom=${encodeURIComponent(mongoBookingId)}`);
+      return;
+    }
+    if (choice === "refund") {
+      const acct = String(refundAccountNumber || "").replace(/\D/g, "");
+      if (!String(refundBankName || "").trim() || acct.length < 6 || !String(refundAccountHolder || "").trim()) {
+        toast.error("Vui lòng điền đầy đủ ngân hàng, STK và tên chủ tài khoản.");
+        return;
+      }
+      setResolutionBusy(true);
+      const res = await resolveMentorCancelBooking(mongoBookingId, {
+        choice: "refund",
+        refundReceiveBankName: String(refundBankName || "").trim(),
+        refundReceiveAccountNumber: acct,
+        refundReceiveAccountHolder: String(refundAccountHolder || "").trim(),
+      });
+      setResolutionBusy(false);
+      if (!res.success) {
+        toast.error(res.error || "Không gửi yêu cầu hoàn tiền.");
+        return;
+      }
+      toast.success("Đã gửi yêu cầu hoàn 100%. Admin sẽ CK khi đối soát.");
+      if (res.booking) setApiBooking(res.booking);
+      setMentorResolutionStep("");
+      return;
+    }
+    if (choice === "reschedule") {
+      if (!rescheduleDate || !rescheduleSlot) {
+        toast.error("Vui lòng chọn ngày và giờ mới.");
+        return;
+      }
+      setResolutionBusy(true);
+      const res = await resolveMentorCancelBooking(mongoBookingId, {
+        choice: "reschedule",
+        newDate: rescheduleDate,
+        newTimeSlot: rescheduleSlot,
+      });
+      setResolutionBusy(false);
+      if (!res.success) {
+        toast.error(res.error || "Không đổi được lịch.");
+        return;
+      }
+      toast.success("Đã đổi lịch — buổi hẹn được khôi phục với thời gian mới.");
+      if (res.booking) setApiBooking(res.booking);
+      setMentorResolutionStep("");
+    }
+  };
+
+  const mentorResolution = String(sessionData?.mentorCancelResolution || "");
+
+  const needsRefundBankForm = Boolean(
+    mongoBookingId &&
+      isLoggedIn() &&
+      String(sessionData?.paymentStatus || "").toLowerCase() === "refund_pending" &&
+      String(sessionData?.refundReceiveAccountNumber || "").replace(/\D/g, "").length < 6,
+  );
+
+  const refundBankFormTitle =
+    mentorResolution === "no_show_refund"
+      ? "Mentor không tham gia — hoàn 100%"
+      : mentorResolution === "late_cancel_refund"
+        ? "Mentor hủy gấp — hoàn 100% ưu tiên"
+        : String(sessionData?.cancelledBy || "") === "mentor"
+          ? "Điền STK nhận hoàn tiền"
+          : "Điền STK nhận hoàn tiền";
+
+  const canReportNoShow = Boolean(
+    mongoBookingId &&
+      isLoggedIn() &&
+      sessionData &&
+      elapsedSinceStartSec >= 15 * 60 &&
+      !["cancelled", "no_show", "done", "completed"].includes(String(sessionData.status || "")) &&
+      String(sessionData.paymentStatus || "").toLowerCase() === "paid",
+  );
+
+  const handleReportNoShow = async () => {
+    if (!mongoBookingId) return;
+    setReportNoShowBusy(true);
+    const res = await reportBookingNoShow(mongoBookingId, {
+      note: "Học viên báo mentor không tham gia buổi hẹn.",
+    });
+    setReportNoShowBusy(false);
+    if (!res.success) {
+      toast.error(res.error || "Không gửi được báo no-show.");
+      return;
+    }
+    toast.success("Đã ghi nhận no-show. Hoàn 100% — vui lòng điền STK nếu được yêu cầu.");
+    if (res.booking) setApiBooking(res.booking);
+  };
+
+  const handleSubmitRefundDestination = async () => {
+    if (!mongoBookingId) return;
+    const acct = String(refundAccountNumber || "").replace(/\D/g, "");
+    if (!String(refundBankName || "").trim() || acct.length < 6 || !String(refundAccountHolder || "").trim()) {
+      toast.error("Vui lòng điền đầy đủ ngân hàng, STK và tên chủ tài khoản.");
+      return;
+    }
+    setRefundDestBusy(true);
+    const res = await updateBookingRefundDestination(mongoBookingId, {
+      refundReceiveBankName: String(refundBankName || "").trim(),
+      refundReceiveAccountNumber: acct,
+      refundReceiveAccountHolder: String(refundAccountHolder || "").trim(),
+    });
+    setRefundDestBusy(false);
+    if (!res.success) {
+      toast.error(res.error || "Không lưu được STK nhận hoàn.");
+      return;
+    }
+    toast.success("Đã lưu tài khoản nhận hoàn. Admin sẽ CK khi đối soát.");
+    if (res.booking) setApiBooking(res.booking);
+  };
 
   /* ── Rating / Feedback ── */
   const [rating, setRating] = useState(0);
@@ -272,24 +517,47 @@ export function SessionDetail() {
 
   const handleConfirmCancelBooking = async () => {
     if (!mongoBookingId) return;
+    if (needsRefundBankDetails) {
+      const acct = String(refundAccountNumber || "").replace(/\D/g, "");
+      if (!String(refundBankName || "").trim() || acct.length < 6 || !String(refundAccountHolder || "").trim()) {
+        toast.error("Vui lòng điền đầy đủ ngân hàng, STK nhận hoàn và tên chủ tài khoản.");
+        return;
+      }
+    }
     setCancelBusy(true);
     const res = await cancelBooking(mongoBookingId, {
       reason: String(cancelReason || "").trim(),
+      refundReceiveBankName: needsRefundBankDetails ? String(refundBankName || "").trim() : "",
+      refundReceiveAccountNumber: needsRefundBankDetails
+        ? String(refundAccountNumber || "").replace(/\D/g, "")
+        : "",
+      refundReceiveAccountHolder: needsRefundBankDetails ? String(refundAccountHolder || "").trim() : "",
     });
     setCancelBusy(false);
     if (!res.success) {
       toast.error(res.error || "Không hủy được lịch.");
       return;
     }
-    const refund = res.cancellationPolicy?.refundPercent;
-    const paid = sessionData?.paymentStatus === "paid";
-    const extra =
-      paid && typeof refund === "number"
-        ? ` Hoàn tiền dự kiến: ${refund}% theo chính sách hệ thống.`
-        : "";
+    const pol = res.cancellationPolicy;
+    const refundAmt = Number(pol?.refundAmountVnd ?? 0);
+    const refundPct = typeof pol?.refundPercent === "number" ? pol.refundPercent : null;
+    const paid =
+      sessionData?.paymentStatus === "paid" ||
+      String(res.booking?.paymentStatus || "").toLowerCase() === "paid";
+    let extra = "";
+    if (refundAmt > 0) {
+      extra = ` Yêu cầu hoàn ${Math.round(refundAmt).toLocaleString("vi-VN")}₫${refundPct != null ? ` (${refundPct}%)` : ""} đã ghi nhận. Admin CK hoàn sau — bạn được báo khi xong.`;
+    } else if (paid && refundPct === 0) {
+      extra = " Theo chính sách, không hoàn tiền cho khoảng thời gian này.";
+    } else if (pol?.ledger === "cancelled_pending_transfer") {
+      extra = " Giao dịch chờ CK đã hủy — chưa thu tiền.";
+    }
     toast.success(`Đã hủy lịch.${extra}`);
     setCancelModalOpen(false);
     setCancelReason("");
+    setRefundBankName("");
+    setRefundAccountNumber("");
+    setRefundAccountHolder("");
     navigate("/dashboard");
   };
 
@@ -328,6 +596,59 @@ export function SessionDetail() {
         <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
         Quay lại
       </button>
+
+      {canReportNoShow && !mentorActionMode ? (
+        <div className="mb-6 rounded-2xl border border-red-200 bg-red-50/90 p-4">
+          <p className="text-sm font-bold text-red-900">Mentor không tham gia?</p>
+          <p className="mt-1 text-xs text-red-900/80">
+            Nếu mentor không vào buổi sau 15 phút kể từ giờ hẹn, bạn có thể báo no-show để được hoàn ưu tiên 100%.
+          </p>
+          <button
+            type="button"
+            disabled={reportNoShowBusy}
+            onClick={() => void handleReportNoShow()}
+            className="mt-3 rounded-xl bg-red-600 px-4 py-2 text-xs font-semibold text-white disabled:opacity-50"
+          >
+            {reportNoShowBusy ? "Đang gửi…" : "Báo mentor no-show"}
+          </button>
+        </div>
+      ) : null}
+
+      {state === "mentor_action" && sessionData ? (
+        <MentorCancelSessionPanel
+          sessionData={sessionData}
+          mode={mentorActionMode || "cancelled_generic"}
+          needsChoose={needsMentorCancelChoice}
+          mentorResolutionStep={mentorResolutionStep}
+          setMentorResolutionStep={setMentorResolutionStep}
+          resolutionBusy={resolutionBusy}
+          onResolve={(choice) => void handleResolveMentorCancel(choice)}
+          rescheduleDate={rescheduleDate}
+          rescheduleSlot={rescheduleSlot}
+          setRescheduleDate={setRescheduleDate}
+          setRescheduleSlot={setRescheduleSlot}
+          rescheduleSlotOptions={rescheduleSlotOptions}
+          loadingRescheduleSlots={loadingRescheduleSlots}
+          refundBankName={refundBankName}
+          setRefundBankName={setRefundBankName}
+          refundAccountNumber={refundAccountNumber}
+          setRefundAccountNumber={setRefundAccountNumber}
+          refundAccountHolder={refundAccountHolder}
+          setRefundAccountHolder={setRefundAccountHolder}
+          refundBankFormTitle={refundBankFormTitle}
+          needsRefundBankForm={needsRefundBankForm}
+          refundDestBusy={refundDestBusy}
+          onSubmitRefundDestination={() => void handleSubmitRefundDestination()}
+          onGoRebookMentors={() => {
+            try {
+              sessionStorage.setItem("prointerview_rebook_from", mongoBookingId);
+            } catch {
+              /* ignore */
+            }
+            navigate(`/mentors?rebookFrom=${encodeURIComponent(mongoBookingId)}`);
+          }}
+        />
+      ) : null}
 
       {/* ══════════════════════════════════════════════ */}
       {/*              STATE: UPCOMING                  */}
@@ -648,6 +969,56 @@ export function SessionDetail() {
                 <p className={`text-xs ${paymentMeta.noteClass}`}>{paymentMeta.note}</p>
               </div>
 
+              {needsRefundBankForm ? (
+                <div className="mb-4 space-y-2 rounded-2xl border border-amber-200 bg-amber-50/90 p-4">
+                  <p className="text-xs font-bold text-amber-900">{refundBankFormTitle}</p>
+                  {Number(sessionData?.cancelRefundAmountVnd) > 0 ? (
+                    <p className="text-[11px] text-amber-950/80">
+                      {Number(sessionData?.rebookCreditRemainderVnd) > 0
+                        ? "Phần tiền thừa sau đổi mentor — hoàn: "
+                        : "Số hoàn dự kiến: "}
+                      <strong>
+                        {Math.round(
+                          sessionData.rebookCreditRemainderVnd ?? sessionData.cancelRefundAmountVnd,
+                        ).toLocaleString("vi-VN")}
+                        ₫
+                      </strong>
+                    </p>
+                  ) : null}
+                  <input
+                    type="text"
+                    value={refundBankName}
+                    onChange={(e) => setRefundBankName(e.target.value)}
+                    placeholder="Tên ngân hàng"
+                    className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-violet-400"
+                  />
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    value={refundAccountNumber}
+                    onChange={(e) => setRefundAccountNumber(e.target.value)}
+                    placeholder="Số tài khoản"
+                    className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 font-mono text-sm outline-none focus:border-violet-400"
+                  />
+                  <input
+                    type="text"
+                    value={refundAccountHolder}
+                    onChange={(e) => setRefundAccountHolder(e.target.value)}
+                    placeholder="Tên chủ tài khoản"
+                    className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-violet-400"
+                  />
+                  <button
+                    type="button"
+                    disabled={refundDestBusy}
+                    onClick={() => void handleSubmitRefundDestination()}
+                    className="w-full rounded-xl py-2.5 text-sm font-semibold text-white disabled:opacity-50"
+                    style={{ background: "#6E35E8" }}
+                  >
+                    {refundDestBusy ? "Đang lưu…" : "Lưu STK nhận hoàn"}
+                  </button>
+                </div>
+              ) : null}
+
               {/* Cancel booking (API) + refund policy — khớp backend bookingsService.cancelMyBooking */}
               <div className="space-y-3">
                 {canCancelOnServer ? (
@@ -681,31 +1052,31 @@ export function SessionDetail() {
                     <CircleDollarSign
                       className="w-4 h-4 flex-shrink-0"
                       style={{
-                        color: hoursLeft > 24 ? "#10b981" : hoursLeft > 2 ? "#f59e0b" : "#ef4444",
+                        color: hoursLeft >= 24 ? "#10b981" : hoursLeft >= 12 ? "#f59e0b" : "#ef4444",
                       }}
                     />
                     <p
                       className="text-xs font-semibold"
                       style={{
-                        color: hoursLeft > 24 ? "#10b981" : hoursLeft > 2 ? "#f59e0b" : "#ef4444",
+                        color: hoursLeft >= 24 ? "#10b981" : hoursLeft >= 12 ? "#f59e0b" : "#ef4444",
                       }}
                     >
-                      {hoursLeft > 24
+                      {hoursLeft >= 24
                         ? "Hoàn 100% (nếu đã thanh toán) nếu hủy ngay"
-                        : hoursLeft > 2
+                        : hoursLeft >= 12
                           ? "Hoàn 50% (nếu đã thanh toán) nếu hủy ngay"
-                          : "Không hoàn tiền nếu đã thanh toán"}
+                          : "Không hoàn tiền (nếu đã thanh toán) nếu hủy ngay"}
                     </p>
                   </div>
                   <ul className="text-xs text-gray-500 space-y-0.5 ml-6">
-                    <li className={hoursLeft > 24 ? "text-emerald-600" : ""}>
-                      • Trước hơn 24 giờ so với giờ hẹn: hoàn 100%
+                    <li className={hoursLeft >= 24 ? "text-emerald-600" : ""}>
+                      • Hủy trước buổi từ 24 giờ trở lên: hoàn 100%
                     </li>
-                    <li className={hoursLeft > 2 && hoursLeft <= 24 ? "text-amber-600" : ""}>
-                      • Trong khoảng 2–24 giờ trước giờ hẹn: hoàn 50%
+                    <li className={hoursLeft >= 12 && hoursLeft < 24 ? "text-amber-600" : ""}>
+                      • Hủy từ 12 giờ đến dưới 24 giờ trước buổi: hoàn 50%
                     </li>
-                    <li className={hoursLeft <= 2 ? "text-red-600" : ""}>
-                      • Trong 2 giờ trước giờ hẹn: không hoàn
+                    <li className={hoursLeft < 12 ? "text-red-600" : ""}>
+                      • Dưới 12 giờ trước buổi / không tham gia: không hoàn tiền
                     </li>
                   </ul>
                   <p className="text-xs text-gray-400 pt-2 border-t border-gray-200">
@@ -851,10 +1222,11 @@ export function SessionDetail() {
             </div>
 
             <button
-              onClick={() => setDemoState("done")}
+              type="button"
+              onClick={() => navigate("/dashboard")}
               className="w-full py-3 rounded-xl text-sm font-semibold border border-gray-200 text-gray-600 hover:border-[#6E35E8]/40 hover:text-[#6E35E8] transition-all"
             >
-              Kết thúc buổi phỏng vấn →
+              Về Dashboard →
             </button>
           </div>
         </div>
@@ -1060,54 +1432,95 @@ export function SessionDetail() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm"
+            className="fixed inset-0 z-50 overflow-y-auto overscroll-y-contain bg-black/40 backdrop-blur-sm"
             onClick={() => {
               if (!cancelBusy) setCancelModalOpen(false);
             }}
           >
-            <motion.div
-              initial={{ scale: 0.96, y: 16, opacity: 0 }}
-              animate={{ scale: 1, y: 0, opacity: 1 }}
-              exit={{ scale: 0.96, y: 16, opacity: 0 }}
-              className="w-full max-w-lg rounded-3xl border border-slate-200 bg-white p-6 shadow-xl"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <h4 className="text-xl font-black text-slate-900">Hủy lịch phỏng vấn?</h4>
-              <p className="mt-2 text-sm text-slate-600">
-                {hoursLeft > 24
-                  ? "Theo chính sách hiện tại: nếu đã thanh toán, bạn được hoàn 100%."
-                  : hoursLeft > 2
-                    ? "Trong khoảng 2–24 giờ trước giờ hẹn: nếu đã thanh toán, hoàn 50%."
-                    : "Trong 2 giờ trước giờ hẹn: không hoàn tiền nếu đã thanh toán."}
-              </p>
-              <textarea
-                value={cancelReason}
-                onChange={(e) => setCancelReason(e.target.value)}
-                className="mt-4 min-h-24 w-full rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-900 outline-none focus:border-violet-400"
-                placeholder="Lý do hủy (tuỳ chọn)"
-              />
-              <div className="mt-5 grid grid-cols-2 gap-3">
-                <button
-                  type="button"
-                  disabled={cancelBusy}
-                  onClick={() => {
-                    setCancelModalOpen(false);
-                    setCancelReason("");
-                  }}
-                  className="rounded-xl border border-slate-200 bg-slate-50 py-3 text-xs font-black uppercase tracking-wider text-slate-800 disabled:opacity-50"
-                >
-                  Giữ lịch
-                </button>
-                <button
-                  type="button"
-                  disabled={cancelBusy}
-                  onClick={() => void handleConfirmCancelBooking()}
-                  className="rounded-xl border border-red-300 bg-red-50 py-3 text-xs font-black uppercase tracking-wider text-red-700 disabled:opacity-50"
-                >
-                  {cancelBusy ? "Đang xử lý…" : "Xác nhận hủy"}
-                </button>
-              </div>
-            </motion.div>
+            <div className="flex min-h-full items-center justify-center p-4 py-8">
+              <motion.div
+                initial={{ scale: 0.96, y: 16, opacity: 0 }}
+                animate={{ scale: 1, y: 0, opacity: 1 }}
+                exit={{ scale: 0.96, y: 16, opacity: 0 }}
+                className="grid w-full max-w-lg max-h-[min(85dvh,calc(100vh-3rem))] grid-rows-[minmax(0,1fr)_auto] overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-xl"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="min-h-0 overflow-y-auto overscroll-contain px-5 pb-2 pt-5 sm:px-6 sm:pt-6">
+                  <h4 className="text-xl font-black text-slate-900">Hủy lịch phỏng vấn?</h4>
+                  <p className="mt-2 text-sm text-slate-600">
+                    {hoursLeft >= 24
+                      ? "Theo chính sách hiện tại: nếu đã thanh toán, bạn được hoàn 100% (hủy từ 24 giờ trở lên trước buổi)."
+                      : hoursLeft >= 12
+                        ? "Từ 12 giờ đến dưới 24 giờ trước buổi: nếu đã thanh toán, hoàn 50%."
+                        : "Dưới 12 giờ trước buổi: không hoàn tiền nếu đã thanh toán."}
+                  </p>
+                  <textarea
+                    value={cancelReason}
+                    onChange={(e) => setCancelReason(e.target.value)}
+                    className="mt-4 min-h-[5rem] w-full rounded-2xl border border-slate-200 bg-slate-50 p-3 text-sm text-slate-900 outline-none focus:border-violet-400"
+                    placeholder="Lý do hủy (tuỳ chọn)"
+                  />
+                  {needsRefundBankDetails ? (
+                    <div className="mt-4 space-y-2 rounded-2xl border border-sky-200 bg-sky-50/90 p-3 sm:p-4">
+                      <p className="text-xs font-bold text-sky-900">Tài khoản nhận hoàn tiền</p>
+                      <p className="text-[11px] leading-snug text-sky-950/80">
+                        Tiền vào TK công ty — hệ thống không lưu STK nguồn. Điền STK nhận hoàn (số tiền do hệ thống tính).
+                      </p>
+                      <input
+                        type="text"
+                        value={refundBankName}
+                        onChange={(e) => setRefundBankName(e.target.value)}
+                        placeholder="Ngân hàng"
+                        className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-violet-400"
+                      />
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        autoComplete="off"
+                        value={refundAccountNumber}
+                        onChange={(e) => setRefundAccountNumber(e.target.value)}
+                        placeholder="Số tài khoản"
+                        className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 font-mono text-sm outline-none focus:border-violet-400"
+                      />
+                      <input
+                        type="text"
+                        autoComplete="name"
+                        value={refundAccountHolder}
+                        onChange={(e) => setRefundAccountHolder(e.target.value)}
+                        placeholder="Tên chủ tài khoản"
+                        className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-violet-400"
+                      />
+                    </div>
+                  ) : null}
+                </div>
+                <div className="border-t border-slate-100 bg-white px-5 py-4 sm:px-6">
+                  <div className="grid grid-cols-2 gap-3">
+                    <button
+                      type="button"
+                      disabled={cancelBusy}
+                      onClick={() => {
+                        setCancelModalOpen(false);
+                        setCancelReason("");
+                        setRefundBankName("");
+                        setRefundAccountNumber("");
+                        setRefundAccountHolder("");
+                      }}
+                      className="rounded-xl border border-slate-200 bg-slate-50 py-3 text-xs font-black uppercase tracking-wider text-slate-800 disabled:opacity-50"
+                    >
+                      Giữ lịch
+                    </button>
+                    <button
+                      type="button"
+                      disabled={cancelBusy}
+                      onClick={() => void handleConfirmCancelBooking()}
+                      className="rounded-xl border border-red-300 bg-red-50 py-3 text-xs font-black uppercase tracking-wider text-red-700 disabled:opacity-50"
+                    >
+                      {cancelBusy ? "Đang xử lý…" : "Xác nhận hủy"}
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>

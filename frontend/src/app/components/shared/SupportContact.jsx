@@ -67,9 +67,11 @@ export function SupportContact() {
       >
         <strong>Chính sách hỗ trợ:</strong>
         <ul className="mt-2 space-y-1 list-disc list-inside">
-          <li>Hoàn tiền 100% nếu mentor hủy</li>
-          <li>Hoàn tiền 100% nếu hủy trước 48h</li>
-          <li>Đổi lịch miễn phí qua email</li>
+          <li>Mentor hủy ≥24h: đổi lịch / đổi mentor / hoàn 100%</li>
+          <li>Mentor hủy &lt;24h: hoàn 100% ưu tiên</li>
+          <li>Mentor no-show: hoàn 100% + ghi vi phạm mentor</li>
+          <li>Bạn hủy từ 24 giờ trở lên trước buổi: hoàn 100% (đã thanh toán)</li>
+          <li>Đổi lịch qua hệ thống hoặc support@prointerview.vn</li>
         </ul>
       </div>
     </div>

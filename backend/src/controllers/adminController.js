@@ -159,6 +159,17 @@ export const AdminController = {
         return res.status(400).json({ success: false, error: "Trạng thái booking không hợp lệ." });
       }
 
+      if (nextStatus === "no_show") {
+        const result = await bookingsService.processBookingNoShow(id, { note: reason }, {
+          markedBy: "admin",
+          actorUserId: req.userId,
+        });
+        if (!result.ok) {
+          return res.status(result.status).json({ success: false, error: result.error });
+        }
+        return res.json({ success: true, booking: result.booking, refundAmountVnd: result.refundAmountVnd });
+      }
+
       const booking = await Booking.findById(id);
       if (!booking) return res.status(404).json({ success: false, error: "Không tìm thấy lịch hẹn." });
 
@@ -208,6 +219,22 @@ export const AdminController = {
     }
   },
 
+  /** Admin xác nhận đã CK hoàn cho HV (booking paymentStatus = refund_pending). */
+  confirmBookingRefund: async (req, res) => {
+    try {
+      const { id } = req.params;
+      const result = await bookingsService.confirmBankRefundByAdmin(id, {
+        adminUserId: req.userId || "",
+      });
+      if (!result.ok) {
+        return res.status(result.status).json({ success: false, error: result.error });
+      }
+      res.json({ success: true, booking: result.booking });
+    } catch (error) {
+      res.status(500).json({ success: false, error: error.message });
+    }
+  },
+
   getPendingEnrollmentTransfers: async (_req, res) => {
     try {
       const enrollments = await Enrollment.find({
@@ -216,6 +243,28 @@ export const AdminController = {
       })
         .populate("userId", "name email")
         .populate("courseId", "title price")
+        .sort({ updatedAt: -1 })
+        .limit(200)
+        .lean();
+      res.json({ success: true, enrollments });
+    } catch (error) {
+      res.status(500).json({ success: false, error: error.message });
+    }
+  },
+
+  /** Danh sách ghi danh có học phí (CK) — chờ + đã xác nhận, cho màn admin Học phí khóa học */
+  getCoursePaymentEnrollments: async (_req, res) => {
+    try {
+      const enrollments = await Enrollment.find({
+        pricePaid: { $gt: 0 },
+        paymentMethod: "transfer",
+      })
+        .populate("userId", "name email")
+        .populate({
+          path: "courseId",
+          select: "title price mentorId",
+          populate: { path: "mentorId", select: "name" },
+        })
         .sort({ updatedAt: -1 })
         .limit(200)
         .lean();

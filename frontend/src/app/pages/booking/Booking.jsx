@@ -1,5 +1,5 @@
 import React, { useMemo, useState, useEffect } from "react";
-import { useNavigate, useParams } from "react-router";
+import { useNavigate, useParams, useSearchParams } from "react-router";
 import {
   Calendar as CalendarBlank,
   Clock,
@@ -22,7 +22,7 @@ import {
   X,
 } from "lucide-react";
 import { fetchMentor, fetchMentorAvailability } from "../../utils/mentorApi";
-import { fetchBookedSlots } from "../../utils/bookingsApi";
+import { fetchBookedSlots, fetchRebookCredit } from "../../utils/bookingsApi";
 import { getSuggestedBookingData, getCVAnalysisHistory } from "../../utils/history";
 import { MentorPageShell } from "../../components/mentor/MentorPageShell";
 
@@ -87,6 +87,12 @@ const TIME_GROUPS = [
 export function Booking() {
   const navigate = useNavigate();
   const { id } = useParams();
+  const [searchParams] = useSearchParams();
+  const rebookFrom =
+    searchParams.get("rebookFrom") ||
+    (typeof sessionStorage !== "undefined" ? sessionStorage.getItem("prointerview_rebook_from") : "") ||
+    "";
+  const [rebookCredit, setRebookCredit] = useState(null);
   const [mentor, setMentor] = useState(null);
   const [mentorLoading, setMentorLoading] = useState(true);
   const [bookedSlots, setBookedSlots] = useState({});
@@ -133,6 +139,17 @@ export function Booking() {
     if (suggested?.position) setShowSmartBanner(true);
   }, []);
 
+  useEffect(() => {
+    if (!rebookFrom) {
+      setRebookCredit(null);
+      return;
+    }
+    void fetchRebookCredit(rebookFrom).then((r) => {
+      if (r.success && r.credit?.available) setRebookCredit(r.credit);
+      else setRebookCredit(null);
+    });
+  }, [rebookFrom]);
+
   const handleUseSmartFill = () => {
     if (!suggestedData) return;
     setForm({ ...form, position: suggestedData.position || "", cv: !!suggestedData.cvFile, jd: !!suggestedData.jdFile });
@@ -153,6 +170,7 @@ export function Booking() {
       cvFile: form.cv ? "Nguyen_Tuan_CV.pdf" : "",
       jdFile: form.jd ? "JD_Target.pdf" : "",
     });
+    if (rebookFrom) params.set("rebookFrom", rebookFrom);
     navigate(`/checkout?${params.toString()}`);
   };
 
@@ -738,7 +756,7 @@ export function Booking() {
                     <CurrencyCircleDollar className="mt-0.5 h-4 w-4 flex-shrink-0 text-emerald-600" />
                     <div>
                       <p className="mb-0.5 text-xs font-bold text-slate-900">Hoàn tiền 100%</p>
-                      <p className="text-xs text-slate-600">Nếu mentor hủy hoặc bạn hủy trước 48h</p>
+                      <p className="text-xs text-slate-600">Nếu mentor hủy hoặc bạn hủy từ 24 giờ trở lên trước buổi</p>
                     </div>
                   </div>
                   <div className="flex gap-2.5">

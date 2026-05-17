@@ -95,6 +95,9 @@ export function AdminMentors() {
                 <th className="px-8 py-6 text-center text-[10px] font-black uppercase tracking-widest text-slate-500">
                   Đánh giá
                 </th>
+                <th className="px-8 py-6 text-center text-[10px] font-black uppercase tracking-widest text-slate-500">
+                  No-show
+                </th>
                 <th className="px-8 py-6 text-right text-[10px] font-black uppercase tracking-widest text-slate-500">
                   Hành động
                 </th>
@@ -103,13 +106,13 @@ export function AdminMentors() {
             <tbody className="divide-y divide-slate-100 text-sm">
               {loading ? (
                 <tr>
-                  <td colSpan="5" className="px-8 py-20 text-center italic text-slate-500">
+                  <td colSpan="6" className="px-8 py-20 text-center italic text-slate-500">
                     Đang tải dữ liệu...
                   </td>
                 </tr>
               ) : filtered.length === 0 ? (
                 <tr>
-                  <td colSpan="5" className="px-8 py-20 text-center italic text-slate-500">
+                  <td colSpan="6" className="px-8 py-20 text-center italic text-slate-500">
                     Không tìm thấy cố vấn nào.
                   </td>
                 </tr>
@@ -155,6 +158,18 @@ export function AdminMentors() {
                         <Star size={12} className="fill-current" />
                         <span className="font-black text-slate-900">{mentor.rating || "0.0"}</span>
                       </div>
+                    </td>
+                    <td className="px-8 py-6 text-center">
+                      {Number(mentor.stats?.noShowCount || 0) > 0 ? (
+                        <span
+                          className="rounded-full border border-rose-200 bg-rose-50 px-3 py-1 text-[10px] font-black uppercase text-rose-800"
+                          title="Số lần no-show đã ghi nhận"
+                        >
+                          {mentor.stats.noShowCount}
+                        </span>
+                      ) : (
+                        <span className="text-[10px] font-bold text-slate-400">0</span>
+                      )}
                     </td>
                     <td className="px-8 py-6 text-right">
                       <div className="flex items-center justify-end gap-2">
