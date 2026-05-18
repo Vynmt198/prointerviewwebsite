@@ -17,6 +17,12 @@ function resolveApiBase() {
 
 export const API_BASE_URL = resolveApiBase();
 
+/** True khi VITE_API_URL được set (production backend trỏ tới Express server riêng) */
+export function isExpressBackendConfigured() {
+  const url = import.meta.env.VITE_API_URL;
+  return Boolean(url && String(url).trim());
+}
+
 /**
  * URL đầy đủ cho một path API (path bắt đầu bằng /).
  * Ví dụ: apiUrl("/api/mentors") → http://localhost:5000/api/mentors

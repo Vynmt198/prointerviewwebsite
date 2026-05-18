@@ -35,17 +35,22 @@ import {
   incrementCVCount,
   CV_FREE_LIMIT,
 } from "../../utils/auth";
-import { apiUrl as expressApiUrl } from "../../utils/api";
+import { apiUrl as expressApiUrl, isExpressBackendConfigured } from "../../utils/api";
 import {
   CVDocumentPreview,
   DocPanel,
 } from "../../components/cv/CVDocumentPreview";
+import { MentorPageShell } from "../../components/mentor/MentorPageShell";
 import { addCVAnalysisRecord } from "../../utils/history";
 import { projectId, publicAnonKey } from "/utils/supabase/info.js";
 
 // ─── API base ─────────────────────────────────────────────────────────────────
 const EDGE_FN = "make-server-64a0c849";
-const API_BASE = `https://${projectId}.supabase.co/functions/v1/${EDGE_FN}`;
+const USE_EXPRESS_CV = isExpressBackendConfigured();
+const SUPABASE_CONFIGURED = Boolean(String(import.meta.env.VITE_SUPABASE_PROJECT_ID ?? "").trim());
+const API_BASE = SUPABASE_CONFIGURED
+  ? `https://${projectId}.supabase.co/functions/v1/${EDGE_FN}`
+  : "";
 
 function getSessionId() {
   const key = "prointerview_session_id";
@@ -67,7 +72,8 @@ function apiHeaders(userToken) {
   return { Authorization: `Bearer ${t}` };
 }
 
-function apiUrl(path) {
+function supabaseApiUrl(path) {
+  if (!SUPABASE_CONFIGURED) return "";
   return `${API_BASE}/${path}`;
 }
 
@@ -310,7 +316,7 @@ export function CVAnalysis() {
   const [expandedCards, setExpandedCards] = useState(new Set());
 
   // NEW: Optional JD/Field checkboxes
-  const [enableJD, setEnableJD] = useState(false);
+  const [enableJD, setEnableJD] = useState(USE_EXPRESS_CV);
   const [enableField, setEnableField] = useState(false);
 
   const canAnalyze = plans.starterPro || plans.elitePro || cvRemaining > 0;
@@ -413,7 +419,7 @@ export function CVAnalysis() {
     setAnalyzeError(null);
     setReuseCV(null);
     setReuseJD(null);
-    setEnableJD(false);
+    setEnableJD(USE_EXPRESS_CV);
     setEnableField(false);
   };
 
@@ -422,8 +428,13 @@ export function CVAnalysis() {
     setHistoryLoading(true);
     setHistoryError(null);
     try {
+      if (!SUPABASE_CONFIGURED) {
+        setHistoryList([]);
+        setHistoryError("Lịch sử CV cần cấu hình Supabase (VITE_SUPABASE_PROJECT_ID). Phân tích CV+JD vẫn hoạt động qua backend.");
+        return;
+      }
       const token = await getForceRefreshedToken();
-      const res = await fetch(apiUrl("cv/analyses"), {
+      const res = await fetch(supabaseApiUrl("cv/analyses"), {
         headers: apiHeaders(token),
       });
       const data = await res.json();
@@ -462,6 +473,8 @@ export function CVAnalysis() {
     setJdFile(file);
     setJdUploaded(true);
     setReuseJD(null);
+    setEnableJD(true);
+    setEnableField(false);
   };
 
   // ── Main analyze handler ────────────────────────────────────────────────
@@ -818,7 +831,7 @@ export function CVAnalysis() {
     setLoadingAnalysisId(id);
     try {
       const token = await getForceRefreshedToken();
-      const res = await fetch(apiUrl(`cv/analyses/${id}`), {
+      const res = await fetch(supabaseApiUrl(`cv/analyses/${id}`), {
         headers: apiHeaders(token),
       });
       const data = await res.json();
@@ -867,7 +880,7 @@ export function CVAnalysis() {
     setDeletingId(id);
     try {
       const token = await getForceRefreshedToken();
-      const res = await fetch(apiUrl(`cv/analyses/${id}`), {
+      const res = await fetch(supabaseApiUrl(`cv/analyses/${id}`), {
         method: "DELETE",
         headers: apiHeaders(token),
       });
@@ -1150,22 +1163,8 @@ export function CVAnalysis() {
 
   // ────────────────────────────────────────────────────────────────────────────
   return (
-    <div className="min-h-full w-full font-sans antialiased text-slate-900 selection:bg-[rgba(196,255,71,0.28)] selection:text-slate-900">
-      <div
-        className="fixed inset-0 pointer-events-none -z-[3]"
-        style={{ background: "#f8f4ff" }}
-      />
-      <div className="fixed top-[-22%] left-[-12%] w-[760px] h-[760px] rounded-full pointer-events-none -z-[2] bg-[#d4ff00]/48 blur-[135px]" />
-      <div className="fixed bottom-[-22%] right-[-10%] w-[820px] h-[820px] rounded-full pointer-events-none -z-[2] bg-[#9447ff]/34 blur-[150px]" />
-      <div
-        className="fixed left-0 right-0 top-[38%] h-[180px] pointer-events-none -z-[2]"
-        style={{
-          background:
-            "linear-gradient(90deg, rgba(212,255,0,0.14) 0%, rgba(148,71,255,0.22) 55%, rgba(148,71,255,0.1) 100%)",
-          filter: "blur(32px)",
-        }}
-      />
-      <div className="relative z-[1] mx-auto w-full max-w-7xl px-6 pb-4 pt-8 sm:px-8 sm:pb-6 sm:pt-10">
+    <MentorPageShell bottomPad="pb-8">
+      <div className="relative z-[1] mx-auto w-full max-w-7xl px-6 pb-4 pt-4 sm:px-8 sm:pb-6 sm:pt-6">
         <div className="mb-8">
           <div className="mb-4 flex items-center gap-3">
             <FileText
@@ -2963,6 +2962,6 @@ export function CVAnalysis() {
           )}
         </div>
       </div>
-    </div>
+    </MentorPageShell>
   );
 }
