@@ -35,7 +35,10 @@ import {
   incrementCVCount,
   CV_FREE_LIMIT,
 } from "../../utils/auth";
-import { apiUrl as expressApiUrl, isExpressBackendConfigured } from "../../utils/api";
+import {
+  apiUrl as expressApiUrl,
+  isExpressBackendConfigured,
+} from "../../utils/api";
 import {
   CVDocumentPreview,
   DocPanel,
@@ -47,7 +50,9 @@ import { projectId, publicAnonKey } from "/utils/supabase/info.js";
 // ─── API base ─────────────────────────────────────────────────────────────────
 const EDGE_FN = "make-server-64a0c849";
 const USE_EXPRESS_CV = isExpressBackendConfigured();
-const SUPABASE_CONFIGURED = Boolean(String(import.meta.env.VITE_SUPABASE_PROJECT_ID ?? "").trim());
+const SUPABASE_CONFIGURED = Boolean(
+  String(import.meta.env.VITE_SUPABASE_PROJECT_ID ?? "").trim(),
+);
 const API_BASE = SUPABASE_CONFIGURED
   ? `https://${projectId}.supabase.co/functions/v1/${EDGE_FN}`
   : "";
@@ -316,6 +321,7 @@ export function CVAnalysis() {
   const [expandedCards, setExpandedCards] = useState(new Set());
 
   // NEW: Optional JD/Field checkboxes
+  // Prod + VITE_API_URL: mặc định CV+JD qua Express → Python (Cách A)
   const [enableJD, setEnableJD] = useState(USE_EXPRESS_CV);
   const [enableField, setEnableField] = useState(false);
 
@@ -430,7 +436,9 @@ export function CVAnalysis() {
     try {
       if (!SUPABASE_CONFIGURED) {
         setHistoryList([]);
-        setHistoryError("Lịch sử CV cần cấu hình Supabase (VITE_SUPABASE_PROJECT_ID). Phân tích CV+JD vẫn hoạt động qua backend.");
+        setHistoryError(
+          "Lịch sử CV cần cấu hình Supabase (VITE_SUPABASE_PROJECT_ID). Phân tích CV+JD vẫn hoạt động qua backend.",
+        );
         return;
       }
       const token = await getForceRefreshedToken();
@@ -493,8 +501,17 @@ export function CVAnalysis() {
     setProgress(0);
     setLoadingStage(0);
 
-    // Use derivedMode instead of mode
-    const analyzeMode = derivedMode === "cv-only" ? "field" : derivedMode;
+    const hasJdInput = jdUploaded || !!reuseJD || !!jdFile;
+    let analyzeMode = derivedMode === "cv-only" ? "field" : derivedMode;
+    if (USE_EXPRESS_CV && hasJdInput) analyzeMode = "jd";
+
+    if (USE_EXPRESS_CV && analyzeMode !== "jd") {
+      setAnalyzeError(
+        "Bật「Có Job Description」, upload file JD (PDF), rồi bấm Phân tích — hệ thống dùng backend + Python trên Render.",
+      );
+      setStep("upload");
+      return;
+    }
 
     if (cvFile || reuseCV) {
       // ── Real API path ──────────────────────────────────────────────────
@@ -767,7 +784,12 @@ export function CVAnalysis() {
             selectedField,
           );
           const headers = apiHeaders(token);
-          const url = apiUrl("cv-analysis");
+          const url = supabaseApiUrl("cv-analysis");
+          if (!url) {
+            throw new Error(
+              "Chưa cấu hình Supabase. Dùng chế độ「Có Job Description」+ JD để phân tích qua backend.",
+            );
+          }
 
           const res = await fetch(url, { method: "POST", headers, body: fd });
 
@@ -1177,10 +1199,10 @@ export function CVAnalysis() {
               Phân tích CV/JD
             </span>
           </div>
-          <h1 className="mb-4 text-3xl font-black leading-[1.08] tracking-tight text-slate-900 sm:text-4xl md:text-5xl">
+          <h1 className="app-page-title mb-3">
             Phân tích CV <span className="text-[#6E35E8]">& JD</span>
           </h1>
-          <p className="max-w-2xl text-base font-semibold leading-relaxed text-slate-600 sm:text-lg">
+          <p className="app-page-subtitle">
             Hệ thống AI đa năng tự động phân tích CV, trích xuất kỹ năng chuyên
             môn từ JD và tạo đề xuất cải thiện hồ sơ phù hợp. Lưu trữ sẵn sàng
             cho Phỏng vấn AI thực tế.
@@ -1218,7 +1240,7 @@ export function CVAnalysis() {
             ))}
           </div>
 
-          {/* ═══════════════════════��═══════════════════════════════════════════
+          {/* ════════════════════════════════════════════════════════════════════
           HISTORY VIEW
       ════════════════════════════════════════════════════════════════════ */}
           {pageView === "history" && (
@@ -1427,12 +1449,12 @@ export function CVAnalysis() {
             </div>
           )}
 
-          {/* ═══════════════════════════════════════════════════════════════════
+          {/* ════════════════════════════════════════════════════════════════════
           ANALYSIS VIEW
       ════════════════════════════════════════════════════════════════════ */}
           {pageView === "analysis" && (
             <div>
-              {/* ── UPLOAD ───────────────────────��──────────────────────────── */}
+              {/* ── UPLOAD ──────────────────────────────────────────────────── */}
               {step === "upload" && (
                 <div>
                   {/* Error */}

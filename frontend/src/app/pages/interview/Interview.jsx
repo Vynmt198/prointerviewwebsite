@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { MentorPageShell } from "../../components/mentor/MentorPageShell";
 import { useNavigate } from "react-router";
 import {
   Upload,
@@ -324,11 +325,8 @@ export function Interview() {
   const optOn = "border-violet-500/65 bg-violet-100 shadow-[0_0_24px_rgba(122,35,229,0.18)]";
 
   return (
-    <div className="interview-light relative min-h-screen overflow-x-hidden pb-24 font-sans text-slate-900 antialiased selection:bg-[rgba(196,255,71,0.28)] selection:text-slate-900">
+    <MentorPageShell className="interview-light" bottomPad="pb-24">
       <style>{`
-        .interview-light.pi-page-dashboard-bg {
-          background: linear-gradient(165deg, #f8f4ff 0%, #f5f8ff 45%, #f7f4ff 100%);
-        }
         .interview-glass {
           background: linear-gradient(145deg, rgba(255,255,255,0.92) 0%, rgba(246,248,255,0.95) 100%);
           backdrop-filter: blur(24px);
@@ -367,11 +365,6 @@ export function Interview() {
         }
       `}</style>
 
-      <div className="fixed inset-0 pointer-events-none z-0" style={{ background: "#f8f4ff" }} />
-      <div className="fixed top-[-22%] left-[-12%] w-[760px] h-[760px] rounded-full pointer-events-none z-0 bg-[#d4ff00]/48 blur-[135px]" />
-      <div className="fixed bottom-[-22%] right-[-10%] w-[820px] h-[820px] rounded-full pointer-events-none z-0 bg-[#9447ff]/34 blur-[150px]" />
-      <div className="fixed left-0 right-0 top-[38%] h-[180px] pointer-events-none z-0" style={{ background: "linear-gradient(90deg, rgba(212,255,0,0.14) 0%, rgba(148,71,255,0.22) 55%, rgba(148,71,255,0.1) 100%)", filter: "blur(32px)" }} />
-
       <header className="relative pt-8 pb-2 sm:pt-10 sm:pb-4">
         <div
           className="absolute inset-0 opacity-[0.11]"
@@ -394,7 +387,7 @@ export function Interview() {
                 ProInterview · Phỏng vấn AI
               </span>
             </div>
-            <h1 className="mb-4 text-3xl font-black leading-[1.08] tracking-tight text-slate-900 sm:text-4xl md:text-5xl">
+            <h1 className="app-page-title mb-3">
               <span className="text-slate-900">
                 Thiết lập{" "}
               </span>
@@ -402,7 +395,7 @@ export function Interview() {
                 Phỏng vấn AI
               </span>
             </h1>
-            <p className="max-w-2xl text-base font-semibold leading-relaxed text-slate-600 sm:text-lg">
+            <p className="app-page-subtitle">
               Khởi động không gian phỏng vấn mô phỏng. Cung cấp thông tin để AI tối ưu hóa bộ câu hỏi cá nhân hoá dành riêng cho bạn.
             </p>
         </div>
@@ -892,6 +885,6 @@ export function Interview() {
         )}
         </div>
       </main>
-    </div>
+    </MentorPageShell>
   );
 }

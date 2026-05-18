@@ -29,6 +29,8 @@ const enrollmentSchema = new Schema(
     transferForceConfirm: { type: Boolean, default: false },
     transferForceNote: { type: String, default: "" },
     paidAt: { type: Date },
+    /** Đã ghi có thu nhập mentor + stats khóa (tránh cộng trùng). */
+    mentorEarningsCreditedAt: { type: Date },
   },
   { collection: "enrollments", timestamps: true }
 );

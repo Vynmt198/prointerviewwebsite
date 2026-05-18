@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { MentorPageShell } from "../../components/mentor/MentorPageShell";
 import { useNavigate, useLocation } from "react-router";
 import {
   Star,
@@ -293,7 +294,7 @@ export function InterviewFeedback() {
       : { cls: "bg-red-100 text-red-600", label: "Cần cải thiện" };
 
   return (
-    <div className="pi-page-dashboard-bg relative min-h-full w-full overflow-hidden antialiased text-foreground">
+    <MentorPageShell bottomPad="pb-12">
       {/* Loading overlay */}
       {evaluating && (
         <div className="absolute inset-0 z-50 flex flex-col items-center justify-center gap-4 bg-[#070510]/85 backdrop-blur-sm">
@@ -302,11 +303,6 @@ export function InterviewFeedback() {
           <p className="text-xs text-white/55">AI đang đánh giá theo chuẩn SHRM/DDI</p>
         </div>
       )}
-      <div className="pointer-events-none absolute inset-0 z-0">
-        <div className="absolute -left-24 top-10 h-80 w-80 rounded-full bg-[#d4ff00]/45 blur-[130px]" />
-        <div className="absolute -right-20 top-24 h-[22rem] w-[22rem] rounded-full bg-[#9447ff]/32 blur-[150px]" />
-        <div className="absolute left-1/2 top-[30%] h-44 w-[55rem] -translate-x-1/2 bg-gradient-to-r from-[#d4ff00]/20 via-[#d4ff00]/8 to-[#9447ff]/20 blur-[95px]" />
-      </div>
       <div className="relative z-10 mx-auto max-w-4xl p-6">
       {/* Error banner */}
       {evalError && (
@@ -330,7 +326,7 @@ export function InterviewFeedback() {
           <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-emerald-400/35 bg-emerald-500/15 px-3 py-1.5 text-xs font-semibold text-emerald-100">
             <Check className="h-3.5 w-3.5" /> Hoàn thành phỏng vấn
           </div>
-          <h1 className="mb-1 text-foreground" style={{ fontSize: "1.5rem", fontWeight: 700 }}>
+          <h1 className="app-page-title mb-1 text-foreground">
             Kết quả phỏng vấn của bạn
           </h1>
           <p className="text-sm text-muted-foreground">
@@ -755,6 +751,6 @@ export function InterviewFeedback() {
         />
       </div>
       </div>
-    </div>
+    </MentorPageShell>
   );
 }

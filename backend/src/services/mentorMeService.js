@@ -247,8 +247,12 @@ export async function getAvailabilityByMentorId(rawId) {
     or.push({ _id: rawId });
     or.push({ userId: rawId });
   }
-  const m = await Mentor.findOne({ $or: or }).select("publicId timezone availableSlots blockedDates recurringSchedule isActive").lean();
-  if (!m || m.isActive === false) return { ok: false, status: 404, error: "Not found" };
+  const m = await Mentor.findOne({ $or: or })
+    .select("publicId timezone availableSlots blockedDates recurringSchedule isActive available isVerified")
+    .lean();
+  if (!m || m.isActive === false || m.available === false || m.isVerified !== true) {
+    return { ok: false, status: 404, error: "Not found" };
+  }
   return {
     ok: true,
     availability: {

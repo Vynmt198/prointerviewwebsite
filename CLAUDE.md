@@ -329,9 +329,9 @@ Hủy booking: `DELETE /api/bookings/:id` (không dùng `PATCH .../cancel`).
 
 ### Payments
 
-- MoMo, ZaloPay (sandbox-friendly); webhook xác nhận → cập nhật booking + plan.
-- VNPay: một số route liên quan trong `paymentsService` — kiểm tra trước khi dùng prod.
-- Luồng: `POST /api/payments/initiate` → redirect/QR → webhook → plan activated.
+- **Phạm vi sản phẩm:** Frontend production dùng **chuyển khoản ngân hàng** (checkout / ghi danh khóa + admin xác nhận qua ledger `payments`). **Không ưu tiên** MoMo, ZaloPay, thẻ làm kênh khách hàng trừ khi được yêu cầu rõ. Backend vẫn có stub initiate/webhook — coi là ngoài phạm vi mặc định.
+- CK: `recordTransferPending` → user `submit-transfer` → admin `confirm-transfer-payment` → `recordAdminTransferSuccess`.
+- MoMo, ZaloPay, VNPay: sandbox/stub trong `paymentsService` — kiểm tra trước khi bật prod.
 
 ---
 

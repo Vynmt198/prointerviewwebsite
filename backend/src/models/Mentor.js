@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { resolveStoredUploadUrl } from "../utils/resolveStoredUploadUrl.js";
 
 const { Schema } = mongoose;
 
@@ -60,6 +61,8 @@ const mentorSchema = new Schema(
       profileViews: { type: Number, default: 0 },
       acceptanceRate: { type: Number, default: 100 },
       rebookingRate: { type: Number, default: 0 },
+      /** Số lần no-show (mentor không tham gia) — điều khoản vi phạm. */
+      noShowCount: { type: Number, default: 0 },
     },
 
     finance: {
@@ -114,7 +117,7 @@ export function toPublicMentor(doc) {
     rating: stats.rating ?? 0,
     reviews: stats.reviewCount ?? 0,
     price: m.pricePerHour ?? 0,
-    avatar: m.avatar ?? "",
+    avatar: resolveStoredUploadUrl(m.avatar ?? ""),
     tags: Array.isArray(m.specialties) && m.specialties.length ? m.specialties : [],
     available: m.available !== false,
     bio: m.bio ?? "",

@@ -10,6 +10,7 @@ Dùng cloud LLM (Groq/Gemini/OpenAI) nếu LLM_API_KEY set trong env,
 fallback về Ollama local nếu không có key.
 """
 
+from __future__ import annotations
 import json
 import re
 from typing import Optional

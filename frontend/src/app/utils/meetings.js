@@ -24,15 +24,19 @@ export function generateJoinCode() {
 
 // Create meeting session when booking is confirmed
 export function createMeetingSession(data) {
+  const meetings = getMeetings();
+  // Tránh tạo trùng
+  const existing = meetings.find(m => m.sessionId === data.sessionId);
+  if (existing) return existing;
+
   const meeting = {
     ...data,
-    joinCode: generateJoinCode(),
+    joinCode: data.joinCode || generateJoinCode(),
     mentorJoined: false,
     customerJoined: false,
     status: "pending",
   };
   
-  const meetings = getMeetings();
   meetings.push(meeting);
   saveMeetings(meetings);
   

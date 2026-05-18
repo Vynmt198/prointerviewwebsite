@@ -1,5 +1,5 @@
 import React from "react";
-import { useNavigate, useParams } from "react-router";
+import { useNavigate, useParams, useSearchParams } from "react-router";
 import {
   Star,
   Clock,
@@ -30,6 +30,14 @@ import { MentorPageShell } from "../../components/mentor/MentorPageShell";
 export function MentorProfile() {
   const navigate = useNavigate();
   const { id } = useParams();
+  const [searchParams] = useSearchParams();
+  const rebookFrom =
+    searchParams.get("rebookFrom") ||
+    (typeof sessionStorage !== "undefined" ? sessionStorage.getItem("prointerview_rebook_from") : "") ||
+    "";
+  const bookingHref = rebookFrom
+    ? `/booking/${id}?rebookFrom=${encodeURIComponent(rebookFrom)}`
+    : `/booking/${id}`;
   const [mentor, setMentor] = React.useState(null);
   const [loadingMentor, setLoadingMentor] = React.useState(true);
   const [showReportModal, setShowReportModal] = React.useState(false);
@@ -110,7 +118,7 @@ export function MentorProfile() {
                      <div className="mb-6 flex flex-wrap items-center gap-2">
                         <span className="rounded-xl border border-slate-200 bg-slate-100 px-4 py-1.5 text-[10px] font-black uppercase tracking-widest text-slate-700">{mentor.company}</span>
                      </div>
-                     <h1 className="font-headline mb-4 text-5xl font-black leading-none tracking-tighter text-slate-900 sm:text-6xl">{mentor.name}</h1>
+                     <h1 className="font-headline app-page-title mb-3 text-2xl sm:text-3xl">{mentor.name}</h1>
                      <p className="mb-8 text-xl font-medium text-slate-600">{mentor.title}</p>
                      <div className="grid grid-cols-2 gap-8 border-t border-slate-200 pt-8 md:grid-cols-3">
                         <div>
@@ -246,12 +254,12 @@ export function MentorProfile() {
                    </div>
 
                    <button 
-                      onClick={() => navigate(`/booking/${mentor.id}`)}
+                      onClick={() => navigate(bookingHref)}
                       className="mb-4 flex w-full items-center justify-center gap-3 rounded-3xl bg-[#c4ff47] py-5 text-xs font-black uppercase tracking-widest text-slate-900 shadow-lg transition-all hover:brightness-95 active:scale-[0.99]">
                       Đặt lịch ngay <ArrowRight size={18} />
                    </button>
                    <button 
-                      onClick={() => navigate(`/booking/${mentor.id}`)}
+                      onClick={() => navigate(bookingHref)}
                       className="w-full rounded-3xl border border-slate-200 bg-white py-5 text-xs font-black uppercase tracking-widest text-slate-600 transition-all hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900">
                       Xem toàn bộ lịch trống
                    </button>

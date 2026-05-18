@@ -52,22 +52,33 @@ function maskAccountNumber(value) {
 }
 
 function toPayoutHistoryRow(row) {
-  const rawStatus = String(row.status || "pending");
-  const status =
-    rawStatus === "rejected"
-      ? "failed"
-      : rawStatus === "paid" || rawStatus === "approved"
-        ? "completed"
-        : "pending";
+  const raw = String(row.status || "pending");
+  let status = "pending";
+  let description = "Yêu cầu rút tiền đang chờ duyệt";
+  if (raw === "rejected") {
+    status = "failed";
+    description = "Yêu cầu rút tiền bị từ chối";
+  } else if (raw === "paid") {
+    status = "paid";
+    description = "Đã chuyển khoản rút tiền";
+  } else if (raw === "approved") {
+    status = "approved";
+    description = "Đã duyệt — chờ chuyển khoản";
+  } else if (raw === "pending") {
+    status = "pending";
+    description = "Yêu cầu rút tiền đang chờ duyệt";
+  }
   return {
     id: String(row._id),
     type: "withdraw",
     amount: Number(row.amount || 0),
     status,
     date: row.requestedAt || row.createdAt,
-    description: status === "failed" ? "Yêu cầu rút tiền bị từ chối" : "Yêu cầu rút tiền",
+    description,
     rejectReason: String(row.rejectReason || ""),
     reviewedAt: row.reviewedAt || null,
+    paidAt: row.paidAt || null,
+    transferRef: String(row.transferRef || ""),
     note: String(row.note || ""),
     providerRef: String(row.providerRef || ""),
   };
@@ -97,9 +108,12 @@ export async function getMentorDashboard(userId) {
     mentorId: mentor._id,
     status: { $in: ["pending", "confirmed", "in_progress"] },
   })
+    .populate({ path: "userId", select: "name email avatar" })
     .sort({ date: 1, timeSlot: 1 })
     .limit(10)
     .lean();
+
+  const { toPublicBooking } = await import("./bookingsService.js");
 
   const reviews = await Review.find({ targetType: "mentor", targetId: mentor._id, isVisible: { $ne: false } })
     .select("rating")
@@ -114,7 +128,7 @@ export async function getMentorDashboard(userId) {
       completedSessions: completed,
       reviewCount,
       avgRating: Math.round(avgRating * 10) / 10,
-      upcomingBookings: upcoming,
+      upcomingBookings: upcoming.map(b => toPublicBooking(b)),
     },
   };
 }
@@ -357,7 +371,10 @@ export async function getMentorPayoutHistory(userId) {
       status: row.status,
       requestedAt: row.requestedAt || row.createdAt,
       reviewedAt: row.reviewedAt || null,
+      paidAt: row.paidAt || null,
+      transferRef: String(row.transferRef || ""),
       rejectReason: row.rejectReason || "",
+      note: String(row.note || ""),
       payoutAccountMasked: maskAccountNumber(row.payoutAccount?.accountNumber || ""),
       bankName: row.payoutAccount?.bankName || "",
       accountName: row.payoutAccount?.accountName || "",
@@ -497,7 +514,7 @@ export async function getMentorReviews(userId) {
     return {
       id: String(r._id),
       mentee: {
-        name: u.name || "Học viên",
+        name: u.name || u.email || "Thành viên",
         avatar: u.avatar || "",
       },
       position: u.desiredPosition || "",

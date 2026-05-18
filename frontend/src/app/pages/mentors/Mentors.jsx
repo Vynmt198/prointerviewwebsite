@@ -1,5 +1,6 @@
+import { MentorPageShell } from "../../components/mentor/MentorPageShell";
 import React, { useState, useMemo, useRef, useEffect } from "react";
-import { useNavigate } from "react-router";
+import { useNavigate, useSearchParams } from "react-router";
 import {
   Search as MagnifyingGlass,
   Star,
@@ -15,6 +16,7 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { fetchMentors } from "../../utils/mentorApi";
+import { fetchRebookCredit } from "../../utils/bookingsApi";
 import { FIELDS } from "../../data/mockData";
 
 const EXPERIENCE_OPTIONS = ["Tất cả", "1-3 năm", "4-6 năm", "7+ năm"];
@@ -28,6 +30,12 @@ const RATING_OPTIONS = ["Tất cả", "4.5+", "4.0+", "3.5+"];
 
 export function Mentors() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const rebookFrom =
+    searchParams.get("rebookFrom") ||
+    (typeof sessionStorage !== "undefined" ? sessionStorage.getItem("prointerview_rebook_from") : "") ||
+    "";
+  const [rebookCredit, setRebookCredit] = useState(null);
   const [search, setSearch] = useState("");
   const [selectedField, setSelectedField] = useState("Tất cả");
   const [selectedExp, setSelectedExp] = useState("Tất cả");
@@ -43,6 +51,22 @@ export function Mentors() {
   // Dropdown states
   const [openDropdown, setOpenDropdown] = useState(null);
   const dropdownRef = useRef(null);
+
+  useEffect(() => {
+    if (!rebookFrom) {
+      setRebookCredit(null);
+      return;
+    }
+    void fetchRebookCredit(rebookFrom).then((r) => {
+      if (r.success && r.credit?.available) setRebookCredit(r.credit);
+      else setRebookCredit(null);
+    });
+  }, [rebookFrom]);
+
+  const bookingPath = (mentorId) => {
+    const base = `/booking/${mentorId}`;
+    return rebookFrom ? `${base}?rebookFrom=${encodeURIComponent(rebookFrom)}` : base;
+  };
 
   useEffect(() => {
     fetchMentors()
@@ -222,15 +246,8 @@ export function Mentors() {
   };
 
   return (
-    <div className="mentors-light pi-page-dashboard-bg relative min-h-full w-full overflow-hidden font-sans text-slate-900 antialiased selection:bg-[rgba(196,255,71,0.28)] selection:text-slate-900">
-      <div className="pointer-events-none fixed inset-0 z-0">
-        <div className="fixed top-[-22%] left-[-12%] h-[760px] w-[760px] rounded-full bg-[#d4ff00]/48 blur-[135px]" />
-        <div className="fixed bottom-[-22%] right-[-10%] h-[820px] w-[820px] rounded-full bg-[#9447ff]/34 blur-[150px]" />
-      </div>
+    <MentorPageShell className="mentors-light" bottomPad="pb-20">
       <style>{`
-        .mentors-light.pi-page-dashboard-bg {
-          background: linear-gradient(165deg, #f8f4ff 0%, #f5f8ff 45%, #f7f4ff 100%);
-        }
         .mentors-light .card-premium {
           background: linear-gradient(145deg, rgba(255,255,255,0.92) 0%, rgba(246,248,255,0.95) 100%) !important;
           border-color: rgba(148,71,255,0.16) !important;
@@ -263,6 +280,15 @@ export function Mentors() {
       `}</style>
       <header className="relative z-10 pb-2 pt-8 sm:pb-4 sm:pt-10">
         <div className="relative z-10 mx-auto max-w-7xl px-6 sm:px-8">
+          {rebookCredit?.available ? (
+            <div className="mb-6 rounded-2xl border border-violet-300 bg-violet-50/95 px-4 py-3 text-sm text-violet-950">
+              <p className="font-bold">Credit đổi mentor</p>
+              <p className="mt-1 text-xs leading-relaxed text-violet-900/90">
+                Bạn có <strong>{Number(rebookCredit.creditVnd || 0).toLocaleString("vi-VN")}₫</strong> từ lịch mentor đã
+                hủy. Chọn <strong>mentor khác</strong> — nếu giá buổi mới ≤ credit thì <strong>không cần chuyển khoản lại</strong>.
+              </p>
+            </div>
+          ) : null}
           <div className="mb-8">
           <div className="mb-4 flex items-center gap-3">
             <Users
@@ -275,13 +301,13 @@ export function Mentors() {
               Mentor 1:1
             </span>
           </div>
-          <h1 className="mb-4 max-w-4xl text-3xl font-black leading-[1.08] tracking-tight text-slate-900 sm:text-4xl md:text-5xl">
+          <h1 className="app-page-title mb-3">
             Tìm Mentor{" "}
             <span className="text-[#6E35E8]">
               phù hợp.
             </span>
           </h1>
-          <p className="mb-8 max-w-2xl text-base font-semibold leading-relaxed text-slate-600 sm:text-lg">
+          <p className="app-page-subtitle mb-8">
             Đặt lịch phỏng vấn 1-1 với các HR/Manager từ Shopee, Grab, VNG và 200+ công ty hàng đầu
           </p>
           <div className="flex flex-wrap gap-6">
@@ -523,7 +549,7 @@ export function Mentors() {
                   </div>
                   <button
                     type="button"
-                    onClick={(e) => { e.stopPropagation(); navigate(`/booking/${mentor.id}`); }}
+                    onClick={(e) => { e.stopPropagation(); navigate(bookingPath(mentor.id)); }}
                     className="rounded-xl bg-gradient-to-br from-[#6E35E8] to-[#8B4DFF] px-4 py-2 text-xs font-bold text-white shadow-md shadow-violet-900/40 transition-opacity hover:opacity-90"
                   >
                     Đặt lịch
@@ -535,6 +561,6 @@ export function Mentors() {
         </div>
       ))}
       </div>
-    </div>
+    </MentorPageShell>
   );
 }

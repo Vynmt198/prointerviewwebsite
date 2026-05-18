@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { resolveStoredUploadUrl } from "../utils/resolveStoredUploadUrl.js";
 
 const { Schema } = mongoose;
 
@@ -161,7 +162,7 @@ export function toPublicUser(doc) {
     email: plain.email,
     name: plain.name,
     role: plain.role,
-    avatar: plain.avatar,
+    avatar: resolveStoredUploadUrl(plain.avatar),
     phone: plain.phone ?? "",
     position: (plain.desiredPosition || plain.position || "").trim(),
     school: plain.school ?? "",

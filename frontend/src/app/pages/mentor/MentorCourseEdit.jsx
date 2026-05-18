@@ -51,17 +51,29 @@ import {
    createCourseDraft,
    publishCourse,
    updateCourseDraft,
+   archiveCourse,
+   fetchCourseMentorStudents,
+   fetchCourseMentorQA,
+   answerCourseMentorQA,
+   fetchCourseMentorReviews,
+   fetchCourseMentorAnalytics,
 } from "../../utils/courseApi";
+import { ArchiveCourseDialog } from "../../components/courses/ArchiveCourseDialog";
 import { fetchMyMentorProfile } from "../../utils/mentorApi";
 import { uploadFile } from "../../utils/uploadApi";
 import { MentorPageShell } from "../../components/mentor/MentorPageShell";
 import { toast } from "sonner";
+import { mediaSrc, DEFAULT_COURSE_THUMB, avatarSrc } from "../../utils/mediaUrl";
 
-const MENTOR_COURSE_EDIT_EXTRA_CSS = `
-        .tab-btn { position: relative; padding: 16px 24px; font-size: 10px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; color: rgba(255,255,255,0.4); transition: all 0.3s; }
-        .tab-btn.active { color: #fff; }
-        .tab-indicator { position: absolute; bottom: 0; left: 24px; right: 24px; height: 3px; background: #c4ff47; box-shadow: 0 0 15px #c4ff47; border-radius: 10px; }
-`;
+const COURSE_STATUS_META = {
+   published: { label: "Đã đăng", className: "bg-emerald-50 text-emerald-700 border-emerald-200" },
+   pending_review: { label: "Chờ duyệt mới", className: "bg-amber-50 text-amber-800 border-amber-200" },
+   pending_update: { label: "Chờ duyệt cập nhật", className: "bg-sky-50 text-sky-800 border-sky-200" },
+   draft: { label: "Bản nháp", className: "bg-slate-100 text-slate-600 border-slate-200" },
+   archived: { label: "Đã lưu trữ", className: "bg-red-50 text-red-700 border-red-200" },
+};
+
+const MENTOR_COURSE_EDIT_EXTRA_CSS = "";
 
 /* ── Helpers ─────────────────────────────────────────────────── */
 const formatDuration = (minutes) => {
@@ -72,35 +84,26 @@ const formatDuration = (minutes) => {
 const formatPrice = (price) =>
    new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(price);
 
-/* ── Mock data persists from legacy implementation ─────────── */
-const MOCK_STUDENTS = [
-   { id: "s1", name: "Nguyễn Văn An", avatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=80&q=80", progress: 92, completedLessons: 11, lastActive: "2 giờ trước", enrolled: "10/03/2024", status: "active" },
-   { id: "s2", name: "Trần Thị Bích", avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=80&q=80", progress: 100, completedLessons: 12, lastActive: "1 ngày trước", enrolled: "05/03/2024", status: "completed" },
-   { id: "s3", name: "Lê Minh Châu", avatar: "https://images.unsplash.com/photo-1527980965255-d3b416303d12?w=80&q=80", progress: 42, completedLessons: 5, lastActive: "3 ngày trước", enrolled: "12/03/2024", status: "active" },
-   { id: "s4", name: "Phạm Thu Dung", avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=80&q=80", progress: 67, completedLessons: 8, lastActive: "5 giờ trước", enrolled: "08/03/2024", status: "active" },
-   { id: "s5", name: "Hoàng Văn Em", avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=80&q=80", progress: 8, completedLessons: 1, lastActive: "7 ngày trước", enrolled: "15/03/2024", status: "inactive" },
-   { id: "s6", name: "Vũ Thị Phương", avatar: "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=80&q=80", progress: 100, completedLessons: 12, lastActive: "2 ngày trước", enrolled: "01/03/2024", status: "completed" },
-   { id: "s7", name: "Đỗ Quang Hùng", avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=80&q=80", progress: 58, completedLessons: 7, lastActive: "12 giờ trước", enrolled: "18/03/2024", status: "active" },
-   { id: "s8", name: "Ngô Bảo Châu", avatar: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=80&q=80", progress: 25, completedLessons: 3, lastActive: "4 ngày trước", enrolled: "20/03/2024", status: "inactive" },
-];
-
-const MOCK_QA = [
-   { id: "q1", lessonIdx: 0, student: "Nguyễn Văn An", avatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=80&q=80", question: "Trong phần Situation, nên mô tả bao nhiêu context là đủ?", answer: null, time: "2 giờ trước", likes: 5 },
-   { id: "q2", lessonIdx: 2, student: "Lê Minh Châu", avatar: "https://images.unsplash.com/photo-1527980965255-d3b416303d12?w=80&q=80", question: "Khi kể về Task, tôi nên phân biệt rõ task của team và task của cá nhân không?", answer: "Nên focus vào task của CÁ NHÂN bạn...", time: "1 ngày trước", likes: 12 },
-];
-
-const MENTOR_STUDENT_REVIEWS = [
-   { id: "msr1", name: "Nguyễn Minh Khoa", avatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=80&q=80", role: "Backend Developer", rating: 5, comment: "Khóa học cực kỳ thực tế và chi tiết.", date: "2024-03-15", helpful: 24, lessonRef: "Bài 2: Cấu trúc STAR", verified: true, responded: true, response: "Cảm ơn Khoa rất nhiều!" },
-];
-
-const generateLessonStats = (count) =>
-   Array.from({ length: count }, (_, i) => ({
-      views: Math.floor(400 - i * 25 + Math.random() * 50),
-      completionRate: Math.max(55, Math.floor(95 - i * 3.5 + Math.random() * 10)),
-      avgWatchTime: Math.max(60, Math.floor(85 - i * 2 + Math.random() * 15)),
-      dropoffRate: Math.min(45, Math.floor(5 + i * 2.5 + Math.random() * 8)),
-      questions: Math.floor(Math.random() * 8),
-   }));
+function TabPanelState({ loading, error, empty, emptyMessage, children }) {
+   if (loading) {
+      return (
+         <div className="glass-card flex min-h-[200px] items-center justify-center p-12">
+            <div className="h-8 w-8 animate-spin rounded-full border-4 border-violet-600 border-t-transparent" />
+         </div>
+      );
+   }
+   if (error) {
+      return <div className="glass-card p-8 text-center text-sm text-red-600">{error}</div>;
+   }
+   if (empty) {
+      return (
+         <div className="glass-card p-12 text-center text-sm text-slate-500">
+            {emptyMessage || "Chưa có dữ liệu."}
+         </div>
+      );
+   }
+   return children;
+}
 
 /* ── UI Components ─────────────────────────────────────────── */
 
@@ -119,37 +122,50 @@ function MiniBar({ value, max = 100, color }) {
 
 /* ── Tabs Content ──────────────────────────────────────────── */
 
-function ReviewsTab({ mentorAvatar, mentorName }) {
+function ReviewsTab({ reviews, summary }) {
+   const stats = [
+      { label: "Rating TB", value: summary?.avgRating ?? "0.0" },
+      { label: "Tổng đánh giá", value: summary?.total ?? reviews.length },
+      { label: "Chờ phản hồi", value: summary?.pendingReply ?? 0 },
+      { label: "Đã xác minh", value: reviews.filter((r) => r.verified).length },
+   ];
    return (
-      <div className="space-y-10">
-         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            {[
-               { label: "Rating TB", value: "4.9", color: "#c4ff47" },
-               { label: "Tổng đánh giá", value: 124, color: "#6E35E8" },
-               { label: "Chờ phản hồi", value: 3, color: "#FF8C42" },
-               { label: "Tỷ lệ hữu ích", value: "98%", color: "#secondary" }
-            ].map((s, i) => (
-               <div key={i} className="glass-card p-8">
+      <motion.div className="space-y-8">
+         <motion.div className="grid grid-cols-1 gap-4 md:grid-cols-4">
+            {stats.map((s, i) => (
+               <motion.div key={i} className="glass-card p-6">
                   <h3 className="text-3xl font-black text-slate-900 tracking-tighter mb-1">{s.value}</h3>
                   <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">{s.label}</p>
-               </div>
+               </motion.div>
             ))}
-         </div>
-         <div className="space-y-6">
-            {MENTOR_STUDENT_REVIEWS.map(review => (
-               <div key={review.id} className="glass-card p-10">
-                  <div className="flex items-start gap-6 mb-8">
-                     <img src={review.avatar} className="w-14 h-14 rounded-2xl object-cover ring-2 ring-white/5" />
-                     <div>
-                        <h5 className="text-lg font-black text-slate-900 tracking-tight">{review.name}</h5>
-                        <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">{review.role} · {review.date}</p>
-                     </div>
-                  </div>
-                  <p className="text-base font-medium text-zinc-300 italic">"{review.comment}"</p>
-               </div>
+         </motion.div>
+         <motion.div className="space-y-4">
+            {reviews.map((review) => (
+               <motion.div key={review.id} className="glass-card p-8">
+                  <motion.div className="mb-4 flex items-start gap-4">
+                     <img src={avatarSrc(review.avatar)} alt="" className="h-12 w-12 rounded-xl object-cover" />
+                     <motion.div>
+                        <h5 className="text-base font-bold text-slate-900">{review.name}</h5>
+                        <p className="text-xs text-slate-500">
+                           {review.role ? `${review.role} · ` : ""}
+                           {review.date}
+                           {" · "}
+                           {"★".repeat(review.rating)}
+                           {"☆".repeat(Math.max(0, 5 - review.rating))}
+                        </p>
+                     </motion.div>
+                  </motion.div>
+                  <p className="text-sm leading-relaxed text-slate-700 italic">"{review.comment}"</p>
+                  {review.response ? (
+                     <motion.div className="mt-4 rounded-xl border border-violet-100 bg-violet-50/50 p-4 text-sm text-slate-700">
+                        <span className="font-bold text-violet-700">Phản hồi của bạn: </span>
+                        {review.response}
+                     </motion.div>
+                  ) : null}
+               </motion.div>
             ))}
-         </div>
-      </div>
+         </motion.div>
+      </motion.div>
    );
 }
 
@@ -243,25 +259,28 @@ function LessonsTab({ lessons, onLessonsChange }) {
    };
 
    return (
-      <div className="space-y-8">
-         <div className="flex items-center justify-between mb-4">
-            <h3 className="text-xl font-black text-slate-900 tracking-tight uppercase">Cấu trúc bài giảng</h3>
+      <div className="glass-card overflow-hidden">
+         <div className="flex flex-col gap-4 border-b border-slate-200/80 bg-slate-50/80 px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+               <h3 className="app-page-title">Nội dung bài giảng</h3>
+               <p className="app-page-subtitle mt-1">{editList.length} bài học</p>
+            </div>
             <button
                type="button"
                onClick={handleAddLesson}
-               className="px-6 py-3 rounded-2xl bg-primary-fixed text-black text-[10px] font-black uppercase tracking-widest shadow-xl flex items-center gap-2"
+               className="inline-flex shrink-0 items-center justify-center gap-2 rounded-2xl bg-violet-600 px-5 py-3 text-xs font-bold uppercase tracking-wide text-white shadow-md shadow-violet-600/20 hover:bg-violet-700"
             >
-               <Plus size={16} /> Thêm bài học mới
+               <Plus size={16} /> Thêm bài học
             </button>
          </div>
-         <div className="space-y-4">
+         <ul className="divide-y divide-slate-100">
             {editList.map((lesson, idx) => (
-               <div key={lesson.id} className={`glass-card p-6 group transition-all`}>
+               <li key={lesson.id} className="px-4 py-5 transition-colors hover:bg-violet-50/30 sm:px-6">
                   <div className="flex items-start justify-between gap-4">
                      <div className="flex items-start gap-6 flex-1">
-                        <div className="w-10 h-10 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center text-sm font-black text-zinc-500 group-hover:text-primary-fixed">
+                        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-100 text-sm font-black text-violet-700">
                         {idx + 1}
-                        </div>
+                        </span>
                         <div className="flex-1">
                            {editingId === lesson.id ? (
                               <input
@@ -292,8 +311,8 @@ function LessonsTab({ lessons, onLessonsChange }) {
                               >
                                  {lesson.isPreview ? "Preview" : "Ẩn"}
                               </button>
-                              <label className="px-3 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-[10px] font-black uppercase tracking-widest text-zinc-300 cursor-pointer">
-                                 Upload video
+                              <label className="cursor-pointer rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-[10px] font-bold uppercase tracking-wide text-slate-600 hover:border-violet-300 hover:text-violet-700">
+                                 Tải video
                                  <input
                                     type="file"
                                     accept="video/mp4,video/quicktime,video/x-msvideo,video/webm"
@@ -350,24 +369,25 @@ function LessonsTab({ lessons, onLessonsChange }) {
                         </button>
                      </div>
                   </div>
-               </div>
+               </li>
             ))}
-         </div>
+         </ul>
       </div>
    );
 }
 
-function StudentsTab({ students }) {
+function StudentsTab({ students, summary }) {
+   const statCards = [
+      { label: "Đang hoạt động", value: summary?.active ?? students.filter((s) => s.status === "active").length },
+      { label: "Hoàn thành", value: summary?.completed ?? students.filter((s) => s.status === "completed").length },
+      { label: "Tiến độ TB", value: summary?.avgProgress ?? "0%" },
+      { label: "Drop-off", value: summary?.dropoffRate ?? "0%" },
+   ];
    return (
-      <div className="space-y-10">
-         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            {[
-               { label: "Đang hoạt động", value: students.filter(s => s.status === 'active').length, color: "#c4ff47" },
-               { label: "Hoàn thành", value: students.filter(s => s.status === 'completed').length, color: "#6E35E8" },
-               { label: "Tiến độ trung bình", value: "68%", color: "#f59e0b" },
-               { label: "Drop-off Rate", value: "4.2%", color: "#secondary" }
-            ].map((s, i) => (
-               <div key={i} className="glass-card p-8">
+      <div className="space-y-8">
+         <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
+            {statCards.map((s, i) => (
+               <div key={i} className="glass-card p-6">
                   <h3 className="text-3xl font-black text-slate-900 tracking-tighter mb-1">{s.value}</h3>
                   <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">{s.label}</p>
                </div>
@@ -377,27 +397,32 @@ function StudentsTab({ students }) {
             <table className="w-full text-left">
                <thead>
                   <tr className="border-b border-slate-200 text-[10px] font-black text-zinc-600 uppercase tracking-widest">
-                     <th className="px-8 py-6">Học viên</th>
-                     <th className="px-8 py-6">Tiến độ</th>
-                     <th className="px-8 py-6 text-right">Lần cuối</th>
+                     <th className="px-6 py-4">Học viên</th>
+                     <th className="px-6 py-4">Tiến độ</th>
+                     <th className="px-6 py-4 text-right">Lần cuối</th>
                   </tr>
                </thead>
-               <tbody className="divide-y divide-white/5">
-                  {students.map(s => (
-                     <tr key={s.id} className="hover:bg-slate-50 transition-colors">
-                        <td className="px-8 py-6">
-                           <div className="flex items-center gap-4">
-                              <img src={s.avatar} className="w-10 h-10 rounded-xl object-cover" />
-                              <span className="text-sm font-black text-slate-900">{s.name}</span>
+               <tbody className="divide-y divide-slate-100">
+                  {students.map((s) => (
+                     <tr key={s.id} className="hover:bg-violet-50/30 transition-colors">
+                        <td className="px-6 py-4">
+                           <div className="flex items-center gap-3">
+                              <img src={avatarSrc(s.avatar)} alt="" className="h-10 w-10 rounded-xl object-cover" />
+                              <div>
+                                 <span className="text-sm font-bold text-slate-900">{s.name}</span>
+                                 {!s.hasAccess ? (
+                                    <p className="text-[10px] text-amber-600">Chờ thanh toán</p>
+                                 ) : null}
+                              </div>
                            </div>
                         </td>
-                        <td className="px-8 py-6">
-                           <div className="flex items-center gap-4 w-40">
-                              <MiniBar value={s.progress} color={s.progress === 100 ? "#c4ff47" : "#6E35E8"} />
-                              <span className="text-[10px] font-black text-slate-900">{s.progress}%</span>
+                        <td className="px-6 py-4">
+                           <div className="flex w-40 items-center gap-3">
+                              <MiniBar value={s.progress} color={s.progress === 100 ? "#10b981" : "#6E35E8"} />
+                              <span className="text-xs font-bold text-slate-900">{s.progress}%</span>
                            </div>
                         </td>
-                        <td className="px-8 py-6 text-right text-[10px] font-bold text-zinc-500 uppercase">{s.lastActive}</td>
+                        <td className="px-6 py-4 text-right text-xs font-medium text-slate-500">{s.lastActive}</td>
                      </tr>
                   ))}
                </tbody>
@@ -407,31 +432,75 @@ function StudentsTab({ students }) {
    );
 }
 
-function QATab({ qa }) {
+function QATab({ courseId, items, onAnswered }) {
+   const [drafts, setDrafts] = useState({});
+   const [sending, setSending] = useState(null);
+
+   const handleSend = async (qaId) => {
+      const content = String(drafts[qaId] || "").trim();
+      if (!content) return;
+      setSending(qaId);
+      const res = await answerCourseMentorQA(courseId, qaId, content);
+      setSending(null);
+      if (!res.success) {
+         toast.error(res.error || "Không gửi được câu trả lời.");
+         return;
+      }
+      toast.success(res.message || "Đã gửi câu trả lời.");
+      setDrafts((prev) => ({ ...prev, [qaId]: "" }));
+      onAnswered?.();
+   };
+
    return (
-      <div className="space-y-6">
-         {qa.map(item => (
-            <div key={item.id} className="glass-card p-10">
-               <div className="flex items-center justify-between mb-8">
-                  <div className="flex items-center gap-4">
-                     <img src={item.avatar} className="w-10 h-10 rounded-xl object-cover" />
-                     <div>
-                        <p className="text-sm font-black text-slate-900">{item.student}</p>
-                        <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">Hỏi lúc {item.time} · Bài {item.lessonIdx + 1}</p>
-                     </div>
-                  </div>
-                  <span className="px-4 py-1.5 rounded-xl bg-orange-500/20 text-orange-400 text-[9px] font-black uppercase tracking-widest border border-orange-500/20">Chờ phản hồi</span>
-               </div>
-               <p className="text-base font-medium text-slate-700 leading-relaxed mb-10">"{item.question}"</p>
-               <div className="flex gap-4">
-                  <textarea
-                     placeholder="Nhập câu trả lời của bạn..."
-                     className="flex-1 bg-slate-50 border border-slate-200 rounded-2xl p-4 text-sm text-slate-900 outline-none focus:border-primary-fixed transition-all resize-none"
-                     rows={2}
-                  />
-                  <button className="px-8 rounded-2xl bg-white text-black text-[10px] font-black uppercase tracking-widest shadow-xl">Gửi</button>
-               </div>
-            </div>
+      <div className="space-y-4">
+         {items.map((item) => (
+            <motion.div key={item.id} className="glass-card p-6 sm:p-8">
+               <motion.div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+                  <motion.div className="flex min-w-0 items-center gap-3">
+                     <img src={avatarSrc(item.avatar)} alt="" className="h-10 w-10 shrink-0 rounded-xl object-cover" />
+                     <motion.div>
+                        <p className="text-sm font-bold text-slate-900">{item.student}</p>
+                        <p className="text-[10px] font-bold uppercase tracking-widest text-violet-600">
+                           {item.lessonTitle || `Bài ${(item.lessonIdx ?? 0) + 1}`} · {item.time}
+                        </p>
+                     </motion.div>
+                  </motion.div>
+                  {item.isAnswered ? (
+                     <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-[10px] font-bold uppercase text-emerald-700">
+                        Đã trả lời
+                     </span>
+                  ) : (
+                     <span className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-[10px] font-bold uppercase text-amber-700">
+                        Chờ trả lời
+                     </span>
+                  )}
+               </motion.div>
+               <p className="text-sm leading-relaxed text-slate-800">{item.question}</p>
+               {item.answer ? (
+                  <motion.div className="mt-4 rounded-xl border border-violet-100 bg-violet-50/50 p-4 text-sm text-slate-700">
+                     <span className="font-bold text-violet-700">Câu trả lời của bạn: </span>
+                     {item.answer}
+                  </motion.div>
+               ) : (
+                  <motion.div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-end">
+                     <textarea
+                        value={drafts[item.id] || ""}
+                        onChange={(e) => setDrafts((prev) => ({ ...prev, [item.id]: e.target.value }))}
+                        placeholder="Nhập câu trả lời cho học viên..."
+                        rows={3}
+                        className="min-h-[80px] flex-1 resize-y rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-400/20"
+                     />
+                     <button
+                        type="button"
+                        onClick={() => handleSend(item.id)}
+                        disabled={sending === item.id || !String(drafts[item.id] || "").trim()}
+                        className="shrink-0 rounded-xl bg-violet-600 px-5 py-3 text-xs font-bold uppercase tracking-wide text-white disabled:opacity-50"
+                     >
+                        {sending === item.id ? "Đang gửi..." : "Gửi trả lời"}
+                     </button>
+                  </motion.div>
+               )}
+            </motion.div>
          ))}
       </div>
    );
@@ -439,34 +508,36 @@ function QATab({ qa }) {
 
 function AnalyticsTab({ lessonStats }) {
    return (
-      <div className="space-y-10">
-         <div className="glass-card p-10 h-[400px] flex items-center justify-center text-zinc-500 italic">
-            [ Biểu đồ dữ liệu Recharts sẽ hiển thị ở đây giống như Dashboard ]
-         </div>
+      <div className="space-y-8">
          <div className="glass-card overflow-hidden">
             <table className="w-full text-left">
                <thead className="border-b border-slate-200 text-[10px] font-black text-zinc-600 uppercase tracking-widest">
                   <tr>
-                     <th className="px-8 py-6">Bài học</th>
-                     <th className="px-8 py-6">Lượt xem</th>
-                     <th className="px-8 py-6">Hoàn thành</th>
-                     <th className="px-8 py-6 text-right">Dropout</th>
+                     <th className="px-6 py-4">Bài học</th>
+                     <th className="px-6 py-4">Đã hoàn thành</th>
+                     <th className="px-6 py-4">Tỷ lệ hoàn thành</th>
+                     <th className="px-6 py-4 text-right">Câu hỏi</th>
                   </tr>
                </thead>
-               <tbody className="divide-y divide-white/5">
-                  {lessonStats.map((s, i) => (
-                     <tr key={i} className="hover:bg-slate-50 transition-colors">
-                        <td className="px-8 py-6 text-sm font-black text-slate-900">Bài số {i + 1}</td>
-                        <td className="px-8 py-6 text-sm font-black text-zinc-400">{s.views}</td>
-                        <td className="px-8 py-6">
-                           <span className="text-primary-fixed font-black text-sm">{s.completionRate}%</span>
+               <tbody className="divide-y divide-slate-100">
+                  {lessonStats.map((s) => (
+                     <tr key={s.lessonIndex} className="hover:bg-violet-50/30 transition-colors">
+                        <td className="px-6 py-4 text-sm font-semibold text-slate-900">
+                           {s.title || `Bài ${s.lessonIndex}`}
                         </td>
-                        <td className="px-8 py-6 text-right text-orange-400 font-black text-sm">{s.dropoffRate}%</td>
+                        <td className="px-6 py-4 text-sm text-slate-600">{s.views}</td>
+                        <td className="px-6 py-4">
+                           <span className="text-sm font-bold text-violet-700">{s.completionRate}%</span>
+                        </td>
+                        <td className="px-6 py-4 text-right text-sm text-slate-500">{s.questions}</td>
                      </tr>
                   ))}
                </tbody>
             </table>
          </div>
+         <p className="text-xs text-slate-500">
+            Phân tích dựa trên tiến độ ghi danh đã thanh toán và câu hỏi Q&amp;A thực tế trên hệ thống.
+         </p>
       </div>
    );
 }
@@ -1054,7 +1125,67 @@ export function MentorCourseEdit() {
    const [thumbnailUrl, setThumbnailUrl] = useState("");
    const [isUploadingThumbnail, setIsUploadingThumbnail] = useState(false);
    const [mentorRejectReason, setMentorRejectReason] = useState("");
+   const [showArchiveDialog, setShowArchiveDialog] = useState(false);
+   const [archiving, setArchiving] = useState(false);
+   const [tabLoading, setTabLoading] = useState(false);
+   const [tabError, setTabError] = useState("");
+   const [students, setStudents] = useState([]);
+   const [studentsSummary, setStudentsSummary] = useState(null);
+   const [qaItems, setQaItems] = useState([]);
+   const [reviews, setReviews] = useState([]);
+   const [reviewsSummary, setReviewsSummary] = useState(null);
+   const [analyticsStats, setAnalyticsStats] = useState([]);
 
+   const loadTabData = async (tab) => {
+      if (!id || isCreateMode || tab === "lessons") return;
+      setTabLoading(true);
+      setTabError("");
+      try {
+         if (tab === "students") {
+            const res = await fetchCourseMentorStudents(id);
+            if (!res.success) {
+               setTabError(res.error || "Không tải được danh sách học viên.");
+               setStudents([]);
+               setStudentsSummary(null);
+            } else {
+               setStudents(res.students || []);
+               setStudentsSummary(res.summary || null);
+            }
+         } else if (tab === "qa") {
+            const res = await fetchCourseMentorQA(id);
+            if (!res.success) {
+               setTabError(res.error || "Không tải được Q&A.");
+               setQaItems([]);
+            } else {
+               setQaItems(res.items || []);
+            }
+         } else if (tab === "reviews") {
+            const res = await fetchCourseMentorReviews(id);
+            if (!res.success) {
+               setTabError(res.error || "Không tải được đánh giá.");
+               setReviews([]);
+               setReviewsSummary(null);
+            } else {
+               setReviews(res.reviews || []);
+               setReviewsSummary(res.summary || null);
+            }
+         } else if (tab === "analytics") {
+            const res = await fetchCourseMentorAnalytics(id);
+            if (!res.success) {
+               setTabError(res.error || "Không tải được phân tích.");
+               setAnalyticsStats([]);
+            } else {
+               setAnalyticsStats(res.lessonStats || []);
+            }
+         }
+      } finally {
+         setTabLoading(false);
+      }
+   };
+
+   useEffect(() => {
+      loadTabData(activeTab);
+   }, [activeTab, id, isCreateMode]);
 
    useEffect(() => {
       fetchMyMentorProfile().then((res) => {
@@ -1089,6 +1220,7 @@ export function MentorCourseEdit() {
          setCourse({
             id: c._id,
             title: c.title,
+            status: c.status || "draft",
             thumbnail: c.thumbnail || "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&q=80",
             studentsCount: c.stats?.enrollmentCount || 0,
             rating: c.stats?.rating || 0,
@@ -1106,7 +1238,22 @@ export function MentorCourseEdit() {
       return <CreateCourseForm navigate={navigate} mentorRejectReason={mentorRejectReason} />;
    }
    const lessons = editableLessons.length ? editableLessons : course?.lessons || [];
-   const lessonStats = generateLessonStats(lessons.length);
+   const isArchived = course?.status === "archived";
+   const refreshQA = () => loadTabData("qa");
+
+   const handleArchiveConfirm = async () => {
+      if (!id) return;
+      setArchiving(true);
+      const res = await archiveCourse(id);
+      setArchiving(false);
+      if (!res.success) {
+         toast.error(res.error || "Không thể lưu trữ khóa học.");
+         return;
+      }
+      toast.success(res.message || "Đã lưu trữ khóa học.");
+      setShowArchiveDialog(false);
+      navigate("/mentor/courses");
+   };
 
    if (loading) {
       return (
@@ -1128,6 +1275,9 @@ export function MentorCourseEdit() {
       );
    }
 
+   const statusMeta = COURSE_STATUS_META[course.status] || COURSE_STATUS_META.draft;
+   const coverSrc = mediaSrc(thumbnailUrl || course.thumbnail, DEFAULT_COURSE_THUMB);
+
    const TABS = [
       { key: "lessons", label: "Bài học", icon: Layout },
       { key: "students", label: "Học viên", icon: Users },
@@ -1137,8 +1287,8 @@ export function MentorCourseEdit() {
    ];
 
    return (
-      <MentorPageShell bottomPad="pb-40" extraStyles={MENTOR_COURSE_EDIT_EXTRA_CSS}>
-         <div className="relative z-10 p-10 max-w-7xl mx-auto pt-20">
+      <MentorPageShell bottomPad="pb-36">
+         <div className="relative z-10 mx-auto max-w-6xl px-6 pb-8 pt-16 sm:px-8">
             {mentorRejectReason ? (
                <div className="mb-8 rounded-2xl border border-orange-400/30 bg-orange-500/10 p-5">
                   <div className="flex items-start gap-3">
@@ -1152,12 +1302,28 @@ export function MentorCourseEdit() {
                   </div>
                </div>
             ) : null}
-            {/* Navigation Hero */}
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-10 mb-20">
-               <div className="flex items-center gap-10">
-                  <div className="relative group/thumb">
-                     <img src={thumbnailUrl || course.thumbnail} className="w-40 h-28 rounded-3xl object-cover ring-8 ring-white/5 shadow-2xl" />
-                     <label className="absolute inset-0 flex items-center justify-center bg-black/60 opacity-0 group-hover/thumb:opacity-100 transition-opacity rounded-3xl cursor-pointer">
+            {isArchived ? (
+               <div className="mb-8 rounded-2xl border border-red-200 bg-red-50 p-5 text-sm text-red-800">
+                  Khóa học này đã được lưu trữ và không còn hiển thị trên trang Khám phá.
+               </div>
+            ) : null}
+            <button
+               type="button"
+               onClick={() => navigate("/mentor/courses")}
+               className="mb-6 inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-violet-700 transition hover:text-violet-900"
+            >
+               <ArrowLeft size={14} /> Quản lý khóa học
+            </button>
+
+            <div className="glass-card mb-8 overflow-hidden">
+               <div className="flex flex-col gap-6 p-6 sm:p-8 lg:flex-row lg:items-start">
+                  <div className="group/thumb relative mx-auto shrink-0 lg:mx-0">
+                     <img
+                        src={coverSrc}
+                        alt=""
+                        className="h-36 w-full max-w-[220px] rounded-2xl object-cover shadow-md ring-1 ring-slate-200/80 sm:h-40"
+                     />
+                     <label className="absolute inset-0 flex cursor-pointer items-center justify-center rounded-2xl bg-black/50 opacity-0 transition-opacity group-hover/thumb:opacity-100">
                         <div className="text-center">
                            {isUploadingThumbnail ? (
                               <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent mx-auto" />
@@ -1190,40 +1356,63 @@ export function MentorCourseEdit() {
                      </label>
                   </div>
 
-                  <div>
-                     <button onClick={() => navigate("/mentor/courses")} className="text-[10px] font-black text-primary-fixed uppercase tracking-widest mb-4 flex items-center gap-2 hover:translate-x-1 transition-transform">
-                        <ArrowLeft size={14} /> Quản lý khóa học
-                     </button>
-                     <h1 className="text-5xl font-black text-slate-900 font-headline tracking-tighter mb-4 leading-none uppercase">
-                        {course.title}
-                     </h1>
-                     <div className="flex items-center gap-6 mt-6">
-                        <div className="flex items-center gap-2 text-[10px] font-black text-zinc-500 uppercase tracking-widest">
-                           <Users size={14} /> {course.studentsCount} Students
-                        </div>
-                        <div className="flex items-center gap-2 text-[10px] font-black text-zinc-500 uppercase tracking-widest">
-                           <Star size={14} className="text-[#FFD600]" /> {course.rating} Rating
-                        </div>
+                  <div className="min-w-0 flex-1">
+                     <span className={`inline-flex rounded-full border px-3 py-1 text-[10px] font-bold uppercase tracking-wide ${statusMeta.className}`}>
+                        {statusMeta.label}
+                     </span>
+                     <h1 className="app-page-title mt-3">{course.title}</h1>
+                     <div className="mt-4 flex flex-wrap gap-4 text-sm text-slate-600">
+                        <span className="inline-flex items-center gap-1.5">
+                           <Users size={15} className="text-violet-600" />
+                           <strong className="text-slate-900">{course.studentsCount}</strong> học viên
+                        </span>
+                        <span className="inline-flex items-center gap-1.5">
+                           <Star size={15} className="text-amber-500" />
+                           <strong className="text-slate-900">{course.rating > 0 ? course.rating : "—"}</strong> đánh giá
+                        </span>
+                        <span className="inline-flex items-center gap-1.5">
+                           <Layout size={15} className="text-violet-600" />
+                           <strong className="text-slate-900">{lessons.length}</strong> bài học
+                        </span>
+                     </div>
+                     <div className="mt-6 flex flex-wrap gap-3">
+                        {course.status === "published" ? (
+                           <button
+                              type="button"
+                              onClick={() => navigate(`/courses/${id}`)}
+                              className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-bold uppercase tracking-wide text-slate-700 hover:bg-slate-50"
+                           >
+                              <Eye size={15} /> Xem trang công khai
+                           </button>
+                        ) : null}
+                        {!isArchived ? (
+                           <button
+                              type="button"
+                              onClick={() => setShowArchiveDialog(true)}
+                              className="inline-flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-2.5 text-xs font-bold uppercase tracking-wide text-red-700 hover:bg-red-100"
+                           >
+                              <Trash size={15} /> Xóa khóa học
+                           </button>
+                        ) : null}
                      </div>
                   </div>
                </div>
-               <div className="flex gap-4">
-                  <button onClick={() => navigate(`/courses/${id}`)} className="px-8 py-4 rounded-3xl bg-slate-50 border border-slate-200 text-xs font-black uppercase tracking-widest hover:bg-slate-100 transition-all flex items-center gap-2">
-                     <Eye size={16} /> Xem bản nháp
-                  </button>
-               </div>
             </div>
 
-            {/* Tab Interface */}
-            <div className="glass-card mb-12 p-2 bg-slate-50 border border-slate-200 flex gap-2 overflow-x-auto custom-scrollbar">
-               {TABS.map(tab => (
+            <div className="mb-6 flex gap-2 overflow-x-auto rounded-2xl border border-slate-200 bg-slate-50/90 p-1.5">
+               {TABS.map((tab) => (
                   <button
                      key={tab.key}
+                     type="button"
                      onClick={() => setActiveTab(tab.key)}
-                     className={`tab-btn ${activeTab === tab.key ? 'active' : ''} flex items-center gap-3 whitespace-nowrap`}
+                     className={`flex shrink-0 items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-bold uppercase tracking-wide transition ${
+                        activeTab === tab.key
+                           ? "bg-violet-600 text-white shadow-md shadow-violet-600/25"
+                           : "text-slate-600 hover:bg-white hover:text-slate-900"
+                     }`}
                   >
-                     <tab.icon size={16} /> {tab.label}
-                     {activeTab === tab.key && <motion.div layoutId="tab-underline" className="tab-indicator" />}
+                     <tab.icon size={15} />
+                     {tab.label}
                   </button>
                ))}
             </div>
@@ -1238,23 +1427,65 @@ export function MentorCourseEdit() {
                   transition={{ duration: 0.4 }}
                >
                   {activeTab === "lessons" && <LessonsTab lessons={lessons} onLessonsChange={setEditableLessons} />}
-                  {activeTab === "students" && <StudentsTab students={MOCK_STUDENTS} />}
-                  {activeTab === "qa" && <QATab qa={MOCK_QA} />}
-                  {activeTab === "reviews" && <ReviewsTab mentorAvatar={course.mentorAvatar} mentorName={course.mentorName} />}
-                  {activeTab === "analytics" && <AnalyticsTab lessonStats={lessonStats} />}
+                  {activeTab === "students" && (
+                     <TabPanelState
+                        loading={tabLoading}
+                        error={tabError}
+                        empty={!students.length}
+                        emptyMessage="Chưa có học viên ghi danh."
+                     >
+                        <StudentsTab students={students} summary={studentsSummary} />
+                     </TabPanelState>
+                  )}
+                  {activeTab === "qa" && (
+                     <TabPanelState
+                        loading={tabLoading}
+                        error={tabError}
+                        empty={!qaItems.length}
+                        emptyMessage="Chưa có câu hỏi từ học viên."
+                     >
+                        <QATab courseId={id} items={qaItems} onAnswered={refreshQA} />
+                     </TabPanelState>
+                  )}
+                  {activeTab === "reviews" && (
+                     <TabPanelState
+                        loading={tabLoading}
+                        error={tabError}
+                        empty={!reviews.length}
+                        emptyMessage="Chưa có đánh giá nào."
+                     >
+                        <ReviewsTab reviews={reviews} summary={reviewsSummary} />
+                     </TabPanelState>
+                  )}
+                  {activeTab === "analytics" && (
+                     <TabPanelState
+                        loading={tabLoading}
+                        error={tabError}
+                        empty={!analyticsStats.length}
+                        emptyMessage="Chưa có dữ liệu phân tích (cần ít nhất một bài học)."
+                     >
+                        <AnalyticsTab lessonStats={analyticsStats} />
+                     </TabPanelState>
+                  )}
                </motion.div>
             </AnimatePresence>
          </div>
 
-         {/* Floating Action Bar */}
-         <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-50">
-            <div className="glass-card px-10 py-5 bg-slate-900/40 border-primary-fixed/20 shadow-[0_20px_60px_rgba(0,0,0,0.6)] flex items-center gap-10">
-               <div className="hidden sm:block">
-                  <p className="text-[9px] font-black text-zinc-500 uppercase tracking-widest">Lần lưu cuối</p>
-                  <p className="text-[10px] font-black text-slate-900 uppercase tracking-widest">vừa xong</p>
-               </div>
-               <div className="flex gap-4">
+         <div className="fixed bottom-6 left-1/2 z-50 w-[calc(100%-2rem)] max-w-2xl -translate-x-1/2">
+            <div className="flex flex-col gap-3 rounded-2xl border border-slate-200/80 bg-white/95 px-4 py-4 shadow-xl shadow-violet-900/10 backdrop-blur-md sm:flex-row sm:items-center sm:justify-between sm:px-6">
+               <p className="text-center text-xs font-medium text-slate-500 sm:text-left">
+                  Lưu thay đổi trước khi gửi admin duyệt
+               </p>
+               <div className="flex flex-col gap-2 sm:flex-row">
                   <button
+                     type="button"
+                     onClick={() => window.location.reload()}
+                     className="rounded-xl border border-slate-200 px-5 py-3 text-xs font-bold uppercase tracking-wide text-slate-600 hover:bg-slate-50"
+                  >
+                     Hủy thay đổi
+                  </button>
+                  <button
+                     type="button"
                      onClick={async () => {
                         const chapters = [
                            {
@@ -1293,19 +1524,23 @@ export function MentorCourseEdit() {
                         toast.success("Đã gửi bản cập nhật để admin duyệt. Khóa hiện tại vẫn đang public.");
                         navigate("/mentor/courses");
                      }}
-                     className="px-10 py-4 rounded-2xl bg-primary-fixed text-black text-[10px] font-black uppercase tracking-widest shadow-xl hover:scale-105 transition-all"
+                     className="rounded-xl bg-violet-600 px-6 py-3 text-xs font-bold uppercase tracking-wide text-white shadow-md shadow-violet-600/25 hover:bg-violet-700"
                   >
-                     Lưu & Gửi duyệt
-                  </button>
-                  <button
-                     onClick={() => window.location.reload()}
-                     className="px-8 py-4 rounded-2xl border border-slate-200 text-[10px] font-black text-zinc-400 uppercase tracking-widest hover:text-slate-900 transition-all"
-                  >
-                     Hủy thay đổi
+                     Lưu & gửi duyệt
                   </button>
                </div>
             </div>
          </div>
+
+         <ArchiveCourseDialog
+            open={showArchiveDialog}
+            courseTitle={course.title}
+            archiving={archiving}
+            onOpenChange={(open) => {
+               if (!archiving) setShowArchiveDialog(open);
+            }}
+            onConfirm={handleArchiveConfirm}
+         />
       </MentorPageShell>
    );
 }

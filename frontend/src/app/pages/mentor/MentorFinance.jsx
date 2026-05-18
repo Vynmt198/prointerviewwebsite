@@ -166,22 +166,29 @@ function WithdrawalModal({
                      </option>
                    ))}
                  </select>
-                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                   <input
-                     type="text"
-                     placeholder="Số tài khoản"
-                     value={accountNumber}
-                     onChange={(e) => setAccountNumber(e.target.value.replace(/\D/g, ""))}
-                     className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-sm font-bold text-slate-900 outline-none focus:border-primary-fixed transition-all"
-                   />
-                   <div className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-sm font-bold text-slate-900">
-                     {payoutAccountOwnerName || "Mentor"}
-                   </div>
+                 <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest ml-1">Số tài khoản (STK)</label>
+                 <input
+                   type="text"
+                   inputMode="numeric"
+                   autoComplete="off"
+                   placeholder="Nhập STK 8–19 chữ số"
+                   value={accountNumber}
+                   onChange={(e) => setAccountNumber(e.target.value.replace(/\D/g, ""))}
+                   className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-sm font-bold text-slate-900 outline-none focus:border-primary-fixed transition-all font-mono tracking-wide"
+                 />
+                 <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3">
+                   <p className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Chủ tài khoản nhận tiền</p>
+                   <p className="mt-1 text-base font-black text-slate-900">{payoutAccountOwnerName || "Mentor"}</p>
+                   <p className="mt-2 text-[11px] leading-relaxed text-zinc-600">
+                     Tên này lấy theo <span className="font-semibold text-slate-800">hồ sơ đã xác minh</span> trên ProInterview và{" "}
+                     <span className="font-semibold text-slate-800">không nhập tay</span>. Hãy dùng STK đúng chính chủ với tên này để admin chuyển khoản chính xác.
+                   </p>
+                   {payoutAccountMasked ? (
+                     <p className="mt-2 text-[10px] font-semibold text-zinc-500">
+                       STK đang lưu (rút gọn): {payoutAccountMasked}
+                     </p>
+                   ) : null}
                  </div>
-                 <p className="text-[10px] text-zinc-500 font-semibold">
-                   Chủ tài khoản được khóa theo hồ sơ đã xác minh.
-                   {payoutAccountMasked ? ` Tài khoản hiện tại: ${payoutAccountMasked}` : ""}
-                 </p>
                  <button
                    onClick={persistAccount}
                    disabled={!isAccountReady || savingAccount}
@@ -253,6 +260,7 @@ export function MentorFinance() {
   const payoutAccountMasked = finance?.payoutAccountMasked || "";
   const payoutAccountOwnerName = finance?.payoutAccountOwnerName || getDisplayName(user, "Mentor");
   const transactions = Array.isArray(finance?.history) ? finance.history : [];
+  const totalSessions = Number(finance?.totalSessions ?? 0);
   const filteredTransactions = transactions.filter((tx) => {
     if (activeTab === "all") return true;
     if (activeTab === "income") return tx.type === "income";
@@ -263,9 +271,21 @@ export function MentorFinance() {
     transactionSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
   const payoutStatusMeta = (status) => {
+    if (status === "paid") {
+      return {
+        text: "Đã chuyển khoản",
+        className: "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20",
+      };
+    }
+    if (status === "approved") {
+      return {
+        text: "Đã duyệt — chờ CK",
+        className: "bg-amber-500/10 text-amber-400 border border-amber-500/20",
+      };
+    }
     if (status === "completed") {
       return {
-        text: "Đã duyệt",
+        text: "Hoàn tất",
         className: "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20",
       };
     }
@@ -341,7 +361,10 @@ export function MentorFinance() {
                     <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-3">Tổng thu nhập</p>
                     <h3 className="text-4xl font-black text-slate-900 tracking-tighter">{totalEarned.toLocaleString()} ₫</h3>
                     <p className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest mt-2 flex items-center gap-2">
-                       <ArrowUpRight size={14} className="text-primary-fixed" /> +12% so với tháng trước
+                       <ArrowUpRight size={14} className="text-primary-fixed" />
+                       {totalSessions > 0
+                         ? `Theo ${totalSessions} buổi đã hoàn thành + học phí khóa (sau phí nền tảng)`
+                         : "Tổng giá trị buổi hoàn thành & khóa học (sau phí nền tảng)"}
                     </p>
                  </div>
                  <div className="w-14 h-14 rounded-2xl bg-primary-fixed/10 flex items-center justify-center text-primary-fixed">
@@ -527,6 +550,17 @@ export function MentorFinance() {
                 {selectedTx.reviewedAt ? (
                   <p className="text-zinc-300">
                     <span className="text-zinc-500">Thời gian xử lý:</span> {new Date(selectedTx.reviewedAt).toLocaleString("vi-VN")}
+                  </p>
+                ) : null}
+                {selectedTx.paidAt ? (
+                  <p className="text-zinc-300">
+                    <span className="text-zinc-500">Thời điểm đã chi:</span>{" "}
+                    {new Date(selectedTx.paidAt).toLocaleString("vi-VN")}
+                  </p>
+                ) : null}
+                {selectedTx.transferRef ? (
+                  <p className="text-zinc-300">
+                    <span className="text-zinc-500">Tham chiếu CK:</span> {selectedTx.transferRef}
                   </p>
                 ) : null}
                 {selectedTx.providerRef ? (

@@ -83,11 +83,11 @@ export function AdminLayout() {
         }}
       >
         <AdminSidebar />
-        <SidebarInset className="relative z-[1] flex min-h-0 flex-1 flex-col bg-transparent shadow-none md:peer-data-[variant=inset]:shadow-none md:peer-data-[variant=inset]:m-0 md:peer-data-[variant=inset]:rounded-none">
+        <SidebarInset className="relative z-[1] flex min-h-0 min-w-0 flex-1 flex-col bg-transparent shadow-none md:peer-data-[variant=inset]:shadow-none md:peer-data-[variant=inset]:m-0 md:peer-data-[variant=inset]:rounded-none">
           <AdminTopBar />
           <div className="relative z-10 flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
             <MentorPageShell fillHeight bottomPad="pb-8">
-              <div className="relative z-10 mx-auto w-full max-w-7xl px-6 pb-10 pt-6 sm:px-8">
+              <div className="relative z-10 mx-auto w-full min-w-0 max-w-7xl px-4 pb-10 pt-6 sm:px-6 lg:px-8">
                 <Outlet />
               </div>
             </MentorPageShell>

@@ -45,7 +45,7 @@ const bookingSchema = new Schema(
     totalAmount: { type: Number, required: true },
     paymentStatus: {
       type: String,
-      enum: ["pending", "paid", "refunded", "partial_refund", "failed"],
+      enum: ["pending", "paid", "refund_pending", "refunded", "partial_refund", "failed"],
       default: "pending",
     },
     paymentMethod: {
@@ -68,10 +68,50 @@ const bookingSchema = new Schema(
     cancelledBy: { type: String, enum: ["user", "mentor", "system", ""], default: "" },
     cancelReason: { type: String, default: "" },
     cancelledAt: { type: Date },
+    /** Sau mentor hủy (đã thanh toán): HV chọn đổi lịch / đổi mentor / hoàn tiền. */
+    mentorCancelResolution: {
+      type: String,
+      enum: [
+        "",
+        "awaiting_user",
+        "late_cancel_refund",
+        "no_show_refund",
+        "reschedule",
+        "change_mentor",
+        "refund",
+      ],
+      default: "",
+    },
+    mentorCancelResolutionAt: { type: Date },
+    /** Credit đổi mentor sau mentor hủy (VND, từ số tiền đã thu). */
+    rebookCreditVnd: { type: Number },
+    rebookCreditStatus: {
+      type: String,
+      enum: ["", "available", "consumed"],
+      default: "",
+    },
+    rebookCreditUsedOnBookingId: { type: Schema.Types.ObjectId, ref: "Booking" },
+    /** Phần credit chưa dùng hết (mentor mới rẻ hơn) — chờ hoàn CK. */
+    rebookCreditRemainderVnd: { type: Number },
+    /** Booking mới dùng credit từ booking nguồn (đổi mentor). */
+    creditSourceBookingId: { type: Schema.Types.ObjectId, ref: "Booking" },
+    /** Snapshot khi user hủy (VND): số hoàn cho HV / số giữ lại / % hoàn (0–100). CK: admin chuyển hoàn theo `cancelRefundAmountVnd`. */
+    cancelRefundAmountVnd: { type: Number },
+    cancelRetainedAmountVnd: { type: Number },
+    cancelRefundPercent: { type: Number },
+    /** TK nhận hoàn — do HV khai báo khi hủy (CK công ty không lưu STK nguồn của khách). */
+    refundReceiveBankName: { type: String, trim: true, default: "" },
+    refundReceiveAccountNumber: { type: String, trim: true, default: "" },
+    refundReceiveAccountHolder: { type: String, trim: true, default: "" },
+    /** Admin xác nhận đã CK hoàn cho HV (sau `refund_pending`). */
+    refundCompletedAt: { type: Date },
+    refundCompletedBy: { type: Schema.Types.ObjectId, ref: "User" },
 
     mentorNotes: { type: String, default: "" },
     reviewId: { type: Schema.Types.ObjectId, ref: "Review" },
     completedAt: { type: Date },
+    /** Đã ghi có thu nhập vào ví mentor (tránh cộng trùng). */
+    mentorEarningsCreditedAt: { type: Date },
   },
   { collection: "bookings", timestamps: true }
 );

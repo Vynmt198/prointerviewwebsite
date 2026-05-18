@@ -61,8 +61,8 @@ export function MentorPageShell({
   fillHeight = false,
 }) {
   const heightBlock = fillHeight
-    ? "min-h-0 flex-1 h-full overflow-y-auto overflow-x-hidden"
-    : "min-h-screen overflow-x-hidden";
+    ? "min-h-0 flex-1 h-full overflow-y-auto overflow-x-clip"
+    : "min-h-screen overflow-x-clip";
   return (
     <div
       className={`mentor-surface relative antialiased ${heightBlock} font-sans text-slate-900 selection:bg-violet-100 selection:text-violet-900 bg-transparent ${bottomPad} ${className}`.trim()}

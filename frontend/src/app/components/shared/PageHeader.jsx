@@ -41,11 +41,11 @@ export function PageHeader({
               {badge}
             </span>
           )}
-          <h1 className="text-foreground" style={{ fontSize: "1.75rem", fontWeight: 700, lineHeight: 1.2 }}>
+          <h1 className="app-page-title text-foreground">
             {title}
           </h1>
           {subtitle && (
-            <p className="text-muted-foreground mt-1.5 leading-relaxed" style={{ fontSize: "0.9375rem" }}>
+            <p className="app-page-subtitle text-muted-foreground mt-1.5">
               {subtitle}
             </p>
           )}

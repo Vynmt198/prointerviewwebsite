@@ -1,7 +1,10 @@
 import mongoose from "mongoose";
 import * as bookingsService from "../services/bookingsService.js";
 import * as paymentsService from "../services/paymentsService.js";
+import { tryCreditMentorForPaidEnrollment, tryCreditMentorForCompletedBooking } from "../services/mentorEarningsService.js";
 import { normalizeTransferRefs } from "../services/normalizeTransferRefsService.js";
+import { runInTransaction } from "../helpers/dbHelper.js";
+
 import { PayoutRequest } from "../models/PayoutRequest.js";
 import { Enrollment } from "../models/Enrollment.js";
 const User = mongoose.model("User");
@@ -43,6 +46,7 @@ export const AdminController = {
       const update = isActive
         ? {
             isActive: true,
+            available: true,
             isVerified: true,
             verifiedAt: new Date(),
             "adminReview.status": "approved",
@@ -50,7 +54,7 @@ export const AdminController = {
             "adminReview.reviewedAt": new Date(),
             "adminReview.reviewedBy": req.userId || null,
           }
-        : { isActive: false };
+        : { isActive: false, available: false };
 
       const mentor = await Mentor.findByIdAndUpdate(id, update, { new: true });
 
@@ -80,6 +84,7 @@ export const AdminController = {
         id,
         {
           isActive: false,
+          available: false,
           isVerified: false,
           verifiedAt: null,
           "adminReview.status": "rejected",
@@ -158,6 +163,17 @@ export const AdminController = {
         return res.status(400).json({ success: false, error: "Trạng thái booking không hợp lệ." });
       }
 
+      if (nextStatus === "no_show") {
+        const result = await bookingsService.processBookingNoShow(id, { note: reason }, {
+          markedBy: "admin",
+          actorUserId: req.userId,
+        });
+        if (!result.ok) {
+          return res.status(result.status).json({ success: false, error: result.error });
+        }
+        return res.json({ success: true, booking: result.booking, refundAmountVnd: result.refundAmountVnd });
+      }
+
       const booking = await Booking.findById(id);
       if (!booking) return res.status(404).json({ success: false, error: "Không tìm thấy lịch hẹn." });
 
@@ -173,6 +189,14 @@ export const AdminController = {
       }
 
       await booking.save();
+
+      if (nextStatus === "completed") {
+        const credit = await tryCreditMentorForCompletedBooking(booking._id);
+        if (!credit.ok) {
+          console.error("[updateBookingStatus] mentor earnings:", credit.error || credit);
+        }
+      }
+
       res.json({ success: true, booking });
     } catch (error) {
       res.status(500).json({ success: false, error: error.message });
@@ -199,6 +223,22 @@ export const AdminController = {
     }
   },
 
+  /** Admin xác nhận đã CK hoàn cho HV (booking paymentStatus = refund_pending). */
+  confirmBookingRefund: async (req, res) => {
+    try {
+      const { id } = req.params;
+      const result = await bookingsService.confirmBankRefundByAdmin(id, {
+        adminUserId: req.userId || "",
+      });
+      if (!result.ok) {
+        return res.status(result.status).json({ success: false, error: result.error });
+      }
+      res.json({ success: true, booking: result.booking });
+    } catch (error) {
+      res.status(500).json({ success: false, error: error.message });
+    }
+  },
+
   getPendingEnrollmentTransfers: async (_req, res) => {
     try {
       const enrollments = await Enrollment.find({
@@ -207,6 +247,28 @@ export const AdminController = {
       })
         .populate("userId", "name email")
         .populate("courseId", "title price")
+        .sort({ updatedAt: -1 })
+        .limit(200)
+        .lean();
+      res.json({ success: true, enrollments });
+    } catch (error) {
+      res.status(500).json({ success: false, error: error.message });
+    }
+  },
+
+  /** Danh sách ghi danh có học phí (CK) — chờ + đã xác nhận, cho màn admin Học phí khóa học */
+  getCoursePaymentEnrollments: async (_req, res) => {
+    try {
+      const enrollments = await Enrollment.find({
+        pricePaid: { $gt: 0 },
+        paymentMethod: "transfer",
+      })
+        .populate("userId", "name email")
+        .populate({
+          path: "courseId",
+          select: "title price mentorId",
+          populate: { path: "mentorId", select: "name" },
+        })
         .sort({ updatedAt: -1 })
         .limit(200)
         .lean();
@@ -281,9 +343,8 @@ export const AdminController = {
       if (force && forceNote.length < 3) {
         return res.status(400).json({ success: false, error: "Xác nhận ngoại lệ cần lý do rõ ràng (ít nhất 3 ký tự)." });
       }
-      const session = await mongoose.startSession();
       try {
-        await session.withTransaction(async () => {
+        await runInTransaction(async (session) => {
           const row = await Enrollment.findById(id).session(session);
           if (!row) throw new Error("ERR_404");
           if (row.paymentMethod !== "transfer") throw new Error("ERR_METHOD");
@@ -317,14 +378,7 @@ export const AdminController = {
           await row.save({ session });
         });
       } catch (error) {
-        await session.endSession();
         const msg = String(error?.message || "");
-        if (msg.includes("Transaction numbers are only allowed")) {
-          return res.status(503).json({
-            success: false,
-            error: "Hạ tầng MongoDB chưa hỗ trợ transaction (cần replica set).",
-          });
-        }
         if (msg === "ERR_404") return res.status(404).json({ success: false, error: "Không tìm thấy ghi danh." });
         if (msg === "ERR_METHOD") {
           return res.status(400).json({ success: false, error: "Ghi danh này không dùng chuyển khoản." });
@@ -348,7 +402,12 @@ export const AdminController = {
         console.error("[confirmEnrollmentTransferPayment]", error?.message || error);
         return res.status(500).json({ success: false, error: "Không thể xác nhận thanh toán lúc này." });
       }
-      await session.endSession();
+
+
+      const credit = await tryCreditMentorForPaidEnrollment(enrollment._id);
+      if (!credit.ok) {
+        console.error("[confirmEnrollmentTransferPayment] mentor earnings:", credit.error || credit);
+      }
 
       const populated = await Enrollment.findById(enrollment._id)
         .populate("userId", "name email")
@@ -510,11 +569,38 @@ export const AdminController = {
       payout.note = String(req.body?.note || "").trim();
       await payout.save();
 
+      res.json({ success: true, payout });
+    } catch (error) {
+      res.status(500).json({ success: false, error: error.message });
+    }
+  },
+
+  /** Sau khi admin chuyển khoản thủ công cho mentor — chỉ từ trạng thái `approved`. */
+  markPayoutPaid: async (req, res) => {
+    try {
+      const { id } = req.params;
+      const transferRef = String(req.body?.transferRef || "").trim().slice(0, 500);
+      const noteExtra = String(req.body?.note || "").trim().slice(0, 2000);
+      const payout = await PayoutRequest.findById(id);
+      if (!payout) return res.status(404).json({ success: false, error: "Không tìm thấy yêu cầu rút tiền." });
+      if (payout.status !== "approved") {
+        return res.status(400).json({
+          success: false,
+          error: "Chỉ xác nhận đã chuyển khoản khi yêu cầu đã được duyệt (chưa ghi nhận chi).",
+        });
+      }
+      payout.status = "paid";
+      payout.paidAt = new Date();
+      payout.transferRef = transferRef;
+      if (noteExtra) {
+        const prev = String(payout.note || "").trim();
+        payout.note = prev ? `${prev}\n${noteExtra}` : noteExtra;
+      }
+      await payout.save();
+
       await Mentor.updateOne(
         { _id: payout.mentorId },
-        {
-          $inc: { "finance.pendingBalance": -Number(payout.amount || 0) },
-        },
+        { $inc: { "finance.pendingBalance": -Number(payout.amount || 0) } },
       );
 
       res.json({ success: true, payout });

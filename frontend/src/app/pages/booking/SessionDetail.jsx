@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { useParams, useNavigate } from "react-router";
+import { motion, AnimatePresence } from "motion/react";
 import {
   ArrowLeft,
   Calendar,
@@ -10,10 +11,11 @@ import {
   Star,
   MessageSquareText as ChatText,
   FileText,
-  Sparkles as Sparkle,
+  Sparkles,
+  Bell,
   BellRing as BellRinging,
   ShieldCheck,
-  ExternalLink as ArrowSquareOut,
+  ExternalLink,
   Timer,
   StickyNote as Notepad,
   CheckCircle,
@@ -21,19 +23,43 @@ import {
   Chrome as GoogleLogo,
   Trophy,
   ThumbsUp,
-  PartyPopper as Confetti,
+  PartyPopper,
   AlertCircle as WarningCircle,
-  Zap as Lightning,
+  Zap,
   User,
   X,
-  CircleDollarSign as CurrencyCircleDollar,
+  CircleDollarSign,
 } from "lucide-react";
+import { toast } from "sonner";
 import { getBookingById, getReview } from "../../utils/bookings";
 import { isLoggedIn } from "../../utils/auth";
-import { fetchBookingById } from "../../utils/bookingsApi";
+import {
+  cancelBooking,
+  fetchBookingById,
+  fetchBookedSlots,
+  reportBookingNoShow,
+  resolveMentorCancelBooking,
+  updateBookingRefundDestination,
+} from "../../utils/bookingsApi";
 import { apiBookingToLocal } from "../../utils/bookingMappers";
+import { MentorCancelSessionPanel } from "./MentorCancelSessionPanel";
+import { fetchMentorAvailability } from "../../utils/mentorApi";
+
+function toBookingDateFormat(input) {
+  const s = String(input || "").trim();
+  if (!s) return "";
+  const tail = s.includes(",") ? s.split(",").pop().trim() : s;
+  const parts = tail.split("/").map((p) => p.trim());
+  if (parts.length === 3) return `${parts[0].padStart(2, "0")}/${parts[1].padStart(2, "0")}/${parts[2]}`;
+  if (parts.length === 2) return `${parts[0].padStart(2, "0")}/${parts[1].padStart(2, "0")}`;
+  return tail;
+}
 
 /* ─── Types ────────────────────────────────────────────── */
+
+function isMongoObjectId(value) {
+  return typeof value === "string" && /^[a-f\d]{24}$/i.test(value.trim());
+}
 
 /* ─── Helpers ──────────────────────────────────────────── */
 function CopyBtn({ text, label = "Sao chép" }) {
@@ -86,6 +112,15 @@ function StarRating({ value, onChange }) {
 }
 
 function getPaymentMeta(paymentStatus) {
+  if (paymentStatus === "refund_pending") {
+    return {
+      title: "Chờ hoàn tiền",
+      titleClass: "text-amber-700",
+      note: "Admin sẽ chuyển khoản hoàn sau khi có STK nhận hoàn của bạn.",
+      noteClass: "text-amber-700",
+      iconClass: "text-amber-500",
+    };
+  }
   if (paymentStatus === "refunded") {
     return {
       title: "Đã hoàn tiền",
@@ -152,11 +187,12 @@ function useCountdown(targetDate, targetTime) {
   }, [target]);
 
   const totalSec = Math.max(0, Math.floor(diff / 1000));
+  const elapsedSinceStartSec = diff < 0 ? Math.floor(-diff / 1000) : 0;
   const days = Math.floor(totalSec / 86400);
   const hours = Math.floor((totalSec % 86400) / 3600);
   const minutes = Math.floor((totalSec % 3600) / 60);
   const seconds = totalSec % 60;
-  return { days, hours, minutes, seconds, totalSec };
+  return { days, hours, minutes, seconds, totalSec, elapsedSinceStartSec };
 }
 
 /* ─── Main Component ───────────────────────────────────── */
@@ -171,12 +207,11 @@ export function SessionDetail() {
       setApiBooking(null);
       return;
     }
-    const local = getBookingById(id);
-    if (local) {
+    if (!isLoggedIn()) {
       setApiBooking(null);
       return;
     }
-    if (!isLoggedIn()) {
+    if (!isMongoObjectId(id)) {
       setApiBooking(null);
       return;
     }
@@ -193,28 +228,67 @@ export function SessionDetail() {
   }, [id]);
 
   const sessionData = useMemo(() => {
-    const local = getBookingById(id);
-    if (local) return local;
     if (apiBooking && typeof apiBooking === "object") return apiBookingToLocal(apiBooking);
+    if (!isMongoObjectId(id)) {
+      const local = getBookingById(id);
+      if (local) return local;
+    }
     return null;
   }, [id, apiBooking]);
 
-  const sessionLoading =
-    isLoggedIn() && apiBooking === undefined && !getBookingById(id);
+  const mongoBookingId = useMemo(() => {
+    if (!sessionData) return "";
+    const raw = sessionData.backendId || sessionData.sessionId;
+    return isMongoObjectId(raw) ? String(raw).trim() : "";
+  }, [sessionData]);
 
-  /* ── Demo state switcher (for demo purposes) ── */
-  const [demoState, setDemoState] = useState("upcoming");
+  const sessionLoading = isLoggedIn() && isMongoObjectId(id) && apiBooking === undefined;
 
   /* ── Countdown ── */
-  const { days, hours, minutes, seconds, totalSec } = useCountdown(
+  const { days, hours, minutes, seconds, totalSec, elapsedSinceStartSec } = useCountdown(
     sessionData?.date ?? "02/03/2026",
     sessionData?.time ?? "14:00"
+  );
+  const hoursLeft = totalSec / 3600;
+  const needsRefundBankDetails = Boolean(
+    sessionData &&
+      hoursLeft >= 12 &&
+      ["paid", "partial_refund"].includes(String(sessionData.paymentStatus || "").toLowerCase()),
   );
 
   /* ── Session state logic ── */
   const autoState = totalSec <= 0 ? "done" : totalSec <= 3600 ? "live" : "upcoming";
-  const state = demoState; // use demo for now
   const paymentMeta = getPaymentMeta(sessionData?.paymentStatus);
+
+  const mentorActionMode = useMemo(() => {
+    if (!sessionData) return null;
+    const st = String(sessionData.status || "").toLowerCase();
+    const res = String(sessionData.mentorCancelResolution || "");
+    const byMentor = String(sessionData.cancelledBy || "") === "mentor";
+    if (st === "no_show" || res === "no_show_refund") return "no_show";
+    if (!byMentor) return null;
+    if (st === "cancelled" && res === "awaiting_user") return "choose";
+    if (st === "cancelled" && res === "late_cancel_refund") return "late_refund";
+    if (st === "cancelled" && res === "change_mentor") return "change_mentor_done";
+    if (st === "cancelled" && (res === "refund" || res === "reschedule")) return "resolution_done";
+    if (st === "cancelled") return "cancelled_generic";
+    return null;
+  }, [sessionData]);
+
+  const state = useMemo(() => {
+    if (mentorActionMode) return "mentor_action";
+    const st = String(sessionData?.status || "").toLowerCase();
+    if (st === "completed" || st === "done") return "done";
+    if (st === "no_show") return "mentor_action";
+    return autoState;
+  }, [mentorActionMode, sessionData?.status, autoState]);
+
+  useEffect(() => {
+    if (!sessionData) return;
+    if (sessionData.refundReceiveBankName) setRefundBankName(sessionData.refundReceiveBankName);
+    if (sessionData.refundReceiveAccountNumber) setRefundAccountNumber(sessionData.refundReceiveAccountNumber);
+    if (sessionData.refundReceiveAccountHolder) setRefundAccountHolder(sessionData.refundReceiveAccountHolder);
+  }, [sessionData?.sessionId]);
 
   /* ── Checklist ── */
   const [checklist, setChecklist] = useState([
@@ -230,6 +304,194 @@ export function SessionDetail() {
 
   /* ── Notes ── */
   const [notes, setNotes] = useState("");
+  const [cancelModalOpen, setCancelModalOpen] = useState(false);
+  const [cancelReason, setCancelReason] = useState("");
+  const [cancelBusy, setCancelBusy] = useState(false);
+  const [refundBankName, setRefundBankName] = useState("");
+  const [refundAccountNumber, setRefundAccountNumber] = useState("");
+  const [refundAccountHolder, setRefundAccountHolder] = useState("");
+  const [refundDestBusy, setRefundDestBusy] = useState(false);
+  const [mentorResolutionStep, setMentorResolutionStep] = useState("");
+  const [resolutionBusy, setResolutionBusy] = useState(false);
+  const [reportNoShowBusy, setReportNoShowBusy] = useState(false);
+  const [rescheduleDate, setRescheduleDate] = useState("");
+  const [rescheduleSlot, setRescheduleSlot] = useState("");
+  const [rescheduleSlotOptions, setRescheduleSlotOptions] = useState([]);
+  const [loadingRescheduleSlots, setLoadingRescheduleSlots] = useState(false);
+
+  const needsMentorCancelChoice = mentorActionMode === "choose" && Boolean(mongoBookingId && isLoggedIn());
+
+  useEffect(() => {
+    if (mentorResolutionStep !== "reschedule" || !sessionData?.mentorId) {
+      setRescheduleSlotOptions([]);
+      return;
+    }
+    let cancelled = false;
+    setLoadingRescheduleSlots(true);
+    void Promise.all([
+      fetchMentorAvailability(sessionData.mentorId),
+      fetchBookedSlots(sessionData.mentorId),
+    ]).then(([availability, bookedRes]) => {
+      if (cancelled) return;
+      setLoadingRescheduleSlots(false);
+      if (!availability?.availableSlots) {
+        setRescheduleSlotOptions([]);
+        return;
+      }
+      const bookedMap = bookedRes.success ? bookedRes.booked || {} : {};
+      const options = [];
+      for (const [date, slots] of Object.entries(availability.availableSlots || {})) {
+        const bookingDate = toBookingDateFormat(date);
+        for (const slot of Array.isArray(slots) ? slots : []) {
+          const taken = Array.isArray(bookedMap[date]) ? bookedMap[date].includes(slot) : false;
+          if (!taken) options.push({ date: bookingDate, slot, label: `${bookingDate} • ${slot}` });
+        }
+      }
+      options.sort((a, b) => `${a.date} ${a.slot}`.localeCompare(`${b.date} ${b.slot}`));
+      setRescheduleSlotOptions(options);
+      if (options.length > 0) {
+        setRescheduleDate(options[0].date);
+        setRescheduleSlot(options[0].slot);
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [mentorResolutionStep, sessionData?.mentorId]);
+
+  const handleResolveMentorCancel = async (choice) => {
+    if (!mongoBookingId) return;
+    if (choice === "change_mentor") {
+      setResolutionBusy(true);
+      const res = await resolveMentorCancelBooking(mongoBookingId, { choice: "change_mentor" });
+      setResolutionBusy(false);
+      if (!res.success) {
+        toast.error(res.error || "Không ghi nhận lựa chọn.");
+        return;
+      }
+      const credit = Number(res.rebookCreditVnd ?? res.booking?.rebookCreditVnd ?? 0);
+      toast.success(
+        credit > 0
+          ? `Đã kích hoạt credit ${credit.toLocaleString("vi-VN")}₫ — chọn mentor khác, không cần CK lại nếu giá ≤ credit.`
+          : "Hãy chọn mentor mới để đặt lịch.",
+      );
+      if (res.booking) setApiBooking(res.booking);
+      try {
+        sessionStorage.setItem("prointerview_rebook_from", mongoBookingId);
+      } catch {
+        /* ignore */
+      }
+      navigate(`/mentors?rebookFrom=${encodeURIComponent(mongoBookingId)}`);
+      return;
+    }
+    if (choice === "refund") {
+      const acct = String(refundAccountNumber || "").replace(/\D/g, "");
+      if (!String(refundBankName || "").trim() || acct.length < 6 || !String(refundAccountHolder || "").trim()) {
+        toast.error("Vui lòng điền đầy đủ ngân hàng, STK và tên chủ tài khoản.");
+        return;
+      }
+      setResolutionBusy(true);
+      const res = await resolveMentorCancelBooking(mongoBookingId, {
+        choice: "refund",
+        refundReceiveBankName: String(refundBankName || "").trim(),
+        refundReceiveAccountNumber: acct,
+        refundReceiveAccountHolder: String(refundAccountHolder || "").trim(),
+      });
+      setResolutionBusy(false);
+      if (!res.success) {
+        toast.error(res.error || "Không gửi yêu cầu hoàn tiền.");
+        return;
+      }
+      toast.success("Đã gửi yêu cầu hoàn 100%. Admin sẽ CK khi đối soát.");
+      if (res.booking) setApiBooking(res.booking);
+      setMentorResolutionStep("");
+      return;
+    }
+    if (choice === "reschedule") {
+      if (!rescheduleDate || !rescheduleSlot) {
+        toast.error("Vui lòng chọn ngày và giờ mới.");
+        return;
+      }
+      setResolutionBusy(true);
+      const res = await resolveMentorCancelBooking(mongoBookingId, {
+        choice: "reschedule",
+        newDate: rescheduleDate,
+        newTimeSlot: rescheduleSlot,
+      });
+      setResolutionBusy(false);
+      if (!res.success) {
+        toast.error(res.error || "Không đổi được lịch.");
+        return;
+      }
+      toast.success("Đã đổi lịch — buổi hẹn được khôi phục với thời gian mới.");
+      if (res.booking) setApiBooking(res.booking);
+      setMentorResolutionStep("");
+    }
+  };
+
+  const mentorResolution = String(sessionData?.mentorCancelResolution || "");
+
+  const needsRefundBankForm = Boolean(
+    mongoBookingId &&
+      isLoggedIn() &&
+      String(sessionData?.paymentStatus || "").toLowerCase() === "refund_pending" &&
+      String(sessionData?.refundReceiveAccountNumber || "").replace(/\D/g, "").length < 6,
+  );
+
+  const refundBankFormTitle =
+    mentorResolution === "no_show_refund"
+      ? "Mentor không tham gia — hoàn 100%"
+      : mentorResolution === "late_cancel_refund"
+        ? "Mentor hủy gấp — hoàn 100% ưu tiên"
+        : String(sessionData?.cancelledBy || "") === "mentor"
+          ? "Điền STK nhận hoàn tiền"
+          : "Điền STK nhận hoàn tiền";
+
+  const canReportNoShow = Boolean(
+    mongoBookingId &&
+      isLoggedIn() &&
+      sessionData &&
+      elapsedSinceStartSec >= 15 * 60 &&
+      !["cancelled", "no_show", "done", "completed"].includes(String(sessionData.status || "")) &&
+      String(sessionData.paymentStatus || "").toLowerCase() === "paid",
+  );
+
+  const handleReportNoShow = async () => {
+    if (!mongoBookingId) return;
+    setReportNoShowBusy(true);
+    const res = await reportBookingNoShow(mongoBookingId, {
+      note: "Học viên báo mentor không tham gia buổi hẹn.",
+    });
+    setReportNoShowBusy(false);
+    if (!res.success) {
+      toast.error(res.error || "Không gửi được báo no-show.");
+      return;
+    }
+    toast.success("Đã ghi nhận no-show. Hoàn 100% — vui lòng điền STK nếu được yêu cầu.");
+    if (res.booking) setApiBooking(res.booking);
+  };
+
+  const handleSubmitRefundDestination = async () => {
+    if (!mongoBookingId) return;
+    const acct = String(refundAccountNumber || "").replace(/\D/g, "");
+    if (!String(refundBankName || "").trim() || acct.length < 6 || !String(refundAccountHolder || "").trim()) {
+      toast.error("Vui lòng điền đầy đủ ngân hàng, STK và tên chủ tài khoản.");
+      return;
+    }
+    setRefundDestBusy(true);
+    const res = await updateBookingRefundDestination(mongoBookingId, {
+      refundReceiveBankName: String(refundBankName || "").trim(),
+      refundReceiveAccountNumber: acct,
+      refundReceiveAccountHolder: String(refundAccountHolder || "").trim(),
+    });
+    setRefundDestBusy(false);
+    if (!res.success) {
+      toast.error(res.error || "Không lưu được STK nhận hoàn.");
+      return;
+    }
+    toast.success("Đã lưu tài khoản nhận hoàn. Admin sẽ CK khi đối soát.");
+    if (res.booking) setApiBooking(res.booking);
+  };
 
   /* ── Rating / Feedback ── */
   const [rating, setRating] = useState(0);
@@ -246,6 +508,59 @@ export function SessionDetail() {
     "Gợi ý cải thiện cụ thể",
     "Tốc độ phù hợp, không áp lực",
   ];
+
+  const canCancelOnServer = Boolean(
+    mongoBookingId &&
+      isLoggedIn() &&
+      sessionData &&
+      !["cancelled", "done", "no_show", "completed"].includes(String(sessionData.status || "")),
+  );
+
+  const handleConfirmCancelBooking = async () => {
+    if (!mongoBookingId) return;
+    if (needsRefundBankDetails) {
+      const acct = String(refundAccountNumber || "").replace(/\D/g, "");
+      if (!String(refundBankName || "").trim() || acct.length < 6 || !String(refundAccountHolder || "").trim()) {
+        toast.error("Vui lòng điền đầy đủ ngân hàng, STK nhận hoàn và tên chủ tài khoản.");
+        return;
+      }
+    }
+    setCancelBusy(true);
+    const res = await cancelBooking(mongoBookingId, {
+      reason: String(cancelReason || "").trim(),
+      refundReceiveBankName: needsRefundBankDetails ? String(refundBankName || "").trim() : "",
+      refundReceiveAccountNumber: needsRefundBankDetails
+        ? String(refundAccountNumber || "").replace(/\D/g, "")
+        : "",
+      refundReceiveAccountHolder: needsRefundBankDetails ? String(refundAccountHolder || "").trim() : "",
+    });
+    setCancelBusy(false);
+    if (!res.success) {
+      toast.error(res.error || "Không hủy được lịch.");
+      return;
+    }
+    const pol = res.cancellationPolicy;
+    const refundAmt = Number(pol?.refundAmountVnd ?? 0);
+    const refundPct = typeof pol?.refundPercent === "number" ? pol.refundPercent : null;
+    const paid =
+      sessionData?.paymentStatus === "paid" ||
+      String(res.booking?.paymentStatus || "").toLowerCase() === "paid";
+    let extra = "";
+    if (refundAmt > 0) {
+      extra = ` Yêu cầu hoàn ${Math.round(refundAmt).toLocaleString("vi-VN")}₫${refundPct != null ? ` (${refundPct}%)` : ""} đã ghi nhận. Admin CK hoàn sau — bạn được báo khi xong.`;
+    } else if (paid && refundPct === 0) {
+      extra = " Theo chính sách, không hoàn tiền cho khoảng thời gian này.";
+    } else if (pol?.ledger === "cancelled_pending_transfer") {
+      extra = " Giao dịch chờ CK đã hủy — chưa thu tiền.";
+    }
+    toast.success(`Đã hủy lịch.${extra}`);
+    setCancelModalOpen(false);
+    setCancelReason("");
+    setRefundBankName("");
+    setRefundAccountNumber("");
+    setRefundAccountHolder("");
+    navigate("/dashboard");
+  };
 
   if (sessionLoading) {
     return (
@@ -282,6 +597,59 @@ export function SessionDetail() {
         <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
         Quay lại
       </button>
+
+      {canReportNoShow && !mentorActionMode ? (
+        <div className="mb-6 rounded-2xl border border-red-200 bg-red-50/90 p-4">
+          <p className="text-sm font-bold text-red-900">Mentor không tham gia?</p>
+          <p className="mt-1 text-xs text-red-900/80">
+            Nếu mentor không vào buổi sau 15 phút kể từ giờ hẹn, bạn có thể báo no-show để được hoàn ưu tiên 100%.
+          </p>
+          <button
+            type="button"
+            disabled={reportNoShowBusy}
+            onClick={() => void handleReportNoShow()}
+            className="mt-3 rounded-xl bg-red-600 px-4 py-2 text-xs font-semibold text-white disabled:opacity-50"
+          >
+            {reportNoShowBusy ? "Đang gửi…" : "Báo mentor no-show"}
+          </button>
+        </div>
+      ) : null}
+
+      {state === "mentor_action" && sessionData ? (
+        <MentorCancelSessionPanel
+          sessionData={sessionData}
+          mode={mentorActionMode || "cancelled_generic"}
+          needsChoose={needsMentorCancelChoice}
+          mentorResolutionStep={mentorResolutionStep}
+          setMentorResolutionStep={setMentorResolutionStep}
+          resolutionBusy={resolutionBusy}
+          onResolve={(choice) => void handleResolveMentorCancel(choice)}
+          rescheduleDate={rescheduleDate}
+          rescheduleSlot={rescheduleSlot}
+          setRescheduleDate={setRescheduleDate}
+          setRescheduleSlot={setRescheduleSlot}
+          rescheduleSlotOptions={rescheduleSlotOptions}
+          loadingRescheduleSlots={loadingRescheduleSlots}
+          refundBankName={refundBankName}
+          setRefundBankName={setRefundBankName}
+          refundAccountNumber={refundAccountNumber}
+          setRefundAccountNumber={setRefundAccountNumber}
+          refundAccountHolder={refundAccountHolder}
+          setRefundAccountHolder={setRefundAccountHolder}
+          refundBankFormTitle={refundBankFormTitle}
+          needsRefundBankForm={needsRefundBankForm}
+          refundDestBusy={refundDestBusy}
+          onSubmitRefundDestination={() => void handleSubmitRefundDestination()}
+          onGoRebookMentors={() => {
+            try {
+              sessionStorage.setItem("prointerview_rebook_from", mongoBookingId);
+            } catch {
+              /* ignore */
+            }
+            navigate(`/mentors?rebookFrom=${encodeURIComponent(mongoBookingId)}`);
+          }}
+        />
+      ) : null}
 
       {/* ══════════════════════════════════════════════ */}
       {/*              STATE: UPCOMING                  */}
@@ -602,46 +970,115 @@ export function SessionDetail() {
                 <p className={`text-xs ${paymentMeta.noteClass}`}>{paymentMeta.note}</p>
               </div>
 
-              {/* Cancel button with refund policy */}
-              <div className="space-y-3">
-                <button
-                  onClick={() => {
-                    if (window.confirm('Bạn có chắc muốn hủy buổi phỏng vấn này không?\n\n' + 
-                      (totalSec > 172800 ? '✓ Hủy trước 48 giờ: Hoàn 100%' : 
-                       totalSec > 86400 ? '• Hủy trong 24-48h: Hoàn 50%' : 
-                       '✗ Hủy trong 24h: Không hoàn tiền'))) {
-                      // TODO: Implement cancel booking logic
-                      alert('Đã gửi yêu cầu hủy. Chúng tôi sẽ liên hệ trong vòng 24h.');
-                    }
-                  }}
-                  className="w-full py-3 rounded-xl text-sm font-semibold transition-all border flex items-center justify-center gap-2 card-premium animate-fade-in" style={{ color: "#6B7280" }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.borderColor = "#EF4444";
-                    e.currentTarget.style.color = "#EF4444";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.borderColor = "#E5E7EB";
-                    e.currentTarget.style.color = "#6B7280";
-                  }}
-                >
-                  <X className="w-4 h-4" />
-                  Hủy buổi phỏng vấn
-                </button>
+              {needsRefundBankForm ? (
+                <div className="mb-4 space-y-2 rounded-2xl border border-amber-200 bg-amber-50/90 p-4">
+                  <p className="text-xs font-bold text-amber-900">{refundBankFormTitle}</p>
+                  {Number(sessionData?.cancelRefundAmountVnd) > 0 ? (
+                    <p className="text-[11px] text-amber-950/80">
+                      {Number(sessionData?.rebookCreditRemainderVnd) > 0
+                        ? "Phần tiền thừa sau đổi mentor — hoàn: "
+                        : "Số hoàn dự kiến: "}
+                      <strong>
+                        {Math.round(
+                          sessionData.rebookCreditRemainderVnd ?? sessionData.cancelRefundAmountVnd,
+                        ).toLocaleString("vi-VN")}
+                        ₫
+                      </strong>
+                    </p>
+                  ) : null}
+                  <input
+                    type="text"
+                    value={refundBankName}
+                    onChange={(e) => setRefundBankName(e.target.value)}
+                    placeholder="Tên ngân hàng"
+                    className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-violet-400"
+                  />
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    value={refundAccountNumber}
+                    onChange={(e) => setRefundAccountNumber(e.target.value)}
+                    placeholder="Số tài khoản"
+                    className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 font-mono text-sm outline-none focus:border-violet-400"
+                  />
+                  <input
+                    type="text"
+                    value={refundAccountHolder}
+                    onChange={(e) => setRefundAccountHolder(e.target.value)}
+                    placeholder="Tên chủ tài khoản"
+                    className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-violet-400"
+                  />
+                  <button
+                    type="button"
+                    disabled={refundDestBusy}
+                    onClick={() => void handleSubmitRefundDestination()}
+                    className="w-full rounded-xl py-2.5 text-sm font-semibold text-white disabled:opacity-50"
+                    style={{ background: "#6E35E8" }}
+                  >
+                    {refundDestBusy ? "Đang lưu…" : "Lưu STK nhận hoàn"}
+                  </button>
+                </div>
+              ) : null}
 
-                {/* Refund info based on time */}
+              {/* Cancel booking (API) + refund policy — khớp backend bookingsService.cancelMyBooking */}
+              <div className="space-y-3">
+                {canCancelOnServer ? (
+                  <button
+                    type="button"
+                    onClick={() => setCancelModalOpen(true)}
+                    className="w-full py-3 rounded-xl text-sm font-semibold transition-all border flex items-center justify-center gap-2 card-premium animate-fade-in"
+                    style={{ color: "#6B7280" }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.borderColor = "#EF4444";
+                      e.currentTarget.style.color = "#EF4444";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.borderColor = "#E5E7EB";
+                      e.currentTarget.style.color = "#6B7280";
+                    }}
+                  >
+                    <X className="w-4 h-4" />
+                    Hủy buổi phỏng vấn
+                  </button>
+                ) : (
+                  <p className="rounded-xl border border-dashed border-gray-200 bg-gray-50 px-3 py-2 text-center text-xs text-gray-500">
+                    {isLoggedIn()
+                      ? "Chỉ lịch đặt trên tài khoản (từ trang cố vấn) mới hủy được tự động qua hệ thống."
+                      : "Đăng nhập và mở lịch từ mục Đặt lịch để hủy online."}
+                  </p>
+                )}
+
                 <div className="rounded-xl p-3 space-y-1.5" style={{ background: "#F9FAFB" }}>
                   <div className="flex items-center gap-2">
-                    <CircleDollarSign className="w-4 h-4 flex-shrink-0" style={{ color: totalSec > 172800 ? "#10b981" : totalSec > 86400 ? "#f59e0b" : "#ef4444" }} />
-                    <p className="text-xs font-semibold" style={{ color: totalSec > 172800 ? "#10b981" : totalSec > 86400 ? "#f59e0b" : "#ef4444" }}>
-                      {totalSec > 172800 ? "Hoàn 100% nếu hủy ngay" : 
-                       totalSec > 86400 ? "Hoàn 50% nếu hủy ngay" : 
-                       "Không hoàn tiền nếu hủy"}
+                    <CircleDollarSign
+                      className="w-4 h-4 flex-shrink-0"
+                      style={{
+                        color: hoursLeft >= 24 ? "#10b981" : hoursLeft >= 12 ? "#f59e0b" : "#ef4444",
+                      }}
+                    />
+                    <p
+                      className="text-xs font-semibold"
+                      style={{
+                        color: hoursLeft >= 24 ? "#10b981" : hoursLeft >= 12 ? "#f59e0b" : "#ef4444",
+                      }}
+                    >
+                      {hoursLeft >= 24
+                        ? "Hoàn 100% (nếu đã thanh toán) nếu hủy ngay"
+                        : hoursLeft >= 12
+                          ? "Hoàn 50% (nếu đã thanh toán) nếu hủy ngay"
+                          : "Không hoàn tiền (nếu đã thanh toán) nếu hủy ngay"}
                     </p>
                   </div>
                   <ul className="text-xs text-gray-500 space-y-0.5 ml-6">
-                    <li className={totalSec > 172800 ? "text-emerald-600" : ""}>• Hủy trước 48h: Hoàn 100%</li>
-                    <li className={totalSec > 86400 && totalSec <= 172800 ? "text-amber-600" : ""}>• Hủy 24-48h: Hoàn 50%</li>
-                    <li className={totalSec <= 86400 ? "text-red-600" : ""}>• Hủy trong 24h: Không hoàn</li>
+                    <li className={hoursLeft >= 24 ? "text-emerald-600" : ""}>
+                      • Hủy trước buổi từ 24 giờ trở lên: hoàn 100%
+                    </li>
+                    <li className={hoursLeft >= 12 && hoursLeft < 24 ? "text-amber-600" : ""}>
+                      • Hủy từ 12 giờ đến dưới 24 giờ trước buổi: hoàn 50%
+                    </li>
+                    <li className={hoursLeft < 12 ? "text-red-600" : ""}>
+                      • Dưới 12 giờ trước buổi / không tham gia: không hoàn tiền
+                    </li>
                   </ul>
                   <p className="text-xs text-gray-400 pt-2 border-t border-gray-200">
                     Liên hệ <strong className="text-gray-600">support@prointerview.vn</strong> để đổi lịch miễn phí
@@ -682,21 +1119,20 @@ export function SessionDetail() {
             </div>
 
             {/* Join button */}
-            <a
-              href={sessionData.meetLink}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center justify-center gap-3 py-5 rounded-2xl text-white font-bold transition-all hover:opacity-95 active:scale-[0.98]"
+            <button
+              onClick={() => navigate(`/meeting/${id}`)}
+              className="w-full flex items-center justify-center gap-3 py-5 rounded-2xl text-white font-bold transition-all hover:opacity-95 active:scale-[0.98]"
               style={{
-                background: "#4285F4",
-                boxShadow: "0 8px 32px rgba(66,133,244,0.35)",
+                background: "#6E35E8",
+                boxShadow: "0 8px 32px rgba(110, 53, 232, 0.35)",
                 fontSize: "1.1rem",
               }}
             >
               <Video className="w-6 h-6" />
-              Tham gia Google Meet ngay
+              Vào phòng phỏng vấn ngay
               <ExternalLink className="w-5 h-5" />
-            </a>
+            </button>
+
 
             <div className="flex items-center gap-3 py-2 text-sm text-gray-500">
               <div className="flex-1 h-px bg-gray-200" />
@@ -786,10 +1222,11 @@ export function SessionDetail() {
             </div>
 
             <button
-              onClick={() => setDemoState("done")}
+              type="button"
+              onClick={() => navigate("/dashboard")}
               className="w-full py-3 rounded-xl text-sm font-semibold border border-gray-200 text-gray-600 hover:border-[#6E35E8]/40 hover:text-[#6E35E8] transition-all"
             >
-              Kết thúc buổi phỏng vấn →
+              Về Dashboard →
             </button>
           </div>
         </div>
@@ -820,74 +1257,156 @@ export function SessionDetail() {
             </div>
 
             {/* Review CTA */}
-            {existingReview ? (
-              <div className="bg-white rounded-2xl border-2 shadow-sm overflow-hidden"
-                style={{ borderColor: "rgba(180,240,0,0.4)", boxShadow: "0 4px 20px rgba(180,240,0,0.08)" }}>
-                <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between"
-                  style={{ background: "rgba(180,240,0,0.06)" }}>
-                  <div className="flex items-center gap-2">
-                    <PartyPopper className="w-4 h-4" style={{ color: "#4a7a00" }} />
-                    <span className="font-bold text-gray-800 text-sm">Bạn đã đánh giá buổi này</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    {[1,2,3,4,5].map(i => (
-                      <Star key={i} style={{ width:16, height:16, color: i <= existingReview.overallRating ? "#FFD600" : "#E5E7EB" }}
-                        fill={i <= existingReview.overallRating ? "#FFD600" : "none"} />
-                    ))}
-                  </div>
+            {sessionData?.isReviewed ? (
+              <motion.div 
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+                className="bg-white rounded-[2.5rem] p-12 shadow-[0_30px_70px_rgba(0,0,0,0.03)] border border-slate-100 text-center relative overflow-hidden group"
+              >
+                <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-indigo-50/40 to-violet-50/20 blur-[100px] -z-10 group-hover:scale-125 transition-transform duration-1000" />
+                
+                <div className="w-24 h-24 rounded-[2rem] bg-indigo-50/50 flex items-center justify-center mx-auto mb-8 shadow-inner">
+                  <motion.div
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ delay: 0.4, type: "spring", stiffness: 200 }}
+                  >
+                    <CheckCircle className="w-12 h-12 text-indigo-500" />
+                  </motion.div>
                 </div>
-                <div className="p-5">
-                  {existingReview.highlights.length > 0 && (
-                    <div className="flex flex-wrap gap-2 mb-3">
-                      {existingReview.highlights.map(h => (
-                        <span key={h} className="text-xs px-2.5 py-1.5 rounded-lg font-medium"
-                          style={{ background: "rgba(110, 53, 232,0.08)", color: "#6E35E8" }}>{h}</span>
-                      ))}
-                    </div>
-                  )}
-                  {existingReview.text && (
-                    <p className="text-sm text-gray-600 leading-relaxed italic border-l-2 pl-3 mb-3"
-                      style={{ borderColor: "#6E35E8" }}>"{existingReview.text}"</p>
-                  )}
-                  <button onClick={() => navigate(`/review/${sessionData.sessionId}`)}
-                    className="text-xs font-medium px-3 py-1.5 rounded-lg transition-all"
-                    style={{ background: "rgba(110, 53, 232,0.08)", color: "#6E35E8" }}>
-                    Chỉnh sửa đánh giá →
-                  </button>
+                
+                <h3 className="text-2xl font-black text-slate-900 mb-4 tracking-tight">Cảm ơn bạn đã đóng góp! ✨</h3>
+                <p className="text-slate-500 text-base font-medium mb-10 leading-relaxed max-w-md mx-auto">
+                  Đánh giá của bạn đã được gửi thành công. Những chia sẻ này giúp cộng đồng ngày càng phát triển hơn.
+                </p>
+                
+                <div className="flex items-center justify-center gap-2 px-8 py-4 bg-slate-50/80 rounded-[1.5rem] w-fit mx-auto border border-slate-100 transition-colors hover:bg-slate-100">
+                  <Star className="w-4 h-4 text-amber-400" fill="currentColor" />
+                  <span className="text-[11px] font-black text-slate-500 uppercase tracking-[0.2em]">Đã hoàn thành đánh giá</span>
                 </div>
-              </div>
+              </motion.div>
             ) : (
-              <div className="bg-white rounded-2xl border-2 shadow-sm overflow-hidden"
-                style={{ borderColor: "rgba(110, 53, 232,0.18)", boxShadow: "0 4px 24px rgba(110, 53, 232,0.10)" }}>
-                <div className="p-7 flex flex-col items-center text-center gap-4">
-                  <div className="w-16 h-16 rounded-2xl flex items-center justify-center"
-                    style={{ background: "linear-gradient(135deg,rgba(255,214,0,0.15),rgba(110, 53, 232,0.12))" }}>
-                    <Star className="w-8 h-8" style={{ color: "#FFD600" }} fill="#FFD600" />
+              <div className="bg-white rounded-[2.5rem] p-12 shadow-[0_30px_70px_rgba(0,0,0,0.03)] border border-slate-100 relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-indigo-50/40 to-violet-50/20 blur-[100px] -z-10" />
+                
+                <div className="flex flex-col items-center text-center">
+                  <div className="w-20 h-20 rounded-[1.8rem] flex items-center justify-center mb-8 shadow-lg shadow-amber-900/5 bg-white border border-amber-50"
+                    style={{ background: "linear-gradient(135deg,rgba(255,214,0,0.08),rgba(255,214,0,0.02))" }}>
+                    <Star className="w-10 h-10" style={{ color: "#FFD600" }} fill="#FFD600" />
                   </div>
-                  <div>
-                    <h3 className="font-black text-gray-900 mb-1.5" style={{ fontSize: "1.15rem" }}>
-                      Đánh giá {sessionData.mentorName}
+                  
+                  <div className="mb-10">
+                    <h3 className="text-2xl font-black text-slate-900 mb-3 tracking-tight">
+                      Bạn thấy buổi phỏng vấn thế nào?
                     </h3>
-                    <p className="text-gray-500 text-sm leading-relaxed">
-                      Chia sẻ trải nghiệm — giúp mentor cải thiện và học viên khác chọn đúng người.
+                    <p className="text-slate-500 text-base font-medium leading-relaxed max-w-md">
+                      Chia sẻ trải nghiệm giúp <span className="text-indigo-600 font-bold">{sessionData.mentorName}</span> và cộng đồng.
                     </p>
                   </div>
-                  <div className="flex gap-1.5">
+
+                  {/* Interactive Star Picker */}
+                  <div className="flex gap-4 mb-12">
                     {[1,2,3,4,5].map(i => (
-                      <Star key={i} style={{ width:32, height:32, color: "#E5E7EB" }} />
+                      <button
+                        key={i}
+                        onClick={() => navigate(`/review/${sessionData.sessionId}`, { state: { initialRating: i } })}
+                        className="transition-all hover:scale-125 active:scale-90 group"
+                      >
+                        <Star 
+                          className="w-14 h-14 transition-all duration-300" 
+                          fill="none" 
+                          style={{ color: "#F1F5F9" }} 
+                          onMouseEnter={(e) => {
+                            const siblings = e.currentTarget.parentElement.parentElement.querySelectorAll('svg');
+                            siblings.forEach((s, idx) => {
+                              if (idx < i) {
+                                s.style.color = "#FFD600";
+                                s.setAttribute('fill', '#FFD600');
+                                s.style.filter = "drop-shadow(0 0 8px rgba(255,214,0,0.4))";
+                              }
+                            });
+                          }}
+                          onMouseLeave={(e) => {
+                            const siblings = e.currentTarget.parentElement.parentElement.querySelectorAll('svg');
+                            siblings.forEach((s) => {
+                              s.style.color = "#F1F5F9";
+                              s.setAttribute('fill', 'none');
+                              s.style.filter = "none";
+                            });
+                          }}
+                        />
+                      </button>
                     ))}
                   </div>
+
                   <button
                     onClick={() => navigate(`/review/${sessionData.sessionId}`)}
-                    className="w-full py-4 rounded-2xl font-black text-base transition-all active:scale-[0.97]"
-                    style={{ background: "linear-gradient(135deg,#6E35E8,#8B4DFF)", color:"#fff", boxShadow:"0 6px 20px rgba(110, 53, 232,0.30)" }}>
-                    <Star className="inline w-5 h-5 mr-2 mb-0.5" fill="currentColor" />
-                    Viết đánh giá ngay
+                    className="w-full py-6 rounded-[2rem] font-black text-lg text-white shadow-2xl shadow-indigo-900/20 transition-all hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-3"
+                    style={{ background: "linear-gradient(135deg, #6E35E8, #8B4DFF)" }}
+                  >
+                    Viết đánh giá ngay <CaretRight className="w-5 h-5" />
                   </button>
-                  <p className="text-xs text-gray-400">Chỉ mất 1–2 phút · Giúp ích rất nhiều cho cộng đồng</p>
+                  
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mt-8">
+                    Chỉ mất 1 phút · Đánh giá của bạn rất quan trọng
+                  </p>
                 </div>
               </div>
             )}
+
+            {/* Luxury Minimalist Mentor Feedback */}
+            <div className="space-y-10">
+              <div className="relative overflow-hidden bg-white rounded-[2.5rem] p-10 shadow-[0_20px_50px_rgba(0,0,0,0.04)] border border-slate-100">
+                <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-indigo-50/50 to-violet-50/30 blur-3xl -z-10" />
+                
+                <div className="mb-10">
+                  <h5 className="text-[10px] font-black text-indigo-500 uppercase tracking-[0.3em] mb-3">KẾT QUẢ ĐÁNH GIÁ</h5>
+                  <h2 className="text-2xl font-black text-slate-900 tracking-tight">Nhận xét từ chuyên gia</h2>
+                </div>
+                
+                <div className="space-y-1">
+                  {(() => {
+                    const raw = sessionData.mentorNotes || "";
+                    if (!raw) return (
+                      <div className="py-10 text-center bg-slate-50/50 rounded-3xl border border-dashed border-slate-200">
+                        <p className="text-sm text-slate-400 font-semibold tracking-tight">Mentor đang hoàn thiện bản đánh giá chuyên sâu cho bạn...</p>
+                      </div>
+                    );
+                    
+                    const sections = raw.split(/\n/);
+                    return sections.map((line, idx) => {
+                      const trimmed = line.trim();
+                      if (!trimmed) return null;
+                      
+                      const cleanLine = trimmed.replace(/^[🎯💪🚀💡📝]\s*/, "");
+                      
+                      if (cleanLine.includes(":")) {
+                         const [title, ...contentParts] = cleanLine.split(":");
+                         const content = contentParts.join(":").trim();
+                         return (
+                           <div key={idx} className="group py-6 first:pt-0 last:pb-0 border-b border-slate-50 last:border-0">
+                             <div className="flex items-baseline gap-5">
+                                <div className="w-1.5 h-1.5 rounded-full bg-indigo-400 group-hover:scale-150 transition-transform" />
+                                <div className="flex-1">
+                                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">{title}</p>
+                                  <p className="text-base font-bold text-slate-800 leading-relaxed tracking-tight">{content}</p>
+                                </div>
+                             </div>
+                           </div>
+                         );
+                      }
+
+                      return (
+                        <div key={idx} className="py-4 first:pt-0 last:pb-0">
+                          <p className="text-sm font-semibold text-slate-600 leading-relaxed">{cleanLine}</p>
+                        </div>
+                      );
+                    });
+                  })()}
+                </div>
+              </div>
+            </div>
 
             {/* Next steps */}
             <div className="card-premium p-5">
@@ -988,6 +1507,105 @@ export function SessionDetail() {
         </div>
         );
       })()}
+
+      <AnimatePresence>
+        {cancelModalOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 overflow-y-auto overscroll-y-contain bg-black/40 backdrop-blur-sm"
+            onClick={() => {
+              if (!cancelBusy) setCancelModalOpen(false);
+            }}
+          >
+            <div className="flex min-h-full items-center justify-center p-4 py-8">
+              <motion.div
+                initial={{ scale: 0.96, y: 16, opacity: 0 }}
+                animate={{ scale: 1, y: 0, opacity: 1 }}
+                exit={{ scale: 0.96, y: 16, opacity: 0 }}
+                className="grid w-full max-w-lg max-h-[min(85dvh,calc(100vh-3rem))] grid-rows-[minmax(0,1fr)_auto] overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-xl"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="min-h-0 overflow-y-auto overscroll-contain px-5 pb-2 pt-5 sm:px-6 sm:pt-6">
+                  <h4 className="text-xl font-black text-slate-900">Hủy lịch phỏng vấn?</h4>
+                  <p className="mt-2 text-sm text-slate-600">
+                    {hoursLeft >= 24
+                      ? "Theo chính sách hiện tại: nếu đã thanh toán, bạn được hoàn 100% (hủy từ 24 giờ trở lên trước buổi)."
+                      : hoursLeft >= 12
+                        ? "Từ 12 giờ đến dưới 24 giờ trước buổi: nếu đã thanh toán, hoàn 50%."
+                        : "Dưới 12 giờ trước buổi: không hoàn tiền nếu đã thanh toán."}
+                  </p>
+                  <textarea
+                    value={cancelReason}
+                    onChange={(e) => setCancelReason(e.target.value)}
+                    className="mt-4 min-h-[5rem] w-full rounded-2xl border border-slate-200 bg-slate-50 p-3 text-sm text-slate-900 outline-none focus:border-violet-400"
+                    placeholder="Lý do hủy (tuỳ chọn)"
+                  />
+                  {needsRefundBankDetails ? (
+                    <div className="mt-4 space-y-2 rounded-2xl border border-sky-200 bg-sky-50/90 p-3 sm:p-4">
+                      <p className="text-xs font-bold text-sky-900">Tài khoản nhận hoàn tiền</p>
+                      <p className="text-[11px] leading-snug text-sky-950/80">
+                        Tiền vào TK công ty — hệ thống không lưu STK nguồn. Điền STK nhận hoàn (số tiền do hệ thống tính).
+                      </p>
+                      <input
+                        type="text"
+                        value={refundBankName}
+                        onChange={(e) => setRefundBankName(e.target.value)}
+                        placeholder="Ngân hàng"
+                        className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-violet-400"
+                      />
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        autoComplete="off"
+                        value={refundAccountNumber}
+                        onChange={(e) => setRefundAccountNumber(e.target.value)}
+                        placeholder="Số tài khoản"
+                        className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 font-mono text-sm outline-none focus:border-violet-400"
+                      />
+                      <input
+                        type="text"
+                        autoComplete="name"
+                        value={refundAccountHolder}
+                        onChange={(e) => setRefundAccountHolder(e.target.value)}
+                        placeholder="Tên chủ tài khoản"
+                        className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-violet-400"
+                      />
+                    </div>
+                  ) : null}
+                </div>
+                <div className="border-t border-slate-100 bg-white px-5 py-4 sm:px-6">
+                  <div className="grid grid-cols-2 gap-3">
+                    <button
+                      type="button"
+                      disabled={cancelBusy}
+                      onClick={() => {
+                        setCancelModalOpen(false);
+                        setCancelReason("");
+                        setRefundBankName("");
+                        setRefundAccountNumber("");
+                        setRefundAccountHolder("");
+                      }}
+                      className="rounded-xl border border-slate-200 bg-slate-50 py-3 text-xs font-black uppercase tracking-wider text-slate-800 disabled:opacity-50"
+                    >
+                      Giữ lịch
+                    </button>
+                    <button
+                      type="button"
+                      disabled={cancelBusy}
+                      onClick={() => void handleConfirmCancelBooking()}
+                      className="rounded-xl border border-red-300 bg-red-50 py-3 text-xs font-black uppercase tracking-wider text-red-700 disabled:opacity-50"
+                    >
+                      {cancelBusy ? "Đang xử lý…" : "Xác nhận hủy"}
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

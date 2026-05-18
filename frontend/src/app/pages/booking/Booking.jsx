@@ -1,5 +1,5 @@
 import React, { useMemo, useState, useEffect } from "react";
-import { useNavigate, useParams } from "react-router";
+import { useNavigate, useParams, useSearchParams } from "react-router";
 import {
   Calendar as CalendarBlank,
   Clock,
@@ -22,9 +22,10 @@ import {
   X,
 } from "lucide-react";
 import { fetchMentor, fetchMentorAvailability } from "../../utils/mentorApi";
-import { fetchBookedSlots } from "../../utils/bookingsApi";
+import { fetchBookedSlots, fetchRebookCredit } from "../../utils/bookingsApi";
 import { getSuggestedBookingData, getCVAnalysisHistory } from "../../utils/history";
 import { MentorPageShell } from "../../components/mentor/MentorPageShell";
+import { avatarSrc } from "../../utils/mediaUrl";
 
 const VI_DAY_SHORT = ["CN", "T2", "T3", "T4", "T5", "T6", "T7"];
 const VI_DAY_FULL = ["Chủ nhật", "Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5", "Thứ 6", "Thứ 7"];
@@ -87,6 +88,12 @@ const TIME_GROUPS = [
 export function Booking() {
   const navigate = useNavigate();
   const { id } = useParams();
+  const [searchParams] = useSearchParams();
+  const rebookFrom =
+    searchParams.get("rebookFrom") ||
+    (typeof sessionStorage !== "undefined" ? sessionStorage.getItem("prointerview_rebook_from") : "") ||
+    "";
+  const [rebookCredit, setRebookCredit] = useState(null);
   const [mentor, setMentor] = useState(null);
   const [mentorLoading, setMentorLoading] = useState(true);
   const [bookedSlots, setBookedSlots] = useState({});
@@ -133,6 +140,17 @@ export function Booking() {
     if (suggested?.position) setShowSmartBanner(true);
   }, []);
 
+  useEffect(() => {
+    if (!rebookFrom) {
+      setRebookCredit(null);
+      return;
+    }
+    void fetchRebookCredit(rebookFrom).then((r) => {
+      if (r.success && r.credit?.available) setRebookCredit(r.credit);
+      else setRebookCredit(null);
+    });
+  }, [rebookFrom]);
+
   const handleUseSmartFill = () => {
     if (!suggestedData) return;
     setForm({ ...form, position: suggestedData.position || "", cv: !!suggestedData.cvFile, jd: !!suggestedData.jdFile });
@@ -146,13 +164,14 @@ export function Booking() {
       type: "booking",
       mentorId: mentor.id,
       price: String(mentor.price),
-      date: selectedDayFull ?? selectedDay ?? "",
+      date: selectedDay ?? "",
       time: selectedTime ?? "",
       position: form.position,
       note: form.note,
       cvFile: form.cv ? "Nguyen_Tuan_CV.pdf" : "",
       jdFile: form.jd ? "JD_Target.pdf" : "",
     });
+    if (rebookFrom) params.set("rebookFrom", rebookFrom);
     navigate(`/checkout?${params.toString()}`);
   };
 
@@ -198,6 +217,11 @@ export function Booking() {
     }
 
     const recurring = Array.isArray(av.recurringSchedule) ? av.recurringSchedule : [];
+    const slotMapKeys = Object.keys(av.availableSlots || {}).length;
+    // Chỉ chặn ngày (blockedDates) — không có lịch cụ thể → mở khung giờ mặc định (khớp backend).
+    if (!recurring.length && slotMapKeys === 0) {
+      return TIME_GROUPS.flatMap((g) => g.slots);
+    }
     if (!recurring.length) return [];
     const mentorDay = (day.dateObj.getDay() + 6) % 7; // Mon=0
     const row = recurring.find((r) => Number(r?.dayOfWeek) === mentorDay);
@@ -316,7 +340,15 @@ export function Booking() {
         </div>
 
         <div className="mb-6 flex items-center gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-          <img src={mentor.avatar} alt={mentor.name} className="h-12 w-12 flex-shrink-0 rounded-xl object-cover ring-1 ring-slate-200" />
+          <img
+            src={avatarSrc(mentor.avatar)}
+            alt={mentor.name}
+            className="h-12 w-12 flex-shrink-0 rounded-xl object-cover ring-1 ring-slate-200"
+            onError={(e) => {
+              e.currentTarget.onerror = null;
+              e.currentTarget.src = avatarSrc("");
+            }}
+          />
           <div className="min-w-0">
             <p className="truncate text-sm font-bold text-slate-900">{mentor.name}</p>
             <p className="truncate text-xs text-slate-600">
@@ -738,7 +770,7 @@ export function Booking() {
                     <CurrencyCircleDollar className="mt-0.5 h-4 w-4 flex-shrink-0 text-emerald-600" />
                     <div>
                       <p className="mb-0.5 text-xs font-bold text-slate-900">Hoàn tiền 100%</p>
-                      <p className="text-xs text-slate-600">Nếu mentor hủy hoặc bạn hủy trước 48h</p>
+                      <p className="text-xs text-slate-600">Nếu mentor hủy hoặc bạn hủy từ 24 giờ trở lên trước buổi</p>
                     </div>
                   </div>
                   <div className="flex gap-2.5">

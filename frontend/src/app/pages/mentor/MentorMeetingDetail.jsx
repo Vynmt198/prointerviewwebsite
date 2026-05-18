@@ -259,6 +259,15 @@ export function MentorMeetingDetail() {
     }
     setActionModal("");
     setActionError("");
+    if (res.lateCancel) {
+      toast.success(
+        "Đã hủy buổi (< 24h). Học viên được hoàn 100% ưu tiên — cần điền STK trên trang buổi hẹn.",
+      );
+    } else if (res.refundPending) {
+      toast.success("Đã hủy. Yêu cầu hoàn tiền đã được ghi nhận.");
+    } else {
+      toast.success("Đã hủy. Học viên sẽ chọn đổi lịch, đổi mentor hoặc hoàn tiền trên trang buổi hẹn.");
+    }
     navigate("/mentor/schedule");
   };
 
@@ -371,20 +380,66 @@ export function MentorMeetingDetail() {
                  </div>
               )}
 
-              {/* General Feedback & Notes */}
-              <div className="grid md:grid-cols-2 gap-10">
-                 <div className="glass-card p-10">
-                    <h5 className="text-[10px] font-black text-primary-fixed uppercase tracking-[0.2em] mb-6">Nhận xét từ Mentor</h5>
-                    <p className="text-base font-medium text-zinc-300 leading-relaxed italic border-l-4 border-primary-fixed pl-6 py-2">
-                       "{meeting.feedback || "Chưa có nhận xét tổng quát cho buổi này."}"
+              {/* Luxury Minimalist Feedback & Notes */}
+              <div className="space-y-10">
+                <div className="relative overflow-hidden bg-white rounded-[2.5rem] p-12 shadow-[0_20px_50px_rgba(0,0,0,0.04)] border border-slate-100">
+                  {/* Subtle Gradient Accent */}
+                  <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-indigo-50/50 to-violet-50/30 blur-3xl -z-10" />
+                  
+                  <div className="mb-12">
+                    <h5 className="text-[11px] font-black text-indigo-500 uppercase tracking-[0.3em] mb-3">BÁO CÁO PHÂN TÍCH</h5>
+                    <h2 className="text-3xl font-black text-slate-900 tracking-tight">Đánh giá từ chuyên gia</h2>
+                  </div>
+                  
+                  <div className="space-y-1">
+                    {(() => {
+                      const raw = meeting.feedback || "";
+                      if (!raw) return <p className="text-sm text-slate-400 font-medium">Đang chờ cập nhật nội dung đánh giá...</p>;
+                      
+                      const sections = raw.split(/\n/);
+                      return sections.map((line, idx) => {
+                        const trimmed = line.trim();
+                        if (!trimmed) return null;
+                        
+                        const cleanLine = trimmed.replace(/^[🎯💪🚀💡📝]\s*/, "");
+                        
+                        if (cleanLine.includes(":")) {
+                           const [title, ...contentParts] = cleanLine.split(":");
+                           const content = contentParts.join(":").trim();
+                           return (
+                             <div key={idx} className="group py-8 first:pt-0 last:pb-0 border-b border-slate-50 last:border-0">
+                               <div className="flex items-baseline gap-6">
+                                  <div className="w-1.5 h-1.5 rounded-full bg-indigo-400 group-hover:scale-150 transition-transform" />
+                                  <div className="flex-1">
+                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">{title}</p>
+                                    <p className="text-lg font-semibold text-slate-800 leading-relaxed tracking-tight">{content}</p>
+                                  </div>
+                               </div>
+                             </div>
+                           );
+                        }
+
+                        return (
+                          <div key={idx} className="py-6 first:pt-0 last:pb-0">
+                            <p className="text-base font-medium text-slate-600 leading-relaxed">{cleanLine}</p>
+                          </div>
+                        );
+                      });
+                    })()}
+                  </div>
+                </div>
+
+                <div className="bg-gradient-to-br from-slate-900 to-indigo-950 rounded-[2.5rem] p-12 shadow-2xl shadow-indigo-900/20 text-white relative overflow-hidden">
+                  <div className="absolute top-0 right-0 p-12 opacity-10">
+                    <div className="w-32 h-32 rounded-full border-8 border-white/20" />
+                  </div>
+                  <h5 className="text-[11px] font-black text-indigo-300 uppercase tracking-[0.3em] mb-8">GHI CHÚ VẬN HÀNH</h5>
+                  <div className="backdrop-blur-md bg-white/5 rounded-3xl p-8 border border-white/10">
+                    <p className="text-base font-medium text-indigo-50/80 leading-relaxed whitespace-pre-wrap">
+                       {meeting.notes || "Hệ thống chưa ghi nhận ghi chú bổ sung cho buổi này."}
                     </p>
-                 </div>
-                 <div className="glass-card p-10">
-                    <h5 className="text-[10px] font-black text-secondary uppercase tracking-[0.2em] mb-6">Ghi chú & Next Steps</h5>
-                    <p className="text-sm font-medium text-zinc-400 leading-relaxed">
-                       {meeting.notes || "Mentor chưa lưu lại ghi chú cụ thể nào."}
-                    </p>
-                 </div>
+                  </div>
+                </div>
               </div>
            </div>
 
@@ -427,7 +482,7 @@ export function MentorMeetingDetail() {
                     {!isCompleted ? (
                        <>
                          <button
-                            onClick={() => navigate(`/mentor/meeting/${meeting.id}`)}
+                            onClick={() => navigate(`/meeting/${meeting.id}`)}
                             disabled={busyAction !== ""}
                             className="w-full py-5 rounded-3xl bg-primary-fixed text-black text-[10px] font-black uppercase tracking-widest shadow-[0_15px_40px_rgba(196, 255, 71,0.32)] hover:scale-105 transition-all"
                          >
@@ -469,7 +524,10 @@ export function MentorMeetingDetail() {
                        </>
                     ) : (
                        <>
-                          <button className="w-full py-5 rounded-3xl bg-primary-fixed text-black text-[10px] font-black uppercase tracking-widest shadow-[0_15px_40px_rgba(196, 255, 71,0.32)] hover:scale-105 transition-all flex items-center justify-center gap-2">
+                          <button 
+                            onClick={() => navigate(`/mentor/session-feedback/${meeting.id}`)}
+                            className="w-full py-5 rounded-3xl bg-primary-fixed text-black text-[10px] font-black uppercase tracking-widest shadow-[0_15px_40px_rgba(196, 255, 71,0.32)] hover:scale-105 transition-all flex items-center justify-center gap-2"
+                          >
                              <TrendingUp size={16} /> Gửi feedback bổ sung
                           </button>
                           <button className="w-full py-5 rounded-3xl bg-slate-50 border border-slate-200 text-[10px] font-black uppercase tracking-widest hover:bg-slate-100 transition-all flex items-center justify-center gap-2">
@@ -559,6 +617,11 @@ export function MentorMeetingDetail() {
               onClick={(e) => e.stopPropagation()}
             >
               <h4 className="text-xl font-black text-slate-900 mb-3">Hủy buổi mentor</h4>
+              <p className="text-sm text-zinc-400 mb-2">
+                Trước buổi <strong className="text-zinc-600">≥ 24h</strong>: học viên chọn đổi lịch / đổi mentor / hoàn 100%.
+                <strong className="text-zinc-600"> Dưới 24h</strong>: hệ thống ưu tiên hoàn 100% (học viên điền STK). Sau giờ họp: dùng
+                báo no-show (học viên/admin).
+              </p>
               <p className="text-sm text-zinc-400 mb-4">Bạn cần nhập lý do trước khi hủy lịch.</p>
               <textarea
                 value={cancelReason}

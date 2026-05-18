@@ -1,3 +1,4 @@
+import { MentorPageShell } from "../../components/mentor/MentorPageShell";
 import React, { useState } from "react";
 import { useNavigate } from "react-router";
 import {
@@ -66,24 +67,8 @@ export function AnalysisHistory() {
   const fieldAnalyses = CV_ANALYSIS_HISTORY.filter(item => item.mode === "field").length;
 
   return (
-    <div className="relative min-h-full w-full overflow-x-hidden font-sans antialiased text-slate-900 selection:bg-[rgba(196,255,71,0.28)] selection:text-slate-900">
-      <div className="fixed inset-0 pointer-events-none -z-[3]" style={{ background: "#f8f4ff" }} />
-      <div className="fixed top-[-22%] left-[-12%] w-[760px] h-[760px] rounded-full pointer-events-none -z-[2] bg-[#d4ff00]/48 blur-[135px]" />
-      <div className="fixed bottom-[-22%] right-[-10%] w-[820px] h-[820px] rounded-full pointer-events-none -z-[2] bg-[#9447ff]/34 blur-[150px]" />
-      <div
-        className="fixed left-0 right-0 top-[38%] h-[180px] pointer-events-none -z-[2]"
-        style={{
-          background: "linear-gradient(90deg, rgba(212,255,0,0.14) 0%, rgba(148,71,255,0.22) 55%, rgba(148,71,255,0.1) 100%)",
-          filter: "blur(32px)",
-        }}
-        aria-hidden
-      />
-      <div className="pricing-grid pointer-events-none fixed inset-0 -z-[1] opacity-[0.45]" aria-hidden style={{
-        backgroundImage: "linear-gradient(rgba(148,71,255,0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(148,71,255,0.06) 1px, transparent 1px)",
-        backgroundSize: "64px 64px",
-      }} />
-
-      <div className="relative z-[1] mx-auto w-full max-w-7xl px-6 pb-4 pt-8 sm:px-8 sm:pb-6 sm:pt-10">
+    <MentorPageShell bottomPad="pb-8">
+      <div className="relative z-[1] mx-auto w-full max-w-7xl px-6 pb-4 pt-4 sm:px-8 sm:pb-6 sm:pt-6">
         <div className="mb-8">
         {/* Header */}
         <div className="mb-6">
@@ -96,7 +81,7 @@ export function AnalysisHistory() {
             Quay lại
           </button>
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-            <div>
+            <div className="min-w-0 flex-1">
               <div className="mb-3 flex items-center gap-3">
                 <FileText
                   className="size-6 shrink-0 text-lime-900"
@@ -108,11 +93,11 @@ export function AnalysisHistory() {
                   Phân tích CV/JD
                 </span>
               </div>
-              <h1 className="mb-4 text-3xl font-black leading-[1.08] tracking-tight text-slate-900 sm:text-4xl md:text-5xl">
+              <h1 className="app-page-title mb-3">
                 Lịch sử phân tích{" "}
                 <span className="text-[#6E35E8]">CV/JD</span>
               </h1>
-              <p className="max-w-2xl text-base font-semibold leading-relaxed text-slate-600 sm:text-lg">
+              <p className="app-page-subtitle">
                 Xem lại các kết quả phân tích đã thực hiện
               </p>
             </div>
@@ -606,6 +591,6 @@ export function AnalysisHistory() {
         )}
         </div>
       </div>
-    </div>
+    </MentorPageShell>
   );
 }

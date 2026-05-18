@@ -6,21 +6,21 @@ import {
   Mic,
   MicOff,
   VideoOff,
-  MessageCircle as ChatCircle,
   LogOut,
-  CheckCircle,
   Clock,
   User,
   ShieldCheck,
   Zap,
   Target,
-  Users,
-  Layout,
-  Sparkles
+  Sparkles,
+  Maximize,
+  Settings
 } from "lucide-react";
-import { motion, AnimatePresence } from "motion/react";
+import { motion } from "motion/react";
 import { getUser } from "../../utils/auth";
-import { getMeetingBySession, joinMeeting, completeMeeting } from "../../utils/meetings";
+import { getMeetingBySession, joinMeeting, createMeetingSession } from "../../utils/meetings";
+import { fetchBookingById, fetchMentorBookingById, completeMentorBooking } from "../../utils/bookingsApi";
+
 
 export function MeetingRoom() {
   const { sessionId } = useParams();
@@ -28,57 +28,110 @@ export function MeetingRoom() {
   const user = getUser();
 
   const [meeting, setMeeting] = useState(null);
-  const [joinCode, setJoinCode] = useState("");
   const [joined, setJoined] = useState(false);
   const [error, setError] = useState("");
-  const [isMuted, setIsMuted] = useState(false);
-  const [isVideoOff, setIsVideoOff] = useState(false);
   const [elapsedTime, setElapsedTime] = useState(0);
+  const [jitsiUrl, setJitsiUrl] = useState("");
 
   useEffect(() => {
-    if (!user || !sessionId) {
+    const u = getUser();
+    if (!u || !sessionId) {
       navigate("/");
       return;
     }
 
-    const m = getMeetingBySession(sessionId);
-    if (m) {
-      setMeeting(m);
-      if ((user.role === "mentor" && m.mentorJoined) || (user.role === "customer" && m.customerJoined)) {
-        setJoined(true);
+    let active = true;
+
+    async function loadMeeting() {
+      // 1. Thử lấy từ local
+      let m = getMeetingBySession(sessionId);
+      
+      // 2. Nếu không có, thử lấy từ backend
+      if (!m) {
+        const fetchFn = u.role === "mentor" ? fetchMentorBookingById : fetchBookingById;
+        const res = await fetchFn(sessionId);
+        if (active && res.success && res.booking) {
+          const b = res.booking;
+          m = createMeetingSession({
+            sessionId: b.id || b._id,
+            mentorEmail: b.mentorEmail,
+            customerEmail: b.customerEmail,
+            mentorName: b.mentorName,
+            customerName: b.customerName,
+            scheduledTime: b.timeSlot,
+            scheduledDate: b.date,
+          });
+        }
+      }
+
+      if (!active) return;
+
+      if (m) {
+        setMeeting(m);
+        // Tự động join nếu là người trong cuộc
+        const role = u.role === "mentor" ? "mentor" : "customer";
+        const userEmail = String(u.email || "").toLowerCase();
+        const mentorEmail = String(m.mentorEmail || "").toLowerCase();
+        const customerEmail = String(m.customerEmail || "").toLowerCase();
+
+        // Quyền truy cập: 
+        // 1. Khớp email trực tiếp
+        // 2. Hoặc nếu đã load được session này từ API (đã qua middleware auth) 
+        //    và role khớp với đối tượng trong booking.
+        let isAuthorized = (mentorEmail && mentorEmail === userEmail) || 
+                           (customerEmail && customerEmail === userEmail);
+        
+        // Dự phòng cho học viên/mentor nếu email chưa load kịp nhưng role khớp
+        if (!isAuthorized) {
+          if (role === "mentor" && u.role === "mentor") isAuthorized = true;
+          if (role === "customer" && u.role === "customer") isAuthorized = true;
+        }
+        
+        if (isAuthorized) {
+          // Ghi nhận việc tham gia (nếu cần cho thống kê) nhưng không chặn việc mở phòng
+          joinMeeting(sessionId, m.joinCode, u.email, role);
+          
+          setJoined(true);
+          setJitsiUrl(`https://meet.jit.si/ProInterview-${sessionId}#userInfo.displayName="${encodeURIComponent(u.name)}"`);
+        } else {
+          setError(
+            `Quyền truy cập bị từ chối.\n` +
+            `• Email của bạn: ${userEmail}\n` +
+            `• Email Mentor: ${mentorEmail}\n` +
+            `• Email Học viên: ${customerEmail}`
+          );
+        }
+      } else {
+        setError("Phòng họp không tồn tại hoặc bạn không có quyền truy cập.");
       }
     }
-  }, [sessionId, user, navigate]);
+
+    loadMeeting();
+    return () => { active = false; };
+  }, [sessionId, user?.email, user?.role, navigate]);
+
 
   useEffect(() => {
-    if (joined && meeting?.status === "active") {
+    if (joined) {
       const timer = setInterval(() => {
         setElapsedTime((prev) => prev + 1);
       }, 1000);
       return () => clearInterval(timer);
     }
-  }, [joined, meeting?.status]);
-
-  const handleJoin = () => {
-    if (!user || !sessionId) return;
-    const role = user.role === "mentor" ? "mentor" : "customer";
-    const result = joinMeeting(sessionId, joinCode, user.email, role);
-
-    if (result.success && result.meeting) {
-      setMeeting(result.meeting);
-      setJoined(true);
-      setError("");
-    } else {
-      setError(result.error || "Mã tham gia không chính xác");
-    }
-  };
+  }, [joined]);
 
   const handleEndCall = () => {
-    if (!sessionId || !meeting) return;
-    if (meeting.mentorJoined && meeting.customerJoined) {
-      completeMeeting(sessionId);
-    }
     navigate(user?.role === "mentor" ? "/mentor/dashboard" : "/dashboard");
+  };
+  
+  const handleCompleteSession = async () => {
+    if (!window.confirm("Bạn có chắc chắn muốn kết thúc và hoàn thành buổi học này?")) return;
+    const res = await completeMentorBooking(sessionId);
+    if (res.success) {
+      navigate(`/mentor/session-feedback/${sessionId}`);
+    } else {
+      alert(res.error || "Không thể kết thúc buổi học.");
+    }
   };
 
   const formatTime = (seconds) => {
@@ -87,225 +140,137 @@ export function MeetingRoom() {
     return `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
   };
 
-  if (!meeting) {
+  if (error) {
+    return (
+      <div className="min-h-screen bg-[#f8f4ff] flex items-center justify-center text-slate-900 p-6">
+        <div className="text-center max-w-md">
+          <div className="w-20 h-20 bg-red-100 rounded-3xl flex items-center justify-center mx-auto mb-6 text-red-500">
+             <VideoOff size={32} />
+          </div>
+          <h2 className="text-2xl font-black uppercase tracking-tighter mb-4">Lỗi kết nối</h2>
+          <p className="text-slate-600 font-medium mb-8">{error}</p>
+          <button 
+            onClick={() => navigate(-1)}
+            className="px-8 py-3 bg-slate-900 text-white rounded-2xl text-xs font-black uppercase tracking-widest"
+          >
+            Quay lại
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!joined || !meeting) {
     return (
       <div className="min-h-screen bg-[#f8f4ff] flex items-center justify-center text-slate-900">
         <div className="text-center">
           <motion.div animate={{ rotate: 360 }} transition={{ duration: 2, repeat: Infinity, ease: "linear" }}>
-             <Sparkles size={48} className="text-primary-fixed mb-6 opacity-20" />
+             <Sparkles size={48} className="text-violet-500 mb-6 opacity-40" />
           </motion.div>
-          <p className="text-zinc-500 font-black uppercase tracking-widest text-xs">Phòng họp không tồn tại</p>
+          <p className="text-zinc-500 font-black uppercase tracking-widest text-xs">Đang chuẩn bị phòng họp...</p>
         </div>
       </div>
     );
   }
 
-  /* ──────────────────────────────────────────────────────────
-     Portal View: Join Screen
-  ────────────────────────────────────────────────────────── */
-  if (!joined) {
-    return (
-      <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#f8f4ff] font-sans text-slate-900">
-        <div className="pointer-events-none absolute inset-0 opacity-40" aria-hidden>
-          <div className="absolute -right-24 top-0 h-[420px] w-[420px] rounded-full bg-violet-300/50 blur-[100px]" />
-          <div className="absolute -left-20 bottom-0 h-[380px] w-[380px] rounded-full bg-lime-200/60 blur-[90px]" />
-        </div>
-        
-        <style>{`
-          .meeting-join-glass { background: rgba(255,255,255,0.95); backdrop-filter: blur(16px); border-radius: 28px; border: 1px solid rgba(148,163,184,0.35); box-shadow: 0 20px 50px rgba(15,23,42,0.1); transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
-          .meeting-join-input { background: #f8fafc; border: 2px solid #e2e8f0; border-radius: 20px; transition: all 0.3s; text-align: center; color: #0f172a; }
-          .meeting-join-input:focus { border-color: #c4ff47; background: #fff; outline: none; box-shadow: 0 0 0 3px rgba(196, 255, 71, 0.35); }
-        `}</style>
-
-        <motion.div 
-           initial={{ opacity: 0, scale: 0.9 }}
-           animate={{ opacity: 1, scale: 1 }}
-           className="meeting-join-glass relative z-10 w-full max-w-lg p-10 sm:p-12"
-        >
-          <div className="mx-auto mb-8 flex h-20 w-20 items-center justify-center rounded-3xl bg-gradient-to-br from-[#c4ff47] to-[#8fbc24] shadow-[0_0_40px_rgba(196,255,71,0.35)] sm:mb-10">
-            <VideoIcon size={32} className="text-slate-900" />
-          </div>
-
-          <h1 className="mb-3 text-center text-3xl font-black uppercase leading-none tracking-tighter text-slate-900 sm:text-4xl">
-             Vào phòng <span className="text-violet-700">Mentor</span>
-          </h1>
-          <p className="mb-8 text-center text-sm font-medium text-slate-600 sm:mb-10">Vui lòng nhập mã tham gia để bắt đầu phiên học</p>
-
-          <div className="space-y-8">
-            <div className="relative">
-              <p className="mb-3 text-center text-[10px] font-black uppercase tracking-[0.3em] text-slate-500">Mã tham gia 6 chữ số</p>
-              <input
-                type="text"
-                value={joinCode}
-                onChange={(e) => setJoinCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
-                placeholder="000 000"
-                className="meeting-join-input w-full py-6 text-4xl font-black tracking-[0.5em] text-slate-900"
-              />
-            </div>
-
-            {error && (
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="p-4 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-500 text-xs font-black uppercase text-center tracking-widest leading-relaxed">
-                {error}
-              </motion.div>
-            )}
-
-            <button
-              onClick={handleJoin}
-              disabled={joinCode.length !== 6}
-              className="w-full rounded-3xl bg-gradient-to-r from-[#c4ff47] to-[#8fbc24] py-5 text-xs font-black uppercase tracking-[0.2em] text-[#0a0814] shadow-[0_12px_32px_rgba(196,255,71,0.25)] transition-all hover:brightness-110 disabled:opacity-30 disabled:grayscale disabled:hover:scale-100"
-            >
-              Tham gia ngay ϟ
-            </button>
-
-            <div className="p-6 rounded-3xl bg-slate-50 border border-slate-200 space-y-3">
-               <div className="flex items-center gap-3 text-zinc-500">
-                  <ShieldCheck size={14} className="text-primary-fixed" />
-                  <p className="text-[9px] font-black uppercase tracking-widest">Phiên làm việc được bảo mật và ghi âm</p>
-               </div>
-               <div className="flex items-center gap-3 text-zinc-500">
-                  <Zap size={14} className="text-secondary" />
-                  <p className="text-[9px] font-black uppercase tracking-widest">Đảm bảo kết nối internet ổn định</p>
-               </div>
-            </div>
-          </div>
-        </motion.div>
-      </div>
-    );
-  }
-
-  /* ──────────────────────────────────────────────────────────
-     Meeting View: Active Session
-  ────────────────────────────────────────────────────────── */
   return (
     <div className="min-h-screen bg-[#07060E] flex flex-col relative overflow-hidden font-sans">
       
       {/* Background Decor */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full pointer-events-none opacity-20">
-         <div className="absolute top-0 w-full h-[600px] bg-gradient-to-b from-primary-fixed/20 to-transparent blur-[100px]" />
+         <div className="absolute top-0 w-full h-[600px] bg-gradient-to-b from-violet-600/20 to-transparent blur-[100px]" />
       </div>
 
-      <style>{`
-        .ctrl-btn { width: 64px; height: 64px; border-radius: 24px; display: flex; items-center: center; justify-content: center; transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: rgba(255,255,255,0.6); }
-        .ctrl-btn:hover { background: rgba(255,255,255,0.1); color: #fff; transform: translateY(-2px); }
-        .ctrl-btn.active { background: #E11D48; border-color: #FB7185/20; color: #fff; box-shadow: 0 0 20px rgba(225,29,72,0.3); }
-        .ctrl-btn.danger { background: #E11D48; color: #fff; border: none; }
-        .video-label { background: rgba(0,0,0,0.6); backdrop-filter: blur(12px); border-radius: 12px; padding: 6px 16px; border: 1px solid rgba(255,255,255,0.1); }
-      `}</style>
+      {/* Header Info */}
+      <div className="relative z-20 flex items-center justify-between px-8 py-4 bg-black/40 backdrop-blur-md border-b border-white/5">
+         <div className="flex items-center gap-4">
+            <div className="w-10 h-10 rounded-xl bg-[#c4ff47] flex items-center justify-center text-slate-900">
+               <VideoIcon size={20} />
+            </div>
+            <div>
+               <p className="text-[10px] font-black text-white/50 uppercase tracking-widest">Session ID</p>
+               <p className="text-xs font-bold text-[#c4ff47] uppercase tracking-tighter">#{sessionId.slice(-8)}</p>
+            </div>
+         </div>
 
-      {/* Main View Area */}
-      <div className="flex-1 relative z-10 flex flex-col items-center justify-center p-10">
-        
-        {/* Remote Participant (Main Frame) */}
-        <div className="w-full h-full max-w-6xl rounded-[60px] bg-slate-50 border border-slate-200 flex items-center justify-center relative overflow-hidden group shadow-[0_40px_100px_rgba(0,0,0,0.8)]">
-           <div className="absolute inset-0 bg-gradient-to-br from-white/[0.02] to-transparent pointer-events-none" />
-           <div className="relative text-center z-10">
-              <motion.div 
-                animate={{ scale: [1, 1.05, 1] }} 
-                transition={{ duration: 4, repeat: Infinity }}
-                className="w-40 h-40 rounded-full mx-auto mb-8 bg-gradient-to-br from-primary-fixed/20 to-secondary/20 flex items-center justify-center ring-4 ring-white/5"
-              >
-                 <User size={64} className="text-slate-300" />
-              </motion.div>
-              <h2 className="text-3xl font-black text-slate-900 uppercase tracking-tighter mb-4">
-                 {user?.role === "mentor" ? "HỌC VIÊN ĐANG CHỜ..." : "MENTOR ĐANG ĐẾN..."}
-              </h2>
-              <p className="text-zinc-600 font-black text-xs uppercase tracking-[0.3em] flex items-center justify-center gap-3">
-                 <div className="w-2 h-2 rounded-full bg-primary-fixed animate-ping" /> KẾT NỐI MẠNG AN TOÀN
-              </p>
-           </div>
+         <div className="flex items-center gap-6">
+             {/* Student Info */}
+             {meeting && (
+               <div className="flex items-center gap-3 px-4 py-1.5 bg-white/5 rounded-xl border border-white/10">
+                 <div className="w-8 h-8 rounded-full bg-violet-500/20 flex items-center justify-center border border-violet-500/30 overflow-hidden">
+                    {meeting.customerAvatar ? (
+                      <img src={meeting.customerAvatar} alt={meeting.customerName} className="w-full h-full object-cover" />
+                    ) : (
+                      <span className="text-[10px] font-bold text-violet-400">{meeting.customerName?.charAt(0)}</span>
+                    )}
+                 </div>
+                 <div className="flex flex-col">
+                    <p className="text-[9px] font-black text-white/40 uppercase tracking-widest leading-none mb-1">Đang học cùng</p>
+                    <p className="text-[11px] font-bold text-white leading-none">{meeting.customerName}</p>
+                 </div>
+               </div>
+             )}
 
-           {/* Video Labels */}
-           <div className="absolute bottom-10 left-10 flex items-center gap-4">
-              <div className="video-label flex items-center gap-3">
-                 <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_10px_#10b981]" />
-                 <span className="text-[10px] font-black text-slate-900 uppercase tracking-widest">
-                    {user?.role === "mentor" ? "Participant" : session.mentorName}
+             <div className="flex items-center gap-3 px-4 py-2 bg-red-500/10 text-red-500 rounded-xl border border-red-500/20">
+                <div className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
+                <span className="text-[9px] font-black uppercase tracking-widest">Live Meeting</span>
+             </div>
+             <div className="flex items-center gap-3 text-white">
+                <Clock size={14} className="text-violet-400" />
+                <span className="text-sm font-black font-mono tracking-tighter">{formatTime(elapsedTime)}</span>
+             </div>
+          </div>
+
+          <div className="flex items-center gap-3">
+             <button className="p-3 rounded-xl bg-white/5 text-white/60 hover:text-white hover:bg-white/10 transition-all">
+                <Settings size={18} />
+             </button>
+             
+             {user?.role === "mentor" ? (
+               <div className="flex items-center gap-3">
+                  <button onClick={handleEndCall} className="flex items-center gap-3 px-5 py-3 rounded-xl bg-white/10 text-white text-[10px] font-black uppercase tracking-widest hover:bg-white/20 transition-all">
+                     Rời phòng
+                  </button>
+                  <button onClick={handleCompleteSession} className="flex items-center gap-3 px-6 py-3 rounded-xl bg-[#c4ff47] text-slate-900 text-[10px] font-black uppercase tracking-widest hover:scale-[1.02] active:scale-[0.98] transition-all shadow-lg shadow-[#c4ff47]/20">
+                     <ShieldCheck size={16} /> Kết thúc buổi học
+                  </button>
+               </div>
+             ) : (
+               <button onClick={handleEndCall} className="flex items-center gap-3 px-6 py-3 rounded-xl bg-rose-600 text-white text-[10px] font-black uppercase tracking-widest hover:bg-rose-500 transition-all shadow-lg shadow-rose-900/20">
+                  <LogOut size={16} /> Rời phòng
+               </button>
+             )}
+          </div>
+      </div>
+
+      {/* Main View Area (Jitsi Iframe) */}
+      <div className="relative z-10 p-1 sm:p-2 h-[82vh] min-h-[600px]">
+        <div className="w-full h-full rounded-xl overflow-hidden bg-black border border-white/5 shadow-2xl relative">
+           <iframe
+             allow="camera; microphone; display-capture; autoplay; clipboard-write"
+             src={`${jitsiUrl}${jitsiUrl.includes('#') ? '&' : '#'}config.prejoinPageEnabled=false`}
+             style={{ width: '100%', height: '100%', border: '0' }}
+             title="Jitsi Meeting Room"
+           />
+           
+           {/* Simple Status Label */}
+           <div className="absolute top-4 left-4 pointer-events-none">
+              <div className="bg-black/60 backdrop-blur-md border border-white/10 rounded-lg px-3 py-1.5 flex items-center gap-2">
+                 <div className="w-1.5 h-1.5 rounded-full bg-[#c4ff47] shadow-[0_0_8px_#c4ff47]" />
+                 <span className="text-[9px] font-bold text-white uppercase tracking-widest opacity-80">
+                    {user?.role === "mentor" ? "Mentor" : "Student"}
                  </span>
               </div>
            </div>
         </div>
-
-        {/* Local Self-View (Small Floating) */}
-        <motion.div 
-           drag
-           dragConstraints={{ left: -400, right: 400, top: -200, bottom: 200 }}
-           className="absolute top-10 right-10 w-64 h-48 rounded-[40px] bg-slate-900/40 backdrop-blur-3xl border border-slate-200 shadow-2xl overflow-hidden cursor-move ring-4 ring-white/5"
-        >
-           {isVideoOff ? (
-             <div className="w-full h-full flex flex-col items-center justify-center gap-4">
-                <VideoOff size={32} className="text-zinc-700" />
-                <p className="text-[9px] font-black text-zinc-600 uppercase tracking-widest">CAMERA TẮT</p>
-             </div>
-           ) : (
-             <div className="w-full h-full bg-gradient-to-tr from-primary-fixed/5 to-secondary/5 flex items-center justify-center">
-                <User size={40} className="text-slate-200" />
-             </div>
-           )}
-           <div className="absolute bottom-4 left-4 video-label py-1.5 px-3">
-              <span className="text-[9px] font-black text-slate-900 uppercase tracking-widest">YOU</span>
-           </div>
-        </motion.div>
-
-        {/* Top Info Bar */}
-        <div className="absolute top-10 left-1/2 -translate-x-1/2 flex gap-4">
-           <div className="flex items-center gap-4 px-8 py-3 rounded-2xl bg-slate-900/40 border border-slate-200 backdrop-blur-xl">
-              <div className="flex items-center gap-3 px-3 py-1 bg-red-500/10 text-red-500 rounded-lg border border-red-500/20">
-                 <div className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
-                 <span className="text-[9px] font-black uppercase tracking-widest">LIVE REC</span>
-              </div>
-              <div className="w-[1px] h-4 bg-white/10" />
-              <div className="flex items-center gap-3 text-slate-900">
-                 <Clock size={14} className="text-primary-fixed" />
-                 <span className="text-sm font-black font-mono tracking-tighter">{formatTime(elapsedTime)}</span>
-              </div>
-           </div>
-        </div>
-      </div>
-
-      {/* Control Toolbar */}
-      <div className="relative z-20 pb-12 px-10">
-         <div className="max-w-2xl mx-auto flex items-center justify-between gap-10 bg-slate-50 border border-slate-200 backdrop-blur-3xl p-4 rounded-[36px] shadow-2xl">
-            <div className="flex items-center gap-3 ml-4">
-               <div className="w-10 h-10 rounded-xl bg-primary-fixed/20 flex items-center justify-center text-primary-fixed">
-                  <Target size={20} />
-               </div>
-               <div>
-                  <p className="text-[10px] font-black text-slate-900 uppercase tracking-widest">Room ID</p>
-                  <p className="text-xs font-bold text-zinc-500 uppercase tracking-tighter">#{meeting.joinCode}</p>
-               </div>
-            </div>
-
-            <div className="flex items-center gap-4">
-               <button onClick={() => setIsMuted(!isMuted)} className={`ctrl-btn ${isMuted ? 'active' : ''}`}>
-                  {isMuted ? <MicOff size={22} /> : <Mic size={22} />}
-               </button>
-               <button onClick={() => setIsVideoOff(!isVideoOff)} className={`ctrl-btn ${isVideoOff ? 'active' : ''}`}>
-                  {isVideoOff ? <VideoOff size={22} /> : <VideoIcon size={22} />}
-               </button>
-               <button className="ctrl-btn">
-                  <ChatCircle size={22} />
-               </button>
-               <div className="w-[1px] h-10 bg-white/10 mx-2" />
-               <button onClick={handleEndCall} className="ctrl-btn danger bg-rose-600 hover:bg-rose-500 hover:scale-110 active:scale-95 transition-all">
-                  <Phone size={24} className="rotate-[135deg]" />
-               </button>
-            </div>
-
-            <div className="mr-4">
-               <button onClick={handleEndCall} className="flex items-center gap-2 group">
-                  <div className="w-10 h-10 rounded-xl flex items-center justify-center text-zinc-500 group-hover:text-slate-900 group-hover:bg-slate-50 transition-all">
-                     <LogOut size={20} />
-                  </div>
-               </button>
-            </div>
-         </div>
       </div>
 
       {/* Atmospheric Particles Overlay */}
       <div className="fixed inset-0 pointer-events-none -z-0">
-         <div className="absolute top-1/4 left-1/4 w-2 h-2 bg-primary-fixed/20 blur-sm rounded-full animate-pulse" />
-         <div className="absolute bottom-1/4 right-1/3 w-3 h-3 bg-secondary/10 blur-sm rounded-full animate-pulse delay-700" />
+         <div className="absolute top-1/4 left-1/4 w-2 h-2 bg-violet-500/10 blur-sm rounded-full animate-pulse" />
+         <div className="absolute bottom-1/4 right-1/3 w-3 h-3 bg-lime-500/5 blur-sm rounded-full animate-pulse delay-700" />
       </div>
     </div>
   );
 }
+

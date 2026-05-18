@@ -64,7 +64,13 @@ export const adminApi = {
       method: "PATCH",
       body: JSON.stringify(body ?? {}),
     }),
+  confirmBookingRefund: (id) =>
+    authedFetch(`/api/admin/bookings/${id}/confirm-refund`, {
+      method: "PATCH",
+      body: JSON.stringify({}),
+    }),
   getPendingEnrollmentTransfers: () => authedFetch("/api/admin/enrollments/pending-transfer"),
+  getCoursePaymentEnrollments: () => authedFetch("/api/admin/enrollments/course-payments"),
   getCourseFinanceSummary: () => authedFetch("/api/admin/finance/courses"),
   confirmEnrollmentTransferPayment: (id, body = {}) =>
     authedFetch(`/api/admin/enrollments/${id}/confirm-transfer-payment`, {
@@ -86,6 +92,11 @@ export const adminApi = {
     authedFetch(`/api/admin/payouts/${id}/reject`, {
       method: "PATCH",
       body: JSON.stringify({ reason }),
+    }),
+  markPayoutPaid: (id, body = {}) =>
+    authedFetch(`/api/admin/payouts/${id}/mark-paid`, {
+      method: "PATCH",
+      body: JSON.stringify(body ?? {}),
     }),
   getPendingCourses: () => authedFetch("/api/admin/courses/pending"),
   approveCourse: (id) =>

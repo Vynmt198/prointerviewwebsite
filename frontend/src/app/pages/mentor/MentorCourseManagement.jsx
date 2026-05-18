@@ -1,27 +1,23 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router";
 import {
    Plus,
    Search,
    Users,
    Star,
-   ArrowLeft,
    BookOpen,
    CircleDollarSign,
-   ArrowRight,
    PlusCircle,
-   ExternalLink,
    Edit3,
    Trash2,
-   CheckCircle2,
-   Clock,
-   ChevronRight,
    Shapes
 } from "lucide-react";
-import { motion, AnimatePresence } from "motion/react";
+import { toast } from "sonner";
 import { getUser } from "../../utils/auth";
 import { MentorPageShell } from "../../components/mentor/MentorPageShell";
-import { fetchMyMentorCourses } from "../../utils/courseApi";
+import { ArchiveCourseDialog } from "../../components/courses/ArchiveCourseDialog";
+import { archiveCourse, fetchMyMentorCourses } from "../../utils/courseApi";
+import { mediaSrc, DEFAULT_COURSE_THUMB } from "../../utils/mediaUrl";
 
 function formatCompactNumber(value) {
    const n = Number(value) || 0;
@@ -31,61 +27,89 @@ function formatCompactNumber(value) {
    return String(n);
 }
 
+const STATUS_LABELS = {
+   published: "Đã đăng",
+   pending_review: "Chờ duyệt mới",
+   pending_update: "Chờ duyệt cập nhật",
+   draft: "Bản nháp",
+   archived: "Đã lưu trữ",
+};
+
+function mapCourseRow(c) {
+   return {
+      id: c._id,
+      title: c.title,
+      status: c.status || "draft",
+      students: c.stats?.enrollmentCount || 0,
+      rating: c.stats?.rating || 0,
+      earnings: c.stats?.totalRevenue || 0,
+      cover: mediaSrc(c.thumbnail, DEFAULT_COURSE_THUMB),
+      level:
+         c.level === "basic"
+            ? "Basic"
+            : c.level === "intermediate"
+              ? "Intermediate"
+              : "Advanced",
+   };
+}
+
 export function MentorCourseManagement() {
    const navigate = useNavigate();
    const user = getUser();
    const [activeTab, setActiveTab] = useState("all");
    const [search, setSearch] = useState("");
   const [myCourses, setMyCourses] = useState([]);
+   const [archiveTarget, setArchiveTarget] = useState(null);
+   const [archiving, setArchiving] = useState(false);
+
+   const loadCourses = useCallback(() => {
+      fetchMyMentorCourses().then((res) => {
+         if (!res.success || !Array.isArray(res.courses)) {
+            setMyCourses([]);
+            return;
+         }
+         setMyCourses(res.courses.map(mapCourseRow));
+      });
+   }, []);
 
    useEffect(() => {
       if (!user || user.role !== "mentor") {
          navigate("/");
          return;
       }
-      fetchMyMentorCourses().then((res) => {
-         if (!res.success || !Array.isArray(res.courses)) {
-            setMyCourses([]);
-            return;
-         }
-         const mapped = res.courses.map((c) => {
-            let cover = c.thumbnail || "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&q=80&w=600";
-            if (c.thumbnail && !c.thumbnail.startsWith("http")) {
-               const baseUrl = import.meta.env.VITE_API_URL || "http://localhost:5000";
-               cover = `${baseUrl}/uploads/${c.thumbnail}`;
-            }
-            return {
-               id: c._id,
-               title: c.title,
-               status: c.status || "draft",
-               students: c.stats?.enrollmentCount || 0,
-               rating: c.stats?.rating || 0,
-               earnings: c.stats?.totalRevenue || 0,
-               cover,
-               level:
-                  c.level === "basic"
-                     ? "Basic"
-                     : c.level === "intermediate"
-                       ? "Intermediate"
-                       : "Advanced",
-            };
-         });
-         setMyCourses(mapped);
+      loadCourses();
+   }, [navigate, user, loadCourses]);
 
-      });
-   }, [navigate, user]);
+   const handleArchiveConfirm = async (courseId) => {
+      const idToArchive = courseId || archiveTarget?.id;
+      if (!idToArchive) return;
+      setArchiving(true);
+      const res = await archiveCourse(idToArchive);
+      setArchiving(false);
+      if (!res.success) {
+         toast.error(res.error || "Không thể lưu trữ khóa học.");
+         return;
+      }
+      toast.success(res.message || "Đã lưu trữ khóa học.");
+      setArchiveTarget(null);
+      loadCourses();
+   };
 
    if (!user || user.role !== "mentor") return null;
 
-   const filtered = myCourses.filter(c => {
-      const matchesTab = activeTab === "all" || c.status === activeTab;
+   const activeCourses = myCourses.filter((c) => c.status !== "archived");
+   const filtered = myCourses.filter((c) => {
+      const matchesTab =
+         activeTab === "all"
+            ? c.status !== "archived"
+            : c.status === activeTab;
       const matchesSearch = c.title.toLowerCase().includes(search.toLowerCase());
       return matchesTab && matchesSearch;
    });
-   const totalCourses = myCourses.length;
-   const totalStudents = myCourses.reduce((sum, c) => sum + (Number(c.students) || 0), 0);
-   const totalRevenue = myCourses.reduce((sum, c) => sum + (Number(c.earnings) || 0), 0);
-   const ratedCourses = myCourses.filter((c) => Number(c.rating) > 0);
+   const totalCourses = activeCourses.length;
+   const totalStudents = activeCourses.reduce((sum, c) => sum + (Number(c.students) || 0), 0);
+   const totalRevenue = activeCourses.reduce((sum, c) => sum + (Number(c.earnings) || 0), 0);
+   const ratedCourses = activeCourses.filter((c) => Number(c.rating) > 0);
    const avgRating = ratedCourses.length
       ? (ratedCourses.reduce((sum, c) => sum + Number(c.rating), 0) / ratedCourses.length).toFixed(1)
       : "0.0";
@@ -137,22 +161,14 @@ export function MentorCourseManagement() {
             <div className="space-y-6">
                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5">
                   <div className="flex gap-2 rounded-[24px] border border-slate-200 bg-slate-50 p-2">
-                     {["all", "published", "pending_review", "pending_update", "draft"].map(t => (
+                     {["all", "published", "pending_review", "pending_update", "draft", "archived"].map((t) => (
                         <button
                            key={t}
                            onClick={() => setActiveTab(t)}
                            className={`rounded-[18px] px-6 py-3 text-[10px] font-black uppercase tracking-widest transition-all sm:px-8 ${activeTab === t ? "bg-violet-600 text-white shadow-md" : "text-slate-600 hover:bg-white hover:text-slate-900"
                               }`}
                         >
-                           {t === "all"
-                              ? "Tất cả"
-                              : t === "published"
-                                 ? "Đã đăng"
-                                 : t === "pending_review"
-                                    ? "Chờ duyệt mới"
-                                    : t === "pending_update"
-                                       ? "Chờ duyệt cập nhật"
-                                       : "Bản nháp"}
+                           {t === "all" ? "Tất cả" : STATUS_LABELS[t] || t}
                         </button>
                      ))}
                   </div>
@@ -183,21 +199,17 @@ export function MentorCourseManagement() {
                            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
                            <div className="absolute top-6 left-6 flex gap-2">
                               <span className={`px-4 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest border ${
-                                 course.status === 'published'
-                                    ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/20'
-                                    : course.status === 'pending_review'
-                                      ? 'bg-amber-500/20 text-amber-300 border-amber-400/30'
-                                      : course.status === 'pending_update'
-                                        ? 'bg-sky-500/20 text-sky-300 border-sky-400/30'
-                                      : 'bg-zinc-500/20 text-zinc-500 border-zinc-500/20'
-                                 }`}>
-                                 {course.status === "published"
-                                    ? "Đã đăng"
+                                 course.status === "published"
+                                    ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/20"
                                     : course.status === "pending_review"
-                                      ? "Chờ duyệt mới"
+                                      ? "bg-amber-500/20 text-amber-300 border-amber-400/30"
                                       : course.status === "pending_update"
-                                        ? "Chờ duyệt cập nhật"
-                                        : "Bản nháp"}
+                                        ? "bg-sky-500/20 text-sky-300 border-sky-400/30"
+                                        : course.status === "archived"
+                                          ? "bg-red-500/20 text-red-300 border-red-400/30"
+                                          : "bg-zinc-500/20 text-zinc-500 border-zinc-500/20"
+                                 }`}>
+                                 {STATUS_LABELS[course.status] || "Bản nháp"}
                               </span>
                               <span className="rounded-xl border border-slate-200 bg-slate-100 px-4 py-1.5 text-[9px] font-black uppercase tracking-widest text-slate-600 backdrop-blur-md">
                                  {course.level}
@@ -224,34 +236,39 @@ export function MentorCourseManagement() {
                                  </div>
                               </div>
                            </div>
-                           <div className="flex items-center gap-4">
+                           <div className="flex items-center gap-3">
                               <button
+                                 type="button"
                                  onClick={() => navigate(`/mentor/courses/${course.id}/edit`)}
-                                 className="flex-1 py-4 rounded-2xl bg-slate-50 border border-slate-200 text-[10px] font-black uppercase tracking-widest hover:text-slate-900 hover:bg-slate-100 transition-all flex items-center justify-center gap-2">
+                                 disabled={course.status === "archived"}
+                                 className="flex-1 py-4 rounded-2xl bg-slate-50 border border-slate-200 text-[10px] font-black uppercase tracking-widest hover:text-slate-900 hover:bg-slate-100 transition-all flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed">
                                  <Edit3 size={14} /> Chỉnh sửa
                               </button>
-                              <button
-                                 onClick={() => course.status === "published" && navigate(`/courses/${course.id}`)}
-                                 title={course.status === "published" ? "Xem trang khóa học" : "Chỉ xem được khi khóa học đã đăng"}
-                                 className="w-14 py-4 rounded-2xl bg-slate-50 border border-slate-200 text-[10px] font-black uppercase tracking-widest hover:text-primary-fixed hover:bg-slate-100 transition-all flex items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed"
-                                 disabled={course.status !== "published"}
-                              >
-                                 <ExternalLink size={16} />
-                              </button>
+                              {course.status !== "archived" ? (
+                                 <button
+                                    type="button"
+                                    onClick={() => setArchiveTarget({ id: course.id, title: course.title })}
+                                    title="Xóa khóa học"
+                                    className="w-14 py-4 rounded-2xl border border-red-200 bg-red-50 text-red-600 transition-all hover:bg-red-100 flex items-center justify-center"
+                                 >
+                                    <Trash2 size={16} />
+                                 </button>
+                              ) : null}
                            </div>
                         </div>
                      </div>
                   ))}
                   <div
                      onClick={() => navigate("/mentor/courses/new/edit")}
-                     className="glass-card border-2 border-dashed border-slate-200 flex flex-col items-center justify-center p-10 text-zinc-700 hover:border-primary-fixed hover:text-primary-fixed transition-all cursor-pointer group min-h-[360px]">
+                     className="glass-card border-2 border-dashed border-slate-200 flex flex-col items-center justify-center p-10 text-zinc-700 hover:border-primary-fixed hover:text-primary-fixed transition-all cursor-pointer group min-h-[360px]"
+                  >
                      <div className="w-16 h-16 rounded-full bg-slate-50 border border-slate-200 flex items-center justify-center mb-5 group-hover:scale-110 transition-transform">
                         <PlusCircle size={32} className="opacity-40 group-hover:opacity-100" />
                      </div>
                      <p className="text-xs font-black uppercase tracking-[0.3em]">Thiết kế khóa học mới</p>
                   </div>
                </div>
-               {!myCourses.length && (
+               {!activeCourses.length && activeTab !== "archived" && (
                   <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50 p-6 text-center">
                      <p className="text-sm font-semibold text-zinc-300">
                         Bạn chưa có khóa học nào trên hệ thống.
@@ -263,6 +280,16 @@ export function MentorCourseManagement() {
                )}
             </div>
          </div>
+
+         <ArchiveCourseDialog
+            open={Boolean(archiveTarget)}
+            courseTitle={archiveTarget?.title}
+            archiving={archiving}
+            onOpenChange={(open) => {
+               if (!open && !archiving) setArchiveTarget(null);
+            }}
+            onConfirm={() => handleArchiveConfirm(archiveTarget?.id)}
+         />
       </MentorPageShell>
    );
 }
