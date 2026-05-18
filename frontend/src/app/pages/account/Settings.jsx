@@ -5,19 +5,29 @@ import { motion } from "motion/react";
 import {
   Bell,
   LogOut,
-  Zap,
   CheckCircle,
   ShieldCheck,
-  Download,
   UserCircle,
   Trash2 as Trash,
-  Key,
-  Monitor,
   ChevronRight,
-  ArrowRight
 } from "lucide-react";
 import { toast } from "sonner";
-import { logout, getPlans, getUser, updateUser, refreshUserProfile } from "../../utils/auth";
+import { logout, getUser, updateUser, refreshUserProfile } from "../../utils/auth";
+import { LoginSessionsSection } from "../../components/account/LoginSessionsSection.jsx";
+import { AccountDangerZone } from "../../components/account/AccountDangerZone.jsx";
+
+const NOTIF_PREFS_KEY = "prointerview_notif_prefs";
+
+function loadNotifPrefs() {
+  try {
+    const raw = localStorage.getItem(NOTIF_PREFS_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : null;
+  } catch {
+    return null;
+  }
+}
 
 /* ─── Reusable components ───────────────────────────────── */
 function ToggleSwitch({
@@ -120,7 +130,14 @@ const DEFAULT_NOTIFS = [
 ];
 
 function NotificationsTab() {
-  const [push, setPush] = useState(DEFAULT_NOTIFS);
+  const [push, setPush] = useState(() => {
+    const saved = loadNotifPrefs();
+    if (!saved) return DEFAULT_NOTIFS;
+    return DEFAULT_NOTIFS.map((d) => {
+      const hit = saved.find((s) => s.id === d.id);
+      return hit ? { ...d, value: !!hit.value } : d;
+    });
+  });
   const [dirty, setDirty] = useState(false);
   const [saving, setSaving] = useState(false);
 
@@ -131,11 +148,18 @@ function NotificationsTab() {
 
   const handleSave = () => {
     setSaving(true);
-    setTimeout(() => {
-      setSaving(false);
+    try {
+      localStorage.setItem(
+        NOTIF_PREFS_KEY,
+        JSON.stringify(push.map(({ id, value }) => ({ id, value }))),
+      );
       setDirty(false);
       toast.success("Đã lưu cài đặt thông báo");
-    }, 600);
+    } catch {
+      toast.error("Không lưu được cài đặt trên trình duyệt.");
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -302,21 +326,7 @@ function SecurityTab({ profileFromServer, onProfileSynced }) {
          </button>
       </SectionCard>
 
-      <SectionCard title="Phiên đăng nhập" icon={Key}>
-         <div className="space-y-4">
-            <div className="flex items-center justify-between rounded-2xl border border-slate-200 bg-white p-6">
-               <div className="flex items-center gap-5">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#c4ff47]/12 text-[#c4ff47]">
-                     <Monitor size={20} strokeWidth={2} />
-                  </div>
-                  <div>
-                     <p className="text-sm font-bold text-slate-900">Browser · Windows Desktop</p>
-                     <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-500">Hà Nội · <span className="text-emerald-500">Đang hoạt động</span></p>
-                  </div>
-               </div>
-            </div>
-         </div>
-      </SectionCard>
+      <LoginSessionsSection SectionCard={SectionCard} />
     </div>
   );
 }
@@ -492,7 +502,9 @@ export function Settings() {
                       onProfileSynced={(u) => setProfileFromServer(u)}
                     />
                   )}
-                  {activeTab === "account" && <AccountTab onLogout={handleLogout} />}
+                  {activeTab === "account" && (
+                    <AccountTab onLogout={handleLogout} />
+                  )}
                </div>
             </main>
          </div>

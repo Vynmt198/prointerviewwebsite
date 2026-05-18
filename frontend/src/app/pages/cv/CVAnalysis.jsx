@@ -45,6 +45,14 @@ import {
 } from "../../components/cv/CVDocumentPreview";
 import { MentorPageShell } from "../../components/mentor/MentorPageShell";
 import { addCVAnalysisRecord } from "../../utils/history";
+import { hasAuthCredentials } from "../../utils/auth";
+import {
+  fetchCvAnalyses,
+  fetchCvAnalysisById,
+  deleteCvAnalysis,
+  saveCvAnalysis,
+  buildCvAnalysisSavePayload,
+} from "../../utils/cvApi";
 import { projectId, publicAnonKey } from "/utils/supabase/info.js";
 
 // ─── API base ─────────────────────────────────────────────────────────────────
@@ -434,10 +442,17 @@ export function CVAnalysis() {
     setHistoryLoading(true);
     setHistoryError(null);
     try {
+      if (hasAuthCredentials()) {
+        const expressRes = await fetchCvAnalyses();
+        if (expressRes.success) {
+          setHistoryList(expressRes.analyses ?? []);
+          return;
+        }
+      }
       if (!SUPABASE_CONFIGURED) {
         setHistoryList([]);
         setHistoryError(
-          "Lịch sử CV cần cấu hình Supabase (VITE_SUPABASE_PROJECT_ID). Phân tích CV+JD vẫn hoạt động qua backend.",
+          "Lịch sử CV cần đăng nhập (Express) hoặc cấu hình Supabase (VITE_SUPABASE_PROJECT_ID).",
         );
         return;
       }
@@ -821,6 +836,28 @@ export function CVAnalysis() {
 
         applyResult(data);
 
+        if (hasAuthCredentials() && data?.analysis) {
+          const saveRes = await saveCvAnalysis(
+            buildCvAnalysisSavePayload({
+              analysis: data.analysis,
+              cvFileName: cvFile?.name ?? reuseCV?.name ?? "cv",
+              jdFileName: jdFile?.name ?? reuseJD?.name ?? "",
+              analyzeMode,
+              selectedField,
+              cvStoragePath,
+              jdStoragePath,
+            }),
+          );
+          if (saveRes.success && saveRes.analysisId) {
+            setSavedFileInfo((prev) => ({
+              ...(prev || {}),
+              analysisId: saveRes.analysisId,
+              cvFileName: cvFile?.name ?? reuseCV?.name ?? "cv",
+              jdFileName: jdFile?.name ?? reuseJD?.name ?? null,
+            }));
+          }
+        }
+
         setProgress(100);
         await new Promise((r) => setTimeout(r, 350));
         setStep("result");
@@ -852,6 +889,20 @@ export function CVAnalysis() {
   const loadHistoryItem = async (id) => {
     setLoadingAnalysisId(id);
     try {
+      if (hasAuthCredentials()) {
+        const expressRes = await fetchCvAnalysisById(id);
+        if (expressRes.success && expressRes.analysis) {
+          setAnalysisResult(expressRes.analysis);
+          setSavedFileInfo({
+            analysisId: expressRes.analysisId,
+            cvFileName: expressRes.historyItem?.cvFileName,
+            jdFileName: expressRes.historyItem?.jdFileName,
+          });
+          setPageView("analysis");
+          setStep("result");
+          return;
+        }
+      }
       const token = await getForceRefreshedToken();
       const res = await fetch(supabaseApiUrl(`cv/analyses/${id}`), {
         headers: apiHeaders(token),
@@ -901,6 +952,13 @@ export function CVAnalysis() {
     if (!confirm("Xóa phân tích này và các file đính kèm?")) return;
     setDeletingId(id);
     try {
+      if (hasAuthCredentials()) {
+        const expressRes = await deleteCvAnalysis(id);
+        if (expressRes.success) {
+          setHistoryList((prev) => prev.filter((a) => a.analysisId !== id));
+          return;
+        }
+      }
       const token = await getForceRefreshedToken();
       const res = await fetch(supabaseApiUrl(`cv/analyses/${id}`), {
         method: "DELETE",
