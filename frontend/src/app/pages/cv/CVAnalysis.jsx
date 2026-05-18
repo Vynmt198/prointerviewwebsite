@@ -30,7 +30,7 @@ import {
   BadgeCheck,
 } from "lucide-react";
 import { getPlans, getCVRemaining, incrementCVCount, CV_FREE_LIMIT } from "../../utils/auth";
-import { apiUrl as expressApiUrl } from "../../utils/api";
+import { apiUrl as expressApiUrl, isExpressBackendConfigured } from "../../utils/api";
 import { CVDocumentPreview } from "../../components/cv/CVDocumentPreview";
 import { MentorPageShell } from "../../components/mentor/MentorPageShell";
 import { addCVAnalysisRecord } from "../../utils/history";
@@ -38,7 +38,11 @@ import { projectId, publicAnonKey } from "/utils/supabase/info.js";
 
 // ─── API base ─────────────────────────────────────────────────────────────────
 const EDGE_FN = "make-server-64a0c849";
-const API_BASE = `https://${projectId}.supabase.co/functions/v1/${EDGE_FN}`;
+const USE_EXPRESS_CV = isExpressBackendConfigured();
+const SUPABASE_CONFIGURED = Boolean(String(import.meta.env.VITE_SUPABASE_PROJECT_ID ?? "").trim());
+const API_BASE = SUPABASE_CONFIGURED
+  ? `https://${projectId}.supabase.co/functions/v1/${EDGE_FN}`
+  : "";
 
 function getSessionId() {
   const key = "prointerview_session_id";
@@ -57,7 +61,8 @@ function apiHeaders(userToken) {
   return { "Authorization": `Bearer ${t}` };
 }
 
-function apiUrl(path) {
+function supabaseApiUrl(path) {
+  if (!SUPABASE_CONFIGURED) return "";
   return `${API_BASE}/${path}`;
 }
 
@@ -192,7 +197,8 @@ export function CVAnalysis() {
   const [loadingAnalysisId, setLoadingAnalysisId] = useState(null);
 
   // NEW: Optional JD/Field checkboxes
-  const [enableJD, setEnableJD] = useState(false);
+  // Prod + VITE_API_URL: mặc định CV+JD qua Express → Python (Cách A)
+  const [enableJD, setEnableJD] = useState(USE_EXPRESS_CV);
   const [enableField, setEnableField] = useState(false);
 
   const canAnalyze  = plans.starterPro || plans.elitePro || cvRemaining > 0;
@@ -236,7 +242,12 @@ export function CVAnalysis() {
     setHistoryError(null);
     try {
       const token = await getForceRefreshedToken();
-      const res = await fetch(apiUrl("cv/analyses"), { headers: apiHeaders(token) });
+      if (!SUPABASE_CONFIGURED) {
+        setHistoryList([]);
+        setHistoryError("Lịch sử CV cần Supabase (VITE_SUPABASE_PROJECT_ID). Phân tích CV+JD vẫn dùng backend.");
+        return;
+      }
+      const res = await fetch(supabaseApiUrl("cv/analyses"), { headers: apiHeaders(token) });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Lỗi tải lịch sử");
       setHistoryList(data.analyses ?? []);
@@ -253,7 +264,13 @@ export function CVAnalysis() {
 
   // ── File change handlers ────────────────────────────────────────────────
   const handleCVFile = (file) => { setCvFile(file); setCvUploaded(true); setReuseCV(null); };
-  const handleJDFile = (file) => { setJdFile(file); setJdUploaded(true); setReuseJD(null); };
+  const handleJDFile = (file) => {
+    setJdFile(file);
+    setJdUploaded(true);
+    setReuseJD(null);
+    setEnableJD(true);
+    setEnableField(false);
+  };
 
   // ── Main analyze handler ────────────────────────────────────────────────
   const handleAnalyze = async () => {
@@ -268,8 +285,17 @@ export function CVAnalysis() {
 
     setStep("loading"); setAnalyzeError(null); setProgress(0); setLoadingStage(0);
 
-    // Use derivedMode instead of mode
-    const analyzeMode = derivedMode === "cv-only" ? "field" : derivedMode;
+    const hasJdInput = jdUploaded || !!reuseJD || !!jdFile;
+    let analyzeMode = derivedMode === "cv-only" ? "field" : derivedMode;
+    if (USE_EXPRESS_CV && hasJdInput) analyzeMode = "jd";
+
+    if (USE_EXPRESS_CV && analyzeMode !== "jd") {
+      setAnalyzeError(
+        "Bật「Có Job Description」, upload file JD (PDF), rồi bấm Phân tích — hệ thống dùng backend + Python trên Render.",
+      );
+      setStep("upload");
+      return;
+    }
 
     if (cvFile || reuseCV) {
       // ── Real API path ──────────────────────────────────────────────────
@@ -486,7 +512,10 @@ export function CVAnalysis() {
           // ── Supabase Edge Function (field mode / cv-only) ───────────────
           const fd = buildFd(cvFile, reuseCV, jdFile, reuseJD, analyzeMode, selectedField);
           const headers = apiHeaders(token);
-          const url = apiUrl("cv-analysis");
+          const url = supabaseApiUrl("cv-analysis");
+          if (!url) {
+            throw new Error("Chưa cấu hình Supabase. Dùng chế độ「Có Job Description」+ JD để phân tích qua backend.");
+          }
 
           const res = await fetch(url, { method: "POST", headers, body: fd });
 
@@ -539,7 +568,7 @@ export function CVAnalysis() {
     setLoadingAnalysisId(id);
     try {
       const token = await getForceRefreshedToken();
-      const res = await fetch(apiUrl(`cv/analyses/${id}`), { headers: apiHeaders(token) });
+      const res = await fetch(supabaseApiUrl(`cv/analyses/${id}`), { headers: apiHeaders(token) });
       const data = await res.json();
       if (!res.ok || !data.success) throw new Error(data.error || "Lỗi tải phân tích");
 
@@ -584,7 +613,7 @@ export function CVAnalysis() {
     setDeletingId(id);
     try {
       const token = await getForceRefreshedToken();
-      const res = await fetch(apiUrl(`cv/analyses/${id}`), { method: "DELETE", headers: apiHeaders(token) });
+      const res = await fetch(supabaseApiUrl(`cv/analyses/${id}`), { method: "DELETE", headers: apiHeaders(token) });
       if (!res.ok) { const e = await res.json(); throw new Error(e.error); }
       setHistoryList(prev => prev.filter(a => a.analysisId !== id));
     } catch (err) {

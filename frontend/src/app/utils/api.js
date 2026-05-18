@@ -17,6 +17,11 @@ function resolveApiBase() {
 
 export const API_BASE_URL = resolveApiBase();
 
+/** True khi FE có URL backend (dev localhost:5000 hoặc VITE_API_URL prod). */
+export function isExpressBackendConfigured() {
+  return Boolean(API_BASE_URL && String(API_BASE_URL).trim());
+}
+
 /**
  * URL đầy đủ cho một path API (path bắt đầu bằng /).
  * Ví dụ: apiUrl("/api/mentors") → http://localhost:5000/api/mentors
