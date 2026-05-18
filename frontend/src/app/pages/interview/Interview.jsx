@@ -276,9 +276,11 @@ export function Interview() {
 
       if (result?.success && result.questions?.length) {
         questions = result.questions;
+      } else if (result && !result.success) {
+        setExtractWarning(`AI không thể tạo câu hỏi cá nhân hóa (${result.error || "lỗi không xác định"}). Đang dùng câu hỏi mẫu.`);
       }
-    } catch {
-      // Fallback: InterviewRoom dùng MOCK_INTERVIEW_QUESTIONS
+    } catch (err) {
+      setExtractWarning(`Không thể kết nối tới máy chủ để tạo câu hỏi. Đang dùng câu hỏi mẫu.`);
     }
 
     // Tạo session ngay sau khi có questions — trước khi vào phòng
@@ -853,10 +855,7 @@ export function Interview() {
             {extractWarning && (
               <div className="mb-4 flex items-start gap-3 rounded-2xl border border-amber-300/60 bg-amber-50/90 p-4">
                 <AlertCircle className="h-4 w-4 flex-shrink-0 text-amber-500 mt-0.5" />
-                <div>
-                  <p className="text-xs font-bold text-amber-800 mb-0.5">Trích xuất CV không thành công</p>
-                  <p className="text-xs text-amber-700 leading-relaxed">{extractWarning}</p>
-                </div>
+                <p className="text-xs text-amber-700 leading-relaxed">{extractWarning}</p>
               </div>
             )}
             <button
