@@ -16,7 +16,7 @@
  */
 
 import React, { useRef, useEffect, useState, useCallback } from "react";
-import { type DIDStatus } from "../hooks/useDIDStream";
+
 
 /* ── Props ────────────────────────────────────────────────── */
 
@@ -71,7 +71,7 @@ function useSpeechWave(isSpeaking) {
    useAnimFrame — poll openness ref → React state at ~30fps
    Simple: luôn chạy, useSpeechWave tự fade về 0 khi !isSpeaking
 ══════════════════════════════════════════════════════════ */
-function useAnimFrame(getOpenness: () => number) {
+function useAnimFrame(getOpenness) {
   const [openness, setOpenness] = useState(0);
   useEffect(() => {
     const id = setInterval(() => setOpenness(getOpenness()), 33);
@@ -86,7 +86,7 @@ function useAnimFrame(getOpenness: () => number) {
 function useBlink() {
   const [blink, setBlink] = useState(false);
   useEffect(() => {
-    let t: ReturnType<typeof setTimeout>;
+    let t;
     const schedule = () => {
       t = setTimeout(() => {
         setBlink(true);
@@ -125,8 +125,12 @@ export function AILipSyncAvatar({
   const openness     = useAnimFrame(getOpenness);
   const blink        = useBlink();
   const scanLine     = useScanLine();
+  const videoRef     = useRef(null);
+  const [videoHasData, setVideoHasData] = useState(false);
 
-  const isVideoMode  = didStatus === "connected" || didStatus === "speaking";
+  // Only show D-ID video when it actually has frames — prevents black-circle when
+  // WebRTC is "connected/speaking" but stream data hasn't arrived yet.
+  const isVideoMode  = (didStatus === "connected" || didStatus === "speaking") && videoHasData;
   const isConnecting = didStatus === "connecting";
 
   /* ── Geometry ─────────────────────────────────────────── */
@@ -187,9 +191,14 @@ export function AILipSyncAvatar({
 
       {/* ── D-ID WebRTC video (primary when key configured) ── */}
       <video
-        ref={attachVideo}
+        ref={(el) => {
+          videoRef.current = el;
+          attachVideo(el);
+        }}
         autoPlay
         playsInline
+        onLoadedData={() => setVideoHasData(true)}
+        onEmptied={() => setVideoHasData(false)}
         style={{
           position: "absolute", inset: 0,
           width: size, height: size,
@@ -563,7 +572,7 @@ export function AILipSyncAvatar({
         <circle cx={cx} cy={cy} r={fR + size * 0.040} fill="none"
           stroke={ctaStroke}
           strokeWidth={isSpeaking ? 2.2 : 1.4}
-          filter={isSpeaking ? `url(#${uid}glow)` }
+          filter={isSpeaking ? `url(#${uid}glow)` : undefined}
           style={{ transition: "stroke 0.25s, stroke-width 0.2s" }}
         />
 

@@ -40,8 +40,8 @@ function makeTextRenderer(matchedKws, missingKws, side) {
       const lower = match.toLowerCase();
       const isMatched = matchedKws.some(k => k.toLowerCase() === lower);
       if (isMatched)
-        return `<mark style="background:#bbf7d0;color:#14532d;border-radius:3px;padding:0 4px;font-weight:700;border:1px solid #22c55e">${match}</mark>`;
-      return `<mark style="background:#fecaca;color:#7f1d1d;border-radius:3px;padding:0 4px;font-weight:700;border:1px solid #f87171">${match}</mark>`;
+        return `<mark data-kw="${lower}" data-kwtype="matched" style="background:#bbf7d0;color:#14532d;border-radius:3px;padding:0 4px;font-weight:700;border:1px solid #22c55e;cursor:pointer">${match}</mark>`;
+      return `<mark data-kw="${lower}" data-kwtype="missing" style="background:#fecaca;color:#7f1d1d;border-radius:3px;padding:0 4px;font-weight:700;border:1px solid #f87171;cursor:pointer">${match}</mark>`;
     });
   };
 }
@@ -95,7 +95,7 @@ function KeywordChips({ matchedKws, missingKws, side }) {
 }
 
 // ─── Single document panel ───────────────────────────────────────────────────
-function DocPanel({ title, fileName, icon, accentColor, file, matchedKws, missingKws, side }) {
+export function DocPanel({ title, fileName, icon, accentColor, file, matchedKws, missingKws, side, showHeader = true, maxHeight = 460 }) {
   const [numPages, setNumPages] = useState(null);
   const [pageNumber, setPageNumber] = useState(1);
   const [width, setWidth] = useState(null);
@@ -110,69 +110,71 @@ function DocPanel({ title, fileName, icon, accentColor, file, matchedKws, missin
   );
 
   return (
-    <div
-      className="flex flex-col rounded-2xl overflow-hidden border border-gray-200 shadow-sm bg-white"
-      style={{ height: 660 }}
-    >
-      {/* Panel header */}
-      <div
-        className="px-4 py-2.5 flex items-center gap-2.5 flex-shrink-0"
-        style={{ background: accentColor }}
-      >
-        <div className="w-7 h-7 rounded-lg bg-white/20 flex items-center justify-center flex-shrink-0">
-          {icon}
+    <div className="flex flex-col overflow-hidden">
+      {/* Panel header (only in standalone mode) */}
+      {showHeader && (
+        <div
+          className="px-4 py-2.5 flex items-center gap-2.5 flex-shrink-0"
+          style={{ background: accentColor }}
+        >
+          <div className="w-7 h-7 rounded-lg bg-white/20 flex items-center justify-center flex-shrink-0">
+            {icon}
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-white text-xs font-semibold leading-tight">{title}</p>
+            <p className="text-white/70 text-[0.67rem] truncate">{fileName}</p>
+          </div>
+          <div className="flex gap-1.5 flex-shrink-0">
+            {matchedKws.length > 0 && (
+              <span className="rounded-full px-2.5 py-0.5 text-[0.64rem] font-bold shadow-sm" style={{ background: "#dcfce7", color: "#14532d", border: "1px solid #22c55e" }}>
+                ✓ {matchedKws.length} khớp
+              </span>
+            )}
+            {missingKws.length > 0 && (
+              <span className="rounded-full px-2.5 py-0.5 text-[0.64rem] font-bold shadow-sm" style={{ background: "#ffedd5", color: "#9a3412", border: "1px solid #ea580c" }}>
+                ✗ {missingKws.length} thiếu
+              </span>
+            )}
+          </div>
         </div>
-        <div className="min-w-0 flex-1">
-          <p className="text-white text-xs font-semibold leading-tight">{title}</p>
-          <p className="text-white/70 text-[0.67rem] truncate">{fileName}</p>
-        </div>
-        <div className="flex gap-1.5 flex-shrink-0">
-          {matchedKws.length > 0 && (
-            <span className="rounded-full px-2.5 py-0.5 text-[0.64rem] font-bold shadow-sm" style={{ background: "#dcfce7", color: "#14532d", border: "1px solid #22c55e" }}>
-              ✓ {matchedKws.length} khớp
-            </span>
-          )}
-          {missingKws.length > 0 && (
-            <span className="rounded-full px-2.5 py-0.5 text-[0.64rem] font-bold shadow-sm" style={{ background: "#ffedd5", color: "#9a3412", border: "1px solid #ea580c" }}>
-              ✗ {missingKws.length} thiếu
-            </span>
-          )}
-        </div>
-      </div>
+      )}
 
       {/* PDF with highlighted text layer */}
-      <div ref={containerRef} className="flex-1 overflow-y-auto bg-gray-100" style={{ minHeight: 0 }}>
+      <div ref={containerRef} className="flex-1 overflow-y-auto bg-gray-50" style={{ minHeight: 0, maxHeight }}>
         {file && width ? (
           <Document
             file={file}
             onLoadSuccess={({ numPages }) => { setNumPages(numPages); setPageNumber(1); }}
             loading={
-              <div className="flex items-center justify-center h-full text-gray-400 text-sm py-20">
+              <div className="flex items-center justify-center py-20 text-sm text-gray-400">
                 Đang tải PDF…
               </div>
             }
             error={
-              <div className="flex items-center justify-center h-full text-red-400 text-sm py-20">
+              <div className="flex items-center justify-center py-20 text-sm text-red-400">
                 Không thể đọc file PDF
               </div>
             }
           >
-            <Page
-              pageNumber={pageNumber}
-              width={width - 8}
-              customTextRenderer={textRenderer}
-              renderAnnotationLayer={false}
-            />
+            {Array.from({ length: numPages ?? 0 }, (_, i) => (
+              <Page
+                key={i + 1}
+                pageNumber={i + 1}
+                width={width - 8}
+                customTextRenderer={textRenderer}
+                renderAnnotationLayer={false}
+              />
+            ))}
           </Document>
         ) : (
-          <div className="flex items-center justify-center h-full text-gray-400 text-sm py-20">
+          <div className="flex items-center justify-center py-20 text-sm text-gray-400">
             Chưa có file PDF
           </div>
         )}
       </div>
 
-      {/* Page navigation */}
-      {numPages && numPages > 1 && (
+      {/* Page navigation (only when single page shown) */}
+      {showHeader && numPages && numPages > 1 && (
         <div className="flex items-center justify-center gap-3 py-1.5 border-t border-gray-100 bg-white flex-shrink-0">
           <button
             onClick={() => setPageNumber(p => Math.max(1, p - 1))}
@@ -194,8 +196,8 @@ function DocPanel({ title, fileName, icon, accentColor, file, matchedKws, missin
         </div>
       )}
 
-      {/* Keyword chips summary */}
-      <KeywordChips matchedKws={matchedKws} missingKws={missingKws} side={side} />
+      {/* Keyword chips (only in standalone mode) */}
+      {showHeader && <KeywordChips matchedKws={matchedKws} missingKws={missingKws} side={side} />}
     </div>
   );
 }

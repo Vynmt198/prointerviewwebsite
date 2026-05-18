@@ -84,16 +84,17 @@ export async function extractCvTextFromFile(file) {
 /**
  * Gửi transcripts lên backend để LLM đánh giá theo chuẩn SHRM/DDI.
  * @param {string} sessionId
- * @param {{ questionIndex: number, transcript: string }[]} answers
+ * @param {{ questionIndex: number, transcript: string, questionText?: string }[]} answers
+ * @param {{ question: string, layer?: string, competencyName?: string }[]} [questions] - fallback khi session không có questions
  * @returns {{ success, evaluation, overallScore, generalComment, inferredRole, totalDurationSeconds }}
  */
-export async function evaluateInterviewSession(sessionId, answers = []) {
+export async function evaluateInterviewSession(sessionId, answers = [], questions = []) {
   if (!hasAuthCredentials() || !sessionId) return { success: false, error: "Thiếu phiên." };
   try {
     const res = await authFetch(`/api/interviews/sessions/${encodeURIComponent(sessionId)}/evaluate`, {
       method: "POST",
       headers: { ...jsonHeaders },
-      body: JSON.stringify({ answers }),
+      body: JSON.stringify({ answers, questions }),
     });
     const body = await res.json().catch(() => ({}));
     if (!res.ok || !body.success) {

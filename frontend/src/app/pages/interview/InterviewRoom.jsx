@@ -24,6 +24,8 @@ import { getPlans, hasAuthCredentials } from "../../utils/auth";
 import { addInterviewRecord } from "../../utils/history";
 import { saveAnswer, completeInterviewSession } from "../../utils/interviewsApi";
 import { QUESTIONS_FEEDBACK } from "./InterviewFeedback";
+import { useDIDStream } from "../../hooks/useDIDStream";
+import { AILipSyncAvatar } from "../../components/interview/AILipSyncAvatar";
 
 /* ── Session storage key ─────────────────────────────────── */
 const TRANSCRIPT_KEY = "prointerview_transcripts";
@@ -66,6 +68,19 @@ const HR_NAMES = {
 const HR_TITLES = {
   male: "HR AI Nam · ProInterview",
   female: "HR AI Nữ · ProInterview",
+};
+
+/* ── D-ID Lipsync config ─────────────────────────────────── */
+const DID_API_KEY = import.meta.env.VITE_DID_API_KEY ?? "";
+
+const DID_VOICES = {
+  male:   "vi-VN-NamMinhNeural",
+  female: "vi-VN-HoaiMyNeural",
+};
+
+const DID_AVATAR_URLS = {
+  female: "https://res.cloudinary.com/dee4bvivu/image/upload/v1778910708/AI-female_gxbcf1.png",
+  male:   "https://res.cloudinary.com/dee4bvivu/image/upload/v1778910708/AI-male_sdrvje.png",
 };
 
 function interviewMetaFromLocationState(state) {
@@ -441,6 +456,11 @@ export default function InterviewRoom() {
   const plans = getPlans();
   const isPro = plans.starterPro || plans.elitePro;
 
+  /* ── D-ID lipsync ─────────────────────────────────────────── */
+  const { status: didStatus, connect: didConnect, disconnect: didDisconnect,
+          speakWithText, attachVideo } = useDIDStream(DID_API_KEY);
+  const isDIDActive = Boolean(DID_API_KEY) && didStatus !== "error";
+
   const hrGender =
     (location.state?.hrGender) ||
     (sessionStorage.getItem("prointerview_hr_gender")) ||
@@ -478,6 +498,7 @@ export default function InterviewRoom() {
   const timerRef = useRef(null);
   const isNavigatingRef = useRef(false);
   const questionStartTimeRef = useRef(Date.now());
+  const lastSpokenQRef = useRef(-1);
 
   /* ── Timer ───────────────────────────────────────────────── */
   useEffect(() => {
@@ -506,8 +527,32 @@ export default function InterviewRoom() {
       isListeningRef.current = false;
       recognitionRef.current?.abort();
       clearInterval(timerRef.current);
+      didDisconnect();
     };
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  /* ── D-ID: kết nối khi phỏng vấn bắt đầu ───────────────── */
+  useEffect(() => {
+    if (phase !== "question" || !DID_API_KEY) return;
+    didConnect(DID_AVATAR_URLS[hrGender]);
+  }, [phase]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  /* ── D-ID: đọc câu hỏi khi avatar kết nối hoặc câu hỏi thay đổi */
+  useEffect(() => {
+    if (phase !== "question" || didStatus !== "connected") return;
+    if (lastSpokenQRef.current === currentQ) return;
+    lastSpokenQRef.current = currentQ;
+    speakWithText(
+      QUESTIONS[currentQ],
+      () => {
+        setHrPhase("listening");
+        isListeningRef.current = true;
+        setIsListening(true);
+        try { recognitionRef.current?.start(); } catch (_) {}
+      },
+      DID_VOICES[hrGender],
+    );
+  }, [phase, didStatus, currentQ]); // eslint-disable-line react-hooks/exhaustive-deps
 
   /* ── STT ─────────────────────────────────────────────────── */
   useEffect(() => {
@@ -978,22 +1023,81 @@ export default function InterviewRoom() {
 
       {/* ── Meeting panels ───────────────────────────────────── */}
       <div className="flex-1 flex gap-3 p-3 min-h-0">
-        {/* AI Panel */}
+        {/* AI Panel — D-ID avatar hoặc video pre-recorded */}
         <div
           className="flex-[3] relative rounded-2xl overflow-hidden"
-          style={{ border: "1.5px solid rgba(255,255,255,0.08)" }}
+          style={{
+            border: `1.5px solid ${isDIDActive ? "rgba(139,77,255,0.35)" : "rgba(255,255,255,0.08)"}`,
+            background: "#0a0a18",
+            transition: "border-color 0.3s",
+          }}
         >
-          <HRVideoPanel
-            questionVideoUrl={HR_QUESTION_URLS[hrGender][currentQ]}
-            hrPhase={hrPhase}
-            onAskingDone={() => {
-              setHrPhase("listening");
-              isListeningRef.current = true;
-              setIsListening(true);
-              try { recognitionRef.current?.start(); } catch (_) {}
-            }}
-            isListening={isListening}
-          />
+          {isDIDActive ? (
+            <>
+              {/* Ambient glow behind avatar */}
+              <div
+                className="absolute inset-0 pointer-events-none"
+                style={{ background: "radial-gradient(ellipse at 50% 48%, rgba(110,53,232,0.22) 0%, transparent 68%)" }}
+              />
+              {/* Avatar centered */}
+              <div className="absolute inset-0 flex items-center justify-center">
+                <AILipSyncAvatar
+                  isSpeaking={didStatus === "speaking"}
+                  didStatus={didStatus}
+                  attachVideo={attachVideo}
+                  size={272}
+                />
+              </div>
+              {/* "HR đang hỏi" indicator */}
+              {hrPhase === "asking" && didStatus === "speaking" && (
+                <div className="absolute top-3 right-3 z-10">
+                  <div
+                    className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold"
+                    style={{ background: "rgba(110, 53, 232,0.85)", backdropFilter: "blur(8px)" }}
+                  >
+                    <div className="w-1.5 h-1.5 bg-[#c4ff47] rounded-full animate-pulse" />
+                    <span className="text-white">HR đang hỏi...</span>
+                  </div>
+                </div>
+              )}
+              {/* "Lượt của bạn" indicator */}
+              {hrPhase === "listening" && (
+                <div className="absolute top-3 right-3 z-10">
+                  <div
+                    className="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold"
+                    style={{
+                      background: isListening ? "rgba(239,68,68,0.9)" : "rgba(180,240,0,0.15)",
+                      border: isListening ? "none" : "1px solid rgba(180,240,0,0.4)",
+                      backdropFilter: "blur(8px)",
+                    }}
+                  >
+                    <div className={`w-1.5 h-1.5 rounded-full ${isListening ? "bg-white animate-pulse" : "bg-[#c4ff47]"}`} />
+                    <span className={isListening ? "text-white" : "text-[#B4F000]"}>
+                      {isListening ? "Đang ghi âm câu trả lời..." : "Lượt của bạn — Nhấn 🎤 để trả lời"}
+                    </span>
+                  </div>
+                </div>
+              )}
+              {/* Bottom fade */}
+              <div
+                className="absolute bottom-0 left-0 right-0 h-20 pointer-events-none"
+                style={{ background: "linear-gradient(to top, rgba(10,10,24,0.75) 0%, transparent 100%)" }}
+              />
+            </>
+          ) : (
+            <HRVideoPanel
+              questionVideoUrl={HR_QUESTION_URLS[hrGender][currentQ]}
+              hrPhase={hrPhase}
+              onAskingDone={() => {
+                setHrPhase("listening");
+                isListeningRef.current = true;
+                setIsListening(true);
+                try { recognitionRef.current?.start(); } catch (_) {}
+              }}
+              isListening={isListening}
+            />
+          )}
+          {/* HR name label */}
           <div
             className="absolute bottom-3 left-3 flex items-center gap-1.5 px-2.5 py-1 rounded-lg"
             style={{ background: "rgba(0,0,0,0.7)", backdropFilter: "blur(8px)" }}
