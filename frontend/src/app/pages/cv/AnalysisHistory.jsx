@@ -1,5 +1,5 @@
 import { MentorPageShell } from "../../components/mentor/MentorPageShell";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router";
 import {
   FileText,
@@ -22,6 +22,24 @@ import {
   Users,
 } from "lucide-react";
 import { CV_ANALYSIS_HISTORY } from "../../data/mockData";
+import { fetchCvAnalyses } from "../../utils/cvApi";
+import { hasAuthCredentials } from "../../utils/auth";
+
+function mapRow(item) {
+  return {
+    id: item.analysisId || item.id,
+    mode: item.mode || (item.jdFileName ? "jd" : "field"),
+    cvFile: item.cvFileName || item.cvFile || "cv",
+    jdFile: item.jdFileName || item.jdFile || null,
+    matchScore: item.matchScore ?? 0,
+    date: item.createdAt
+      ? new Date(item.createdAt).toLocaleDateString("vi-VN")
+      : item.date || "",
+    company: item.company || null,
+    position: item.position || item.cvFileName || null,
+    field: item.field || null,
+  };
+}
 
 export function AnalysisHistory() {
   const navigate = useNavigate();
@@ -29,9 +47,28 @@ export function AnalysisHistory() {
   const [sortBy, setSortBy] = useState("date");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedId, setSelectedId] = useState(null);
+  const [rows, setRows] = useState(() => CV_ANALYSIS_HISTORY.map(mapRow));
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!hasAuthCredentials()) return;
+    let cancelled = false;
+    (async () => {
+      setLoading(true);
+      const res = await fetchCvAnalyses();
+      if (cancelled) return;
+      setLoading(false);
+      if (res.success && res.analyses?.length) {
+        setRows(res.analyses.map((a) => mapRow(a)));
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   // Filter and sort logic
-  const filteredData = CV_ANALYSIS_HISTORY
+  const filteredData = rows
     .filter(item => {
       if (filterMode !== "all" && item.mode !== filterMode) return false;
       if (searchQuery) {
@@ -55,16 +92,16 @@ export function AnalysisHistory() {
     });
 
   const selectedAnalysis = selectedId
-    ? CV_ANALYSIS_HISTORY.find(item => item.id === selectedId)
+    ? rows.find((item) => item.id === selectedId)
     : null;
 
   // Stats
-  const totalAnalyses = CV_ANALYSIS_HISTORY.length;
-  const avgScore = Math.round(
-    CV_ANALYSIS_HISTORY.reduce((sum, item) => sum + item.matchScore, 0) / totalAnalyses
-  );
-  const jdAnalyses = CV_ANALYSIS_HISTORY.filter(item => item.mode === "jd").length;
-  const fieldAnalyses = CV_ANALYSIS_HISTORY.filter(item => item.mode === "field").length;
+  const totalAnalyses = rows.length;
+  const avgScore = totalAnalyses
+    ? Math.round(rows.reduce((sum, item) => sum + item.matchScore, 0) / totalAnalyses)
+    : 0;
+  const jdAnalyses = rows.filter((item) => item.mode === "jd").length;
+  const fieldAnalyses = rows.filter((item) => item.mode === "field").length;
 
   return (
     <MentorPageShell bottomPad="pb-8">

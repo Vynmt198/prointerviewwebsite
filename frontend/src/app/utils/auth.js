@@ -424,6 +424,78 @@ export async function logout() {
   clearAuthStorage();
 }
 
+/** ObjectId phiên refresh hiện tại (phần trước dấu `:` trong refresh token). */
+export function getCurrentAuthSessionId() {
+  const rt = getRefreshToken();
+  const idx = rt.indexOf(":");
+  if (idx <= 0) return "";
+  return rt.slice(0, idx);
+}
+
+export async function fetchAuthSessions() {
+  if (!hasAuthCredentials()) {
+    return { success: false, error: "Chưa đăng nhập.", sessions: [] };
+  }
+  try {
+    const res = await authFetch("/api/auth/sessions", {
+      method: "GET",
+      headers: { Accept: "application/json" },
+    });
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      return { success: false, error: body.error || `Lỗi ${res.status}`, sessions: [] };
+    }
+    return { success: true, sessions: body.sessions || [] };
+  } catch {
+    return { success: false, error: "Không kết nối được server.", sessions: [] };
+  }
+}
+
+export async function revokeAuthSession(sessionId) {
+  if (!hasAuthCredentials()) {
+    return { success: false, error: "Chưa đăng nhập." };
+  }
+  const id = String(sessionId || "").trim();
+  if (!id) return { success: false, error: "Thiếu mã phiên." };
+  try {
+    const res = await authFetch(`/api/auth/sessions/${encodeURIComponent(id)}`, {
+      method: "DELETE",
+      headers: { Accept: "application/json" },
+    });
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      return { success: false, error: body.error || `Lỗi ${res.status}` };
+    }
+    if (id === getCurrentAuthSessionId()) {
+      clearAuthStorage();
+    }
+    return { success: true };
+  } catch {
+    return { success: false, error: "Không kết nối được server." };
+  }
+}
+
+/** Xóa tài khoản vĩnh viễn trên server; luôn xóa auth local sau khi thành công. */
+export async function deleteAccount() {
+  if (!hasAuthCredentials()) {
+    return { success: false, error: "Chưa đăng nhập." };
+  }
+  try {
+    const res = await authFetch("/api/auth/me", {
+      method: "DELETE",
+      headers: { Accept: "application/json" },
+    });
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      return { success: false, error: body.error || `Lỗi ${res.status}` };
+    }
+    clearAuthStorage();
+    return { success: true, message: body.message || "Đã xóa tài khoản." };
+  } catch {
+    return { success: false, error: "Không kết nối được server." };
+  }
+}
+
 export function getInitials(name) {
   const parts = name.trim().split(/\s+/);
   if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
