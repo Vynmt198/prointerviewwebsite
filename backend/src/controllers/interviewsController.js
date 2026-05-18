@@ -191,7 +191,11 @@ export const InterviewsController = {
       }
 
       // Layer 1+2: SHRM/DDI grounded generation
-      const result = await generateQuestionsFromText({ cvText, jdText, position, field, level, fewShotExamples });
+      const result = await generateQuestionsFromText({
+        cvText, jdText, position, field, level, fewShotExamples,
+        userId: req.userId,
+        sessionId: null, // session created after question generation
+      });
 
       const combined = `${cvText} ${jdText}`;
       const coverage = computeCoverage(result.questions, combined);
