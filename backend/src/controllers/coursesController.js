@@ -3,6 +3,7 @@ import { Enrollment } from "../models/Enrollment.js";
 import { Mentor } from "../models/Mentor.js";
 import { enrollmentAccessGranted } from "../helpers/enrollmentAccess.js";
 import { serializeCourseForApi } from "../utils/resolveStoredUploadUrl.js";
+import * as courseMentorInsights from "../services/courseMentorInsightsService.js";
 
 function normalizeCoursePayload(body = {}) {
   const chapters = Array.isArray(body.chapters) ? body.chapters : [];
@@ -261,6 +262,61 @@ export const CoursesController = {
       res.json({ success: true, message: "Đã lưu trữ khóa học" });
     } catch (error) {
       res.status(500).json({ success: false, error: error.message });
+    }
+  },
+
+  mentorStudents: async (req, res) => {
+    try {
+      const result = await courseMentorInsights.getCourseStudentsForMentor(req.userId, req.params.id);
+      if (!result.ok) return res.status(result.status).json({ success: false, error: result.error });
+      return res.json({ success: true, students: result.students, summary: result.summary });
+    } catch (error) {
+      return res.status(500).json({ success: false, error: error.message });
+    }
+  },
+
+  mentorQA: async (req, res) => {
+    try {
+      const result = await courseMentorInsights.getCourseQAForMentor(req.userId, req.params.id);
+      if (!result.ok) return res.status(result.status).json({ success: false, error: result.error });
+      return res.json({ success: true, items: result.items, pendingCount: result.pendingCount });
+    } catch (error) {
+      return res.status(500).json({ success: false, error: error.message });
+    }
+  },
+
+  mentorAnswerQA: async (req, res) => {
+    try {
+      const result = await courseMentorInsights.answerCourseQAForMentor(
+        req.userId,
+        req.params.id,
+        req.params.qaId,
+        req.body?.content,
+      );
+      if (!result.ok) return res.status(result.status).json({ success: false, error: result.error });
+      return res.json({ success: true, message: result.message });
+    } catch (error) {
+      return res.status(500).json({ success: false, error: error.message });
+    }
+  },
+
+  mentorReviews: async (req, res) => {
+    try {
+      const result = await courseMentorInsights.getCourseReviewsForMentor(req.userId, req.params.id);
+      if (!result.ok) return res.status(result.status).json({ success: false, error: result.error });
+      return res.json({ success: true, reviews: result.reviews, summary: result.summary });
+    } catch (error) {
+      return res.status(500).json({ success: false, error: error.message });
+    }
+  },
+
+  mentorAnalytics: async (req, res) => {
+    try {
+      const result = await courseMentorInsights.getCourseAnalyticsForMentor(req.userId, req.params.id);
+      if (!result.ok) return res.status(result.status).json({ success: false, error: result.error });
+      return res.json({ success: true, lessonStats: result.lessonStats, totals: result.totals });
+    } catch (error) {
+      return res.status(500).json({ success: false, error: error.message });
     }
   },
 };

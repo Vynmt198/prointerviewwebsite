@@ -97,6 +97,101 @@ export async function publishCourse(id, payload) {
   }
 }
 
+export async function fetchCourseMentorStudents(courseId) {
+  if (!hasAuthCredentials()) return { success: false, error: "Chưa đăng nhập.", students: [], summary: null };
+  try {
+    const res = await authFetch(`/api/courses/${encodeURIComponent(courseId)}/mentor/students`, {
+      method: "GET",
+      headers: { ...jsonHeaders },
+    });
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok) return { success: false, error: body.error || `Lỗi ${res.status}`, students: [], summary: null };
+    return { success: true, students: body.students || [], summary: body.summary || null };
+  } catch {
+    return { success: false, error: "Không kết nối được backend.", students: [], summary: null };
+  }
+}
+
+export async function fetchCourseMentorQA(courseId) {
+  if (!hasAuthCredentials()) return { success: false, error: "Chưa đăng nhập.", items: [] };
+  try {
+    const res = await authFetch(`/api/courses/${encodeURIComponent(courseId)}/mentor/qa`, {
+      method: "GET",
+      headers: { ...jsonHeaders },
+    });
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok) return { success: false, error: body.error || `Lỗi ${res.status}`, items: [] };
+    return { success: true, items: body.items || [], pendingCount: body.pendingCount ?? 0 };
+  } catch {
+    return { success: false, error: "Không kết nối được backend.", items: [] };
+  }
+}
+
+export async function answerCourseMentorQA(courseId, qaId, content) {
+  if (!hasAuthCredentials()) return { success: false, error: "Chưa đăng nhập." };
+  try {
+    const res = await authFetch(
+      `/api/courses/${encodeURIComponent(courseId)}/mentor/qa/${encodeURIComponent(qaId)}/answers`,
+      {
+        method: "POST",
+        headers: { ...jsonHeaders },
+        body: JSON.stringify({ content }),
+      },
+    );
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok) return { success: false, error: body.error || `Lỗi ${res.status}` };
+    return { success: true, message: body.message };
+  } catch {
+    return { success: false, error: "Không kết nối được backend." };
+  }
+}
+
+export async function fetchCourseMentorReviews(courseId) {
+  if (!hasAuthCredentials()) return { success: false, error: "Chưa đăng nhập.", reviews: [], summary: null };
+  try {
+    const res = await authFetch(`/api/courses/${encodeURIComponent(courseId)}/mentor/reviews`, {
+      method: "GET",
+      headers: { ...jsonHeaders },
+    });
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok) return { success: false, error: body.error || `Lỗi ${res.status}`, reviews: [], summary: null };
+    return { success: true, reviews: body.reviews || [], summary: body.summary || null };
+  } catch {
+    return { success: false, error: "Không kết nối được backend.", reviews: [], summary: null };
+  }
+}
+
+export async function fetchCourseMentorAnalytics(courseId) {
+  if (!hasAuthCredentials()) return { success: false, error: "Chưa đăng nhập.", lessonStats: [] };
+  try {
+    const res = await authFetch(`/api/courses/${encodeURIComponent(courseId)}/mentor/analytics`, {
+      method: "GET",
+      headers: { ...jsonHeaders },
+    });
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok) return { success: false, error: body.error || `Lỗi ${res.status}`, lessonStats: [] };
+    return { success: true, lessonStats: body.lessonStats || [], totals: body.totals || null };
+  } catch {
+    return { success: false, error: "Không kết nối được backend.", lessonStats: [] };
+  }
+}
+
+/** Lưu trữ khóa học (xóa mềm — DELETE /api/courses/:id). */
+export async function archiveCourse(id) {
+  if (!hasAuthCredentials()) return { success: false, error: "Chưa đăng nhập." };
+  try {
+    const res = await authFetch(`/api/courses/${encodeURIComponent(id)}`, {
+      method: "DELETE",
+      headers: { ...jsonHeaders },
+    });
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok) return { success: false, error: body.error || `Lỗi ${res.status}` };
+    return { success: true, message: body.message };
+  } catch {
+    return { success: false, error: "Không kết nối được backend." };
+  }
+}
+
 /** Danh sách review theo mentor — khớp `GET /api/mentors/:id/reviews` (publicId hoặc _id). */
 export async function fetchCourseReviews(mentorId) {
   try {

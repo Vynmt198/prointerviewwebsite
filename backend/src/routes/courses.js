@@ -8,6 +8,11 @@ export const coursesRouter = Router();
 
 coursesRouter.get("/", CoursesController.list);
 coursesRouter.get("/me", authJwt, requireMentor, CoursesController.listMine);
+coursesRouter.get("/:id/mentor/students", authJwt, requireMentor, CoursesController.mentorStudents);
+coursesRouter.get("/:id/mentor/qa", authJwt, requireMentor, CoursesController.mentorQA);
+coursesRouter.post("/:id/mentor/qa/:qaId/answers", authJwt, requireMentor, CoursesController.mentorAnswerQA);
+coursesRouter.get("/:id/mentor/reviews", authJwt, requireMentor, CoursesController.mentorReviews);
+coursesRouter.get("/:id/mentor/analytics", authJwt, requireMentor, CoursesController.mentorAnalytics);
 coursesRouter.get("/:id", CoursesController.getById);
 coursesRouter.get("/:id/lessons/:lessonId", authJwt, CoursesController.getLessonContent);
 

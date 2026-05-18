@@ -3,7 +3,6 @@ import React, { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router";
 import {
   Search,
-  Filter,
   Star,
   Clock,
   Users,
@@ -26,7 +25,8 @@ import {
   Compass,
   RotateCcw,
   Play,
-  ShieldCheck
+  ShieldCheck,
+  X,
 } from "lucide-react";
 
 import { fetchCourses } from "../../utils/courseApi";
@@ -36,16 +36,108 @@ import { enrollmentAccessGranted } from "../../utils/enrollmentAccess.js";
 import { mediaSrc, DEFAULT_COURSE_THUMB, avatarSrc } from "../../utils/mediaUrl";
 import { ImageWithFallback } from "../../components/figma/ImageWithFallback";
 
-const CATEGORIES = [
-  "Tất cả",
-  "Viết CV",
-  "Kỹ năng phỏng vấn",
-  "Kỹ năng kỹ thuật",
-  "Kỹ năng mềm",
-  "Phát triển nghề nghiệp",
+const LEVEL_OPTIONS = [
+  { label: "Tất cả", value: "Tất cả" },
+  { label: "Người mới", value: "Beginner" },
+  { label: "Trung cấp", value: "Intermediate" },
+  { label: "Nâng cao", value: "Advanced" },
 ];
 
-const LEVELS = ["Tất cả", "Người mới", "Trung cấp", "Nâng cao"];
+function CoursesExploreFilters({
+  searchQuery,
+  onSearchChange,
+  selectedLevel,
+  onLevelChange,
+  resultCount,
+}) {
+  const levelLabel =
+    LEVEL_OPTIONS.find((o) => o.value === selectedLevel)?.label ?? selectedLevel;
+  const hasLevelFilter = selectedLevel !== "Tất cả";
+
+  return (
+    <div className="space-y-3">
+      <div className="overflow-hidden rounded-2xl border border-violet-200/55 bg-white shadow-[0_10px_28px_rgba(76,29,149,0.07)]">
+        <div className="border-b border-slate-100 px-4 py-3.5 sm:px-5">
+          <div className="group relative">
+            <Search className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-slate-400 transition-colors group-focus-within:text-[#6E35E8]" />
+            <input
+              type="search"
+              placeholder="Tìm theo tên khóa học, kỹ năng, tag..."
+              value={searchQuery}
+              onChange={(e) => onSearchChange(e.target.value)}
+              className="w-full rounded-xl border-0 bg-slate-50 py-2.5 pl-10 pr-10 text-sm text-slate-800 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#6E35E8]/20"
+            />
+            {searchQuery ? (
+              <button
+                type="button"
+                onClick={() => onSearchChange("")}
+                className="absolute right-2 top-1/2 flex size-7 -translate-y-1/2 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-200/80 hover:text-slate-700"
+                aria-label="Xóa từ khóa"
+              >
+                <X className="size-3.5" />
+              </button>
+            ) : null}
+          </div>
+        </div>
+
+        <div className="px-4 py-4 sm:px-5">
+          <p className="mb-2.5 text-xs font-semibold text-slate-700">Cấp độ</p>
+          <div
+            className="grid grid-cols-2 gap-1.5 rounded-xl bg-slate-100/90 p-1 sm:grid-cols-4"
+            role="group"
+            aria-label="Lọc theo cấp độ"
+          >
+            {LEVEL_OPTIONS.map((opt) => (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => onLevelChange(opt.value)}
+                className={`rounded-lg px-3 py-2 text-center text-xs font-semibold transition-all ${
+                  selectedLevel === opt.value
+                    ? "bg-white text-[#6E35E8] shadow-sm ring-1 ring-violet-200/70"
+                    : "text-slate-600 hover:text-slate-900"
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {hasLevelFilter ? (
+          <div className="flex flex-wrap items-center gap-2 border-t border-violet-100/80 bg-violet-50/50 px-4 py-2.5 sm:px-5">
+            <span className="text-[11px] font-medium text-slate-500">Đang lọc</span>
+            <button
+              type="button"
+              onClick={() => onLevelChange("Tất cả")}
+              className="inline-flex items-center gap-1 rounded-full bg-white py-1 pl-2.5 pr-1.5 text-xs font-medium text-[#6E35E8] ring-1 ring-violet-200/80"
+            >
+              {levelLabel}
+              <X className="size-3 opacity-70" />
+            </button>
+            <button
+              type="button"
+              onClick={() => onLevelChange("Tất cả")}
+              className="ml-auto text-xs font-semibold text-slate-500 transition-colors hover:text-[#6E35E8]"
+            >
+              Xóa bộ lọc
+            </button>
+          </div>
+        ) : null}
+      </div>
+
+      <p className="px-0.5 text-sm text-slate-500">
+        <span className="font-semibold text-slate-800">{resultCount}</span> khóa học
+        {searchQuery ? (
+          <>
+            {" "}
+            · &quot;<span className="font-medium text-[#6E35E8]">{searchQuery}</span>&quot;
+          </>
+        ) : null}
+      </p>
+    </div>
+  );
+}
 
 /* ── Enrolled Course helpers ───────────────────────────────────── */
 
@@ -399,11 +491,7 @@ export function Courses() {
   }, []);
 
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCategory, setSelectedCategory] =
-    useState("Tất cả");
   const [selectedLevel, setSelectedLevel] = useState("Tất cả");
-  const [showFilters, setShowFilters] = useState(true);
-
   // My Courses state
   const [myCoursesTab, setMyCoursesTab] = useState("Tất cả");
   const [myCoursesSearch, setMyCoursesSearch] = useState("");
@@ -422,13 +510,10 @@ export function Courses() {
       course.tags.some((tag) =>
         tag.toLowerCase().includes(searchQuery.toLowerCase()),
       );
-    const matchCategory =
-      selectedCategory === "Tất cả" ||
-      course.category === selectedCategory;
     const matchLevel =
       selectedLevel === "Tất cả" ||
       course.level === selectedLevel;
-    return matchSearch && matchCategory && matchLevel;
+    return matchSearch && matchLevel;
   });
 
   // Filter my courses
@@ -544,105 +629,44 @@ export function Courses() {
             }`}
           >
             <div className="p-0 sm:p-0">
-              <div className="mb-4 flex w-fit rounded-2xl border border-white/12 bg-white/[0.05] p-1.5 backdrop-blur-xl">
+              <div className="mb-5 inline-flex rounded-xl border border-slate-200/90 bg-white p-1 shadow-sm">
                 <button
+                  type="button"
                   onClick={() => setSearchParams({ tab: "explore" })}
-                  className={`flex items-center gap-2 rounded-xl px-8 py-3 text-sm font-bold transition-all ${
+                  className={`flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold transition-all ${
                     activeTab === "explore"
-                      ? "bg-[#c4ff47] text-[#0a0618] shadow-lg shadow-[#c4ff47]/25"
-                      : "text-slate-500 hover:text-slate-800"
+                      ? "bg-[#6E35E8] text-white shadow-sm"
+                      : "text-slate-600 hover:bg-slate-50"
                   }`}
                 >
-                  <Compass className="size-4.5" />
+                  <Compass className="size-4" />
                   Khám phá
                 </button>
                 <button
+                  type="button"
                   onClick={() => setSearchParams({ tab: "my-courses" })}
-                  className={`flex items-center gap-2 rounded-xl px-8 py-3 text-sm font-bold transition-all ${
+                  className={`flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold transition-all ${
                     activeTab === "my-courses"
-                      ? "bg-[#c4ff47] text-[#0a0618] shadow-lg shadow-[#c4ff47]/25"
-                      : "text-slate-500 hover:text-slate-800"
+                      ? "bg-[#6E35E8] text-white shadow-sm"
+                      : "text-slate-600 hover:bg-slate-50"
                   }`}
                 >
-                  <BookOpen className="size-4.5" />
+                  <BookOpen className="size-4" />
                   Khóa học của tôi
                 </button>
               </div>
 
               {activeTab === "explore" && (
                 <div>
-                  <div className="flex flex-col gap-4 md:flex-row">
-                    <div className="group relative flex-1">
-                      <Search className="absolute left-5 top-1/2 size-5 -translate-y-1/2 text-white/40 transition-colors group-focus-within:text-[#c4ff47]" />
-                      <input
-                        type="text"
-                        placeholder="Tìm kiếm khóa học theo tên, kỹ năng, tag..."
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full rounded-2xl border border-slate-300 bg-white py-4 pl-14 pr-6 text-sm font-medium text-slate-800 backdrop-blur-md placeholder:text-slate-400 transition-all focus:outline-none focus:ring-2 focus:ring-[#6E35E8]/40"
-                      />
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setShowFilters((prev) => !prev)}
-                      className={`flex w-[170px] items-center justify-center gap-3 rounded-2xl border px-5 py-4 text-sm font-bold transition-all ${
-                        showFilters
-                          ? "border-[#b6e93f] bg-[#d4ff6a]/75 text-[#1f2d00]"
-                          : "border-slate-300 bg-white text-slate-700 hover:border-violet-300 hover:bg-violet-50/40"
-                      }`}
-                    >
-                      <Filter className="size-5" />
-                      {showFilters ? "Ẩn bộ lọc" : "Hiện bộ lọc"}
-                    </button>
-                  </div>
+                  <CoursesExploreFilters
+                    searchQuery={searchQuery}
+                    onSearchChange={setSearchQuery}
+                    selectedLevel={selectedLevel}
+                    onLevelChange={setSelectedLevel}
+                    resultCount={filteredCourses.length}
+                  />
 
-                  {showFilters && (
-                    <div className="mt-4 grid grid-cols-1 gap-6 rounded-2xl border border-violet-200/45 bg-white/82 p-5">
-                      <div>
-                        <label className="mb-4 block text-xs font-black uppercase tracking-widest text-slate-500">Danh mục</label>
-                        <div className="flex flex-wrap gap-3">
-                          {CATEGORIES.map((cat) => (
-                            <button
-                              key={cat}
-                              onClick={() => setSelectedCategory(cat)}
-                              className={`px-6 py-2.5 rounded-xl text-sm font-bold transition-all border ${
-                                selectedCategory === cat
-                                  ? "bg-primary-fixed text-on-primary-fixed border-primary-fixed"
-                                  : "border-white/10 bg-white/[0.05] text-white/55 hover:border-white/25 hover:text-white"
-                              }`}
-                            >
-                              {cat}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                      <div>
-                        <label className="mb-4 block text-xs font-black uppercase tracking-widest text-slate-500">Cấp độ</label>
-                        <div className="flex flex-wrap gap-3">
-                          {LEVELS.map((level) => (
-                            <button
-                              key={level}
-                              onClick={() => setSelectedLevel(level)}
-                              className={`px-6 py-2.5 rounded-xl text-sm font-bold transition-all border ${
-                                selectedLevel === level
-                                  ? "bg-primary-fixed text-on-primary-fixed border-primary-fixed"
-                                  : "border-white/10 bg-white/[0.05] text-white/55 hover:border-white/25 hover:text-white"
-                              }`}
-                            >
-                              {level}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  <p className="mt-4 font-medium text-slate-600">
-                    Hiển thị <span className="font-black text-slate-900">{filteredCourses.length}</span> khóa học
-                    {searchQuery && <span> cho "<span className="text-[#c4ff47]">{searchQuery}</span>"</span>}
-                  </p>
-
-                  <div className="my-4 h-px bg-violet-200/55" />
+                  <div className="my-4 h-px bg-slate-200/80" />
 
                   <div className="pb-2 pt-1">
                     <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
