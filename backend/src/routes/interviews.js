@@ -1,6 +1,7 @@
 import { Router } from "express";
 import multer from "multer";
 import { authJwt } from "../middleware/authJwt.js";
+import { injectionRateLimit } from "../middleware/injectionRateLimit.js";
 import { InterviewsController } from "../controllers/interviewsController.js";
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });
@@ -15,6 +16,6 @@ interviewsRouter.post("/sessions/:id/evaluate", authJwt, InterviewsController.ev
 interviewsRouter.get("/sessions", authJwt, InterviewsController.list);
 interviewsRouter.get("/sessions/:id", authJwt, InterviewsController.getById);
 
-// AI question generation
-interviewsRouter.post("/generate-questions", authJwt, InterviewsController.generateQuestions);
+// AI question generation — injectionRateLimit blocks users with ≥3 injection attempts/hour
+interviewsRouter.post("/generate-questions", authJwt, injectionRateLimit, InterviewsController.generateQuestions);
 interviewsRouter.post("/extract-cv-text", authJwt, upload.single("file"), InterviewsController.extractCvText);

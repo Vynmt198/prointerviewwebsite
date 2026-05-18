@@ -19,6 +19,7 @@ import {
   COMPETENCY_LIBRARY,
 } from "./competencyFramework.js";
 import { sanitizeUserInput } from "../utils/promptSafety.js";
+import { validateQuestionSet } from "../utils/outputValidator.js";
 import { logger } from "../config/logger.js";
 import { SecurityLog } from "../models/SecurityLog.js";
 
@@ -323,8 +324,36 @@ export async function generateQuestionsFromText({
     parsed = JSON.parse(extractJson(rawContent));
   }
 
-  if (!Array.isArray(parsed.questions) || parsed.questions.length === 0) {
-    throw new Error("LLM không trả về mảng questions hợp lệ");
+  // Step 3b: Validate output structure + screen for suspicious content
+  let validation = validateQuestionSet(parsed);
+  if (!validation.valid) {
+    logger.error("llm_output_invalid", { reason: validation.reason, sessionId, userId });
+
+    if (validation.reason.includes("suspicious")) {
+      SecurityLog.create({
+        userId,
+        sessionId,
+        type: "suspicious_output",
+        details: { reason: validation.reason, response: rawContent.slice(0, 500) },
+      }).catch(err => logger.error("security_log_write_failed", { error: err.message }));
+    }
+
+    // One retry at temp=0 — deterministic output is more likely to be well-structured
+    logger.warn("llm_output_retry", { reason: validation.reason, sessionId, userId });
+    let retryRaw = await callLLM(systemPrompt, userMsg, { temp: 0, maxTokens: 4000, retries: 1 });
+    try {
+      parsed = JSON.parse(extractJson(retryRaw));
+    } catch {
+      const repairPrompt = "Sửa JSON sau thành JSON hợp lệ. Chỉ trả về JSON thuần:";
+      retryRaw = await callLLM(repairPrompt, retryRaw, { maxTokens: 3000, temp: 0, retries: 1 });
+      parsed = JSON.parse(extractJson(retryRaw));
+    }
+
+    validation = validateQuestionSet(parsed);
+    if (!validation.valid) {
+      logger.error("llm_output_still_invalid", { reason: validation.reason, sessionId, userId });
+      throw new Error(`LLM output không hợp lệ sau retry: ${validation.reason}`);
+    }
   }
 
   // Step 4: Normalize sang camelCase + enrich với SHRM rubric
