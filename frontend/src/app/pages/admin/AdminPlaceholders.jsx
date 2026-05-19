@@ -170,12 +170,20 @@ export function AdminFinance() {
                     Ghi danh khóa có phí (chuyển khoản). Khoản chờ đối soát là giao dịch chưa được xác nhận trên sao kê; khoản đã thu là giao dịch đã được xác nhận thanh toán.
                   </p>
                 </div>
-                <Link
-                  to="/admin/course-payments"
-                  className="shrink-0 rounded-xl bg-violet-600 px-4 py-2.5 text-xs font-black uppercase tracking-wider text-white shadow-sm transition hover:bg-violet-700"
-                >
-                  Mở trang học phí khóa →
-                </Link>
+                <div className="flex flex-wrap gap-2">
+                  <Link
+                    to="/admin/course-payments"
+                    className="shrink-0 rounded-xl bg-violet-600 px-4 py-2.5 text-xs font-black uppercase tracking-wider text-white shadow-sm transition hover:bg-violet-700"
+                  >
+                    Học phí khóa →
+                  </Link>
+                  <Link
+                    to="/admin/subscription-payments"
+                    className="shrink-0 rounded-xl bg-amber-500 px-4 py-2.5 text-xs font-black uppercase tracking-wider text-slate-900 shadow-sm transition hover:bg-amber-400"
+                  >
+                    Gói Pro/Elite →
+                  </Link>
+                </div>
               </div>
               <div className="grid gap-4 md:grid-cols-3">
                 <div className="rounded-2xl border border-violet-400/30 bg-violet-500/10 p-5">

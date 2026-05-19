@@ -171,7 +171,7 @@ Các nhóm endpoint theo phase (bookings, payments, plans, courses, enrollments,
 | ✅ | POST | `/api/auth/logout` | `[AUTH]` | Vô hiệu access + xóa refresh sessions |
 | ✅ | POST | `/api/auth/refresh` | — | Làm mới access từ refresh token |
 | ✅ | GET / DELETE | `/api/auth/sessions`, `/api/auth/sessions/:id` | `[AUTH]` | Danh sách / thu hồi phiên |
-| 📋 | DELETE | `/api/auth/me` | `[AUTH]` | Xóa tài khoản |
+| ✅ | DELETE | `/api/auth/me` | `[AUTH]` | Xóa tài khoản (Settings → Vùng nguy hiểm) |
 
 *Ghi chú:* `change-password` không dùng — đã gộp `PATCH /api/auth/me` (xem Phần A trong `API_INDEX.md`).
 

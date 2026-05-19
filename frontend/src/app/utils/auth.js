@@ -4,6 +4,14 @@
  */
 
 import { apiUrl } from "./api.js";
+import {
+  PLAN_STORAGE_KEY,
+  apiPlanToLocalFlags,
+  migrateLegacyPlanFlags,
+  resolvePlansFromStorageAndUser,
+} from "./planSync.js";
+
+export { apiPlanToLocalFlags } from "./planSync.js";
 
 const AUTH_KEY = "prointerview_auth";
 const TOKEN_KEY = "prointerview_access_token";
@@ -391,6 +399,7 @@ export async function updateUser(partial) {
 
 export function setLoggedIn(user) {
   localStorage.setItem(AUTH_KEY, JSON.stringify(user));
+  syncPlansFromUser(user);
 }
 
 export function isLoggedIn() {
@@ -555,25 +564,39 @@ export function getDisplayFirstName(user, fallback = "bạn") {
    PLAN SYSTEM — 3 tiers
 ══════════════════════════════════════════════════════════ */
 
-const PLAN_KEY = "prointerview_plans";
+const PLAN_KEY = PLAN_STORAGE_KEY;
+export const PLANS_CHANGED_EVENT = "prointerview-plans-changed";
+
+/** Đồng bộ localStorage từ user.plan (sau login /me / admin duyệt CK). */
+export function syncPlansFromUser(user) {
+  if (!user?.plan) return;
+  const flags = apiPlanToLocalFlags(user.plan);
+  localStorage.setItem(PLAN_KEY, JSON.stringify(flags));
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new Event(PLANS_CHANGED_EVENT));
+  }
+}
 
 export function getPlans() {
   const raw = localStorage.getItem(PLAN_KEY);
-  if (!raw) return { starterPro: false, elitePro: false };
-  try {
-    const parsed = JSON.parse(raw);
-    if ("voicePro" in parsed || "cvPro" in parsed) {
-      const migrated = {
-        starterPro: !!(parsed.voicePro || parsed.cvPro || parsed.textPro),
-        elitePro: !!(parsed.voicePro && parsed.cvPro),
-      };
-      localStorage.setItem(PLAN_KEY, JSON.stringify(migrated));
-      return migrated;
+  let stored = { starterPro: false, elitePro: false };
+  if (raw) {
+    try {
+      const parsed = JSON.parse(raw);
+      stored = migrateLegacyPlanFlags(parsed);
+      if ("voicePro" in parsed || "cvPro" in parsed) {
+        localStorage.setItem(PLAN_KEY, JSON.stringify(stored));
+      }
+    } catch {
+      stored = { starterPro: false, elitePro: false };
     }
-    return { starterPro: false, elitePro: false, ...parsed };
-  } catch {
-    return { starterPro: false, elitePro: false };
   }
+  const u = getUser();
+  const resolved = resolvePlansFromStorageAndUser(stored, u?.plan);
+  if (resolved !== stored) {
+    localStorage.setItem(PLAN_KEY, JSON.stringify(resolved));
+  }
+  return resolved;
 }
 
 export function setPlan(plan, value = true) {

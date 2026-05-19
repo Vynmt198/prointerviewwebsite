@@ -5,22 +5,31 @@ dotenv.config();
 
 import dns from "node:dns";
 
+export function isMailConfigured() {
+  const user = (process.env.MAIL_USER || process.env.EMAIL_USER || "").trim();
+  const pass = (process.env.MAIL_PASS || process.env.EMAIL_PASS || "").trim();
+  return Boolean(user && pass);
+}
+
 const getTransporter = () => {
-  const user = process.env.MAIL_USER || process.env.EMAIL_USER;
-  const pass = process.env.MAIL_PASS || process.env.EMAIL_PASS;
+  const user = (process.env.MAIL_USER || process.env.EMAIL_USER || "").trim();
+  const pass = (process.env.MAIL_PASS || process.env.EMAIL_PASS || "").trim();
+
+  if (!user || !pass) {
+    throw new Error(
+      "Thiếu MAIL_USER hoặc MAIL_PASS trong backend/.env (Gmail: dùng App Password, không phải mật khẩu đăng nhập thường).",
+    );
+  }
 
   return nodemailer.createTransport({
-    host: "smtp.gmail.com",
-    port: 587,
+    host: process.env.MAIL_HOST || "smtp.gmail.com",
+    port: Number(process.env.MAIL_PORT) || 587,
     secure: false,
     family: 4,
     connectionTimeout: 10000,
     greetingTimeout: 10000,
     socketTimeout: 10000,
-    auth: {
-      user: user,
-      pass: pass,
-    },
+    auth: { user, pass },
   });
 };
 
@@ -168,13 +177,22 @@ export async function sendMentorFeedbackEmail(to, studentName, mentorName, sessi
   });
 }
 
-// Kiểm tra cấu hình mail ngay khi server khởi động
+// Kiểm tra SMTP khi khởi động — bỏ qua nếu chưa cấu hình (dev vẫn chạy API/DB)
 (async function verifyMailConfig() {
+  if (!isMailConfigured()) {
+    console.warn(
+      "⚠️ SMTP chưa cấu hình (MAIL_USER / MAIL_PASS trống). Quên mật khẩu / xác thực email sẽ không gửi được.",
+    );
+    return;
+  }
   try {
     const initTransporter = getTransporter();
     await initTransporter.verify();
     console.log("✔️ Server đã sẵn sàng gửi mail (SMTP OK)!");
   } catch (error) {
-    console.error("❌ LỖI CẤU HÌNH MAIL TRÊN SERVER:", error);
+    console.error("❌ LỖI CẤU HÌNH MAIL TRÊN SERVER:", error.message || error);
+    console.error(
+      "   Gợi ý: Gmail → bật 2FA → tạo App Password → dán vào MAIL_PASS (có thể bọc ngoặc kép nếu có dấu cách).",
+    );
   }
 })();

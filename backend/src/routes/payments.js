@@ -5,6 +5,8 @@ import { PaymentsController } from "../controllers/paymentsController.js";
 export const paymentsRouter = Router();
 
 paymentsRouter.post("/initiate", authJwt, PaymentsController.initiate);
+paymentsRouter.post("/subscription/transfer-pending", authJwt, PaymentsController.subscriptionTransferPending);
+paymentsRouter.patch("/subscription/:paymentId/submit-transfer", authJwt, PaymentsController.subscriptionSubmitTransfer);
 paymentsRouter.get("/history", authJwt, PaymentsController.history);
 paymentsRouter.post("/webhook/momo", PaymentsController.webhookMomo);
 paymentsRouter.post("/webhook/zalopay", PaymentsController.webhookZalopay);

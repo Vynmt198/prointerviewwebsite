@@ -21,7 +21,6 @@ import {
   CalendarDays as CalendarBlank,
   Users,
 } from "lucide-react";
-import { CV_ANALYSIS_HISTORY } from "../../data/mockData";
 import { fetchCvAnalyses } from "../../utils/cvApi";
 import { hasAuthCredentials } from "../../utils/auth";
 
@@ -47,7 +46,7 @@ export function AnalysisHistory() {
   const [sortBy, setSortBy] = useState("date");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedId, setSelectedId] = useState(null);
-  const [rows, setRows] = useState(() => CV_ANALYSIS_HISTORY.map(mapRow));
+  const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {

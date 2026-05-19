@@ -159,6 +159,15 @@ export async function completeMentorBooking(id) {
   return authedSend("PATCH", `/api/bookings/${encodeURIComponent(id)}/complete`, {});
 }
 
+/** Đánh dấu buổi học `in_progress` khi vào phòng (học viên hoặc mentor). */
+export async function startBookingMeeting(id, { asMentor = false } = {}) {
+  if (!id) return { success: false, error: "Thiếu id." };
+  const path = asMentor
+    ? `/api/bookings/mentor/${encodeURIComponent(id)}/start`
+    : `/api/bookings/${encodeURIComponent(id)}/start`;
+  return authedSend("PATCH", path, {});
+}
+
 export async function updateMentorNotes(id, body) {
   if (!id) return { success: false, error: "Thiếu id." };
   return authedSend("PATCH", `/api/bookings/${encodeURIComponent(id)}/notes`, body);

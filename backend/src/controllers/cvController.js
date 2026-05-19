@@ -13,46 +13,48 @@ export const CVController = {
     }
   },
 
-  /** Tạo bản phân tích CV */
+  /** Lưu bản phân tích CV (kết quả từ Python / FE — không mock) */
   createAnalysis: async (req, res) => {
     try {
-      const { cvText, jdText, analysisType = "basic" } = req.body;
+      const {
+        cvText,
+        jdText = "",
+        analysisType = "basic",
+        cvFileName = "",
+        jdFileName = "",
+        result,
+        geminiModel,
+      } = req.body;
       const userId = req.userId;
 
-      const user = await User.findById(userId);
-      if (user.quota.cvAnalysisUsed >= user.quota.cvAnalysisLimit) {
-        return res.status(403).json({ success: false, error: "Bạn đã hết lượt phân tích CV miễn phí. Vui lòng nâng cấp gói." });
+      if (!cvText || !String(cvText).trim()) {
+        return res.status(400).json({ success: false, error: "cvText là bắt buộc" });
+      }
+      if (!result || typeof result !== "object") {
+        return res.status(400).json({ success: false, error: "result là bắt buộc" });
       }
 
-      // Mock AI Result
-      const result = {
-        overallSummary: "CV của bạn khá ấn tượng với kinh nghiệm thực tế tốt. Tuy nhiên cần làm nổi bật hơn các con số kết quả.",
-        experienceLevel: "Senior",
-        topStrengths: ["Kỹ năng giải quyết vấn đề", "Node.js & MongoDB", "Thiết kế hệ thống"],
-        areasToImprove: ["Kỹ năng viết Unit Test", "Chứng chỉ ngoại ngữ"],
-        recommendations: [
-          "Thêm các dự án thực tế vào phần kinh nghiệm",
-          "Cập nhật các công nghệ mới nhất đang sử dụng",
-        ]
-      };
+      const user = await User.findById(userId);
+      if (!user) return res.status(404).json({ success: false, error: "Người dùng không tồn tại" });
 
-      if (jdText) {
-        result.matchScore = Math.floor(Math.random() * 40) + 60; // 60-100
-        result.matchStrengths = ["Khớp kỹ năng React", "Kinh nghiệm Ecommerce"];
-        result.matchWeaknesses = ["Thiếu kiến thức AWS", "Chưa có kinh nghiệm quản lý team"];
-        result.missingKeywords = ["Docker", "Kubernetes", "Microservices"];
+      if (user.quota.cvAnalysisUsed >= user.quota.cvAnalysisLimit) {
+        return res.status(403).json({
+          success: false,
+          error: "Bạn đã hết lượt phân tích CV miễn phí. Vui lòng nâng cấp gói.",
+        });
       }
 
       const analysis = await CVAnalysis.create({
         userId,
-        cvText,
-        jdText,
+        cvText: String(cvText).trim(),
+        jdText: String(jdText || ""),
+        cvFileName: cvFileName || "",
+        jdFileName: jdFileName || "",
         analysisType,
         result,
-        geminiModel: "mock-analyzer-v1"
+        geminiModel: geminiModel || "python-cv-matcher",
       });
 
-      // Increment quota
       user.quota.cvAnalysisUsed += 1;
       await user.save();
 
@@ -92,5 +94,5 @@ export const CVController = {
     } catch (error) {
       res.status(500).json({ success: false, error: error.message });
     }
-  }
+  },
 };

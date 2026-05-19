@@ -31,3 +31,16 @@ export async function markNotificationAsRead(id) {
     return { success: false };
   }
 }
+
+export async function markAllNotificationsRead() {
+  if (!hasAuthCredentials()) return { success: false };
+  try {
+    const res = await authFetch("/api/notifications/read-all", {
+      method: "POST",
+      headers: { ...jsonHeaders },
+    });
+    return { success: res.ok };
+  } catch {
+    return { success: false };
+  }
+}

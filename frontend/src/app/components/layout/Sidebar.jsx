@@ -39,7 +39,15 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
-import { getUser, logout, getInitials, getBrandClickPath, getPlans, getDisplayName } from "../../utils/auth";
+import {
+  getUser,
+  logout,
+  getInitials,
+  getBrandClickPath,
+  getPlans,
+  getDisplayName,
+  PLANS_CHANGED_EVENT,
+} from "../../utils/auth";
 
 /* ── Nav data ─────────────────────────────────────────────── */
 const customerMainItems = [
@@ -71,7 +79,16 @@ export function AppSidebar() {
   const navigate = useNavigate();
 
   const user = getUser();
-  const plans = getPlans();
+  const [plans, setPlans] = React.useState(getPlans);
+  React.useEffect(() => {
+    const refresh = () => setPlans(getPlans());
+    window.addEventListener(PLANS_CHANGED_EVENT, refresh);
+    window.addEventListener("focus", refresh);
+    return () => {
+      window.removeEventListener(PLANS_CHANGED_EVENT, refresh);
+      window.removeEventListener("focus", refresh);
+    };
+  }, []);
   const displayName = getDisplayName(user);
   const initials = getInitials(displayName);
   const isMentor = user?.role === "mentor";

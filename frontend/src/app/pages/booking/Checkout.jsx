@@ -21,10 +21,13 @@ import {
 } from "lucide-react";
 import { isLoggedIn } from "../../utils/auth";
 import { fetchMentor } from "../../utils/mentorApi";
-import { genMeetLink } from "../../utils/bookings";
 import { createBooking, fetchRebookCredit, submitBookingTransferReference } from "../../utils/bookingsApi";
 import { fetchCourseById } from "../../utils/courseApi";
 import { enrollmentApi } from "../../utils/enrollmentApi";
+import {
+  createSubscriptionTransferPending,
+  submitSubscriptionTransfer,
+} from "../../utils/paymentsApi";
 
 /* ─── Plan meta ─────────────────────────────────────────── */
 
@@ -272,7 +275,7 @@ function CheckoutPayPanel({ mode, fmt, rebookCreditVnd, bookingTotalEstimate, bo
         <Landmark className="h-6 w-6" />
       </div>
       <p className="text-xs leading-relaxed text-white/60">
-        Tiếp theo: STK + QR VietQR → chuyển khoản → «Đã chuyển» → admin kích hoạt lịch.
+        Tiếp theo: STK + QR VietQR → chuyển khoản → «Đã chuyển» → admin xác nhận và kích hoạt gói / lịch.
       </p>
     </div>
   );
@@ -288,7 +291,8 @@ export function Checkout() {
   const isBooking = searchParams.get("type") === "booking";
   const isCourse = searchParams.get("type") === "course";
   const courseId = searchParams.get("courseId") ?? "";
-  const isPaidCheckout = isBooking || isCourse;
+  const isPlanCheckout = Boolean(searchParams.get("plan"));
+  const isPaidCheckout = isBooking || isCourse || isPlanCheckout;
   const mentorId = searchParams.get("mentorId") ?? "";
   const [bookingMentor, setBookingMentor] = React.useState(null);
   const [courseInfo, setCourseInfo] = React.useState(null);
@@ -334,7 +338,6 @@ export function Checkout() {
   const total = isBooking ? bookingPrice : isCourse ? coursePriceNum : price; // never multiply by 12 — price is always the per-period amount shown on the card
 
   const [transferOrderNum, setTransferOrderNum] = useState(() => `PI${Math.floor(Math.random() * 900000 + 100000)}`);
-  const meetLink = useMemo(() => genMeetLink(transferOrderNum), [transferOrderNum]);
 
   /* ── Read all booking params from URL ── */
   const bookingPosition = searchParams.get("position") ?? "";
@@ -366,6 +369,7 @@ export function Checkout() {
   const [appStep, setAppStep] = useState("checkout");
   const [bankBookingId, setBankBookingId] = useState(null);
   const [bankEnrollmentId, setBankEnrollmentId] = useState(null);
+  const [bankSubscriptionPaymentId, setBankSubscriptionPaymentId] = useState(null);
   const [transferBusy, setTransferBusy] = useState(false);
 
   const [cardError, setCardError] = useState("");
@@ -435,6 +439,11 @@ export function Checkout() {
         setCardError("Thiếu mã ghi danh. Hãy quay lại bước thanh toán.");
         return;
       }
+    } else if (isPlanCheckout) {
+      if (!bankSubscriptionPaymentId) {
+        setCardError("Thiếu mã giao dịch. Hãy quay lại bước thanh toán.");
+        return;
+      }
     } else {
       return;
     }
@@ -446,8 +455,15 @@ export function Checkout() {
         const res = await submitBookingTransferReference(bankBookingId, transferOrderNum || "");
         ok = res.success;
         if (!ok) setCardError(res.error || "Không lưu được.");
-      } else {
+      } else if (isCourse) {
         const res = await enrollmentApi.submitEnrollmentTransfer(bankEnrollmentId, transferOrderNum || "");
+        ok = res.success;
+        if (!ok) setCardError(res.error || "Không lưu được.");
+      } else if (isPlanCheckout) {
+        const res = await submitSubscriptionTransfer(
+          bankSubscriptionPaymentId,
+          transferOrderNum || "",
+        );
         ok = res.success;
         if (!ok) setCardError(res.error || "Không lưu được.");
       }
@@ -465,10 +481,25 @@ export function Checkout() {
       return;
     }
 
-    if (!isPaidCheckout) {
-      setCardError(
-        "Thanh toán chuyển khoản trên trang này chỉ dành cho đặt lịch mentor hoặc mua khóa học có phí. Mua gói Pro vui lòng quay lại trang Gói cước hoặc liên hệ hỗ trợ.",
-      );
+    if (isPlanCheckout) {
+      setCardError("");
+      const apiPlanKey = planKey === "elitePro" ? "elite_pro" : "starter_pro";
+      try {
+        const apiRes = await createSubscriptionTransferPending({
+          amount: payAmount,
+          planKey: apiPlanKey,
+          orderNum: transferOrderNum,
+        });
+        if (apiRes.success && apiRes.paymentId) {
+          if (apiRes.providerRef) setTransferOrderNum(apiRes.providerRef);
+          setBankSubscriptionPaymentId(apiRes.paymentId);
+          setAppStep("awaiting_transfer");
+        } else {
+          setCardError(apiRes.error || "Không thể tạo giao dịch chờ chuyển khoản.");
+        }
+      } catch {
+        setCardError("Lỗi hệ thống khi tạo giao dịch gói cước.");
+      }
       return;
     }
 
@@ -538,7 +569,6 @@ export function Checkout() {
           jdFile: bookingJdFile || "",
           price: bookingPrice,
           durationMinutes: 60,
-          meetingLink: meetLink,
           applyRebookCreditFromBookingId: rebookFrom,
         });
         if (apiRes.success && apiRes.booking?.id) {
@@ -566,7 +596,6 @@ export function Checkout() {
         jdFile: bookingJdFile || "",
         price: bookingPrice,
         durationMinutes: 60,
-        meetingLink: meetLink,
         orderNum: transferOrderNum,
         paymentStatus: "pending",
         paymentMethod: "transfer",
@@ -688,17 +717,17 @@ export function Checkout() {
               Hệ thống đã ghi nhận bạn đã hoàn tất bước chuyển khoản. Admin sẽ đối soát theo{" "}
               <span className="text-white font-semibold">số tiền + nội dung mã đơn</span> rồi{" "}
               <span className="text-white font-semibold">xác nhận thanh toán</span> trong admin →{" "}
-              {isCourse ? "Ghi danh khóa học" : "Lịch hẹn"}.
+              {isCourse ? "Ghi danh khóa học" : isPlanCheckout ? "Gói cước" : "Lịch hẹn"}.
             </p>
           )}
 
           <div className="mt-6 flex flex-wrap gap-3">
             <button
               type="button"
-              onClick={() => navigate(isCourse ? "/courses" : "/dashboard")}
+              onClick={() => navigate(isCourse ? "/courses" : isPlanCheckout ? "/dashboard" : "/dashboard")}
               className="flex-1 min-w-[140px] h-12 rounded-xl bg-white/10 border border-white/15 text-[10px] font-black uppercase tracking-widest hover:bg-white/15"
             >
-              {isCourse ? "Về Khóa học" : "Về Dashboard"}
+              {isCourse ? "Về Khóa học" : isPlanCheckout ? "Về Dashboard" : "Về Dashboard"}
             </button>
             {!submitted && (
               <button
@@ -707,6 +736,7 @@ export function Checkout() {
                   setAppStep("checkout");
                   setBankBookingId(null);
                   setBankEnrollmentId(null);
+                  setBankSubscriptionPaymentId(null);
                 }}
                 className="flex-1 min-w-[140px] h-12 rounded-xl border border-white/15 text-[10px] font-black uppercase tracking-widest text-white/70 hover:text-white"
               >
@@ -825,9 +855,7 @@ export function Checkout() {
                     <Lock className="h-5 w-5" />
                     {payMode === PAY_MODE.REBOOK_READY
                       ? "Xác nhận đặt lại"
-                      : isPaidCheckout
-                        ? `Tiếp tục — ${fmt(payAmount)}`
-                        : "Chọn luồng thanh toán"}
+                      : `Tiếp tục — ${fmt(payAmount)}`}
                   </button>
                 ) : null}
 

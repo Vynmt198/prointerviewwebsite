@@ -14,7 +14,19 @@ function escapeRegex(str) {
   return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
+/** Bỏ ký tự đơn (vd. "r" từ skills_db) — tránh highlight mọi chữ r trong PDF */
+function filterHighlightKeywords(list) {
+  if (!list) return [];
+  const arr = Array.isArray(list) ? list : [];
+  return arr
+    .map((k) => String(k ?? "").trim())
+    .filter((k) => k.length >= 2);
+}
+
 function makeTextRenderer(matchedKws, missingKws, side) {
+  const matched = filterHighlightKeywords(matchedKws);
+  const missing = filterHighlightKeywords(missingKws);
+
   return ({ str }) => {
     if (!str.trim()) return str;
 
@@ -23,10 +35,10 @@ function makeTextRenderer(matchedKws, missingKws, side) {
     const targets =
       side === "jd"
         ? [
-            ...matchedKws.map(k => ({ kw: k, type: "matched" })),
-            ...missingKws.map(k => ({ kw: k, type: "missing" })),
+            ...matched.map(k => ({ kw: k, type: "matched" })),
+            ...missing.map(k => ({ kw: k, type: "missing" })),
           ]
-        : matchedKws.map(k => ({ kw: k, type: "matched" }));
+        : matched.map(k => ({ kw: k, type: "matched" }));
 
     if (targets.length === 0) return str;
 
@@ -38,7 +50,7 @@ function makeTextRenderer(matchedKws, missingKws, side) {
 
     return str.replace(pattern, match => {
       const lower = match.toLowerCase();
-      const isMatched = matchedKws.some(k => k.toLowerCase() === lower);
+      const isMatched = matched.some(k => k.toLowerCase() === lower);
       if (isMatched)
         return `<mark data-kw="${lower}" data-kwtype="matched" style="background:#bbf7d0;color:#14532d;border-radius:3px;padding:0 4px;font-weight:700;border:1px solid #22c55e;cursor:pointer">${match}</mark>`;
       return `<mark data-kw="${lower}" data-kwtype="missing" style="background:#fecaca;color:#7f1d1d;border-radius:3px;padding:0 4px;font-weight:700;border:1px solid #f87171;cursor:pointer">${match}</mark>`;
@@ -59,8 +71,10 @@ const chipMissing = {
 };
 
 function KeywordChips({ matchedKws, missingKws, side }) {
-  const showMissing = (side === "cv" || side === "jd") && missingKws.length > 0;
-  if (matchedKws.length === 0 && !showMissing) return null;
+  const matched = filterHighlightKeywords(matchedKws);
+  const missing = filterHighlightKeywords(missingKws);
+  const showMissing = (side === "cv" || side === "jd") && missing.length > 0;
+  if (matched.length === 0 && !showMissing) return null;
 
   return (
     <div
@@ -68,7 +82,7 @@ function KeywordChips({ matchedKws, missingKws, side }) {
       style={{ maxHeight: 112, overflowY: "auto" }}
     >
       <div className="flex flex-wrap gap-1.5">
-        {matchedKws.map(kw => (
+        {matched.map(kw => (
           <span
             key={`m-${kw}`}
             className="inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[11px] font-bold leading-tight"
@@ -79,7 +93,7 @@ function KeywordChips({ matchedKws, missingKws, side }) {
           </span>
         ))}
         {showMissing &&
-          missingKws.map(kw => (
+          missing.map(kw => (
             <span
               key={`x-${kw}`}
               className="inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[11px] font-bold leading-tight"

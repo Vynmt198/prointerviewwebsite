@@ -5,12 +5,14 @@ import {
   GraduationCap,
   Wallet,
   Calendar,
+  Crown,
   FileQuestion,
   LineChart,
   Settings,
   MessageSquare,
   Activity,
   ArrowRight,
+  BookOpen,
 } from "lucide-react";
 import { adminApi } from "../../utils/adminApi";
 
@@ -19,7 +21,20 @@ const TILES = [
   { to: "/admin/mentors", label: "Cố vấn", icon: GraduationCap, desc: "Cố vấn, duyệt chờ xét" },
   { to: "/admin/finance", label: "Tài chính", icon: Wallet, desc: "Lịch hẹn, học phí khóa học, rút tiền cố vấn" },
   { to: "/admin/bookings", label: "Lịch hẹn & thanh toán", icon: Calendar, desc: "Lịch hẹn mentor và xác nhận thanh toán chuyển khoản" },
-  { to: "/admin/course-payments", label: "Học phí khóa học", icon: Wallet, desc: "Đối soát chuyển khoản ghi danh khóa học" },
+  {
+    to: "/admin/subscription-payments",
+    label: "Duyệt gói Pro/Elite",
+    icon: Crown,
+    desc: "Xác nhận CK nâng cấp Starter Pro / Elite Pro",
+    highlight: true,
+  },
+  {
+    to: "/admin/course-payments",
+    label: "Duyệt học phí khóa",
+    icon: BookOpen,
+    desc: "Đối soát chuyển khoản ghi danh khóa học",
+    highlight: true,
+  },
   { to: "/admin/content/questions", label: "Nội dung", icon: FileQuestion, desc: "Câu hỏi, video, khóa học" },
   { to: "/admin/analytics", label: "Phân tích", icon: LineChart, desc: "Báo cáo và biểu đồ" },
   { to: "/admin/settings", label: "Cài đặt HT", icon: Settings, desc: "Giá, fee, API, email" },
@@ -73,11 +88,13 @@ export function AdminDashboard() {
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {TILES.map(({ to, label, icon: Icon, desc }) => (
+        {TILES.map(({ to, label, icon: Icon, desc, highlight }) => (
           <Link
             key={to}
             to={to}
-            className="group glass-card border-slate-200/90 p-6 transition-all hover:border-violet-300/80"
+            className={`group glass-card border-slate-200/90 p-6 transition-all hover:border-violet-300/80 ${
+              highlight ? "ring-2 ring-amber-400/50 border-amber-300/60 bg-amber-50/30" : ""
+            }`}
           >
             <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 text-violet-700 transition-all group-hover:border-[#c4ff47]/60 group-hover:bg-[#c4ff47]/20 group-hover:text-[#120B2E]">
               <Icon size={24} strokeWidth={2} />
