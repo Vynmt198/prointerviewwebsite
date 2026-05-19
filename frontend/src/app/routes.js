@@ -18,6 +18,7 @@ import { Mentors } from "./pages/mentors/Mentors";
 import { MentorProfile } from "./pages/mentors/MentorProfile";
 import { Booking } from "./pages/booking/Booking";
 import { SessionDetail } from "./pages/booking/SessionDetail";
+import { MyBookings } from "./pages/booking/MyBookings";
 import { Profile } from "./pages/account/Profile";
 import { Settings } from "./pages/account/Settings";
 import { PaymentReturn } from "./pages/payment/PaymentReturn";
@@ -48,6 +49,7 @@ import { AdminMentors } from "./pages/admin/AdminMentors.jsx";
 import { AdminUsers } from "./pages/admin/AdminUsers.jsx";
 import { AdminBookings } from "./pages/admin/AdminBookings.jsx";
 import { AdminCoursePayments } from "./pages/admin/AdminCoursePayments.jsx";
+import { AdminSubscriptionPayments } from "./pages/admin/AdminSubscriptionPayments.jsx";
 import { AdminMentorsPending } from "./pages/admin/AdminMentorsPending.jsx";
 import {
   AdminUserDetail,
@@ -78,8 +80,9 @@ export const router = createHashRouter([
   { path: "/payment-success", Component: SuccessPage },
   { path: "/payment-failure", Component: FailurePage },
   { path: "/avatar-demo", Component: AvatarDemo },
-  // Course learning — full-screen, no sidebar
+  // Course learning & meeting room — full-screen, no sidebar
   { path: "/courses/:id/learn", Component: CourseLearning },
+  { path: "/meeting/:sessionId", Component: MeetingRoom },
   {
     path: "/admin",
     Component: AdminLayout,
@@ -97,6 +100,7 @@ export const router = createHashRouter([
       { path: "payouts", Component: AdminPayouts },
       { path: "bookings", Component: AdminBookings },
       { path: "course-payments", Component: AdminCoursePayments },
+      { path: "subscription-payments", Component: AdminSubscriptionPayments },
       { path: "bookings/:id", Component: AdminBookingDetail },
       { path: "content/questions", Component: AdminContentQuestions },
       { path: "content/videos", Component: AdminContentVideos },
@@ -110,6 +114,7 @@ export const router = createHashRouter([
     Component: AppLayout,
     children: [
       { path: "dashboard", Component: Dashboard },
+      { path: "my-bookings", Component: MyBookings },
       { path: "cv-analysis", Component: CVAnalysis },
       { path: "cv-analysis/history", Component: AnalysisHistory },
       { path: "interview", Component: Interview },
@@ -141,7 +146,6 @@ export const router = createHashRouter([
         ],
       },
 
-      { path: "meeting/:sessionId", Component: MeetingRoom },
       { path: "mentor/session-feedback/:sessionId", Component: MentorSessionFeedback },
 
       { path: "courses", Component: Courses },

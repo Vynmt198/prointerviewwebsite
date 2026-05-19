@@ -34,7 +34,9 @@ import {
   getCVRemaining,
   incrementCVCount,
   CV_FREE_LIMIT,
+  hasAuthCredentials,
 } from "../../utils/auth";
+import { fetchCurrentPlan } from "../../utils/plansApi";
 import {
   apiUrl as expressApiUrl,
   isExpressBackendConfigured,
@@ -45,85 +47,18 @@ import {
 } from "../../components/cv/CVDocumentPreview";
 import { MentorPageShell } from "../../components/mentor/MentorPageShell";
 import { addCVAnalysisRecord } from "../../utils/history";
-import { hasAuthCredentials } from "../../utils/auth";
 import {
   fetchCvAnalyses,
   fetchCvAnalysisById,
   deleteCvAnalysis,
   saveCvAnalysis,
   buildCvAnalysisSavePayload,
+  fetchCvQuota,
 } from "../../utils/cvApi";
-import { projectId, publicAnonKey } from "/utils/supabase/info.js";
 
-// ─── API base ─────────────────────────────────────────────────────────────────
-const EDGE_FN = "make-server-64a0c849";
 const USE_EXPRESS_CV = isExpressBackendConfigured();
-const SUPABASE_CONFIGURED = Boolean(
-  String(import.meta.env.VITE_SUPABASE_PROJECT_ID ?? "").trim(),
-);
-const API_BASE = SUPABASE_CONFIGURED
-  ? `https://${projectId}.supabase.co/functions/v1/${EDGE_FN}`
-  : "";
 
-function getSessionId() {
-  const key = "prointerview_session_id";
-  let id = localStorage.getItem(key);
-  if (!id) {
-    id = crypto.randomUUID();
-    localStorage.setItem(key, id);
-  }
-  return id;
-}
-
-// This server does NOT list "apikey" in Access-Control-Allow-Headers,
-// so sending it as a header causes CORS preflight to fail with
-// "Failed to fetch". Only Authorization is safe to include.
-function apiHeaders(userToken) {
-  const t = userToken ?? "";
-  const hasToken = !!(t && t !== "null" && t !== "undefined" && t.length > 20);
-  if (!hasToken) return {};
-  return { Authorization: `Bearer ${t}` };
-}
-
-function supabaseApiUrl(path) {
-  if (!SUPABASE_CONFIGURED) return "";
-  return `${API_BASE}/${path}`;
-}
-
-/**
- * JWT từ backend (/api/auth). Edge function Supabase có thể không chấp nhận token này —
- * khi đó CV vẫn chạy ở chế độ demo (không gửi Bearer).
- */
-async function getForceRefreshedToken() {
-  try {
-    const { getFreshAccessToken } = await import("../../utils/auth");
-    return await getFreshAccessToken();
-  } catch {
-    return "";
-  }
-}
-
-/** Rebuild FormData for retry requests */
-function buildFd(
-  cvFile,
-  reuseCV,
-  jdFile,
-  reuseJD,
-  analyzeModeParam,
-  selectedField,
-) {
-  const fd = new FormData();
-  if (cvFile) fd.append("cv", cvFile);
-  else if (reuseCV) fd.append("cvPath", reuseCV.path);
-  if (jdFile && analyzeModeParam === "jd") fd.append("jd", jdFile);
-  else if (reuseJD && analyzeModeParam === "jd")
-    fd.append("jdPath", reuseJD.path);
-  fd.append("mode", analyzeModeParam);
-  if (selectedField) fd.append("field", selectedField);
-  return fd;
-}
-
-/** FastAPI trả `detail` (string hoặc mảng validation); Express dùng `error`. */
+/** FastAPI trả `detail`; Express dùng `error`. */
 function formatCvAnalyzerHttpError(status, body) {
   const e = body ?? {};
   if (typeof e.detail === "string" && e.detail.trim()) return e.detail.trim();
@@ -141,6 +76,22 @@ function formatCvAnalyzerHttpError(status, body) {
   }
   if (typeof e.error === "string" && e.error.trim()) return e.error.trim();
   return `CV Analyzer lỗi ${status}`;
+}
+
+/** Bỏ từ khóa 1 ký tự (vd. "r" = ngôn ngữ R) — tránh highlight mọi chữ r trong văn bản */
+function filterHighlightKeywords(list) {
+  if (!list) return [];
+  const arr = Array.isArray(list) ? list : [];
+  return arr.map((k) => String(k ?? "").trim()).filter((k) => k.length >= 2);
+}
+
+async function getForceRefreshedToken() {
+  try {
+    const { getFreshAccessToken } = await import("../../utils/auth");
+    return await getFreshAccessToken();
+  } catch {
+    return "";
+  }
 }
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -287,6 +238,28 @@ export function CVAnalysis() {
   const [plans] = useState(getPlans());
   const [cvRemaining, setCvRemaining] = useState(getCVRemaining());
 
+  useEffect(() => {
+    if (!hasAuthCredentials()) return;
+    let cancelled = false;
+    (async () => {
+      const planRes = await fetchCurrentPlan();
+      const quotaRes = await fetchCvQuota();
+      if (cancelled) return;
+      if (quotaRes.success && quotaRes.quota) {
+        const limit = Number(quotaRes.quota.cvAnalysisLimit) || CV_FREE_LIMIT;
+        const used = Number(quotaRes.quota.cvAnalysisUsed) || 0;
+        setCvRemaining(Math.max(0, limit - used));
+      }
+      if (planRes.success && planRes.plan) {
+        const { syncPlansFromUser } = await import("../../utils/auth");
+        syncPlansFromUser({ plan: planRes.plan });
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   // Page-level view
   const [pageView, setPageView] = useState("analysis");
 
@@ -328,8 +301,7 @@ export function CVAnalysis() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [expandedCards, setExpandedCards] = useState(new Set());
 
-  // NEW: Optional JD/Field checkboxes
-  // Prod + VITE_API_URL: mặc định CV+JD qua Express → Python (Cách A)
+  // JD: Express → Python. Field-only: chưa hỗ trợ (không dùng Supabase).
   const [enableJD, setEnableJD] = useState(USE_EXPRESS_CV);
   const [enableField, setEnableField] = useState(false);
 
@@ -343,10 +315,14 @@ export function CVAnalysis() {
   const R = analysisResult;
   const matchScore = R?.matchScore ?? 72;
   const overallScore = R?.overallScore ?? matchScore;
-  const matchedSet = new Set(R ? R.matchedKeywords : DEMO_MATCHED);
-  const cvDisplayKWs = R ? R.matchedKeywords : DEMO_MATCHED;
+  const cvDisplayKWs = filterHighlightKeywords(
+    R ? R.matchedKeywords : DEMO_MATCHED,
+  );
   const jdDisplayKWs = R
-    ? [...R.matchedKeywords, ...R.missingKeywords]
+    ? filterHighlightKeywords([
+        ...(Array.isArray(R.matchedKeywords) ? R.matchedKeywords : []),
+        ...(Array.isArray(R.missingKeywords) ? R.missingKeywords : []),
+      ])
     : DEMO_JD_KWS;
   const scoreTableData = R
     ? [
@@ -442,27 +418,16 @@ export function CVAnalysis() {
     setHistoryLoading(true);
     setHistoryError(null);
     try {
-      if (hasAuthCredentials()) {
-        const expressRes = await fetchCvAnalyses();
-        if (expressRes.success) {
-          setHistoryList(expressRes.analyses ?? []);
-          return;
-        }
-      }
-      if (!SUPABASE_CONFIGURED) {
+      if (!hasAuthCredentials()) {
         setHistoryList([]);
-        setHistoryError(
-          "Lịch sử CV cần đăng nhập (Express) hoặc cấu hình Supabase (VITE_SUPABASE_PROJECT_ID).",
-        );
+        setHistoryError("Đăng nhập để xem lịch sử phân tích CV.");
         return;
       }
-      const token = await getForceRefreshedToken();
-      const res = await fetch(supabaseApiUrl("cv/analyses"), {
-        headers: apiHeaders(token),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Lỗi tải lịch sử");
-      setHistoryList(data.analyses ?? []);
+      const res = await fetchCvAnalyses();
+      if (!res.success) {
+        throw new Error(res.error || "Lỗi tải lịch sử");
+      }
+      setHistoryList(res.analyses ?? []);
     } catch (err) {
       setHistoryError(err.message);
     } finally {
@@ -516,13 +481,12 @@ export function CVAnalysis() {
     setProgress(0);
     setLoadingStage(0);
 
-    const hasJdInput = jdUploaded || !!reuseJD || !!jdFile;
     let analyzeMode = derivedMode === "cv-only" ? "field" : derivedMode;
-    if (USE_EXPRESS_CV && hasJdInput) analyzeMode = "jd";
+    if (USE_EXPRESS_CV && (jdUploaded || reuseJD || jdFile)) analyzeMode = "jd";
 
     if (USE_EXPRESS_CV && analyzeMode !== "jd") {
       setAnalyzeError(
-        "Bật「Có Job Description」, upload file JD (PDF), rồi bấm Phân tích — hệ thống dùng backend + Python trên Render.",
+        "Bật「Có Job Description」, upload file JD (PDF), rồi bấm Phân tích — hệ thống dùng Express + Python.",
       );
       setStep("upload");
       return;
@@ -540,7 +504,7 @@ export function CVAnalysis() {
       }, 700);
 
       try {
-        // Storage paths: set by Supabase flow; null for Python-service path
+        // Storage paths: chưa lưu file trên server (chỉ text trong MongoDB)
         let cvStoragePath = null;
         let jdStoragePath = null;
 
@@ -629,29 +593,23 @@ export function CVAnalysis() {
           return;
         }
 
-        console.log("✅ CV Analysis — authenticated, token ready");
+        console.log("✅ CV Analysis — Express + Python");
 
         let data;
 
         if (analyzeMode === "jd") {
-          // ── Python CV Matcher (qua Express proxy /api/cv/analyze) ──────
           const form = new FormData();
           if (cvFile) form.append("resume", cvFile);
           if (jdFile) form.append("jd", jdFile);
 
-          // Cascade: suggestions (full) → full (scores only) → analyze (basic)
           const ollamaDown = (s) => s === 503 || s === 504;
 
-          let pyRes = await fetch(
-            expressApiUrl("/api/cv/analyze/suggestions"),
-            {
-              method: "POST",
-              headers: { Authorization: `Bearer ${token}` },
-              body: form,
-            },
-          );
+          let pyRes = await fetch(expressApiUrl("/api/cv/analyze/suggestions"), {
+            method: "POST",
+            headers: { Authorization: `Bearer ${token}` },
+            body: form,
+          });
 
-          // Tier-2: Ollama có nhưng suggestions thất bại → thử scoring only
           if (ollamaDown(pyRes.status)) {
             const form2 = new FormData();
             if (cvFile) form2.append("resume", cvFile);
@@ -663,7 +621,6 @@ export function CVAnalysis() {
             });
           }
 
-          // Tier-3: Ollama hoàn toàn không chạy → basic skill-matching (không LLM)
           let usedFallback = false;
           if (ollamaDown(pyRes.status)) {
             const form3 = new FormData();
@@ -694,7 +651,6 @@ export function CVAnalysis() {
           const matchedSkills = m.matching ?? [];
           const missingSkills = m.missing ?? [];
 
-          // Strengths từ matched skills, weaknesses từ missing
           const strengths = matchedSkills
             .slice(0, 6)
             .map((sk) => `Có kỹ năng "${sk}" phù hợp với yêu cầu JD`);
@@ -702,7 +658,6 @@ export function CVAnalysis() {
             .slice(0, 6)
             .map((sk) => `Thiếu kỹ năng "${sk}" mà JD yêu cầu`);
 
-          // Map rewritten_bullets → "fix" suggestions (hiển thị trước — high value)
           const bulletSuggestions = (sugg.rewritten_bullets ?? []).map((b) => ({
             type: "fix",
             priority:
@@ -722,7 +677,6 @@ export function CVAnalysis() {
             confidence: b.confidence ?? "medium",
           }));
 
-          // Map missing_skill_suggestions → "add" suggestions
           const missSuggestions = (sugg.missing_skill_suggestions ?? []).map(
             (item) => ({
               type: "add",
@@ -740,7 +694,6 @@ export function CVAnalysis() {
             }),
           );
 
-          // Bullet rewrites trước, rồi mới skill gaps
           const suggestions = [...bulletSuggestions, ...missSuggestions];
 
           data = {
@@ -789,49 +742,9 @@ export function CVAnalysis() {
             },
           };
         } else {
-          // ── Supabase Edge Function (field mode / cv-only) ───────────────
-          const fd = buildFd(
-            cvFile,
-            reuseCV,
-            jdFile,
-            reuseJD,
-            analyzeMode,
-            selectedField,
+          throw new Error(
+            "Chế độ theo ngành chưa hỗ trợ trên Express. Bật JD và upload file JD (PDF).",
           );
-          const headers = apiHeaders(token);
-          const url = supabaseApiUrl("cv-analysis");
-          if (!url) {
-            throw new Error(
-              "Chưa cấu hình Supabase. Dùng chế độ「Có Job Description」+ JD để phân tích qua backend.",
-            );
-          }
-
-          const res = await fetch(url, { method: "POST", headers, body: fd });
-
-          clearInterval(timer);
-          setProgress(95);
-          setLoadingStage(4);
-
-          if (!res.ok) {
-            if (res.status === 401) {
-              console.info(
-                "📋 Server authentication issue — using demo result",
-              );
-              applyMockResult();
-              setProgress(100);
-              await new Promise((r) => setTimeout(r, 350));
-              setStep("result");
-              return;
-            }
-            const errJson = await res.json().catch(() => ({}));
-            throw new Error(
-              errJson.message || errJson.error || `Server ${res.status}`,
-            );
-          }
-
-          data = await res.json();
-          if (!data?.success)
-            throw new Error(data?.error || "Phân tích thất bại");
         }
 
         applyResult(data);
@@ -889,35 +802,20 @@ export function CVAnalysis() {
   const loadHistoryItem = async (id) => {
     setLoadingAnalysisId(id);
     try {
-      if (hasAuthCredentials()) {
-        const expressRes = await fetchCvAnalysisById(id);
-        if (expressRes.success && expressRes.analysis) {
-          setAnalysisResult(expressRes.analysis);
-          setSavedFileInfo({
-            analysisId: expressRes.analysisId,
-            cvFileName: expressRes.historyItem?.cvFileName,
-            jdFileName: expressRes.historyItem?.jdFileName,
-          });
-          setPageView("analysis");
-          setStep("result");
-          return;
-        }
+      if (!hasAuthCredentials()) {
+        throw new Error("Đăng nhập để mở lại phân tích đã lưu.");
       }
-      const token = await getForceRefreshedToken();
-      const res = await fetch(supabaseApiUrl(`cv/analyses/${id}`), {
-        headers: apiHeaders(token),
-      });
-      const data = await res.json();
-      if (!res.ok || !data.success)
-        throw new Error(data.error || "Lỗi tải phân tích");
-
-      setAnalysisResult(data.record.analysis);
+      const res = await fetchCvAnalysisById(id);
+      if (!res.success || !res.analysis) {
+        throw new Error(res.error || "Lỗi tải phân tích");
+      }
+      setAnalysisResult(res.analysis);
       setSavedFileInfo({
-        analysisId: data.record.analysisId,
-        cvSignedUrl: data.cvSignedUrl,
-        jdSignedUrl: data.jdSignedUrl,
-        cvFileName: data.record.cvFileName,
-        jdFileName: data.record.jdFileName,
+        analysisId: res.analysisId,
+        cvFileName: res.historyItem?.cvFileName,
+        jdFileName: res.historyItem?.jdFileName,
+        cvStoragePath: res.historyItem?.cvStoragePath,
+        jdStoragePath: res.historyItem?.jdStoragePath,
       });
       setPageView("analysis");
       setStep("result");
@@ -952,21 +850,12 @@ export function CVAnalysis() {
     if (!confirm("Xóa phân tích này và các file đính kèm?")) return;
     setDeletingId(id);
     try {
-      if (hasAuthCredentials()) {
-        const expressRes = await deleteCvAnalysis(id);
-        if (expressRes.success) {
-          setHistoryList((prev) => prev.filter((a) => a.analysisId !== id));
-          return;
-        }
+      if (!hasAuthCredentials()) {
+        throw new Error("Đăng nhập để xóa bản ghi.");
       }
-      const token = await getForceRefreshedToken();
-      const res = await fetch(supabaseApiUrl(`cv/analyses/${id}`), {
-        method: "DELETE",
-        headers: apiHeaders(token),
-      });
-      if (!res.ok) {
-        const e = await res.json();
-        throw new Error(e.error);
+      const delRes = await deleteCvAnalysis(id);
+      if (!delRes.success) {
+        throw new Error(delRes.error || "Không xóa được");
       }
       setHistoryList((prev) => prev.filter((a) => a.analysisId !== id));
     } catch (err) {
@@ -991,8 +880,9 @@ export function CVAnalysis() {
           "Tạo gợi ý chi tiết...",
         ];
 
-  const missingKwsData =
-    R?.missingKeywords ?? DEMO_JD_KWS.filter((k) => !DEMO_MATCHED.includes(k));
+  const missingKwsData = filterHighlightKeywords(
+    R?.missingKeywords ?? DEMO_JD_KWS.filter((k) => !DEMO_MATCHED.includes(k)),
+  );
 
   const handleWordClick = (word, type, e) => {
     e.stopPropagation();
@@ -1035,8 +925,8 @@ export function CVAnalysis() {
   const highlightText = (text, matched, missing) => {
     if (!text?.trim()) return null;
     const kwList = [
-      ...matched.map((k) => ({ kw: k, type: "matched" })),
-      ...missing.map((k) => ({ kw: k, type: "missing" })),
+      ...filterHighlightKeywords(matched).map((k) => ({ kw: k, type: "matched" })),
+      ...filterHighlightKeywords(missing).map((k) => ({ kw: k, type: "missing" })),
     ].sort((a, b) => b.kw.length - a.kw.length);
     if (!kwList.length)
       return (
@@ -2041,7 +1931,7 @@ export function CVAnalysis() {
                       }}
                     >
                       <CloudUpload className="h-3.5 w-3.5" /> Files được lưu vào
-                      Supabase Storage · Phân tích bởi Gemini 1.5 Flash
+                      Lưu lịch sử trên server · Phân tích CV/JD qua Python
                     </span>
                   </div>
 

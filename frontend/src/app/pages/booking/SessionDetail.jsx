@@ -31,7 +31,6 @@ import {
   CircleDollarSign,
 } from "lucide-react";
 import { toast } from "sonner";
-import { getBookingById, getReview } from "../../utils/bookings";
 import { isLoggedIn } from "../../utils/auth";
 import {
   cancelBooking,
@@ -42,6 +41,11 @@ import {
   updateBookingRefundDestination,
 } from "../../utils/bookingsApi";
 import { apiBookingToLocal } from "../../utils/bookingMappers";
+import {
+  canEnterMeetingRoom,
+  getMinutesUntilBookingStart,
+  isBookingInLiveWindow,
+} from "../../utils/meetingLinks";
 import { MentorCancelSessionPanel } from "./MentorCancelSessionPanel";
 import { fetchMentorAvailability } from "../../utils/mentorApi";
 
@@ -200,27 +204,38 @@ export function SessionDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
 
-  /* ── Resolve session data (localStorage / mock trước, rồi GET /api/bookings/:id khi đã đăng nhập) ── */
+  /* ── Resolve session data — GET /api/bookings/:id (không dùng mock local) ── */
   const [apiBooking, setApiBooking] = useState(undefined);
+  const [loadError, setLoadError] = useState("");
+
   useEffect(() => {
     if (!id) {
       setApiBooking(null);
+      setLoadError("");
       return;
     }
     if (!isLoggedIn()) {
       setApiBooking(null);
+      setLoadError("Vui lòng đăng nhập để xem buổi phỏng vấn.");
       return;
     }
     if (!isMongoObjectId(id)) {
       setApiBooking(null);
+      setLoadError("Mã buổi hẹn không hợp lệ.");
       return;
     }
     let cancelled = false;
     setApiBooking(undefined);
+    setLoadError("");
     void fetchBookingById(id).then((r) => {
       if (cancelled) return;
-      if (r.success && r.booking) setApiBooking(r.booking);
-      else setApiBooking(null);
+      if (r.success && r.booking) {
+        setApiBooking(r.booking);
+        setLoadError("");
+      } else {
+        setApiBooking(null);
+        setLoadError(r.error || "Không tải được buổi hẹn.");
+      }
     });
     return () => {
       cancelled = true;
@@ -229,12 +244,8 @@ export function SessionDetail() {
 
   const sessionData = useMemo(() => {
     if (apiBooking && typeof apiBooking === "object") return apiBookingToLocal(apiBooking);
-    if (!isMongoObjectId(id)) {
-      const local = getBookingById(id);
-      if (local) return local;
-    }
     return null;
-  }, [id, apiBooking]);
+  }, [apiBooking]);
 
   const mongoBookingId = useMemo(() => {
     if (!sessionData) return "";
@@ -282,6 +293,21 @@ export function SessionDetail() {
     if (st === "no_show") return "mentor_action";
     return autoState;
   }, [mentorActionMode, sessionData?.status, autoState]);
+
+  const meetingEntry = useMemo(() => {
+    if (!apiBooking || typeof apiBooking !== "object") return { ok: false, message: "" };
+    return canEnterMeetingRoom(apiBooking);
+  }, [apiBooking]);
+
+  const inLiveWindow = useMemo(() => {
+    if (!apiBooking) return false;
+    return isBookingInLiveWindow(apiBooking);
+  }, [apiBooking]);
+
+  const minutesUntilStart = useMemo(() => {
+    if (!apiBooking) return 0;
+    return getMinutesUntilBookingStart(apiBooking);
+  }, [apiBooking]);
 
   useEffect(() => {
     if (!sessionData) return;
@@ -574,14 +600,26 @@ export function SessionDetail() {
     return (
       <div className="p-8 text-center text-gray-400 antialiased">
         <WarningCircle className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-        <p>Không tìm thấy thông tin buổi phỏng vấn.</p>
-        <button
-          onClick={() => navigate("/dashboard")}
-          className="mt-4 px-4 py-2 rounded-xl text-sm font-medium text-white"
-          style={{ background: "#6E35E8" }}
-        >
-          Về Dashboard
-        </button>
+        <p>{loadError || "Không tìm thấy thông tin buổi phỏng vấn."}</p>
+        {!isLoggedIn() ? (
+          <button
+            type="button"
+            onClick={() => navigate("/login")}
+            className="mt-4 px-4 py-2 rounded-xl text-sm font-medium text-white"
+            style={{ background: "#6E35E8" }}
+          >
+            Đăng nhập
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={() => navigate("/dashboard")}
+            className="mt-4 px-4 py-2 rounded-xl text-sm font-medium text-white"
+            style={{ background: "#6E35E8" }}
+          >
+            Về Dashboard
+          </button>
+        )}
       </div>
     );
   }
@@ -1119,19 +1157,35 @@ export function SessionDetail() {
             </div>
 
             {/* Join button */}
-            <button
-              onClick={() => navigate(`/meeting/${id}`)}
-              className="w-full flex items-center justify-center gap-3 py-5 rounded-2xl text-white font-bold transition-all hover:opacity-95 active:scale-[0.98]"
-              style={{
-                background: "#6E35E8",
-                boxShadow: "0 8px 32px rgba(110, 53, 232, 0.35)",
-                fontSize: "1.1rem",
-              }}
-            >
-              <Video className="w-6 h-6" />
-              Vào phòng phỏng vấn ngay
-              <ExternalLink className="w-5 h-5" />
-            </button>
+            {meetingEntry.ok ? (
+              <div className="space-y-3">
+                {!inLiveWindow && minutesUntilStart > 0 && (
+                  <div className="rounded-2xl border border-violet-200 bg-violet-50 px-5 py-4 text-sm text-violet-900">
+                    Còn khoảng <strong>{minutesUntilStart} phút</strong> đến giờ hẹn. Bạn có thể vào
+                    thử phòng sớm — trạng thái buổi học chỉ chuyển sang &quot;đang diễn ra&quot; khi
+                    đến khung giờ cho phép.
+                  </div>
+                )}
+              <button
+                type="button"
+                onClick={() => navigate(`/meeting/${id}`)}
+                className="w-full flex items-center justify-center gap-3 py-5 rounded-2xl text-white font-bold transition-all hover:opacity-95 active:scale-[0.98]"
+                style={{
+                  background: "#6E35E8",
+                  boxShadow: "0 8px 32px rgba(110, 53, 232, 0.35)",
+                  fontSize: "1.1rem",
+                }}
+              >
+                <Video className="w-6 h-6" />
+                {inLiveWindow ? "Vào phòng phỏng vấn ngay" : "Vào thử phòng sớm"}
+              </button>
+              </div>
+            ) : (
+              <div className="rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4 text-sm text-amber-800">
+                {meetingEntry.message ||
+                  "Chưa thể vào phòng. Buổi hẹn cần được xác nhận và thanh toán trước."}
+              </div>
+            )}
 
 
             <div className="flex items-center gap-3 py-2 text-sm text-gray-500">
@@ -1235,9 +1289,7 @@ export function SessionDetail() {
       {/* ══════════════════════════════════════════════ */}
       {/*               STATE: DONE                     */}
       {/* ══════════════════════════════════════════════ */}
-      {state === "done" && (() => {
-        const existingReview = getReview(sessionData.sessionId);
-        return (
+      {state === "done" && (
         <div className="grid lg:grid-cols-3 gap-5">
           <div className="lg:col-span-2 space-y-5">
 
@@ -1476,18 +1528,13 @@ export function SessionDetail() {
 
             <div className="card-premium p-5">
               <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Trạng thái đánh giá</p>
-              {existingReview ? (
+              {sessionData.isReviewed ? (
                 <div>
                   <div className="flex items-center gap-1.5 mb-2">
                     <div className="w-2 h-2 rounded-full" style={{ background: "#B4F000" }} />
-                    <span className="text-xs font-semibold" style={{ color: "#4a7a00" }}>Đã đánh giá</span>
+                    <span className="text-xs font-semibold" style={{ color: "#4a7a00" }}>Đã đánh giá mentor</span>
                   </div>
-                  <div className="flex items-center gap-1">
-                    {[1,2,3,4,5].map(i => (
-                      <Star key={i} style={{ width:18, height:18, color: i <= existingReview.overallRating ? "#FFD600" : "#E5E7EB" }}
-                        fill={i <= existingReview.overallRating ? "#FFD600" : "none"} />
-                    ))}
-                  </div>
+                  <p className="text-xs text-gray-500">Cảm ơn bạn đã gửi nhận xét sau buổi phỏng vấn.</p>
                 </div>
               ) : (
                 <div>
@@ -1505,8 +1552,7 @@ export function SessionDetail() {
             </div>
           </div>
         </div>
-        );
-      })()}
+      )}
 
       <AnimatePresence>
         {cancelModalOpen && (

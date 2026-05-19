@@ -2,6 +2,8 @@
  * Map API booking (POST/GET /api/bookings) sang shape dùng chung với mock/local (Dashboard, SessionDetail, …).
  */
 
+import { resolveProInterviewMeetLink } from "./meetingLinks";
+
 export function parseBookingNotes(notes = "") {
   const n = String(notes || "");
   const pick = (label) => {
@@ -64,7 +66,7 @@ export function apiBookingToLocal(b) {
     time,
     endTime,
     price,
-    meetLink: b.meetingLink || "",
+    meetLink: resolveProInterviewMeetLink(b.id, b.meetingLink),
     position: position || "—",
     note: "",
     cvFile,

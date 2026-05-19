@@ -13,10 +13,14 @@ import {
   AlertCircle
 } from "lucide-react";
 import { toast } from "sonner";
-import { getBookingById } from "../../utils/bookings";
+import { isLoggedIn } from "../../utils/auth";
 import { submitReview } from "../../utils/reviewsApi";
 import { fetchBookingById } from "../../utils/bookingsApi";
 import { apiBookingToLocal } from "../../utils/bookingMappers";
+
+function isMongoObjectId(value) {
+  return typeof value === "string" && /^[a-f\d]{24}$/i.test(value.trim());
+}
 
 const HIGHLIGHT_OPTIONS = [
   "Câu hỏi thực tế & chuyên sâu",
@@ -38,6 +42,7 @@ export function MentorReview() {
 
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
   
   // Use initialRating from navigation state if available
   const [overallRating, setOverallRating] = useState(location.state?.initialRating || 0);
@@ -50,32 +55,31 @@ export function MentorReview() {
   useEffect(() => {
     const loadSession = async () => {
       setLoading(true);
+      setLoadError("");
+      setSession(null);
       try {
-        // 1. Try local mock/stored
-        const local = getBookingById(sessionId);
-        if (local) {
-          setSession(local);
-          setLoading(false);
+        if (!isLoggedIn()) {
+          setLoadError("Vui lòng đăng nhập để đánh giá buổi phỏng vấn.");
           return;
         }
-
-        // 2. Try backend
+        if (!isMongoObjectId(sessionId)) {
+          setLoadError("Mã buổi hẹn không hợp lệ.");
+          return;
+        }
         const res = await fetchBookingById(sessionId);
         if (res.success && res.booking) {
           setSession(apiBookingToLocal(res.booking));
+        } else {
+          setLoadError(res.error || "Không tải được buổi hẹn.");
         }
       } catch (err) {
         console.error("Failed to load session:", err);
+        setLoadError("Lỗi kết nối máy chủ.");
       } finally {
         setLoading(false);
       }
     };
     loadSession();
-  }, [sessionId]);
-
-  // If review exists in local (for immediate UI feedback)
-  useEffect(() => {
-    // Optional: check if already reviewed on server
   }, [sessionId]);
 
   const canSubmit = overallRating > 0;
@@ -115,6 +119,27 @@ export function MentorReview() {
     );
   }
 
+  if (session?.isReviewed) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] p-8 antialiased">
+        <div className="w-16 h-16 rounded-3xl bg-emerald-50 flex items-center justify-center mb-6">
+          <Check className="w-8 h-8 text-emerald-500" />
+        </div>
+        <p className="text-xl font-black text-slate-900 mb-2">Bạn đã đánh giá buổi này</p>
+        <p className="text-slate-500 mb-8 text-center max-w-xs text-sm font-medium">
+          Cảm ơn phản hồi của bạn cho mentor {session.mentorName}.
+        </p>
+        <button
+          onClick={() => navigate(`/session/${session.backendId || session.sessionId}`)}
+          className="px-8 py-3 rounded-2xl text-sm font-black text-white shadow-xl shadow-violet-900/20"
+          style={{ background: "linear-gradient(135deg, #6E35E8, #8B4DFF)" }}
+        >
+          Xem buổi phỏng vấn
+        </button>
+      </div>
+    );
+  }
+
   if (!session) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] p-8 antialiased">
@@ -122,12 +147,26 @@ export function MentorReview() {
           <AlertCircle className="w-8 h-8 text-slate-300" />
         </div>
         <p className="text-xl font-black text-slate-900 mb-2">Không tìm thấy thông tin</p>
-        <p className="text-slate-500 mb-8 text-center max-w-xs text-sm font-medium">Buổi phỏng vấn này không tồn tại hoặc đã bị gỡ bỏ.</p>
-        <button onClick={() => navigate("/dashboard")}
-          className="px-8 py-3 rounded-2xl text-sm font-black text-white shadow-xl shadow-violet-900/20"
-          style={{ background: "linear-gradient(135deg, #6E35E8, #8B4DFF)" }}>
-          Về Dashboard
-        </button>
+        <p className="text-slate-500 mb-8 text-center max-w-xs text-sm font-medium">
+          {loadError || "Buổi phỏng vấn này không tồn tại hoặc bạn không có quyền xem."}
+        </p>
+        {!isLoggedIn() ? (
+          <button
+            onClick={() => navigate("/login")}
+            className="px-8 py-3 rounded-2xl text-sm font-black text-white shadow-xl shadow-violet-900/20"
+            style={{ background: "linear-gradient(135deg, #6E35E8, #8B4DFF)" }}
+          >
+            Đăng nhập
+          </button>
+        ) : (
+          <button
+            onClick={() => navigate("/dashboard")}
+            className="px-8 py-3 rounded-2xl text-sm font-black text-white shadow-xl shadow-violet-900/20"
+            style={{ background: "linear-gradient(135deg, #6E35E8, #8B4DFF)" }}
+          >
+            Về Dashboard
+          </button>
+        )}
       </div>
     );
   }

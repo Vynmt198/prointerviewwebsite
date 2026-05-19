@@ -82,6 +82,12 @@ export const adminApi = {
       method: "POST",
       body: JSON.stringify(body ?? {}),
     }),
+  getPendingSubscriptionPayments: () => authedFetch("/api/admin/payments/subscription-pending"),
+  confirmSubscriptionTransferPayment: (paymentId, body = {}) =>
+    authedFetch(`/api/admin/payments/${paymentId}/confirm-subscription-transfer`, {
+      method: "PATCH",
+      body: JSON.stringify(body ?? {}),
+    }),
   getPayouts: () => authedFetch("/api/admin/payouts"),
   approvePayout: (id, note = "") =>
     authedFetch(`/api/admin/payouts/${id}/approve`, {
