@@ -837,44 +837,88 @@ export function CVAnalysis() {
               <input ref={cvInputRef} type="file" accept=".pdf,.doc,.docx,.txt" className="hidden" onChange={e => { const f = e.target.files?.[0]; if (f) handleCVFile(f); }} />
               <input ref={jdInputRef} type="file" accept=".pdf,.doc,.docx,.txt" className="hidden" onChange={e => { const f = e.target.files?.[0]; if (f) handleJDFile(f); }} />
 
-              {/* CV Upload Zone - Always visible with modern full-width design */}
+              {/* CV upload — kéo thả / chọn file */}
               <div className="mb-8">
                 <div className="mb-6">
                   <h3 className="mb-2 text-xl font-bold tracking-tight text-slate-900">Upload CV của bạn</h3>
                   <p className="text-sm text-slate-600">Bắt đầu bằng việc tải lên CV để phân tích chất lượng</p>
                 </div>
-                
+
                 <div
-                  onDragOver={e => { e.preventDefault(); setDragOverCV(true); }}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") cvInputRef.current?.click();
+                  }}
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    setDragOverCV(true);
+                  }}
                   onDragLeave={() => setDragOverCV(false)}
-                  onDrop={e => { e.preventDefault(); setDragOverCV(false); const f = e.dataTransfer.files?.[0]; if (f) handleCVFile(f); }}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    setDragOverCV(false);
+                    const f = e.dataTransfer.files?.[0];
+                    if (f) handleCVFile(f);
+                  }}
                   onClick={() => cvInputRef.current?.click()}
-                  className={`group relative cursor-pointer rounded-3xl border-2 border-dashed p-12 text-center backdrop-blur-sm transition-all ${dragOverCV ? "border-[#6E35E8] bg-[#6E35E8]/10" : (cvUploaded || reuseCV) ? "border-[#c4ff47]/60 bg-[#c4ff47]/[0.08]" : "border-slate-300 bg-white hover:border-violet-400/45 hover:bg-violet-50/40"}`}
-                  style={(cvUploaded || reuseCV) ? { background: "rgba(180,240,0,0.06)" } : {}}
+                  className={`group relative cursor-pointer rounded-3xl border-2 border-dashed p-10 text-center transition-all sm:p-12 ${
+                    dragOverCV
+                      ? "border-[#6E35E8] bg-[#6E35E8]/10"
+                      : cvUploaded || reuseCV
+                        ? "border-[#c4ff47]/60 bg-[#c4ff47]/[0.08]"
+                        : "border-violet-200 bg-white hover:border-violet-400/50 hover:bg-violet-50/50"
+                  }`}
                 >
-                  {(cvUploaded || reuseCV) ? (
+                  {cvUploaded || reuseCV ? (
                     <div className="flex flex-col items-center">
-                      <div className="w-20 h-20 rounded-3xl flex items-center justify-center mb-5" style={{ background: "rgba(180,240,0,0.15)" }}>
-                        {reuseCV ? <BadgeCheck className="w-10 h-10" style={{ color: "#6E9900" }} /> : <Check className="w-10 h-10" style={{ color: "#6E9900" }} />}
+                      <div className="mb-5 flex h-20 w-20 items-center justify-center rounded-3xl bg-[#c4ff47]/20">
+                        {reuseCV ? (
+                          <BadgeCheck className="h-10 w-10 text-[#6E35E8]" />
+                        ) : (
+                          <Check className="h-10 w-10 text-[#6E35E8]" />
+                        )}
                       </div>
-                      <p className="font-bold text-lg mb-2 text-[#4A7A00]">{reuseCV ? "Dùng lại file đã lưu" : "CV đã được tải lên"}</p>
-                      <p className="text-sm text-[#6E9900] mb-1 font-medium">{cvFile?.name ?? reuseCV?.name}</p>
-                      {cvFile && <p className="text-sm text-slate-500">{(cvFile.size / 1024).toFixed(0)} KB · {cvFile.name.split(".").pop()?.toUpperCase()}</p>}
-                      {reuseCV && <p className="text-sm text-slate-500">Đã lưu trên cloud</p>}
-                      <button onClick={e => { e.stopPropagation(); setCvUploaded(false); setCvFile(null); setReuseCV(null); if (cvInputRef.current) cvInputRef.current.value = ""; }} className="mt-4 flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700">
-                        <X className="w-4 h-4" /> Xóa và tải lại
+                      <p className="mb-2 text-lg font-bold text-[#1a1035]">
+                        {reuseCV ? "Dùng lại file đã lưu" : "CV đã được tải lên"}
+                      </p>
+                      <p className="mb-1 text-sm font-medium text-violet-800">
+                        {cvFile?.name ?? reuseCV?.name}
+                      </p>
+                      {cvFile && (
+                        <p className="text-sm text-slate-500">
+                          {(cvFile.size / 1024).toFixed(0)} KB ·{" "}
+                          {cvFile.name.split(".").pop()?.toUpperCase()}
+                        </p>
+                      )}
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setCvUploaded(false);
+                          setCvFile(null);
+                          setReuseCV(null);
+                          if (cvInputRef.current) cvInputRef.current.value = "";
+                        }}
+                        className="mt-4 flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm text-slate-500 transition-colors hover:bg-violet-50 hover:text-[#6E35E8]"
+                      >
+                        <X className="h-4 w-4" /> Xóa và tải lại
                       </button>
                     </div>
                   ) : (
                     <div className="flex flex-col items-center">
-                      <div className="w-20 h-20 rounded-3xl bg-[#6E35E8]/10 flex items-center justify-center mb-5 group-hover:bg-[#6E35E8]/20 transition-colors"><FileText className="w-10 h-10 text-[#6E35E8]" /></div>
-                      <p className="mb-2 text-lg font-bold text-slate-900">Kéo & thả CV vào đây</p>
-                      <p className="mb-6 max-w-md text-slate-600">hoặc click vào vùng này để chọn file từ máy tính của bạn</p>
-                      <div className="bg-[#6E35E8] text-white text-sm font-bold px-8 py-3 rounded-xl flex items-center gap-2 shadow-lg shadow-[#6E35E8]/20 hover:shadow-xl hover:shadow-[#6E35E8]/30 hover:-translate-y-0.5 transition-all">
-                        <Upload className="w-4 h-4" /> Chọn file CV
+                      <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-[#6E35E8]/10 transition-colors group-hover:bg-[#6E35E8]/15 sm:h-20 sm:w-20 sm:rounded-3xl">
+                        <FileText className="h-8 w-8 text-[#6E35E8] sm:h-10 sm:w-10" />
                       </div>
+                      <p className="mb-2 text-lg font-bold text-slate-900">Kéo & thả CV vào đây</p>
+                      <p className="mb-6 max-w-md text-sm text-slate-600">
+                        hoặc click vào vùng này để chọn file từ máy tính của bạn
+                      </p>
+                      <span className="inline-flex items-center gap-2 rounded-xl bg-[#6E35E8] px-8 py-3 text-sm font-bold text-white shadow-lg shadow-[#6E35E8]/20 transition group-hover:-translate-y-0.5 group-hover:shadow-xl group-hover:shadow-[#6E35E8]/30">
+                        <Upload className="h-4 w-4" /> Chọn file CV
+                      </span>
                       <p className="mt-6 flex items-center gap-2 text-sm text-slate-500">
-                        <FileText className="w-4 h-4" /> PDF, DOC, DOCX, TXT · tối đa 10MB
+                        <FileText className="h-4 w-4" /> PDF, DOC, DOCX, TXT · tối đa 10MB
                       </p>
                     </div>
                   )}

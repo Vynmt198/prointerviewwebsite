@@ -52,6 +52,22 @@ export async function fetchMentor(id) {
   return null;
 }
 
+/** Đánh giá công khai theo mentor — GET /api/mentors/:id/reviews */
+export async function fetchMentorPublicReviews(mentorId) {
+  try {
+    const res = await fetch(apiUrl(`/api/mentors/${encodeURIComponent(mentorId)}/reviews`), {
+      headers: jsonHeaders,
+    });
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      return { success: false, error: body.error || `Lỗi ${res.status}`, reviews: [] };
+    }
+    return { success: true, reviews: body.reviews || [] };
+  } catch {
+    return { success: false, error: "Không kết nối được backend.", reviews: [] };
+  }
+}
+
 export async function fetchMentorAvailability(id) {
   const res = await fetch(apiUrl(`/api/mentors/${encodeURIComponent(id)}/availability`), {
     headers: jsonHeaders,

@@ -27,12 +27,12 @@
   --muted: oklch(0.9400 0.0050 264.5);
   --muted-foreground: oklch(0.5200 0.0150 264.5);
 
-  /* ─── Accent: #FFD600 Gold ───────────────────────────── */
-  --accent: oklch(0.9020 0.1950 91.0);
-  --accent-foreground: oklch(0.2094 0 0);
+  /* ─── Accent: lime (cùng secondary) ───────────────────── */
+  --accent: oklch(0.93 0.21 124);
+  --accent-foreground: oklch(0.22 0.06 285);
 
-  /* ─── Destructive: #FF8C42 Orange ────────────────────── */
-  --destructive: oklch(0.7240 0.1650 47.0);
+  /* ─── Destructive: tím đậm (không cam/đỏ) ─────────────── */
+  --destructive: oklch(0.38 0.14 285);
   --destructive-foreground: oklch(1.0000 0 0);
 
   /* ─── Border / Input / Ring ──────────────────────────── */
@@ -43,9 +43,9 @@
   /* ─── Chart Colors ────────────────────────────────────── */
   --chart-1: oklch(0.4790 0.2670 287.0);
   --chart-2: oklch(0.93 0.21 124);
-  --chart-3: oklch(0.9020 0.1950 91.0);
-  --chart-4: oklch(0.7240 0.1650 47.0);
-  --chart-5: oklch(0.7373 0.1310 245.0);
+  --chart-3: oklch(0.93 0.21 124);
+  --chart-4: oklch(0.55 0.22 287);
+  --chart-5: oklch(0.72 0.12 290);
 
   /* ─── Sidebar: Dark Purple Navy ──────────────────────── */
   --sidebar: oklch(0.0920 0.0520 287.0);
@@ -135,9 +135,9 @@ body:has(.app-user-shell) {
   --secondary-foreground: oklch(0.12 0.02 285);
   --muted: oklch(0.140 0.018 287);
   --muted-foreground: oklch(0.55 0.04 287);
-  --accent: oklch(0.9020 0.1950 91.0);
-  --accent-foreground: oklch(0.2094 0 0);
-  --destructive: oklch(0.7240 0.1650 47.0);
+  --accent: oklch(0.93 0.21 124);
+  --accent-foreground: oklch(0.22 0.06 285);
+  --destructive: oklch(0.45 0.16 285);
   --destructive-foreground: oklch(1.0000 0 0);
   --border: oklch(0.175 0.018 287);
   --input: oklch(0.140 0.018 287);
@@ -225,10 +225,125 @@ body:has(.app-user-shell) {
 
 @layer components {
   .app-page-title {
-    @apply text-xl font-black leading-tight tracking-tight text-slate-900 sm:text-2xl;
+    @apply text-xl font-black leading-tight tracking-tight text-foreground sm:text-2xl;
   }
 
   .app-page-subtitle {
-    @apply w-full text-sm font-medium leading-relaxed text-slate-600 sm:text-base;
+    @apply w-full text-sm font-medium leading-relaxed text-muted-foreground sm:text-base;
   }
+}
+
+/* ─── ProInterview: chỉ trắng · tím · lime ─────────────────
+   Map palette Tailwind phổ biến → tông tím (neutral) / lime (success) */
+@theme {
+  /* Neutral → tím xám (thay slate/zinc/gray) */
+  --color-slate-50: #faf9fd;
+  --color-slate-100: #f3f0f9;
+  --color-slate-200: #e6e0f2;
+  --color-slate-300: #cfc6e6;
+  --color-slate-400: #a89bc4;
+  --color-slate-500: #7c6fa8;
+  --color-slate-600: #5a4d85;
+  --color-slate-700: #3d2f66;
+  --color-slate-800: #2a1f4d;
+  --color-slate-900: #1a1035;
+  --color-slate-950: #120b2e;
+
+  --color-zinc-50: #faf9fd;
+  --color-zinc-100: #f3f0f9;
+  --color-zinc-200: #e6e0f2;
+  --color-zinc-300: #cfc6e6;
+  --color-zinc-400: #a89bc4;
+  --color-zinc-500: #7c6fa8;
+  --color-zinc-600: #5a4d85;
+  --color-zinc-700: #3d2f66;
+  --color-zinc-800: #2a1f4d;
+  --color-zinc-900: #1a1035;
+
+  --color-gray-50: #faf9fd;
+  --color-gray-100: #f3f0f9;
+  --color-gray-200: #e6e0f2;
+  --color-gray-300: #cfc6e6;
+  --color-gray-400: #a89bc4;
+  --color-gray-500: #7c6fa8;
+  --color-gray-600: #5a4d85;
+  --color-gray-700: #3d2f66;
+  --color-gray-800: #2a1f4d;
+  --color-gray-900: #1a1035;
+
+  /* Success → lime */
+  --color-emerald-50: #f7ffe8;
+  --color-emerald-100: #eefcc8;
+  --color-emerald-200: #e2f99a;
+  --color-emerald-300: #d4f56b;
+  --color-emerald-400: #c8f24f;
+  --color-emerald-500: #b4f000;
+  --color-emerald-600: #93c800;
+  --color-emerald-700: #6e9a00;
+  --color-emerald-800: #4a6800;
+  --color-emerald-900: #2d4000;
+  --color-green-50: #f7ffe8;
+  --color-green-100: #eefcc8;
+  --color-green-500: #b4f000;
+  --color-green-600: #93c800;
+  --color-green-700: #6e9a00;
+
+  /* Warning → tím nhạt + lime nhạt (không vàng/cam) */
+  --color-amber-50: #f5f0ff;
+  --color-amber-100: #ebe4ff;
+  --color-amber-200: #ddd6fe;
+  --color-amber-300: #c4b5fd;
+  --color-amber-400: #a78bfa;
+  --color-amber-500: #8b6ee8;
+  --color-amber-600: #6e35e8;
+  --color-amber-700: #5c2bc9;
+  --color-amber-800: #4a229f;
+  --color-amber-900: #3a1a7a;
+  --color-yellow-50: #f7ffe8;
+  --color-yellow-100: #eefcc8;
+  --color-yellow-500: #c4ff47;
+  --color-orange-50: #f5f0ff;
+  --color-orange-500: #6e35e8;
+  --color-orange-600: #5c2bc9;
+
+  /* Info / link blues → tím */
+  --color-sky-50: #f5f0ff;
+  --color-sky-100: #ebe4ff;
+  --color-sky-500: #8b6ee8;
+  --color-sky-600: #6e35e8;
+  --color-sky-900: #3a1a7a;
+  --color-blue-50: #f5f0ff;
+  --color-blue-100: #ebe4ff;
+  --color-blue-500: #6e35e8;
+  --color-blue-600: #5c2bc9;
+  --color-blue-700: #4a229f;
+  --color-cyan-50: #f5f0ff;
+  --color-cyan-500: #8b6ee8;
+  --color-indigo-50: #f5f0ff;
+  --color-indigo-500: #6e35e8;
+  --color-indigo-600: #5c2bc9;
+
+  /* Error → tím đậm (không đỏ) */
+  --color-red-50: #f5f0ff;
+  --color-red-100: #ebe4ff;
+  --color-red-200: #ddd6fe;
+  --color-red-500: #5c2bc9;
+  --color-red-600: #4a229f;
+  --color-red-700: #3a1a7a;
+  --color-rose-50: #f5f0ff;
+  --color-rose-500: #6e35e8;
+  --color-rose-600: #5c2bc9;
+
+  /* Pink/fuchsia → tím */
+  --color-fuchsia-50: #f5f0ff;
+  --color-fuchsia-100: #ebe4ff;
+  --color-fuchsia-500: #8b6ee8;
+  --color-fuchsia-600: #6e35e8;
+  --color-fuchsia-700: #5c2bc9;
+  --color-pink-50: #f5f0ff;
+  --color-pink-500: #8b6ee8;
+
+  /* Teal → lime-violet */
+  --color-teal-50: #f7ffe8;
+  --color-teal-500: #93c800;
 }

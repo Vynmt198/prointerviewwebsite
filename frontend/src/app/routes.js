@@ -73,7 +73,6 @@ export const router = createHashRouter([
   { path: "/reset-password", Component: ResetPassword },
   { path: "/verify-email", Component: VerifyEmail },
   { path: "/checkout", Component: Checkout },
-  { path: "/pricing", Component: Pricing },
   { path: "/payment-return", Component: PaymentReturn },
   { path: "/payment-success", Component: SuccessPage },
   { path: "/payment-failure", Component: FailurePage },
@@ -124,6 +123,7 @@ export const router = createHashRouter([
       { path: "review/:sessionId", Component: MentorReview },
       { path: "profile", Component: Profile },
       { path: "settings", Component: Settings },
+      { path: "pricing", Component: Pricing },
       {
         path: "mentor",
         Component: MentorArea,
