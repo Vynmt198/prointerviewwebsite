@@ -1270,161 +1270,261 @@ export function CVAnalysis() {
                 </div>
               )}
 
-              {/* Detailed scoring */}
-              <div className="relative card-premium mb-6 overflow-hidden">
-                <div className="flex items-center gap-2.5 border-b border-white/10 px-6 py-4" style={{ background: "rgba(110, 53, 232,0.08)" }}>
-                  <div className="flex h-8 w-8 items-center justify-center rounded-xl" style={{ background: "rgba(110, 53, 232,0.2)" }}><BarChart3 className="h-4 w-4 text-violet-200" /></div>
-                  <div><h3 className="text-sm font-semibold text-white">Đánh giá chi tiết</h3><p className="text-xs text-white/55">4 tiêu chí theo chuẩn tuyển dụng</p></div>
-                  {isFreeTier && <div className="ml-auto flex items-center gap-1.5 px-3 py-1.5 rounded-lg" style={{ background: "rgba(110, 53, 232,0.08)" }}><Lock className="w-3.5 h-3.5 text-[#6E35E8]" /><span className="text-xs font-semibold text-[#6E35E8]">Khoá</span></div>}
+              {/* Detailed scoring — nền card-premium sáng: chữ slate, không dùng text-white */}
+              <div className="relative mb-6 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+                <div className="flex items-center gap-2.5 border-b border-slate-200 bg-violet-50/80 px-6 py-4">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-violet-100">
+                    <BarChart3 className="h-4 w-4 text-[#6E35E8]" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-semibold text-slate-900">Đánh giá chi tiết</h3>
+                    <p className="text-xs text-slate-600">4 tiêu chí theo chuẩn tuyển dụng</p>
+                  </div>
+                  {isFreeTier && (
+                    <div className="ml-auto flex items-center gap-1.5 rounded-lg bg-violet-100 px-3 py-1.5">
+                      <Lock className="h-3.5 w-3.5 text-[#6E35E8]" />
+                      <span className="text-xs font-semibold text-[#6E35E8]">Khoá</span>
+                    </div>
+                  )}
                 </div>
                 <div className="p-6" style={isFreeTier ? { filter: "blur(5px)", userSelect: "none", pointerEvents: "none" } : {}}>
-                  <div className="flex gap-6 items-start mb-6 flex-wrap">
-                    <div className="flex flex-col items-center flex-shrink-0">
-                      <div className="relative w-28 h-28">
-                        <svg viewBox="0 0 100 100" className="w-full h-full -rotate-90">
-                          <circle cx="50" cy="50" r="40" fill="none" stroke="rgba(255,255,255,0.12)" strokeWidth="10" />
+                  <div className="mb-6 flex flex-wrap items-start gap-6">
+                    <div className="flex flex-shrink-0 flex-col items-center">
+                      <div className="relative h-28 w-28">
+                        <svg viewBox="0 0 100 100" className="h-full w-full -rotate-90">
+                          <circle cx="50" cy="50" r="40" fill="none" stroke="#e2e8f0" strokeWidth="10" />
                           <circle cx="50" cy="50" r="40" fill="none" stroke="url(#sg)" strokeWidth="10" strokeDasharray={`${overallScore * 2.51} 251`} strokeLinecap="round" />
                           <defs><linearGradient id="sg" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stopColor="#6E35E8" /><stop offset="100%" stopColor="#8B4DFF" /></linearGradient></defs>
                         </svg>
-                        <div className="absolute inset-0 flex flex-col items-center justify-center"><span className="font-bold text-white" style={{ fontSize: "1.6rem" }}>{overallScore}</span><span className="text-xs text-white/50">/ 100</span></div>
+                        <div className="absolute inset-0 flex flex-col items-center justify-center">
+                          <span className="text-[1.6rem] font-bold text-slate-900">{overallScore}</span>
+                          <span className="text-xs text-slate-500">/ 100</span>
+                        </div>
                       </div>
-                      <p className="mt-1 text-xs text-white/50">Điểm AI</p>
-                      <p className="text-[0.6rem] text-white/30 text-center leading-tight mt-0.5">Clarity · Structure<br/>Relevance · Credibility</p>
+                      <p className="mt-1 text-xs font-medium text-slate-700">Điểm AI</p>
+                      <p className="mt-0.5 text-center text-[0.65rem] leading-tight text-slate-500">
+                        Clarity · Structure<br />Relevance · Credibility
+                      </p>
                     </div>
-                    <div className="flex-1 min-w-0 space-y-3">
+                    <div className="min-w-0 flex-1 space-y-3">
                       {scoreTableData.map(row => (
                         <div key={row.criteria}>
-                          <div className="flex items-center justify-between mb-1">
-                            <span className="text-sm text-white/85">{row.criteria}</span>
-                            <span className="text-xs font-semibold px-2 py-0.5 rounded-lg" style={{ background: row.status === "good" ? "rgba(180,240,0,0.15)" : row.status === "ok" ? "rgba(139, 77, 255,0.1)" : "rgba(255,140,66,0.12)", color: row.status === "good" ? "#4A7A00" : row.status === "ok" ? "#6E35E8" : "#CC5C00" }}>{row.score}/{row.max}</span>
+                          <div className="mb-1 flex items-center justify-between gap-2">
+                            <span className="text-sm font-medium text-slate-800">{row.criteria}</span>
+                            <span
+                              className={`shrink-0 rounded-lg px-2 py-0.5 text-xs font-bold ${
+                                row.status === "good"
+                                  ? "bg-lime-100 text-lime-900"
+                                  : row.status === "ok"
+                                    ? "bg-violet-100 text-violet-900"
+                                    : "bg-orange-100 text-orange-900"
+                              }`}
+                            >
+                              {row.score}/{row.max}
+                            </span>
                           </div>
-                          <div className="h-2 overflow-hidden rounded-full bg-white/10">
-                            <div className="h-full rounded-full transition-all duration-700" style={{ width: `${(row.score / row.max) * 100}%`, background: row.status === "good" ? "#B4F000" : row.status === "ok" ? "#8B4DFF" : "#FF8C42" }} />
+                          <div className="h-2 overflow-hidden rounded-full bg-slate-200">
+                            <div
+                              className="h-full rounded-full transition-all duration-700"
+                              style={{
+                                width: `${(row.score / row.max) * 100}%`,
+                                background: row.status === "good" ? "#84cc16" : row.status === "ok" ? "#8B4DFF" : "#f97316",
+                              }}
+                            />
                           </div>
-                          {row.note && <p className="mt-0.5 text-[0.7rem] text-white/50">{row.note}</p>}
+                          {row.note && <p className="mt-0.5 text-[0.72rem] leading-snug text-slate-600">{row.note}</p>}
                         </div>
                       ))}
                     </div>
                   </div>
-                  <div className="grid md:grid-cols-2 gap-4">
-                    <div className="rounded-xl p-4" style={{ background: "rgba(180,240,0,0.07)", border: "1px solid rgba(180,240,0,0.2)" }}>
-                      <h4 className="text-sm font-semibold mb-3 flex items-center gap-2 text-[#4A7A00]"><Check className="w-4 h-4" /> Điểm mạnh</h4>
-                      <ul className="space-y-2">{strengthsData.map((s, i) => <li key={i} className="flex items-start gap-2 text-sm text-white/88"><span className="mt-1 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-[#6E9900]" />{s}</li>)}</ul>
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="rounded-xl border border-lime-200 bg-lime-50 p-4">
+                      <h4 className="mb-3 flex items-center gap-2 text-sm font-semibold text-lime-900">
+                        <Check className="h-4 w-4" /> Điểm mạnh
+                      </h4>
+                      <ul className="space-y-2">
+                        {strengthsData.map((s, i) => (
+                          <li key={i} className="flex items-start gap-2 text-sm text-slate-800">
+                            <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-lime-600" />
+                            {s}
+                          </li>
+                        ))}
+                      </ul>
                     </div>
-                    <div className="rounded-xl p-4" style={{ background: "rgba(255,140,66,0.07)", border: "1px solid rgba(255,140,66,0.2)" }}>
-                      <h4 className="text-sm font-semibold mb-3 flex items-center gap-2 text-[#CC5C00]"><Warning className="w-4 h-4" /> Cần cải thiện</h4>
-                      <ul className="space-y-2">{weaknessesData.map((s, i) => <li key={i} className="flex items-start gap-2 text-sm text-white/88"><span className="mt-1 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-[#FF8C42]" />{s}</li>)}</ul>
+                    <div className="rounded-xl border border-orange-200 bg-orange-50 p-4">
+                      <h4 className="mb-3 flex items-center gap-2 text-sm font-semibold text-orange-900">
+                        <Warning className="h-4 w-4" /> Cần cải thiện
+                      </h4>
+                      <ul className="space-y-2">
+                        {weaknessesData.map((s, i) => (
+                          <li key={i} className="flex items-start gap-2 text-sm text-slate-800">
+                            <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-orange-500" />
+                            {s}
+                          </li>
+                        ))}
+                      </ul>
                     </div>
                   </div>
                 </div>
                 {isFreeTier && (
-                  <div className="absolute inset-0 flex items-center justify-center" style={{ background: "rgba(7,6,14,0.72)", backdropFilter: "blur(6px)" }}>
-                    <div className="rounded-2xl border border-white/12 bg-[#120d24]/95 px-8 py-6 text-center shadow-2xl shadow-black/40" style={{ boxShadow: "0 8px 32px rgba(0,0,0,0.45)" }}>
-                      <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl" style={{ background: "rgba(110, 53, 232,0.25)" }}><Lock className="h-6 w-6 text-violet-200" /></div>
-                      <p className="mb-1 font-bold text-white">Đánh giá chi tiết bị khoá</p>
-                      <p className="mb-4 max-w-[240px] text-xs text-white/60">Nâng cấp <strong className="text-violet-300">Elite Pro</strong> để xem điểm số và nhận xét chi tiết.</p>
-                      <button onClick={() => navigate("/pricing")} className="flex items-center gap-2 mx-auto px-6 py-2.5 rounded-xl font-bold text-sm text-white" style={{ background: "linear-gradient(135deg,#6E35E8,#8B4DFF)" }}>
-                        <Zap className="w-4 h-4" /> Nâng cấp
+                  <div className="absolute inset-0 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm">
+                    <div className="rounded-2xl border border-violet-200 bg-white px-8 py-6 text-center shadow-xl">
+                      <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-violet-100">
+                        <Lock className="h-6 w-6 text-[#6E35E8]" />
+                      </div>
+                      <p className="mb-1 font-bold text-slate-900">Đánh giá chi tiết bị khoá</p>
+                      <p className="mb-4 max-w-[240px] text-xs text-slate-600">
+                        Nâng cấp <strong className="text-[#6E35E8]">Elite Pro</strong> để xem điểm số và nhận xét chi tiết.
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => navigate("/pricing")}
+                        className="mx-auto flex items-center gap-2 rounded-xl bg-[#6E35E8] px-6 py-2.5 text-sm font-bold text-white hover:bg-[#5C28D9]"
+                      >
+                        <Zap className="h-4 w-4" /> Nâng cấp
                       </button>
                     </div>
                   </div>
                 )}
               </div>
 
-              {/* Suggestions */}
-              <div className="relative card-premium mb-6 overflow-hidden">
-                <div className="flex items-center justify-between border-b border-white/10 px-6 py-4" style={{ background: "rgba(110, 53, 232,0.08)" }}>
+              {/* Suggestions — theme sáng, tương phản rõ */}
+              <div className="relative mb-6 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+                <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 bg-violet-50/80 px-6 py-4">
                   <div className="flex items-center gap-2.5">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-xl" style={{ background: "rgba(110, 53, 232,0.2)" }}><Lightbulb className="h-4 w-4 text-violet-200" /></div>
-                    <div><h3 className="text-sm font-semibold text-white">Gợi ý chỉnh sửa cụ thể</h3><p className="text-xs text-white/55">Bullet rewrites (STAR + JD keywords) · Kỹ năng cần bổ sung</p></div>
+                    <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-violet-100">
+                      <Lightbulb className="h-4 w-4 text-[#6E35E8]" />
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-semibold text-slate-900">Gợi ý chỉnh sửa cụ thể</h3>
+                      <p className="text-xs text-slate-600">Bullet rewrites (STAR + JD keywords) · Kỹ năng cần bổ sung</p>
+                    </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    {highCount   > 0 && <span className="rounded-lg px-2.5 py-1 text-xs font-medium" style={{ background: "rgba(255,140,66,0.18)",  color: "#ffb088" }}>{highCount} Cao</span>}
-                    {mediumCount > 0 && <span className="rounded-lg px-2.5 py-1 text-xs font-medium" style={{ background: "rgba(255,214,0,0.14)",   color: "#fde68a" }}>{mediumCount} TB</span>}
-                    {lowCount    > 0 && <span className="rounded-lg px-2.5 py-1 text-xs font-medium" style={{ background: "rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.65)" }}>{lowCount} Thấp</span>}
+                    {highCount > 0 && (
+                      <span className="rounded-lg bg-orange-100 px-2.5 py-1 text-xs font-semibold text-orange-900">
+                        {highCount} Cao
+                      </span>
+                    )}
+                    {mediumCount > 0 && (
+                      <span className="rounded-lg bg-amber-100 px-2.5 py-1 text-xs font-semibold text-amber-900">
+                        {mediumCount} TB
+                      </span>
+                    )}
+                    {lowCount > 0 && (
+                      <span className="rounded-lg bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700">
+                        {lowCount} Thấp
+                      </span>
+                    )}
                   </div>
                 </div>
-                <div className="divide-y divide-white/10">
+                <div className="divide-y divide-slate-200">
                   {suggestionsData.map((item, i) => {
                     if (isFreeTier && i > 1) return null;
-                    const isAdd = item.type === "add", isFix = item.type === "fix";
-                    const pStyle = item.priority === "high" ? { bg: "rgba(255,140,66,0.1)", border: "rgba(255,140,66,0.25)", color: "#CC5C00", label: "Ưu tiên cao" } : item.priority === "medium" ? { bg: "rgba(255,214,0,0.1)", border: "rgba(255,214,0,0.3)", color: "#997F00", label: "Trung bình" } : { bg: "rgba(255,255,255,0.06)", border: "rgba(255,255,255,0.12)", color: "rgba(255,255,255,0.6)", label: "Thấp" };
-                    const tStyle = isAdd ? { bg: "rgba(180,240,0,0.12)", color: "#4A7A00", label: "Bổ sung" } : isFix ? { bg: "rgba(110, 53, 232,0.1)", color: "#6E35E8", label: "Chỉnh sửa" } : { bg: "rgba(255,140,66,0.1)", color: "#CC5C00", label: "Loại bỏ" };
+                    const isAdd = item.type === "add";
+                    const isFix = item.type === "fix";
+                    const priorityClass =
+                      item.priority === "high"
+                        ? "bg-orange-100 text-orange-900 border-orange-200"
+                        : item.priority === "medium"
+                          ? "bg-amber-100 text-amber-900 border-amber-200"
+                          : "bg-slate-100 text-slate-700 border-slate-200";
+                    const typeClass = isAdd
+                      ? "bg-lime-100 text-lime-900"
+                      : isFix
+                        ? "bg-violet-100 text-violet-900"
+                        : "bg-orange-100 text-orange-900";
+                    const typeLabel = isAdd ? "Bổ sung" : isFix ? "Chỉnh sửa" : "Loại bỏ";
                     const isDimmed = isFreeTier && i === 1;
                     return (
-                      <div key={i} className="p-5 transition-colors hover:bg-white/[0.04]" style={isDimmed ? { filter: "blur(4px)", userSelect: "none", pointerEvents: "none", opacity: 0.5 } : {}}>
-                        <div className="flex items-start justify-between gap-3 mb-3">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <span className="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-lg" style={{ background: tStyle.bg, color: tStyle.color }}>
-                              {isAdd && <PlusCircle className="w-3 h-3" />}{isFix && <Wrench className="w-3 h-3" />}{!isAdd && !isFix && <Trash className="w-3 h-3" />}
-                              {tStyle.label}
+                      <div
+                        key={i}
+                        className="p-5 transition-colors hover:bg-slate-50/80"
+                        style={isDimmed ? { filter: "blur(4px)", userSelect: "none", pointerEvents: "none", opacity: 0.5 } : {}}
+                      >
+                        <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-semibold ${typeClass}`}>
+                              {isAdd && <PlusCircle className="h-3 w-3" />}
+                              {isFix && <Wrench className="h-3 w-3" />}
+                              {!isAdd && !isFix && <Trash className="h-3 w-3" />}
+                              {typeLabel}
                             </span>
-                            <h4 className="text-sm font-semibold text-white">{item.title}</h4>
+                            <h4 className="text-sm font-semibold text-slate-900">{item.title}</h4>
                           </div>
-                          <span className="flex-shrink-0 text-xs font-medium px-2.5 py-1 rounded-lg" style={{ background: pStyle.bg, color: pStyle.color, border: `1px solid ${pStyle.border}` }}>{pStyle.label}</span>
+                          <span className={`shrink-0 rounded-lg border px-2.5 py-1 text-xs font-semibold ${priorityClass}`}>
+                            {item.priority === "high" ? "Ưu tiên cao" : item.priority === "medium" ? "Trung bình" : "Thấp"}
+                          </span>
                         </div>
-                        <div className="rounded-xl p-3.5 mb-3" style={{ background: "rgba(110, 53, 232,0.04)", border: "1px solid rgba(110, 53, 232,0.1)" }}>
-                          <p className="text-xs font-semibold mb-1 text-[#6E35E8]">💡 Lý do</p>
-                          <p className="text-[0.82rem] leading-relaxed text-white/70">{item.reason}</p>
+                        <div className="mb-3 rounded-xl border border-violet-100 bg-violet-50/60 p-3.5">
+                          <p className="mb-1 text-xs font-semibold text-[#6E35E8]">💡 Lý do</p>
+                          <p className="text-[0.82rem] leading-relaxed text-slate-700">{item.reason}</p>
                         </div>
                         {(item.before || item.after) && (
-                          <div className="grid md:grid-cols-2 gap-2 mb-3">
+                          <div className="mb-3 grid gap-2 md:grid-cols-2">
                             {item.before && (
-                              <div className="rounded-xl p-3" style={{ background: "rgba(255,140,66,0.05)", border: "1px solid rgba(255,140,66,0.18)" }}>
-                                <p className="mb-1.5 text-xs font-semibold text-[#ffb088]">✗ Hiện tại</p>
-                                <code className="block whitespace-pre-wrap font-mono text-[0.76rem] leading-relaxed text-white/75">{item.before}</code>
+                              <div className="rounded-xl border border-orange-200 bg-orange-50 p-3">
+                                <p className="mb-1.5 text-xs font-semibold text-orange-800">✗ Hiện tại</p>
+                                <code className="block whitespace-pre-wrap font-mono text-[0.76rem] leading-relaxed text-slate-800">
+                                  {item.before}
+                                </code>
                               </div>
                             )}
                             {item.after && (
-                              <div className="rounded-xl p-3" style={{ background: "rgba(180,240,0,0.06)", border: "1px solid rgba(180,240,0,0.22)" }}>
-                                <p className="mb-1.5 text-xs font-semibold text-[#c4ff47]">✓ Nên sửa thành</p>
-                                <code className="block whitespace-pre-wrap font-mono text-[0.76rem] leading-relaxed text-white/75">{item.after}</code>
+                              <div className="rounded-xl border border-lime-200 bg-lime-50 p-3">
+                                <p className="mb-1.5 text-xs font-semibold text-lime-900">✓ Nên sửa thành</p>
+                                <code className="block whitespace-pre-wrap font-mono text-[0.76rem] leading-relaxed text-slate-800">
+                                  {item.after}
+                                </code>
                               </div>
                             )}
                           </div>
                         )}
-                        {/* Bullet rewrite metadata — chỉ hiện cho type "fix" */}
                         {isFix && (item.keywordsAdded?.length > 0 || item.starCheck || item.confidence) && (
-                          <div className="flex flex-wrap gap-3 pt-2 border-t border-white/8">
-                            {/* STAR check badges */}
+                          <div className="flex flex-wrap gap-3 border-t border-slate-200 pt-2">
                             {item.starCheck && Object.keys(item.starCheck).length > 0 && (
                               <div className="flex items-center gap-1.5">
-                                <span className="text-[10px] font-semibold text-white/45 uppercase tracking-wide mr-0.5">STAR:</span>
-                                {[["situation","S"],["action","A"],["result","R"]].map(([k,label]) => (
+                                <span className="mr-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-500">STAR:</span>
+                                {[["situation", "S"], ["action", "A"], ["result", "R"]].map(([k, label]) => (
                                   <span
                                     key={k}
-                                    className="inline-flex items-center justify-center h-5 w-5 rounded-full text-[10px] font-bold"
-                                    style={item.starCheck[k]
-                                      ? { background: "rgba(180,240,0,0.18)", color: "#c4ff47", border: "1px solid rgba(180,240,0,0.35)" }
-                                      : { background: "rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.3)", border: "1px solid rgba(255,255,255,0.1)" }
-                                    }
+                                    className={`inline-flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-bold ${
+                                      item.starCheck[k]
+                                        ? "border border-lime-400 bg-lime-100 text-lime-900"
+                                        : "border border-slate-200 bg-slate-100 text-slate-400"
+                                    }`}
                                     title={item.starCheck[k] ? `${k} ✓` : `${k} thiếu`}
-                                  >{label}</span>
+                                  >
+                                    {label}
+                                  </span>
                                 ))}
                               </div>
                             )}
-                            {/* Keywords added */}
                             {item.keywordsAdded?.length > 0 && (
-                              <div className="flex items-center gap-1.5 flex-wrap">
-                                <span className="text-[10px] font-semibold text-white/45 uppercase tracking-wide">Keywords:</span>
+                              <div className="flex flex-wrap items-center gap-1.5">
+                                <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">Keywords:</span>
                                 {item.keywordsAdded.map((kw, ki) => (
-                                  <span key={ki} className="inline-flex items-center gap-0.5 rounded-md px-1.5 py-0.5 text-[10px] font-semibold" style={{ background: "rgba(110,53,232,0.18)", color: "#c4b5fd", border: "1px solid rgba(110,53,232,0.3)" }}>
+                                  <span
+                                    key={ki}
+                                    className="inline-flex items-center gap-0.5 rounded-md border border-violet-200 bg-violet-100 px-1.5 py-0.5 text-[10px] font-semibold text-violet-900"
+                                  >
                                     + {kw}
                                   </span>
                                 ))}
                               </div>
                             )}
-                            {/* Confidence badge */}
                             {item.confidence && (
-                              <span className="ml-auto text-[10px] font-semibold px-2 py-0.5 rounded-md"
-                                style={item.confidence === "high"
-                                  ? { background: "rgba(180,240,0,0.12)", color: "#86b800" }
-                                  : item.confidence === "medium"
-                                  ? { background: "rgba(255,214,0,0.1)", color: "#c9a800" }
-                                  : { background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.45)" }
-                                }
+                              <span
+                                className={`ml-auto rounded-md px-2 py-0.5 text-[10px] font-semibold ${
+                                  item.confidence === "high"
+                                    ? "bg-lime-100 text-lime-900"
+                                    : item.confidence === "medium"
+                                      ? "bg-amber-100 text-amber-900"
+                                      : "bg-slate-100 text-slate-600"
+                                }`}
                               >
-                                Độ tin cậy: {item.confidence === "high" ? "Cao" : item.confidence === "medium" ? "Trung bình" : "Thấp"}
+                                Độ tin cậy:{" "}
+                                {item.confidence === "high" ? "Cao" : item.confidence === "medium" ? "Trung bình" : "Thấp"}
                               </span>
                             )}
                           </div>
@@ -1434,13 +1534,17 @@ export function CVAnalysis() {
                   })}
                 </div>
                 {isFreeTier && (
-                  <div className="flex items-center gap-4 border-t border-white/10 px-6 py-5" style={{ background: "linear-gradient(135deg,rgba(110, 53, 232,0.12),rgba(139, 77, 255,0.06))" }}>
+                  <div className="flex flex-wrap items-center gap-4 border-t border-slate-200 bg-violet-50/50 px-6 py-5">
                     <div className="min-w-0 flex-1">
-                      <p className="text-sm font-bold text-white">🔒 Còn {suggestionsData.length - 1} gợi ý đang bị ẩn</p>
-                      <p className="mt-0.5 text-xs text-white/55">Bao gồm gợi ý về từ khóa thiếu, số liệu KPI, format STAR</p>
+                      <p className="text-sm font-bold text-slate-900">🔒 Còn {suggestionsData.length - 1} gợi ý đang bị ẩn</p>
+                      <p className="mt-0.5 text-xs text-slate-600">Bao gồm gợi ý về từ khóa thiếu, số liệu KPI, format STAR</p>
                     </div>
-                    <button onClick={() => navigate("/pricing")} className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm text-white flex-shrink-0" style={{ background: "linear-gradient(135deg,#6E35E8,#8B4DFF)" }}>
-                      <Zap className="w-4 h-4" /> Mở khoá toàn bộ
+                    <button
+                      type="button"
+                      onClick={() => navigate("/pricing")}
+                      className="flex shrink-0 items-center gap-2 rounded-xl bg-[#6E35E8] px-5 py-2.5 text-sm font-bold text-white hover:bg-[#5C28D9]"
+                    >
+                      <Zap className="h-4 w-4" /> Mở khoá toàn bộ
                     </button>
                   </div>
                 )}
