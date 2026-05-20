@@ -21,20 +21,22 @@ import {
   CalendarDays as CalendarBlank,
   Users,
 } from "lucide-react";
-import { fetchCvAnalyses } from "../../utils/cvApi";
+import { fetchCvAnalyses, fetchCvAnalysisById } from "../../utils/cvApi";
 import { hasAuthCredentials, isLoggedIn } from "../../utils/auth";
 import { buildLoginPath } from "../../utils/authGate";
 
 function mapRow(item) {
+  const createdAt = item.createdAt || item.date || "";
   return {
     id: item.analysisId || item.id,
     mode: item.mode || (item.jdFileName ? "jd" : "field"),
     cvFile: item.cvFileName || item.cvFile || "cv",
     jdFile: item.jdFileName || item.jdFile || null,
     matchScore: item.matchScore ?? 0,
-    date: item.createdAt
-      ? new Date(item.createdAt).toLocaleDateString("vi-VN")
-      : item.date || "",
+    createdAt,
+    date: createdAt
+      ? new Date(createdAt).toLocaleDateString("vi-VN")
+      : "",
     company: item.company || null,
     position: item.position || item.cvFileName || null,
     field: item.field || null,
@@ -49,6 +51,22 @@ export function AnalysisHistory() {
   const [selectedId, setSelectedId] = useState(null);
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [loadError, setLoadError] = useState("");
+  const [detail, setDetail] = useState(null);
+  const [detailLoading, setDetailLoading] = useState(false);
+
+  const loadRows = React.useCallback(async () => {
+    setLoading(true);
+    setLoadError("");
+    const res = await fetchCvAnalyses();
+    setLoading(false);
+    if (!res.success) {
+      setRows([]);
+      setLoadError(res.error || "Không tải được lịch sử phân tích.");
+      return;
+    }
+    setRows((res.analyses || []).map((a) => mapRow(a)));
+  }, []);
 
   useEffect(() => {
     if (!isLoggedIn()) {
@@ -56,20 +74,30 @@ export function AnalysisHistory() {
       return;
     }
     if (!hasAuthCredentials()) return;
+    loadRows();
+  }, [loadRows, navigate]);
+
+  useEffect(() => {
+    if (!selectedId) {
+      setDetail(null);
+      return;
+    }
     let cancelled = false;
     (async () => {
-      setLoading(true);
-      const res = await fetchCvAnalyses();
+      setDetailLoading(true);
+      const res = await fetchCvAnalysisById(selectedId);
       if (cancelled) return;
-      setLoading(false);
-      if (res.success && res.analyses?.length) {
-        setRows(res.analyses.map((a) => mapRow(a)));
+      setDetailLoading(false);
+      if (res.success && res.analysis) {
+        setDetail(res.analysis);
+      } else {
+        setDetail(null);
       }
     })();
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [selectedId]);
 
   // Filter and sort logic
   const filteredData = rows
@@ -89,15 +117,12 @@ export function AnalysisHistory() {
     })
     .sort((a, b) => {
       if (sortBy === "date") {
-        return new Date(b.date).getTime() - new Date(a.date).getTime();
-      } else {
-        return b.matchScore - a.matchScore;
+        return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime();
       }
+      return b.matchScore - a.matchScore;
     });
 
-  const selectedAnalysis = selectedId
-    ? rows.find((item) => item.id === selectedId)
-    : null;
+  const selectedRow = selectedId ? rows.find((item) => item.id === selectedId) : null;
 
   // Stats
   const totalAnalyses = rows.length;
@@ -271,27 +296,55 @@ export function AnalysisHistory() {
           </div>
         </div>
 
+        {loadError && (
+          <div className="mb-4 rounded-2xl border border-orange-200 bg-orange-50 px-4 py-3 text-sm text-orange-900">
+            {loadError}
+            <button
+              type="button"
+              onClick={loadRows}
+              className="ml-3 font-semibold text-[#6E35E8] hover:underline"
+            >
+              Thử lại
+            </button>
+          </div>
+        )}
+
         {/* Results count */}
         <div className="mb-4">
-          <p className="text-sm text-gray-500">
+          <p className="text-sm font-medium text-slate-600">
             Hiển thị {filteredData.length} / {totalAnalyses} phân tích
           </p>
         </div>
 
-        {/* Analysis List */}
-        {filteredData.length === 0 ? (
-          <div className="bg-white rounded-2xl p-12 text-center border border-gray-100 shadow-sm">
-            <MagnifyingGlass
-              className="w-16 h-16 mx-auto mb-4 text-gray-200"
-            />
-            <p className="text-gray-400 font-medium mb-1">
-              Không tìm thấy kết quả
-            </p>
-            <p className="text-sm text-gray-300">
-              Thử thay đổi bộ lọc hoặc từ khóa tìm kiếm
-            </p>
+        {loading && (
+          <div className="rounded-2xl border border-slate-200 bg-white py-16 text-center text-sm text-slate-600">
+            Đang tải lịch sử…
           </div>
-        ) : (
+        )}
+
+        {/* Analysis List */}
+        {!loading && filteredData.length === 0 ? (
+          <div className="rounded-2xl border border-slate-200 bg-white p-12 text-center shadow-sm">
+            <MagnifyingGlass className="mx-auto mb-4 h-16 w-16 text-slate-200" />
+            <p className="mb-1 font-medium text-slate-700">
+              {totalAnalyses === 0 ? "Chưa có phân tích nào được lưu" : "Không tìm thấy kết quả"}
+            </p>
+            <p className="text-sm text-slate-500">
+              {totalAnalyses === 0
+                ? "Phân tích CV+JD trên trang Phân tích — kết quả sẽ lưu vào đây sau mỗi lần chạy."
+                : "Thử thay đổi bộ lọc hoặc từ khóa tìm kiếm"}
+            </p>
+            {totalAnalyses === 0 && (
+              <button
+                type="button"
+                onClick={() => navigate("/cv-analysis")}
+                className="mt-4 rounded-xl bg-[#6E35E8] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#5C28D9]"
+              >
+                Phân tích ngay
+              </button>
+            )}
+          </div>
+        ) : !loading ? (
           <div className="grid gap-4">
             {filteredData.map(item => {
               const scoreColor =
@@ -408,9 +461,17 @@ export function AnalysisHistory() {
                     </div>
                   </div>
 
-                  {/* Expanded Details */}
-                  {isExpanded && selectedAnalysis && (
-                    <div className="border-t border-gray-100 p-5 bg-gray-50">
+                  {/* Expanded Details — tải đầy đủ từ GET /api/cv/analyses/:id */}
+                  {isExpanded && selectedRow && (
+                    <div className="border-t border-slate-200 bg-slate-50 p-5">
+                      {detailLoading && (
+                        <p className="text-center text-sm text-slate-600 py-6">Đang tải chi tiết…</p>
+                      )}
+                      {!detailLoading && !detail && (
+                        <p className="text-center text-sm text-slate-500 py-6">Không tải được chi tiết phân tích.</p>
+                      )}
+                      {!detailLoading && detail && (
+                      <>
                       <div className="grid md:grid-cols-2 gap-6">
                         {/* Left Column */}
                         <div>
@@ -420,11 +481,11 @@ export function AnalysisHistory() {
                               <Check
                                 className="w-4 h-4 text-[#6E9900]"
                               />
-                              Từ khóa khớp ({selectedAnalysis.matchedKeywords.length}/
-                              {selectedAnalysis.totalKeywords})
+                              Từ khóa khớp ({(detail.matchedKeywords || []).length}/
+                              {detail.totalKeywords || (detail.matchedKeywords?.length || 0) + (detail.missingKeywords?.length || 0)})
                             </h4>
                             <div className="flex flex-wrap gap-2">
-                              {selectedAnalysis.matchedKeywords.map(kw => (
+                              {(detail.matchedKeywords || []).map(kw => (
                                 <span
                                   key={kw}
                                   className="px-3 py-1.5 rounded-lg text-xs font-medium"
@@ -445,10 +506,10 @@ export function AnalysisHistory() {
                               <X
                                 className="w-4 h-4 text-[#CC5C00]"
                               />
-                              Từ khóa thiếu ({selectedAnalysis.missingKeywords.length})
+                              Từ khóa thiếu ({(detail.missingKeywords || []).length})
                             </h4>
                             <div className="flex flex-wrap gap-2">
-                              {selectedAnalysis.missingKeywords.map(kw => (
+                              {(detail.missingKeywords || []).map(kw => (
                                 <span
                                   key={kw}
                                   className="px-3 py-1.5 rounded-lg text-xs font-medium"
@@ -473,22 +534,10 @@ export function AnalysisHistory() {
                             </h4>
                             <div className="space-y-2">
                               {[
-                                {
-                                  label: "Clarity",
-                                  score: selectedAnalysis.scores.clarity,
-                                },
-                                {
-                                  label: "Structure",
-                                  score: selectedAnalysis.scores.structure,
-                                },
-                                {
-                                  label: "Relevance",
-                                  score: selectedAnalysis.scores.relevance,
-                                },
-                                {
-                                  label: "Credibility",
-                                  score: selectedAnalysis.scores.credibility,
-                                },
+                                { label: "Clarity", score: detail.scores?.clarity ?? 0 },
+                                { label: "Structure", score: detail.scores?.structure ?? 0 },
+                                { label: "Relevance", score: detail.scores?.relevance ?? 0 },
+                                { label: "Credibility", score: detail.scores?.credibility ?? 0 },
                               ].map(({ label, score }) => (
                                 <div key={label}>
                                   <div className="flex items-center justify-between mb-1">
@@ -528,10 +577,10 @@ export function AnalysisHistory() {
                                 className="w-4 h-4 text-[#6E9900]"
                                
                               />
-                              Điểm mạnh ({selectedAnalysis.strengths.length})
+                              Điểm mạnh ({(detail.strengths || []).length})
                             </h4>
                             <ul className="space-y-2">
-                              {selectedAnalysis.strengths.map((str, idx) => (
+                              {(detail.strengths || []).map((str, idx) => (
                                 <li
                                   key={idx}
                                   className="text-xs text-gray-700 pl-4 relative before:content-['✓'] before:absolute before:left-0 before:text-[#6E9900] before:font-bold"
@@ -549,10 +598,10 @@ export function AnalysisHistory() {
                                 className="w-4 h-4 text-[#CC5C00]"
                                
                               />
-                              Điểm yếu ({selectedAnalysis.weaknesses.length})
+                              Điểm yếu ({(detail.weaknesses || []).length})
                             </h4>
                             <ul className="space-y-2">
-                              {selectedAnalysis.weaknesses.map((weak, idx) => (
+                              {(detail.weaknesses || []).map((weak, idx) => (
                                 <li
                                   key={idx}
                                   className="text-xs text-gray-700 pl-4 relative before:content-['!'] before:absolute before:left-0 before:text-[#CC5C00] before:font-bold"
@@ -575,11 +624,7 @@ export function AnalysisHistory() {
                                 style={{ background: "#CC5C00" }}
                               />
                               <span className="text-xs text-gray-600">
-                                {
-                                  selectedAnalysis.suggestions.filter(
-                                    s => s.priority === "high"
-                                  ).length
-                                }{" "}
+                                {(detail.suggestions || []).filter((s) => s.priority === "high").length}{" "}
                                 ưu tiên cao
                               </span>
                             </div>
@@ -589,11 +634,7 @@ export function AnalysisHistory() {
                                 style={{ background: "#6E35E8" }}
                               />
                               <span className="text-xs text-gray-600">
-                                {
-                                  selectedAnalysis.suggestions.filter(
-                                    s => s.priority === "medium"
-                                  ).length
-                                }{" "}
+                                {(detail.suggestions || []).filter((s) => s.priority === "medium").length}{" "}
                                 trung bình
                               </span>
                             </div>
@@ -603,33 +644,31 @@ export function AnalysisHistory() {
                                 style={{ background: "#6E9900" }}
                               />
                               <span className="text-xs text-gray-600">
-                                {
-                                  selectedAnalysis.suggestions.filter(
-                                    s => s.priority === "low"
-                                  ).length
-                                }{" "}
+                                {(detail.suggestions || []).filter((s) => s.priority === "low").length}{" "}
                                 thấp
                               </span>
                             </div>
                           </div>
 
                           <button
+                            type="button"
                             onClick={() => navigate("/cv-analysis")}
-                            className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-white transition-all hover:brightness-105"
-                            style={{ background: "#6E35E8" }}
+                            className="flex items-center gap-2 rounded-xl bg-[#6E35E8] px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-[#5C28D9]"
                           >
-                            <ArrowsClockwise className="w-4 h-4" />
+                            <ArrowsClockwise className="h-4 w-4" />
                             Phân tích lại
                           </button>
                         </div>
                       </div>
+                      </>
+                      )}
                     </div>
                   )}
                 </div>
               );
             })}
           </div>
-        )}
+        ) : null}
         </div>
       </div>
     </MentorPageShell>

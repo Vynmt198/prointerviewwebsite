@@ -19,6 +19,8 @@ const ROUTE_TITLES = {
   "/register": "Đăng ký",
   "/dashboard": "Bảng điều khiển",
   "/cv-analysis": "Phân tích CV",
+  "/cv-analysis/jd": "Phân tích CV + JD",
+  "/cv-analysis/field": "Phân tích CV theo ngành",
   "/interview": "Phỏng vấn AI",
   "/mentors": "Tìm mentor",
   "/courses": "Khóa học",

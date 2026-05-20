@@ -8,6 +8,7 @@ import { ResetPassword } from "./pages/auth/ResetPassword";
 import { VerifyEmail } from "./pages/auth/VerifyEmail";
 import { Checkout } from "./pages/booking/Checkout";
 import { Dashboard } from "./pages/account/Dashboard";
+import { CVAnalysisHub } from "./pages/cv/CVAnalysisHub";
 import { CVAnalysis } from "./pages/cv/CVAnalysis";
 import { AnalysisHistory } from "./pages/cv/AnalysisHistory";
 import { Interview } from "./pages/interview/Interview";
@@ -76,7 +77,9 @@ export const router = createHashRouter([
       { index: true, Component: Home },
       { path: "dashboard", Component: Dashboard },
       { path: "my-bookings", Component: MyBookings },
-      { path: "cv-analysis", Component: CVAnalysis },
+      { path: "cv-analysis", Component: CVAnalysisHub },
+      { path: "cv-analysis/jd", Component: CVAnalysis },
+      { path: "cv-analysis/field", Component: CVAnalysis },
       { path: "cv-analysis/history", Component: AnalysisHistory },
       { path: "interview", Component: Interview },
       { path: "interview/gender", Component: AIGenderSelection },
@@ -158,7 +161,9 @@ export const router = createHashRouter([
     children: [
       { path: "dashboard", Component: Dashboard },
       { path: "my-bookings", Component: MyBookings },
-      { path: "cv-analysis", Component: CVAnalysis },
+      { path: "cv-analysis", Component: CVAnalysisHub },
+      { path: "cv-analysis/jd", Component: CVAnalysis },
+      { path: "cv-analysis/field", Component: CVAnalysis },
       { path: "cv-analysis/history", Component: AnalysisHistory },
       { path: "interview", Component: Interview },
       { path: "interview/gender", Component: AIGenderSelection },

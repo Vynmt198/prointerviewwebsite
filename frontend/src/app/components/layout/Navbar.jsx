@@ -30,7 +30,9 @@ import { buildLoginPath, buildRegisterPath } from "../../utils/authGate";
 const PAGE_TITLES = {
   "/dashboard": { label: "Bảng điều khiển", sub: "Tổng quan tiến độ học của bạn" },
   "/my-bookings": { label: "Lịch hẹn của tôi", sub: "Tất cả buổi mentor đã đặt" },
-  "/cv-analysis": { label: "Phân tích CV/JD", sub: "Tối ưu hồ sơ theo từng vị trí" },
+  "/cv-analysis": { label: "Phân tích CV", sub: "Chọn phân tích theo JD hoặc ngành nghề" },
+  "/cv-analysis/jd": { label: "Phân tích CV + JD", sub: "So khớp CV với Job Description" },
+  "/cv-analysis/field": { label: "Phân tích theo ngành", sub: "Đánh giá CV theo chuẩn ngành nghề" },
   "/interview": { label: "Phỏng vấn AI", sub: "Thiết lập & bắt đầu phiên luyện tập" },
   "/mentors": { label: "Tìm Mentor", sub: "Đặt lịch 1:1 với chuyên gia" },
   "/profile": { label: "Hồ sơ cá nhân", sub: "Thông tin và thành tích của bạn" },
