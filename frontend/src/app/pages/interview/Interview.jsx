@@ -1,6 +1,11 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { MentorPageShell } from "../../components/mentor/MentorPageShell";
 import { useNavigate } from "react-router";
+import {
+  BrowserCompatibilityWarning,
+  checkSTTSupport,
+} from "../../components/interview/BrowserCompatibilityWarning";
+import { InterviewLoadingState } from "../../components/interview/InterviewLoadingState";
 import {
   Upload,
   ChevronDown,
@@ -190,8 +195,17 @@ export function Interview() {
   const [form, setForm] = useState({ company: "", position: "", field: "", level: "" });
   const [fieldOpen, setFieldOpen] = useState(false);
   const [levelOpen, setLevelOpen] = useState(false);
-  const [generating, setGenerating] = useState(false);
+  const [loadingStep, setLoadingStep] = useState(null); // null | "extracting_cv" | "generating_questions" | "creating_session"
   const [extractWarning, setExtractWarning] = useState("");
+  const [showBrowserWarning, setShowBrowserWarning] = useState(false);
+  // Option A: bổ sung role/level khi CV không có position (Python không extract field này)
+  const [optionAPosition, setOptionAPosition] = useState("");
+  const [optionALevel,    setOptionALevel]    = useState("");
+  const [optionALevelOpen, setOptionALevelOpen] = useState(false);
+
+  useEffect(() => {
+    if (!checkSTTSupport()) setShowBrowserWarning(true);
+  }, []);
 
   const latestCV = getLatestCVAnalysis();
   const storedCV = getUploadedCV();
@@ -219,9 +233,14 @@ export function Interview() {
   };
 
   const handleStart = async () => {
-    if (!canStart || generating) return;
-    setGenerating(true);
+    if (!canStart || loadingStep) return;
     setExtractWarning("");
+
+    // Clear stale session data from previous interview before starting new one
+    sessionStorage.removeItem("prointerview_questions");
+    sessionStorage.removeItem("prointerview_sessionId");
+    sessionStorage.removeItem("prointerview_transcripts");
+    sessionStorage.removeItem("prointerview_question_objects");
 
     let questions = null;
     let result = null;
@@ -245,15 +264,26 @@ export function Interview() {
         ];
         cvText = parts.filter(Boolean).join("\n\n");
       } else if (option === "B" && inputMethod === "cv" && uploadedFile) {
+        setLoadingStep("extracting_cv");
         const extracted = await extractCvTextFromFile(uploadedFile);
         if (extracted.success && extracted.text) {
           cvText = extracted.text;
         } else {
-          // Báo lỗi nhưng vẫn tiếp tục với context tối thiểu từ tên file
+          // Python service down hoặc file lỗi — offer switch to form
+          const proceed = window.confirm(
+            "Không thể đọc CV (dịch vụ phân tích đang bảo trì).\n" +
+            "Bạn có muốn chuyển sang nhập thông tin thủ công không?"
+          );
+          if (proceed) {
+            setInputMethod("form");
+            setFlowStep(1);
+            setLoadingStep(null);
+            return;
+          }
+          // User declined → continue with filename as minimal context
           setExtractWarning(
             extracted.error ||
-            "Không thể trích xuất text từ CV (cần Python service đang chạy). " +
-            "AI sẽ tạo câu hỏi dựa trên tên file — chất lượng cá nhân hoá thấp hơn."
+            "Không thể trích xuất text từ CV. AI sẽ tạo câu hỏi dựa trên tên file — chất lượng cá nhân hoá thấp hơn."
           );
           cvText = `Tên file CV: ${uploadedFile.name}`;
         }
@@ -266,26 +296,36 @@ export function Interview() {
         ].filter(Boolean).join(" ");
       }
 
+      setLoadingStep("generating_questions");
       result = await generateInterviewQuestions({
         cvText,
         jdText,
-        // Option A lấy position/field từ latestCV thay vì form
-        position: option === "A" ? (latestCV?.position || "") : form.position,
-        field:    option === "A" ? ""                          : form.field,
-        level:    option === "A" ? ""                          : form.level,
+        // Option A: ưu tiên position từ CV phân tích; nếu null thì dùng input bổ sung
+        position: option === "A"
+          ? (latestCV?.position || optionAPosition || "")
+          : form.position,
+        field: option === "A" ? "" : form.field,
+        level: option === "A"
+          ? (optionALevel || "")
+          : form.level,
       });
 
       if (result?.success && result.questions?.length) {
         questions = result.questions;
       } else if (result && !result.success) {
-        setExtractWarning(`AI không thể tạo câu hỏi cá nhân hóa (${result.error || "lỗi không xác định"}). Đang dùng câu hỏi mẫu.`);
+        setExtractWarning(`AI không thể tạo câu hỏi cá nhân hóa (${result.error || "lỗi không xác định"}).`);
+        setLoadingStep(null);
+        return;
       }
     } catch (err) {
-      setExtractWarning(`Không thể kết nối tới máy chủ để tạo câu hỏi. Đang dùng câu hỏi mẫu.`);
+      setExtractWarning(`Không thể kết nối tới máy chủ để tạo câu hỏi. Vui lòng thử lại.`);
+      setLoadingStep(null);
+      return;
     }
 
     // Tạo session ngay sau khi có questions — trước khi vào phòng
     // sessionId được truyền vào InterviewRoom để lưu từng câu trả lời
+    setLoadingStep("creating_session");
     let sessionId = null;
     if (hasAuthCredentials()) {
       try {
@@ -302,7 +342,7 @@ export function Interview() {
       }
     }
 
-    setGenerating(false);
+    setLoadingStep(null);
 
     const interviewData = {
       option,
@@ -326,6 +366,26 @@ export function Interview() {
 
   return (
     <MentorPageShell className="interview-light" bottomPad="pb-24">
+      {/* ── Browser STT compatibility warning ─────────────────── */}
+      {showBrowserWarning && (
+        <BrowserCompatibilityWarning
+          onProceed={() => setShowBrowserWarning(false)}
+          onCancel={() => navigate("/")}
+        />
+      )}
+
+      {/* ── Loading step overlay ───────────────────────────────── */}
+      {loadingStep && (
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+          <div className="mx-4 w-full max-w-sm rounded-2xl bg-white p-8 shadow-2xl">
+            <p className="mb-6 text-center text-base font-bold text-slate-800">
+              Đang chuẩn bị phỏng vấn...
+            </p>
+            <InterviewLoadingState currentStep={loadingStep} />
+          </div>
+        </div>
+      )}
+
       <style>{`
         .interview-glass {
           background: linear-gradient(145deg, rgba(255,255,255,0.92) 0%, rgba(246,248,255,0.95) 100%);
@@ -498,6 +558,49 @@ export function Interview() {
               </p>
             </button>
           </div>
+
+          {/* Bổ sung position + level khi Option A nhưng CV không có — Python không extract fields này */}
+          {option === "A" && latestCV && !latestCV.position && (
+            <div className="border-t border-white/10 pt-4">
+              <div className="space-y-2 rounded-xl border border-violet-200/60 bg-violet-50/70 p-3">
+                <p className="text-[10px] font-semibold text-violet-700">
+                  Thêm thông tin để AI cá nhân hóa câu hỏi tốt hơn
+                </p>
+                <input
+                  className="w-full rounded-lg border border-violet-200 bg-white px-3 py-1.5 text-xs text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-violet-400"
+                  placeholder="Vị trí ứng tuyển (vd: Frontend Developer)"
+                  value={optionAPosition}
+                  onChange={(e) => setOptionAPosition(e.target.value)}
+                />
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={() => setOptionALevelOpen(!optionALevelOpen)}
+                    className="flex w-full items-center justify-between rounded-lg border border-violet-200 bg-white px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-violet-400"
+                  >
+                    <span className={optionALevel ? "text-slate-800" : "text-slate-400"}>
+                      {optionALevel || "Level kinh nghiệm (tùy chọn)"}
+                    </span>
+                    <ChevronDown className={`h-3 w-3 text-slate-400 transition-transform ${optionALevelOpen ? "rotate-180" : ""}`} {...IS} />
+                  </button>
+                  {optionALevelOpen && (
+                    <div className="absolute left-0 right-0 top-full z-20 mt-1 overflow-hidden rounded-lg border border-violet-200 bg-white shadow-lg">
+                      {["", ...LEVELS].map((l) => (
+                        <button
+                          key={l || "none"}
+                          type="button"
+                          onClick={() => { setOptionALevel(l); setOptionALevelOpen(false); }}
+                          className="w-full px-3 py-2 text-left text-xs text-slate-700 hover:bg-violet-50"
+                        >
+                          {l || "Không chọn"}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
 
           {option === "B" && (
             <div className="border-t border-white/10 pt-6">
@@ -854,17 +957,19 @@ export function Interview() {
             <button
               type="button"
               onClick={handleStart}
-              disabled={!canStart || generating}
+              disabled={!canStart || Boolean(loadingStep)}
               className={`flex w-full items-center justify-center gap-2.5 rounded-2xl py-4 text-sm font-black transition-all active:scale-[0.99] ${
-                canStart && !generating
+                canStart && !loadingStep
                   ? "bg-gradient-to-r from-[#c4ff47] to-[#8fbc24] text-[#0a0814] shadow-[0_8px_28px_rgba(196,255,71,0.25)] hover:brightness-110"
                   : "cursor-not-allowed border border-white/10 bg-white/[0.04] text-zinc-500"
               }`}
             >
-              {generating ? (
+              {loadingStep ? (
                 <>
                   <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-                  AI đang tạo câu hỏi cá nhân hóa...
+                  {loadingStep === "extracting_cv"       && "Đang đọc CV..."}
+                  {loadingStep === "generating_questions" && "AI đang tạo câu hỏi... (15–40 giây)"}
+                  {loadingStep === "creating_session"    && "Đang chuẩn bị phiên..."}
                 </>
               ) : (
                 <>

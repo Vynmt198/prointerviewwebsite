@@ -35,3 +35,4 @@ adminRouter.patch("/payouts/:id/reject", AdminController.rejectPayoutRequest);
 adminRouter.get("/courses/pending", AdminController.getPendingCourses);
 adminRouter.patch("/courses/:id/approve", AdminController.approveCourse);
 adminRouter.patch("/courses/:id/reject", AdminController.rejectCourse);
+adminRouter.get("/interview-metrics", AdminController.getInterviewMetrics);
