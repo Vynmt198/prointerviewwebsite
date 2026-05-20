@@ -43,11 +43,13 @@ export async function activatePlan(userId, body) {
 
   const updates = { plan, planExpiresAt: expires };
   if (plan === "starter_pro") {
-    updates["quota.cvAnalysisLimit"] = 20;
-    updates["quota.interviewLimit"] = 10;
+    updates["quota.cvAnalysisLimit"]          = 20;
+    updates["quota.interviewLimit"]           = 10;
+    updates["quota.interviewQuestionsAllowed"] = 5;
   } else if (plan === "elite_pro") {
-    updates["quota.cvAnalysisLimit"] = 999;
-    updates["quota.interviewLimit"] = 999;
+    updates["quota.cvAnalysisLimit"]          = 999;
+    updates["quota.interviewLimit"]           = 999;
+    updates["quota.interviewQuestionsAllowed"] = 5;
   }
 
   const u = await User.findByIdAndUpdate(userId, { $set: updates }, { new: true }).select("plan planExpiresAt quota").lean();

@@ -8,6 +8,41 @@ const PORT = process.env.PORT || 5000;
 const MONGO_URI = process.env.MONGO_URI;
 const isProd = process.env.NODE_ENV === "production";
 
+// ── Env validation ────────────────────────────────────────────────────────────
+const REQUIRED_ENV = {
+  MONGO_URI:       { critical: true,  feature: "Database" },
+  LLM_API_KEY:     { critical: true,  feature: "AI question generation + evaluation" },
+  LLM_BASE_URL:    { critical: true,  feature: "LLM API endpoint" },
+  CV_ANALYZER_URL: { critical: false, feature: "CV text extraction (Python service)" },
+  DID_API_KEY:     { critical: false, feature: "D-ID avatar (fallback Cloudinary)" },
+};
+
+function validateEnv() {
+  const critical = [];
+  const warnings = [];
+
+  for (const [key, config] of Object.entries(REQUIRED_ENV)) {
+    if (!process.env[key]) {
+      (config.critical ? critical : warnings).push({ key, feature: config.feature });
+    }
+  }
+
+  if (critical.length > 0) {
+    console.error("❌ CRITICAL: Missing required env vars — server cannot start:");
+    critical.forEach((i) => console.error(`  - ${i.key}: required for ${i.feature}`));
+    process.exit(1);
+  }
+
+  if (warnings.length > 0) {
+    console.warn("⚠️  Optional env vars missing (features will degrade gracefully):");
+    warnings.forEach((i) => console.warn(`  - ${i.key}: ${i.feature}`));
+  }
+
+  console.log("✅ Environment validated");
+}
+
+validateEnv();
+
 const app = createApp();
 
 export async function startServer() {
