@@ -8,6 +8,7 @@ import { runInTransaction } from "../helpers/dbHelper.js";
 import { PayoutRequest } from "../models/PayoutRequest.js";
 import { Enrollment } from "../models/Enrollment.js";
 import { InterviewSession } from "../models/InterviewSession.js";
+import { Notification } from "../models/index.js";
 const User = mongoose.model("User");
 const Mentor = mongoose.model("Mentor");
 const Booking = mongoose.model("Booking");
@@ -22,7 +23,10 @@ export const AdminController = {
       await ensureMentorProfilesForAllMentorUsers();
 
       const mentors = await Mentor.find()
-        .populate("userId", "name email avatar role isActive")
+        .populate(
+          "userId",
+          "name email avatar role isActive profileWorkExperience profileEducation profileExtracurricular profileAwards desiredPosition currentCompany experience school",
+        )
         .sort({ createdAt: -1 })
         .lean();
       
@@ -61,10 +65,20 @@ export const AdminController = {
 
       if (!mentor) return res.status(404).json({ success: false, error: "Không tìm thấy mentor" });
 
-      if (mentor.userId) {
-        if (isActive) {
-          await User.updateOne({ _id: mentor.userId }, { $set: { role: "mentor" } });
-        }
+      if (mentor.userId && isActive) {
+        await User.updateOne(
+          { _id: mentor.userId },
+          {
+            $set: {
+              role: "mentor",
+              desiredPosition: mentor.title || "",
+              currentCompany: mentor.company || "",
+              experience: mentor.experienceYears ?? 0,
+              skills: Array.isArray(mentor.specialties) ? mentor.specialties : [],
+              bio: mentor.bio || "",
+            },
+          },
+        );
       }
 
       res.json({ success: true, mentor });
@@ -100,6 +114,22 @@ export const AdminController = {
 
       if (mentor.userId) {
         await User.updateOne({ _id: mentor.userId }, { $set: { role: "customer" } });
+        try {
+          const reasonShort =
+            reason.length > 220 ? `${reason.slice(0, 217)}…` : reason;
+          await Notification.create({
+            userId: mentor.userId,
+            type: "feedback",
+            title: "Hồ sơ mentor bị từ chối",
+            body: `Admin từ chối hồ sơ của bạn. Lý do: ${reasonShort}. Vui lòng cập nhật hồ sơ và đăng ký lại.`,
+            metadata: {
+              mentorId: mentor._id,
+              actionUrl: "/profile",
+            },
+          });
+        } catch (notifErr) {
+          console.error("[Admin] rejectMentorApplication notification:", notifErr);
+        }
       }
 
       res.json({ success: true, mentor });

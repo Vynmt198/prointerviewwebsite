@@ -48,6 +48,7 @@ import {
   getDisplayName,
   PLANS_CHANGED_EVENT,
 } from "../../utils/auth";
+import { SidebarBrandButton } from "./SidebarBrandButton";
 
 /* ── Nav data ─────────────────────────────────────────────── */
 const customerMainItems = [
@@ -116,46 +117,13 @@ export function AppSidebar() {
     <Sidebar collapsible="icon">
 
       {/* ════════════ HEADER / LOGO ════════════ */}
-      <SidebarHeader className="p-0">
+      <SidebarHeader className="overflow-hidden p-0">
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton
-              size="lg"
+            <SidebarBrandButton
               tooltip="ProInterview"
               onClick={() => navigate(getBrandClickPath())}
-              className="
-                !overflow-visible h-14 min-h-14 rounded-none cursor-pointer py-1
-                hover:bg-sidebar-accent active:bg-sidebar-accent/80
-                data-[active=true]:bg-transparent
-                group-data-[collapsible=icon]:!h-10 group-data-[collapsible=icon]:!w-10
-                group-data-[collapsible=icon]:!min-h-10 group-data-[collapsible=icon]:!min-w-10
-                group-data-[collapsible=icon]:!justify-center group-data-[collapsible=icon]:!p-0
-                group-data-[collapsible=icon]:shadow-none group-data-[collapsible=icon]:ring-0
-                group-data-[collapsible=icon]:focus-visible:ring-0
-                group-data-[collapsible=icon]:!overflow-visible
-                group-data-[collapsible=icon]:px-0
-                px-3
-              "
-            >
-              {/* Full wordmark (expanded) + circular mark (collapsed) */}
-              <div className="relative flex h-14 w-auto shrink-0 items-center justify-center group-data-[collapsible=icon]:size-10 group-data-[collapsible=icon]:overflow-visible">
-                <img
-                  src="/Logo.png"
-                  alt="ProInterview"
-                  className="h-full w-auto object-contain origin-center brightness-[0.92] contrast-[1.14] saturate-[1.05] scale-[1.74] translate-x-12 group-data-[collapsible=icon]:hidden sm:scale-[1.8]"
-                />
-                <div
-                  className="hidden size-10 shrink-0 items-center justify-center bg-transparent overflow-visible group-data-[collapsible=icon]:flex"
-                  aria-hidden
-                >
-                  <img
-                    src="/logo-mark-circle.png?v=4"
-                    alt=""
-                    className="h-10 w-10 object-contain object-center brightness-[0.95] contrast-[1.08] translate-x-2.5 translate-y-0.5 scale-[1.1]"
-                  />
-                </div>
-              </div>
-            </SidebarMenuButton>
+            />
           </SidebarMenuItem>
         </SidebarMenu>
 

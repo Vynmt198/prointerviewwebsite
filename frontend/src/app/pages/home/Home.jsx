@@ -24,7 +24,6 @@ import {
   Tag,
 } from "lucide-react";
 import { COURSES_DATA } from "../../data/coursesData";
-import { navigateToInterview, requireLoginNavigate } from "../../utils/authGate";
 import { Footer } from "../../components/layout/Footer";
 import { RecommendedJourney } from "../../components/home/RecommendedJourney";
 import { CvAnalysisFeatureShowcase } from "../../components/home/CvAnalysisFeatureShowcase";
@@ -775,7 +774,7 @@ export function Home() {
               <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:justify-start">
                 <button
                   type="button"
-                  onClick={() => navigateToInterview(navigate)}
+                  onClick={() => navigate("/interview")}
                   className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full font-black transition-all hover:brightness-105 active:scale-[0.98] hover:-translate-y-0.5"
                   style={{
                     background: "linear-gradient(135deg, #B4F500, #93D600)",
@@ -1038,7 +1037,7 @@ export function Home() {
                 <div className="relative z-[1] mt-auto sm:pr-[calc(6rem+1cm+1.75rem)]">
                   <button
                     type="button"
-                    onClick={() => navigateToInterview(navigate)}
+                    onClick={() => navigate("/interview")}
                     className="inline-flex shrink-0 items-center gap-2 px-5 py-2.5 rounded-full font-semibold transition-all hover:brightness-110 hover:-translate-y-0.5"
                     style={{
                       background: "linear-gradient(135deg, #B4F500, #93D600)",
@@ -1071,7 +1070,7 @@ export function Home() {
       {/* ═══ CV ANALYSIS — vẫn trong nhóm Lộ trình (navbar #features) ═══ */}
       <div className="landing-section-flow">
         <CvAnalysisFeatureShowcase
-          onCtaClick={() => requireLoginNavigate(navigate, "/cv-analysis")}
+          onCtaClick={() => navigate("/cv-analysis")}
         />
       </div>
 

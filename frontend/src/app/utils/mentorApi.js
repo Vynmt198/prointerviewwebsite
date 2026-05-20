@@ -121,12 +121,6 @@ export async function updateMyMentorAvailability(payload) {
 export async function fetchMyMentorProfile() {
   if (!hasAuthCredentials()) return { success: false, error: ERROR_MESSAGES.UNAUTHENTICATED, mentor: null };
 
-  // Optimization: only fetch if user is mentor or admin (or might be an applicant)
-  const user = getUser();
-  if (user && user.role !== "mentor" && user.role !== "admin" && !user.isMentorApplicant) {
-    return { success: true, mentor: null };
-  }
-
   try {
     const res = await authFetch("/api/mentors/me", {
       method: "GET",

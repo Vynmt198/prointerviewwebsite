@@ -102,7 +102,7 @@ export async function authFetch(path, init = {}) {
 
 const AUTH_ONLY_PATHS = ["/login", "/register", "/forgot-password", "/reset-password", "/verify-email"];
 
-/** `?redirect=` hợp lệ — không trỏ trang auth; /admin chỉ cho admin. */
+/** `?redirect=` hợp lệ — không trỏ trang auth; /admin chỉ admin; /mentor/* chỉ mentor. */
 export function isSafeAppRedirect(path, user) {
   const r = typeof path === "string" ? path.trim() : "";
   if (!r.startsWith("/") || r.startsWith("//")) return false;
@@ -110,15 +110,32 @@ export function isSafeAppRedirect(path, user) {
     return false;
   }
   if (r.startsWith("/admin") && user?.role !== "admin") return false;
+  if (r.startsWith("/mentor") && user?.role !== "mentor") return false;
   return true;
 }
 
-/** Đường dẫn sau đăng nhập: ưu tiên ?redirect=; không có thì customer → trang chủ. */
+/** Hub customer — admin/mentor không dùng làm đích sau login. */
+function isCustomerHubRedirect(path) {
+  const r = typeof path === "string" ? path.trim() : "";
+  if (!r) return true;
+  return r === "/" || r === "/dashboard" || r.startsWith("/dashboard/");
+}
+
+/** Đường dẫn sau đăng nhập: admin → /admin, mentor → /mentor/dashboard, customer → ?redirect hoặc /. */
 export function getPostLoginPath(user, redirectParam) {
   const r = typeof redirectParam === "string" ? redirectParam.trim() : "";
+  const role = user?.role;
+
+  if (role === "admin") {
+    if (r && isSafeAppRedirect(r, user) && !isCustomerHubRedirect(r)) return r;
+    return "/admin";
+  }
+  if (role === "mentor") {
+    if (r && isSafeAppRedirect(r, user) && !isCustomerHubRedirect(r)) return r;
+    return "/mentor/dashboard";
+  }
+
   if (isSafeAppRedirect(r, user)) return r;
-  if (user?.role === "admin") return "/admin";
-  if (user?.role === "mentor") return "/mentor/dashboard";
   return "/";
 }
 

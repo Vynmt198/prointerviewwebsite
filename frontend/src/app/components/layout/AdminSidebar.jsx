@@ -42,6 +42,7 @@ import {
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
 import { getUser, logout, getInitials, getDisplayName } from "../../utils/auth";
+import { SidebarBrandButton } from "./SidebarBrandButton";
 
 const MAIN_GROUPS = [
   {
@@ -101,7 +102,15 @@ function pathActive(pathname, to, end) {
   const p = pathname.replace(/\/$/, "") || "/";
   const t = to.replace(/\/$/, "") || "/";
   if (end) return p === t;
-  return p === t || p.startsWith(`${t}/`);
+  if (p === t) return true;
+  if (!p.startsWith(`${t}/`)) return false;
+  // /admin/mentors/pending thuộc menu "Duyệt cố vấn", không tô "Cố vấn"
+  if (t === "/admin/mentors") {
+    if (p === "/admin/mentors/pending" || p.startsWith("/admin/mentors/pending/")) {
+      return false;
+    }
+  }
+  return true;
 }
 
 export function AdminSidebar() {
@@ -124,63 +133,28 @@ export function AdminSidebar() {
 
   return (
     <Sidebar collapsible="icon">
-      <SidebarHeader className="p-0">
+      <SidebarHeader className="overflow-hidden p-0">
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton
-              size="lg"
+            <SidebarBrandButton
               tooltip="ProInterview — Quản trị"
               onClick={() => navigate("/admin")}
-              className="
-                !overflow-visible h-14 min-h-14 rounded-none cursor-pointer py-1
-                hover:bg-white/5 active:bg-white/10
-                data-[active=true]:bg-transparent
-                group-data-[collapsible=icon]:!h-10 group-data-[collapsible=icon]:!w-10
-                group-data-[collapsible=icon]:!min-h-10 group-data-[collapsible=icon]:!min-w-10
-                group-data-[collapsible=icon]:!justify-center group-data-[collapsible=icon]:!p-0
-                group-data-[collapsible=icon]:shadow-none group-data-[collapsible=icon]:ring-0
-                group-data-[collapsible=icon]:focus-visible:ring-0
-                group-data-[collapsible=icon]:!overflow-visible
-                group-data-[collapsible=icon]:px-0
-                px-4
-              "
-            >
-              <div className="relative flex h-14 min-w-0 flex-1 items-center justify-center gap-2 group-data-[collapsible=icon]:size-10 group-data-[collapsible=icon]:overflow-visible">
-                <div className="relative flex h-14 w-auto shrink-0 items-center justify-center group-data-[collapsible=icon]:size-10 group-data-[collapsible=icon]:overflow-visible">
-                  <img
-                    src="/Logo.png"
-                    alt="ProInterview"
-                    className="h-full w-auto object-contain origin-center brightness-[0.92] contrast-[1.14] saturate-[1.05] scale-[1.74] translate-x-12 group-data-[collapsible=icon]:hidden sm:scale-[1.8]"
-                  />
-                  <div
-                    className="hidden size-10 shrink-0 items-center justify-center bg-transparent overflow-visible group-data-[collapsible=icon]:flex"
-                    aria-hidden
-                  >
-                    <img
-                      src="/logo-mark-circle.png?v=4"
-                      alt=""
-                      className="h-10 w-10 object-contain object-center brightness-[0.95] contrast-[1.08] translate-x-2.5 translate-y-0.5 scale-[1.1]"
-                    />
-                  </div>
-                </div>
-                <span className="ml-auto shrink-0 rounded-md bg-[#c4ff47] px-1.5 py-0.5 text-[7px] font-bold tracking-wide text-[#120B2E] group-data-[collapsible=icon]:hidden">
+              badge={
+                <span className="shrink-0 rounded-md bg-[#B4F500] px-1.5 py-0.5 text-[7px] font-bold tracking-wide text-[#2D1B69]">
                   ADMIN
                 </span>
-              </div>
-            </SidebarMenuButton>
+              }
+            />
           </SidebarMenuItem>
         </SidebarMenu>
-        <div
-          className="mx-3 h-px group-data-[collapsible=icon]:mx-2"
-          style={{ background: "rgba(255,255,255,0.08)" }}
-        />
+        <div className="mx-3 h-px bg-sidebar-border group-data-[collapsible=icon]:mx-2" />
       </SidebarHeader>
 
       <SidebarContent className="min-h-0 flex-1 gap-0 overflow-hidden px-2 py-3">
         <div ref={contentRef} className="flex min-h-0 flex-1 flex-col gap-0 overflow-y-auto overflow-x-hidden">
         <SidebarGroup className="p-0">
           <SidebarGroupLabel
-            className="mb-1 px-2 uppercase text-white/30 group-data-[collapsible=icon]:hidden"
+            className="mb-1 px-2 uppercase text-sidebar-foreground/45 group-data-[collapsible=icon]:hidden"
             style={{ fontSize: "0.6rem", fontWeight: 700, letterSpacing: "0.1em" }}
           >
             Menu chính
@@ -190,7 +164,7 @@ export function AdminSidebar() {
               {MAIN_GROUPS.map((group) => (
                 <SidebarGroup key={group.title} className="p-0">
                   <SidebarGroupLabel
-                    className="mb-1 px-2 uppercase text-white/45 group-data-[collapsible=icon]:hidden"
+                    className="mb-1 px-2 uppercase text-sidebar-foreground/45 group-data-[collapsible=icon]:hidden"
                     style={{ fontSize: "0.5625rem", fontWeight: 800, letterSpacing: "0.14em" }}
                   >
                     {group.title}
@@ -206,7 +180,8 @@ export function AdminSidebar() {
                               tooltip={label}
                               onClick={() => navigate(to)}
                               className="
-                                h-10 rounded-xl gap-3 transition-all
+                                h-10 rounded-xl gap-3 transition-all text-sidebar-foreground/75
+                                hover:bg-sidebar-accent hover:text-sidebar-accent-foreground
                                 group-data-[collapsible=icon]:!justify-center
                                 group-data-[collapsible=icon]:!w-10
                                 group-data-[collapsible=icon]:!mx-auto
@@ -219,12 +194,11 @@ export function AdminSidebar() {
                                       color: "#fff",
                                       boxShadow: "0 4px 12px rgba(110,53,232,0.35)",
                                     }
-                                  : { color: "rgba(255,255,255,0.55)" }
+                                  : undefined
                               }
                             >
                               <Icon
-                                className="size-[18px] shrink-0"
-                                style={{ color: active ? "#fff" : "rgba(255,255,255,0.55)" }}
+                                className={`size-[18px] shrink-0 ${active ? "text-white" : "text-sidebar-foreground/70"}`}
                               />
                               <span
                                 className="truncate text-[0.8125rem] group-data-[collapsible=icon]:hidden"
@@ -250,14 +224,11 @@ export function AdminSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        <div
-          className="mx-1 my-3 h-px group-data-[collapsible=icon]:mx-0"
-          style={{ background: "rgba(255,255,255,0.07)" }}
-        />
+        <div className="mx-1 my-3 h-px bg-sidebar-border group-data-[collapsible=icon]:mx-0" />
 
         <SidebarGroup className="p-0">
           <SidebarGroupLabel
-            className="mb-1 px-2 uppercase text-white/30 group-data-[collapsible=icon]:hidden"
+            className="mb-1 px-2 uppercase text-sidebar-foreground/45 group-data-[collapsible=icon]:hidden"
             style={{ fontSize: "0.6rem", fontWeight: 700, letterSpacing: "0.1em" }}
           >
             Khác
@@ -273,7 +244,8 @@ export function AdminSidebar() {
                       tooltip={label}
                       onClick={() => navigate(to)}
                       className="
-                        h-10 rounded-xl gap-3 transition-all
+                        h-10 rounded-xl gap-3 transition-all text-sidebar-foreground/75
+                        hover:bg-sidebar-accent hover:text-sidebar-accent-foreground
                         group-data-[collapsible=icon]:!justify-center
                         group-data-[collapsible=icon]:!w-10
                         group-data-[collapsible=icon]:!mx-auto
@@ -286,12 +258,11 @@ export function AdminSidebar() {
                               color: "#fff",
                               boxShadow: "0 4px 12px rgba(110,53,232,0.35)",
                             }
-                          : { color: "rgba(255,255,255,0.55)" }
+                          : undefined
                       }
                     >
                       <Icon
-                        className="size-[18px] shrink-0"
-                        style={{ color: active ? "#fff" : "rgba(255,255,255,0.55)" }}
+                        className={`size-[18px] shrink-0 ${active ? "text-white" : "text-sidebar-foreground/70"}`}
                       />
                       <span
                         className="truncate text-[0.8125rem] group-data-[collapsible=icon]:hidden"
@@ -309,7 +280,7 @@ export function AdminSidebar() {
         </div>
       </SidebarContent>
 
-      <div className="mx-2 h-px" style={{ background: "rgba(255,255,255,0.08)" }} />
+      <div className="mx-2 h-px bg-sidebar-border" />
 
       <SidebarFooter className="p-2">
         <SidebarMenu>
@@ -321,18 +292,12 @@ export function AdminSidebar() {
                   className="
                     flex h-11 w-full cursor-pointer items-center gap-3 rounded-xl px-3 py-2
                     transition-all focus:outline-none
+                    bg-sidebar-accent/50 hover:bg-sidebar-accent
                     group-data-[collapsible=icon]:mx-auto
                     group-data-[collapsible=icon]:w-10
                     group-data-[collapsible=icon]:justify-center
                     group-data-[collapsible=icon]:px-0
                   "
-                  style={{ background: "rgba(255,255,255,0.05)" }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = "rgba(255,255,255,0.09)";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = "rgba(255,255,255,0.05)";
-                  }}
                 >
                   <div
                     className="flex size-7 shrink-0 items-center justify-center rounded-full font-bold text-white"
@@ -345,14 +310,14 @@ export function AdminSidebar() {
                     {initials}
                   </div>
                   <div className="min-w-0 flex-1 group-data-[collapsible=icon]:hidden">
-                    <p className="truncate font-medium text-white" style={{ fontSize: "0.78rem" }}>
+                    <p className="truncate font-medium text-slate-900" style={{ fontSize: "0.78rem" }}>
                       {displayName}
                     </p>
-                    <p className="truncate text-white/35" style={{ fontSize: "0.65rem" }}>
+                    <p className="truncate text-slate-500" style={{ fontSize: "0.65rem" }}>
                       {user?.email || ""}
                     </p>
                   </div>
-                  <ChevronsUpDown className="size-3 shrink-0 text-white/25 group-data-[collapsible=icon]:hidden" />
+                  <ChevronsUpDown className="size-3 shrink-0 text-slate-400 group-data-[collapsible=icon]:hidden" />
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent side="top" align="end" className="mb-1 w-56">

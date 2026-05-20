@@ -22,7 +22,8 @@ import {
   Users,
 } from "lucide-react";
 import { fetchCvAnalyses } from "../../utils/cvApi";
-import { hasAuthCredentials } from "../../utils/auth";
+import { hasAuthCredentials, isLoggedIn } from "../../utils/auth";
+import { buildLoginPath } from "../../utils/authGate";
 
 function mapRow(item) {
   return {
@@ -50,6 +51,10 @@ export function AnalysisHistory() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    if (!isLoggedIn()) {
+      navigate(buildLoginPath("/cv-analysis/history"), { replace: true });
+      return;
+    }
     if (!hasAuthCredentials()) return;
     let cancelled = false;
     (async () => {

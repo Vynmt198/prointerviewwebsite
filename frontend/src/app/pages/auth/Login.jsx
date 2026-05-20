@@ -13,6 +13,7 @@ import {
 import {
   loginUser,
   getUser,
+  isLoggedIn,
   getPostLoginPath,
   getBrandClickPath,
 } from "../../utils/auth";
@@ -65,6 +66,13 @@ export function Login() {
   const [error, setError] = useState("");
   const isRegistered = searchParams.get("registered") === "1";
   const t = TESTIMONIALS[0];
+
+  React.useEffect(() => {
+    if (!isLoggedIn()) return;
+    const user = getUser();
+    if (!user) return;
+    navigate(getPostLoginPath(user, searchParams.get("redirect")), { replace: true });
+  }, [navigate, searchParams]);
 
   const handleLogin = async (e) => {
     e.preventDefault();

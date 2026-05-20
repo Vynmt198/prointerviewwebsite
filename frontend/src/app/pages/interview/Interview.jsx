@@ -32,7 +32,8 @@ import {
   Award,
 } from "lucide-react";
 import { getLatestCVAnalysis, getUploadedCV, saveUploadedCV } from "../../utils/history";
-import { hasAuthCredentials } from "../../utils/auth";
+import { hasAuthCredentials, isLoggedIn } from "../../utils/auth";
+import { buildLoginPath } from "../../utils/authGate";
 import { generateInterviewQuestions, extractCvTextFromFile, createInterviewSession } from "../../utils/interviewsApi";
 
 const LEVELS = ["Thực tập sinh", "Mới ra trường", "Junior", "Trung cấp", "Senior"];
@@ -234,6 +235,10 @@ export function Interview() {
 
   const handleStart = async () => {
     if (!canStart || loadingStep) return;
+    if (!isLoggedIn()) {
+      navigate(buildLoginPath("/interview"));
+      return;
+    }
     setExtractWarning("");
 
     // Clear stale session data from previous interview before starting new one

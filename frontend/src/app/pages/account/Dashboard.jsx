@@ -369,6 +369,18 @@ function LearningStreakCard({ days, loading }) {
 
 export function Dashboard() {
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const user = getUser();
+    if (user?.role === "admin") {
+      navigate("/admin", { replace: true });
+      return;
+    }
+    if (user?.role === "mentor") {
+      navigate("/mentor/dashboard", { replace: true });
+    }
+  }, [navigate]);
+
   const user = getUser();
   const fullName = getDisplayName(user);
   const initials = getInitials(fullName);

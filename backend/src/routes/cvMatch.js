@@ -32,11 +32,14 @@ async function proxyToAnalyzer(path, files, res) {
   try {
     data = text ? JSON.parse(text) : {};
   } catch (parseErr) {
-    console.error("[cvMatch] analyzer non-JSON body:", response.status, text?.slice(0, 400), parseErr?.message);
+    console.error("[cvMatch] analyzer non-JSON body:", CV_ANALYZER_URL, response.status, text?.slice(0, 400), parseErr?.message);
+    const isGatewayHtml = response.status >= 500 || text?.trimStart().startsWith("<!");
+    const deployHint = isGatewayHtml
+      ? ` Service Python tại CV_ANALYZER_URL (${CV_ANALYZER_URL}) không phản hồi JSON (HTTP ${response.status}). Trên Render: deploy thư mục cv_jd_matching riêng, Health Check Path = /health, set LLM_API_KEY (+ LLM_BASE_URL, LLM_MODEL), rồi gán URL service vào CV_ANALYZER_URL của backend. Free tier có thể sleep — thử mở URL /health trước khi phân tích.`
+      : " Xem log FastAPI (cv_jd_matching) — thường do lỗi PDF, thiếu LLM_API_KEY, hoặc exception Python.";
     return res.status(502).json({
       success: false,
-      error:
-        "Service phân tích CV trả về dữ liệu không hợp lệ. Xem log terminal của FastAPI (cv_jd_matching) — thường do lỗi PDF, thiếu Ollama/API LLM, hoặc exception trong Python.",
+      error: `Service phân tích CV trả về dữ liệu không hợp lệ.${deployHint}`,
     });
   }
 

@@ -72,6 +72,20 @@ async def _process_upload(label: str, upload: UploadFile) -> dict:
 
 # ── Endpoints ─────────────────────────────────────────────────────────────────
 
+@app.get("/")
+@app.get("/health")
+def health():
+    """Render / load balancer — tránh 404 trên GET / (service bị coi là down)."""
+    llm = check_llm_health()
+    return {
+        "ok": True,
+        "service": "resume-analyzer",
+        "version": "0.3.0",
+        "llm_mode": llm.get("mode"),
+        "llm_ready": bool(llm.get("running")),
+    }
+
+
 @app.get("/health/ollama")
 def ollama_health():
     """Kiểm tra LLM provider (cloud hoặc Ollama) đang khả dụng."""
