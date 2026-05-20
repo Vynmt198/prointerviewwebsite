@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { MentorPageShell } from "../../components/mentor/MentorPageShell";
+import { MentorPageShell } from "../../../components/mentor/MentorPageShell";
 import { useNavigate, useLocation } from "react-router";
 import {
   ArrowLeft,

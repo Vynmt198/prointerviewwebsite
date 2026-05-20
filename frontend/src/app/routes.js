@@ -11,6 +11,7 @@ import { Dashboard } from "./pages/account/Dashboard";
 import { CVAnalysis } from "./pages/cv/CVAnalysis";
 import { AnalysisHistory } from "./pages/cv/AnalysisHistory";
 import { Interview } from "./pages/interview/Interview";
+import { AIGenderSelection } from "./pages/interview/__archived__/AIGenderSelection";
 import InterviewRoom from "./pages/interview/InterviewRoom";
 import { InterviewFeedback } from "./pages/interview/InterviewFeedback";
 import { Mentors } from "./pages/mentors/Mentors";
