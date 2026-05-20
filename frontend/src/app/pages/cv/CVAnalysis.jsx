@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { useNavigate, useSearchParams } from "react-router";
+import { useNavigate, useSearchParams, useLocation } from "react-router";
 import {
   FileText,
   ChevronDown,
@@ -35,6 +35,7 @@ import { apiUrl as expressApiUrl, isExpressBackendConfigured } from "../../utils
 import { CVDocumentPreview } from "../../components/cv/CVDocumentPreview";
 import { MentorPageShell } from "../../components/mentor/MentorPageShell";
 import { addCVAnalysisRecord } from "../../utils/history";
+import { buildCvAnalysisSavePayload, saveCvAnalysis } from "../../utils/cvApi";
 import { projectId, publicAnonKey } from "/utils/supabase/info.js";
 
 // ─── API base ─────────────────────────────────────────────────────────────────
@@ -155,8 +156,16 @@ const DEMO_SUGGESTIONS = [
 
 // ─── Component ────────────────────────────────────────────────────────────────
 export function CVAnalysis() {
-  const navigate    = useNavigate();
+  const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams] = useSearchParams();
+
+  const routeMode = location.pathname.includes("/cv-analysis/field")
+    ? "field"
+    : location.pathname.includes("/cv-analysis/jd")
+      ? "jd"
+      : null;
+  const loginReturnPath = routeMode === "field" ? "/cv-analysis/field" : "/cv-analysis/jd";
   
   const [plans]            = useState(getPlans());
   const [cvRemaining, setCvRemaining] = useState(getCVRemaining());
@@ -197,10 +206,22 @@ export function CVAnalysis() {
   const [deletingId,      setDeletingId]      = useState(null);
   const [loadingAnalysisId, setLoadingAnalysisId] = useState(null);
 
-  // NEW: Optional JD/Field checkboxes
-  // Prod + VITE_API_URL: mặc định CV+JD qua Express → Python (Cách A)
-  const [enableJD, setEnableJD] = useState(USE_EXPRESS_CV);
-  const [enableField, setEnableField] = useState(false);
+  const [enableJD, setEnableJD] = useState(routeMode === "jd" || (routeMode !== "field" && USE_EXPRESS_CV));
+  const [enableField, setEnableField] = useState(routeMode === "field");
+
+  useEffect(() => {
+    if (!routeMode) {
+      navigate("/cv-analysis", { replace: true });
+      return;
+    }
+    if (routeMode === "jd") {
+      setEnableJD(true);
+      setEnableField(false);
+    } else if (routeMode === "field") {
+      setEnableJD(false);
+      setEnableField(true);
+    }
+  }, [routeMode, navigate]);
 
   const canAnalyze  = plans.starterPro || plans.elitePro || cvRemaining > 0;
   const isFreeTier  = !plans.starterPro && !plans.elitePro;
@@ -280,7 +301,7 @@ export function CVAnalysis() {
   // ── Main analyze handler ────────────────────────────────────────────────
   const handleAnalyze = async () => {
     if (!isLoggedIn()) {
-      navigate(buildLoginPath("/cv-analysis"));
+      navigate(buildLoginPath(loginReturnPath));
       return;
     }
     const hasCVInput = cvUploaded || !!reuseCV;
@@ -357,7 +378,7 @@ export function CVAnalysis() {
           clearInterval(timer);
           setStep("upload");
           setAnalyzeError("Vui lòng đăng nhập để phân tích CV.");
-          navigate(buildLoginPath("/cv-analysis"));
+          navigate(buildLoginPath(loginReturnPath));
           return;
         }
         
@@ -418,6 +439,24 @@ export function CVAnalysis() {
           const s    = raw.scores      ?? null;
           const sugg = raw.suggestions ?? {};
 
+          const hasPySuggestions =
+            (sugg.rewritten_bullets?.length ?? 0) > 0 ||
+            (sugg.missing_skill_suggestions?.length ?? 0) > 0;
+          const analysisTier = usedFallback
+            ? "basic"
+            : hasPySuggestions
+              ? "suggestions"
+              : s
+                ? "full"
+                : "basic";
+          const pythonEndpoint = usedFallback
+            ? "/analyze"
+            : hasPySuggestions
+              ? "/analyze/suggestions"
+              : s
+                ? "/analyze/full"
+                : "/analyze";
+
           const matchedSkills = m.matching ?? [];
           const missingSkills = m.missing  ?? [];
 
@@ -458,9 +497,7 @@ export function CVAnalysis() {
           // Bullet rewrites trước, rồi mới skill gaps
           const suggestions = [...bulletSuggestions, ...missSuggestions];
 
-          data = {
-            success: true,
-            analysis: {
+          const analysisPayload = {
               matchScore:      Math.round(m.match_score    ?? 0),
               overallScore:    Math.round((s?.overall ?? 0) * 10),
               totalKeywords:   m.summary?.jd_total         ?? 0,
@@ -484,6 +521,29 @@ export function CVAnalysis() {
               summary:  sugg.executive_summary ?? s?.summary ?? "",
               cvText:   raw.resume_text ?? "",
               jdText:   raw.jd_text     ?? "",
+          };
+
+          const planFlags = getPlans();
+          const planAtTime = planFlags.elitePro ? "enterprise" : planFlags.starterPro ? "pro" : "free";
+          const savePayload = buildCvAnalysisSavePayload({
+            analysis: analysisPayload,
+            cvFileName: cvFile?.name ?? reuseCV?.name ?? "cv.pdf",
+            jdFileName: jdFile?.name ?? reuseJD?.name ?? "",
+            analyzeMode: "jd",
+            tier: analysisTier,
+            planAtTime,
+            meta: { pythonEndpoint, fallbackTriggered: usedFallback },
+          });
+          const saveRes = await saveCvAnalysis(savePayload);
+          if (!saveRes.success) {
+            console.warn("[CV] Không lưu được lịch sử MongoDB:", saveRes.error);
+          }
+
+          data = {
+            success: true,
+            analysisId: saveRes.analysisId || null,
+            analysis: {
+              ...analysisPayload,
             },
           };
         } else {
@@ -504,7 +564,7 @@ export function CVAnalysis() {
               clearInterval(timer);
               setStep("upload");
               setAnalyzeError("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.");
-              navigate(buildLoginPath("/cv-analysis"));
+              navigate(buildLoginPath(loginReturnPath));
               return;
             }
             const errJson = await res.json().catch(() => ({}));
@@ -568,15 +628,18 @@ export function CVAnalysis() {
 
   // ── Re-analyze from stored paths ────────────────────────────────────────
   const reAnalyze = (item) => {
-    navigate(`/cv-analysis`);
+    const target = item.mode === "field" || item.field ? "/cv-analysis/field" : "/cv-analysis/jd";
+    navigate(target);
     if (item.cvStoragePath) setReuseCV({ path: item.cvStoragePath, name: item.cvFileName });
     if (item.jdStoragePath && item.jdFileName) {
       setReuseJD({ path: item.jdStoragePath, name: item.jdFileName });
       setEnableJD(true);
+      setEnableField(false);
     }
     if (item.field) {
       setSelectedField(item.field);
       setEnableField(true);
+      setEnableJD(false);
     }
     // Pre-mark as uploaded so button activates
     setCvUploaded(true);
@@ -609,6 +672,14 @@ export function CVAnalysis() {
     <MentorPageShell bottomPad="pb-8">
       <div className="relative z-[1] mx-auto w-full max-w-7xl px-6 pb-4 pt-4 sm:px-8 sm:pb-6 sm:pt-6">
         <div className="mb-8">
+        <button
+          type="button"
+          onClick={() => navigate("/cv-analysis")}
+          className="mb-4 flex items-center gap-2 text-sm font-semibold text-slate-600 transition-colors hover:text-[#6E35E8]"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Quay lại chọn loại phân tích
+        </button>
         <div className="mb-4 flex items-center gap-3">
           <FileText
             className="size-6 shrink-0 text-lime-900"
@@ -616,14 +687,25 @@ export function CVAnalysis() {
             strokeLinecap="round"
             strokeLinejoin="round"
           />
-          <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-800 sm:text-[11px]">Phân tích CV/JD</span>
+          <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-800 sm:text-[11px]">
+            {routeMode === "field" ? "Phân tích theo ngành" : "Phân tích CV + JD"}
+          </span>
         </div>
         <h1 className="app-page-title mb-3">
-          Phân tích CV{" "}
-          <span className="text-[#6E35E8]">& JD</span>
+          {routeMode === "field" ? (
+            <>
+              Phân tích CV <span className="text-[#6E35E8]">theo ngành</span>
+            </>
+          ) : (
+            <>
+              Phân tích CV <span className="text-[#6E35E8]">với JD</span>
+            </>
+          )}
         </h1>
         <p className="app-page-subtitle">
-          Hệ thống AI đa năng tự động phân tích CV, trích xuất kỹ năng chuyên môn từ JD và tạo đề xuất cải thiện hồ sơ phù hợp. Lưu trữ sẵn sàng cho Phỏng vấn AI thực tế.
+          {routeMode === "field"
+            ? "Tải CV, chọn nhóm ngành nghề — AI đánh giá cấu trúc, nội dung và gợi ý cải thiện theo chuẩn ngành."
+            : "Tải CV và Job Description (PDF) — so khớp từ khóa, chấm điểm và gợi ý chỉnh sửa theo đúng vị trí tuyển dụng."}
         </p>
         </div>
 
@@ -902,90 +984,8 @@ export function CVAnalysis() {
                 </div>
               </div>
 
-              {/* Optional modes as modern button toggles */}
-              <div className="mb-8">
-                <div className="mb-4">
-                  <h3 className="mb-2 text-base font-bold text-slate-900">Tùy chọn phân tích nâng cao</h3>
-                  <p className="text-sm text-slate-600">Chọn một trong các tùy chọn để phân tích chuyên sâu hơn</p>
-                </div>
-                
-                <div className="grid md:grid-cols-2 gap-4">
-                  {/* Button: Upload JD */}
-                  <button
-                    onClick={() => {
-                      setEnableJD(!enableJD);
-                      if (!enableJD) setEnableField(false);
-                    }}
-                    className={`group relative rounded-2xl border-2 p-6 text-left backdrop-blur-sm transition-all hover:shadow-md ${
-                      enableJD
-                        ? "border-[#6E35E8] bg-violet-50 shadow-sm"
-                        : "border-slate-300 bg-white hover:border-violet-400/35"
-                    }`}
-                  >
-                    <div className="flex items-start gap-4">
-                      <div className={`flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl transition-all ${
-                        enableJD ? "bg-[#6E35E8] shadow-lg shadow-[#6E35E8]/25" : "bg-slate-100 group-hover:bg-[#6E35E8]/15"
-                      }`}>
-                        <Briefcase className={`h-6 w-6 ${enableJD ? "text-white" : "text-slate-500 group-hover:text-violet-500"}`} fill={enableJD ? "currentColor" : "none"} />
-                      </div>
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                          <p className={`font-bold ${enableJD ? "text-violet-950" : "text-slate-900"}`}>
-                            Có Job Description
-                          </p>
-                          {enableJD && (
-                            <div className="w-5 h-5 rounded-full bg-[#B4F000] flex items-center justify-center">
-                              <Check className="w-3 h-3 text-[#4A7A00]" />
-                            </div>
-                          )}
-                        </div>
-                        <p className={`text-sm leading-relaxed ${enableJD ? "text-slate-700" : "text-slate-600"}`}>
-                          Upload JD để phân tích mức độ phù hợp CV với vị trí tuyển dụng cụ thể
-                        </p>
-                      </div>
-                    </div>
-                  </button>
-
-                  {/* Button: Select Field */}
-                  <button
-                    onClick={() => {
-                      setEnableField(!enableField);
-                      if (!enableField) setEnableJD(false);
-                    }}
-                    className={`group relative rounded-2xl border-2 p-6 text-left backdrop-blur-sm transition-all hover:shadow-md ${
-                      enableField
-                        ? "border-[#8B4DFF] bg-violet-50 shadow-sm"
-                        : "border-slate-300 bg-white hover:border-violet-400/35"
-                    }`}
-                  >
-                    <div className="flex items-start gap-4">
-                      <div className={`flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl transition-all ${
-                        enableField ? "bg-[#8B4DFF] shadow-lg shadow-[#8B4DFF]/25" : "bg-slate-100 group-hover:bg-[#8B4DFF]/15"
-                      }`}>
-                        <Users className={`h-6 w-6 ${enableField ? "text-white" : "text-slate-500 group-hover:text-violet-500"}`} fill={enableField ? "currentColor" : "none"} />
-                      </div>
-                      <div className="flex-1">
-                        <div className="mb-1 flex items-center gap-2">
-                          <p className={`font-bold ${enableField ? "text-violet-950" : "text-slate-900"}`}>
-                            Chọn theo ngành nghề
-                          </p>
-                          {enableField && (
-                            <div className="w-5 h-5 rounded-full bg-[#B4F000] flex items-center justify-center">
-                              <Check className="w-3 h-3 text-[#4A7A00]" />
-                            </div>
-                          )}
-                        </div>
-                        <p className={`text-sm leading-relaxed ${enableField ? "text-slate-700" : "text-slate-600"}`}>
-                          Đánh giá và tinh chỉnh CV đạt chuẩn chuyên nghiệp của từng nhóm ngành.
-                        </p>
-                      </div>
-                    </div>
-                  </button>
-                </div>
-              </div>
-
-              {/* JD Upload zone - conditional */}
-              {enableJD && (
+              {/* JD Upload — /cv-analysis/jd */}
+              {routeMode === "jd" && enableJD && (
                 <div className="mb-8">
                   <div className="mb-4">
                     <h3 className="mb-1 text-base font-bold text-slate-900">Upload Job Description</h3>
@@ -1028,8 +1028,8 @@ export function CVAnalysis() {
                 </div>
               )}
 
-              {/* Field selector - conditional */}
-              {enableField && (
+              {/* Chọn ngành — chỉ luồng /cv-analysis/field */}
+              {routeMode === "field" && enableField && (
                 <div className="mb-8">
                   <div className="mb-4">
                     <h3 className="mb-1 text-base font-bold text-slate-900">Chọn ngành nghề</h3>
