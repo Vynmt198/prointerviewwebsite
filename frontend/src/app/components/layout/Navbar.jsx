@@ -25,6 +25,10 @@ import {
 import { CUSTOMER_NAV_ITEMS, isCustomerNavActive } from "./customerNav";
 import { CUSTOMER_SHELL_GUTTER, CUSTOMER_SHELL_MAX } from "./customerShellLayout";
 import { BrandLogo } from "../brand/BrandLogo";
+<<<<<<< HEAD
+import { buildLoginPath, buildRegisterPath } from "../../utils/authGate";
+=======
+>>>>>>> origin/main
 
 const PAGE_TITLES = {
   "/dashboard": { label: "Bảng điều khiển", sub: "Tổng quan tiến độ học của bạn" },
@@ -108,6 +112,11 @@ function CustomerNavbar() {
   const user = getUser();
   const displayName = getDisplayName(user);
   const initials = getInitials(displayName);
+<<<<<<< HEAD
+  const loginHref = buildLoginPath(`${location.pathname}${location.search}`);
+  const registerHref = buildRegisterPath(`${location.pathname}${location.search}`);
+=======
+>>>>>>> origin/main
 
   React.useEffect(() => {
     setMobileOpen(false);
@@ -342,14 +351,22 @@ function CustomerNavbar() {
           ) : (
             <>
               <Link
+<<<<<<< HEAD
+                to={loginHref}
+=======
                 to="/login"
+>>>>>>> origin/main
                 className="hidden items-center gap-1.5 whitespace-nowrap rounded-full border border-slate-200 bg-white px-4 py-1.5 text-sm font-semibold text-slate-700 transition-all hover:bg-slate-50 sm:inline-flex"
               >
                 <LogIn className="size-3.5 shrink-0" aria-hidden />
                 Đăng nhập
               </Link>
               <Link
+<<<<<<< HEAD
+                to={registerHref}
+=======
                 to="/register"
+>>>>>>> origin/main
                 className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-4 py-1.5 text-sm font-semibold transition-all hover:scale-105 active:scale-95 sm:px-5"
                 style={{
                   background: "#fff",
@@ -381,7 +398,11 @@ function CustomerNavbar() {
           {!loggedIn ? (
             <div className="mt-2 flex flex-col gap-2 border-t border-slate-100 pt-2">
               <Link
+<<<<<<< HEAD
+                to={loginHref}
+=======
                 to="/login"
+>>>>>>> origin/main
                 className="flex items-center justify-center gap-2 rounded-full border border-slate-200 py-2.5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
                 onClick={() => setMobileOpen(false)}
               >
@@ -389,7 +410,11 @@ function CustomerNavbar() {
                 Đăng nhập
               </Link>
               <Link
+<<<<<<< HEAD
+                to={registerHref}
+=======
                 to="/register"
+>>>>>>> origin/main
                 className="flex items-center justify-center gap-2 rounded-full py-2.5 text-sm font-semibold transition-all"
                 style={{
                   background: "#fff",
