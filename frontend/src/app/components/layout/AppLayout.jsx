@@ -4,9 +4,13 @@ import { SidebarProvider, SidebarInset } from "../ui/sidebar";
 import { AppSidebar } from "./Sidebar";
 import { Navbar } from "./Navbar";
 import { resolveDocumentTitle } from "../../utils/documentTitle";
+import { getUser } from "../../utils/auth";
+import { SidebarMascot } from "./SidebarMascot";
 
 export function AppLayout() {
   const location = useLocation();
+  const user = getUser();
+  const isMentor = user?.role === "mentor";
 
   useEffect(() => {
     document.title = resolveDocumentTitle(location.pathname);
@@ -35,6 +39,7 @@ export function AppLayout() {
           </div>
         </SidebarInset>
       </SidebarProvider>
+      {!isMentor && <SidebarMascot />}
     </div>
   );
 }

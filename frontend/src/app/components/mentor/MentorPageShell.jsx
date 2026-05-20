@@ -74,7 +74,7 @@ export function MentorPageShell({
         aria-hidden
       />
       <div
-        className="pointer-events-none fixed -bottom-[14%] -left-[8%] h-[min(520px,65vw)] w-[min(520px,65vw)] rounded-full bg-[#6E35E8]/18 blur-[110px] -z-[1]"
+        className="pointer-events-none fixed -bottom-[14%] -left-[8%] h-[min(520px,65vw)] w-[min(520px,65vw)] rounded-full bg-[#c4ff47]/14 blur-[110px] -z-[1]"
         aria-hidden
       />
       <div

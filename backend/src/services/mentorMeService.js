@@ -273,17 +273,23 @@ export async function listReviewsForMentor(rawMentorId) {
   if (!mentor || mentor.isActive === false) return { ok: false, status: 404, error: "Not found" };
   const rows = await Review.find({ targetType: "mentor", targetId: mentor._id, isVisible: { $ne: false } })
     .sort({ createdAt: -1 })
+    .populate({ path: "userId", select: "name avatar desiredPosition" })
     .lean();
   return {
     ok: true,
-    reviews: rows.map((r) => ({
-      id: String(r._id),
-      rating: r.rating,
-      comment: r.comment ?? "",
-      tags: r.tags ?? [],
-      reply: r.reply?.content ? { content: r.reply.content, repliedAt: r.reply.repliedAt } : null,
-      createdAt: r.createdAt,
-    })),
+    reviews: rows.map((r) => {
+      const u = r.userId && typeof r.userId === "object" ? r.userId : null;
+      return {
+        id: String(r._id),
+        rating: r.rating,
+        comment: r.comment ?? "",
+        tags: r.tags ?? [],
+        reply: r.reply?.content ? { content: r.reply.content, repliedAt: r.reply.repliedAt } : null,
+        createdAt: r.createdAt,
+        userName: u?.name || "",
+        userAvatar: u?.avatar || "",
+      };
+    }),
   };
 }
 

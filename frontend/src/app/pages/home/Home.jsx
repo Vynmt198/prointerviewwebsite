@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { motion } from "motion/react";
 import { useNavigate, Link } from "react-router";
 import {
   Mic as Microphone,
@@ -33,8 +34,14 @@ import { navigateToInterview, requireLoginNavigate } from "../../utils/authGate"
 import { Footer } from "../../components/layout/Footer";
 import { TopNavShell } from "../../components/layout/TopNavShell";
 import { RecommendedJourney } from "../../components/home/RecommendedJourney";
+import { CvAnalysisFeatureShowcase } from "../../components/home/CvAnalysisFeatureShowcase";
 import { BrandLogo } from "../../components/brand/BrandLogo";
 import { SparkleGlyph } from "../../components/decor/SparkleGlyph.jsx";
+import {
+  LandingReveal,
+  LandingStagger,
+  LandingItem,
+} from "../../components/home/landing/LandingReveal";
 
 /* ─── Data ──────────────────────────────────────────────── */
 const FEATURES = [
@@ -45,10 +52,10 @@ const FEATURES = [
     dotColor: "#B4F500",
     borderHover: "rgba(196, 255, 71,0.5)",
     bgHover: "rgba(196, 255, 71,0.07)",
-    title: "Phân tích CV/JD",
-    desc: "AI phân tích mức độ phù hợp giữa CV và JD, đưa ra gợi ý tối ưu cụ thể cho từng vị trí.",
+    title: "So CV với JD",
+    desc: "Tải lên, biết ngay khớp hay trượt — có gợi ý sửa từng vị trí.",
     route: "/cv-analysis",
-    cta: "Phân tích ngay",
+    cta: "So ngay",
   },
   {
     icon: Brain,
@@ -58,9 +65,9 @@ const FEATURES = [
     borderHover: "rgba(110, 53, 232,0.5)",
     bgHover: "rgba(110, 53, 232,0.08)",
     title: "Phỏng vấn thử với AI",
-    desc: "Luyện tập với các câu hỏi HR phổ biến, nhận phản hồi chi tiết theo mô hình STAR sau mỗi câu trả lời.",
+    desc: "Câu hỏi sát thực tế, góp ý STAR từng câu — không chém gió.",
     route: "/interview",
-    cta: "Phỏng vấn thử",
+    cta: "Vào phòng thử",
   },
   {
     icon: Users,
@@ -69,10 +76,10 @@ const FEATURES = [
     dotColor: "#FFB800",
     borderHover: "rgba(255,184,0,0.5)",
     bgHover: "rgba(255,184,0,0.07)",
-    title: "Mentor 1:1 Thực tế",
-    desc: "Đặt lịch phỏng vấn chuyên ngành 1-1 với HR/Manager từ Shopee, Vingroup, FPT và 200+ công ty hàng đầu.",
+    title: "Mentor 1:1 thật",
+    desc: "Đặt lịch với HR/Manager công ty lớn — kinh nghiệm nội bộ, chuẩn gu.",
     route: "/mentors",
-    cta: "Tìm Mentor",
+    cta: "Chọn mentor",
   },
   {
     icon: TrendUp,
@@ -81,10 +88,10 @@ const FEATURES = [
     dotColor: "#38BDF8",
     borderHover: "rgba(167,139,250,0.)",
     bgHover: "rgba(167,139,250,0.)",
-    title: "Theo Dõi Tiến Bộ",
-    desc: "Bảng điều khiển cá nhân hóa với biểu đồ tiến bộ, lịch sử phỏng vấn và lộ trình kỹ năng cụ thể.",
+    title: "Theo dõi tiến độ",
+    desc: "Biểu đồ tiến bộ, lịch sử luyện — biết mình đang ở đâu.",
     route: "/dashboard",
-    cta: "Xem bảng điều khiển",
+    cta: "Xem tiến độ",
   },
 ];
 
@@ -92,29 +99,29 @@ const STEPS = [
   {
     step: "01",
     icon: FileText,
-    title: "Phân tích CV/JD",
-    desc: "AI phân tích mức độ phù hợp giữa CV và JD, đưa ra gợi ý tối ưu cụ thể cho từng vị trí.",
+    title: "So CV với JD",
+    desc: "Có điểm khớp và danh sách cần sửa cho từng vị trí.",
     color: "#7000ff",
   },
   {
     step: "02",
     icon: Brain,
-    title: "Phỏng vấn thử với AI",
-    desc: "Luyện tập trả lời với AI chuyên gia, nhận phản hồi chi tiết theo mô hình STAR.",
+    title: "Phỏng vấn thử AI",
+    desc: "Luyện trả lời, chấm STAR ngay — giống phòng phỏng vấn thật.",
     color: "#b8f600",
   },
   {
     step: "03",
     icon: Users,
-    title: "Mentor 1:1 thực tế",
-    desc: "Kết nối và phỏng vấn trực tiếp với các chuyên gia/HR từ những tập đoàn lớn.",
+    title: "Mentor 1:1",
+    desc: "Gặp HR/Manager thật — mẹo nội bộ, không tìm trên mạng được.",
     color: "#7000ff",
   },
   {
     step: "04",
     icon: GraduationCap,
     title: "Khóa học",
-    desc: "Học lộ trình từ mentor chuyên gia: video bài giảng, bài tập thực hành và feedback để nâng kỹ năng phỏng vấn.",
+    desc: "Video + bài tập mentor duyệt — học xong ứng tuyển được luôn.",
     color: "#7000ff",
   },
 ];
@@ -125,51 +132,51 @@ const TESTIMONIALS = [
     role: "Software Engineer @ Shopee",
     avatar: "PA",
     grad: "from-[#6E35E8] to-[#9B6DFF]",
-    text: "Sau 3 buổi phỏng vấn thử với AI và 1 buổi với mentor từ Shopee, mình tự tin hơn hẳn. Câu hỏi AI đặt ra rất sát thực tế, phản hồi chi tiết giúp mình biết chính xác điểm cần cải thiện.",
+    text: "Ba buổi phỏng vấn thử với AI và một buổi mentor Shopee — mình tự tin hơn hẳn. Câu hỏi sát thực tế, góp ý đúng chỗ cần sửa.",
     stars: 5,
-    tag: "Đã nhận offer",
+    tag: "Đã nhận việc",
   },
   {
     name: "Nguyễn Thị Hoa",
     role: "Marketing Executive @ Unilever",
     avatar: "NH",
     grad: "from-pink-500 to-rose-600",
-    text: "Phần phân tích CV/JD của ProInterview giúp mình nhận ra CV thiếu nhiều keyword quan trọng. Điểm STAR của mình tăng từ 2.4 lên 4.1 sau 3 tuần luyện tập.",
+    text: "So CV với JD xong mới biết CV thiếu từ khóa quan trọng. Điểm STAR từ 2.4 lên 4.1 sau ba tuần — tiến bộ có thật.",
     stars: 5,
-    tag: "Tăng STAR +70%",
+    tag: "STAR +70%",
   },
   {
     name: "Trần Minh Đức",
     role: "Business Analyst @ KPMG",
     avatar: "TM",
     grad: "from-emerald-500 to-teal-600",
-    text: "Tính năng matching CV-JD rất hay, chỉ ra đúng điểm yếu của CV. Mentor từ KPMG chia sẻ insider tips rất thực tế, khác hẳn các tài liệu trên mạng.",
+    text: "So khớp CV–JD chỉ đúng điểm yếu. Mentor KPMG chia sẻ kinh nghiệm thật — khác hẳn đọc blog cho có.",
     stars: 5,
     tag: "Mentor 5 sao",
   },
 ];
 
 const STATS = [
-  { value: "10,000+", label: "Ứng viên đã luyện tập" },
-  { value: "500+", label: "Mentor chuyên nghiệp" },
-  { value: "85%", label: "Tỷ lệ được nhận việc" },
-  { value: "4.8/5", label: "Điểm hài lòng" },
+  { value: "10,000+", label: "Bạn đã luyện phỏng vấn" },
+  { value: "500+", label: "Mentor thật, không ảo" },
+  { value: "85%", label: "Tỉ lệ nhận việc" },
+  { value: "4.8/5", label: "Hài lòng 4.8★" },
 ];
 
 /** Clip demo phỏng vấn AI — dùng chung hero (cột phải) và mock màn hình khu tính năng. */
 const HOME_AI_DEMO_VIDEO =
   "https://res.cloudinary.com/dee4bvivu/video/upload/v1774336640/Female_delxmy.mp4";
 const NAV_LINKS = [
-  { label: "Tính năng", href: "#features" },
+  { label: "Lộ trình", href: "#features" },
   { label: "Khóa học", href: "#courses" },
   { label: "Đánh giá", href: "#mentors" },
   { label: "Bảng giá", href: "#pricing" },
 ];
 
-/** Hero: video + viền tím mỏng + khoảng cách giữa viền và video + thẻ feedback. */
+/** Hero: video phỏng vấn + sticker gấu góc phải. */
 function HeroInterviewVideoCard() {
   return (
-    <div className="relative mx-auto w-full max-w-[min(100%,268px)] sm:max-w-[300px] lg:max-w-[332px] lg:justify-self-end">
+    <div className="relative mx-auto w-full max-w-[min(100%,268px)] overflow-visible sm:max-w-[300px] lg:max-w-[332px] lg:justify-self-end">
       <div
         className="rounded-[22px] p-2 sm:p-2.5"
         style={{
@@ -190,23 +197,19 @@ function HeroInterviewVideoCard() {
           >
             <source src={HOME_AI_DEMO_VIDEO} type="video/mp4" />
           </video>
-          <div
-            className="absolute bottom-3 left-3 z-10 flex max-w-[calc(100%-1.5rem)] items-center gap-2 rounded-full border-2 border-white bg-white py-2 pl-2 pr-3 shadow-[0_8px_24px_-10px_rgba(15,23,42,0.35)] sm:bottom-4 sm:left-4 sm:gap-2.5 sm:py-2.5 sm:pl-2.5 sm:pr-3.5"
-            role="status"
-          >
-            <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-600 ring-2 ring-emerald-200/90 sm:size-8">
-              <Check className="size-3.5 stroke-[2.5]" />
-            </span>
-            <div className="min-w-0">
-              <p className="text-[11px] font-black leading-tight text-slate-900 sm:text-[12px]">Bạn làm tốt lắm!</p>
-              <p className="text-[9px] font-medium text-slate-500 sm:text-[10px]">Phản hồi AI vừa xong</p>
-            </div>
-          </div>
         </div>
       </div>
+
+      <img
+        src="/mascot-features-hero.png?v=21"
+        alt=""
+        aria-hidden
+        className="hero-home-mascot-sticker pointer-events-none absolute -bottom-8 -right-8 z-20 hidden h-[7.25rem] w-[7.25rem] object-contain drop-shadow-[0_14px_32px_rgba(110,53,232,0.22)] sm:block sm:-bottom-9 sm:-right-9 sm:h-[8.25rem] sm:w-[8.25rem] lg:-bottom-10 lg:-right-10 lg:h-[9rem] lg:w-[9rem]"
+      />
     </div>
   );
 }
+
 
 /** Mock cửa sổ phỏng vấn AI + video + overlay (section Interview Preview). */
 function InterviewDemoMockup() {
@@ -228,7 +231,7 @@ function InterviewDemoMockup() {
   const statTxt = "text-[12px] font-semibold";
 
   return (
-    <div className="relative mx-auto w-full max-w-[560px] scale-[0.96] origin-center lg:max-w-[620px] lg:scale-[0.92]">
+    <div className="relative flex h-full w-full min-h-0 flex-col lg:max-w-[620px] lg:mx-auto">
       <div
         className={`absolute ${glow} rounded-[32px] opacity-0 pointer-events-none`}
         style={{
@@ -237,9 +240,9 @@ function InterviewDemoMockup() {
         }}
         aria-hidden
       />
-      <div className={`glass-card ${shell}`}>
+      <div className={`glass-card flex h-full min-h-0 flex-1 flex-col ${shell}`}>
         <div
-          className={`relative ${inner} overflow-hidden border-0 bg-[#ffffff]/95`}
+          className={`relative flex min-h-0 flex-1 flex-col ${inner} overflow-hidden border-0 bg-[#ffffff]/95`}
           style={{
             boxShadow: "0 24px 64px rgba(0,0,0,0.5), 0 0 0 1px rgba(167,139,250,0.) inset",
           }}
@@ -270,7 +273,7 @@ function InterviewDemoMockup() {
             </div>
           </div>
 
-          <div className="relative bg-[#ffffff]" style={{ aspectRatio: "16/10" }}>
+          <div className="relative min-h-[200px] flex-1 bg-[#ffffff] sm:min-h-[240px]">
             <div className="absolute inset-0 flex items-center justify-center">
               <video
                 autoPlay
@@ -407,6 +410,9 @@ export function Home() {
 
     const onScroll = () => {
       const y = window.scrollY;
+      const max = document.documentElement.scrollHeight - window.innerHeight;
+      const progress = max > 0 ? Math.min(1, Math.max(0, y / max)) : 0;
+      document.documentElement.style.setProperty("--landing-scroll", String(progress));
       setScrolled(y > 20);
 
       if (y < 300) {
@@ -414,8 +420,17 @@ export function Home() {
         return;
       }
 
-      // Find the section whose top is closest above the viewport midpoint
+      // Chưa tới Khóa học → vẫn highlight Lộ trình (4 bước + PV AI + So CV/JD)
       const mid = window.innerHeight * 0.5;
+      const coursesEl = document.getElementById("courses");
+      const beforeCourses =
+        !coursesEl || coursesEl.getBoundingClientRect().top > mid;
+
+      if (beforeCourses) {
+        setActiveSection("#features");
+        return;
+      }
+
       let found = "";
       for (const id of sectionIds) {
         const el = document.getElementById(id);
@@ -427,6 +442,7 @@ export function Home() {
     };
 
     window.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
 
     // Check for scrollTo param
     const params = new URLSearchParams(window.location.search);
@@ -640,6 +656,49 @@ export function Home() {
           50% { opacity: 0.7; transform: translate(2%, -2%) scale(1.05); }
           100% { opacity: 0.4; transform: translate(0,0) scale(1); }
         }
+        .landing-scroll-ambient {
+          position: fixed;
+          inset: 0;
+          z-index: 0;
+          pointer-events: none;
+          background:
+            radial-gradient(
+              55% 35% at 15% calc(var(--landing-scroll, 0) * 100%),
+              rgba(99, 14, 212, 0.14),
+              transparent 65%
+            ),
+            radial-gradient(
+              45% 30% at 88% calc(var(--landing-scroll, 0) * 85% + 8%),
+              rgba(191, 243, 101, 0.1),
+              transparent 60%
+            );
+          transition: opacity 0.4s ease;
+        }
+        .landing-section-flow {
+          position: relative;
+        }
+        .landing-section-flow::before {
+          content: "";
+          position: absolute;
+          left: 50%;
+          top: -3rem;
+          width: 1px;
+          height: 3rem;
+          transform: translateX(-50%);
+          background: linear-gradient(to bottom, transparent, rgba(124, 58, 237, 0.35));
+          opacity: 0;
+          animation: landingConnectorIn 0.8s ease forwards;
+          animation-timeline: view();
+          animation-range: entry 0% cover 25%;
+        }
+        @keyframes landingConnectorIn {
+          to { opacity: 1; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .landing-section-flow::before { animation: none; opacity: 0.4; }
+          .hero-orbit-text { animation: none !important; }
+          .float-icon, .float-icon-delay, .float-icon-slow { animation: none !important; }
+        }
         .font-headline {
           letter-spacing: -0.045em;
           text-shadow: none;
@@ -669,6 +728,39 @@ export function Home() {
         }
         #pricing > .max-w-7xl > .grid > .glass-card {
           overflow: visible !important;
+        }
+        .glass-card.interview-preview-card {
+          overflow: visible !important;
+          transition: border-color 0.25s ease, box-shadow 0.25s ease;
+        }
+        .glass-card.interview-preview-card:hover {
+          transform: none;
+        }
+        .courses-glass-card {
+          background: rgba(255, 255, 255, 0.78);
+          backdrop-filter: blur(20px);
+          -webkit-backdrop-filter: blur(20px);
+          border: 1px solid rgba(255, 255, 255, 0.55);
+          border-radius: 24px;
+          box-shadow: 0 8px 32px rgba(124, 58, 237, 0.08);
+          transition: border-color 0.25s ease, box-shadow 0.3s ease, transform 0.3s ease;
+        }
+        .courses-glass-card:hover {
+          border-color: rgba(124, 58, 237, 0.22);
+          box-shadow: 0 12px 40px rgba(124, 58, 237, 0.14);
+          transform: translateY(-2px);
+        }
+        .courses-cta-primary {
+          background: #bff365;
+          color: #131f00;
+          box-shadow: 0 10px 24px rgba(164, 214, 76, 0.35);
+        }
+        .courses-cta-primary:hover {
+          box-shadow: 0 14px 32px rgba(164, 214, 76, 0.45);
+        }
+        .courses-mascot-lean {
+          object-fit: contain;
+          object-position: left bottom;
         }
         @keyframes testimonial-marquee {
           0% {
@@ -709,6 +801,8 @@ export function Home() {
           }
         }
       `}</style>
+
+      <motion.div className="landing-scroll-ambient" aria-hidden />
 
       <div className="home-page-violet-ambient" aria-hidden />
 
@@ -822,7 +916,7 @@ export function Home() {
                   className="flex items-center justify-center gap-2 py-2.5 rounded-full text-sm font-bold"
                   style={{ background: "linear-gradient(135deg, #B4F500, #8fbc24)", color: "#120B2E" }}
                 >
-                  <Lightning className="w-4 h-4" /> Trải nghiệm thử miễn phí
+                  <Lightning className="w-4 h-4" /> Thử miễn phí
                 </button>
               </div>
             </div>
@@ -851,7 +945,7 @@ export function Home() {
                 }}
               >
                 <SparkleGlyph className="w-3.5 h-3.5" />
-                Nền tảng luyện phỏng vấn với AI
+                Bạn đồng hành luyện phỏng vấn
               </div>
 
               <h1
@@ -875,16 +969,15 @@ export function Home() {
                 >
                   1:1 với AI
                 </span>
-                <span className="text-slate-900"> qua mô phỏng hội thoại thông minh</span>
+                <span className="block text-slate-900">qua mô phỏng hội thoại thông minh</span>
               </h1>
 
               <p
                 className="mb-5 max-w-2xl leading-relaxed text-slate-600 font-medium"
                 style={{ fontSize: "0.9rem" }}
               >
-                ProInterview phân tích CV/JD, tạo câu hỏi phỏng vấn
-                cá nhân hóa, và kết nối bạn với Mentor HR thực tế từ
-                Shopee, Vingroup, FPT và hơn 200 công ty hàng đầu.
+                So CV với JD, luyện trả lời với AI, gặp mentor từ Shopee, Vingroup, FPT…
+                Mở app là thấy tiến bộ rõ — không còn phải tự lo một mình trên hành trình tìm việc.
               </p>
 
               <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:justify-start">
@@ -900,11 +993,13 @@ export function Home() {
                   }}
                 >
                   <Lightning className="w-5 h-5" />
-                  Phỏng vấn thử miễn phí
+                  Thử phỏng vấn miễn phí
                 </button>
                 <button
                   type="button"
-                  onClick={() => navigate("/pricing")}
+                  onClick={() =>
+                    document.getElementById("pricing")?.scrollIntoView({ behavior: "smooth" })
+                  }
                   className="inline-flex items-center justify-center gap-1.5 px-5 py-2.5 rounded-full text-sm font-bold transition-all hover:bg-violet-50 active:scale-95 bg-white text-slate-800"
                   style={{
                     border: "1px solid rgba(95, 0, 240, 0.38)",
@@ -912,7 +1007,7 @@ export function Home() {
                   }}
                 >
                   <Tag className="w-4 h-4 text-[#6E35E8]" />
-                  Xem giá
+                  Xem giá nè
                 </button>
               </div>
             </div>
@@ -969,7 +1064,7 @@ export function Home() {
       {/* ═══ HOW IT WORKS ════════════════════════════════════ */}
       <section
         id="features"
-        className="relative z-10 h-screen max-h-screen flex flex-col justify-center overflow-hidden pt-6 md:pt-8 lg:pt-10"
+        className="landing-section-flow relative z-10 h-screen max-h-screen flex flex-col justify-center overflow-hidden pt-6 md:pt-8 lg:pt-10"
       >
         {renderSectionSticks([
           { x: 10, y: 16, size: 34, opacity: 0.45 },
@@ -977,24 +1072,32 @@ export function Home() {
           { x: 82, y: 78, size: 32, opacity: 0.44 },
         ])}
         <div className="max-w-7xl mx-auto px-6 relative z-10 w-full py-2">
-          <div className="text-center mb-6 pt-5">
-            <div className="flex justify-center mb-5">
-              <span className="h-1 w-10 rounded-full bg-gradient-to-r from-[#6E35E8] to-[#9B6DFF]" />
+          <LandingReveal className="mb-6 pt-5" y={24}>
+            <div className="mx-auto mb-5 flex max-w-4xl flex-col items-center">
+              <div className="flex items-center justify-center">
+                <img
+                  src="/mascot-features.png?v=4"
+                  alt="Gấu Piupiu"
+                  className="relative z-10 h-auto w-[9.5rem] shrink-0 -translate-x-[0.5rem] -translate-y-[0.65rem] drop-shadow-[0_16px_32px_rgba(110,53,232,0.18)] sm:w-[10.5rem] sm:-translate-y-[0.9rem] md:w-[11rem]"
+                />
+                <div className="relative z-0 -ml-[3.15rem] text-left sm:-ml-[3.4rem] md:-ml-[3.65rem]">
+                  <span className="mb-3 block h-1.5 w-12 rounded-full bg-[#6E35E8]/40" />
+                  <h2 className="cute-heading font-headline text-3xl font-black leading-[1.08] tracking-tighter text-slate-900 md:text-5xl">
+                    Chuẩn bị phỏng vấn
+                    <br />
+                    <span className="text-[#7c3aed]">tự tin hơn rõ rệt</span>
+                  </h2>
+                </div>
+              </div>
             </div>
-            <h2 className="text-3xl md:text-5xl text-slate-900 mb-3 leading-[1.1] py-1 cute-heading font-headline tracking-tighter font-black">
-              Chuẩn bị thông minh<br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#5F00F0] to-[#7A35FF]">phỏng vấn bản lĩnh</span>
-            </h2>
-            <p className="text-slate-600 text-lg max-w-2xl mx-auto leading-relaxed font-medium">
-              Cá nhân hóa lộ trình luyện tập bằng AI để tăng khả năng chinh phục nhà tuyển dụng.
-            </p>
-          </div>
+            <p className="mx-auto max-w-md text-center text-sm font-semibold text-slate-500">Bốn bước nối liền — lướt xuống là hiểu ngay</p>
+          </LandingReveal>
 
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+          <LandingStagger className="grid grid-cols-1 md:grid-cols-4 gap-4" stagger={0.1}>
             {STEPS.map((s, i) => (
+              <LandingItem key={i}>
               <div
-                key={i}
-                className={`glass-card group p-4 sm:p-5 relative overflow-hidden transition-[border-color,box-shadow] duration-300 ${i === 1
+                className={`glass-card group min-h-[11.25rem] p-5 sm:min-h-[11.75rem] sm:p-6 relative overflow-hidden h-full transition-[border-color,box-shadow] duration-300 ${i === 1
                   ? "border-[#6E35E8]/35 shadow-[0_0_0_1px_rgba(167,139,250,0.12)_inset]"
                   : i === 2
                     ? "border-violet-400/35 shadow-[0_0_0_1px_rgba(167,139,250,0.15)_inset]"
@@ -1011,7 +1114,7 @@ export function Home() {
               >
                 <div className="relative z-[1]">
                   {/* Hàng nhãn cố định — tránh absolute đè lên icon */}
-                  <div className="mb-3 min-h-[30px] flex items-center justify-start">
+                  <div className="mb-3.5 min-h-[32px] flex items-center justify-start">
                     {(i === 1 || i === 2) && (
                     <span
                         className={`inline-flex px-2 py-1 text-[10px] sm:text-[11px] font-bold tracking-wide rounded-md border ${i === 1
@@ -1024,26 +1127,27 @@ export function Home() {
                     )}
                   </div>
                   <div className={`absolute top-0 right-0 p-4 transition-opacity pointer-events-none ${i === 1 ? "opacity-[0.22]" : "opacity-[0.18] group-hover:opacity-[0.26]"}`}>
-                    <span className={`text-6xl font-black italic ${i === 1 ? "text-[#5F00F0]/40" : "text-[#5F00F0]/30"}`}>{s.step}</span>
+                    <span className={`text-7xl font-black italic ${i === 1 ? "text-[#5F00F0]/40" : "text-[#5F00F0]/30"}`}>{s.step}</span>
                   </div>
 
                   <div
-                    className={`relative w-10 h-10 rounded-xl flex items-center justify-center mb-4 transition-all duration-500 shadow-lg ${i % 2 === 0
+                    className={`relative w-11 h-11 rounded-xl flex items-center justify-center mb-4 transition-all duration-500 shadow-lg ${i % 2 === 0
                       ? "bg-[#6E35E8] text-[#ffffff] shadow-[0_0_24px_rgba(167,139,250,0.)]"
                       : "bg-white/5 text-[#6E35E8] border border-white/10 group-hover:bg-[#6E35E8]/15 group-hover:border-[#6E35E8]/35"
                       }`}
                   >
-                    <s.icon className="h-5 w-5" />
+                    <s.icon className="h-[1.35rem] w-[1.35rem]" />
                   </div>
 
-                  <h3 className="text-base font-extrabold mb-1.5 text-slate-900 font-headline tracking-tight">{s.title}</h3>
-                  <p className="text-slate-600 text-xs leading-relaxed font-medium whitespace-pre-line">
+                  <h3 className="text-lg font-extrabold mb-2 text-slate-900 font-headline tracking-tight">{s.title}</h3>
+                  <p className="text-slate-600 text-sm leading-relaxed font-medium whitespace-pre-line">
                     {s.desc}
                   </p>
                 </div>
               </div>
+              </LandingItem>
             ))}
-          </div>
+          </LandingStagger>
 
           {/* CTA Section */}
           <div className="mt-6 flex flex-col items-center">
@@ -1056,7 +1160,7 @@ export function Home() {
                 boxShadow: "0 10px 24px rgba(143,188,36,0.42), 0 2px 10px rgba(15,23,42,0.1)",
               }}
             >
-              Bắt đầu ngay
+              Bắt đầu luyện
               <div className="absolute inset-0 rounded-full bg-white opacity-0 group-hover:opacity-20 transition-opacity"></div>
             </button>
             <div className="mt-6 flex items-center gap-4">
@@ -1070,7 +1174,7 @@ export function Home() {
 
       {/* ═══ INTERVIEW PREVIEW ═══════════════════════════════ */}
       <section
-        className="relative z-10 h-screen max-h-screen flex flex-col justify-center overflow-x-hidden overflow-y-visible"
+        className="landing-section-flow relative z-10 h-screen max-h-screen flex flex-col justify-center overflow-x-hidden overflow-y-visible"
       >
         {renderSectionSticks([
           { x: 14, y: 24, size: 32, opacity: 0.42 },
@@ -1078,11 +1182,13 @@ export function Home() {
           { x: 88, y: 72, size: 34, opacity: 0.46 },
         ])}
         <div className="max-w-7xl mx-auto px-5 relative z-10 w-full py-2">
-          <div className="grid lg:grid-cols-2 gap-5 lg:gap-8 items-center">
-            {/* Left copy */}
-            <div className="glass-card !overflow-visible p-4 sm:p-5 lg:p-6">
-              <div className="relative z-[1]">
-                <div className="mb-4 h-1 w-10 rounded-full bg-gradient-to-r from-[#6E35E8] to-[#9B6DFF]" aria-hidden />
+          <div className="grid lg:grid-cols-2 gap-5 lg:gap-8 items-stretch">
+            {/* Left copy + gấu Upzi (mock HTML) */}
+            <div className="relative h-full min-h-0 overflow-visible">
+              <div className="glass-card interview-preview-card relative flex h-full min-h-0 flex-col p-4 sm:p-5 lg:p-6">
+              <div className="relative z-[1] flex min-h-0 flex-1 flex-col">
+                <div>
+                  <div className="mb-4 h-1 w-10 rounded-full bg-gradient-to-r from-[#6E35E8] to-[#9B6DFF]" aria-hidden />
                 <span
                   className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full text-[11px] font-semibold mb-4 border border-violet-400/30 bg-violet-500/10 text-violet-700"
                 >
@@ -1092,16 +1198,16 @@ export function Home() {
                   Phòng phỏng vấn ảo
                 </span>
                 <h2
-                  className="text-slate-900 mb-2 leading-[1.42] cute-heading"
+                  className="mb-2 text-slate-900 leading-tight cute-heading"
                   style={{
-                    fontSize: "clamp(1.55rem, 2.95vw, 2.2rem)",
+                    fontSize: "clamp(1.35rem, 2.6vw, 2.05rem)",
                   }}
                 >
-                  Trải nghiệm phỏng vấn{" "}
-                  <span className="font-headline text-[#5F00F0]">
-                    như thật với AI
-                  </span>
+                  <span className="block">Phỏng vấn như thật</span>
+                  <span className="block font-headline text-[#5F00F0]">AI hỏi, bạn đỡ lo hơn</span>
                 </h2>
+                </div>
+                <div className="relative flex min-h-0 flex-1 flex-col">
                 <p
                   className="mb-6 leading-relaxed"
                   style={{
@@ -1109,16 +1215,14 @@ export function Home() {
                     fontSize: "0.98rem",
                   }}
                 >
-                  Phòng phỏng vấn ảo với AI phỏng vấn viên, phản
-                  hồi trực quan khi bạn đang nói, và đánh giá chi
-                  tiết từng câu trả lời theo mô hình STAR.
+                  AI phỏng vấn hỏi sát JD, góp ý trực quan — chấm STAR từng câu, biết ngay chỗ cần chỉnh.
                 </p>
 
                 <ul className="space-y-2 mb-5">
                   {[
-                    "AI hỏi 5 câu hỏi cá nhân hóa theo JD",
-                    "Nhận diện giọng nói tự động",
-                    "Phân tích chi tiết theo mô hình STAR",
+                    "Năm câu hỏi riêng theo JD — không hỏi chung chung",
+                    "Nhận diện giọng, không cần gõ từng chữ",
+                    "Chấm STAR chi tiết — biết điểm yếu ở đâu",
                   ].map((item, i) => (
                     <li
                       key={i}
@@ -1141,31 +1245,50 @@ export function Home() {
                   ))}
                 </ul>
 
-                <button
-                  type="button"
-                  onClick={() => navigateToInterview(navigate)}
-                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full font-semibold transition-all hover:brightness-110 hover:-translate-y-0.5"
-                  style={{
-                    background: "linear-gradient(135deg, #B4F500, #93D600)",
-                    color: "#0f172a",
-                    boxShadow: "0 8px 20px rgba(15,23,42,0.08)",
-                  }}
-                >
-                  Thử ngay miễn phí
-                  <ArrowRight className="w-4 h-4" />
-                </button>
+                <div className="relative z-[1] mt-auto sm:pr-[calc(6rem+1cm+1.75rem)]">
+                  <button
+                    type="button"
+                    onClick={() => navigateToInterview(navigate)}
+                    className="inline-flex shrink-0 items-center gap-2 px-5 py-2.5 rounded-full font-semibold transition-all hover:brightness-110 hover:-translate-y-0.5"
+                    style={{
+                      background: "linear-gradient(135deg, #B4F500, #93D600)",
+                      color: "#0f172a",
+                      boxShadow: "0 8px 20px rgba(15,23,42,0.08)",
+                    }}
+                  >
+                    Thử miễn phí ngay
+                    <ArrowRight className="w-4 h-4" />
+                  </button>
+                </div>
+                </div>
               </div>
+              </div>
+              <img
+                src="/mascot-interview-preview.png?v=4"
+                alt=""
+                aria-hidden
+                className="pointer-events-none absolute bottom-0 right-[calc(2.25rem+1rem)] z-30 hidden h-auto w-[calc(5.25rem+1cm)] object-contain object-bottom drop-shadow-[0_8px_18px_rgba(110,53,232,0.16)] sm:block sm:right-[calc(2.5rem+1rem)] sm:w-[calc(5.75rem+1cm)] md:right-[calc(2.75rem+1rem)] md:w-[calc(6rem+1cm)]"
+              />
             </div>
 
-            <InterviewDemoMockup />
+            <div className="flex h-full min-h-0 flex-col">
+              <InterviewDemoMockup />
+            </div>
           </div>
         </div>
       </section>
 
+      {/* ═══ CV ANALYSIS — vẫn trong nhóm Lộ trình (navbar #features) ═══ */}
+      <div className="landing-section-flow">
+        <CvAnalysisFeatureShowcase
+          onCtaClick={() => requireLoginNavigate(navigate, "/cv-analysis")}
+        />
+      </div>
+
       {/* ═══ COURSES SECTION ═════════════════════════════════ */}
       <section
         id="courses"
-        className="relative z-10 h-screen max-h-screen flex flex-col justify-center overflow-x-hidden overflow-y-visible pt-2 md:pt-3 lg:pt-4"
+        className="landing-section-flow relative isolate z-20 flex h-screen max-h-screen flex-col justify-center overflow-x-hidden overflow-y-visible pt-2 md:pt-3 lg:pt-4"
       >
         {renderSectionSticks([
           { x: 90, y: 8, size: 32, opacity: 0.44 },
@@ -1174,49 +1297,37 @@ export function Home() {
           { x: 82, y: 78, size: 34, opacity: 0.46 },
         ])}
 
-        <div className="max-w-7xl mx-auto px-6 relative z-10 w-full translate-y-3 py-3.5 md:translate-y-4">
-          <div className="flex flex-col md:flex-row items-end gap-3.5 mb-4">
-            <div className="md:w-2/3">
-              <div className="h-1 w-10 rounded-full bg-gradient-to-r from-[#6E35E8] to-[#9B6DFF] mb-3" aria-hidden />
-              <span className="font-bold uppercase tracking-[0.2em] text-[10px] mb-2 block text-[#6E35E8] drop-shadow-[0_0_12px_rgba(167,139,250,0.)]">
-                Nền tảng học
+        <div className="relative z-10 mx-auto w-full max-w-7xl translate-x-[0.4rem] px-5 py-3 sm:px-10 sm:py-4">
+          <div className="relative z-10 mb-4 md:pl-[1.58rem] lg:pl-[2.08rem]">
+              <div className="mb-3 h-1 w-10 rounded-full bg-gradient-to-r from-[#630ed4] to-[#7c3aed]" aria-hidden />
+              <span className="mb-2 block text-sm font-semibold uppercase tracking-[0.05em] text-[#630ed4]">
+                Học kỹ năng
               </span>
-              <h2 className="text-[1.35rem] font-black tracking-tighter text-slate-900 mb-2 leading-[1.06] sm:text-2xl md:text-[2.38rem] md:leading-[1.08]">
-                Học từ chuyên gia
-                <span className="mt-0 block font-headline text-[#5F00F0]">
-                  sửa lỗi ngay
-                </span>
+              <h2 className="mb-2 -translate-y-[0.45rem] translate-x-[0.1rem] font-headline text-[1.75rem] font-bold leading-[1.1] tracking-[-0.02em] text-[#1a1b23] sm:text-[2rem]">
+                Học từ mentor thật
+                <span className="mt-0 block translate-x-[0.31rem] text-[#7c3aed]">sửa lỗi liền tay</span>
               </h2>
-              <p className="text-sm text-slate-600 leading-relaxed max-w-xl">
-                Nâng tầm sự nghiệp với feedback trực tiếp từ Mentor hàng đầu. Hoàn thiện từng câu trả lời thông qua bài tập thực tế.
-              </p>
-            </div>
-            <div className="w-full md:w-1/3 flex justify-end">
-              <div className="glass-card !rounded-full px-2 py-1.5 flex items-center gap-3 min-w-0 max-w-full">
-                <div className="relative z-[1] flex items-center gap-3 w-full">
-                  <div className="flex -space-x-3 px-1.5">
-                    {[1, 2, 3].map(i => (
-                      <img key={i} src={`https://i.pravatar.cc/100?img=${i + 10}`} alt="Student" className="h-8 w-8 rounded-full border-2 border-white/15 object-cover" />
-                    ))}
-                  </div>
-                  <span className="pr-3 pl-0.5 text-[11px] font-bold text-[#6E35E8]">10k+ Học viên</span>
-                </div>
-              </div>
-            </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5 mb-4">
+          <div className="relative mb-5 mt-8 overflow-visible">
+            <img
+              src="/mascot-courses.png?v=8"
+              alt=""
+              aria-hidden
+              className="pointer-events-none absolute z-0 hidden object-contain md:block md:h-[10.5rem] md:w-[10.5rem] md:left-0 md:-top-[7.5rem] md:-translate-x-[6.3rem] md:translate-y-[2.81rem] lg:h-[13.5rem] lg:w-[13.5rem] lg:-left-2 lg:-top-[9rem] xl:h-[15rem] xl:w-[15rem] xl:-left-3 xl:-top-[10rem]"
+            />
+            <div className="relative z-10 grid grid-cols-1 gap-6 md:grid-cols-3">
             {COURSES_DATA.slice(0, 3).map((course, idx) => (
               <div
                 key={course.id}
                 onClick={() =>
                   handleFeatureClick(`/courses/${course.id}`)
                 }
-                className="group glass-card flex h-full min-h-0 cursor-pointer flex-col overflow-hidden !rounded-[24px]"
+                className="group courses-glass-card flex h-full min-h-0 cursor-pointer flex-col overflow-hidden"
               >
                 <div className="relative z-[1] flex min-h-0 flex-1 flex-col">
                   {/* Thumbnail */}
-                  <div className="relative h-[7.75rem] shrink-0 overflow-hidden">
+                  <div className="relative h-[7.25rem] shrink-0 overflow-hidden sm:h-[7.5rem]">
                     <img
                       src={course.thumbnail}
                       alt={course.title}
@@ -1234,22 +1345,22 @@ export function Home() {
                       </span>
                     </div>
                     {idx === 0 && (
-                      <span className="absolute top-3.5 right-3.5 inline-flex items-center justify-center rounded-full bg-[#6E35E8] px-2 py-1 text-[10px] font-black uppercase leading-none tracking-wide text-white shadow-md">
+                      <span className="absolute top-3.5 right-3.5 inline-flex items-center justify-center rounded-full bg-[#7c3aed] px-2 py-1 text-[10px] font-black uppercase leading-none tracking-wide text-white shadow-md">
                         New
                       </span>
                     )}
 
                     <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-500 scale-90 group-hover:scale-100">
                       <div className="w-[3.35rem] h-[3.35rem] rounded-full flex items-center justify-center shadow-2xl transform transition-transform border-2 border-white/90 float-icon-delay parallax-layer"
-                        style={{ background: "linear-gradient(135deg, #B4F500, #93D600)" }}
+                        style={{ background: "#bff365" }}
                       >
-                        <PlayCircle className="w-[1.4rem] h-[1.4rem] text-slate-900 translate-x-0.5" />
+                        <PlayCircle className="w-[1.4rem] h-[1.4rem] text-[#131f00] translate-x-0.5" />
                       </div>
                     </div>
                   </div>
 
-                  <div className="flex flex-1 flex-col p-4">
-                    <h3 className="mb-2.5 min-h-[2.7rem] line-clamp-2 break-words text-[0.9375rem] font-bold leading-snug text-slate-900 transition-colors sm:min-h-[2.75rem] group-hover:text-[#6E35E8]">
+                  <div className="flex flex-1 flex-col p-4 sm:p-[1.125rem]">
+                    <h3 className="mb-2.5 min-h-[2.5rem] line-clamp-2 break-words text-base font-bold leading-snug text-[#1a1b23] transition-colors sm:min-h-[2.6rem] group-hover:text-[#7c3aed]">
                       {course.title}
                     </h3>
 
@@ -1260,14 +1371,14 @@ export function Home() {
                         className="h-10 w-10 shrink-0 rounded-xl border border-slate-200 object-cover"
                       />
                       <div className="flex min-w-0 flex-col justify-center gap-0.5">
-                        <p className="text-sm font-bold leading-tight text-slate-900">{course.mentorName}</p>
-                        <span className="text-[9px] font-black uppercase leading-none tracking-[0.15em] text-slate-500">
-                          Mentor duyệt
+                        <p className="text-sm font-bold leading-tight text-[#1a1b23]">{course.mentorName}</p>
+                        <span className="text-[9px] font-semibold uppercase leading-none tracking-[0.05em] text-[#4a4455]">
+                          Mentor thật
                         </span>
                       </div>
                     </div>
 
-                    <div className="mt-auto flex items-center justify-between gap-3 border-t border-slate-100 pt-3.5">
+                    <div className="mt-auto flex items-center justify-between gap-3 border-t border-[#ccc3d8]/60 pt-3">
                       <div className="flex min-w-0 flex-1 items-center gap-1.5">
                         <span
                           className="material-symbols-outlined shrink-0 text-[1.125rem] leading-none text-amber-500"
@@ -1280,7 +1391,7 @@ export function Home() {
                           ({(course.reviewsCount || 0) + 700})
                         </span>
                       </div>
-                      <div className="shrink-0 text-lg font-black leading-none tabular-nums text-[#5F00F0]">
+                      <div className="shrink-0 text-lg font-black leading-none tabular-nums text-[#630ed4]">
                         {new Intl.NumberFormat("vi-VN", {
                           style: "currency",
                           currency: "VND",
@@ -1291,18 +1402,14 @@ export function Home() {
                 </div>
               </div>
             ))}
+            </div>
           </div>
 
-          <div className="text-center">
+          <div className="relative z-0 text-center">
             <button
               type="button"
               onClick={() => requireLoginNavigate(navigate, "/courses")}
-              className="group relative px-10 py-3.5 rounded-full font-bold text-sm transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]"
-              style={{
-                background: "linear-gradient(135deg, #B4F500, #8FBC24)",
-                color: "#120B2E",
-                boxShadow: "0 10px 24px rgba(143,188,36,0.42), 0 2px 10px rgba(15,23,42,0.1)",
-              }}
+              className="courses-cta-primary group relative rounded-full px-10 py-3.5 text-sm font-bold transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] sm:px-11 sm:py-4 sm:text-base"
             >
               Xem tất cả khóa học
               <span className="pointer-events-none absolute inset-0 rounded-full bg-white opacity-0 transition-opacity group-hover:opacity-20" aria-hidden />
@@ -1316,7 +1423,7 @@ export function Home() {
       {/* ═══ TESTIMONIALS ═══════════════════════════════════ */}
       <section
         id="mentors"
-        className="relative z-10 h-screen max-h-screen overflow-hidden"
+        className="landing-section-flow relative z-10 h-screen max-h-screen overflow-hidden"
       >
         {renderSectionSticks([
           { x: 78, y: 12, size: 34, opacity: 0.46 },
@@ -1327,7 +1434,7 @@ export function Home() {
           <div className="grid lg:grid-cols-12 gap-6 lg:gap-6 items-start">
             <div className="lg:col-span-5">
               <h2 className="text-slate-900 mb-0 cute-heading flex flex-col items-start gap-0 text-[1.65rem] leading-none sm:text-3xl md:text-4xl lg:text-[2.55rem]">
-                <span className="block leading-none tracking-tight">Người dùng nói gì về</span>
+                <span className="block leading-none tracking-tight">Mọi người nói gì về</span>
                 <img
                   src="/Logo.png"
                   alt="ProInterview"
@@ -1336,8 +1443,8 @@ export function Home() {
                 />
               </h2>
               <p className="mt-0 text-slate-600 text-[0.9375rem] leading-relaxed max-w-xl">
-                Kết hợp AI thông minh và mạng lưới Mentor thực chiến để giúp bạn bứt tốc qua mọi vòng phỏng vấn.
-                Đây là phản hồi thật từ học viên đã nhận offer.
+                AI + mentor thật chiến — giúp bạn bứt tốc qua mọi vòng PV.
+                Lời thật từ bạn đã nhận việc — không phải câu quảng cáo đâu nhé.
               </p>
 
               <div className="mt-4 flex items-center gap-3">
@@ -1352,7 +1459,7 @@ export function Home() {
                   ))}
                 </div>
                 <p className="text-[0.9375rem] text-slate-600">
-                  <span className="text-[#6E35E8] font-black">500+</span> ứng viên đã thành công
+                  <span className="text-[#6E35E8] font-black">500+</span> bạn đã nhận việc
                 </p>
               </div>
             </div>
@@ -1421,7 +1528,7 @@ export function Home() {
       {/* ═══ PRICING SECTION ═════════════════════════════════════ */}
       <section
         id="pricing"
-        className="relative z-10 h-screen max-h-screen flex flex-col justify-center overflow-hidden"
+        className="landing-section-flow relative z-10 h-screen max-h-screen flex flex-col justify-center overflow-hidden"
       >
         {renderSectionSticks([
           { x: 10, y: 20, size: 30, opacity: 0.44 },
@@ -1435,10 +1542,10 @@ export function Home() {
               <span className="h-1 w-10 rounded-full bg-gradient-to-r from-[#6E35E8] to-[#9B6DFF]" />
             </div>
             <h2 className="text-2xl md:text-3xl font-black font-headline tracking-tighter mb-2 leading-tight text-slate-900">
-            Sẵn sàng hơn cho <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#5F00F0] to-[#9B6DFF]">mọi buổi phỏng vấn</span>
+            Chọn gói, <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#5F00F0] to-[#9B6DFF]">vào phỏng vấn tự tin hơn</span>
             </h2>
             <p className="text-slate-600 max-w-xl mx-auto text-sm">
-            Chọn gói phù hợp để luyện tập, cải thiện và sẵn sàng chinh phục nhà tuyển dụng.
+            Chọn gói vừa túi — luyện đều là thấy tiến, không phải đoán mò.
             </p>
           </header>
 
@@ -1447,14 +1554,14 @@ export function Home() {
             <div className="glass-card p-5 !rounded-[20px] flex flex-col h-full group">
               <div className="relative z-[1] flex flex-col flex-1">
                 <div className="mb-3">
-                  <h3 className="font-headline font-bold text-lg mb-1 text-slate-900">Free</h3>
+                  <h3 className="font-headline font-bold text-lg mb-1 text-slate-900">Miễn phí</h3>
                   <div className="flex items-baseline gap-1">
                     <span className="text-2xl font-black font-headline text-slate-900">0đ</span>
                     <span className="text-zinc-500 text-xs">/tháng</span>
                   </div>
                 </div>
                 <ul className="space-y-2 mb-4 flex-grow">
-                  {["3/5 câu hỏi phỏng vấn cùng AI", "1 lần phân tích CV/JD", "Bộ câu hỏi phỏng vấn theo ngành nghề"].map((f, i) => (
+                  {["3/5 câu phỏng vấn với AI", "1 lần so CV–JD", "Bộ câu hỏi theo ngành — miễn phí"].map((f, i) => (
                     <li key={i} className="flex items-start gap-2 text-sm text-slate-700">
                       <CheckCircle2 className="size-4 shrink-0 text-secondary" />
                       {f}
@@ -1466,7 +1573,7 @@ export function Home() {
                   onClick={() => requireLoginNavigate(navigate, "/dashboard")}
                   className="w-full py-3 rounded-full border border-slate-200 bg-white text-slate-900 font-bold text-sm hover:bg-slate-50 transition-all mt-auto"
                 >
-                  Bắt đầu ngay
+                  Dùng miễn phí trước
                 </button>
               </div>
             </div>
@@ -1482,7 +1589,7 @@ export function Home() {
                   </div>
                 </div>
                 <ul className="space-y-2 mb-4 flex-grow">
-                  {["10 buổi AI Interview/tháng", "Nhận diện giọng nói AI", "20 lần phân tích CV/JD", "Phản hồi chi tiết từng câu"].map((f, i) => (
+                  {["10 buổi phỏng vấn AI/tháng", "Nhận diện giọng — nói là xong", "20 lần so CV–JD", "Góp ý từng câu chi tiết"].map((f, i) => (
                     <li key={i} className="flex items-start gap-2 text-sm text-slate-700">
                       <CheckCircle2 className="size-4 shrink-0 text-primary-fixed" />
                       {f}
@@ -1512,7 +1619,7 @@ export function Home() {
             {/* Elite Tier */}
             <div className="relative glass-card p-5 !rounded-[20px] flex flex-col h-full border-2 border-primary-fixed z-10 !overflow-visible group">
               <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary-fixed text-on-primary-fixed px-3 py-0.5 rounded-full text-[10px] font-black tracking-widest uppercase z-[2] shadow-[0_0_20px_rgba(167,139,250,0.)]">
-                PHỔ BIẾN NHẤT
+                Phổ biến nhất
               </div>
               <div className="relative z-[1] flex flex-col flex-1 pt-1">
                 <div className="mb-3">
@@ -1523,7 +1630,7 @@ export function Home() {
                   </div>
                 </div>
                 <ul className="space-y-2 mb-4 flex-grow">
-                  {["AI Interview KHÔNG GIỚI HẠN", "Phân tích hành vi & tư thế", "Nhận diện giọng nói Turbo", "Hỗ trợ ưu tiên 24/7"].map((f, i) => (
+                  {["Phỏng vấn AI không giới hạn", "Phân tích hành vi & tư thế", "Nhận diện giọng nhanh", "Hỗ trợ ưu tiên 24/7"].map((f, i) => (
                     <li key={i} className="flex items-start gap-2 text-sm text-slate-700">
                       <ShieldCheck className="size-4 shrink-0 text-secondary-fixed" />
                       {f}
@@ -1554,8 +1661,8 @@ export function Home() {
           {/* CTA Section */}
           <div className="mt-4 glass-card py-3 px-4 sm:py-3.5 sm:px-5 !rounded-[20px] text-center relative overflow-hidden">
             <div className="relative z-[1]">
-              <h2 className="text-base sm:text-lg font-headline font-black mb-0.5 text-slate-900">Sẵn sàng cho buổi phỏng vấn tiếp theo?</h2>
-              <p className="text-slate-600 mb-2 text-sm max-w-xl mx-auto leading-snug">Trải nghiệm miễn phí và bắt đầu luyện tập cùng AI ngay hôm nay.
+              <h2 className="text-base sm:text-lg font-headline font-black mb-0.5 text-slate-900">Đọc tới đây rồi, thử liền nhé?</h2>
+              <p className="text-slate-600 mb-2 text-sm max-w-xl mx-auto leading-snug">Dùng miễn phí trước, ổn thì lên gói. Không còn phải tự luyện một mình.
               </p>
               <div className="flex items-center justify-center">
                 <button
