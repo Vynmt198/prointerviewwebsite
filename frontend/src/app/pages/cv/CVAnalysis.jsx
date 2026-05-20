@@ -343,7 +343,7 @@ export function CVAnalysis() {
             _isMocked: true,
             matchScore: derivedMode === "jd" ? 72 : 68,
             totalKeywords: DEMO_JD_KWS.length,
-            matchedKeywords,
+            matchedKeywords: DEMO_MATCHED,
             missingKeywords: DEMO_JD_KWS.filter(k => !DEMO_MATCHED.includes(k)),
             scores: { clarity: 7, structure: 6, relevance: 8, credibility: 5 },
             scoreNotes: {
@@ -361,7 +361,7 @@ export function CVAnalysis() {
               "Không đề cập CI/CD pipeline trong kinh nghiệm.",
               "Thiếu số liệu KPI cụ thể trong các mô tả thành tích.",
             ],
-            suggestions,
+            suggestions: DEMO_SUGGESTIONS,
           });
           setSavedFileInfo(null);
         };
