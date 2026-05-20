@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect } from "react";
 import { motion } from "motion/react";
 import { useNavigate, Link } from "react-router";
 import {
@@ -14,14 +14,8 @@ import {
   Award as Medal,
   ArrowRight,
   Zap as Lightning,
-  ShieldCheck,
   CheckCircle2,
   BarChart3 as ChartBar,
-  Menu as List,
-  X,
-  LogIn as SignIn,
-  UserPlus,
-  Lock,
   Upload as UploadSimple,
   Video as VideoCamera,
   BadgeCheck as SealCheck,
@@ -32,10 +26,8 @@ import {
 import { COURSES_DATA } from "../../data/coursesData";
 import { navigateToInterview, requireLoginNavigate } from "../../utils/authGate";
 import { Footer } from "../../components/layout/Footer";
-import { TopNavShell } from "../../components/layout/TopNavShell";
 import { RecommendedJourney } from "../../components/home/RecommendedJourney";
 import { CvAnalysisFeatureShowcase } from "../../components/home/CvAnalysisFeatureShowcase";
-import { BrandLogo } from "../../components/brand/BrandLogo";
 import { SparkleGlyph } from "../../components/decor/SparkleGlyph.jsx";
 import {
   LandingReveal,
@@ -166,12 +158,6 @@ const STATS = [
 /** Clip demo phỏng vấn AI — dùng chung hero (cột phải) và mock màn hình khu tính năng. */
 const HOME_AI_DEMO_VIDEO =
   "https://res.cloudinary.com/dee4bvivu/video/upload/v1774336640/Female_delxmy.mp4";
-const NAV_LINKS = [
-  { label: "Lộ trình", href: "#features" },
-  { label: "Khóa học", href: "#courses" },
-  { label: "Đánh giá", href: "#mentors" },
-  { label: "Bảng giá", href: "#pricing" },
-];
 
 /** Hero: video phỏng vấn + sticker gấu góc phải. */
 function HeroInterviewVideoCard() {
@@ -378,12 +364,9 @@ function InterviewDemoMockup() {
 }
 
 export function Home() {
-  const [scrolled, setScrolled] = useState(false);
-  const [mobileOpen, setMobileOpen] = useState(false);
-  const [activeSection, setActiveSection] = useState("");
   const navigate = useNavigate();
 
-  const handleFeatureClick = (route) => requireLoginNavigate(navigate, route);
+  const handleFeatureClick = (route) => navigate(route);
   const renderSectionSticks = (sticks) => (
     <div className="pointer-events-none absolute inset-0 z-[1] hidden md:block" aria-hidden>
       {sticks.map((s, idx) => (
@@ -406,45 +389,16 @@ export function Home() {
   );
 
   useEffect(() => {
-    const sectionIds = ["features", "courses", "mentors", "pricing"];
-
     const onScroll = () => {
       const y = window.scrollY;
       const max = document.documentElement.scrollHeight - window.innerHeight;
       const progress = max > 0 ? Math.min(1, Math.max(0, y / max)) : 0;
       document.documentElement.style.setProperty("--landing-scroll", String(progress));
-      setScrolled(y > 20);
-
-      if (y < 300) {
-        setActiveSection("");
-        return;
-      }
-
-      // Chưa tới Khóa học → vẫn highlight Lộ trình (4 bước + PV AI + So CV/JD)
-      const mid = window.innerHeight * 0.5;
-      const coursesEl = document.getElementById("courses");
-      const beforeCourses =
-        !coursesEl || coursesEl.getBoundingClientRect().top > mid;
-
-      if (beforeCourses) {
-        setActiveSection("#features");
-        return;
-      }
-
-      let found = "";
-      for (const id of sectionIds) {
-        const el = document.getElementById(id);
-        if (!el) continue;
-        const rect = el.getBoundingClientRect();
-        if (rect.top <= mid) found = "#" + id;
-      }
-      setActiveSection(found);
     };
 
     window.addEventListener("scroll", onScroll, { passive: true });
     onScroll();
 
-    // Check for scrollTo param
     const params = new URLSearchParams(window.location.search);
     const scrollTarget = params.get("scrollTo");
     if (scrollTarget) {
@@ -462,21 +416,9 @@ export function Home() {
 
   return (
     <div
-      className="min-h-screen selection:bg-violet-100 selection:text-violet-900 font-sans overflow-x-hidden relative bg-[#f3f0f9] text-slate-900"
+      className="min-h-screen selection:bg-violet-100 selection:text-violet-900 font-sans overflow-x-hidden relative bg-transparent text-slate-900"
     >
       <style>{`
-        /* Lưới ô vuông cực nét từ ảnh mẫu */
-        .premium-grid {
-          position: fixed;
-          inset: 0;
-          z-index: -5;
-          background-image: 
-            linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
-          background-size: 64px 64px;
-          pointer-events: none;
-        }
-        
         .cute-glass {
           background: linear-gradient(180deg, rgba(0,0,0,0.03), rgba(0,0,0,0.03));
           border: 1px solid rgba(255,255,255,0.1);
@@ -546,33 +488,6 @@ export function Home() {
           letter-spacing: -0.035em;
           font-weight: 850;
           line-height: 1.08;
-        }
-        .home-page-violet-ambient {
-          position: absolute;
-          inset: 0;
-          z-index: 0;
-          min-height: 100%;
-          pointer-events: none;
-          background-color: #f3f0f9;
-          background-image:
-            radial-gradient(ellipse 130% 58% at 50% 108%, rgba(45, 22, 72, 0.075), transparent 58%),
-            radial-gradient(ellipse 42% 36% at 93% 4%, rgba(72, 32, 185, 0.17), transparent 52%),
-            radial-gradient(ellipse 40% 34% at 4% 97%, rgba(58, 22, 145, 0.135), transparent 50%),
-            radial-gradient(ellipse 38% 32% at 88% 94%, rgba(68, 30, 168, 0.125), transparent 48%),
-            radial-gradient(ellipse 82% 68% at 50% 46%, rgba(255, 255, 255, 0.5), transparent 62%),
-            radial-gradient(ellipse 125% 95% at 88% -5%, rgba(110, 53, 232, 0.125), transparent 56%),
-            radial-gradient(ellipse 105% 90% at -8% 100%, rgba(95, 0, 240, 0.095), transparent 54%),
-            radial-gradient(ellipse 100% 85% at 38% 38%, rgba(155, 109, 255, 0.072), transparent 60%),
-            radial-gradient(ellipse 90% 75% at 85% 95%, rgba(110, 53, 232, 0.058), transparent 55%),
-            linear-gradient(
-              180deg,
-              rgba(255, 255, 255, 0.48) 0%,
-              rgba(255, 255, 255, 0.06) 16%,
-              rgba(210, 200, 232, 0.28) 38%,
-              rgba(225, 216, 242, 0.16) 52%,
-              rgba(198, 186, 222, 0.24) 68%,
-              rgba(255, 255, 255, 0.36) 100%
-            );
         }
         .sticker-badge {
           border-radius: 999px;
@@ -726,9 +641,6 @@ export function Home() {
           transform: translateY(-2px);
           box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
         }
-        #pricing > .max-w-7xl > .grid > .glass-card {
-          overflow: visible !important;
-        }
         .glass-card.interview-preview-card {
           overflow: visible !important;
           transition: border-color 0.25s ease, box-shadow 0.25s ease;
@@ -804,128 +716,8 @@ export function Home() {
 
       <motion.div className="landing-scroll-ambient" aria-hidden />
 
-      <div className="home-page-violet-ambient" aria-hidden />
-
-      {/* ═══ NAVBAR ════════════════════════════════════════ */}
-      {/* ═══ NAVBAR ════════════════════════════════════════ */}
-      <TopNavShell variant="light" scrolled={scrolled}>
-
-        {/* Logo */}
-        <div
-          className="flex shrink-0 cursor-pointer items-center gap-2"
-          onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-        >
-          <BrandLogo />
-        </div>
-
-        {/* Desktop nav links */}
-        <div className="hidden md:flex items-center gap-6">
-          {NAV_LINKS.map((l) => (
-            <a
-              key={l.label}
-              href={l.href}
-              className="relative py-1 text-sm transition-all duration-300 cursor-pointer whitespace-nowrap"
-              style={{ 
-                color: activeSection === l.href ? "#6E35E8" : "rgb(71,85,105)",
-                fontWeight: activeSection === l.href ? "800" : "600"
-              }}
-              onClick={(e) => {
-                e.preventDefault();
-                document.querySelector(l.href)?.scrollIntoView({ behavior: "smooth" });
-              }}
-            >
-              {l.label}
-              <span
-                className={`absolute -bottom-1 left-0 w-full h-[3px] rounded-full transition-all duration-300 ${
-                  activeSection === l.href ? "opacity-100 scale-x-100" : "opacity-0 scale-x-0"
-                }`}
-                style={{ 
-                  background: "#C4FF47",
-                  boxShadow: "0 0 12px rgba(196, 255, 71, 0.8)" 
-                }}
-              />
-            </a>
-          ))}
-        </div>
-
-        {/* Right side */}
-        <div className="flex items-center gap-3">
-          {/* Đăng nhập */}
-          <button
-            onClick={() => navigate("/login")}
-            className="hidden sm:inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-semibold border border-slate-200 bg-white text-slate-700 transition-all hover:bg-slate-50 whitespace-nowrap"
-          >
-            <SignIn className="w-3.5 h-3.5" />
-            Đăng nhập
-          </button>
-
-          {/* Đăng ký */}
-          <button
-            onClick={() => navigate("/register")}
-            className="hidden sm:inline-flex items-center gap-1.5 px-5 py-1.5 rounded-full text-sm font-semibold transition-all hover:scale-105 active:scale-95 whitespace-nowrap"
-            style={{
-              background: "#fff",
-              color: "#6E35E8",
-              border: "1.5px solid #6E35E8",
-            }}
-          >
-            <UserPlus className="w-3.5 h-3.5" />
-            Đăng ký
-          </button>
-
-          {/* Mobile hamburger */}
-          <button
-            className="md:hidden p-2 rounded-lg text-slate-600 hover:bg-slate-100 transition-colors"
-            onClick={() => setMobileOpen(!mobileOpen)}
-          >
-            {mobileOpen ? <X className="w-5 h-5" /> : <List className="w-5 h-5" />}
-          </button>
-        </div>
-
-
-        {/* Mobile menu */}
-        {mobileOpen && (
-          <div
-            className="md:hidden absolute top-[72px] left-4 right-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-lg"
-          >
-            <div className="flex flex-col gap-1">
-              {NAV_LINKS.map((l) => (
-                <a
-                  key={l.label}
-                  href={l.href}
-                  className="px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-700 hover:bg-violet-50 hover:text-violet-700 transition-colors"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    setMobileOpen(false);
-                    document.querySelector(l.href)?.scrollIntoView({ behavior: "smooth" });
-                  }}
-                >
-                  {l.label}
-                </a>
-              ))}
-              <div className="mt-2 pt-2 border-t border-slate-100 flex flex-col gap-2">
-                <button
-                  onClick={() => navigate("/login")}
-                  className="flex items-center justify-center gap-2 py-2.5 rounded-full text-sm font-semibold text-slate-700 border border-slate-200 hover:bg-slate-50 transition-colors"
-                >
-                  <SignIn className="w-4 h-4" /> Đăng nhập
-                </button>
-                <button
-                  type="button"
-                  onClick={() => { setMobileOpen(false); navigateToInterview(navigate); }}
-                  className="flex items-center justify-center gap-2 py-2.5 rounded-full text-sm font-bold"
-                  style={{ background: "linear-gradient(135deg, #B4F500, #8fbc24)", color: "#120B2E" }}
-                >
-                  <Lightning className="w-4 h-4" /> Thử miễn phí
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-      </TopNavShell>
-
       {/* ═══ HERO ═══════════════════════════════════════════ */}
-      <section className="relative z-10 flex h-screen max-h-screen flex-col justify-start overflow-hidden px-10 sm:px-16 lg:px-24 pt-36">
+      <section className="relative z-10 flex h-screen max-h-screen flex-col justify-start overflow-hidden px-10 sm:px-16 lg:px-24 pt-6 sm:pt-8 md:pt-10">
         {renderSectionSticks([
           { x: 5, y: 11, size: 38, opacity: 0.48 },
           { x: 93, y: 13, size: 44, opacity: 0.55 },
@@ -997,9 +789,7 @@ export function Home() {
                 </button>
                 <button
                   type="button"
-                  onClick={() =>
-                    document.getElementById("pricing")?.scrollIntoView({ behavior: "smooth" })
-                  }
+                  onClick={() => navigate("/pricing")}
                   className="inline-flex items-center justify-center gap-1.5 px-5 py-2.5 rounded-full text-sm font-bold transition-all hover:bg-violet-50 active:scale-95 bg-white text-slate-800"
                   style={{
                     border: "1px solid rgba(95, 0, 240, 0.38)",
@@ -1017,10 +807,10 @@ export function Home() {
               <HeroInterviewVideoCard />
             </div>
 
-            {/* Thanh stats — full width, căn giữa; khoảng cách trên lg gọn để còn trong 1 màn */}
-            <div className="order-2 mt-6 flex w-full justify-center lg:order-3 lg:col-span-2 lg:col-start-1 lg:row-start-2 lg:mt-6">
+            {/* Thanh stats — full width trong cột hero, căn với navbar */}
+            <div className="order-2 mt-6 w-full lg:order-3 lg:col-span-2 lg:col-start-1 lg:row-start-2 lg:mt-6">
               <div
-                className="glass-card w-full max-w-xl px-2.5 py-3 sm:max-w-3xl sm:px-3 sm:py-3.5 lg:max-w-4xl"
+                className="glass-card w-full px-2.5 py-3 sm:px-3 sm:py-3.5"
                 style={{
                   background: "#ffffff",
                   border: "1px solid rgba(95, 0, 240, 0.32)",
@@ -1408,7 +1198,7 @@ export function Home() {
           <div className="relative z-0 text-center">
             <button
               type="button"
-              onClick={() => requireLoginNavigate(navigate, "/courses")}
+              onClick={() => navigate("/courses")}
               className="courses-cta-primary group relative rounded-full px-10 py-3.5 text-sm font-bold transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] sm:px-11 sm:py-4 sm:text-base"
             >
               Xem tất cả khóa học
@@ -1438,7 +1228,7 @@ export function Home() {
                 <img
                   src="/Logo.png"
                   alt="ProInterview"
-                  className="-mb-2.5 -ml-[1.1rem] -mt-[1.08em] block h-[7.35rem] w-auto max-w-[min(100%,36rem)] object-contain object-left object-top contrast-[1.06] sm:-mb-3 sm:-ml-[1.2rem] sm:h-[8.15rem] sm:-mt-[1.14em] md:-mb-3.5 md:h-[9.1rem] md:-ml-[1.35rem] md:-mt-[1.14em] lg:-mb-4 lg:h-[10rem] lg:-ml-[1.4rem] lg:-mt-[1.18em]"
+                  className="mt-2 block h-10 w-auto max-w-[min(100%,16rem)] object-contain object-left contrast-[1.06] sm:mt-2.5 sm:h-11 sm:max-w-[min(100%,18rem)] md:h-12 md:max-w-[min(100%,20rem)] lg:h-14"
                   decoding="async"
                 />
               </h2>
@@ -1519,164 +1309,6 @@ export function Home() {
                 </div>
                 <div className="pointer-events-none absolute inset-y-0 left-0 w-14 bg-gradient-to-r from-[#f3f0f9] via-[#f3f0f9]/70 to-transparent blur-md" />
                 <div className="pointer-events-none absolute inset-y-0 right-0 w-14 bg-gradient-to-l from-[#f3f0f9] via-[#f3f0f9]/70 to-transparent blur-md" />
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ═══ PRICING SECTION ═════════════════════════════════════ */}
-      <section
-        id="pricing"
-        className="landing-section-flow relative z-10 h-screen max-h-screen flex flex-col justify-center overflow-hidden"
-      >
-        {renderSectionSticks([
-          { x: 10, y: 20, size: 30, opacity: 0.44 },
-          { x: 82, y: 28, size: 32, opacity: 0.5 },
-          { x: 78, y: 74, size: 32, opacity: 0.46 },
-        ])}
-
-        <div className="max-w-7xl mx-auto px-6 relative z-10 w-full">
-          <header className="text-center mb-6">
-            <div className="flex justify-center mb-3">
-              <span className="h-1 w-10 rounded-full bg-gradient-to-r from-[#6E35E8] to-[#9B6DFF]" />
-            </div>
-            <h2 className="text-2xl md:text-3xl font-black font-headline tracking-tighter mb-2 leading-tight text-slate-900">
-            Chọn gói, <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#5F00F0] to-[#9B6DFF]">vào phỏng vấn tự tin hơn</span>
-            </h2>
-            <p className="text-slate-600 max-w-xl mx-auto text-sm">
-            Chọn gói vừa túi — luyện đều là thấy tiến, không phải đoán mò.
-            </p>
-          </header>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-5 items-stretch">
-            {/* Free Tier */}
-            <div className="glass-card p-5 !rounded-[20px] flex flex-col h-full group">
-              <div className="relative z-[1] flex flex-col flex-1">
-                <div className="mb-3">
-                  <h3 className="font-headline font-bold text-lg mb-1 text-slate-900">Miễn phí</h3>
-                  <div className="flex items-baseline gap-1">
-                    <span className="text-2xl font-black font-headline text-slate-900">0đ</span>
-                    <span className="text-zinc-500 text-xs">/tháng</span>
-                  </div>
-                </div>
-                <ul className="space-y-2 mb-4 flex-grow">
-                  {["3/5 câu phỏng vấn với AI", "1 lần so CV–JD", "Bộ câu hỏi theo ngành — miễn phí"].map((f, i) => (
-                    <li key={i} className="flex items-start gap-2 text-sm text-slate-700">
-                      <CheckCircle2 className="size-4 shrink-0 text-secondary" />
-                      {f}
-                    </li>
-                  ))}
-                </ul>
-                <button
-                  type="button"
-                  onClick={() => requireLoginNavigate(navigate, "/dashboard")}
-                  className="w-full py-3 rounded-full border border-slate-200 bg-white text-slate-900 font-bold text-sm hover:bg-slate-50 transition-all mt-auto"
-                >
-                  Dùng miễn phí trước
-                </button>
-              </div>
-            </div>
-
-            {/* Pro Tier */}
-            <div className="glass-card p-5 !rounded-[20px] flex flex-col h-full group">
-              <div className="relative z-[1] flex flex-col flex-1">
-                <div className="mb-3">
-                  <h3 className="font-headline font-bold text-lg mb-1 text-slate-900">Pro</h3>
-                  <div className="flex items-baseline gap-1">
-                    <span className="text-2xl font-black font-headline text-slate-900">79.000đ</span>
-                    <span className="text-slate-500 text-xs">/tháng</span>
-                  </div>
-                </div>
-                <ul className="space-y-2 mb-4 flex-grow">
-                  {["10 buổi phỏng vấn AI/tháng", "Nhận diện giọng — nói là xong", "20 lần so CV–JD", "Góp ý từng câu chi tiết"].map((f, i) => (
-                    <li key={i} className="flex items-start gap-2 text-sm text-slate-700">
-                      <CheckCircle2 className="size-4 shrink-0 text-primary-fixed" />
-                      {f}
-                    </li>
-                  ))}
-                </ul>
-                <button
-                  type="button"
-                  onClick={() =>
-                    requireLoginNavigate(
-                      navigate,
-                      "/checkout?plan=starterPro&billing=monthly&planPrice=79000",
-                    )
-                  }
-                  className="w-full py-3 rounded-full font-black text-sm transition-all mt-auto hover:brightness-105"
-                  style={{
-                    background: "linear-gradient(135deg, #B4F500, #93D600)",
-                    color: "#0f172a",
-                    boxShadow: "0 8px 20px rgba(15,23,42,0.1)",
-                  }}
-                >
-                  Nâng cấp Pro
-                </button>
-              </div>
-            </div>
-
-            {/* Elite Tier */}
-            <div className="relative glass-card p-5 !rounded-[20px] flex flex-col h-full border-2 border-primary-fixed z-10 !overflow-visible group">
-              <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary-fixed text-on-primary-fixed px-3 py-0.5 rounded-full text-[10px] font-black tracking-widest uppercase z-[2] shadow-[0_0_20px_rgba(167,139,250,0.)]">
-                Phổ biến nhất
-              </div>
-              <div className="relative z-[1] flex flex-col flex-1 pt-1">
-                <div className="mb-3">
-                  <h3 className="font-headline font-bold text-lg mb-1 text-secondary-fixed">Elite</h3>
-                  <div className="flex items-baseline gap-1">
-                    <span className="text-2xl font-black font-headline text-slate-900">99.000đ</span>
-                    <span className="text-zinc-500 text-xs">/tháng</span>
-                  </div>
-                </div>
-                <ul className="space-y-2 mb-4 flex-grow">
-                  {["Phỏng vấn AI không giới hạn", "Phân tích hành vi & tư thế", "Nhận diện giọng nhanh", "Hỗ trợ ưu tiên 24/7"].map((f, i) => (
-                    <li key={i} className="flex items-start gap-2 text-sm text-slate-700">
-                      <ShieldCheck className="size-4 shrink-0 text-secondary-fixed" />
-                      {f}
-                    </li>
-                  ))}
-                </ul>
-                <button
-                  type="button"
-                  onClick={() =>
-                    requireLoginNavigate(
-                      navigate,
-                      "/checkout?plan=elitePro&billing=monthly&planPrice=99000",
-                    )
-                  }
-                  className="w-full py-3 rounded-full font-bold text-sm transition-all mt-auto hover:brightness-105"
-                  style={{
-                    background: "linear-gradient(135deg, #B4F500, #93D600)",
-                    color: "#0f172a",
-                    boxShadow: "0 8px 20px rgba(15,23,42,0.1)",
-                  }}
-                >
-                  Nâng cấp Elite
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* CTA Section */}
-          <div className="mt-4 glass-card py-3 px-4 sm:py-3.5 sm:px-5 !rounded-[20px] text-center relative overflow-hidden">
-            <div className="relative z-[1]">
-              <h2 className="text-base sm:text-lg font-headline font-black mb-0.5 text-slate-900">Đọc tới đây rồi, thử liền nhé?</h2>
-              <p className="text-slate-600 mb-2 text-sm max-w-xl mx-auto leading-snug">Dùng miễn phí trước, ổn thì lên gói. Không còn phải tự luyện một mình.
-              </p>
-              <div className="flex items-center justify-center">
-                <button
-                  type="button"
-                  onClick={() => requireLoginNavigate(navigate, "/dashboard")}
-                  className="font-black px-7 py-2 rounded-full text-sm hover:scale-105 transition-all"
-                  style={{
-                    background: "linear-gradient(135deg, #B4F500, #93D600)",
-                    color: "#0f172a",
-                    boxShadow: "0 8px 20px rgba(15,23,42,0.1)",
-                  }}
-                >
-                  Bắt đầu miễn phí
-                </button>
               </div>
             </div>
           </div>

@@ -157,7 +157,7 @@ export function Register() {
           style={{ borderColor: "rgba(110,53,232,0.1)" }}
         >
           <button onClick={() => navigate(getBrandClickPath())} className="flex items-center gap-2.5 group">
-            <BrandLogo />
+            <BrandLogo size="auth" />
           </button>
           <p className="text-sm text-gray-500">
             Đã có tài khoản?{" "}

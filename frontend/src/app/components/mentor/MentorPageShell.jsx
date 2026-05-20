@@ -40,17 +40,6 @@ const MENTOR_LIGHT_STYLES = `
           letter-spacing: -0.045em;
           text-shadow: none;
         }
-        .premium-grid {
-          position: fixed;
-          inset: 0;
-          z-index: -2;
-          pointer-events: none;
-          opacity: 1;
-          background-image:
-            linear-gradient(rgba(110, 53, 232, 0.045) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(110, 53, 232, 0.045) 1px, transparent 1px);
-          background-size: 64px 64px;
-        }
 `;
 
 export function MentorPageShell({
@@ -68,7 +57,6 @@ export function MentorPageShell({
       className={`mentor-surface relative antialiased ${heightBlock} font-sans text-slate-900 selection:bg-violet-100 selection:text-violet-900 bg-transparent ${bottomPad} ${className}`.trim()}
     >
       <style>{`${MENTOR_LIGHT_STYLES}${extraStyles || ""}`}</style>
-      <div className="premium-grid" aria-hidden />
       <div
         className="pointer-events-none fixed -top-[12%] -right-[6%] h-[min(560px,70vw)] w-[min(560px,70vw)] rounded-full bg-[#9B6DFF]/28 blur-[120px] -z-[1]"
         aria-hidden

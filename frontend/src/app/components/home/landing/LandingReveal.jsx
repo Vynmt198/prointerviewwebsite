@@ -9,6 +9,7 @@ export function LandingReveal({
   delay = 0,
   y = 32,
   once = true,
+  as: Tag = "motion.div",
 }) {
   const ref = useRef(null);
   const inView = useInView(ref, {
@@ -17,8 +18,10 @@ export function LandingReveal({
     margin: "-10% 0px -6% 0px",
   });
 
+  const Component = Tag === "div" ? motion.div : motion.div;
+
   return (
-    <motion.div
+    <Component
       ref={ref}
       className={className}
       initial={{ opacity: 0, y, scale: 0.98, filter: "blur(8px)" }}
@@ -30,7 +33,7 @@ export function LandingReveal({
       transition={{ duration: 0.7, delay, ease: EASE }}
     >
       {children}
-    </motion.div>
+    </Component>
   );
 }
 

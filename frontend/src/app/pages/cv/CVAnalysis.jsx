@@ -156,7 +156,7 @@ const DEMO_SUGGESTIONS = [
 export function CVAnalysis() {
   const navigate    = useNavigate();
   const [searchParams] = useSearchParams();
-
+  
   const [plans]            = useState(getPlans());
   const [cvRemaining, setCvRemaining] = useState(getCVRemaining());
 
