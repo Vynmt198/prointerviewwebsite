@@ -19,11 +19,9 @@ import {
   MessageCircle as ChatCircle,
   Star,
 } from "lucide-react";
-import { MOCK_INTERVIEW_QUESTIONS } from "../../data/mockData";
 import { getPlans, hasAuthCredentials } from "../../utils/auth";
 import { addInterviewRecord } from "../../utils/history";
 import { saveAnswer, completeInterviewSession } from "../../utils/interviewsApi";
-import { QUESTIONS_FEEDBACK } from "./InterviewFeedback";
 import { useDIDStream } from "../../hooks/useDIDStream";
 import { AILipSyncAvatar } from "../../components/interview/AILipSyncAvatar";
 
@@ -105,19 +103,6 @@ function interviewMetaFromLocationState(state) {
   }
   return { position: "Phỏng vấn AI", company: "—" };
 }
-
-function aggregateScoresFromFeedbackSlice(slice) {
-  if (!slice.length) return { clarity: 0, structure: 0, relevance: 0, credibility: 0, overall: 0 };
-  const keys = ["clarity", "structure", "relevance", "credibility"];
-  const scores = {};
-  for (const k of keys) {
-    scores[k] = slice.reduce((s, q) => s + (q.scores?.[k] ?? 0), 0) / slice.length;
-  }
-  const overall = slice.reduce((s, q) => s + (q.overall ?? 0), 0) / slice.length;
-  return { ...scores, overall };
-}
-
-/* ── QUESTIONS được resolve trong component từ location.state hoặc mock ── */
 
 /* ── Helpers ─────────────────────────────────────────────── */
 function formatTimer(s) {
@@ -456,24 +441,36 @@ export default function InterviewRoom() {
   const plans = getPlans();
   const isPro = plans.starterPro || plans.elitePro;
 
-  /* ── D-ID lipsync ─────────────────────────────────────────── */
-  const { status: didStatus, connect: didConnect, disconnect: didDisconnect,
-          speakWithText, attachVideo } = useDIDStream(DID_API_KEY);
-  const isDIDActive = Boolean(DID_API_KEY) && didStatus !== "error";
-
+  // Resolve hrGender before hook call so it can be passed as sourceImageUrl
   const hrGender =
     (location.state?.hrGender) ||
     (sessionStorage.getItem("prointerview_hr_gender")) ||
     "male";
+
+  /* ── D-ID lipsync ─────────────────────────────────────────── */
+  const { status: didStatus, connect: didConnect, disconnect: didDisconnect,
+          speakWithText, attachVideo } = useDIDStream({
+    apiKey: DID_API_KEY,
+    sourceImageUrl: DID_AVATAR_URLS[hrGender],
+  });
+  const isDIDActive = Boolean(DID_API_KEY) && didStatus !== "error";
   const hrName = HR_NAMES[hrGender];
   const hrTitle = HR_TITLES[hrGender];
   const hrVideoUrl = HR_IDLE_URLS[hrGender];
 
-  // Câu hỏi từ LLM nếu có, fallback về mock
-  const apiQuestions = location.state?.questions;
+  // Resolve từ location.state (happy path) hoặc sessionStorage (refresh recovery)
+  const apiQuestions = location.state?.questions ?? (() => {
+    try { return JSON.parse(sessionStorage.getItem("prointerview_questions") ?? "null"); }
+    catch { return null; }
+  })();
+
+  const resolvedSessionId = location.state?.sessionId
+    ?? sessionStorage.getItem("prointerview_sessionId")
+    ?? null;
+
   const QUESTIONS = apiQuestions?.length
     ? apiQuestions.map((q) => (typeof q === "string" ? q : q.question))
-    : MOCK_INTERVIEW_QUESTIONS;
+    : [];
   // Giữ full objects để dùng cho STAR guidance sau này
   const QUESTION_OBJECTS = apiQuestions?.length ? apiQuestions : null;
 
@@ -499,6 +496,19 @@ export default function InterviewRoom() {
   const isNavigatingRef = useRef(false);
   const questionStartTimeRef = useRef(Date.now());
   const lastSpokenQRef = useRef(-1);
+
+  /* ── Guard: validate required state, save to sessionStorage for refresh recovery ── */
+  useEffect(() => {
+    if (!apiQuestions?.length || !resolvedSessionId) {
+      navigate("/interview", { replace: true });
+      return;
+    }
+    sessionStorage.setItem("prointerview_questions", JSON.stringify(apiQuestions));
+    sessionStorage.setItem("prointerview_sessionId", resolvedSessionId);
+    if (location.state?.hrGender) {
+      sessionStorage.setItem("prointerview_hr_gender", location.state.hrGender);
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   /* ── Timer ───────────────────────────────────────────────── */
   useEffect(() => {
@@ -534,7 +544,7 @@ export default function InterviewRoom() {
   /* ── D-ID: kết nối khi phỏng vấn bắt đầu ───────────────── */
   useEffect(() => {
     if (phase !== "question" || !DID_API_KEY) return;
-    didConnect(DID_AVATAR_URLS[hrGender]);
+    didConnect();
   }, [phase]); // eslint-disable-line react-hooks/exhaustive-deps
 
   /* ── D-ID: đọc câu hỏi khi avatar kết nối hoặc câu hỏi thay đổi */
@@ -620,7 +630,7 @@ export default function InterviewRoom() {
 
   // Lưu 1 câu trả lời vào MongoDB — fire-and-forget, không block UI
   const persistAnswer = (qIndex, updatedTranscripts) => {
-    const sessionId = location.state?.sessionId ?? null;
+    const sessionId = resolvedSessionId;
     if (!sessionId || !hasAuthCredentials()) return;
     const durationSeconds = Math.round((Date.now() - questionStartTimeRef.current) / 1000);
     saveAnswer(sessionId, {
@@ -641,37 +651,45 @@ export default function InterviewRoom() {
       sessionStorage.setItem("prointerview_question_objects", JSON.stringify(QUESTION_OBJECTS));
     }
 
-    // Session đã được tạo ở Interview.jsx — chỉ cần complete
-    const sessionId = location.state?.sessionId ?? null;
+    // Build backup answers: toàn bộ transcript gửi kèm complete request
+    // Safety net cho trường hợp fire-and-forget PATCH chưa kịp lưu vào DB
+    const backupAnswers = transcripts
+      .map((t, i) => ({
+        questionIndex:   i,
+        questionText:    QUESTIONS[i] ?? "",
+        transcript:      t ?? "",
+        durationSeconds: 0,
+      }))
+      .filter((a) => a.transcript.trim().length > 0);
+
+    // Session đã được tạo ở Interview.jsx — chỉ cần mark complete
+    const sessionId = resolvedSessionId;
     if (hasAuthCredentials() && sessionId) {
       try {
-        await completeInterviewSession(sessionId);
+        await completeInterviewSession(sessionId, {
+          answers:              backupAnswers,
+          totalDurationSeconds: timerSeconds,
+        });
       } catch {
-        /* vẫn chuyển trang */
+        /* vẫn chuyển trang dù complete fail */
       }
     }
 
+    // Ghi local history với scores = 0 (placeholder); sẽ được cập nhật sau khi
+    // InterviewFeedback.jsx nhận kết quả evaluate thực từ LLM
     const { position, company } = interviewMetaFromLocationState(location.state);
-    const answered = transcripts.filter((t) => t && String(t).trim()).length;
-    const n = Math.min(QUESTIONS_FEEDBACK.length, Math.max(1, answered > 0 ? answered : 1));
-    const slice = QUESTIONS_FEEDBACK.slice(0, n);
-    const agg = aggregateScoresFromFeedbackSlice(slice);
     const durationMin = Math.max(1, Math.round(timerSeconds / 60));
-
     addInterviewRecord({
-      id: `ai-${Date.now()}`,
-      type: "ai",
-      date: new Date().toISOString().slice(0, 10),
+      id:       `ai-${Date.now()}`,
+      type:     "ai",
+      date:     new Date().toISOString().slice(0, 10),
       position,
       company,
-      scores: {
-        clarity: Math.round(agg.clarity * 10) / 10,
-        structure: Math.round(agg.structure * 10) / 10,
-        relevance: Math.round(agg.relevance * 10) / 10,
-        credibility: Math.round(agg.credibility * 10) / 10,
-      },
-      overall: Math.round(agg.overall * 10) / 10,
+      scores:   { clarity: 0, structure: 0, relevance: 0, credibility: 0 },
+      overall:  0,
       duration: durationMin,
+      sessionId,
+      pending:  true,
     });
 
     navigate("/interview/feedback", { state: { sessionId } });
@@ -839,6 +857,9 @@ export default function InterviewRoom() {
       </div>
     );
   }
+
+  /* ── Guard render: useEffect sẽ redirect, render null để tránh crash ── */
+  if (!apiQuestions?.length || !resolvedSessionId) return null;
 
   /* ══ RENDER — Main interview room ═════════════════════════ */
   return (
@@ -1162,17 +1183,27 @@ export default function InterviewRoom() {
             </div>
 
             <div className="flex-1 overflow-y-auto p-3">
-              {!hasTranscript && !interimTranscript && !isListening ? (
+              {/* Manual text input — shown when browser doesn't support STT */}
+              {!sttSupported ? (
+                <div className="flex h-full flex-col gap-2">
+                  <p className="text-xs text-amber-300">
+                    ⚠️ Trình duyệt không nhận diện được giọng nói — hãy gõ câu trả lời bên dưới.
+                  </p>
+                  <textarea
+                    value={transcript}
+                    onChange={(e) => {
+                      setTranscript(e.target.value);
+                      transcriptRef.current = e.target.value;
+                    }}
+                    placeholder="Gõ câu trả lời của bạn vào đây..."
+                    rows={6}
+                    className="flex-1 w-full resize-none rounded-xl border border-white/15 bg-white/8 p-3 text-sm text-white/85 placeholder:text-white/25 focus:outline-none focus:ring-1 focus:ring-violet-400/50"
+                  />
+                </div>
+              ) : !hasTranscript && !interimTranscript && !isListening ? (
                 <div className="flex flex-col items-center justify-center h-full text-center gap-2">
                   <Microphone className="w-7 h-7 text-white/15" />
                   <p className="text-white/25 text-xs">Nhấn 🎤 mic để bắt đầu trả lời</p>
-                  {!sttSupported && (
-                    <div className="mt-2 bg-amber-500/10 border border-amber-500/20 rounded-xl p-2.5 max-w-[200px] text-left">
-                      <p className="text-amber-300 text-xs leading-relaxed">
-                        Dùng Chrome/Edge và cấp quyền microphone.
-                      </p>
-                    </div>
-                  )}
                 </div>
               ) : (
                 <div>
@@ -1200,7 +1231,7 @@ export default function InterviewRoom() {
               )}
             </div>
 
-            {hasTranscript && !isListening && (
+            {hasTranscript && !isListening && sttSupported && (
               <div className="px-3 py-2 flex-shrink-0" style={{ borderTop: "1px solid rgba(255,255,255,0.05)" }}>
                 <button
                   onClick={() => {

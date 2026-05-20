@@ -27,7 +27,6 @@ import {
 import { CourseRecommendations } from "../../components/courses/CourseRecommendations";
 import { getPlans } from "../../utils/auth";
 import { evaluateInterviewSession } from "../../utils/interviewsApi";
-import { MOCK_INTERVIEW_QUESTIONS } from "../../data/mockData";
 
 const IS = { strokeWidth: 1.75, strokeLinecap: "round", strokeLinejoin: "round" };
 
@@ -165,14 +164,14 @@ export function InterviewFeedback() {
 
     setEvaluating(true);
 
-    // Kèm questionText để backend dùng làm fallback khi session không có questions (mock flow)
+    // Kèm questionText để backend dùng làm fallback khi session không có questions
     const answers = transcripts.map((t, i) => ({
       questionIndex: i,
       transcript: t || "",
-      questionText: questionObjects?.[i]?.question || MOCK_INTERVIEW_QUESTIONS?.[i] || `Câu hỏi ${i + 1}`,
+      questionText: questionObjects?.[i]?.question || `Câu hỏi ${i + 1}`,
     }));
 
-    // Gửi kèm question objects nếu có (từ LLM) hoặc tạo minimal từ mock strings
+    // Gửi kèm question objects nếu có (từ LLM); session.questions là fallback phía backend
     const questionsPayload = questionObjects
       ? questionObjects.map(q => ({
           question:       q.question,
@@ -181,11 +180,7 @@ export function InterviewFeedback() {
           ddiKeyActionTargeted: q.ddiKeyActionTargeted,
           shrmRubricExcellent:  q.shrmRubricExcellent,
         }))
-      : MOCK_INTERVIEW_QUESTIONS.map(q => ({
-          question:       q,
-          layer:          "behavior",
-          competencyName: "Năng lực tổng quát",
-        }));
+      : [];
 
     evaluateInterviewSession(sessionId, answers, questionsPayload)
       .then(res => {

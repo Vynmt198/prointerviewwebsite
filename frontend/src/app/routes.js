@@ -11,7 +11,6 @@ import { Dashboard } from "./pages/account/Dashboard";
 import { CVAnalysis } from "./pages/cv/CVAnalysis";
 import { AnalysisHistory } from "./pages/cv/AnalysisHistory";
 import { Interview } from "./pages/interview/Interview";
-import { AIGenderSelection } from "./pages/interview/AIGenderSelection";
 import InterviewRoom from "./pages/interview/InterviewRoom";
 import { InterviewFeedback } from "./pages/interview/InterviewFeedback";
 import { Mentors } from "./pages/mentors/Mentors";
@@ -51,6 +50,7 @@ import { AdminBookings } from "./pages/admin/AdminBookings.jsx";
 import { AdminCoursePayments } from "./pages/admin/AdminCoursePayments.jsx";
 import { AdminSubscriptionPayments } from "./pages/admin/AdminSubscriptionPayments.jsx";
 import { AdminMentorsPending } from "./pages/admin/AdminMentorsPending.jsx";
+import { AdminInterviewMetrics } from "./pages/admin/AdminInterviewMetrics.jsx";
 import {
   AdminUserDetail,
   AdminMentorDetail,
@@ -108,6 +108,7 @@ export const router = createHashRouter([
       { path: "settings", Component: AdminSystemSettings },
       { path: "reviews", Component: AdminReviews },
       { path: "support", Component: AdminSupport },
+      { path: "interview-metrics", Component: AdminInterviewMetrics },
     ],
   },
   {
@@ -118,7 +119,6 @@ export const router = createHashRouter([
       { path: "cv-analysis", Component: CVAnalysis },
       { path: "cv-analysis/history", Component: AnalysisHistory },
       { path: "interview", Component: Interview },
-      { path: "interview/gender", Component: AIGenderSelection },
       { path: "interview/room", Component: InterviewRoom },
       { path: "interview/feedback", Component: InterviewFeedback },
       { path: "mentors", Component: Mentors },

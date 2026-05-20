@@ -113,4 +113,5 @@ export const adminApi = {
     authedFetch(`/api/admin/courses/${id}/reject`, {
       method: "PATCH",
     }),
+  getInterviewMetrics: () => authedFetch("/api/admin/interview-metrics"),
 };

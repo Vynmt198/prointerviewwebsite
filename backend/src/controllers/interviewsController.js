@@ -6,6 +6,7 @@ import {
   extractPDFText,
   evaluateTranscripts,
 } from "../services/interviewQuestionService.js";
+import { logger } from "../config/logger.js";
 
 // ── Accumulation helper ───────────────────────────────────────────────────────
 /**
@@ -45,12 +46,21 @@ async function getFewShotExamples(roleCategory, competencyIds, limit = 3) {
       return true;
     });
 
-    return unique
+    const examples = unique
       .slice(0, limit)
       .map(q =>
         `[${q.competencyName || q.competencyId}] ${q.question}` +
         (q.ddiKeyActionTargeted ? ` (DDI: ${q.ddiKeyActionTargeted})` : "")
       );
+
+    logger.info("few_shot_examples_fetched", {
+      roleCategory,
+      competencyIds,
+      candidateCount: candidates.length,
+      examplesFound:  examples.length,
+    });
+
+    return examples;
   } catch {
     return [];
   }
@@ -113,34 +123,77 @@ export const InterviewsController = {
     }
   },
 
-  /** POST /api/interviews/sessions/:id/complete — Hoàn thành */
+  /** POST /api/interviews/sessions/:id/complete — Hoàn thành (không tạo feedback) */
   completeSession: async (req, res) => {
     try {
       const { id } = req.params;
-      const session = await InterviewSession.findOne({ _id: id, userId: req.userId });
-      if (!session) return res.status(404).json({ success: false, error: "Không tìm thấy phiên phỏng vấn" });
+      const userId = req.userId;
+      const { answers, totalDurationSeconds } = req.body;
 
-      session.status = "completed";
+      const session = await InterviewSession.findOne({ _id: id, userId });
+      if (!session) {
+        return res.status(404).json({ success: false, error: "session_not_found" });
+      }
+
+      // Idempotent: nếu đã completed thì trả về ngay, không ghi đè
+      if (session.status === "completed") {
+        return res.json({
+          success: true,
+          sessionId: session._id,
+          status: "completed",
+          message: "already_completed",
+        });
+      }
+
+      // Merge backup answers từ request body — bảo vệ trường hợp fire-and-forget PATCH
+      // chưa kịp ghi trước khi user thoát trang
+      if (Array.isArray(answers) && answers.length > 0) {
+        for (const backupAnswer of answers) {
+          const idx = backupAnswer.questionIndex ?? -1;
+          if (idx < 0) continue;
+          const existing = session.answers.find((a) => a.questionIndex === idx);
+          if (!existing || !existing.transcript) {
+            // Chỉ ghi khi chưa có hoặc transcript rỗng
+            session.answers = session.answers.filter((a) => a.questionIndex !== idx);
+            session.answers.push({
+              questionIndex:  idx,
+              questionText:   backupAnswer.questionText ?? "",
+              transcript:     backupAnswer.transcript ?? "",
+              durationSeconds: backupAnswer.durationSeconds ?? 0,
+              recordedAt:     new Date(),
+            });
+          }
+        }
+      }
+
+      // Tính tổng thời gian: ưu tiên giá trị từ FE (timer chạy thực tế)
+      const computedDuration = session.answers.reduce((acc, a) => acc + (a.durationSeconds || 0), 0);
+      session.totalDurationSeconds = totalDurationSeconds ?? computedDuration;
+      session.status    = "completed";
       session.completedAt = new Date();
-      session.totalDurationSeconds = session.answers.reduce((acc, a) => acc + (a.durationSeconds || 0), 0);
+      // Feedback sẽ được tạo bởi /evaluate — không gán gì ở đây
 
-      session.feedback = {
-        overallScore: Math.floor(Math.random() * 30) + 60,
-        communication: 75, confidence: 80, structure: 70, content: 65, timing: 90,
-        generalComment: "Bạn có phong thái tự tin và trả lời đúng trọng tâm. Hãy chú ý hơn vào việc cấu trúc câu trả lời theo mô hình STAR.",
-        perQuestion: session.answers.map((a, idx) => ({
-          questionIndex: a.questionIndex,
-          score: Math.floor(Math.random() * 40) + 50,
-          badge: idx % 2 === 0 ? "Tốt" : "Cần cải thiện",
-          strengths: ["Phát âm rõ ràng", "Thông tin chính xác"],
-          improvements: ["Nên giải thích sâu hơn về kết quả", "Giảm bớt từ đệm"],
-        })),
-      };
-
-      session.feedbackGeneratedAt = new Date();
       await session.save();
-      res.json({ success: true, session });
+
+      logger.info("interview_session_completed", {
+        userId,
+        sessionId:   String(session._id),
+        answerCount: session.answers.filter((a) => a?.transcript).length,
+        durationSec: session.totalDurationSeconds,
+      });
+
+      return res.json({
+        success:   true,
+        sessionId: session._id,
+        status:    "completed",
+        message:   "session_completed_pending_evaluation",
+      });
     } catch (error) {
+      logger.error("complete_session_failed", {
+        userId:    req.userId,
+        sessionId: req.params.id,
+        error:     error.message,
+      });
       res.status(500).json({ success: false, error: error.message });
     }
   },
@@ -178,7 +231,7 @@ export const InterviewsController = {
   generateQuestions: async (req, res) => {
     try {
       const { cvText = "", jdText = "", position = "", field = "", level = "" } = req.body;
-      console.log("[generateQuestions] position=%s field=%s cvText_len=%d", position, field, cvText.length);
+      logger.info("generate_questions_start", { userId: req.userId, position, field, cvTextLen: cvText.length });
 
       // Layer 3: Accumulation — lấy few-shot từ MongoDB (sẽ giàu dần theo thời gian)
       // Detect role sơ bộ để query đúng collection
@@ -187,7 +240,7 @@ export const InterviewsController = {
       const fewShotExamples = await getFewShotExamples(roleCategory, preIds);
 
       if (fewShotExamples.length > 0) {
-        console.log("[generateQuestions] few-shot examples loaded: %d", fewShotExamples.length);
+        logger.info("generate_questions_fewshot", { userId: req.userId, count: fewShotExamples.length });
       }
 
       // Layer 1+2: SHRM/DDI grounded generation
@@ -200,24 +253,37 @@ export const InterviewsController = {
       const combined = `${cvText} ${jdText}`;
       const coverage = computeCoverage(result.questions, combined);
 
-      console.log(
-        "[generateQuestions] OK — %d questions, role=%s, competencies=%s, fewShot=%d",
-        result.questions.length,
-        result.inferredRole,
-        result.competencyProfile.competencyIds.join(","),
-        fewShotExamples.length,
-      );
+      // Fallback: nếu pre-LLM keyword matching không detect được competencies (thường xảy ra
+      // khi user dùng form-only, không có CV/JD text), reconstruct từ questions LLM đã sinh.
+      // Đảm bảo competencyProfile luôn có data để few-shot accumulation hoạt động.
+      const profile = result.competencyProfile;
+      if (!profile.competencyIds?.length && result.questions?.length) {
+        const uniqueIds   = [...new Set(result.questions.map((q) => q.competencyId).filter(Boolean))];
+        const uniqueNames = [...new Set(result.questions.map((q) => q.competencyName).filter(Boolean))];
+        profile.competencyIds      = uniqueIds;
+        profile.competencyCoverage = uniqueNames;
+        profile.roleCategory       = profile.roleCategory || result.inferredRole || position || field || "general";
+        profile.generatedAt        = profile.generatedAt  || new Date().toISOString();
+      }
+
+      logger.info("generate_questions_ok", {
+        userId:       req.userId,
+        questionCount: result.questions.length,
+        inferredRole:  result.inferredRole,
+        competencies:  profile.competencyIds.join(","),
+        fewShotCount:  fewShotExamples.length,
+      });
 
       res.json({
         success: true,
-        questions:          result.questions,
-        inferredRole:       result.inferredRole,
-        inferredSeniority:  result.inferredSeniority,
-        competencyProfile:  result.competencyProfile,
-        coverageScore:      coverage,
+        questions:         result.questions,
+        inferredRole:      result.inferredRole,
+        inferredSeniority: result.inferredSeniority,
+        competencyProfile: profile,
+        coverageScore:     coverage,
       });
     } catch (error) {
-      console.error("[generateQuestions] ERROR:", error.message);
+      logger.error("generate_questions_failed", { userId: req.userId, error: error.message });
       res.status(500).json({ success: false, error: error.message });
     }
   },
@@ -258,6 +324,29 @@ export const InterviewsController = {
       const session = await InterviewSession.findOne({ _id: id, userId: req.userId });
       if (!session) return res.status(404).json({ success: false, error: "Không tìm thấy phiên" });
 
+      // Idempotent: return cached feedback if already evaluated (skip LLM call)
+      if (session.feedbackGeneratedAt && session.feedback?.perQuestion?.length > 0) {
+        return res.json({
+          success:        true,
+          evaluation: {
+            overallComment: session.feedback.generalComment ?? "",
+            perQuestion: session.feedback.perQuestion.map(q => ({
+              questionIndex: q.questionIndex,
+              overall:       q.overall5 ?? (q.score / 20),
+              scores:        q.scores ?? { clarity: 0, structure: 0, relevance: 0, credibility: 0 },
+              shrmLevel:     q.shrmLevel ?? "proficient",
+              strengths:     q.strengths ?? [],
+              improvements:  q.improvements ?? [],
+              suggestion:    q.suggestion ?? "",
+            })),
+          },
+          overallScore:   session.feedback.overallScore,
+          generalComment: session.feedback.generalComment,
+          inferredRole:   session.inferredRole,
+          totalDurationSeconds: session.totalDurationSeconds,
+        });
+      }
+
       // Ưu tiên answers từ request body (tránh race condition với saveAnswer fire-and-forget)
       const answersToEval = answers.length > 0 ? answers : session.answers;
 
@@ -277,8 +366,11 @@ export const InterviewsController = {
         }
       }
 
-      console.log("[evaluateSession] id=%s questions=%d answers=%d",
-        id, questionsToUse.length, answersToEval.length);
+      logger.info("evaluate_session_start", {
+        userId: req.userId, sessionId: id,
+        questionCount: questionsToUse.length,
+        answerCount:   answersToEval.length,
+      });
 
       const evalResult = await evaluateTranscripts({
         questions: questionsToUse,
@@ -309,7 +401,7 @@ export const InterviewsController = {
       session.feedbackGeneratedAt = new Date();
       await session.save();
 
-      console.log("[evaluateSession] OK — overallScore=%d", session.feedback.overallScore);
+      logger.info("evaluate_session_ok", { userId: req.userId, sessionId: id, overallScore: session.feedback.overallScore });
 
       res.json({
         success:        true,
@@ -320,7 +412,7 @@ export const InterviewsController = {
         totalDurationSeconds: session.totalDurationSeconds,
       });
     } catch (error) {
-      console.error("[evaluateSession] ERROR:", error.message);
+      logger.error("evaluate_session_failed", { userId: req.userId, sessionId: req.params.id, error: error.message });
       res.status(500).json({ success: false, error: error.message });
     }
   },

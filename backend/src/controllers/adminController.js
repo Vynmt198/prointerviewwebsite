@@ -7,6 +7,7 @@ import { runInTransaction } from "../helpers/dbHelper.js";
 
 import { PayoutRequest } from "../models/PayoutRequest.js";
 import { Enrollment } from "../models/Enrollment.js";
+import { InterviewSession } from "../models/InterviewSession.js";
 const User = mongoose.model("User");
 const Mentor = mongoose.model("Mentor");
 const Booking = mongoose.model("Booking");
@@ -601,6 +602,108 @@ export const AdminController = {
       );
 
       res.json({ success: true, payout });
+    } catch (error) {
+      res.status(500).json({ success: false, error: error.message });
+    }
+  },
+
+  /** GET /api/admin/interview-metrics — 7-day operational snapshot */
+  getInterviewMetrics: async (req, res) => {
+    try {
+      const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+
+      const [
+        sessionsByStatus,
+        evalDurationStats,
+        scoreStats,
+        sessionsByDay,
+        topRoles,
+        fewShotReadyCount,
+        totalAllTime,
+      ] = await Promise.all([
+        // Sessions by status — last 7 days
+        InterviewSession.aggregate([
+          { $match: { createdAt: { $gte: since } } },
+          { $group: { _id: "$status", count: { $sum: 1 } } },
+        ]),
+
+        // Avg LLM evaluation latency (feedbackGeneratedAt − completedAt)
+        InterviewSession.aggregate([
+          { $match: {
+            feedbackGeneratedAt: { $exists: true },
+            completedAt:         { $exists: true },
+            createdAt:           { $gte: since },
+          }},
+          { $project: {
+            evalMs: { $subtract: ["$feedbackGeneratedAt", "$completedAt"] },
+          }},
+          { $group: {
+            _id:   null,
+            avgMs: { $avg: "$evalMs" },
+            count: { $sum: 1 },
+          }},
+        ]),
+
+        // Avg overall score for evaluated sessions
+        InterviewSession.aggregate([
+          { $match: {
+            status: "completed",
+            "feedback.overallScore": { $exists: true, $gt: 0 },
+            createdAt: { $gte: since },
+          }},
+          { $group: {
+            _id:      null,
+            avgScore: { $avg: "$feedback.overallScore" },
+            count:    { $sum: 1 },
+          }},
+        ]),
+
+        // Daily session count — last 7 days
+        InterviewSession.aggregate([
+          { $match: { createdAt: { $gte: since } } },
+          { $group: {
+            _id:   { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
+            count: { $sum: 1 },
+          }},
+          { $sort: { _id: 1 } },
+        ]),
+
+        // Top role categories in completed sessions
+        InterviewSession.aggregate([
+          { $match: {
+            status: "completed",
+            "competencyProfile.roleCategory": { $exists: true, $ne: "" },
+            createdAt: { $gte: since },
+          }},
+          { $group: {
+            _id:   "$competencyProfile.roleCategory",
+            count: { $sum: 1 },
+          }},
+          { $sort: { count: -1 } },
+          { $limit: 5 },
+        ]),
+
+        // Few-shot pool: completed sessions with high scores (eligible as training examples)
+        InterviewSession.countDocuments({
+          status: "completed",
+          "feedback.overallScore": { $gte: 80 },
+        }),
+
+        // All-time total
+        InterviewSession.countDocuments(),
+      ]);
+
+      res.json({
+        success: true,
+        period: "7d",
+        sessionsByStatus,
+        evalDuration: evalDurationStats[0] ?? { avgMs: null, count: 0 },
+        scoreStats:   scoreStats[0]        ?? { avgScore: null, count: 0 },
+        sessionsByDay,
+        topRoles,
+        fewShotReadyCount,
+        totalAllTime,
+      });
     } catch (error) {
       res.status(500).json({ success: false, error: error.message });
     }

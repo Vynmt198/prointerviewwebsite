@@ -20,20 +20,21 @@ import { useRef, useState, useCallback } from "react";
 
 export const DID_API = "https://api.d-id.com";
 
-/** Ảnh nguồn gửi cho D-ID — portrait rõ mặt, publicly accessible */
-export const DID_SOURCE_IMAGE =
-  "https://images.unsplash.com/photo-1729337531424-198f880cb6c7?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=400";
+/** Fallback nếu caller không truyền sourceImageUrl */
+const FALLBACK_AVATAR =
+  "https://res.cloudinary.com/dee4bvivu/image/upload/v1778910708/AI-female_gxbcf1.png";
 
-export function useDIDStream(apiKey) {
+export function useDIDStream({ apiKey, sourceImageUrl } = {}) {
   const [status, setStatus] = useState("idle");
   const [error, setError]   = useState("");
 
-  const pcRef           = useRef(null);
-  const streamIdRef     = useRef("");
-  const sessionIdRef    = useRef("");
-  const videoElRef      = useRef(null);
-  const endTimerRef     = useRef();
-  const connectTimerRef = useRef();
+  const pcRef              = useRef(null);
+  const streamIdRef        = useRef("");
+  const sessionIdRef       = useRef("");
+  const videoElRef         = useRef(null);
+  const endTimerRef        = useRef();
+  const connectTimerRef    = useRef();
+  const sourceImageUrlRef  = useRef(sourceImageUrl || FALLBACK_AVATAR);
 
   const isConfigured = Boolean(apiKey && apiKey !== "YOUR_DID_API_KEY");
 
@@ -49,7 +50,7 @@ export function useDIDStream(apiKey) {
   }, []);
 
   // ── Connect ───────────────────────────────────────────────
-  const connect = useCallback(async (sourceUrl = DID_SOURCE_IMAGE) => {
+  const connect = useCallback(async (sourceUrl = sourceImageUrlRef.current) => {
     if (!isConfigured) {
       setStatus("error");
       setError("D-ID API key chưa được cấu hình");
