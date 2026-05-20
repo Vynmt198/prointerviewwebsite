@@ -1,7 +1,11 @@
 import React, { useState } from "react";
 import { useNavigate, useLocation } from "react-router";
 import { Bell } from "lucide-react";
-import { fetchNotifications, markNotificationAsRead } from "../../utils/notificationApi";
+import {
+  fetchNotifications,
+  markAllNotificationsRead,
+  markNotificationAsRead,
+} from "../../utils/notificationApi";
 
 import { SidebarTrigger } from "../ui/sidebar";
 import {
@@ -13,6 +17,7 @@ import {
 
 const PAGE_TITLES = {
   "/dashboard": { label: "Bảng điều khiển", sub: "Tổng quan tiến độ học của bạn" },
+  "/my-bookings": { label: "Lịch hẹn của tôi", sub: "Tất cả buổi mentor đã đặt" },
   "/cv-analysis": { label: "Phân tích CV/JD", sub: "Tối ưu hồ sơ theo từng vị trí" },
   "/interview": { label: "Phỏng vấn AI", sub: "Thiết lập & bắt đầu phiên luyện tập" },
   "/mentors": { label: "Tìm Mentor", sub: "Đặt lịch 1:1 với chuyên gia" },
@@ -79,6 +84,14 @@ export function Navbar() {
     }, 60000); 
     return () => clearInterval(interval);
   }, []);
+
+  const handleMarkAllRead = () => {
+    markAllNotificationsRead().then((res) => {
+      if (res.success) {
+        setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
+      }
+    });
+  };
 
   const handleRead = (notif) => {
     const id = notif._id;
@@ -196,12 +209,23 @@ export function Navbar() {
               className="flex items-center justify-between border-b border-slate-100 px-4 py-3"
             >
               <span className="text-sm font-semibold text-slate-900">Thông báo</span>
-              <span
-                className="rounded-full px-2 py-0.5 text-xs font-semibold text-[#0f172a]"
-                style={{ background: "linear-gradient(135deg, #B4F500, #93D600)" }}
-              >
-                {unreadCount} mới
-              </span>
+              <div className="flex items-center gap-2">
+                {unreadCount > 0 && (
+                  <button
+                    type="button"
+                    onClick={handleMarkAllRead}
+                    className="text-[10px] font-semibold text-[#6E35E8] hover:underline"
+                  >
+                    Đọc tất cả
+                  </button>
+                )}
+                <span
+                  className="rounded-full px-2 py-0.5 text-xs font-semibold text-[#0f172a]"
+                  style={{ background: "linear-gradient(135deg, #B4F500, #93D600)" }}
+                >
+                  {unreadCount} mới
+                </span>
+              </div>
             </div>
 
             <div className="max-h-[400px] overflow-y-auto py-1">
@@ -237,9 +261,13 @@ export function Navbar() {
             <div className="border-t border-slate-100">
               <button
                 type="button"
+                onClick={() => {
+                  handleMarkAllRead();
+                  setNotifOpen(false);
+                }}
                 className="w-full py-3 text-xs font-semibold text-[#6E35E8] transition-colors hover:bg-violet-50"
               >
-                Xem tất cả thông báo
+                Đánh dấu tất cả đã đọc
               </button>
             </div>
           </DropdownMenuContent>

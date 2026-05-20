@@ -11,6 +11,7 @@ import { recordAdminTransferSuccess, recordTransferPending, recordTransferSubmit
 import { tryCreditMentorForCompletedBooking } from "./mentorEarningsService.js";
 import { runInTransaction } from "../helpers/dbHelper.js";
 import { resolveStoredUploadUrl } from "../utils/resolveStoredUploadUrl.js";
+import { isBookingInLiveWindow } from "../utils/bookingSchedule.js";
 
 /** Chính sách hủy (User): ≥24h trước buổi → hoàn 100%; 12–<24h → hoàn 50%; <12h → không hoàn. */
 function userCancellationFeePercent(hoursUntilStart) {
@@ -1274,6 +1275,61 @@ export async function completeMentorBooking(mentorUserId, rawId) {
     { path: "mentorId", select: "name title company avatar publicId userId", populate: { path: "userId", select: "email" } }
   ]);
   return { ok: true, booking: toPublicBooking(booking) };
+}
+
+function meetingEntryBlockedReason(booking) {
+  const st = String(booking?.status || "").toLowerCase();
+  const pst = String(booking?.paymentStatus || "").toLowerCase();
+  if (["cancelled", "completed", "no_show"].includes(st)) {
+    return "Buổi hẹn đã kết thúc hoặc đã bị hủy.";
+  }
+  if (!["confirmed", "in_progress"].includes(st)) {
+    return "Buổi hẹn chưa được xác nhận. Hoàn tất thanh toán hoặc chờ mentor xác nhận.";
+  }
+  if (pst !== "paid") {
+    return "Buổi hẹn chưa được thanh toán.";
+  }
+  return "";
+}
+
+/** Vào phòng Jitsi — đánh dấu `in_progress` (idempotent). */
+export async function startBookingMeeting(userId, rawId, { asMentor = false } = {}) {
+  if (!isMongoReady()) return { ok: false, status: 503, error: MONGO_ERR };
+  if (!mongoose.isValidObjectId(rawId)) return { ok: false, status: 400, error: "id booking không hợp lệ." };
+
+  let booking;
+  if (asMentor) {
+    const mentor = await getMentorByUserId(userId);
+    if (!mentor?._id) return { ok: false, status: 404, error: "Không tìm thấy hồ sơ mentor." };
+    booking = await Booking.findOne({ _id: rawId, mentorId: mentor._id });
+  } else {
+    booking = await Booking.findOne({ _id: rawId, userId: String(userId).trim() });
+  }
+
+  if (!booking) return { ok: false, status: 404, error: "Không tìm thấy booking." };
+
+  const block = meetingEntryBlockedReason(booking);
+  if (block) return { ok: false, status: 400, error: block };
+
+  let started = false;
+  if (booking.status === "in_progress" && !isBookingInLiveWindow(booking)) {
+    booking.status = "confirmed";
+    await booking.save();
+  } else if (booking.status === "confirmed" && isBookingInLiveWindow(booking)) {
+    booking.status = "in_progress";
+    await booking.save();
+    started = true;
+  }
+
+  await booking.populate([
+    { path: "userId", select: "name email avatar" },
+    {
+      path: "mentorId",
+      select: "name title company avatar publicId userId",
+      populate: { path: "userId", select: "email" },
+    },
+  ]);
+  return { ok: true, booking: toPublicBooking(booking), started };
 }
 
 export async function updateMentorNotes(mentorUserId, rawId, body) {

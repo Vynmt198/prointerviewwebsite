@@ -26,6 +26,39 @@ export class PaymentsController {
     }
   }
 
+  static async subscriptionTransferPending(req, res, next) {
+    try {
+      const result = await paymentsService.createSubscriptionTransferPending(req.userId, req.body ?? {});
+      if (!result.ok) {
+        return res.status(result.status || 400).json({ success: false, error: result.error });
+      }
+      res.status(201).json({
+        success: true,
+        paymentId: result.paymentId,
+        providerRef: result.providerRef,
+        idempotent: Boolean(result.idempotent),
+      });
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  static async subscriptionSubmitTransfer(req, res, next) {
+    try {
+      const paymentId = req.params.paymentId;
+      const result = await paymentsService.submitSubscriptionTransfer(req.userId, {
+        paymentId,
+        reference: req.body?.reference ?? req.body?.paymentRef ?? req.body?.orderNum,
+      });
+      if (!result.ok) {
+        return res.status(result.status || 400).json({ success: false, error: result.error });
+      }
+      res.json({ success: true });
+    } catch (err) {
+      next(err);
+    }
+  }
+
   static async history(req, res, next) {
     try {
       const limit = req.query.limit;

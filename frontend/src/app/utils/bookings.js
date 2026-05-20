@@ -43,15 +43,11 @@ export function getAllReviews() {
 const INDEX_KEY = "PI_BOOKINGS_INDEX";      // stores array of orderNums
 const PREFIX = "PI_BOOKING_";
 
-/* ── Generate a Google Meet-style link ──────────────────── */
+import { proInterviewRoomName } from "./meetingLinks";
+
+/* ── Link phòng ProInterview (Jitsi) — cùng pattern với MeetingRoom ── */
 export function genMeetLink(seed) {
-  const chars = "abcdefghijklmnopqrstuvwxyz";
-  const digits = seed.replace(/\D/g, "").padEnd(12, "3456789");
-  const pick = (offset, len) =>
-    Array.from({ length: len }, (_, i) =>
-      chars[parseInt(digits[(offset + i) % digits.length]) % 26]
-    ).join("");
-  return `https://meet.google.com/${pick(0, 3)}-${pick(3, 4)}-${pick(7, 3)}`;
+  return `https://meet.jit.si/${proInterviewRoomName(seed)}`;
 }
 
 /* ── Convert UPCOMING_SESSIONS mock to BookingData ───────── */

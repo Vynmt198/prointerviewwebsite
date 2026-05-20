@@ -33,6 +33,46 @@ export async function initiatePayment(payload) {
   }
 }
 
+export async function createSubscriptionTransferPending({ amount, planKey, orderNum }) {
+  if (!hasAuthCredentials()) return { success: false, error: "Chưa đăng nhập." };
+  try {
+    const res = await authFetch("/api/payments/subscription/transfer-pending", {
+      method: "POST",
+      headers: { ...jsonHeaders },
+      body: JSON.stringify({ amount, planKey, orderNum }),
+    });
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok) return { success: false, error: body.error || `Lỗi ${res.status}` };
+    if (body.success) {
+      return {
+        success: true,
+        paymentId: body.paymentId,
+        providerRef: body.providerRef,
+        idempotent: Boolean(body.idempotent),
+      };
+    }
+    return { success: false, error: body.error || "Không tạo được giao dịch chờ CK." };
+  } catch {
+    return { success: false, error: "Không kết nối được backend." };
+  }
+}
+
+export async function submitSubscriptionTransfer(paymentId, reference) {
+  if (!hasAuthCredentials()) return { success: false, error: "Chưa đăng nhập." };
+  try {
+    const res = await authFetch(`/api/payments/subscription/${paymentId}/submit-transfer`, {
+      method: "PATCH",
+      headers: { ...jsonHeaders },
+      body: JSON.stringify({ reference }),
+    });
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok) return { success: false, error: body.error || `Lỗi ${res.status}` };
+    return { success: Boolean(body.success) };
+  } catch {
+    return { success: false, error: "Không kết nối được backend." };
+  }
+}
+
 export async function fetchPaymentHistory(limit = 50) {
   if (!hasAuthCredentials()) return { success: false, error: "Chưa đăng nhập." };
   try {

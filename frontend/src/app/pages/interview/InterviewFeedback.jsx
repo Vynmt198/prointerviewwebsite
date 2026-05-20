@@ -27,6 +27,7 @@ import {
 import { CourseRecommendations } from "../../components/courses/CourseRecommendations";
 import { getPlans } from "../../utils/auth";
 import { evaluateInterviewSession } from "../../utils/interviewsApi";
+import { MOCK_INTERVIEW_QUESTIONS } from "../../data/mockData";
 
 const IS = { strokeWidth: 1.75, strokeLinecap: "round", strokeLinejoin: "round" };
 
@@ -163,9 +164,30 @@ export function InterviewFeedback() {
     if (!sessionId) return;
 
     setEvaluating(true);
-    const answers = transcripts.map((t, i) => ({ questionIndex: i, transcript: t || "" }));
 
-    evaluateInterviewSession(sessionId, answers)
+    // Kèm questionText để backend dùng làm fallback khi session không có questions (mock flow)
+    const answers = transcripts.map((t, i) => ({
+      questionIndex: i,
+      transcript: t || "",
+      questionText: questionObjects?.[i]?.question || MOCK_INTERVIEW_QUESTIONS?.[i] || `Câu hỏi ${i + 1}`,
+    }));
+
+    // Gửi kèm question objects nếu có (từ LLM) hoặc tạo minimal từ mock strings
+    const questionsPayload = questionObjects
+      ? questionObjects.map(q => ({
+          question:       q.question,
+          layer:          q.layer,
+          competencyName: q.competencyName,
+          ddiKeyActionTargeted: q.ddiKeyActionTargeted,
+          shrmRubricExcellent:  q.shrmRubricExcellent,
+        }))
+      : MOCK_INTERVIEW_QUESTIONS.map(q => ({
+          question:       q,
+          layer:          "behavior",
+          competencyName: "Năng lực tổng quát",
+        }));
+
+    evaluateInterviewSession(sessionId, answers, questionsPayload)
       .then(res => {
         if (!res.success || !res.evaluation?.perQuestion?.length) {
           setEvalError("Không thể tạo phản hồi AI. Đang hiển thị kết quả mẫu.");

@@ -28,8 +28,17 @@ import {
   History,
   AlertTriangle
 } from "lucide-react";
-import { getPlans, getUser, updateUser, logout, getInitials, restoreSession } from "../../utils/auth";
+import {
+  getPlans,
+  getUser,
+  updateUser,
+  logout,
+  getInitials,
+  restoreSession,
+  PLANS_CHANGED_EVENT,
+} from "../../utils/auth";
 import { applyAsMentor, fetchMyMentorProfile, updateMyMentorProfile } from "../../utils/mentorApi";
+import { uploadFile } from "../../utils/uploadApi";
 
 const ACHIEVEMENTS = [
   { icon: Lightning, label: "5 ngày streak", color: "from-amber-400 to-orange-500", earned: true },
@@ -58,6 +67,9 @@ export function Profile() {
   const [showMentorModal, setShowMentorModal] = useState(false);
   const [applying, setApplying] = useState(false);
   const [resubmittingMentor, setResubmittingMentor] = useState(false);
+  const [avatarUrl, setAvatarUrl] = useState(user?.avatar || "");
+  const [avatarUploading, setAvatarUploading] = useState(false);
+  const avatarInputRef = React.useRef(null);
   const [mentorForm, setMentorForm] = useState({
     title: "",
     company: "",
@@ -151,6 +163,36 @@ export function Profile() {
   const handleLogout = async () => {
     await logout();
     navigate("/");
+  };
+
+  const handleAvatarChange = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      alert("Vui lòng chọn file ảnh (JPG, PNG, …).");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      alert("Ảnh tối đa 5MB.");
+      return;
+    }
+    setAvatarUploading(true);
+    const up = await uploadFile(file, "avatar");
+    if (!up.success || !up.url) {
+      setAvatarUploading(false);
+      alert(up.error || "Upload ảnh thất bại.");
+      return;
+    }
+    const res = await updateUser({ avatar: up.url });
+    setAvatarUploading(false);
+    if (res.success) {
+      setAvatarUrl(up.url);
+      setSaveMsg("avatar");
+      setTimeout(() => setSaveMsg(null), 2500);
+    } else {
+      alert(res.error || "Không lưu được ảnh đại diện.");
+    }
   };
 
   const handleResubmitMentorProfile = async () => {
@@ -257,8 +299,16 @@ export function Profile() {
 
   React.useEffect(() => {
     const refresh = () => setPlans(getPlans());
+    window.addEventListener(PLANS_CHANGED_EVENT, refresh);
     window.addEventListener("focus", refresh);
-    return () => window.removeEventListener("focus", refresh);
+    return () => {
+      window.removeEventListener(PLANS_CHANGED_EVENT, refresh);
+      window.removeEventListener("focus", refresh);
+    };
+  }, []);
+
+  React.useEffect(() => {
+    restoreSession().catch(() => {});
   }, []);
 
   React.useEffect(() => {
@@ -391,6 +441,14 @@ export function Profile() {
         </div>
 
         {/* Status messages */}
+        {saveMsg === "avatar" && (
+          <div className="fixed bottom-10 right-10 z-50 flex items-center gap-4 bg-[#6E35E8] text-white px-8 py-5 rounded-2xl shadow-2xl border border-violet-300/40 font-black text-xs uppercase tracking-widest animate-in fade-in slide-in-from-bottom-5">
+            <div className="bg-emerald-500 rounded-full p-1">
+              <Check size={14} />
+            </div>
+            Đã cập nhật ảnh đại diện
+          </div>
+        )}
         {saveMsg === "saved" && (
           <div className="fixed bottom-10 right-10 z-50 flex items-center gap-3 bg-emerald-600/90 backdrop-blur-xl text-white px-8 py-4 rounded-2xl shadow-2xl border border-emerald-400/30 font-black text-xs uppercase tracking-widest animate-in fade-in slide-in-from-bottom-5">
             <Check size={18} /> Đã cập nhật thành công
@@ -418,10 +476,30 @@ export function Profile() {
         <div className="grid lg:grid-cols-12 gap-10">
           <div className="lg:col-span-4 space-y-10">
             <div className="glass-card p-10 text-center">
-               <div className="glow-halo mb-8">
-                  <div className="w-32 h-32 rounded-[34px] bg-[#f8f5ff] border-[3px] border-[#7a23e5] flex items-center justify-center text-[2.3rem] font-black text-[#7a23e5] shadow-[0_10px_24px_rgba(122,35,229,0.25)]">
-                     {initials}
+               <div className="glow-halo relative mx-auto mb-8 w-fit">
+                  <div className="w-32 h-32 rounded-[34px] bg-[#f8f5ff] border-[3px] border-[#7a23e5] overflow-hidden flex items-center justify-center text-[2.3rem] font-black text-[#7a23e5] shadow-[0_10px_24px_rgba(122,35,229,0.25)]">
+                     {avatarUrl ? (
+                       <img src={avatarUrl} alt="" className="h-full w-full object-cover" />
+                     ) : (
+                       initials
+                     )}
                   </div>
+                  <button
+                    type="button"
+                    disabled={avatarUploading}
+                    onClick={() => avatarInputRef.current?.click()}
+                    className="absolute -bottom-1 -right-1 flex h-10 w-10 items-center justify-center rounded-full border-2 border-white bg-[#6E35E8] text-white shadow-lg transition hover:scale-105 disabled:opacity-60"
+                    title="Đổi ảnh đại diện"
+                  >
+                    <Camera size={18} />
+                  </button>
+                  <input
+                    ref={avatarInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleAvatarChange}
+                  />
                </div>
                
                <h2 className="mb-1 text-2xl font-black tracking-tight text-slate-900 sm:text-3xl">{form.name || "Người dùng"}</h2>

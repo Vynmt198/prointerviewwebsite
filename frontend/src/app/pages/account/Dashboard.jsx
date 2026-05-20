@@ -438,8 +438,8 @@ export function Dashboard() {
       return aFuture ? -1 : 1;
     });
     const upcoming = merged.filter((b) => {
-      // Chỉ hiển thị những lịch đã thanh toán thành công (confirmed) theo yêu cầu của bạn
-      return b.status === "confirmed";
+      const st = String(b.status || "").toLowerCase();
+      return st === "confirmed" || st === "in_progress";
     });
     setUpcomingSessions(upcoming);
     setMentorIssueAlerts(mentorAlerts);
@@ -658,7 +658,7 @@ export function Dashboard() {
                                    <span className="text-xl font-black text-slate-400">{s.mentorName[0]}</span>
                                 )}
                              </div>
-                             {(s.status === "confirmed" || (s.status === "done" && !s.reviewId)) && (
+                             {(s.status === "confirmed" || s.status === "in_progress" || (s.status === "done" && !s.reviewId)) && (
                                 <div className="absolute -top-1 -right-1 w-4 h-4 bg-emerald-500 rounded-full border-2 border-[#0E0922] shadow-[0_0_10px_rgba(16,185,129,0.5)]" />
                              )}
                           </div>
@@ -685,11 +685,15 @@ export function Dashboard() {
                           </div>
                        </div>
                        
-                       {(s.status === "confirmed" || (s.status === "done" && !s.reviewId)) && (
+                       {(s.status === "confirmed" || s.status === "in_progress" || (s.status === "done" && !s.reviewId)) && (
                           <div className="mt-4 pt-3 border-t border-slate-200 flex gap-2">
-                             {s.status === "confirmed" ? (
+                             {s.status === "confirmed" || s.status === "in_progress" ? (
                                <>
-                                 <button className="flex-1 h-10 rounded-xl bg-secondary text-black font-black text-[10px] uppercase tracking-widest hover:scale-[1.02] active:scale-[0.98] transition-all shadow-[0_10px_30px_rgba(232,121,249,0.2)]" onClick={() => navigate(`/meeting/${s.sessionId || s.backendId || s.id}`)}>
+                                 <button
+                                   className="flex-1 h-10 rounded-xl bg-secondary text-black font-black text-[10px] uppercase tracking-widest hover:scale-[1.02] active:scale-[0.98] transition-all shadow-[0_10px_30px_rgba(232,121,249,0.2)] disabled:opacity-50"
+                                   disabled={String(s.paymentStatus || "").toLowerCase() !== "paid"}
+                                   onClick={() => navigate(`/meeting/${s.sessionId || s.backendId || s.id}`)}
+                                 >
                                     Vào phòng phỏng vấn
                                  </button>
                                  <button 
@@ -714,9 +718,15 @@ export function Dashboard() {
                  ))}
                </div>
                
-               {upcomingSessions.length > 2 && (
-                 <button className="w-full mt-4 py-2 text-[10px] font-black text-slate-500 uppercase tracking-[0.1em] hover:text-slate-800 transition-colors">
-                    Xem tất cả lịch hẹn ({upcomingSessions.length})
+               {upcomingSessions.length > 0 && (
+                 <button
+                   type="button"
+                   onClick={() => navigate("/my-bookings")}
+                   className="w-full mt-4 py-2 text-[10px] font-black text-slate-500 uppercase tracking-[0.1em] hover:text-slate-800 transition-colors"
+                 >
+                    {upcomingSessions.length > 2
+                      ? `Xem tất cả lịch hẹn (${upcomingSessions.length})`
+                      : "Quản lý lịch hẹn"}
                  </button>
                )}
             </div>

@@ -28,11 +28,12 @@ export function useDIDStream(apiKey) {
   const [status, setStatus] = useState("idle");
   const [error, setError]   = useState("");
 
-  const pcRef        = useRef(null);
-  const streamIdRef  = useRef("");
-  const sessionIdRef = useRef("");
-  const videoElRef   = useRef(null);
-  const endTimerRef  = useRef();
+  const pcRef           = useRef(null);
+  const streamIdRef     = useRef("");
+  const sessionIdRef    = useRef("");
+  const videoElRef      = useRef(null);
+  const endTimerRef     = useRef();
+  const connectTimerRef = useRef();
 
   const isConfigured = Boolean(apiKey && apiKey !== "YOUR_DID_API_KEY");
 
@@ -43,12 +44,12 @@ export function useDIDStream(apiKey) {
   }), [apiKey]);
 
   // ── Attach video element ──────────────────────────────────
-  const attachVideo = useCallback((el: HTMLVideoElement | null) => {
+  const attachVideo = useCallback((el) => {
     videoElRef.current = el;
   }, []);
 
   // ── Connect ───────────────────────────────────────────────
-  const connect = useCallback(async () => {
+  const connect = useCallback(async (sourceUrl = DID_SOURCE_IMAGE) => {
     if (!isConfigured) {
       setStatus("error");
       setError("D-ID API key chưa được cấu hình");
@@ -64,7 +65,7 @@ export function useDIDStream(apiKey) {
       const res = await fetch(`${DID_API}/talks/streams`, {
         method: "POST",
         headers: getHeaders(),
-        body: JSON.stringify({ source_url: DID_SOURCE_IMAGE }),
+        body: JSON.stringify({ source_url: sourceUrl }),
       });
 
       if (!res.ok) {
@@ -83,10 +84,11 @@ export function useDIDStream(apiKey) {
       pc.addTransceiver("video", { direction: "recvonly" });
       pc.addTransceiver("audio", { direction: "recvonly" });
 
-      // 3. Video/audio track → attach lên <video>
+      // 3. Video/audio track → attach lên <video> + gọi play() để bypass autoplay policy
       pc.ontrack = (event) => {
         if (videoElRef.current && event.streams[0]) {
           videoElRef.current.srcObject = event.streams[0];
+          videoElRef.current.play().catch(() => {});
         }
       };
 
@@ -112,12 +114,14 @@ export function useDIDStream(apiKey) {
       // 5. Theo dõi connection state
       pc.onconnectionstatechange = () => {
         if (pc.connectionState === "connected") {
+          clearTimeout(connectTimerRef.current);
           setStatus("connected");
         } else if (
           pc.connectionState === "failed" ||
           pc.connectionState === "closed" ||
           pc.connectionState === "disconnected"
         ) {
+          clearTimeout(connectTimerRef.current);
           setStatus("error");
           setError("WebRTC kết nối thất bại");
         }
@@ -138,7 +142,14 @@ export function useDIDStream(apiKey) {
         throw new Error(`SDP exchange thất bại: ${sdpRes.status}`);
       }
 
-      // Connection state change sẽ trigger setStatus('connected')
+      // Timeout 7s: nếu WebRTC không vào "connected" → fallback sang pre-recorded video
+      connectTimerRef.current = setTimeout(() => {
+        if (pcRef.current && pcRef.current.connectionState !== "connected") {
+          console.warn("[D-ID] connection timeout → fallback");
+          setStatus("error");
+          setError("Kết nối D-ID timeout");
+        }
+      }, 7000);
     } catch (err) {
       console.error("[D-ID] connect():", err);
       setStatus("error");
@@ -150,7 +161,7 @@ export function useDIDStream(apiKey) {
   const speakWithAudio = useCallback(async (
     audioUrl,
     text,
-    onEnd?: () => void,
+    onEnd,
   ) => {
     if (!streamIdRef.current || !sessionIdRef.current) {
       onEnd?.();
@@ -198,7 +209,8 @@ export function useDIDStream(apiKey) {
   // ── Nói với text (Azure TTS vi-VN) ───────────────────────
   const speakWithText = useCallback(async (
     text,
-    onEnd?: () => void,
+    onEnd,
+    voiceId = "vi-VN-HoaiMyNeural",
   ) => {
     if (!streamIdRef.current || !sessionIdRef.current) {
       onEnd?.();
@@ -220,7 +232,7 @@ export function useDIDStream(apiKey) {
             input: text,
             provider: {
               type:     "microsoft",
-              voice_id: "vi-VN-HoaiMyNeural", // giọng nữ Việt Azure
+              voice_id: voiceId,
             },
           },
           config: {
@@ -246,6 +258,7 @@ export function useDIDStream(apiKey) {
   // ── Disconnect & cleanup ──────────────────────────────────
   const disconnect = useCallback(async () => {
     clearTimeout(endTimerRef.current);
+    clearTimeout(connectTimerRef.current);
 
     if (streamIdRef.current && sessionIdRef.current) {
       try {

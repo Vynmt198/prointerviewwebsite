@@ -4,6 +4,14 @@
  */
 
 import { apiUrl } from "./api.js";
+import {
+  PLAN_STORAGE_KEY,
+  apiPlanToLocalFlags,
+  migrateLegacyPlanFlags,
+  resolvePlansFromStorageAndUser,
+} from "./planSync.js";
+
+export { apiPlanToLocalFlags } from "./planSync.js";
 
 const AUTH_KEY = "prointerview_auth";
 const TOKEN_KEY = "prointerview_access_token";
@@ -391,6 +399,7 @@ export async function updateUser(partial) {
 
 export function setLoggedIn(user) {
   localStorage.setItem(AUTH_KEY, JSON.stringify(user));
+  syncPlansFromUser(user);
 }
 
 export function isLoggedIn() {
@@ -422,6 +431,78 @@ export async function logout() {
     }
   }
   clearAuthStorage();
+}
+
+/** ObjectId phiên refresh hiện tại (phần trước dấu `:` trong refresh token). */
+export function getCurrentAuthSessionId() {
+  const rt = getRefreshToken();
+  const idx = rt.indexOf(":");
+  if (idx <= 0) return "";
+  return rt.slice(0, idx);
+}
+
+export async function fetchAuthSessions() {
+  if (!hasAuthCredentials()) {
+    return { success: false, error: "Chưa đăng nhập.", sessions: [] };
+  }
+  try {
+    const res = await authFetch("/api/auth/sessions", {
+      method: "GET",
+      headers: { Accept: "application/json" },
+    });
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      return { success: false, error: body.error || `Lỗi ${res.status}`, sessions: [] };
+    }
+    return { success: true, sessions: body.sessions || [] };
+  } catch {
+    return { success: false, error: "Không kết nối được server.", sessions: [] };
+  }
+}
+
+export async function revokeAuthSession(sessionId) {
+  if (!hasAuthCredentials()) {
+    return { success: false, error: "Chưa đăng nhập." };
+  }
+  const id = String(sessionId || "").trim();
+  if (!id) return { success: false, error: "Thiếu mã phiên." };
+  try {
+    const res = await authFetch(`/api/auth/sessions/${encodeURIComponent(id)}`, {
+      method: "DELETE",
+      headers: { Accept: "application/json" },
+    });
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      return { success: false, error: body.error || `Lỗi ${res.status}` };
+    }
+    if (id === getCurrentAuthSessionId()) {
+      clearAuthStorage();
+    }
+    return { success: true };
+  } catch {
+    return { success: false, error: "Không kết nối được server." };
+  }
+}
+
+/** Xóa tài khoản vĩnh viễn trên server; luôn xóa auth local sau khi thành công. */
+export async function deleteAccount() {
+  if (!hasAuthCredentials()) {
+    return { success: false, error: "Chưa đăng nhập." };
+  }
+  try {
+    const res = await authFetch("/api/auth/me", {
+      method: "DELETE",
+      headers: { Accept: "application/json" },
+    });
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      return { success: false, error: body.error || `Lỗi ${res.status}` };
+    }
+    clearAuthStorage();
+    return { success: true, message: body.message || "Đã xóa tài khoản." };
+  } catch {
+    return { success: false, error: "Không kết nối được server." };
+  }
 }
 
 export function getInitials(name) {
@@ -483,25 +564,39 @@ export function getDisplayFirstName(user, fallback = "bạn") {
    PLAN SYSTEM — 3 tiers
 ══════════════════════════════════════════════════════════ */
 
-const PLAN_KEY = "prointerview_plans";
+const PLAN_KEY = PLAN_STORAGE_KEY;
+export const PLANS_CHANGED_EVENT = "prointerview-plans-changed";
+
+/** Đồng bộ localStorage từ user.plan (sau login /me / admin duyệt CK). */
+export function syncPlansFromUser(user) {
+  if (!user?.plan) return;
+  const flags = apiPlanToLocalFlags(user.plan);
+  localStorage.setItem(PLAN_KEY, JSON.stringify(flags));
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new Event(PLANS_CHANGED_EVENT));
+  }
+}
 
 export function getPlans() {
   const raw = localStorage.getItem(PLAN_KEY);
-  if (!raw) return { starterPro: false, elitePro: false };
-  try {
-    const parsed = JSON.parse(raw);
-    if ("voicePro" in parsed || "cvPro" in parsed) {
-      const migrated = {
-        starterPro: !!(parsed.voicePro || parsed.cvPro || parsed.textPro),
-        elitePro: !!(parsed.voicePro && parsed.cvPro),
-      };
-      localStorage.setItem(PLAN_KEY, JSON.stringify(migrated));
-      return migrated;
+  let stored = { starterPro: false, elitePro: false };
+  if (raw) {
+    try {
+      const parsed = JSON.parse(raw);
+      stored = migrateLegacyPlanFlags(parsed);
+      if ("voicePro" in parsed || "cvPro" in parsed) {
+        localStorage.setItem(PLAN_KEY, JSON.stringify(stored));
+      }
+    } catch {
+      stored = { starterPro: false, elitePro: false };
     }
-    return { starterPro: false, elitePro: false, ...parsed };
-  } catch {
-    return { starterPro: false, elitePro: false };
   }
+  const u = getUser();
+  const resolved = resolvePlansFromStorageAndUser(stored, u?.plan);
+  if (resolved !== stored) {
+    localStorage.setItem(PLAN_KEY, JSON.stringify(resolved));
+  }
+  return resolved;
 }
 
 export function setPlan(plan, value = true) {

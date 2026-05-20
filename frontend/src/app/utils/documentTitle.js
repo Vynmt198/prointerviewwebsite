@@ -29,8 +29,13 @@ const ROUTE_TITLES = {
   "/admin": "Quản trị",
 };
 
+const MEETING_TITLE_RE = /^\/meeting\/[^/]+$/;
+
 export function resolveDocumentTitle(pathname) {
   const path = pathname || "/";
+  if (MEETING_TITLE_RE.test(path.replace(/\/$/, "") || path)) {
+    return "Phòng phỏng vấn · ProInterview";
+  }
   if (path.startsWith("/admin")) {
     const normalized = path.replace(/\/$/, "") || "/admin";
     for (const [re, label] of ADMIN_TITLE_RULES) {

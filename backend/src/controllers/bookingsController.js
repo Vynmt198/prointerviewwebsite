@@ -64,6 +64,34 @@ export class BookingsController {
     }
   }
 
+  static async startMeeting(req, res, next) {
+    try {
+      const result = await bookingsService.startBookingMeeting(req.userId, req.params.id, {
+        asMentor: false,
+      });
+      if (!result.ok) {
+        return res.status(result.status).json({ success: false, error: result.error });
+      }
+      res.json({ success: true, booking: result.booking });
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  static async startMeetingForMentor(req, res, next) {
+    try {
+      const result = await bookingsService.startBookingMeeting(req.userId, req.params.id, {
+        asMentor: true,
+      });
+      if (!result.ok) {
+        return res.status(result.status).json({ success: false, error: result.error });
+      }
+      res.json({ success: true, booking: result.booking });
+    } catch (err) {
+      next(err);
+    }
+  }
+
   static async updateNotesForMentor(req, res, next) {
     try {
       const result = await bookingsService.updateMentorNotes(req.userId, req.params.id, req.body ?? {});

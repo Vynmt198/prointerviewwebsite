@@ -78,6 +78,10 @@ def extract_skills(text: str, fuzzy_threshold: int = 85) -> dict:
     found: dict[str, dict] = {}  # skill → best match info
 
     for ngram in ngrams:
+        # Bỏ token 1 ký tự — tránh khớp nhầm "r" (ngôn ngữ R) với mọi chữ "r" trong CV tiếng Việt
+        if len(ngram) < 2:
+            continue
+
         # 1. Alias resolution trước
         resolved = ALIASES.get(ngram, ngram)
         

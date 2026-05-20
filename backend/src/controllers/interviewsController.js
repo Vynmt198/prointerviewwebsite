@@ -191,7 +191,11 @@ export const InterviewsController = {
       }
 
       // Layer 1+2: SHRM/DDI grounded generation
-      const result = await generateQuestionsFromText({ cvText, jdText, position, field, level, fewShotExamples });
+      const result = await generateQuestionsFromText({
+        cvText, jdText, position, field, level, fewShotExamples,
+        userId: req.userId,
+        sessionId: null, // session created after question generation
+      });
 
       const combined = `${cvText} ${jdText}`;
       const coverage = computeCoverage(result.questions, combined);
@@ -249,22 +253,35 @@ export const InterviewsController = {
   evaluateSession: async (req, res) => {
     try {
       const { id } = req.params;
-      const { answers = [] } = req.body;
+      const { answers = [], questions: bodyQuestions = [] } = req.body;
 
       const session = await InterviewSession.findOne({ _id: id, userId: req.userId });
       if (!session) return res.status(404).json({ success: false, error: "Không tìm thấy phiên" });
-      if (!session.questions?.length) {
-        return res.status(400).json({ success: false, error: "Phiên không có câu hỏi" });
-      }
 
       // Ưu tiên answers từ request body (tránh race condition với saveAnswer fire-and-forget)
       const answersToEval = answers.length > 0 ? answers : session.answers;
 
+      // Resolve questions: session > body > build từ questionText trong answers
+      let questionsToUse = session.questions;
+      if (!questionsToUse?.length) {
+        if (bodyQuestions.length) {
+          questionsToUse = bodyQuestions;
+        } else if (answersToEval.some(a => a.questionText)) {
+          questionsToUse = answersToEval.map((a, i) => ({
+            question:        a.questionText || `Câu hỏi ${i + 1}`,
+            layer:           "behavior",
+            competencyName:  "Năng lực tổng quát",
+          }));
+        } else {
+          return res.status(400).json({ success: false, error: "Phiên không có câu hỏi" });
+        }
+      }
+
       console.log("[evaluateSession] id=%s questions=%d answers=%d",
-        id, session.questions.length, answersToEval.length);
+        id, questionsToUse.length, answersToEval.length);
 
       const evalResult = await evaluateTranscripts({
-        questions: session.questions,
+        questions: questionsToUse,
         answers:   answersToEval,
       });
 
