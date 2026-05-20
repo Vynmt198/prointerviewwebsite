@@ -5,7 +5,7 @@ export const HOME_LANDING_ANCHORS = [
   { label: "Đánh giá", hash: "#mentors" },
 ];
 
-/** Menu ngang cho customer (khách & đã đăng nhập) — vào trang tự do, hành động dùng tính năng mới bắt login. */
+/** Menu ngang customer — xem & chọn tùy chọn tự do; đăng nhập khi bấm Phân tích / Bắt đầu phỏng vấn. */
 export const CUSTOMER_NAV_ITEMS = [
   { title: "Phân tích CV", url: "/cv-analysis" },
   { title: "Phỏng vấn AI", url: "/interview" },

@@ -39,6 +39,12 @@ const mentorSchema = new Schema(
     /** Link portfolio / CV online do ứng viên gửi khi đăng ký mentor */
     portfolioUrl: { type: String, default: "" },
 
+    /** Snapshot từ hồ sơ User lúc đăng ký — admin duyệt đúng nội dung form /profile */
+    profileEducation: { type: String, default: "" },
+    profileWorkExperience: { type: String, default: "" },
+    profileExtracurricular: { type: String, default: "" },
+    profileAwards: { type: String, default: "" },
+
     experienceYears: { type: Number, default: 0 },
 
     pricePerHour: { type: Number, required: true },

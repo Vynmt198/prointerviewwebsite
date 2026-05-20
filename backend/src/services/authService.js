@@ -654,6 +654,7 @@ export async function patchMeUser(userId, body, req) {
     user.desiredPosition = p;
     user.position = p;
   }
+  if (typeof body.company === "string") user.currentCompany = body.company.trim();
   if (typeof body.school === "string") user.school = body.school.trim();
   if (typeof body.field === "string" && body.field.trim()) {
     const f = body.field.trim();
@@ -679,6 +680,18 @@ export async function patchMeUser(userId, body, req) {
     if (Number.isFinite(n)) user.hourlyRate = n;
   }
   if (typeof body.bio === "string") user.bio = body.bio;
+  if (typeof body.profileWorkExperience === "string") {
+    user.profileWorkExperience = body.profileWorkExperience.trim();
+  }
+  if (typeof body.profileEducation === "string") {
+    user.profileEducation = body.profileEducation.trim();
+  }
+  if (typeof body.profileExtracurricular === "string") {
+    user.profileExtracurricular = body.profileExtracurricular.trim();
+  }
+  if (typeof body.profileAwards === "string") {
+    user.profileAwards = body.profileAwards.trim();
+  }
 
   if (typeof body.email === "string") {
     const e = body.email.trim().toLowerCase();

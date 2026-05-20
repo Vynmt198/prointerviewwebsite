@@ -20,6 +20,61 @@ function normalizeList(value) {
   return [];
 }
 
+function formatMonthVi(ym) {
+  const s = String(ym ?? "").trim();
+  if (!/^\d{4}-\d{2}$/.test(s)) return s || "—";
+  const [y, m] = s.split("-");
+  return `${m}/${y}`;
+}
+
+function workHistoryJsonToText(raw) {
+  const s = String(raw ?? "").trim();
+  if (!s.startsWith("{")) return "";
+  try {
+    const data = JSON.parse(s);
+    if (data?.version !== 1 || !Array.isArray(data.entries)) return "";
+    return data.entries
+      .map((e) => {
+        const role = String(e?.role ?? "").trim() || "—";
+        const company = String(e?.company ?? "").trim() || "—";
+        let period = "—";
+        if (e?.isCurrent && e?.startMonth) {
+          period = `${formatMonthVi(e.startMonth)} — Hiện tại`;
+        } else if (e?.startMonth && e?.endMonth) {
+          period = `${formatMonthVi(e.startMonth)} — ${formatMonthVi(e.endMonth)}`;
+        } else if (e?.startMonth) {
+          period = `Từ ${formatMonthVi(e.startMonth)}`;
+        } else if (e?.isCurrent) {
+          period = "Hiện tại";
+        }
+        const tag = e?.isCurrent ? " [Hiện tại]" : "";
+        const line = `${role} · ${company}${tag} (${period})`;
+        const note = String(e?.note ?? "").trim();
+        return note ? `${line}\n  ${note}` : line;
+      })
+      .join("\n");
+  } catch {
+    return "";
+  }
+}
+
+/** Ghép KN từ JSON lịch sử, ô mô tả hoặc chức danh / công ty / số năm (form Profile). */
+function buildProfileWorkExperienceText(user, body, title, company, experienceYears) {
+  const fromUser = String(user?.profileWorkExperience ?? "").trim();
+  const fromBody = String(body?.workExperience ?? body?.profileWorkExperience ?? "").trim();
+  const fromJson = workHistoryJsonToText(fromUser) || workHistoryJsonToText(fromBody);
+  if (fromJson) return fromJson;
+  if (fromUser && !fromUser.startsWith("{")) return fromUser;
+  if (fromBody && !fromBody.startsWith("{")) return fromBody;
+  const lines = [];
+  if (title) lines.push(`Chức danh: ${title}`);
+  if (company && company !== "Freelancer") lines.push(`Công ty: ${company}`);
+  if (Number.isFinite(experienceYears) && experienceYears > 0) {
+    lines.push(`Số năm kinh nghiệm: ${experienceYears}`);
+  }
+  return lines.join("\n");
+}
+
 export async function getMyMentorDoc(userId) {
   if (!isMongoReady()) return { ok: false, status: 503, error: MONGO_ERR };
   const uid = String(userId ?? "").trim();
@@ -34,7 +89,9 @@ export async function applyForMentor(userId, body) {
   const uid = String(userId ?? "").trim();
   if (!mongoose.isValidObjectId(uid)) return { ok: false, status: 401, error: "Phiên đăng nhập không hợp lệ." };
 
-  const user = await User.findById(uid).select("name email role isActive avatar");
+  const user = await User.findById(uid).select(
+    "name email role isActive avatar profileExtracurricular profileEducation profileWorkExperience profileAwards school",
+  );
   if (!user || user.isActive === false) {
     return { ok: false, status: 404, error: "Không tìm thấy tài khoản hợp lệ." };
   }
@@ -48,28 +105,73 @@ export async function applyForMentor(userId, body) {
   const linkedinUrl = String(body?.linkedinProfile || body?.linkedinUrl || "").trim();
   const portfolioUrl = String(body?.portfolioLink || body?.portfolioUrl || "").trim();
   const specialties = normalizeList(body?.tags?.length ? body.tags : body?.skills);
-  const companies = normalizeList(body?.companies?.length ? body.companies : body?.careerHistory);
+  let companies = normalizeList(body?.companies?.length ? body.companies : body?.careerHistory);
   const fields = normalizeList(body?.fields);
-  const targetRate = Number(body?.targetRate);
-  const experienceYears = Number(body?.yearsOfExperience);
+  const targetRate = Number(body?.targetRate ?? body?.pricePerHour);
+  const experienceYears = Number(body?.yearsOfExperience ?? body?.experienceYears);
+  const responseTime =
+    String(body?.responseTime ?? "").trim() || "< 24 giờ";
+  const timezone =
+    String(body?.timezone ?? "").trim() || "Asia/Ho_Chi_Minh";
 
-  if (!title || !bio) {
-    return { ok: false, status: 400, error: "Thiếu thông tin bắt buộc (chức danh, tiểu sử)." };
+  if (!bio) {
+    return { ok: false, status: 400, error: "Vui lòng điền Giới thiệu bản thân." };
   }
+  const hasWork =
+    companies.length > 0 ||
+    title.length > 0 ||
+    String(body?.company || "").trim().length > 0 ||
+    (Number.isFinite(experienceYears) && experienceYears > 0);
+  const hasExtracurricular = String(user.profileExtracurricular ?? "").trim().length > 0;
+  if (!hasWork && !hasExtracurricular) {
+    return {
+      ok: false,
+      status: 400,
+      error: "Vui lòng điền Kinh nghiệm làm việc hoặc Hoạt động ngoại khóa.",
+    };
+  }
+  if (!Number.isFinite(targetRate) || targetRate <= 0) {
+    return { ok: false, status: 400, error: "Vui lòng nhập mức phí mong muốn (VNĐ/60 phút)." };
+  }
+
+  const mentorTitle = title || String(body?.company || "").trim() || "Mentor";
+  const expYears =
+    Number.isFinite(experienceYears) && experienceYears >= 0 ? Math.round(experienceYears) : 0;
+
+  if (companies.length === 0 && company && company !== "Freelancer") {
+    companies = [company];
+  }
+
+  const profileEducation = String(user.profileEducation || user.school || "").trim();
+  const profileWorkExperience = buildProfileWorkExperienceText(
+    user,
+    body,
+    mentorTitle,
+    company,
+    expYears,
+  );
+  const profileExtracurricular = String(user.profileExtracurricular ?? "").trim();
+  const profileAwards = String(user.profileAwards ?? "").trim();
 
   const baseProfile = {
     name: String(user.name || "Mentor").trim() || "Mentor",
-    title,
+    title: mentorTitle,
     company,
     avatar: String(user.avatar || "").trim(),
     bio,
     specialties,
     fields,
     companies,
+    profileEducation,
+    profileWorkExperience,
+    profileExtracurricular,
+    profileAwards,
     linkedinUrl,
     portfolioUrl,
-    experienceYears: Number.isFinite(experienceYears) && experienceYears >= 0 ? Math.round(experienceYears) : 0,
+    experienceYears: expYears,
     pricePerHour: Number.isFinite(targetRate) && targetRate > 0 ? Math.round(targetRate) : 350_000,
+    responseTime,
+    timezone,
     isActive: false,
     available: false,
     isVerified: false,
@@ -118,6 +220,7 @@ export function toPublicMentorMe(doc) {
     fields: m.fields ?? [],
     companies: m.companies ?? [],
     linkedinUrl: m.linkedinUrl ?? "",
+    portfolioUrl: m.portfolioUrl ?? "",
     experienceYears: m.experienceYears ?? 0,
     pricePerHour: m.pricePerHour ?? 0,
     sessionTypes: m.sessionTypes ?? [],

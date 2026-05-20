@@ -29,7 +29,8 @@ import {
   RefreshCw,
   BadgeCheck,
 } from "lucide-react";
-import { getPlans, getCVRemaining, incrementCVCount, CV_FREE_LIMIT } from "../../utils/auth";
+import { getPlans, getCVRemaining, incrementCVCount, CV_FREE_LIMIT, isLoggedIn } from "../../utils/auth";
+import { buildLoginPath } from "../../utils/authGate";
 import { apiUrl as expressApiUrl, isExpressBackendConfigured } from "../../utils/api";
 import { CVDocumentPreview } from "../../components/cv/CVDocumentPreview";
 import { MentorPageShell } from "../../components/mentor/MentorPageShell";
@@ -263,7 +264,11 @@ export function CVAnalysis() {
   }, [pageView, loadHistory]);
 
   // ── File change handlers ────────────────────────────────────────────────
-  const handleCVFile = (file) => { setCvFile(file); setCvUploaded(true); setReuseCV(null); };
+  const handleCVFile = (file) => {
+    setCvFile(file);
+    setCvUploaded(true);
+    setReuseCV(null);
+  };
   const handleJDFile = (file) => {
     setJdFile(file);
     setJdUploaded(true);
@@ -274,6 +279,10 @@ export function CVAnalysis() {
 
   // ── Main analyze handler ────────────────────────────────────────────────
   const handleAnalyze = async () => {
+    if (!isLoggedIn()) {
+      navigate(buildLoginPath("/cv-analysis"));
+      return;
+    }
     const hasCVInput = cvUploaded || !!reuseCV;
     if (!hasCVInput) return;
     if (!canAnalyze) return;
@@ -338,48 +347,17 @@ export function CVAnalysis() {
           } );
         };
 
-        const applyMockResult = () => {
-          setAnalysisResult({
-            _isMocked: true,
-            matchScore: derivedMode === "jd" ? 72 : 68,
-            totalKeywords: DEMO_JD_KWS.length,
-            matchedKeywords: DEMO_MATCHED,
-            missingKeywords: DEMO_JD_KWS.filter(k => !DEMO_MATCHED.includes(k)),
-            scores: { clarity: 7, structure: 6, relevance: 8, credibility: 5 },
-            scoreNotes: {
-              clarity: DEMO_SCORES[0].note, structure: DEMO_SCORES[1].note,
-              relevance: DEMO_SCORES[2].note, credibility: DEMO_SCORES[3].note,
-            },
-            position: "Frontend Developer", company: derivedMode === "jd" ? "Tech Corp" : null,
-            strengths: [
-              "CV có cấu trúc rõ ràng, dễ đọc và logic.",
-              "Kỹ năng React & TypeScript phù hợp JD.",
-              "Đã có kinh nghiệm làm việc thực tế với REST API.",
-            ],
-            weaknesses: [
-              "Thiếu kỹ năng Docker & AWS mà JD yêu cầu bắt buộc.",
-              "Không đề cập CI/CD pipeline trong kinh nghiệm.",
-              "Thiếu số liệu KPI cụ thể trong các mô tả thành tích.",
-            ],
-            suggestions: DEMO_SUGGESTIONS,
-          });
-          setSavedFileInfo(null);
-        };
-
         // Force-refresh the session BEFORE sending so we always have the
         // freshest JWT — avoids the "Invalid JWT" 401 caused by stale tokens.
         // We deliberately do NOT send "apikey" as a header because this server's
         // CORS config blocks it (causes FunctionsFetchError / "Failed to fetch").
         const token = await getForceRefreshedToken();
         
-        // If no token (not authenticated), use demo mode immediately
         if (!token) {
-          console.info("📋 CV Analysis: No authentication — using demo mode");
           clearInterval(timer);
-          applyMockResult();
-          setProgress(100);
-          await new Promise(r => setTimeout(r, 350));
-          setStep("result");
+          setStep("upload");
+          setAnalyzeError("Vui lòng đăng nhập để phân tích CV.");
+          navigate(buildLoginPath("/cv-analysis"));
           return;
         }
         
@@ -523,11 +501,10 @@ export function CVAnalysis() {
 
           if (!res.ok) {
             if (res.status === 401) {
-              console.info("📋 Server authentication issue — using demo result");
-              applyMockResult();
-              setProgress(100);
-              await new Promise(r => setTimeout(r, 350));
-              setStep("result");
+              clearInterval(timer);
+              setStep("upload");
+              setAnalyzeError("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.");
+              navigate(buildLoginPath("/cv-analysis"));
               return;
             }
             const errJson = await res.json().catch(() => ({}));
@@ -1130,19 +1107,6 @@ export function CVAnalysis() {
           {/* ── RESULT ──────────────────────────────────────────────────── */}
           {step === "result" && (
             <div>
-              {/* Mock data notice */}
-              {R?._isMocked && (
-                <div className="mb-4 flex items-center gap-3 rounded-2xl px-5 py-3" style={{ background: "rgba(255,214,0,0.08)", border: "1.5px solid rgba(250,204,21,0.35)" }}>
-                  <span className="text-lg">🔒</span>
-                  <div className="flex-1">
-                    <p className="text-sm font-semibold text-amber-900">Kết quả Demo — Cần đăng nhập để phân tích thực tế</p>
-                    <p className="mt-0.5 text-xs text-amber-800/90">
-                      Phiên đăng nhập hết hạn hoặc chưa đăng nhập. Đây là kết quả mẫu — hãy đăng nhập lại để nhận phân tích CV thực từ AI.
-                    </p>
-                  </div>
-                </div>
-              )}
-
               {/* Free-tier notice */}
               {isFreeTier && (
                 <div className="flex items-center gap-4 rounded-2xl px-5 py-4 mb-6" style={{ background: "linear-gradient(135deg,rgba(110, 53, 232,0.08),rgba(139, 77, 255,0.05))", border: "1.5px solid rgba(110, 53, 232,0.2)" }}>

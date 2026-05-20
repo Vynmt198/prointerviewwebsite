@@ -43,6 +43,10 @@ const userSchema = new Schema(
     /** Tương thích API profile cũ (FE đang gửi /me) */
     school: { type: String, default: "" },
     bio: { type: String, default: "" },
+    profileWorkExperience: { type: String, default: "" },
+    profileEducation: { type: String, default: "" },
+    profileExtracurricular: { type: String, default: "" },
+    profileAwards: { type: String, default: "" },
     hourlyRate: { type: Number },
 
     settings: {
@@ -165,6 +169,7 @@ export function toPublicUser(doc) {
     avatar: resolveStoredUploadUrl(plain.avatar),
     phone: plain.phone ?? "",
     position: (plain.desiredPosition || plain.position || "").trim(),
+    currentCompany: plain.currentCompany ?? "",
     school: plain.school ?? "",
     field: skills[0] ?? "",
     expertise: skills,
@@ -174,6 +179,10 @@ export function toPublicUser(doc) {
         : "",
     hourlyRate: plain.hourlyRate,
     bio: plain.bio ?? "",
+    profileWorkExperience: plain.profileWorkExperience ?? "",
+    profileEducation: plain.profileEducation ?? "",
+    profileExtracurricular: plain.profileExtracurricular ?? "",
+    profileAwards: plain.profileAwards ?? "",
     plan: plain.plan,
     planExpiresAt: plain.planExpiresAt,
     /** Đổi mật khẩu: không bắt buộc mật khẩu cũ nếu đã liên kết Google */

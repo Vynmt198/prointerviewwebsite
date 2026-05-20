@@ -42,30 +42,26 @@ function AdminTopBar() {
 
   return (
     <header
-      className="sticky top-0 z-30 flex h-16 shrink-0 items-center gap-4 border-b px-5 backdrop-blur-xl"
-      style={{
-        background: "rgba(255, 255, 255, 0.95)",
-        borderColor: "rgba(122,35,229,0.18)",
-        boxShadow: "0 1px 0 rgba(122,35,229,0.08)",
-      }}
+      className="sticky top-0 z-30 flex h-16 shrink-0 items-center gap-4 border-b border-[rgba(110,53,232,0.14)] bg-white/95 px-5 antialiased backdrop-blur-xl"
+      style={{ boxShadow: "0 1px 0 rgba(110, 53, 232, 0.08)" }}
     >
-      <SidebarTrigger className="rounded-lg text-[#7a23e5]/70 transition-colors hover:bg-[#7a23e5]/10 hover:text-[#7a23e5]" />
-      <div className="h-6 w-px shrink-0 bg-[#7a23e5]/20" />
+      <SidebarTrigger className="rounded-lg text-[#6E35E8]/75 transition-colors hover:bg-[#6E35E8]/10 hover:text-[#6E35E8]" />
+      <div className="h-6 w-px shrink-0 bg-[#6E35E8]/20" />
       <div className="min-w-0 flex flex-col gap-0">
         <h1
-          className="truncate text-[#7a23e5]"
+          className="truncate text-[#6E35E8]"
           style={{ fontSize: "0.9375rem", fontWeight: 700, lineHeight: 1.2, letterSpacing: "-0.015em" }}
         >
           {label}
         </h1>
         {sub ? (
-          <p className="hidden truncate text-xs text-[#8CAF2F] sm:block">{sub}</p>
+          <p className="hidden truncate text-xs text-slate-500 sm:block">{sub}</p>
         ) : null}
       </div>
       <div className="flex-1" />
       <span
-        className="shrink-0 rounded-md px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-[#120B2E] sm:text-[10px]"
-        style={{ background: "linear-gradient(135deg, #c4ff47, #a3e635)" }}
+        className="shrink-0 rounded-md px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-[#2D1B69] sm:text-[10px]"
+        style={{ background: "linear-gradient(135deg, #B4F500, #93D600)" }}
       >
         Admin
       </span>
@@ -75,12 +71,16 @@ function AdminTopBar() {
 
 export function AdminLayout() {
   return (
-    <div className="relative h-svh w-full overflow-hidden bg-[#120B2E] text-foreground">
+    <div
+      className="app-user-shell relative h-svh w-full overflow-hidden bg-[#f3f0f9] text-slate-900 antialiased selection:bg-violet-100 selection:text-violet-900"
+      style={{ fontFamily: "'Lexend', 'Plus Jakarta Sans', system-ui, sans-serif" }}
+    >
+      <div className="app-shell-ambient" aria-hidden />
       <SidebarProvider
         className="relative z-[1] flex h-full min-h-0 w-full bg-transparent"
         style={{
-          "--sidebar-width": "260px",
-          "--sidebar-width-icon": "64px",
+          "--sidebar-width": "228px",
+          "--sidebar-width-icon": "56px",
         }}
       >
         <AdminSidebar />

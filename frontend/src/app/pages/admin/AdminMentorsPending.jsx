@@ -1,15 +1,10 @@
 import { useState, useEffect } from "react";
-import { CheckCircle, XCircle, FileText, Briefcase, ExternalLink } from "lucide-react";
+import { createPortal } from "react-dom";
+import { CheckCircle, XCircle, FileText, Briefcase } from "lucide-react";
 import { adminApi } from "../../utils/adminApi";
+import { getInitials } from "../../utils/auth";
+import { formatWorkHistoryLines, parseWorkHistory } from "../../utils/profileWorkHistory";
 import { toast } from "sonner";
-
-function safeHttpUrl(raw) {
-  const s = String(raw ?? "").trim();
-  if (!s) return null;
-  if (/^https?:\/\//i.test(s)) return s;
-  if (/^www\./i.test(s)) return `https://${s}`;
-  return null;
-}
 
 function formatVnd(n) {
   const x = Number(n);
@@ -19,19 +14,145 @@ function formatVnd(n) {
 
 function ChipList({ items, empty }) {
   const list = Array.isArray(items) ? items.filter(Boolean) : [];
-  if (!list.length) return <p className="text-sm text-slate-500">{empty}</p>;
+  if (!list.length) return <p className="text-sm text-[#2D1B69]/50">{empty}</p>;
   return (
-    <div className="flex flex-wrap gap-2">
+    <div className="flex flex-wrap gap-1.5">
       {list.map((t) => (
         <span
           key={t}
-          className="rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-medium text-slate-800"
+          className="rounded-md border border-[#6E35E8]/15 bg-white px-2 py-0.5 text-xs font-medium text-[#2D1B69]"
         >
           {t}
         </span>
       ))}
     </div>
   );
+}
+
+function hasUsableAvatar(url) {
+  const s = String(url ?? "").trim();
+  if (!s) return false;
+  if (/logo\.png|logo-mark/i.test(s)) return false;
+  return s.startsWith("http") || s.startsWith("/");
+}
+
+/** Portal ra body — tránh fixed bị kẹt trong layout overflow-hidden của admin shell. */
+function AdminModalPortal({ onClose, children, maxWidthClass = "max-w-2xl" }) {
+  return createPortal(
+    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 sm:p-6 md:p-8">
+      <button
+        type="button"
+        aria-label="Đóng"
+        className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+        onClick={onClose}
+      />
+      <div
+        role="dialog"
+        aria-modal="true"
+        className={`relative z-10 w-full ${maxWidthClass} max-h-[min(90vh,calc(100dvh-2rem))] overflow-y-auto rounded-2xl border border-[#6E35E8]/18 bg-white p-6 shadow-[0_24px_60px_rgba(110,53,232,0.18)]`}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {children}
+      </div>
+    </div>,
+    document.body,
+  );
+}
+
+function MentorPreviewAvatar({ mentor }) {
+  const name = mentor?.userId?.name || mentor?.name || "Mentor";
+  const avatar = mentor?.userId?.avatar || mentor?.avatar || "";
+  const initials = getInitials(name);
+  const [imgFailed, setImgFailed] = useState(false);
+
+  if (hasUsableAvatar(avatar) && !imgFailed) {
+    return (
+      <img
+        src={avatar}
+        alt=""
+        className="size-14 shrink-0 rounded-2xl object-cover ring-2 ring-[#6E35E8]/20"
+        onError={() => setImgFailed(true)}
+      />
+    );
+  }
+
+  return (
+    <div
+      className="flex size-14 shrink-0 items-center justify-center rounded-2xl text-base font-black text-white ring-2 ring-[#6E35E8]/20"
+      style={{ background: "linear-gradient(135deg, #6E35E8 0%, #8B4DFF 100%)" }}
+      aria-hidden
+    >
+      {initials}
+    </div>
+  );
+}
+
+function PreviewSection({ label, children }) {
+  return (
+    <div className="py-3.5 first:pt-0 last:pb-0">
+      <p className="text-[10px] font-black uppercase tracking-[0.14em] text-[#7a23e5]">{label}</p>
+      <div className="mt-1.5">{children}</div>
+    </div>
+  );
+}
+
+function PreviewText({ value, empty = "—" }) {
+  const text = String(value ?? "").trim();
+  return (
+    <p className="whitespace-pre-wrap text-sm leading-relaxed text-[#2D1B69]/85">
+      {text || empty}
+    </p>
+  );
+}
+
+function formatWorkFromMentorHeader(mentor) {
+  const lines = [];
+  if (mentor?.title) lines.push(`Chức danh: ${mentor.title}`);
+  if (mentor?.company && mentor.company !== "Freelancer") lines.push(`Công ty: ${mentor.company}`);
+  const y = Number(mentor?.experienceYears);
+  if (Number.isFinite(y) && y > 0) lines.push(`Số năm kinh nghiệm: ${y}`);
+  return lines.join("\n");
+}
+
+/** Gộp hồ sơ User (form /profile) + snapshot trên Mentor lúc apply. */
+function getMentorPreviewFromApplication(mentor) {
+  const u = mentor?.userId && typeof mentor.userId === "object" ? mentor.userId : {};
+  const companiesFromMentor = Array.isArray(mentor?.companies)
+    ? mentor.companies.filter(Boolean)
+    : [];
+
+  const education =
+    String(mentor?.profileEducation ?? "").trim() ||
+    String(u.profileEducation || u.school || "").trim();
+
+  const rawWork =
+    String(mentor?.profileWorkExperience ?? "").trim() ||
+    String(u.profileWorkExperience ?? "").trim();
+  let workExperience = "";
+  if (rawWork.startsWith("{")) {
+    workExperience = formatWorkHistoryLines(parseWorkHistory(rawWork));
+  } else if (rawWork) {
+    workExperience = rawWork;
+  }
+  if (!workExperience) {
+    workExperience =
+      formatWorkFromMentorHeader(mentor) || companiesFromMentor.join(", ");
+  }
+
+  const extracurricular =
+    String(mentor?.profileExtracurricular ?? "").trim() ||
+    String(u.profileExtracurricular ?? "").trim();
+
+  const awards =
+    String(mentor?.profileAwards ?? "").trim() || String(u.profileAwards ?? "").trim();
+
+  return {
+    education,
+    workExperience,
+    workCompanies: companiesFromMentor,
+    extracurricular,
+    awards,
+  };
 }
 
 export function AdminMentorsPending() {
@@ -205,124 +326,88 @@ export function AdminMentorsPending() {
       </div>
 
       {previewMentor ? (
-        <div
-          role="presentation"
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm"
-          onClick={() => setPreviewMentor(null)}
-        >
-          <div
-            role="dialog"
-            aria-labelledby="admin-mentor-preview-title"
-            className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-start justify-between gap-4">
-              <h3 id="admin-mentor-preview-title" className="text-lg font-black text-slate-900">
-                Hồ sơ ứng tuyển cố vấn
-              </h3>
+        <AdminModalPortal onClose={() => setPreviewMentor(null)}>
+          <div aria-labelledby="admin-mentor-preview-title">
+            <div className="flex items-start justify-between gap-4 border-b border-[#6E35E8]/10 pb-4">
+              <div>
+                <h3 id="admin-mentor-preview-title" className="text-lg font-black text-[#2D1B69]">
+                  Hồ sơ ứng tuyển cố vấn
+                </h3>
+                <p className="mt-1 text-sm text-[#2D1B69]/55">
+                  Thông tin mentor gửi qua form đăng ký trên hồ sơ cá nhân.
+                </p>
+              </div>
               <button
                 type="button"
                 onClick={() => setPreviewMentor(null)}
-                className="shrink-0 rounded-lg border border-slate-200 px-3 py-1 text-xs font-bold text-slate-600 hover:bg-slate-50"
+                className="shrink-0 rounded-lg border border-[#6E35E8]/20 px-3 py-1.5 text-xs font-bold text-[#7a23e5] transition hover:bg-[#f8f5ff]"
               >
                 Đóng
               </button>
             </div>
-            <p className="mt-1 text-sm text-slate-600">
-              Thông tin mentor gửi qua form đăng ký (không có file CV tải lên máy chủ — chỉ liên kết nếu có).
-            </p>
 
-            <div className="mt-6 flex gap-4 border-b border-slate-100 pb-6">
-              <img
-                src={previewMentor.userId?.avatar || "/Logo.png"}
-                alt=""
-                className="size-16 shrink-0 rounded-xl bg-slate-100 object-cover"
-              />
-              <div className="min-w-0">
-                <p className="font-black text-slate-900">{previewMentor.userId?.name || previewMentor.name}</p>
-                <p className="truncate text-sm text-slate-500">{previewMentor.userId?.email}</p>
-                <p className="mt-2 text-sm text-slate-700">
+            <div className="mt-5 flex gap-4 rounded-xl bg-[#f8f5ff] p-4 ring-1 ring-[#6E35E8]/12">
+              <MentorPreviewAvatar mentor={previewMentor} />
+              <div className="min-w-0 flex-1">
+                <p className="font-black text-[#2D1B69]">{previewMentor.userId?.name || previewMentor.name}</p>
+                <p className="truncate text-sm text-[#2D1B69]/55">{previewMentor.userId?.email}</p>
+                <p className="mt-2 text-sm text-[#2D1B69]">
                   <span className="font-semibold">{previewMentor.title}</span>
-                  <span className="text-slate-400"> · </span>
+                  <span className="text-[#2D1B69]/35"> · </span>
                   {previewMentor.company || "Freelancer"}
                 </p>
-                <p className="mt-1 text-xs text-slate-500">
+                <p className="mt-1.5 text-xs text-[#2D1B69]/55">
                   Kinh nghiệm:{" "}
-                  <span className="font-medium text-slate-800">
+                  <span className="font-semibold text-[#2D1B69]">
                     {Number.isFinite(Number(previewMentor.experienceYears))
                       ? `${previewMentor.experienceYears} năm`
                       : "—"}
                   </span>
-                  <span className="mx-2 text-slate-300">|</span>
+                  <span className="mx-2 text-[#6E35E8]/25">|</span>
                   Đề xuất giá/giờ:{" "}
-                  <span className="font-medium text-slate-800">{formatVnd(previewMentor.pricePerHour)}</span>
+                  <span className="font-semibold text-[#2D1B69]">{formatVnd(previewMentor.pricePerHour)}</span>
                 </p>
               </div>
             </div>
 
-            <div className="mt-6 space-y-5">
-              <div>
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">Tiểu sử</p>
-                <p className="mt-2 whitespace-pre-wrap rounded-xl border border-slate-100 bg-slate-50/80 p-4 text-sm leading-relaxed text-slate-800">
-                  {previewMentor.bio?.trim() || "—"}
-                </p>
-              </div>
-              <div>
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">Kỹ năng / chuyên môn</p>
-                <div className="mt-2">
-                  <ChipList items={previewMentor.specialties} empty="Không có." />
-                </div>
-              </div>
-              <div>
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">Lĩnh vực</p>
-                <div className="mt-2">
-                  <ChipList items={previewMentor.fields} empty="Không có." />
-                </div>
-              </div>
-              <div>
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">Công ty / lịch sử (text)</p>
-                <div className="mt-2">
-                  <ChipList items={previewMentor.companies} empty="Không có." />
-                </div>
-              </div>
-              <div>
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">Liên kết</p>
-                <ul className="mt-2 space-y-2 text-sm">
-                  <li className="flex flex-wrap items-center gap-2">
-                    <span className="text-slate-500">LinkedIn:</span>
-                    {safeHttpUrl(previewMentor.linkedinUrl) ? (
-                      <a
-                        href={safeHttpUrl(previewMentor.linkedinUrl)}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1 font-semibold text-violet-700 hover:underline"
-                      >
-                        Mở <ExternalLink className="size-3.5" />
-                      </a>
-                    ) : (
-                      <span className="text-slate-400">Chưa cung cấp</span>
-                    )}
-                  </li>
-                  <li className="flex flex-wrap items-center gap-2">
-                    <span className="text-slate-500">Portfolio / CV online:</span>
-                    {safeHttpUrl(previewMentor.portfolioUrl) ? (
-                      <a
-                        href={safeHttpUrl(previewMentor.portfolioUrl)}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1 font-semibold text-violet-700 hover:underline"
-                      >
-                        Mở <ExternalLink className="size-3.5" />
-                      </a>
-                    ) : (
-                      <span className="text-slate-400">Chưa cung cấp</span>
-                    )}
-                  </li>
-                </ul>
-              </div>
+            {(() => {
+              const profile = getMentorPreviewFromApplication(previewMentor);
+              return (
+            <div className="mt-5 divide-y divide-[#6E35E8]/10">
+              <PreviewSection label="Giới thiệu bản thân">
+                <PreviewText value={previewMentor.bio} />
+              </PreviewSection>
+              <PreviewSection label="Quá trình học tập">
+                <PreviewText value={profile.education} empty="Không có." />
+              </PreviewSection>
+              <PreviewSection label="Kinh nghiệm làm việc">
+                <PreviewText value={profile.workExperience} empty="Không có." />
+                {profile.workCompanies.length > 0 &&
+                profile.workExperience !== profile.workCompanies.join(", ") ? (
+                  <div className="mt-2">
+                    <p className="mb-1 text-[10px] font-bold uppercase tracking-wide text-[#2D1B69]/45">
+                      Công ty (tách theo dấu phẩy)
+                    </p>
+                    <ChipList items={profile.workCompanies} empty="" />
+                  </div>
+                ) : null}
+              </PreviewSection>
+              <PreviewSection label="Hoạt động ngoại khóa">
+                <PreviewText value={profile.extracurricular} empty="Không có." />
+              </PreviewSection>
+              {profile.awards ? (
+                <PreviewSection label="Giải thưởng">
+                  <PreviewText value={profile.awards} />
+                </PreviewSection>
+              ) : null}
+              <PreviewSection label="Kỹ năng & chứng chỉ">
+                <ChipList items={previewMentor.specialties} empty="Không có." />
+              </PreviewSection>
             </div>
+              );
+            })()}
 
-            <div className="mt-8 flex flex-wrap justify-end gap-3 border-t border-slate-100 pt-5">
+            <div className="mt-6 flex flex-wrap justify-end gap-3 border-t border-[#6E35E8]/10 pt-5">
               <button
                 type="button"
                 onClick={() => {
@@ -330,7 +415,7 @@ export function AdminMentorsPending() {
                   setPreviewMentor(null);
                   openRejectModal(m);
                 }}
-                className="rounded-xl border border-red-200 bg-red-50 px-4 py-2 text-xs font-black uppercase tracking-wider text-red-700 hover:bg-red-600 hover:text-white"
+                className="rounded-xl border border-[#6E35E8]/25 bg-white px-4 py-2 text-xs font-black uppercase tracking-wider text-[#7a23e5] transition hover:border-[#7a23e5] hover:bg-[#f8f5ff]"
               >
                 Từ chối
               </button>
@@ -341,26 +426,17 @@ export function AdminMentorsPending() {
                   setPreviewMentor(null);
                   await handleApprove(id);
                 }}
-                className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2 text-xs font-black uppercase tracking-wider text-emerald-800 hover:border-emerald-400 hover:bg-emerald-600 hover:text-white"
+                className="rounded-xl border border-[#93D600]/50 bg-[#B4F500] px-4 py-2 text-xs font-black uppercase tracking-wider text-[#2D1B69] shadow-[0_8px_20px_rgba(180,245,0,0.35)] transition hover:brightness-95"
               >
                 Phê duyệt
               </button>
             </div>
           </div>
-        </div>
+        </AdminModalPortal>
       ) : null}
 
       {rejectingMentor ? (
-        <div
-          role="presentation"
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm"
-          onClick={closeRejectModal}
-        >
-          <div
-            role="dialog"
-            className="w-full max-w-lg rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl"
-            onClick={(e) => e.stopPropagation()}
-          >
+        <AdminModalPortal onClose={closeRejectModal} maxWidthClass="max-w-lg">
             <h3 className="text-lg font-black text-slate-900">Từ chối hồ sơ cố vấn</h3>
             <p className="mt-2 text-sm text-slate-600">
               Bạn đang từ chối hồ sơ của{" "}
@@ -399,8 +475,7 @@ export function AdminMentorsPending() {
                 {submittingReject ? "Đang xử lý..." : "Xác nhận từ chối"}
               </button>
             </div>
-          </div>
-        </div>
+        </AdminModalPortal>
       ) : null}
     </div>
   );

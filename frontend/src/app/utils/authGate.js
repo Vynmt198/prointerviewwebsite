@@ -50,3 +50,23 @@ export function requireLoginNavigate(navigate, path) {
   }
   navigate(buildLoginPath(path));
 }
+
+/** Tính năng cốt lõi — không cho dùng / xem demo khi chưa đăng nhập. */
+export function requiresLoginForPath(path) {
+  const p = typeof path === "string" ? path.trim() : "";
+  if (!p.startsWith("/") || p.startsWith("//")) return false;
+  if (p === "/cv-analysis" || p.startsWith("/cv-analysis/")) return true;
+  if (p === "/interview" || p.startsWith("/interview/")) return true;
+  if (p === "/dashboard" || p.startsWith("/dashboard/")) return true;
+  return false;
+}
+
+/** Click menu / CTA: chưa login → /login?redirect=... */
+export function navigateToFeature(navigate, path) {
+  if (!path || typeof path !== "string") return;
+  if (requiresLoginForPath(path) && !isLoggedIn()) {
+    navigate(buildLoginPath(path));
+    return;
+  }
+  navigate(path);
+}

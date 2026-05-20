@@ -51,11 +51,11 @@ const PAGE_TITLES = {
   "/mentor/meeting": { label: "Phòng họp", sub: "Buổi mentor trực tuyến" },
 };
 
-function CustomerNavLinks({ pathname, onNavigate, className = "", stacked = false }) {
+function ShellNavLinks({ items, pathname, isActive, onNavigate, className = "", stacked = false }) {
   return (
     <nav className={className} aria-label="Menu chính">
-      {CUSTOMER_NAV_ITEMS.map((item) => {
-        const active = isCustomerNavActive(pathname, item.url);
+      {items.map((item) => {
+        const active = isActive(pathname, item);
         if (stacked) {
           return (
             <Link
@@ -207,8 +207,10 @@ function CustomerNavbar() {
           />
         </Link>
 
-        <CustomerNavLinks
+        <ShellNavLinks
+          items={CUSTOMER_NAV_ITEMS}
           pathname={location.pathname}
+          isActive={(p, item) => isCustomerNavActive(p, item.url)}
           className="hidden min-w-0 flex-1 items-center justify-center gap-3 px-1 md:flex md:gap-4 lg:gap-5"
         />
 
@@ -375,8 +377,10 @@ function CustomerNavbar() {
           <div
             className={`rounded-2xl border border-slate-200 bg-white p-4 shadow-lg ${CUSTOMER_SHELL_MAX}`}
           >
-          <CustomerNavLinks
+          <ShellNavLinks
+            items={CUSTOMER_NAV_ITEMS}
             pathname={location.pathname}
+            isActive={(p, item) => isCustomerNavActive(p, item.url)}
             onNavigate={() => setMobileOpen(false)}
             className="flex flex-col gap-1"
             stacked
@@ -474,13 +478,13 @@ function MentorNavbar() {
     }
 
     if (notif.type === "payment") {
-      navigate("/dashboard");
+      navigate("/mentor/finance");
     }
   };
 
   const pageKey =
     Object.keys(PAGE_TITLES).find(
-      (k) => k === location.pathname || location.pathname.startsWith(`${k}/`)
+      (k) => k === location.pathname || location.pathname.startsWith(`${k}/`),
     ) || location.pathname;
   const pageInfo = PAGE_TITLES[pageKey] || { label: "ProInterview", sub: "" };
   const unreadCount = notifications.filter((n) => !n.isRead).length;
