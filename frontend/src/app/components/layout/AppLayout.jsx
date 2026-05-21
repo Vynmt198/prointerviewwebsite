@@ -10,6 +10,7 @@ export function AppLayout() {
   const location = useLocation();
   const user = getUser();
   const isMentor = user?.role === "mentor";
+  const isHome = location.pathname === "/" || location.pathname === "";
 
   useEffect(() => {
     document.title = resolveDocumentTitle(location.pathname);
@@ -25,7 +26,10 @@ export function AppLayout() {
   if (isMentor) {
     return (
       <div className={shellClass} style={shellStyle}>
-        <div className="app-shell-ambient" aria-hidden />
+        <div
+          className={`app-shell-ambient${isHome ? " app-shell-ambient--home" : ""}`}
+          aria-hidden
+        />
         <SidebarProvider
           className="relative z-[1] flex min-h-svh w-full bg-transparent"
           style={{
@@ -47,7 +51,10 @@ export function AppLayout() {
 
   return (
     <div className={shellClass} style={shellStyle}>
-      <div className="app-shell-ambient" aria-hidden />
+      <div
+        className={`app-shell-ambient${isHome ? " app-shell-ambient--home" : ""}`}
+        aria-hidden
+      />
       <div className="relative z-[1] flex min-h-svh w-full flex-col">
         <Navbar variant="customer" />
         <main className="relative z-[1] min-h-0 flex-1 pt-[3.75rem] sm:pt-[4.25rem] md:pt-[4.75rem]">

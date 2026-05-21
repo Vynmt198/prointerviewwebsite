@@ -10,6 +10,8 @@ const LOGO_FRAMES = {
   navbar: "h-9 sm:h-10 md:h-11",
   /** Đăng nhập / đăng ký — vừa thanh top h-20 */
   auth: "h-9 sm:h-10",
+  /** Footer — ~nửa default */
+  footer: "h-8 md:h-[52px]",
 };
 
 const LOGO_FALLBACK_FRAMES = {
@@ -17,6 +19,7 @@ const LOGO_FALLBACK_FRAMES = {
   compact: "w-[56px] h-[56px] md:w-[72px] md:h-[72px] rounded-[1.75rem]",
   navbar: "h-9 w-9 sm:h-10 sm:w-10 md:h-11 md:w-11 rounded-2xl",
   auth: "h-9 w-9 sm:h-10 sm:w-10 rounded-2xl",
+  footer: "h-8 w-8 md:h-[52px] md:w-[52px] rounded-xl",
 };
 
 export function BrandLogo({ className = "", compact = false, size }) {

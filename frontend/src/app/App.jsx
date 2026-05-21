@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { RouterProvider } from "react-router";
-import { Toaster } from "sonner";
+import { Toaster } from "./components/ui/sonner";
 import { router } from "./routes";
 import { restoreSession } from "./utils/auth";
 
@@ -55,7 +55,7 @@ export default function App() {
   return (
     <>
       <RouterProvider router={router} />
-      <Toaster position="top-right" richColors closeButton />
+      <Toaster position="top-right" closeButton duration={4500} />
     </>
   );
 }
