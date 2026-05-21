@@ -1,297 +1,228 @@
 import React from "react";
+import { FileText, Briefcase } from "lucide-react";
 import {
-  FileText,
-  Briefcase,
-  Users,
-  ChevronRight,
-  History,
-  Upload,
-  Sparkles,
-  BarChart3,
-  Lightbulb,
-  Target,
-  CheckCircle2,
-  Mic,
-} from "lucide-react";
+  CvAnalysisScoreBreakdown,
+  CV_HUB_DEMO_SCORE_ROWS,
+  CV_HUB_DEMO_MATCH,
+} from "./CvAnalysisScoreBreakdown";
+import { CUSTOMER_SHELL_GUTTER, CUSTOMER_SHELL_MAX } from "../layout/customerShellLayout";
 
-const FEATURES = [
-  {
-    icon: Target,
-    title: "So khớp từ khóa CV–JD",
-    desc: "Liệt kê kỹ năng đã có, còn thiếu so với mô tả công việc — không đoán mò trước khi nộp hồ sơ.",
-    accent: "violet",
-  },
-  {
-    icon: BarChart3,
-    title: "Chấm 4 tiêu chí chuẩn HR",
-    desc: "Clarity, Structure (STAR), Relevance, Credibility — điểm rõ ràng kèm nhận xét từng mục.",
-    accent: "violet",
-  },
-  {
-    icon: Lightbulb,
-    title: "Gợi ý chỉnh sửa cụ thể",
-    desc: "Viết lại bullet theo STAR, bổ sung kỹ năng thiếu và lộ trình học ngắn gọn.",
-    accent: "lime",
-  },
-  {
-    icon: History,
-    title: "Lưu lịch sử phân tích",
-    desc: "Xem lại kết quả cũ, so sánh tiến độ sau mỗi lần chỉnh CV.",
-    accent: "violet",
-  },
-  {
-    icon: Mic,
-    title: "Nối sang Phỏng vấn AI",
-    desc: "Sau khi chỉnh CV, luyện phỏng vấn với câu hỏi sát vị trí bạn nhắm tới.",
-    accent: "lime",
-  },
-  {
-    icon: Users,
-    title: "Đặt lịch Mentor",
-    desc: "HR/Manager review CV thật — phù hợp khi cần góc nhìn người tuyển dụng.",
-    accent: "violet",
-  },
-];
+const HUB_STYLES = `
+  .cv-hub-enter {
+    animation: cvHubIn 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  @keyframes cvHubIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .cv-hub-cta {
+    transition: transform 0.28s cubic-bezier(0.34, 1.45, 0.64, 1), box-shadow 0.28s ease, filter 0.2s ease;
+  }
+  .cv-hub-cta:hover {
+    transform: scale(1.045) translateY(-2px);
+  }
+  .cv-hub-cta:active {
+    transform: scale(0.98) translateY(0);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .cv-hub-enter { animation: none; opacity: 1; transform: none; }
+    .cv-hub-cta { transition: none; }
+    .cv-hub-cta:hover,
+    .cv-hub-cta:active { transform: none; }
+  }
+`;
 
-const STEPS = [
-  {
-    step: "01",
-    icon: Upload,
-    title: "Tải CV (và JD nếu có)",
-    desc: "Upload file PDF. Có JD thì so khớp trực tiếp; chưa có JD thì chọn ngành nghề.",
-  },
-  {
-    step: "02",
-    icon: Sparkles,
-    title: "AI phân tích",
-    desc: "Hệ thống đọc nội dung, trích kỹ năng, chấm điểm và tạo gợi ý trong vài phút.",
-  },
-  {
-    step: "03",
-    icon: CheckCircle2,
-    title: "Nhận báo cáo chi tiết",
-    desc: "Điểm khớp, từ khóa, điểm mạnh/yếu và checklist chỉnh sửa — sẵn sàng ứng tuyển.",
-  },
-];
-
-function SectionLabel({ children }) {
+function MascotSparkle({ className }) {
   return (
-    <span className="mb-3 inline-flex items-center gap-2 rounded-full border border-violet-200 bg-violet-50 px-3.5 py-1 text-[10px] font-black uppercase tracking-[0.2em] text-[#6E35E8]">
-      {children}
-    </span>
+    <span
+      className={`pointer-events-none absolute block h-2.5 w-2.5 rotate-45 rounded-[3px] bg-[#FACC15] shadow-sm ${className}`}
+      aria-hidden
+    />
   );
 }
 
-export function CvAnalysisHubHero({ onJd, onField, onHistory }) {
+export function CvAnalysisHubHero({ onJd, onField }) {
+  const { percent, matched, missing, summary } = CV_HUB_DEMO_MATCH;
+
   return (
-    <>
-      <div className="mb-10 text-center">
-        <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-violet-200 bg-violet-50 px-4 py-1.5 text-[10px] font-black uppercase tracking-[0.2em] text-[#6E35E8]">
-          <FileText className="h-3.5 w-3.5" />
-          Phân tích CV
-        </div>
-        <h1 className="app-page-title mb-3">Bạn đã có Job Description chưa?</h1>
-        <p className="app-page-subtitle mx-auto max-w-2xl">
-          Chọn cách phân tích phù hợp. Có JD thì so khớp trực tiếp; chưa có JD thì đánh giá theo chuẩn ngành nghề — cùng
-          bộ công cụ AI và gợi ý chỉnh sửa.
-        </p>
-      </div>
+    <div className="cv-hub-page relative min-h-0 bg-transparent">
+      <style>{HUB_STYLES}</style>
 
-      <div className="grid gap-5 sm:grid-cols-2">
-        <button
-          type="button"
-          onClick={onJd}
-          className="group rounded-[28px] border-2 border-violet-200 bg-white p-8 text-left shadow-[0_18px_40px_rgba(110,53,232,0.08)] transition-all hover:border-[#6E35E8] hover:shadow-[0_22px_48px_rgba(110,53,232,0.14)]"
+      <div
+        className={`relative flex min-h-0 flex-col bg-transparent pb-4 pt-12 sm:pb-5 ${CUSTOMER_SHELL_GUTTER}`}
+      >
+        <div
+          className={`cv-hub-enter ${CUSTOMER_SHELL_MAX} flex flex-col overflow-visible lg:flex-row lg:items-stretch lg:gap-3 xl:gap-4`}
         >
-          <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#6E35E8] shadow-lg shadow-[#6E35E8]/25 transition group-hover:scale-105">
-            <Briefcase className="h-7 w-7 text-white" />
+          {/* Trái — hero + linh vật */}
+          <div className="relative flex shrink-0 flex-col justify-center py-3 sm:py-4 lg:min-w-[25rem] lg:max-w-[33rem] lg:flex-[0.92] lg:py-2 xl:max-w-[34rem]">
+            <div className="relative z-10 flex flex-col gap-2.5 pr-16 sm:gap-3 sm:pr-20 lg:-translate-y-24 lg:pr-0">
+              <div className="inline-flex w-fit items-center gap-1.5 rounded-full border border-violet-200/80 bg-white/90 px-3 py-1 shadow-sm backdrop-blur-sm">
+                <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#630ed4]" />
+                <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#5b598c] sm:text-[11px]">
+                  Phân tích CV &amp; JD
+                </span>
+              </div>
+
+              <h1 className="max-w-[min(100%,32rem)] font-headline tracking-tight">
+                <span className="block text-[clamp(1.8rem,4.35vw,2.65rem)] font-extrabold leading-[1.15] text-[#1a1b23]">
+                  <span className="block whitespace-nowrap">Làm sao để CV ấn tượng</span>
+                  <span className="block whitespace-nowrap">trong mắt nhà tuyển dụng?</span>
+                </span>
+                <span className="mt-1 block text-[clamp(1.72rem,4.2vw,2.5rem)] font-extrabold leading-[1.15] text-[#630ed4]">
+                  Để ProInterview gợi ý tin và chỉnh CV nè.
+                </span>
+              </h1>
+
+              <div className="flex flex-wrap items-center gap-2.5 pt-0.5">
+                <button
+                  type="button"
+                  onClick={onJd}
+                  className="cv-hub-cta inline-flex items-center justify-center rounded-2xl bg-gradient-to-br from-[#630ed4] to-[#7c3aed] px-5 py-2.5 text-xs font-bold text-white shadow-lg shadow-violet-500/25 hover:brightness-105 hover:shadow-xl hover:shadow-violet-500/30 sm:text-sm"
+                >
+                  Phân tích CV + JD có sẵn
+                </button>
+                <button
+                  type="button"
+                  onClick={onField}
+                  className="cv-hub-cta inline-flex items-center gap-2 rounded-2xl border-2 border-violet-200/80 bg-white/90 px-5 py-2.5 text-xs font-bold text-[#630ed4] shadow-sm backdrop-blur-sm hover:border-violet-300 hover:bg-white hover:shadow-md sm:text-sm"
+                >
+                  Phân tích CV theo ngành nghề
+                </button>
+              </div>
+            </div>
+
+            <div className="pointer-events-none absolute right-0 top-[1.3rem] z-0 translate-x-[0.7rem] lg:hidden" aria-hidden>
+              <img
+                src="/mascot-cv-hub-knowledge.png?v=8"
+                alt=""
+                className="h-[11.5rem] w-[11.5rem] object-contain drop-shadow-[0_12px_28px_rgba(99,14,212,0.12)] sm:h-[11.5rem] sm:w-[11.5rem]"
+              />
+            </div>
           </div>
-          <h2 className="mb-2 text-xl font-black tracking-tight text-slate-900">Phân tích với JD có sẵn</h2>
-          <p className="mb-5 text-sm leading-relaxed text-slate-600">
-            Upload CV + file JD (PDF). So khớp từ khóa, chấm điểm và gợi ý chỉnh sửa theo đúng vị trí tuyển dụng.
-          </p>
-          <span className="inline-flex items-center gap-2 text-sm font-bold text-[#6E35E8]">
-            Bắt đầu
-            <ChevronRight className="h-4 w-4 transition group-hover:translate-x-0.5" />
-          </span>
-        </button>
 
-        <button
-          type="button"
-          onClick={onField}
-          className="group rounded-[28px] border-2 border-lime-200 bg-white p-8 text-left shadow-[0_18px_40px_rgba(180,245,0,0.12)] transition-all hover:border-[#B4F500] hover:shadow-[0_22px_48px_rgba(180,245,0,0.18)]"
-        >
-          <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#B4F500] shadow-lg shadow-[#B4F500]/30 transition group-hover:scale-105">
-            <Users className="h-7 w-7 text-[#4A7A00]" />
-          </div>
-          <h2 className="mb-2 text-xl font-black tracking-tight text-slate-900">Phân tích theo ngành nghề</h2>
-          <p className="mb-5 text-sm leading-relaxed text-slate-600">
-            Chọn nhóm ngành (IT, Marketing, Tài chính…). Đánh giá CV khi bạn chưa có JD cụ thể.
-          </p>
-          <span className="inline-flex items-center gap-2 text-sm font-bold text-[#4A7A00]">
-            Bắt đầu
-            <ChevronRight className="h-4 w-4 transition group-hover:translate-x-0.5" />
-          </span>
-        </button>
-      </div>
+          {/* Phải — demo: banner + 2 ô + card cùng full width */}
+          <div className="flex min-w-0 w-full flex-1 flex-col gap-2.5 sm:gap-3 lg:ml-auto lg:min-w-0 lg:max-w-[32rem] lg:flex-[1.08] xl:max-w-[33rem]">
+            <div className="flex items-center justify-between gap-2 px-0.5">
+              <span className="inline-flex items-center gap-1.5 text-[10px] font-semibold text-violet-800 sm:text-xs">
+                Kết quả phân tích
+              </span>
+            </div>
 
-      <div className="mt-6 flex justify-center">
-        <button
-          type="button"
-          onClick={onHistory}
-          className="inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 transition-colors hover:border-[#6E35E8]/40 hover:text-[#6E35E8]"
-        >
-          <History className="h-4 w-4" />
-          Xem lịch sử phân tích
-        </button>
-      </div>
-    </>
-  );
-}
-
-export function CvAnalysisHubIntroSections({ onJd, onField }) {
-  return (
-    <div className="mt-16 space-y-20 border-t border-violet-100/80 pt-16">
-      {/* Bạn nhận được gì */}
-      <section>
-        <div className="mb-8 text-center">
-          <SectionLabel>Tính năng</SectionLabel>
-          <h2 className="font-headline text-2xl font-black tracking-tight text-slate-900 sm:text-3xl">
-            Một lần phân tích — đủ thông tin để chỉnh CV
-          </h2>
-          <p className="mx-auto mt-2 max-w-2xl text-sm text-slate-600 sm:text-base">
-            Không chỉ điểm số: bạn biết thiếu gì, sửa chỗ nào và ưu tiên việc nào trước khi nộp hồ sơ.
-          </p>
-        </div>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {FEATURES.map(({ icon: Icon, title, desc, accent }) => (
             <div
-              key={title}
-              className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-shadow hover:shadow-md"
+              className="w-full overflow-hidden rounded-xl sm:rounded-2xl"
+              style={{ background: "linear-gradient(135deg,#6E35E8 0%,#9B6DFF 55%,#B794FF 100%)" }}
             >
+              <div className="relative px-4 py-3 text-white sm:px-5 sm:py-3.5">
+                <div
+                  className="pointer-events-none absolute -right-6 -top-6 h-24 w-24 rounded-full bg-white/10 blur-2xl"
+                  aria-hidden
+                />
+                <p className="relative mb-1 text-[10px] font-medium text-indigo-100/90 sm:text-xs">
+                  Mức độ phù hợp CV
+                </p>
+                <div className="relative flex flex-wrap items-end gap-2">
+                  <span className="font-headline text-3xl font-extrabold leading-none tracking-tight sm:text-[2.35rem]">
+                    {percent}%
+                  </span>
+                  <div className="mb-1 flex flex-col gap-1">
+                    <span className="text-[10px] text-indigo-200/90 sm:text-xs">keyword match</span>
+                    <div className="flex gap-0.5">
+                      {Array.from({ length: 10 }).map((_, i) => (
+                        <div
+                          key={i}
+                          className="h-1 w-3 rounded-full sm:w-3.5"
+                          style={{
+                            background:
+                              i < Math.round(percent / 10)
+                                ? "rgba(255,255,255,0.9)"
+                                : "rgba(255,255,255,0.22)",
+                          }}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                </div>
+                <p className="relative mt-1.5 line-clamp-2 text-[10px] leading-snug text-indigo-50/95 sm:text-xs">
+                  {summary}
+                </p>
+              </div>
+            </div>
+
+            <div className="grid w-full grid-cols-10 gap-2">
+              <div className="col-span-6 rounded-md border border-emerald-100/90 bg-white/95 p-2.5 shadow-sm backdrop-blur-sm sm:p-3">
+                <div className="mb-1.5 flex items-center gap-1.5">
+                  <div className="flex h-6 w-6 items-center justify-center rounded-md bg-emerald-100">
+                    <FileText className="h-3.5 w-3.5 text-emerald-700" />
+                  </div>
+                  <h3 className="text-[10px] font-semibold text-slate-900 sm:text-xs">Từ khóa khớp</h3>
+                </div>
+                <div className="flex flex-wrap gap-1">
+                  {matched.map((kw) => (
+                    <span
+                      key={kw}
+                      className="rounded-md border border-emerald-400/60 bg-emerald-50 px-1.5 py-0.5 text-[9px] font-semibold text-emerald-800 sm:text-[10px]"
+                    >
+                      {kw} ✓
+                    </span>
+                  ))}
+                </div>
+              </div>
+              <div className="col-span-4 rounded-md border border-orange-100/90 bg-white/95 p-2.5 shadow-sm backdrop-blur-sm sm:p-3">
+                <div className="mb-1.5 flex items-center gap-1.5">
+                  <div className="flex h-6 w-6 items-center justify-center rounded-md bg-orange-100">
+                    <Briefcase className="h-3.5 w-3.5 text-orange-700" />
+                  </div>
+                  <h3 className="text-[10px] font-semibold text-slate-900 sm:text-xs">Cần bổ sung</h3>
+                </div>
+                <div className="flex flex-wrap gap-1">
+                  {missing.map((kw) => (
+                    <span
+                      key={kw}
+                      className="rounded-md border border-orange-300/70 bg-orange-50 px-1.5 py-0.5 text-[9px] font-semibold text-orange-900 sm:text-[10px]"
+                    >
+                      {kw}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Card đánh giá — gấu ôm mép trái (desktop) */}
+            <div className="relative hidden w-full overflow-visible lg:block">
               <div
-                className={`mb-4 flex h-11 w-11 items-center justify-center rounded-xl ${
-                  accent === "lime" ? "bg-lime-100 text-lime-900" : "bg-violet-100 text-[#6E35E8]"
-                }`}
+                className="pointer-events-none absolute bottom-0 left-0 z-20 -translate-x-[15.95rem] translate-y-[2.24rem] xl:-translate-x-[16.45rem]"
+                aria-hidden
               >
-                <Icon className="h-5 w-5" />
+                <MascotSparkle className="left-[27%] top-[8%] h-2.5 w-2.5" />
+                <MascotSparkle className="right-[17%] top-[4.5%] h-2 w-2 opacity-80" />
+                <img
+                  src="/mascot-cv-hub-knowledge.png?v=8"
+                  alt=""
+                  className="block h-[19rem] w-[19rem] max-w-none object-contain object-bottom drop-shadow-[0_20px_50px_rgba(99,14,212,0.18)] xl:h-[20rem] xl:w-[20rem]"
+                />
               </div>
-              <h3 className="mb-1.5 text-sm font-bold text-slate-900">{title}</h3>
-              <p className="text-xs leading-relaxed text-slate-600 sm:text-sm">{desc}</p>
+              <CvAnalysisScoreBreakdown
+                overallScore={percent}
+                rows={CV_HUB_DEMO_SCORE_ROWS}
+                compact
+                showHeader={false}
+                className="relative z-10 w-full !rounded-md border-violet-100/60 bg-white/95 shadow-sm backdrop-blur-sm [&>div:last-child]:pl-12 [&>div:last-child]:xl:pl-14"
+              />
             </div>
-          ))}
-        </div>
-      </section>
 
-      {/* Cách hoạt động */}
-      <section className="rounded-[32px] border border-violet-100 bg-gradient-to-br from-violet-50/80 via-white to-lime-50/50 px-6 py-10 sm:px-10">
-        <div className="mb-8 text-center">
-          <SectionLabel>Quy trình</SectionLabel>
-          <h2 className="font-headline text-2xl font-black tracking-tight text-slate-900">3 bước đơn giản</h2>
-        </div>
-        <div className="grid gap-6 md:grid-cols-3">
-          {STEPS.map(({ step, icon: Icon, title, desc }) => (
-            <div key={step} className="relative text-center md:text-left">
-              <span className="mb-3 inline-block font-headline text-4xl font-black text-violet-200">{step}</span>
-              <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-[#6E35E8] text-white md:mx-0">
-                <Icon className="h-6 w-6" />
-              </div>
-              <h3 className="mb-2 text-base font-bold text-slate-900">{title}</h3>
-              <p className="text-sm leading-relaxed text-slate-600">{desc}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* So sánh 2 loại */}
-      <section>
-        <div className="mb-6 text-center">
-          <SectionLabel>Chọn đúng luồng</SectionLabel>
-          <h2 className="font-headline text-2xl font-black text-slate-900">JD có sẵn hay theo ngành?</h2>
-        </div>
-        <div className="overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-sm">
-          <div className="grid md:grid-cols-2">
-            <div className="border-b border-slate-100 p-6 md:border-b-0 md:border-r">
-              <div className="mb-3 flex items-center gap-2">
-                <Briefcase className="h-5 w-5 text-[#6E35E8]" />
-                <h3 className="font-bold text-slate-900">Với JD có sẵn</h3>
-              </div>
-              <ul className="space-y-2 text-sm text-slate-600">
-                <li className="flex gap-2">
-                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-lime-600" />
-                  So khớp % từ khóa trực tiếp với mô tả công việc
-                </li>
-                <li className="flex gap-2">
-                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-lime-600" />
-                  Gợi ý bổ sung đúng stack JD yêu cầu
-                </li>
-                <li className="flex gap-2">
-                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-lime-600" />
-                  Phù hợp khi đã có tin tuyển dụng cụ thể
-                </li>
-              </ul>
-              <button
-                type="button"
-                onClick={onJd}
-                className="mt-5 text-sm font-bold text-[#6E35E8] hover:underline"
-              >
-                Bắt đầu phân tích CV + JD →
-              </button>
-            </div>
-            <div className="bg-slate-50/80 p-6">
-              <div className="mb-3 flex items-center gap-2">
-                <Users className="h-5 w-5 text-[#4A7A00]" />
-                <h3 className="font-bold text-slate-900">Theo ngành nghề</h3>
-              </div>
-              <ul className="space-y-2 text-sm text-slate-600">
-                <li className="flex gap-2">
-                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-lime-600" />
-                  Chuẩn đánh giá theo nhóm ngành (IT, MKT, Tài chính…)
-                </li>
-                <li className="flex gap-2">
-                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-lime-600" />
-                  Không cần file JD — chỉ cần CV
-                </li>
-                <li className="flex gap-2">
-                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-lime-600" />
-                  Hữu ích khi đang tìm hướng hoặc chưa có tin cụ thể
-                </li>
-              </ul>
-              <button
-                type="button"
-                onClick={onField}
-                className="mt-5 text-sm font-bold text-[#4A7A00] hover:underline"
-              >
-                Bắt đầu theo ngành →
-              </button>
+            <div className="w-full lg:hidden">
+              <CvAnalysisScoreBreakdown
+                overallScore={percent}
+                rows={CV_HUB_DEMO_SCORE_ROWS}
+                compact
+                showHeader={false}
+                className="w-full !rounded-md border-violet-100/60 bg-white/95 shadow-sm backdrop-blur-sm"
+              />
             </div>
           </div>
         </div>
-      </section>
-
-      {/* CTA cuối */}
-      <section className="rounded-[28px] bg-gradient-to-r from-[#6E35E8] to-[#8B4DFF] px-6 py-10 text-center text-white sm:px-10">
-        <h2 className="font-headline mb-2 text-xl font-black sm:text-2xl">Sẵn sàng chỉnh CV cho đúng việc?</h2>
-        <p className="mx-auto mb-6 max-w-lg text-sm text-white/85">
-          Bắt đầu miễn phí với gói cơ bản — lưu lịch sử và xem lại mỗi lần cập nhật hồ sơ.
-        </p>
-        <div className="flex flex-wrap items-center justify-center gap-3">
-          <button
-            type="button"
-            onClick={onJd}
-            className="inline-flex items-center gap-2 rounded-xl bg-[#B4F500] px-6 py-3 text-sm font-bold text-[#1a1035] transition hover:brightness-95"
-          >
-            Phân tích với JD
-          </button>
-          <button
-            type="button"
-            onClick={onField}
-            className="inline-flex items-center gap-2 rounded-xl border border-white/40 bg-white/10 px-6 py-3 text-sm font-bold text-white transition hover:bg-white/20"
-          >
-            Phân tích theo ngành
-          </button>
-        </div>
-      </section>
+      </div>
     </div>
   );
 }

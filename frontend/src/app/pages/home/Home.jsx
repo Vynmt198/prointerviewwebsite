@@ -1,5 +1,4 @@
 import React, { useEffect } from "react";
-import { motion } from "motion/react";
 import { useNavigate, Link } from "react-router";
 import {
   Mic as Microphone,
@@ -8,27 +7,30 @@ import {
   TrendingUp as TrendUp,
   Star,
   ChevronRight as CaretRight,
-  Check,
   Brain,
   Target as Crosshair,
   Award as Medal,
   ArrowRight,
   Zap as Lightning,
-  CheckCircle2,
+  CircleCheck,
   BarChart3 as ChartBar,
   Upload as UploadSimple,
   Video as VideoCamera,
   BadgeCheck as SealCheck,
   GraduationCap,
-  PlayCircle,
   Tag,
 } from "lucide-react";
-import { COURSES_DATA } from "../../data/coursesData";
 import { Footer } from "../../components/layout/Footer";
 import { RecommendedJourney } from "../../components/home/RecommendedJourney";
 import { CvAnalysisFeatureShowcase } from "../../components/home/CvAnalysisFeatureShowcase";
+import {
+  MentorFeatureShowcase,
+  HOME_MENTOR_MASCOTS,
+} from "../../components/home/MentorFeatureShowcase";
+import { CoursesFeatureShowcase } from "../../components/home/CoursesFeatureShowcase";
 import { SparkleGlyph } from "../../components/decor/SparkleGlyph.jsx";
 import {
+  SectionReveal,
   LandingReveal,
   LandingStagger,
   LandingItem,
@@ -121,8 +123,7 @@ const TESTIMONIALS = [
   {
     name: "Phạm Anh Tuấn",
     role: "Software Engineer @ Shopee",
-    avatar: "PA",
-    grad: "from-[#6E35E8] to-[#9B6DFF]",
+    mascot: HOME_MENTOR_MASCOTS.pro,
     text: "Ba buổi phỏng vấn thử với AI và một buổi mentor Shopee — mình tự tin hơn hẳn. Câu hỏi sát thực tế, góp ý đúng chỗ cần sửa.",
     stars: 5,
     tag: "Đã nhận việc",
@@ -130,8 +131,7 @@ const TESTIMONIALS = [
   {
     name: "Nguyễn Thị Hoa",
     role: "Marketing Executive @ Unilever",
-    avatar: "NH",
-    grad: "from-pink-500 to-rose-600",
+    mascot: HOME_MENTOR_MASCOTS.cv,
     text: "So CV với JD xong mới biết CV thiếu từ khóa quan trọng. Điểm STAR từ 2.4 lên 4.1 sau ba tuần — tiến bộ có thật.",
     stars: 5,
     tag: "STAR +70%",
@@ -139,8 +139,7 @@ const TESTIMONIALS = [
   {
     name: "Trần Minh Đức",
     role: "Business Analyst @ KPMG",
-    avatar: "TM",
-    grad: "from-emerald-500 to-teal-600",
+    mascot: HOME_MENTOR_MASCOTS.headset,
     text: "So khớp CV–JD chỉ đúng điểm yếu. Mentor KPMG chia sẻ kinh nghiệm thật — khác hẳn đọc blog cho có.",
     stars: 5,
     tag: "Mentor 5 sao",
@@ -194,7 +193,6 @@ function HeroInterviewVideoCard() {
     </div>
   );
 }
-
 
 /** Mock cửa sổ phỏng vấn AI + video + overlay (section Interview Preview). */
 function InterviewDemoMockup() {
@@ -260,19 +258,12 @@ function InterviewDemoMockup() {
 
           <div className="relative min-h-[200px] flex-1 bg-[#ffffff] sm:min-h-[240px]">
             <div className="absolute inset-0 flex items-center justify-center">
-              <video
-                autoPlay
-                loop
-                muted
-                playsInline
-                className="h-full w-full object-cover"
-              >
+              <video autoPlay loop muted playsInline className="h-full w-full object-cover">
                 <source src={HOME_AI_DEMO_VIDEO} type="video/mp4" />
               </video>
             </div>
 
             <div className="pointer-events-none absolute inset-0">
-              {/* Che watermark góc phải dưới video (HeyGen) */}
               <div
                 className="absolute bottom-0 right-0 z-[1] h-[24%] w-[40%] max-w-[11rem] min-h-[3.25rem] sm:max-w-[13rem]"
                 style={{
@@ -289,9 +280,7 @@ function InterviewDemoMockup() {
               >
                 <div className="flex items-center gap-2">
                   <div className="h-1.5 w-1.5 animate-pulse rounded-full sm:h-2 sm:w-2" style={{ background: "#FF5F57" }} />
-                  <span className="font-semibold text-foreground text-xs">
-                    Đang phỏng vấn
-                  </span>
+                  <span className="font-semibold text-foreground text-xs">Đang phỏng vấn</span>
                 </div>
                 <div
                   className="rounded-md border px-3 py-1.5 text-xs font-semibold sm:rounded-lg"
@@ -388,16 +377,6 @@ export function Home() {
   );
 
   useEffect(() => {
-    const onScroll = () => {
-      const y = window.scrollY;
-      const max = document.documentElement.scrollHeight - window.innerHeight;
-      const progress = max > 0 ? Math.min(1, Math.max(0, y / max)) : 0;
-      document.documentElement.style.setProperty("--landing-scroll", String(progress));
-    };
-
-    window.addEventListener("scroll", onScroll, { passive: true });
-    onScroll();
-
     const params = new URLSearchParams(window.location.search);
     const scrollTarget = params.get("scrollTo");
     if (scrollTarget) {
@@ -410,7 +389,6 @@ export function Home() {
       }, 500);
     }
 
-    return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
   return (
@@ -570,46 +548,10 @@ export function Home() {
           50% { opacity: 0.7; transform: translate(2%, -2%) scale(1.05); }
           100% { opacity: 0.4; transform: translate(0,0) scale(1); }
         }
-        .landing-scroll-ambient {
-          position: fixed;
-          inset: 0;
-          z-index: 0;
-          pointer-events: none;
-          background:
-            radial-gradient(
-              55% 35% at 15% calc(var(--landing-scroll, 0) * 100%),
-              rgba(99, 14, 212, 0.14),
-              transparent 65%
-            ),
-            radial-gradient(
-              45% 30% at 88% calc(var(--landing-scroll, 0) * 85% + 8%),
-              rgba(191, 243, 101, 0.1),
-              transparent 60%
-            );
-          transition: opacity 0.4s ease;
-        }
         .landing-section-flow {
           position: relative;
         }
-        .landing-section-flow::before {
-          content: "";
-          position: absolute;
-          left: 50%;
-          top: -3rem;
-          width: 1px;
-          height: 3rem;
-          transform: translateX(-50%);
-          background: linear-gradient(to bottom, transparent, rgba(124, 58, 237, 0.35));
-          opacity: 0;
-          animation: landingConnectorIn 0.8s ease forwards;
-          animation-timeline: view();
-          animation-range: entry 0% cover 25%;
-        }
-        @keyframes landingConnectorIn {
-          to { opacity: 1; }
-        }
         @media (prefers-reduced-motion: reduce) {
-          .landing-section-flow::before { animation: none; opacity: 0.4; }
           .hero-orbit-text { animation: none !important; }
           .float-icon, .float-icon-delay, .float-icon-slow { animation: none !important; }
         }
@@ -640,12 +582,19 @@ export function Home() {
           transform: translateY(-2px);
           box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
         }
-        .glass-card.interview-preview-card {
+        .interview-preview-panel {
+          background: #ffffff;
+          border: 2px solid rgba(95, 0, 240, 0.4);
+          box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+        }
+        .interview-preview-panel.interview-preview-card {
           overflow: visible !important;
           transition: border-color 0.25s ease, box-shadow 0.25s ease;
         }
-        .glass-card.interview-preview-card:hover {
+        .interview-preview-panel.interview-preview-card:hover {
           transform: none;
+          border-color: rgba(95, 0, 240, 0.52);
+          box-shadow: 0 14px 36px rgba(99, 14, 212, 0.14);
         }
         .courses-glass-card {
           background: rgba(255, 255, 255, 0.78);
@@ -713,8 +662,6 @@ export function Home() {
         }
       `}</style>
 
-      <motion.div className="landing-scroll-ambient" aria-hidden />
-
       {/* ═══ HERO ═══════════════════════════════════════════ */}
       <section className="relative z-10 flex h-screen max-h-screen flex-col justify-start overflow-hidden px-10 sm:px-16 lg:px-24 pt-6 sm:pt-8 md:pt-10">
         {renderSectionSticks([
@@ -749,7 +696,6 @@ export function Home() {
                   Phỏng vấn{" "}
                 </span>
                 <span
-                  className="hero-title-animated hero-orbit-text"
                   style={{
                     background: "linear-gradient(135deg, #5F00F0 0%, #6E35E8 45%, #9B6DFF 100%)",
                     WebkitBackgroundClip: "text",
@@ -820,7 +766,7 @@ export function Home() {
                   {STATS.map((s, i) => (
                     <div
                       key={i}
-                      className="rounded-xl bg-white px-2 py-2.5 text-center sm:px-3 sm:py-3.5"
+                      className="rounded-xl bg-white px-2 py-2.5 text-center transition-transform duration-300 hover:-translate-y-0.5 sm:px-3 sm:py-3.5"
                       style={{
                         border: "1px solid rgba(95, 0, 240, 0.22)",
                         boxShadow: "none",
@@ -848,8 +794,6 @@ export function Home() {
 
       </section>
 
-
-
       {/* ═══ HOW IT WORKS ════════════════════════════════════ */}
       <section
         id="features"
@@ -865,11 +809,12 @@ export function Home() {
             <div className="mx-auto mb-5 flex max-w-4xl flex-col items-center">
               <div className="flex items-center justify-center">
                 <img
-                  src="/mascot-features.png?v=4"
-                  alt="Gấu Piupiu"
-                  className="relative z-10 h-auto w-[9.5rem] shrink-0 -translate-x-[0.5rem] -translate-y-[0.65rem] drop-shadow-[0_16px_32px_rgba(110,53,232,0.18)] sm:w-[10.5rem] sm:-translate-y-[0.9rem] md:w-[11rem]"
+                  src="/mascot-features.png?v=7"
+                  alt=""
+                  aria-hidden
+                  className="relative z-10 h-auto w-[9.5rem] shrink-0 -translate-x-[1.5rem] -translate-y-[0.51rem] rotate-[3deg] object-contain sm:w-[10.5rem] sm:-translate-y-[0.76rem] md:w-[11rem]"
                 />
-                <div className="relative z-0 -ml-[3.15rem] text-left sm:-ml-[3.4rem] md:-ml-[3.65rem]">
+                <div className="relative z-0 -ml-[3.15rem] -translate-x-[0.15rem] text-left sm:-ml-[3.4rem] md:-ml-[3.65rem]">
                   <span className="mb-3 block h-1.5 w-12 rounded-full bg-[#6E35E8]/40" />
                   <h2 className="cute-heading font-headline text-3xl font-black leading-[1.08] tracking-tighter text-slate-900 md:text-5xl">
                     Chuẩn bị phỏng vấn
@@ -941,7 +886,7 @@ export function Home() {
           {/* CTA Section */}
           <div className="mt-6 flex flex-col items-center">
             <button
-              onClick={() => handleFeatureClick("/dashboard")}
+              onClick={() => handleFeatureClick("/cv-analysis")}
               className="group relative px-8 py-3 rounded-full font-black text-base tracking-tight uppercase transition-all duration-500 hover:scale-105 active:scale-95"
               style={{
                 background: "linear-gradient(135deg, #B4F500, #8FBC24)",
@@ -961,102 +906,87 @@ export function Home() {
         </div>
       </section>
 
+      {/* ═══ CV ANALYSIS — trước Phỏng vấn AI (navbar #features) ═══ */}
+      <div className="landing-section-flow">
+        <SectionReveal variant="cv">
+          <CvAnalysisFeatureShowcase
+            onCtaClick={() => navigate("/cv-analysis")}
+          />
+        </SectionReveal>
+      </div>
+
       {/* ═══ INTERVIEW PREVIEW ═══════════════════════════════ */}
-      <section
-        className="landing-section-flow relative z-10 h-screen max-h-screen flex flex-col justify-center overflow-x-hidden overflow-y-visible"
-      >
+      <section className="landing-section-flow relative z-10 flex h-screen max-h-screen flex-col justify-center overflow-x-hidden overflow-y-visible">
         {renderSectionSticks([
           { x: 14, y: 24, size: 32, opacity: 0.42 },
           { x: 91, y: 16, size: 42, opacity: 0.56 },
           { x: 88, y: 72, size: 34, opacity: 0.46 },
         ])}
-        <div className="max-w-7xl mx-auto px-5 relative z-10 w-full py-2">
-          <div className="grid lg:grid-cols-2 gap-5 lg:gap-8 items-stretch">
-            {/* Left copy + gấu Upzi (mock HTML) */}
+        <div className="relative z-10 mx-auto w-full max-w-7xl px-5 py-2">
+          <div className="grid items-stretch gap-5 lg:grid-cols-2 lg:gap-8">
             <div className="relative h-full min-h-0 overflow-visible">
-              <div className="glass-card interview-preview-card relative flex h-full min-h-0 flex-col p-4 sm:p-5 lg:p-6">
-              <div className="relative z-[1] flex min-h-0 flex-1 flex-col">
-                <div>
-                  <div className="mb-4 h-1 w-10 rounded-full bg-gradient-to-r from-[#6E35E8] to-[#9B6DFF]" aria-hidden />
-                <span
-                  className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full text-[11px] font-semibold mb-4 border border-violet-400/30 bg-violet-500/10 text-violet-700"
-                >
-                  <Microphone
-                    className="w-3.5 h-3.5"
-                  />
-                  Phòng phỏng vấn ảo
-                </span>
-                <h2
-                  className="mb-2 text-slate-900 leading-tight cute-heading"
-                  style={{
-                    fontSize: "clamp(1.35rem, 2.6vw, 2.05rem)",
-                  }}
-                >
-                  <span className="block">Phỏng vấn như thật</span>
-                  <span className="block font-headline text-[#5F00F0]">AI hỏi, bạn đỡ lo hơn</span>
-                </h2>
-                </div>
-                <div className="relative flex min-h-0 flex-1 flex-col">
-                <p
-                  className="mb-6 leading-relaxed"
-                  style={{
-                    color: "#475569",
-                    fontSize: "0.98rem",
-                  }}
-                >
-                  AI phỏng vấn hỏi sát JD, góp ý trực quan — chấm STAR từng câu, biết ngay chỗ cần chỉnh.
-                </p>
-
-                <ul className="space-y-2 mb-5">
-                  {[
-                    "Năm câu hỏi riêng theo JD — không hỏi chung chung",
-                    "Nhận diện giọng, không cần gõ từng chữ",
-                    "Chấm STAR chi tiết — biết điểm yếu ở đâu",
-                  ].map((item, i) => (
-                    <li
-                      key={i}
-                      className="flex items-start gap-2.5"
-                      style={{ color: "#334155" }}
+              <div className="interview-preview-panel interview-preview-card relative flex h-full min-h-0 flex-col rounded-[1.75rem] p-4 sm:rounded-[2rem] sm:p-5 lg:p-6">
+                <div className="relative z-[1] flex min-h-0 flex-1 flex-col">
+                  <div>
+                    <div className="mb-4 h-1 w-10 rounded-full bg-gradient-to-r from-[#6E35E8] to-[#9B6DFF]" aria-hidden />
+                    <span className="mb-4 inline-flex items-center gap-2 rounded-full border border-violet-400/30 bg-violet-500/10 px-3.5 py-1 text-[11px] font-semibold text-violet-700">
+                      <Microphone className="h-3.5 w-3.5" />
+                      Phòng phỏng vấn ảo
+                    </span>
+                    <h2
+                      className="cute-heading mb-2 leading-tight text-slate-900"
+                      style={{ fontSize: "clamp(1.35rem, 2.6vw, 2.05rem)" }}
                     >
-                      <div
-                        className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full"
+                      <span className="block">Phỏng vấn như thật</span>
+                      <span className="block font-headline text-[#5F00F0]">AI hỏi, bạn đỡ lo hơn</span>
+                    </h2>
+                  </div>
+                  <div className="relative flex min-h-0 flex-1 flex-col">
+                    <p className="mb-6 text-[0.98rem] font-semibold leading-relaxed text-slate-800">
+                      AI phỏng vấn hỏi sát JD, góp ý trực quan — chấm STAR từng câu, biết ngay chỗ cần chỉnh.
+                    </p>
+                    <ul className="mb-5 space-y-2.5">
+                      {[
+                        "Năm câu hỏi riêng theo JD — không hỏi chung chung",
+                        "Nhận diện giọng, không cần gõ từng chữ",
+                        "Chấm STAR chi tiết — biết điểm yếu ở đâu",
+                      ].map((item, i) => (
+                        <li key={i} className="flex items-start gap-2.5 text-slate-900">
+                          <CircleCheck
+                            className="mt-0.5 h-[18px] w-[18px] shrink-0 text-[#5F00F0]"
+                            strokeWidth={2.5}
+                            aria-hidden
+                          />
+                          <span className="min-w-0 flex-1 text-[13px] font-semibold leading-relaxed text-slate-900">
+                            {item}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                    <div className="relative z-[1] mt-auto sm:pr-[calc(6rem+1cm+1.75rem)]">
+                      <button
+                        type="button"
+                        onClick={() => navigate("/interview")}
+                        className="inline-flex shrink-0 items-center gap-2 rounded-full px-5 py-2.5 font-semibold transition-all hover:-translate-y-0.5 hover:brightness-110"
                         style={{
-                          background: "rgba(110, 53, 232,0.08)",
+                          background: "linear-gradient(135deg, #B4F500, #93D600)",
+                          color: "#0f172a",
+                          boxShadow: "0 8px 20px rgba(15,23,42,0.08)",
                         }}
                       >
-                        <Check
-                          className="h-3 w-3 shrink-0"
-                          style={{ color: "#6E35E8" }}
-                        />
-                      </div>
-                      <span className="min-w-0 flex-1 text-[13px] leading-relaxed">{item}</span>
-                    </li>
-                  ))}
-                </ul>
-
-                <div className="relative z-[1] mt-auto sm:pr-[calc(6rem+1cm+1.75rem)]">
-                  <button
-                    type="button"
-                    onClick={() => navigate("/interview")}
-                    className="inline-flex shrink-0 items-center gap-2 px-5 py-2.5 rounded-full font-semibold transition-all hover:brightness-110 hover:-translate-y-0.5"
-                    style={{
-                      background: "linear-gradient(135deg, #B4F500, #93D600)",
-                      color: "#0f172a",
-                      boxShadow: "0 8px 20px rgba(15,23,42,0.08)",
-                    }}
-                  >
-                    Thử miễn phí ngay
-                    <ArrowRight className="w-4 h-4" />
-                  </button>
+                        Thử miễn phí ngay
+                        <ArrowRight className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </div>
                 </div>
-                </div>
-              </div>
               </div>
               <img
-                src="/mascot-interview-preview.png?v=4"
+                src="/mascot-interview-knowledge.png?v=8"
                 alt=""
                 aria-hidden
-                className="pointer-events-none absolute bottom-0 right-[calc(2.25rem+1rem)] z-30 hidden h-auto w-[calc(5.25rem+1cm)] object-contain object-bottom drop-shadow-[0_8px_18px_rgba(110,53,232,0.16)] sm:block sm:right-[calc(2.5rem+1rem)] sm:w-[calc(5.75rem+1cm)] md:right-[calc(2.75rem+1rem)] md:w-[calc(6rem+1cm)]"
+                className="pointer-events-none absolute bottom-0 right-[calc(1.75rem+0.5rem)] z-30 hidden h-auto w-[calc(6.5rem+6.6rem)] max-w-none object-contain object-bottom sm:block sm:right-[calc(2rem+0.5rem)] sm:w-[calc(7rem+6.6rem)] md:right-[calc(2.25rem+0.5rem)] md:w-[calc(7.5rem+6.6rem)]"
+                style={{ transform: "translate(3.3rem, 2.804rem) rotate(-3.5deg)" }}
               />
             </div>
 
@@ -1067,145 +997,17 @@ export function Home() {
         </div>
       </section>
 
-      {/* ═══ CV ANALYSIS — vẫn trong nhóm Lộ trình (navbar #features) ═══ */}
-      <div className="landing-section-flow">
-        <CvAnalysisFeatureShowcase
-          onCtaClick={() => navigate("/cv-analysis")}
-        />
+      <div className="landing-section-flow" style={{ perspective: "1400px" }}>
+        <SectionReveal variant="mentor">
+          <MentorFeatureShowcase onCtaClick={() => navigate("/mentors")} />
+        </SectionReveal>
       </div>
 
-      {/* ═══ COURSES SECTION ═════════════════════════════════ */}
-      <section
-        id="courses"
-        className="landing-section-flow relative isolate z-20 flex h-screen max-h-screen flex-col justify-center overflow-x-hidden overflow-y-visible pt-2 md:pt-3 lg:pt-4"
-      >
-        {renderSectionSticks([
-          { x: 90, y: 8, size: 32, opacity: 0.44 },
-          { x: 94, y: 38, size: 36, opacity: 0.5 },
-          { x: 6, y: 86, size: 28, opacity: 0.38 },
-          { x: 82, y: 78, size: 34, opacity: 0.46 },
-        ])}
-
-        <div className="relative z-10 mx-auto w-full max-w-7xl translate-x-[0.4rem] px-5 py-3 sm:px-10 sm:py-4">
-          <div className="relative z-10 mb-4 md:pl-[1.58rem] lg:pl-[2.08rem]">
-              <div className="mb-3 h-1 w-10 rounded-full bg-gradient-to-r from-[#630ed4] to-[#7c3aed]" aria-hidden />
-              <span className="mb-2 block text-sm font-semibold uppercase tracking-[0.05em] text-[#630ed4]">
-                Học kỹ năng
-              </span>
-              <h2 className="mb-2 -translate-y-[0.45rem] translate-x-[0.1rem] font-headline text-[1.75rem] font-bold leading-[1.1] tracking-[-0.02em] text-[#1a1b23] sm:text-[2rem]">
-                Học từ mentor thật
-                <span className="mt-0 block translate-x-[0.31rem] text-[#7c3aed]">sửa lỗi liền tay</span>
-              </h2>
-          </div>
-
-          <div className="relative mb-5 mt-8 overflow-visible">
-            <img
-              src="/mascot-courses.png?v=8"
-              alt=""
-              aria-hidden
-              className="pointer-events-none absolute z-0 hidden object-contain md:block md:h-[10.5rem] md:w-[10.5rem] md:left-0 md:-top-[7.5rem] md:-translate-x-[6.3rem] md:translate-y-[2.81rem] lg:h-[13.5rem] lg:w-[13.5rem] lg:-left-2 lg:-top-[9rem] xl:h-[15rem] xl:w-[15rem] xl:-left-3 xl:-top-[10rem]"
-            />
-            <div className="relative z-10 grid grid-cols-1 gap-6 md:grid-cols-3">
-            {COURSES_DATA.slice(0, 3).map((course, idx) => (
-              <div
-                key={course.id}
-                onClick={() =>
-                  handleFeatureClick(`/courses/${course.id}`)
-                }
-                className="group courses-glass-card flex h-full min-h-0 cursor-pointer flex-col overflow-hidden"
-              >
-                <div className="relative z-[1] flex min-h-0 flex-1 flex-col">
-                  {/* Thumbnail */}
-                  <div className="relative h-[7.25rem] shrink-0 overflow-hidden sm:h-[7.5rem]">
-                    <img
-                      src={course.thumbnail}
-                      alt={course.title}
-                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-
-                    <div className="absolute top-3.5 left-3.5 flex items-center gap-2">
-                      <span className="inline-flex items-center justify-center bg-black/55 px-2.5 py-1 text-[10px] font-bold uppercase leading-none tracking-wider text-white backdrop-blur-md rounded-full">
-                        {course.category}
-                      </span>
-                      <span className="inline-flex items-center justify-center gap-1 bg-black/60 px-2.5 py-1 text-[10px] font-medium leading-none text-white backdrop-blur-md rounded-full">
-                        <span className="material-symbols-outlined text-[13px] leading-none">schedule</span>
-                        {Math.floor(course.duration / 60)}h {course.duration % 60}m
-                      </span>
-                    </div>
-                    {idx === 0 && (
-                      <span className="absolute top-3.5 right-3.5 inline-flex items-center justify-center rounded-full bg-[#7c3aed] px-2 py-1 text-[10px] font-black uppercase leading-none tracking-wide text-white shadow-md">
-                        New
-                      </span>
-                    )}
-
-                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-500 scale-90 group-hover:scale-100">
-                      <div className="w-[3.35rem] h-[3.35rem] rounded-full flex items-center justify-center shadow-2xl transform transition-transform border-2 border-white/90 float-icon-delay parallax-layer"
-                        style={{ background: "#bff365" }}
-                      >
-                        <PlayCircle className="w-[1.4rem] h-[1.4rem] text-[#131f00] translate-x-0.5" />
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="flex flex-1 flex-col p-4 sm:p-[1.125rem]">
-                    <h3 className="mb-2.5 min-h-[2.5rem] line-clamp-2 break-words text-base font-bold leading-snug text-[#1a1b23] transition-colors sm:min-h-[2.6rem] group-hover:text-[#7c3aed]">
-                      {course.title}
-                    </h3>
-
-                    <div className="mb-2.5 flex min-h-[2.5rem] shrink-0 items-center gap-2">
-                      <img
-                        src={course.mentorAvatar}
-                        alt={course.mentorName}
-                        className="h-10 w-10 shrink-0 rounded-xl border border-slate-200 object-cover"
-                      />
-                      <div className="flex min-w-0 flex-col justify-center gap-0.5">
-                        <p className="text-sm font-bold leading-tight text-[#1a1b23]">{course.mentorName}</p>
-                        <span className="text-[9px] font-semibold uppercase leading-none tracking-[0.05em] text-[#4a4455]">
-                          Mentor thật
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="mt-auto flex items-center justify-between gap-3 border-t border-[#ccc3d8]/60 pt-3">
-                      <div className="flex min-w-0 flex-1 items-center gap-1.5">
-                        <span
-                          className="material-symbols-outlined shrink-0 text-[1.125rem] leading-none text-amber-500"
-                          style={{ fontVariationSettings: "'FILL' 1" }}
-                        >
-                          star
-                        </span>
-                        <span className="text-sm font-bold leading-none text-slate-800">{course.rating}</span>
-                        <span className="truncate text-xs leading-none text-slate-500">
-                          ({(course.reviewsCount || 0) + 700})
-                        </span>
-                      </div>
-                      <div className="shrink-0 text-lg font-black leading-none tabular-nums text-[#630ed4]">
-                        {new Intl.NumberFormat("vi-VN", {
-                          style: "currency",
-                          currency: "VND",
-                        }).format(course.price)}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ))}
-            </div>
-          </div>
-
-          <div className="relative z-0 text-center">
-            <button
-              type="button"
-              onClick={() => navigate("/courses")}
-              className="courses-cta-primary group relative rounded-full px-10 py-3.5 text-sm font-bold transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] sm:px-11 sm:py-4 sm:text-base"
-            >
-              Xem tất cả khóa học
-              <span className="pointer-events-none absolute inset-0 rounded-full bg-white opacity-0 transition-opacity group-hover:opacity-20" aria-hidden />
-            </button>
-          </div>
-        </div>
-      </section>
+      <div className="landing-section-flow">
+        <SectionReveal variant="courses" delay={0.05}>
+          <CoursesFeatureShowcase onCtaClick={() => navigate("/courses")} />
+        </SectionReveal>
+      </div>
 
 
 
@@ -1241,9 +1043,18 @@ export function Home() {
                   {TESTIMONIALS.map((t) => (
                     <div
                       key={`avatar-${t.name}`}
-                      className={`w-9 h-9 rounded-full bg-gradient-to-br ${t.grad} border-2 border-white flex items-center justify-center text-[11px] font-black text-white shadow-sm`}
+                      className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full border-2 border-white bg-violet-50 shadow-sm"
                     >
-                      {t.avatar}
+                      <img
+                        src={t.mascot}
+                        alt=""
+                        className="h-[85%] w-[85%] object-contain object-bottom"
+                        onError={(e) => {
+                          if (e.currentTarget.src !== HOME_MENTOR_MASCOTS.fallback) {
+                            e.currentTarget.src = HOME_MENTOR_MASCOTS.fallback;
+                          }
+                        }}
+                      />
                     </div>
                   ))}
                 </div>
@@ -1276,8 +1087,17 @@ export function Home() {
                           className="shrink-0 w-[min(17.5rem,calc(100vw-3rem))] sm:w-[15.5rem] bg-white border border-slate-200 rounded-2xl p-5 shadow-sm"
                         >
                           <div className="flex items-center gap-2.5 mb-2.5">
-                            <div className={`w-9 h-9 shrink-0 rounded-lg bg-gradient-to-br ${t.grad} flex items-center justify-center`}>
-                              <CheckCircle2 className="size-[1.125rem] text-white" />
+                            <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-violet-100 bg-violet-50">
+                              <img
+                                src={t.mascot}
+                                alt=""
+                                className="h-[88%] w-[88%] object-contain object-bottom"
+                                onError={(e) => {
+                                  if (e.currentTarget.src !== HOME_MENTOR_MASCOTS.fallback) {
+                                    e.currentTarget.src = HOME_MENTOR_MASCOTS.fallback;
+                                  }
+                                }}
+                              />
                             </div>
                             <p className="text-[11px] sm:text-xs uppercase tracking-widest text-[#6E35E8] font-black leading-tight">{t.tag}</p>
                           </div>

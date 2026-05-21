@@ -1,24 +1,26 @@
 import React from "react";
 import { useNavigate } from "react-router";
-import { MentorPageShell } from "../../components/mentor/MentorPageShell";
-import { CvAnalysisHubHero, CvAnalysisHubIntroSections } from "../../components/cv/CvAnalysisHubSections";
+import { toast } from "sonner";
+import { CvAnalysisHubHero } from "../../components/cv/CvAnalysisHubSections";
+import { requireLoginNavigate } from "../../utils/authGate";
 
 export function CVAnalysisHub() {
   const navigate = useNavigate();
 
   return (
-    <MentorPageShell bottomPad="pb-16">
-      <div className="relative z-[1] mx-auto w-full max-w-6xl px-6 pb-12 pt-6 sm:px-8 sm:pt-10">
-        <CvAnalysisHubHero
-          onJd={() => navigate("/cv-analysis/jd")}
-          onField={() => navigate("/cv-analysis/field")}
-          onHistory={() => navigate("/cv-analysis/history")}
-        />
-        <CvAnalysisHubIntroSections
-          onJd={() => navigate("/cv-analysis/jd")}
-          onField={() => navigate("/cv-analysis/field")}
-        />
-      </div>
-    </MentorPageShell>
+    <div className="flex min-h-0 flex-1 flex-col">
+      <CvAnalysisHubHero
+        onJd={() => requireLoginNavigate(navigate, "/cv-analysis/jd")}
+        onField={() =>
+          toast.info("Sắp ra mắt", {
+            description:
+              "Phân tích CV theo ngành nghề đang được hoàn thiện. Bạn có thể dùng «Phân tích CV + JD có sẵn» trước nhé!",
+            classNames: {
+              icon: "!text-[#630ed4]",
+            },
+          })
+        }
+      />
+    </div>
   );
 }

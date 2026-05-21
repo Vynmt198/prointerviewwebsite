@@ -91,7 +91,7 @@ body:has(.app-user-shell) {
   --sidebar-ring: oklch(0.479 0.267 287);
 }
 
-/* Nền loang tím giống Home (fixed, sau nội dung z-1) */
+/* Nền loang tím (fixed, sau nội dung z-1) */
 .app-shell-ambient {
   position: fixed;
   inset: 0;
@@ -118,6 +118,24 @@ body:has(.app-user-shell) {
       rgba(243, 240, 249, 0.95) 100%
     );
   background-size: auto;
+}
+
+/* Home — loang đều, không blob góc / vệt trắng mờ che nội dung */
+.app-shell-ambient--home {
+  background-color: #f3f0f9;
+  background-image:
+    radial-gradient(ellipse 150% 95% at 50% -18%, rgba(110, 53, 232, 0.13), transparent 62%),
+    radial-gradient(ellipse 130% 90% at 50% 108%, rgba(95, 0, 240, 0.09), transparent 58%),
+    radial-gradient(ellipse 165% 125% at 50% 50%, rgba(224, 214, 242, 0.42), transparent 74%),
+    linear-gradient(
+      180deg,
+      #f5f2fb 0%,
+      #f1ecf9 20%,
+      #ebe5f6 45%,
+      #ece6f7 55%,
+      #efeaf8 75%,
+      #f3f0f9 100%
+    );
 }
 
 .dark {

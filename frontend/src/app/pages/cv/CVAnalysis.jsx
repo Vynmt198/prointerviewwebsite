@@ -214,6 +214,10 @@ export function CVAnalysis() {
       navigate("/cv-analysis", { replace: true });
       return;
     }
+    if (!isLoggedIn()) {
+      navigate(buildLoginPath(loginReturnPath), { replace: true });
+      return;
+    }
     if (routeMode === "jd") {
       setEnableJD(true);
       setEnableField(false);
@@ -221,7 +225,7 @@ export function CVAnalysis() {
       setEnableJD(false);
       setEnableField(true);
     }
-  }, [routeMode, navigate]);
+  }, [routeMode, navigate, loginReturnPath]);
 
   const canAnalyze  = plans.starterPro || plans.elitePro || cvRemaining > 0;
   const isFreeTier  = !plans.starterPro && !plans.elitePro;

@@ -19,7 +19,6 @@ import {
   Brain,
   Timer,
   BarChart3,
-  Sparkles,
   ArrowRight,
   BadgeCheck,
   Video,
@@ -35,6 +34,17 @@ import { getLatestCVAnalysis, getUploadedCV, saveUploadedCV } from "../../utils/
 import { hasAuthCredentials, isLoggedIn } from "../../utils/auth";
 import { buildLoginPath } from "../../utils/authGate";
 import { generateInterviewQuestions, extractCvTextFromFile, createInterviewSession } from "../../utils/interviewsApi";
+import { CUSTOMER_SHELL_GUTTER, CUSTOMER_SHELL_MAX } from "../../components/layout/customerShellLayout";
+
+const INPUT_LIGHT =
+  "w-full rounded-xl border border-violet-200/80 bg-white px-4 py-2.5 text-sm text-violet-900 outline-none transition placeholder:text-violet-400 focus:border-[#630ed4]/45 focus:ring-2 focus:ring-violet-100";
+const SELECT_TRIGGER =
+  "flex w-full items-center justify-between rounded-xl border border-violet-200/80 bg-white px-3.5 py-2.5 text-sm text-violet-900 outline-none transition focus:border-[#630ed4]/45 focus:ring-2 focus:ring-violet-100";
+const SELECT_MENU =
+  "absolute left-0 right-0 top-full z-20 mt-1 max-h-56 overflow-y-auto rounded-xl border border-violet-200 bg-white py-1 shadow-[0_12px_32px_rgba(99,14,212,0.12)]";
+const SELECT_ITEM = "w-full px-4 py-2.5 text-left text-sm text-violet-800 hover:bg-violet-50";
+const CTA_LIME =
+  "bg-gradient-to-r from-[#c4ff47] to-[#d4ff00] text-violet-950 shadow-[0_8px_28px_rgba(196,255,71,0.25)] hover:brightness-110";
 
 const LEVELS = ["Thực tập sinh", "Mới ra trường", "Junior", "Trung cấp", "Senior"];
 const FIELDS_LIST = [
@@ -52,37 +62,40 @@ const PREVIEW_ITEMS = [
   { icon: BadgeCheck, title: "Phản hồi chi tiết từng câu", desc: "Điểm số + gợi ý câu trả lời mẫu tốt hơn" },
 ];
 
-/** Thẻ pastel + chữ đậm (cùng tông) — giống mock coaching cho user */
+/** Thẻ preview — tím (lime chỉ dùng cho nút CTA) */
 const PREVIEW_PASTEL = [
   {
-    shell: "border-emerald-200/95 bg-emerald-50 shadow-[0_4px_16px_rgba(15,23,42,0.06)]",
-    iconWell: "border-emerald-300/90 bg-emerald-100",
-    iconClass: "text-emerald-800",
-    title: "text-emerald-950",
-    body: "text-emerald-900/90",
-  },
-  {
-    shell: "border-amber-200/95 bg-amber-50 shadow-[0_4px_16px_rgba(15,23,42,0.06)]",
-    iconWell: "border-amber-300/90 bg-amber-100",
-    iconClass: "text-amber-900",
-    title: "text-amber-950",
-    body: "text-amber-900/88",
-  },
-  {
-    shell: "border-sky-200/95 bg-sky-50 shadow-[0_4px_16px_rgba(15,23,42,0.06)]",
-    iconWell: "border-sky-300/90 bg-sky-100",
-    iconClass: "text-sky-900",
-    title: "text-sky-950",
-    body: "text-sky-900/88",
-  },
-  {
-    shell: "border-violet-200/95 bg-violet-50 shadow-[0_4px_16px_rgba(15,23,42,0.06)]",
+    shell: "border-violet-200/95 bg-violet-50/90 shadow-[0_4px_16px_rgba(99,14,212,0.06)]",
     iconWell: "border-violet-300/90 bg-violet-100",
     iconClass: "text-violet-800",
     title: "text-violet-950",
-    body: "text-violet-900/88",
+    body: "text-violet-800",
+  },
+  {
+    shell: "border-violet-300/50 bg-violet-100/50 shadow-[0_4px_16px_rgba(99,14,212,0.08)]",
+    iconWell: "border-violet-400/40 bg-violet-200/60",
+    iconClass: "text-violet-900",
+    title: "text-violet-950",
+    body: "text-violet-800",
+  },
+  {
+    shell: "border-violet-200/95 bg-violet-50/90 shadow-[0_4px_16px_rgba(99,14,212,0.06)]",
+    iconWell: "border-violet-300/90 bg-violet-100",
+    iconClass: "text-violet-800",
+    title: "text-violet-950",
+    body: "text-violet-800",
+  },
+  {
+    shell: "border-violet-300/50 bg-violet-100/50 shadow-[0_4px_16px_rgba(99,14,212,0.08)]",
+    iconWell: "border-violet-400/40 bg-violet-200/60",
+    iconClass: "text-violet-900",
+    title: "text-violet-950",
+    body: "text-violet-800",
   },
 ];
+
+const SELECTED_BADGE =
+  "absolute right-3 top-3 flex h-7 w-7 items-center justify-center rounded-full border border-violet-300/60 bg-[#630ed4] shadow-[0_2px_12px_rgba(99,14,212,0.28)]";
 
 const HR_PREVIEWS = {
   male: {
@@ -102,12 +115,9 @@ function IconFrame({ size = "md", tone = "neutral", className = "", children }) 
   const sz = size === "sm" ? "h-9 w-9" : size === "lg" ? "h-14 w-14" : "h-11 w-11";
   const tones = {
     neutral:
-      "border-slate-300 bg-white shadow-[inset_0_1px_0_rgba(255,255,255,0.9)]",
-    lime: "border-[#b6d84a]/55 bg-gradient-to-br from-[#dfff8a]/45 to-[#d4ff00]/22 shadow-[inset_0_1px_0_rgba(255,255,255,0.9)]",
+      "border-violet-200/80 bg-white shadow-[inset_0_1px_0_rgba(255,255,255,0.9)]",
     violet:
       "border-violet-300/60 bg-gradient-to-br from-violet-200/70 to-violet-100/70 shadow-[inset_0_1px_0_rgba(255,255,255,0.9)]",
-    fuchsia:
-      "border-fuchsia-300/60 bg-gradient-to-br from-fuchsia-200/70 to-violet-100/70 shadow-[inset_0_1px_0_rgba(255,255,255,0.9)]",
   };
   return (
     <div
@@ -126,28 +136,24 @@ function StepBar({ current = 1 }) {
     { n: 3, label: "Phỏng vấn" },
   ];
   return (
-    <div className="mb-10 flex select-none flex-wrap items-center gap-0">
+    <div className="mb-8 flex select-none flex-wrap items-center gap-0 sm:mb-10">
       {steps.map((s, i) => (
         <span key={s.n} className="contents">
           <div className="flex items-center gap-2">
             <div
               className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold transition-all ${
                 s.n === current
-                  ? "bg-gradient-to-br from-[#6E35E8] to-[#8B4DFF] text-white shadow-[0_0_0_3px_rgba(110,53,232,0.2)]"
+                  ? "bg-gradient-to-br from-[#630ed4] to-[#7c3aed] text-white shadow-[0_0_0_3px_rgba(99,14,212,0.18)]"
                   : s.n < current
-                    ? "bg-[#c4ff47] text-[#0a0814]"
-                    : "border border-white/15 bg-white/[0.06] text-zinc-500"
+                    ? "bg-violet-200 text-violet-800"
+                    : "border border-violet-200/90 bg-white text-violet-500"
               }`}
             >
               {s.n < current ? <Check className="h-3.5 w-3.5" {...IS} strokeWidth={2.25} /> : s.n}
             </div>
             <span
               className={`text-sm font-semibold ${
-                s.n === current
-                  ? "text-lime-800"
-                  : s.n < current
-                    ? "text-white/55"
-                    : "text-zinc-500"
+                s.n === current ? "text-[#630ed4]" : s.n < current ? "text-violet-800" : "text-violet-500"
               }`}
             >
               {s.label}
@@ -156,7 +162,7 @@ function StepBar({ current = 1 }) {
           {i < steps.length - 1 && (
             <div
               className={`mx-3 h-0.5 min-w-[2rem] flex-1 rounded-full ${
-                s.n < current ? "bg-[#c4ff47]/70" : "bg-white/10"
+                s.n < current ? "bg-violet-400/70" : "bg-violet-200/80"
               }`}
             />
           )}
@@ -167,19 +173,12 @@ function StepBar({ current = 1 }) {
 }
 
 function FInput({ placeholder, value, onChange }) {
-  const [focus, setFocus] = useState(false);
   return (
     <input
-      className={`w-full rounded-xl border px-4 py-2.5 text-sm text-white outline-none transition-all placeholder:text-white/35 ${
-        focus
-          ? "border-[#c4ff47]/45 bg-white/[0.08] ring-2 ring-[#c4ff47]/15"
-          : "border-white/12 bg-white/[0.05]"
-      }`}
+      className={INPUT_LIGHT}
       placeholder={placeholder}
       value={value}
       onChange={(e) => onChange(e.target.value)}
-      onFocus={() => setFocus(true)}
-      onBlur={() => setFocus(false)}
     />
   );
 }
@@ -366,11 +365,11 @@ export function Interview() {
 
   const optBase =
     "relative rounded-2xl border p-5 text-left transition-all duration-300 sm:p-6";
-  const optIdle = "border-slate-400 bg-white/95 hover:border-violet-400/45 hover:bg-violet-50/45";
+  const optIdle = "border-violet-300 bg-white/95 hover:border-violet-400/45 hover:bg-violet-50/45";
   const optOn = "border-violet-500/65 bg-violet-100 shadow-[0_0_24px_rgba(122,35,229,0.18)]";
 
   return (
-    <MentorPageShell className="interview-light" bottomPad="pb-24">
+    <MentorPageShell bottomPad="pb-24">
       {/* ── Browser STT compatibility warning ─────────────────── */}
       {showBrowserWarning && (
         <BrowserCompatibilityWarning
@@ -381,9 +380,9 @@ export function Interview() {
 
       {/* ── Loading step overlay ───────────────────────────────── */}
       {loadingStep && (
-        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-violet-950/40 backdrop-blur-sm">
           <div className="mx-4 w-full max-w-sm rounded-2xl bg-white p-8 shadow-2xl">
-            <p className="mb-6 text-center text-base font-bold text-slate-800">
+            <p className="mb-6 text-center text-base font-bold text-violet-800">
               Đang chuẩn bị phỏng vấn...
             </p>
             <InterviewLoadingState currentStep={loadingStep} />
@@ -392,91 +391,44 @@ export function Interview() {
       )}
 
       <style>{`
-        .interview-glass {
-          background: linear-gradient(145deg, rgba(255,255,255,0.92) 0%, rgba(246,248,255,0.95) 100%);
-          backdrop-filter: blur(24px);
-          -webkit-backdrop-filter: blur(40px);
-          border: 1px solid rgba(148, 71, 255, 0.16);
-          border-radius: 1.5rem;
-          box-shadow: 0 16px 36px rgba(15,23,42,0.12), 0 0 0 1px rgba(148,71,255,0.07) inset;
-        }
-        .interview-light .text-white { color: #0f172a !important; }
-        .interview-light .text-zinc-300,
-        .interview-light .text-zinc-200 { color: #334155 !important; }
-        .interview-light .text-white\\/65,
-        .interview-light .text-white\\/60,
-        .interview-light .text-white\\/55,
-        .interview-light .text-white\\/50,
-        .interview-light .text-white\\/45,
-        .interview-light .text-zinc-500,
-        .interview-light .text-zinc-400 { color: #64748b !important; }
-        .interview-light .text-zinc-700 { color: #475569 !important; }
-        .interview-light .border-white\\/12,
-        .interview-light .border-white\\/10,
-        .interview-light .border-white\\/15 { border-color: rgba(148,71,255,0.18) !important; }
-        .interview-light .bg-white\\/\\[0\\.06\\],
-        .interview-light .bg-white\\/\\[0\\.05\\],
-        .interview-light .bg-white\\/\\[0\\.04\\],
-        .interview-light .bg-white\\/\\[0\\.03\\] { background-color: rgba(255,255,255,0.85) !important; }
-        .interview-light header { border-bottom-color: rgba(148,71,255,0.16) !important; }
-        .interview-light header .absolute.inset-0 {
-          opacity: .05 !important;
-          background-image: linear-gradient(rgba(148,71,255,0.16) 1px,transparent 1px),linear-gradient(90deg,rgba(148,71,255,0.16) 1px,transparent 1px) !important;
-        }
-        @keyframes interview-shimmer {
-          0% { opacity: 0.4; transform: translate(0,0) scale(1); }
-          50% { opacity: 0.7; transform: translate(2%, -2%) scale(1.05); }
-          100% { opacity: 0.4; transform: translate(0,0) scale(1); }
+        .interview-setup-panel {
+          background: #ffffff;
+          border: 2px solid rgba(95, 0, 240, 0.28);
+          border-radius: 1.75rem;
+          box-shadow: 0 12px 32px rgba(99, 14, 212, 0.08);
         }
       `}</style>
 
-      <header className="relative pt-8 pb-2 sm:pt-10 sm:pb-4">
-        <div
-          className="absolute inset-0 opacity-[0.11]"
-          style={{
-            backgroundImage:
-              "linear-gradient(rgba(255,255,255,0.55) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.45) 1px,transparent 1px)",
-            backgroundSize: "32px 32px",
-          }}
-          aria-hidden
-        />
-        <div className="relative z-10 mx-auto w-full max-w-7xl px-6 sm:px-8">
-            <div className="mb-4 flex items-center gap-3">
-              <Sparkles
-                className="size-6 shrink-0 text-lime-900"
-                strokeWidth={2.5}
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-800 sm:text-[11px]">
+      <div className={`relative flex min-h-0 flex-col bg-transparent pb-8 pt-10 sm:pt-12 ${CUSTOMER_SHELL_GUTTER}`}>
+        <div className={`${CUSTOMER_SHELL_MAX} flex flex-col`}>
+          <div className="mb-6 sm:mb-8">
+            <div className="mb-3 inline-flex items-center gap-1.5 rounded-full border border-violet-200/80 bg-white/90 px-3 py-1 shadow-sm backdrop-blur-sm">
+              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#630ed4]" />
+              <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-violet-600 sm:text-[11px]">
                 ProInterview · Phỏng vấn AI
               </span>
             </div>
-            <h1 className="app-page-title mb-3">
-              <span className="text-slate-900">
+            <h1 className="max-w-3xl font-headline tracking-tight">
+              <span className="block text-[clamp(1.65rem,3.5vw,2.35rem)] font-extrabold leading-[1.12] text-violet-950">
                 Thiết lập{" "}
-              </span>
-              <span className="text-[#6E35E8]">
-                Phỏng vấn AI
+                <span className="text-[#630ed4]">Phỏng vấn AI</span>
               </span>
             </h1>
-            <p className="app-page-subtitle">
-              Khởi động không gian phỏng vấn mô phỏng. Cung cấp thông tin để AI tối ưu hóa bộ câu hỏi cá nhân hoá dành riêng cho bạn.
+            <p className="mt-2 max-w-2xl text-[0.9375rem] font-medium leading-relaxed text-violet-600 sm:text-base">
+              Khởi động không gian phỏng vấn mô phỏng. Cung cấp thông tin để AI tối ưu bộ câu hỏi cá nhân hoá dành riêng cho bạn.
             </p>
-        </div>
-      </header>
+          </div>
 
-      <main className="relative z-10 mx-auto w-full max-w-7xl px-6 pb-16 pt-8">
-        <div className="w-full rounded-[28px] border border-slate-200 bg-white/85 px-6 pb-10 pt-8 shadow-[0_18px_40px_rgba(15,23,42,0.08)] backdrop-blur-sm sm:px-8">
+        <div className="interview-setup-panel w-full px-5 pb-8 pt-6 sm:px-7 sm:pb-10 sm:pt-8">
         <StepBar current={flowStep} />
 
         {flowStep === 1 && (
-        <section className="interview-glass mb-6 p-6 sm:p-8">
+        <section className="mb-6 rounded-2xl border border-violet-100/90 bg-violet-50/30 p-5 sm:p-7">
           <div className="mb-6 flex items-center gap-2.5">
             <div className="flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br from-[#6E35E8] to-[#8B4DFF] text-xs font-bold text-white shadow-lg">
               1
             </div>
-            <h2 className="text-sm font-black uppercase tracking-[0.14em] text-slate-900">Chọn nguồn thông tin</h2>
+            <h2 className="text-sm font-black uppercase tracking-[0.14em] text-violet-900">Chọn nguồn thông tin</h2>
           </div>
 
           <div className="mb-6 grid gap-4 sm:grid-cols-2">
@@ -487,46 +439,43 @@ export function Interview() {
               className={`${optBase} ${option === "A" ? optOn : optIdle} ${!latestCV ? "opacity-60 cursor-not-allowed" : ""}`}
             >
               {option === "A" && (
-                <div className="absolute right-3 top-3 flex h-7 w-7 items-center justify-center rounded-full border border-[#c4ff47]/40 bg-[#c4ff47] shadow-[0_2px_12px_rgba(196,255,71,0.35)]">
-                  <Check className="h-3.5 w-3.5 text-[#0a0814]" strokeWidth={2.25} strokeLinecap="round" strokeLinejoin="round" />
+                <div className={SELECTED_BADGE}>
+                  <Check className="h-3.5 w-3.5 text-white" strokeWidth={2.25} strokeLinecap="round" strokeLinejoin="round" />
                 </div>
               )}
-              <IconFrame tone="lime" className="mb-3">
-                <FileCheck className="h-5 w-5 text-lime-950" {...IS} strokeWidth={2.25} />
+              <IconFrame tone="violet" className="mb-3">
+                <FileCheck className="h-5 w-5 text-violet-700" {...IS} strokeWidth={2.25} />
               </IconFrame>
-              <p className="mb-1 text-sm font-black text-slate-900">Dùng CV/JD đã phân tích</p>
-              <p className="text-xs leading-relaxed text-slate-600">
+              <p className="mb-1 text-sm font-black text-violet-900">Dùng CV/JD đã phân tích</p>
+              <p className="text-xs leading-relaxed text-violet-600">
                 Sử dụng từ phiên phân tích CV/JD trước — AI hiểu rõ bạn nhất
               </p>
               {latestCV ? (
-                <div
-                  className="mt-3 w-full rounded-xl border p-3 text-left"
-                  style={{ background: "rgba(220,252,231,0.7)", borderColor: "rgba(74,222,128,0.35)" }}
-                >
-                  <p className="mb-1.5 text-[10px] font-black uppercase tracking-widest text-emerald-600">
+                <div className="mt-3 w-full rounded-xl border border-violet-200/80 bg-violet-50/90 p-3 text-left">
+                  <p className="mb-1.5 text-[10px] font-black uppercase tracking-widest text-violet-700">
                     Phân tích gần nhất
                   </p>
-                  <p className="truncate text-xs font-bold text-slate-800">{latestCV.position || "—"}</p>
+                  <p className="truncate text-xs font-bold text-violet-800">{latestCV.position || "—"}</p>
                   {latestCV.company && (
-                    <p className="text-[11px] text-slate-500">{latestCV.company}</p>
+                    <p className="text-[11px] text-violet-500">{latestCV.company}</p>
                   )}
                   <div className="mt-2 flex flex-wrap items-center gap-1.5">
                     {latestCV.matchScore != null && (
-                      <span className="flex items-center gap-1 rounded-md border border-emerald-200 bg-emerald-100 px-1.5 py-0.5 text-[10px] font-bold text-emerald-700">
+                      <span className="flex items-center gap-1 rounded-md border border-violet-200 bg-violet-100 px-1.5 py-0.5 text-[10px] font-bold text-violet-800">
                         <Award className="h-2.5 w-2.5" />
                         {latestCV.matchScore}% phù hợp
                       </span>
                     )}
                     {latestCV.date && (
-                      <span className="flex items-center gap-1 text-[10px] text-slate-400">
+                      <span className="flex items-center gap-1 text-[10px] text-violet-400">
                         <CalendarDays className="h-2.5 w-2.5" />
                         {latestCV.date}
                       </span>
                     )}
                   </div>
                   {latestCV.matchedKeywords?.length > 0 && (
-                    <p className="mt-2 text-[10px] text-slate-500 leading-relaxed">
-                      <span className="font-semibold text-slate-600">Skills: </span>
+                    <p className="mt-2 text-[10px] text-violet-500 leading-relaxed">
+                      <span className="font-semibold text-violet-600">Skills: </span>
                       {latestCV.matchedKeywords.slice(0, 5).join(", ")}
                       {latestCV.matchedKeywords.length > 5 && ` +${latestCV.matchedKeywords.length - 5}`}
                     </p>
@@ -534,9 +483,9 @@ export function Interview() {
                 </div>
               ) : (
                 <div
-                  className="mt-3 w-full rounded-xl border border-amber-200/60 bg-amber-50/70 p-3 text-left"
+                  className="mt-3 w-full rounded-xl border border-violet-200/80 bg-violet-50/80 p-3 text-left"
                 >
-                  <p className="text-[11px] text-amber-700">
+                  <p className="text-[11px] text-violet-700">
                     Chưa có phân tích CV nào. Hãy dùng tính năng{" "}
                     <span className="font-bold">CV Analysis</span> trước.
                   </p>
@@ -550,15 +499,15 @@ export function Interview() {
               className={`${optBase} ${option === "B" ? optOn : optIdle}`}
             >
               {option === "B" && (
-                <div className="absolute right-3 top-3 flex h-7 w-7 items-center justify-center rounded-full border border-[#c4ff47]/40 bg-[#c4ff47] shadow-[0_2px_12px_rgba(196,255,71,0.35)]">
-                  <Check className="h-3.5 w-3.5 text-[#0a0814]" strokeWidth={2.25} strokeLinecap="round" strokeLinejoin="round" />
+                <div className={SELECTED_BADGE}>
+                  <Check className="h-3.5 w-3.5 text-white" strokeWidth={2.25} strokeLinecap="round" strokeLinejoin="round" />
                 </div>
               )}
-              <IconFrame tone="fuchsia" className="mb-3">
+              <IconFrame tone="violet" className="mb-3">
                 <CloudUpload className="h-5 w-5 text-violet-700" {...IS} />
               </IconFrame>
-              <p className="mb-1 text-sm font-black text-slate-900">Upload mới / Nhập thông tin</p>
-              <p className="text-xs leading-relaxed text-slate-600">
+              <p className="mb-1 text-sm font-black text-violet-900">Upload mới / Nhập thông tin</p>
+              <p className="text-xs leading-relaxed text-violet-600">
                 Upload CV hoặc điền thông tin công ty và vị trí ứng tuyển
               </p>
             </button>
@@ -566,13 +515,13 @@ export function Interview() {
 
           {/* Bổ sung position + level khi Option A nhưng CV không có — Python không extract fields này */}
           {option === "A" && latestCV && !latestCV.position && (
-            <div className="border-t border-white/10 pt-4">
+            <div className="border-t border-violet-200/70 pt-4">
               <div className="space-y-2 rounded-xl border border-violet-200/60 bg-violet-50/70 p-3">
                 <p className="text-[10px] font-semibold text-violet-700">
                   Thêm thông tin để AI cá nhân hóa câu hỏi tốt hơn
                 </p>
                 <input
-                  className="w-full rounded-lg border border-violet-200 bg-white px-3 py-1.5 text-xs text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-violet-400"
+                  className="w-full rounded-lg border border-violet-200 bg-white px-3 py-1.5 text-xs text-violet-800 placeholder:text-violet-400 focus:outline-none focus:ring-1 focus:ring-violet-400"
                   placeholder="Vị trí ứng tuyển (vd: Frontend Developer)"
                   value={optionAPosition}
                   onChange={(e) => setOptionAPosition(e.target.value)}
@@ -583,10 +532,10 @@ export function Interview() {
                     onClick={() => setOptionALevelOpen(!optionALevelOpen)}
                     className="flex w-full items-center justify-between rounded-lg border border-violet-200 bg-white px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-violet-400"
                   >
-                    <span className={optionALevel ? "text-slate-800" : "text-slate-400"}>
+                    <span className={optionALevel ? "text-violet-800" : "text-violet-400"}>
                       {optionALevel || "Level kinh nghiệm (tùy chọn)"}
                     </span>
-                    <ChevronDown className={`h-3 w-3 text-slate-400 transition-transform ${optionALevelOpen ? "rotate-180" : ""}`} {...IS} />
+                    <ChevronDown className={`h-3 w-3 text-violet-400 transition-transform ${optionALevelOpen ? "rotate-180" : ""}`} {...IS} />
                   </button>
                   {optionALevelOpen && (
                     <div className="absolute left-0 right-0 top-full z-20 mt-1 overflow-hidden rounded-lg border border-violet-200 bg-white shadow-lg">
@@ -595,7 +544,7 @@ export function Interview() {
                           key={l || "none"}
                           type="button"
                           onClick={() => { setOptionALevel(l); setOptionALevelOpen(false); }}
-                          className="w-full px-3 py-2 text-left text-xs text-slate-700 hover:bg-violet-50"
+                          className="w-full px-3 py-2 text-left text-xs text-violet-700 hover:bg-violet-50"
                         >
                           {l || "Không chọn"}
                         </button>
@@ -608,7 +557,7 @@ export function Interview() {
           )}
 
           {option === "B" && (
-            <div className="border-t border-white/10 pt-6">
+            <div className="border-t border-violet-200/70 pt-6">
               <div className="mb-5 flex flex-wrap gap-2">
                 {([
                   { id: "cv", icon: Upload, label: "Tải lên CV" },
@@ -620,12 +569,12 @@ export function Interview() {
                     onClick={() => setInputMethod(t.id)}
                     className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition-all ${
                       inputMethod === t.id
-                        ? "border border-lime-600/45 bg-lime-500/10 text-lime-950"
-                        : "border border-white/10 bg-white/[0.04] text-zinc-400 hover:border-white/20 hover:text-zinc-200"
+                        ? "border border-[#630ed4]/35 bg-violet-100 text-[#630ed4] shadow-sm"
+                        : "border border-violet-200/80 bg-white text-violet-600 hover:border-violet-300 hover:bg-violet-50/50"
                     }`}
                   >
-                    <span className="flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-white/[0.06]">
-                      <t.icon className="h-4 w-4 text-zinc-300" {...IS} />
+                    <span className="flex h-8 w-8 items-center justify-center rounded-lg border border-violet-200/70 bg-white">
+                      <t.icon className="h-4 w-4 text-[#630ed4]" {...IS} />
                     </span>
                     {t.label}
                   </button>
@@ -636,23 +585,23 @@ export function Interview() {
                 <div
                   className={`relative rounded-2xl border-2 border-dashed p-8 text-center transition-colors ${
                     cvUploaded
-                      ? "border-[#c4ff47]/45 bg-[#c4ff47]/[0.06]"
-                      : "border-white/15 bg-white/[0.03] hover:border-white/25"
+                      ? "border-violet-300/70 bg-violet-50/80"
+                      : "border-violet-200/80 bg-white hover:border-violet-300/80 hover:bg-violet-50/30"
                   }`}
                 >
                   {cvUploaded ? (
                     <div className="flex flex-col items-center">
-                      <IconFrame size="lg" tone="lime" className="mb-3 rounded-2xl">
-                        <Check className="h-6 w-6 text-lime-950" {...IS} strokeWidth={2.25} />
+                      <IconFrame size="lg" tone="violet" className="mb-3 rounded-2xl">
+                        <Check className="h-6 w-6 text-violet-700" {...IS} strokeWidth={2.25} />
                       </IconFrame>
-                      <p className="text-sm font-black text-slate-900">CV đã được tải lên thành công</p>
-                      <p className="mt-1 text-xs text-zinc-400">
+                      <p className="text-sm font-black text-violet-900">CV đã được tải lên thành công</p>
+                      <p className="mt-1 text-xs text-violet-500">
                         {uploadedFile?.name} · {(uploadedFile?.size / 1024 / 1024).toFixed(2)} MB
                       </p>
                       <button
                         type="button"
                         onClick={(e) => { e.stopPropagation(); setCvUploaded(false); }}
-                        className="mt-3 text-xs font-semibold text-lime-800 underline underline-offset-2 hover:text-lime-950"
+                        className="mt-3 text-xs font-semibold text-violet-700 underline underline-offset-2 hover:text-[#630ed4]"
                       >
                         Tải lại
                       </button>
@@ -662,8 +611,8 @@ export function Interview() {
                       <IconFrame size="lg" tone="violet" className="mb-3 rounded-2xl">
                         <FileStack className="h-6 w-6 text-violet-900" {...IS} strokeWidth={2.25} />
                       </IconFrame>
-                      <p className="text-sm font-black text-slate-900">Kéo & thả CV hoặc click để chọn</p>
-                      <p className="mt-1 text-xs text-zinc-500">PDF, DOC, DOCX · Tối đa 5 MB</p>
+                      <p className="text-sm font-black text-violet-900">Kéo & thả CV hoặc click để chọn</p>
+                      <p className="mt-1 text-xs text-violet-500">PDF, DOC, DOCX · Tối đa 5 MB</p>
                       <input
                         type="file"
                         accept=".pdf,.doc,.docx"
@@ -678,9 +627,9 @@ export function Interview() {
               {inputMethod === "form" && (
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div>
-                    <label className="mb-1.5 flex items-center gap-2 text-xs font-semibold text-zinc-400">
-                      <span className="flex h-6 w-6 items-center justify-center rounded-md border border-white/10 bg-white/[0.05]">
-                        <Building2 className="h-3.5 w-3.5 text-zinc-300" {...IS} />
+                    <label className="mb-1.5 flex items-center gap-2 text-xs font-semibold text-violet-600">
+                      <span className="flex h-6 w-6 items-center justify-center rounded-md border border-violet-200/70 bg-violet-50">
+                        <Building2 className="h-3.5 w-3.5 text-[#630ed4]" {...IS} />
                       </span>
                       Tên công ty
                     </label>
@@ -691,9 +640,9 @@ export function Interview() {
                     />
                   </div>
                   <div>
-                    <label className="mb-1.5 flex items-center gap-2 text-xs font-semibold text-zinc-400">
-                      <span className="flex h-6 w-6 items-center justify-center rounded-md border border-white/10 bg-white/[0.05]">
-                        <BriefcaseBusiness className="h-3.5 w-3.5 text-zinc-300" {...IS} />
+                    <label className="mb-1.5 flex items-center gap-2 text-xs font-semibold text-violet-600">
+                      <span className="flex h-6 w-6 items-center justify-center rounded-md border border-violet-200/70 bg-violet-50">
+                        <BriefcaseBusiness className="h-3.5 w-3.5 text-[#630ed4]" {...IS} />
                       </span>
                       Vị trí ứng tuyển
                     </label>
@@ -704,9 +653,9 @@ export function Interview() {
                     />
                   </div>
                   <div>
-                    <label className="mb-1.5 flex items-center gap-2 text-xs font-semibold text-zinc-400">
-                      <span className="flex h-6 w-6 items-center justify-center rounded-md border border-white/10 bg-white/[0.05]">
-                        <LayoutGrid className="h-3.5 w-3.5 text-zinc-300" {...IS} />
+                    <label className="mb-1.5 flex items-center gap-2 text-xs font-semibold text-violet-600">
+                      <span className="flex h-6 w-6 items-center justify-center rounded-md border border-violet-200/70 bg-violet-50">
+                        <LayoutGrid className="h-3.5 w-3.5 text-[#630ed4]" {...IS} />
                       </span>
                       Lĩnh vực / Ngành nghề
                     </label>
@@ -714,26 +663,24 @@ export function Interview() {
                       <button
                         type="button"
                         onClick={() => { setFieldOpen(!fieldOpen); setLevelOpen(false); }}
-                        className={`flex w-full items-center justify-between rounded-xl border px-3.5 py-2.5 text-sm transition-all ${
-                          fieldOpen
-                            ? "border-[#c4ff47]/45 bg-white/[0.08] ring-2 ring-[#c4ff47]/12"
-                            : "border-white/12 bg-white/[0.05]"
-                        } ${form.field ? "text-white" : "text-zinc-500"}`}
+                        className={`${SELECT_TRIGGER} ${fieldOpen ? "ring-2 ring-violet-100" : ""} ${
+                          form.field ? "" : "text-violet-500"
+                        }`}
                       >
                         <span>{form.field || "Chọn ngành..."}</span>
                         <ChevronDown
-                          className={`h-4 w-4 text-zinc-500 transition-transform ${fieldOpen ? "rotate-180" : ""}`}
+                          className={`h-4 w-4 text-violet-400 transition-transform ${fieldOpen ? "rotate-180" : ""}`}
                           {...IS}
                         />
                       </button>
                       {fieldOpen && (
-                        <div className="absolute left-0 right-0 top-full z-20 mt-1 max-h-56 overflow-y-auto rounded-xl border border-white/12 bg-[#1a0d35]/98 py-1 shadow-[0_20px_50px_rgba(0,0,0,0.5)] backdrop-blur-xl">
+                        <div className={SELECT_MENU}>
                           {FIELDS_LIST.map((f) => (
                             <button
                               key={f}
                               type="button"
                               onClick={() => { setForm({ ...form, field: f }); setFieldOpen(false); }}
-                              className="w-full px-4 py-2.5 text-left text-sm text-zinc-200 hover:bg-white/[0.08] hover:text-white"
+                              className={SELECT_ITEM}
                             >
                               {f}
                             </button>
@@ -743,9 +690,9 @@ export function Interview() {
                     </div>
                   </div>
                   <div>
-                    <label className="mb-1.5 flex items-center gap-2 text-xs font-semibold text-zinc-400">
-                      <span className="flex h-6 w-6 items-center justify-center rounded-md border border-white/10 bg-white/[0.05]">
-                        <Users className="h-3.5 w-3.5 text-zinc-300" {...IS} />
+                    <label className="mb-1.5 flex items-center gap-2 text-xs font-semibold text-violet-600">
+                      <span className="flex h-6 w-6 items-center justify-center rounded-md border border-violet-200/70 bg-violet-50">
+                        <Users className="h-3.5 w-3.5 text-[#630ed4]" {...IS} />
                       </span>
                       Level kinh nghiệm
                     </label>
@@ -753,26 +700,24 @@ export function Interview() {
                       <button
                         type="button"
                         onClick={() => { setLevelOpen(!levelOpen); setFieldOpen(false); }}
-                        className={`flex w-full items-center justify-between rounded-xl border px-3.5 py-2.5 text-sm transition-all ${
-                          levelOpen
-                            ? "border-[#c4ff47]/45 bg-white/[0.08] ring-2 ring-[#c4ff47]/12"
-                            : "border-white/12 bg-white/[0.05]"
-                        } ${form.level ? "text-white" : "text-zinc-500"}`}
+                        className={`${SELECT_TRIGGER} ${levelOpen ? "ring-2 ring-violet-100" : ""} ${
+                          form.level ? "" : "text-violet-500"
+                        }`}
                       >
                         <span>{form.level || "Chọn level..."}</span>
                         <ChevronDown
-                          className={`h-4 w-4 text-zinc-500 transition-transform ${levelOpen ? "rotate-180" : ""}`}
+                          className={`h-4 w-4 text-violet-400 transition-transform ${levelOpen ? "rotate-180" : ""}`}
                           {...IS}
                         />
                       </button>
                       {levelOpen && (
-                        <div className="absolute left-0 right-0 top-full z-20 mt-1 max-h-56 overflow-y-auto rounded-xl border border-white/12 bg-[#1a0d35]/98 py-1 shadow-[0_20px_50px_rgba(0,0,0,0.5)] backdrop-blur-xl">
+                        <div className={SELECT_MENU}>
                           {LEVELS.map((l) => (
                             <button
                               key={l}
                               type="button"
                               onClick={() => { setForm({ ...form, level: l }); setLevelOpen(false); }}
-                              className="w-full px-4 py-2.5 text-left text-sm text-zinc-200 hover:bg-white/[0.08] hover:text-white"
+                              className={SELECT_ITEM}
                             >
                               {l}
                             </button>
@@ -790,16 +735,16 @@ export function Interview() {
 
         {flowStep === 2 && (
         <>
-        <section className="interview-glass mb-5 p-6 sm:p-8">
+        <section className="mb-5 rounded-2xl border border-violet-100/90 bg-violet-50/30 p-5 sm:p-7">
           <div className="mb-6 flex items-center gap-3">
             <IconFrame tone="violet">
               <Users className="h-5 w-5 text-violet-700" {...IS} />
             </IconFrame>
             <div>
-              <h2 className="font-semibold text-slate-900" style={{ fontSize: "1.125rem" }}>
+              <h2 className="font-semibold text-violet-900" style={{ fontSize: "1.125rem" }}>
                 Chọn giới tính HR AI
               </h2>
-              <p className="mt-0.5 text-xs text-slate-500">Chọn 1 trong 2 tùy chọn bên dưới</p>
+              <p className="mt-0.5 text-xs text-violet-500">Chọn 1 trong 2 tùy chọn bên dưới</p>
             </div>
           </div>
 
@@ -810,8 +755,8 @@ export function Interview() {
               className={`${optBase} ${hrGender === "male" ? optOn : optIdle}`}
             >
               {hrGender === "male" && (
-                <div className="absolute right-3 top-3 flex h-7 w-7 items-center justify-center rounded-full border border-[#c4ff47]/40 bg-[#c4ff47] shadow-[0_2px_12px_rgba(196,255,71,0.35)]">
-                  <Check className="h-3.5 w-3.5 text-[#0a0814]" strokeWidth={2.25} strokeLinecap="round" strokeLinejoin="round" />
+                <div className={SELECTED_BADGE}>
+                  <Check className="h-3.5 w-3.5 text-white" strokeWidth={2.25} strokeLinecap="round" strokeLinejoin="round" />
                 </div>
               )}
               <div className="mb-3 flex justify-center">
@@ -819,8 +764,8 @@ export function Interview() {
                   <Mars className="h-10 w-10 text-violet-700" {...IS} />
                 </IconFrame>
               </div>
-              <p className="mb-1 text-sm font-black text-slate-900">{HR_PREVIEWS.male.name}</p>
-              <p className="text-xs leading-relaxed text-slate-600">{HR_PREVIEWS.male.subtitle}</p>
+              <p className="mb-1 text-sm font-black text-violet-900">{HR_PREVIEWS.male.name}</p>
+              <p className="text-xs leading-relaxed text-violet-600">{HR_PREVIEWS.male.subtitle}</p>
             </button>
 
             <button
@@ -829,17 +774,17 @@ export function Interview() {
               className={`${optBase} ${hrGender === "female" ? optOn : optIdle}`}
             >
               {hrGender === "female" && (
-                <div className="absolute right-3 top-3 flex h-7 w-7 items-center justify-center rounded-full border border-[#c4ff47]/40 bg-[#c4ff47] shadow-[0_2px_12px_rgba(196,255,71,0.35)]">
-                  <Check className="h-3.5 w-3.5 text-[#0a0814]" strokeWidth={2.25} strokeLinecap="round" strokeLinejoin="round" />
+                <div className={SELECTED_BADGE}>
+                  <Check className="h-3.5 w-3.5 text-white" strokeWidth={2.25} strokeLinecap="round" strokeLinejoin="round" />
                 </div>
               )}
               <div className="mb-3 flex justify-center">
-                <IconFrame tone="fuchsia" size="lg">
-                  <Venus className="h-10 w-10 text-fuchsia-700" {...IS} />
+                <IconFrame tone="violet" size="lg">
+                  <Venus className="h-10 w-10 text-violet-700" {...IS} />
                 </IconFrame>
               </div>
-              <p className="mb-1 text-sm font-black text-slate-900">{HR_PREVIEWS.female.name}</p>
-              <p className="text-xs leading-relaxed text-slate-600">{HR_PREVIEWS.female.subtitle}</p>
+              <p className="mb-1 text-sm font-black text-violet-900">{HR_PREVIEWS.female.name}</p>
+              <p className="text-xs leading-relaxed text-violet-600">{HR_PREVIEWS.female.subtitle}</p>
             </button>
           </div>
         </section>
@@ -851,13 +796,13 @@ export function Interview() {
             </IconFrame>
             <div>
               <p className="mb-1.5 text-sm font-bold text-violet-700">Xem video giới thiệu</p>
-              <p className="text-sm leading-relaxed text-slate-600">
+              <p className="text-sm leading-relaxed text-violet-600">
                 Mỗi HR AI có video giới thiệu ngắn giúp bạn làm quen trước khi phỏng vấn. Bạn cũng có thể bỏ qua và vào phòng ngay.
               </p>
             </div>
           </div>
           {hrGender && (
-            <div className="mt-4 mx-auto w-full max-w-[560px] overflow-hidden rounded-2xl border border-violet-200/65 bg-black aspect-[5/4]">
+            <div className="mt-4 mx-auto w-full max-w-[560px] overflow-hidden rounded-2xl border border-violet-200/65 bg-violet-950 aspect-[5/4]">
               <video
                 src={HR_PREVIEWS[hrGender].video}
                 autoPlay
@@ -873,13 +818,13 @@ export function Interview() {
         )}
 
         {flowStep === 1 && (
-        <section className="interview-glass mb-8 p-6 sm:p-8">
+        <section className="mb-8 rounded-2xl border border-violet-100/90 bg-violet-50/30 p-5 sm:p-7">
           <div className="mb-5 flex flex-wrap items-center gap-2.5">
-            <IconFrame size="sm" tone="lime" className="rounded-lg">
-              <Timer className="h-4 w-4 text-lime-950" {...IS} strokeWidth={2.25} />
+            <IconFrame size="sm" tone="violet" className="rounded-lg">
+              <Timer className="h-4 w-4 text-violet-700" {...IS} strokeWidth={2.25} />
             </IconFrame>
-            <h2 className="text-sm font-black uppercase tracking-[0.14em] text-slate-900">Những gì sẽ xảy ra trong buổi phỏng vấn</h2>
-            <span className="ml-auto text-xs font-semibold text-zinc-500">~30–45 phút</span>
+            <h2 className="text-sm font-black uppercase tracking-[0.14em] text-violet-900">Những gì sẽ xảy ra trong buổi phỏng vấn</h2>
+            <span className="ml-auto text-xs font-semibold text-violet-500">~30–45 phút</span>
           </div>
 
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
@@ -904,19 +849,19 @@ export function Interview() {
             })}
           </div>
 
-          <div className="mt-6 border-t border-white/10 pt-5">
-            <p className="mb-2.5 text-[10px] font-black uppercase tracking-widest text-zinc-500">
+          <div className="mt-6 border-t border-violet-200/70 pt-5">
+            <p className="mb-2.5 text-[10px] font-black uppercase tracking-widest text-violet-500">
               Quy trình buổi phỏng vấn
             </p>
             <div className="flex flex-wrap items-center gap-2">
               {["AI giới thiệu", "→", "AI đặt câu hỏi", "→", "Bạn trả lời", "→", "AI hỏi thêm", "→", "Nhận kết quả"].map(
                 (step, i) =>
                   step === "→" ? (
-                    <ArrowRight key={i} className="h-3.5 w-3.5 text-zinc-500" {...IS} />
+                    <ArrowRight key={i} className="h-3.5 w-3.5 text-violet-400" {...IS} />
                   ) : (
                     <span
                       key={i}
-                      className="rounded-lg border border-white/10 bg-white/[0.06] px-2.5 py-1 text-xs font-semibold text-zinc-300"
+                      className="rounded-lg border border-violet-200/80 bg-white px-2.5 py-1 text-xs font-semibold text-violet-600"
                     >
                       {step}
                     </span>
@@ -935,8 +880,8 @@ export function Interview() {
               disabled={!canProceedSetup}
               className={`flex w-full items-center justify-center gap-2.5 rounded-2xl py-4 text-sm font-black transition-all active:scale-[0.99] ${
                 canProceedSetup
-                  ? "bg-gradient-to-r from-[#c4ff47] to-[#8fbc24] text-[#0a0814] shadow-[0_8px_28px_rgba(196,255,71,0.25)] hover:brightness-110"
-                  : "cursor-not-allowed border border-white/10 bg-white/[0.04] text-zinc-500"
+                  ? CTA_LIME
+                  : "cursor-not-allowed border border-violet-100 bg-violet-50 text-violet-400"
               }`}
             >
               Tiếp tục: Chọn HR AI
@@ -944,7 +889,7 @@ export function Interview() {
             </button>
 
             {!canProceedSetup && (
-              <p className="mt-3 text-center text-xs font-medium text-zinc-500">
+              <p className="mt-3 text-center text-xs font-medium text-violet-500">
                 Vui lòng chọn nguồn thông tin để tiếp tục
               </p>
             )}
@@ -954,9 +899,9 @@ export function Interview() {
         {flowStep === 2 && (
           <>
             {extractWarning && (
-              <div className="mb-4 flex items-start gap-3 rounded-2xl border border-amber-300/60 bg-amber-50/90 p-4">
-                <AlertCircle className="h-4 w-4 flex-shrink-0 text-amber-500 mt-0.5" />
-                <p className="text-xs text-amber-700 leading-relaxed">{extractWarning}</p>
+              <div className="mb-4 flex items-start gap-3 rounded-2xl border border-violet-200/80 bg-violet-50/90 p-4">
+                <AlertCircle className="h-4 w-4 flex-shrink-0 text-violet-700 mt-0.5" />
+                <p className="text-xs text-violet-800 leading-relaxed">{extractWarning}</p>
               </div>
             )}
             <button
@@ -965,8 +910,8 @@ export function Interview() {
               disabled={!canStart || Boolean(loadingStep)}
               className={`flex w-full items-center justify-center gap-2.5 rounded-2xl py-4 text-sm font-black transition-all active:scale-[0.99] ${
                 canStart && !loadingStep
-                  ? "bg-gradient-to-r from-[#c4ff47] to-[#8fbc24] text-[#0a0814] shadow-[0_8px_28px_rgba(196,255,71,0.25)] hover:brightness-110"
-                  : "cursor-not-allowed border border-white/10 bg-white/[0.04] text-zinc-500"
+                  ? CTA_LIME
+                  : "cursor-not-allowed border border-violet-100 bg-violet-50 text-violet-400"
               }`}
             >
               {loadingStep ? (
@@ -987,14 +932,15 @@ export function Interview() {
             <button
               type="button"
               onClick={() => setFlowStep(1)}
-              className="mt-3 w-full rounded-2xl border border-violet-200/70 bg-white/80 py-3 text-sm font-semibold text-slate-700 transition hover:bg-violet-50"
+              className="mt-3 w-full rounded-2xl border border-violet-200/70 bg-white/80 py-3 text-sm font-semibold text-violet-700 transition hover:bg-violet-50"
             >
               Quay lại bước thiết lập
             </button>
           </>
         )}
         </div>
-      </main>
+        </div>
+      </div>
     </MentorPageShell>
   );
 }

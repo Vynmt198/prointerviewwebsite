@@ -97,8 +97,8 @@ function FooterDark() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-12 lg:gap-10">
           {/* Brand */}
           <div className="lg:col-span-2">
-            <div className="flex items-center gap-3 mb-1.5 -mt-5">
-              <BrandLogo />
+            <div className="mb-1 flex items-center gap-3">
+              <BrandLogo size="footer" />
             </div>
             <p className="text-white/65 text-sm leading-relaxed mb-6" style={{ maxWidth: 320 }}>
               Nền tảng luyện phỏng vấn AI thông minh hàng đầu Việt Nam — giúp bạn tự tin chinh phục mọi cơ hội nghề nghiệp.
@@ -237,8 +237,8 @@ function FooterLight() {
       <div className="relative z-[1] mx-auto max-w-7xl px-6 py-16">
         <div className="grid grid-cols-1 gap-12 md:grid-cols-2 lg:grid-cols-5 lg:gap-10">
           <div className="lg:col-span-2">
-            <div className="-mt-5 mb-1 flex items-center gap-3">
-              <BrandLogo />
+            <div className="-mt-1 mb-1 flex items-center gap-3">
+              <BrandLogo size="footer" />
             </div>
             <p className="mb-6 max-w-[320px] text-sm leading-relaxed text-slate-600">
               Nền tảng luyện phỏng vấn AI thông minh hàng đầu Việt Nam — giúp bạn tự tin chinh phục mọi cơ hội nghề nghiệp.
