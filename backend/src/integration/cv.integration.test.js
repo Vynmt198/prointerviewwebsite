@@ -23,6 +23,7 @@ let createApp;
 const SAVE_BODY = {
   cvFileName: "cv-test.pdf",
   jdFileName: "",
+  field: "IT / Công nghệ",
   mode: "field",
   tier: "suggestions",
   planAtTime: "free",

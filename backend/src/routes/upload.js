@@ -30,6 +30,7 @@ const handleMulterError = (handler) => (req, res, next) => {
 
 uploadRouter.post("/avatar", authJwt, handleMulterError(upload.single("file")), asyncHandler(UploadController.uploadAvatar));
 uploadRouter.post("/cv", authJwt, handleMulterError(upload.single("file")), asyncHandler(UploadController.uploadCV));
+uploadRouter.post("/jd", authJwt, handleMulterError(upload.single("file")), asyncHandler(UploadController.uploadJD));
 uploadRouter.post("/course-thumbnail", authJwt, requireMentor, handleMulterError(upload.single("file")), asyncHandler(UploadController.uploadCourseThumbnail));
 uploadRouter.post("/course-video", authJwt, requireMentor, handleMulterError(upload.single("file")), asyncHandler(UploadController.uploadCourseVideo));
 

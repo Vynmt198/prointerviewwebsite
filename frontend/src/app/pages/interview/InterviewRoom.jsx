@@ -24,6 +24,9 @@ import { addInterviewRecord } from "../../utils/history";
 import { saveAnswer, completeInterviewSession } from "../../utils/interviewsApi";
 import { useDIDStream } from "../../hooks/useDIDStream";
 import { AILipSyncAvatar } from "../../components/interview/AILipSyncAvatar";
+import { MentorPageShell } from "../../components/mentor/MentorPageShell";
+import { InterviewStepBar } from "../../components/interview/InterviewStepBar";
+import { CUSTOMER_SHELL_GUTTER, CUSTOMER_SHELL_MAX } from "../../components/layout/customerShellLayout";
 
 /* ── Session storage key ─────────────────────────────────── */
 const TRANSCRIPT_KEY = "prointerview_transcripts";
@@ -180,7 +183,7 @@ function HRVideoPanel({
         src={questionVideoUrl}
         playsInline
         onEnded={handleEnded}
-        className="absolute inset-0 w-full h-full object-cover"
+        className="absolute inset-0 h-full w-full object-cover object-center"
         style={{ display: isVisible ? "block" : "none" }}
       />
       {(videoState === "loading" || videoState === "error") && (
@@ -206,21 +209,15 @@ function HRVideoPanel({
           )}
         </div>
       )}
-      {videoState === "done" && (
-        <div className="absolute inset-0 pointer-events-none" style={{ background: "rgba(0,0,0,0.35)" }}>
-          <div className="absolute inset-0 flex flex-col items-end justify-start p-4 gap-2">
+      {videoState === "done" && isListening && (
+        <div className="pointer-events-none absolute inset-0" style={{ background: "rgba(0,0,0,0.2)" }}>
+          <div className="absolute right-3 top-3">
             <div
-              className="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold"
-              style={{
-                background: isListening ? "rgba(239,68,68,0.9)" : "rgba(180,240,0,0.15)",
-                border: isListening ? "none" : "1px solid rgba(180,240,0,0.4)",
-                backdropFilter: "blur(8px)",
-              }}
+              className="flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-semibold text-white"
+              style={{ background: "rgba(110,53,232,0.92)", backdropFilter: "blur(8px)" }}
             >
-              <div className={`w-1.5 h-1.5 rounded-full ${isListening ? "bg-white animate-pulse" : "bg-[#c4ff47]"}`} />
-              <span className={isListening ? "text-white" : "text-[#B4F000]"}>
-                {isListening ? "Đang ghi âm câu trả lời..." : "Lượt của bạn — Nhấn 🎤 để trả lời"}
-              </span>
+              <div className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#b5e636]" />
+              Đang ghi âm câu trả lời...
             </div>
           </div>
         </div>
@@ -231,7 +228,7 @@ function HRVideoPanel({
             className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold"
             style={{ background: "rgba(110, 53, 232,0.85)", backdropFilter: "blur(8px)" }}
           >
-            <div className="w-1.5 h-1.5 bg-[#c4ff47] rounded-full animate-pulse" />
+            <div className="w-1.5 h-1.5 rounded-full bg-[#b5e636] animate-pulse" />
             <span className="text-white">HR đang hỏi...</span>
           </div>
         </div>
@@ -288,14 +285,17 @@ function UserCameraTile({ isRecording }) {
   }, [camState]);
 
   return (
-    <div className="relative w-full h-full rounded-2xl overflow-hidden" style={{ background: "#0f0f1a" }}>
+    <div className="relative h-full min-h-[220px] w-full overflow-hidden rounded-2xl bg-[#0f0f1a]">
       <video
         ref={videoRef}
         autoPlay
         muted
         playsInline
-        className="w-full h-full object-cover"
-        style={{ transform: "scaleX(-1)", display: camState === "active" ? "block" : "none" }}
+        className="absolute inset-0 h-full w-full object-cover object-center"
+        style={{
+          transform: "scaleX(-1)",
+          display: camState === "active" ? "block" : "none",
+        }}
       />
       {camState !== "active" && (
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
@@ -315,7 +315,7 @@ function UserCameraTile({ isRecording }) {
         style={{ background: "rgba(0,0,0,0.6)" }}
       >
         <span className="text-white text-xs font-medium">Bạn</span>
-        {isRecording && <div className="w-1.5 h-1.5 bg-red-400 rounded-full animate-pulse" />}
+        {isRecording && <div className="w-1.5 h-1.5 rounded-full bg-[#b5e636] animate-pulse" />}
       </div>
     </div>
   );
@@ -351,7 +351,7 @@ function UpgradeModal({
           <div
             className="w-20 h-20 rounded-full flex items-center justify-center"
             style={{
-              background: "linear-gradient(135deg, rgba(110, 53, 232,0.2), rgba(180,240,0,0.1))",
+              background: "linear-gradient(135deg, rgba(110, 53, 232,0.2), rgba(139, 77, 255,0.1))",
               border: "2px solid rgba(139, 77, 255,0.4)",
             }}
           >
@@ -362,7 +362,7 @@ function UpgradeModal({
         {/* Stars */}
         <div className="flex justify-center gap-1 mb-5">
           {[...Array(completedCount)].map((_, i) => (
-            <Star key={i} className="w-5 h-5 text-[#FFD600]" />
+            <Star key={i} className="w-5 h-5 text-[#8B4DFF]" />
           ))}
           {[...Array(QUESTIONS.length - completedCount)].map((_, i) => (
             <Star key={i} className="w-5 h-5 text-white/15" />
@@ -379,7 +379,7 @@ function UpgradeModal({
             {QUESTIONS.length - completedCount} câu hỏi
           </span>{" "}
           nữa trong buổi phỏng vấn. Nâng cấp gói{" "}
-          <span className="text-[#B4F000] font-semibold">Pro</span> để trả lời
+          <span className="text-[#8B4DFF] font-semibold">Pro</span> để trả lời
           đầy đủ và nhận phân tích toàn diện hơn.
         </p>
 
@@ -398,8 +398,8 @@ function UpgradeModal({
             "Không giới hạn số buổi phỏng vấn AI",
           ].map((item, i) => (
             <div key={i} className="flex items-center gap-2 mb-2">
-              <div className="w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: "rgba(180,240,0,0.15)" }}>
-                <div className="w-1.5 h-1.5 rounded-full bg-[#c4ff47]" />
+              <div className="w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: "rgba(110,53,232,0.2)" }}>
+                <div className="w-1.5 h-1.5 rounded-full bg-[#b5e636]" />
               </div>
               <p className="text-white/70 text-xs">{item}</p>
             </div>
@@ -487,7 +487,7 @@ export default function InterviewRoom() {
   );
   const [hrPhase, setHrPhase] = useState("asking");
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
-  const [showStarHints, setShowStarHints] = useState(true);
+  const [showStarHints, setShowStarHints] = useState(false);
 
   const recognitionRef = useRef(null);
   const isListeningRef = useRef(false);
@@ -523,7 +523,7 @@ export default function InterviewRoom() {
     setTranscript("");
     setInterimTranscript("");
     transcriptRef.current = "";
-    setShowStarHints(true);
+    setShowStarHints(false);
     questionStartTimeRef.current = Date.now();
   }, [currentQ]);
 
@@ -728,145 +728,142 @@ export default function InterviewRoom() {
   /* ══ RENDER — Ready lobby ══════════════════════════════════ */
   if (phase === "ready") {
     return (
-      <div
-        className="pi-page-dashboard-bg relative flex flex-col items-center justify-center overflow-hidden antialiased"
-        style={{ height: "calc(100vh - 56px)" }}
-      >
-        <div
-          className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full pointer-events-none"
-          style={{ background: "radial-gradient(ellipse, rgba(110, 53, 232,0.12) 0%, transparent 70%)" }}
-        />
-
-        <div className="relative z-10 flex flex-col lg:flex-row items-center gap-10 max-w-4xl w-full px-6 overflow-y-auto max-h-full py-6">
-          {/* HR Video Preview */}
-          <div className="relative flex-shrink-0">
-            <div
-              className="rounded-3xl overflow-hidden"
-              style={{
-                width: "260px",
-                height: "350px",
-                border: "2px solid rgba(139, 77, 255,0.3)",
-                boxShadow: "0 0 60px rgba(110, 53, 232,0.3), 0 20px 60px rgba(0,0,0,0.5)",
-              }}
-            >
-              <video src={hrVideoUrl} autoPlay loop muted playsInline className="w-full h-full object-cover" />
-            </div>
-            <div
-              className="absolute top-4 left-4 flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold"
-              style={{ background: "rgba(239,68,68,0.9)", backdropFilter: "blur(8px)" }}
-            >
-              <div className="w-1.5 h-1.5 bg-white rounded-full animate-pulse" />
-              <span className="text-white">LIVE</span>
-            </div>
-            <div
-              className="absolute bottom-4 left-4 right-4 px-3 py-2 rounded-xl"
-              style={{ background: "rgba(0,0,0,0.75)", backdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.1)" }}
-            >
-              <p className="text-white text-sm font-semibold">{hrName}</p>
-              <p className="text-white/50 text-xs">{hrTitle}</p>
-            </div>
-          </div>
-
-          {/* Info */}
-          <div className="flex flex-col items-start gap-5 text-left max-w-sm w-full">
-            <div
-              className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold"
-              style={{ background: "rgba(110, 53, 232,0.15)", border: "1px solid rgba(139, 77, 255,0.3)", color: "#c4b5fd" }}
-            >
-              <div className="w-2 h-2 rounded-full bg-[#c4ff47] animate-pulse" />
-              AI Interview đã sẵn sàng
-            </div>
-
-            <div>
-              <h2 className="text-white text-2xl font-bold mb-2 leading-tight">
-                Phỏng vấn với <span style={{ color: "#B4F000" }}>{hrName}</span>
-              </h2>
-              <p className="text-white/50 text-sm leading-relaxed">
-                Buổi phỏng vấn gồm{" "}
-                <span className="text-white/80 font-semibold">{QUESTIONS.length} câu hỏi</span>.
-                {!isPro && (
-                  <span className="text-[#FFD600]">
-                    {" "}3 câu hỏi đầu miễn phí, 2 câu còn lại yêu cầu gói Pro.
-                  </span>
-                )}
+      <MentorPageShell bottomPad="pb-16">
+        <div className={`relative z-10 pb-8 pt-8 sm:pt-10 ${CUSTOMER_SHELL_GUTTER}`}>
+          <div className={`${CUSTOMER_SHELL_MAX} mx-auto w-full max-w-3xl`}>
+            <header className="mb-5">
+              <h1 className="font-headline text-2xl font-extrabold tracking-tight text-violet-950 sm:text-3xl">
+                Phỏng vấn AI
+              </h1>
+              <p className="mt-1.5 text-sm leading-relaxed text-violet-600">
+                Chọn nguồn CV → chọn HR AI → vào phòng phỏng vấn (~30 phút, có feedback từng câu).
               </p>
-            </div>
+            </header>
 
-            {/* Question preview pills */}
-            <div className="flex flex-col gap-2 w-full">
-              {QUESTIONS.map((q, i) => {
-                const isLocked = !isPro && i >= FREE_LIMIT;
-                return (
-                  <div
-                    key={i}
-                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl"
-                    style={{
-                      background: isLocked ? "rgba(255,255,255,0.02)" : "rgba(255,255,255,0.04)",
-                      border: isLocked ? "1px solid rgba(255,255,255,0.04)" : "1px solid rgba(255,255,255,0.08)",
-                      opacity: isLocked ? 0.6 : 1,
-                    }}
-                  >
-                    <span
-                      className="w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
-                      style={
-                        isLocked
-                          ? { background: "rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.25)" }
-                          : { background: "rgba(110, 53, 232,0.3)", color: "#c4b5fd" }
-                      }
-                    >
-                      {isLocked ? <Lock className="w-2.5 h-2.5" /> : i + 1}
-                    </span>
-                    <p className="text-xs line-clamp-1" style={{ color: isLocked ? "rgba(255,255,255,0.2)" : "rgba(255,255,255,0.6)" }}>
-                      {isLocked ? "Yêu cầu gói Pro" : q}
-                    </p>
-                    {isLocked && (
-                      <span
-                        className="ml-auto text-xs px-1.5 py-0.5 rounded-full flex-shrink-0"
-                        style={{ background: "rgba(139, 77, 255,0.15)", color: "#8B4DFF", border: "1px solid rgba(139, 77, 255,0.2)" }}
-                      >
-                        Pro
-                      </span>
-                    )}
+            <div className="w-full rounded-md border border-violet-200/80 bg-white px-4 py-5 shadow-sm sm:px-6 sm:py-6">
+              <InterviewStepBar current={3} />
+
+              <div className="mb-6">
+                <h2 className="text-base font-bold text-violet-950">Bước 3 — Phỏng vấn</h2>
+                <p className="mt-0.5 text-sm text-violet-600">
+                  Xác nhận HR và danh sách câu hỏi trước khi bắt đầu với {hrName}.
+                </p>
+              </div>
+
+              <div className="grid gap-8 lg:grid-cols-[300px_minmax(0,1fr)] lg:items-start lg:gap-x-10">
+                <div className="relative mx-auto w-[300px] shrink-0 lg:mx-0">
+                  <div className="h-[420px] overflow-hidden rounded-2xl border-2 border-violet-200/80 shadow-[0_12px_32px_rgba(110,53,232,0.12)]">
+                    <video
+                      src={hrVideoUrl}
+                      autoPlay
+                      loop
+                      muted
+                      playsInline
+                      className="h-full w-full object-cover"
+                    />
                   </div>
-                );
-              })}
+                  <div className="absolute top-3 left-3 flex items-center gap-1.5 rounded-full bg-[#630ed4]/90 px-2.5 py-1 text-xs font-bold text-white backdrop-blur-sm">
+                    <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#b5e636]" />
+                    LIVE
+                  </div>
+                  <div className="absolute right-3 bottom-3 left-3 rounded-lg border border-white/10 bg-black/70 px-3 py-2 backdrop-blur-md">
+                    <p className="text-sm font-semibold text-white">{hrName}</p>
+                    <p className="text-xs text-white/65">{hrTitle}</p>
+                  </div>
+                </div>
+
+                <div className="flex min-w-0 flex-col gap-4">
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-wide text-violet-500">
+                      Sẵn sàng
+                    </p>
+                    <h3 className="mt-1 text-xl font-bold leading-tight text-violet-950 sm:text-2xl">
+                      Phỏng vấn với{" "}
+                      <span className="text-[#630ed4]">{hrName}</span>
+                    </h3>
+                    <p className="mt-1.5 text-sm leading-relaxed text-violet-600">
+                      Buổi phỏng vấn gồm{" "}
+                      <span className="font-semibold text-violet-900">{QUESTIONS.length} câu hỏi</span>
+                      {!isPro && (
+                        <span className="text-violet-700">
+                          {" "}
+                          · 3 câu miễn phí, 2 câu sau cần Pro
+                        </span>
+                      )}
+                      .
+                    </p>
+                  </div>
+
+                  <ul className="flex flex-col gap-2">
+                    {QUESTIONS.map((q, i) => {
+                      const isLocked = !isPro && i >= FREE_LIMIT;
+                      return (
+                        <li
+                          key={i}
+                          className={`flex min-h-[2.5rem] items-center gap-3 rounded-md border px-3 py-2 ${
+                            isLocked
+                              ? "border-violet-100 bg-violet-50/40 opacity-65"
+                              : "border-violet-200/70 bg-violet-50/30"
+                          }`}
+                        >
+                          <span
+                            className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
+                              isLocked
+                                ? "bg-violet-100 text-violet-300"
+                                : "bg-violet-200/80 text-[#630ed4]"
+                            }`}
+                          >
+                            {isLocked ? <Lock className="h-3 w-3" /> : i + 1}
+                          </span>
+                          <p
+                            className={`min-w-0 flex-1 text-xs leading-snug ${
+                              isLocked ? "text-violet-400" : "text-violet-800"
+                            }`}
+                          >
+                            {isLocked ? "Yêu cầu gói Pro" : q}
+                          </p>
+                          {isLocked && (
+                            <span className="shrink-0 rounded-full border border-violet-200 bg-white px-1.5 py-0.5 text-[10px] font-semibold text-[#630ed4]">
+                              Pro
+                            </span>
+                          )}
+                        </li>
+                      );
+                    })}
+                  </ul>
+
+                  <div className="mt-1 flex flex-col gap-2.5 pt-1">
+                    <button
+                      type="button"
+                      onClick={() => setPhase("question")}
+                      className="w-full rounded-md bg-gradient-to-r from-[#c4ff47] to-[#d4ff00] py-3.5 text-sm font-bold text-violet-950 shadow-[0_8px_24px_rgba(196,255,71,0.22)] transition-all hover:brightness-105 active:scale-[0.99]"
+                    >
+                      Bắt đầu phỏng vấn →
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => navigate(-1)}
+                      className="text-center text-sm font-medium text-violet-600 hover:text-[#630ed4]"
+                    >
+                      ← Quay lại
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
-
-            {/* Start CTA */}
-            <button
-              onClick={() => setPhase("question")}
-              className="w-full py-3.5 rounded-2xl font-bold text-base transition-all hover:scale-[1.02] active:scale-[0.98]"
-              style={{
-                background: "linear-gradient(135deg, #6E35E8, #8B4DFF)",
-                color: "#fff",
-                boxShadow: "0 8px 32px rgba(110, 53, 232,0.5)",
-              }}
-            >
-              Bắt đầu phỏng vấn →
-            </button>
-
-            <button
-              type="button"
-              onClick={() => navigate(-1)}
-              className="w-full text-center text-sm text-white/35 transition-colors hover:text-white/60"
-            >
-              ← Quay lại
-            </button>
           </div>
         </div>
-      </div>
+      </MentorPageShell>
     );
   }
 
   /* ── Guard render: useEffect sẽ redirect, render null để tránh crash ── */
   if (!apiQuestions?.length || !resolvedSessionId) return null;
 
-  /* ══ RENDER — Main interview room ═════════════════════════ */
+  /* ══ RENDER — Main interview room (palette sáng đồng bộ setup) ══ */
   return (
-    <div
-      className="pi-page-dashboard-bg relative flex flex-col overflow-hidden antialiased"
-      style={{ height: "calc(100vh - 56px)" }}
-    >
+    <MentorPageShell bottomPad="pb-0" fillHeight className="!min-h-0 !pb-0">
+    <div className="relative flex h-svh max-h-svh flex-col overflow-hidden antialiased">
       {/* ── Upgrade modal overlay (non-Pro, after FREE_LIMIT) ── */}
       {showUpgradeModal && (
         <UpgradeModal
@@ -880,49 +877,31 @@ export default function InterviewRoom() {
       )}
 
       {/* ── Top bar ─────────────────────────────────────────── */}
-      <div
-        className="flex items-center justify-between px-5 py-2.5 flex-shrink-0"
-        style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}
-      >
-        {/* Left: REC + Timer */}
+      <div className="flex shrink-0 items-center justify-between border-b border-violet-200/80 bg-white/85 px-4 py-2 backdrop-blur-sm">
         <div className="flex items-center gap-2">
-          <div
-            className="flex items-center gap-1.5 px-2.5 py-1 rounded-full"
-            style={{ background: "rgba(239,68,68,0.15)", border: "1px solid rgba(239,68,68,0.3)" }}
-          >
-            <div className="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse" />
-            <span className="text-red-300 text-xs font-semibold">REC</span>
+          <div className="flex items-center gap-1.5 rounded-full border border-violet-200/80 bg-violet-50 px-2.5 py-1">
+            <div className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#b5e636]" />
+            <span className="text-xs font-semibold text-violet-800">REC</span>
           </div>
-          <div
-            className="flex items-center gap-1.5 px-2.5 py-1 rounded-full"
-            style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)" }}
-          >
-            <Clock className="w-3 h-3 text-white/50" />
-            <span className="text-white/70 text-xs tabular-nums">{formatTimer(timerSeconds)}</span>
+          <div className="flex items-center gap-1.5 rounded-full border border-violet-200/80 bg-violet-50 px-2.5 py-1">
+            <Clock className="h-3 w-3 text-violet-500" />
+            <span className="text-xs tabular-nums text-violet-800">{formatTimer(timerSeconds)}</span>
           </div>
           {isListening && (
-            <div
-              className="flex items-center gap-1.5 px-2.5 py-1 rounded-full"
-              style={{ background: "rgba(239,68,68,0.15)", border: "1px solid rgba(239,68,68,0.3)" }}
-            >
-              <div className="w-1.5 h-1.5 bg-red-400 rounded-full animate-pulse" />
-              <span className="text-red-300 text-xs font-medium">Ghi âm</span>
+            <div className="flex items-center gap-1.5 rounded-full border border-violet-200/80 bg-violet-50 px-2.5 py-1">
+              <div className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#b5e636]" />
+              <span className="text-xs font-medium text-violet-800">Ghi âm</span>
             </div>
           )}
         </div>
 
-        {/* Center: HR name */}
         <div className="flex items-center gap-2">
-          <div
-            className="w-6 h-6 rounded-full overflow-hidden flex-shrink-0"
-            style={{ border: "1.5px solid rgba(139, 77, 255,0.5)" }}
-          >
-            <video src={hrVideoUrl} autoPlay loop muted playsInline className="w-full h-full object-cover" />
+          <div className="h-6 w-6 shrink-0 overflow-hidden rounded-full border-2 border-violet-300/80">
+            <video src={hrVideoUrl} autoPlay loop muted playsInline className="h-full w-full object-cover" />
           </div>
-          <span className="text-white/70 text-sm font-medium hidden sm:block">{hrName}</span>
+          <span className="hidden text-sm font-medium text-violet-900 sm:block">{hrName}</span>
         </div>
 
-        {/* Right: Progress */}
         <div className="flex items-center gap-3">
           <div className="flex gap-1.5">
             {QUESTIONS.map((_, i) => {
@@ -930,56 +909,45 @@ export default function InterviewRoom() {
               return (
                 <div
                   key={i}
-                  className="h-1.5 w-7 rounded-full transition-all duration-500"
-                  style={{
-                    background:
-                      isLockedDot
-                        ? "rgba(139, 77, 255,0.25)"
-                        : i < currentQ
-                        ? "#6E35E8"
+                  className={`h-1.5 w-7 rounded-full transition-all duration-500 ${
+                    isLockedDot
+                      ? "bg-violet-200"
+                      : i < currentQ
+                        ? "bg-[#b5e636]/55"
                         : i === currentQ
-                        ? "#B4F000"
-                        : "rgba(255,255,255,0.1)",
-                  }}
+                          ? "bg-[#b5e636]"
+                          : "bg-violet-100"
+                  }`}
                 />
               );
             })}
           </div>
-          <span className="text-white/50 text-xs">
+          <span className="text-xs font-medium text-violet-600">
             {currentQ + 1}/{QUESTIONS.length}
           </span>
         </div>
       </div>
 
       {/* ── Question banner ──────────────────────────────────── */}
-      <div
-        className="flex-shrink-0 px-5 py-3"
-        style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}
-      >
-        <div
-          className="flex items-start gap-3 rounded-xl px-4 py-3"
-          style={{ background: "rgba(110, 53, 232,0.12)", border: "1px solid rgba(139, 77, 255,0.25)" }}
-        >
-          <span
-            className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5"
-            style={{ background: "linear-gradient(135deg, #6E35E8, #8B4DFF)", color: "#fff" }}
-          >
+      <div className="shrink-0 border-b border-violet-100 bg-white/70 px-4 py-2">
+        <div className="flex items-start gap-2.5 rounded-md border border-violet-200/80 bg-violet-50/50 px-3 py-2">
+          <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#6E35E8] to-[#8B4DFF] text-xs font-bold text-white">
             {currentQ + 1}
           </span>
-          <div className="flex-1 min-w-0">
-            <p className="text-white/90 text-sm leading-relaxed">{QUESTIONS[currentQ]}</p>
+          <div className="min-w-0 flex-1">
+            <p className="line-clamp-2 text-sm leading-snug text-violet-950">{QUESTIONS[currentQ]}</p>
             {QUESTION_OBJECTS && (() => {
               const layer = QUESTION_OBJECTS[currentQ]?.layer;
               const layerMap = {
-                theory:   { label: "Lý thuyết",      color: "#60A5FA", bg: "rgba(96,165,250,0.15)",  border: "rgba(96,165,250,0.3)"  },
-                project:  { label: "Dự án",           color: "#34D399", bg: "rgba(52,211,153,0.15)",  border: "rgba(52,211,153,0.3)"  },
-                behavior: { label: "Hành vi · STAR",  color: "#FBBF24", bg: "rgba(251,191,36,0.15)", border: "rgba(251,191,36,0.3)" },
+                theory:   { label: "Lý thuyết",      color: "#630ed4", bg: "rgba(110,53,232,0.12)",  border: "rgba(110,53,232,0.28)"  },
+                project:  { label: "Dự án",           color: "#8B4DFF", bg: "rgba(139,77,255,0.12)",  border: "rgba(139,77,255,0.28)"  },
+                behavior: { label: "Hành vi · STAR",  color: "#630ed4", bg: "rgba(110,53,232,0.1)", border: "rgba(110,53,232,0.22)" },
               };
               const lm = layerMap[layer];
               if (!lm) return null;
               return (
                 <span
-                  className="inline-block mt-1.5 px-2 py-0.5 rounded-full text-xs font-semibold"
+                  className="mt-1.5 inline-block rounded-md px-2 py-0.5 text-xs font-semibold"
                   style={{ background: lm.bg, border: `1px solid ${lm.border}`, color: lm.color }}
                 >
                   {lm.label}
@@ -996,41 +964,37 @@ export default function InterviewRoom() {
         const hasContent = sg && (sg.situation?.length || sg.task?.length || sg.action?.length || sg.result?.length);
         if (!hasContent) return null;
         return (
-          <div className="flex-shrink-0 px-5 py-2" style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
-            <div className="rounded-xl overflow-hidden" style={{ background: "rgba(251,191,36,0.05)", border: "1px solid rgba(251,191,36,0.18)" }}>
+          <div className="shrink-0 border-b border-violet-100 bg-white/60 px-4 py-1.5">
+            <div className="overflow-hidden rounded-md border border-violet-200/70 bg-violet-50/40">
               <button
-                onClick={() => setShowStarHints(p => !p)}
-                className="w-full flex items-center justify-between px-4 py-2 text-left transition-colors hover:bg-white/5"
+                type="button"
+                onClick={() => setShowStarHints((p) => !p)}
+                className="flex w-full items-center justify-between px-4 py-2 text-left transition-colors hover:bg-violet-100/50"
               >
                 <div className="flex items-center gap-2">
-                  <Star className="w-3.5 h-3.5 text-amber-400" />
-                  <span className="text-amber-300 text-xs font-semibold">Gợi ý STAR</span>
-                  <span className="text-amber-300/50 text-xs">— nhấn để {showStarHints ? "ẩn" : "xem"}</span>
+                  <Star className="h-3.5 w-3.5 text-[#630ed4]" />
+                  <span className="text-xs font-semibold text-violet-950">Gợi ý STAR</span>
+                  <span className="text-xs text-violet-600/70">— nhấn để {showStarHints ? "ẩn" : "xem"}</span>
                 </div>
                 <ChevronDown
-                  className="w-3.5 h-3.5 text-amber-400/50 transition-transform duration-200"
-                  style={{ transform: showStarHints ? "rotate(180deg)" : "rotate(0deg)" }}
+                  className={`h-3.5 w-3.5 text-violet-500/60 transition-transform duration-200 ${showStarHints ? "rotate-180" : ""}`}
                 />
               </button>
               {showStarHints && (
-                <div className="px-4 pb-3 grid grid-cols-2 gap-2" style={{ gridTemplateColumns: "repeat(4, 1fr)" }}>
+                <div className="grid max-h-24 grid-cols-2 gap-2 overflow-y-auto px-4 pb-2 sm:grid-cols-4">
                   {[
-                    { key: "situation", label: "S · Tình huống", color: "#60A5FA" },
-                    { key: "task",      label: "T · Nhiệm vụ",   color: "#34D399" },
-                    { key: "action",    label: "A · Hành động",  color: "#F472B6" },
-                    { key: "result",    label: "R · Kết quả",    color: "#FBBF24" },
-                  ].map(({ key, label, color }) => {
+                    { key: "situation", label: "S · Tình huống", color: "#630ed4", border: "border-violet-200" },
+                    { key: "task", label: "T · Nhiệm vụ", color: "#8B4DFF", border: "border-violet-200" },
+                    { key: "action", label: "A · Hành động", color: "#8B4DFF", border: "border-violet-200" },
+                    { key: "result", label: "R · Kết quả", color: "#630ed4", border: "border-violet-300" },
+                  ].map(({ key, label, color, border }) => {
                     const hints = sg[key] ?? [];
                     if (!hints.length) return null;
                     return (
-                      <div
-                        key={key}
-                        className="rounded-lg p-2.5"
-                        style={{ background: "rgba(0,0,0,0.25)", border: `1px solid ${color}22` }}
-                      >
-                        <p className="text-xs font-semibold mb-1" style={{ color }}>{label}</p>
+                      <div key={key} className={`rounded border bg-white p-2.5 ${border}`}>
+                        <p className="mb-1 text-xs font-semibold" style={{ color }}>{label}</p>
                         {hints.slice(0, 2).map((h, i) => (
-                          <p key={i} className="text-white/50 text-xs leading-relaxed">· {h}</p>
+                          <p key={i} className="text-xs leading-relaxed text-violet-700">· {h}</p>
                         ))}
                       </div>
                     );
@@ -1042,16 +1006,12 @@ export default function InterviewRoom() {
         );
       })()}
 
-      {/* ── Meeting panels ───────────────────────────────────── */}
-      <div className="flex-1 flex gap-3 p-3 min-h-0">
-        {/* AI Panel — D-ID avatar hoặc video pre-recorded */}
+      {/* ── Meeting panels — co giãn trong 1 màn hình ── */}
+      <div className="grid min-h-0 flex-1 gap-2 px-3 pb-2 max-lg:grid-rows-[minmax(0,1fr)_minmax(0,1fr)_4.5rem] lg:grid-cols-2 lg:grid-rows-[minmax(0,1fr)_4.5rem]">
         <div
-          className="flex-[3] relative rounded-2xl overflow-hidden"
-          style={{
-            border: `1.5px solid ${isDIDActive ? "rgba(139,77,255,0.35)" : "rgba(255,255,255,0.08)"}`,
-            background: "#0a0a18",
-            transition: "border-color 0.3s",
-          }}
+          className={`relative min-h-0 h-full overflow-hidden rounded-xl border-2 bg-[#0a0a18] ${
+            isDIDActive ? "border-violet-300/80 shadow-[0_8px_32px_rgba(110,53,232,0.12)]" : "border-violet-200/70"
+          }`}
         >
           {isDIDActive ? (
             <>
@@ -1066,7 +1026,7 @@ export default function InterviewRoom() {
                   isSpeaking={didStatus === "speaking"}
                   didStatus={didStatus}
                   attachVideo={attachVideo}
-                  size={272}
+                  size={220}
                 />
               </div>
               {/* "HR đang hỏi" indicator */}
@@ -1076,26 +1036,19 @@ export default function InterviewRoom() {
                     className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold"
                     style={{ background: "rgba(110, 53, 232,0.85)", backdropFilter: "blur(8px)" }}
                   >
-                    <div className="w-1.5 h-1.5 bg-[#c4ff47] rounded-full animate-pulse" />
+                    <div className="w-1.5 h-1.5 rounded-full bg-[#b5e636] animate-pulse" />
                     <span className="text-white">HR đang hỏi...</span>
                   </div>
                 </div>
               )}
-              {/* "Lượt của bạn" indicator */}
-              {hrPhase === "listening" && (
+              {hrPhase === "listening" && isListening && (
                 <div className="absolute top-3 right-3 z-10">
                   <div
-                    className="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold"
-                    style={{
-                      background: isListening ? "rgba(239,68,68,0.9)" : "rgba(180,240,0,0.15)",
-                      border: isListening ? "none" : "1px solid rgba(180,240,0,0.4)",
-                      backdropFilter: "blur(8px)",
-                    }}
+                    className="flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-semibold text-white"
+                    style={{ background: "rgba(110,53,232,0.92)", backdropFilter: "blur(8px)" }}
                   >
-                    <div className={`w-1.5 h-1.5 rounded-full ${isListening ? "bg-white animate-pulse" : "bg-[#c4ff47]"}`} />
-                    <span className={isListening ? "text-white" : "text-[#B4F000]"}>
-                      {isListening ? "Đang ghi âm câu trả lời..." : "Lượt của bạn — Nhấn 🎤 để trả lời"}
-                    </span>
+                    <div className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#b5e636]" />
+                    Đang ghi âm câu trả lời...
                   </div>
                 </div>
               )}
@@ -1128,65 +1081,58 @@ export default function InterviewRoom() {
           </div>
         </div>
 
-        {/* Right column */}
-        <div className="flex-[2] flex flex-col gap-3 min-h-0">
-          {/* User camera */}
-          <div
-            className="flex-[2] min-h-0 rounded-2xl overflow-hidden relative"
-            style={{
-              border: `1.5px solid ${isListening ? "rgba(239,68,68,0.4)" : "rgba(255,255,255,0.08)"}`,
-              transition: "border-color 0.3s",
-              boxShadow: isListening ? "0 0 24px rgba(239,68,68,0.15)" : "none",
-            }}
-          >
-            <UserCameraTile isRecording={isListening} />
-            {isListening && (
-              <div className="absolute inset-0 rounded-2xl border-2 border-red-400/40 animate-pulse pointer-events-none" />
-            )}
-          </div>
+        <div
+          className={`relative min-h-0 h-full overflow-hidden rounded-xl border-2 ${
+            isListening
+              ? "border-violet-400 shadow-[0_0_20px_rgba(110,53,232,0.15)]"
+              : "border-violet-200/80 shadow-[0_8px_24px_rgba(110,53,232,0.1)]"
+          }`}
+        >
+          <UserCameraTile isRecording={isListening} />
+          {isListening && (
+            <div className="pointer-events-none absolute inset-0 rounded-xl ring-2 ring-inset ring-violet-400/50" />
+          )}
+        </div>
 
-          {/* Transcript panel */}
-          <div
-            className="flex-[3] min-h-0 rounded-2xl flex flex-col overflow-hidden"
-            style={{
-              background: isListening ? "rgba(239,68,68,0.05)" : hasTranscript ? "rgba(16,185,129,0.05)" : "rgba(255,255,255,0.03)",
-              border: isListening ? "1.5px solid rgba(239,68,68,0.2)" : hasTranscript ? "1.5px solid rgba(16,185,129,0.15)" : "1px solid rgba(255,255,255,0.07)",
-              transition: "all 0.3s ease",
-            }}
+        <div
+            className={`flex h-[4.5rem] max-h-[4.5rem] shrink-0 flex-col overflow-hidden rounded-md border bg-white transition-all lg:col-span-2 ${
+              isListening
+                ? "border-violet-300"
+                : hasTranscript
+                  ? "border-violet-300/80"
+                  : "border-violet-200/80"
+            }`}
           >
-            <div
-              className="px-3 py-2 flex items-center justify-between flex-shrink-0"
-              style={{ borderBottom: "1px solid rgba(255,255,255,0.05)", background: "rgba(0,0,0,0.2)" }}
-            >
+            <div className="flex shrink-0 items-center justify-between border-b border-violet-100 bg-violet-50/60 px-2.5 py-1.5">
               <div className="flex items-center gap-2">
                 {isListening ? (
                   <>
-                    <div className="w-2 h-2 bg-red-400 rounded-full animate-pulse" />
-                    <span className="text-red-300 text-xs font-semibold">Đang ghi âm...</span>
-                    <Waveform active={true} color="#f87171" />
+                    <div className="h-2 w-2 animate-pulse rounded-full bg-[#b5e636]" />
+                    <span className="text-xs font-semibold text-violet-800">Đang ghi âm...</span>
+                    <Waveform active={true} color="#9B6DFF" />
                   </>
                 ) : hasTranscript ? (
                   <>
-                    <CheckCircle className="w-3.5 h-3.5 text-emerald-400" />
-                    <span className="text-emerald-300 text-xs font-semibold">Đã ghi nhận</span>
+                    <CheckCircle className="h-3.5 w-3.5 text-violet-600" />
+                    <span className="text-xs font-semibold text-violet-900">Đã ghi nhận</span>
                   </>
                 ) : (
                   <>
-                    <ChatCircle className="w-3.5 h-3.5 text-white/30" />
-                    <span className="text-white/35 text-xs">Câu trả lời của bạn</span>
+                    <ChatCircle className="h-3.5 w-3.5 text-violet-400" />
+                    <span className="text-xs text-violet-600">Câu trả lời của bạn</span>
                   </>
                 )}
               </div>
               {(hasTranscript || isListening) && (
-                <span className="text-white/25 text-xs tabular-nums">{wordCount} từ</span>
+                <span className="text-xs tabular-nums text-violet-500">{wordCount} từ</span>
               )}
             </div>
 
-            <div className="flex-1 overflow-y-auto p-3">
+            <div className="min-h-0 flex-1 overflow-y-auto px-2.5 py-1.5">
               {/* Manual text input — shown when browser doesn't support STT */}
               {!sttSupported ? (
                 <div className="flex h-full flex-col gap-2">
-                  <p className="text-xs text-amber-300">
+                  <p className="text-xs text-violet-700">
                     ⚠️ Trình duyệt không nhận diện được giọng nói — hãy gõ câu trả lời bên dưới.
                   </p>
                   <textarea
@@ -1196,44 +1142,40 @@ export default function InterviewRoom() {
                       transcriptRef.current = e.target.value;
                     }}
                     placeholder="Gõ câu trả lời của bạn vào đây..."
-                    rows={6}
-                    className="flex-1 w-full resize-none rounded-xl border border-white/15 bg-white/8 p-3 text-sm text-white/85 placeholder:text-white/25 focus:outline-none focus:ring-1 focus:ring-violet-400/50"
+                    rows={2}
+                    className="w-full flex-1 resize-none rounded-xl border border-violet-200 bg-white p-3 text-sm text-black placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-violet-200"
                   />
                 </div>
-              ) : !hasTranscript && !interimTranscript && !isListening ? (
-                <div className="flex flex-col items-center justify-center h-full text-center gap-2">
-                  <Microphone className="w-7 h-7 text-white/15" />
-                  <p className="text-white/25 text-xs">Nhấn 🎤 mic để bắt đầu trả lời</p>
-                </div>
-              ) : (
+              ) : !hasTranscript && !interimTranscript && !isListening ? null : (
                 <div>
                   {hasTranscript && (
-                    <p className="text-white/85 leading-relaxed text-sm">{transcript}</p>
+                    <p className="line-clamp-2 text-xs leading-snug text-black">{transcript}</p>
                   )}
                   {interimTranscript && (
-                    <p className="text-white/40 leading-relaxed italic text-sm">
+                    <p className="line-clamp-2 text-xs leading-snug text-black italic">
                       {interimTranscript}
                       {isListening && (
-                        <span className="inline-block w-0.5 h-4 bg-red-400 ml-0.5 animate-pulse align-middle" />
+                        <span className="ml-0.5 inline-block h-4 w-0.5 animate-pulse bg-[#b5e636] align-middle" />
                       )}
                     </p>
                   )}
                   {isListening && !hasTranscript && !interimTranscript && (
-                    <span className="inline-block w-0.5 h-5 bg-red-400 animate-pulse" />
+                    <span className="inline-block h-5 w-0.5 animate-pulse bg-[#b5e636]" />
                   )}
                 </div>
               )}
               {sttError && (
-                <div className="mt-2 flex items-start gap-1.5 bg-red-500/10 border border-red-500/20 rounded-xl p-2.5">
-                  <WarningCircle className="w-3.5 h-3.5 text-red-400 flex-shrink-0 mt-0.5" />
-                  <p className="text-red-300 text-xs">{sttError}</p>
+                <div className="mt-2 flex items-start gap-1.5 rounded-xl border border-violet-200 bg-violet-50 p-2.5">
+                  <WarningCircle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-violet-600" />
+                  <p className="text-xs text-violet-800">{sttError}</p>
                 </div>
               )}
             </div>
 
             {hasTranscript && !isListening && sttSupported && (
-              <div className="px-3 py-2 flex-shrink-0" style={{ borderTop: "1px solid rgba(255,255,255,0.05)" }}>
+              <div className="hidden shrink-0 border-t border-violet-100 px-2 py-1 sm:block">
                 <button
+                  type="button"
                   onClick={() => {
                     isListeningRef.current = false;
                     recognitionRef.current?.abort();
@@ -1246,8 +1188,7 @@ export default function InterviewRoom() {
                       try { recognitionRef.current?.start(); } catch (_) {}
                     }, 150);
                   }}
-                  className="flex items-center gap-1.5 text-xs font-medium transition-all px-2.5 py-1.5 rounded-lg hover:bg-white/10"
-                  style={{ color: "#ef4444" }}
+                  className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-violet-700 transition-all hover:bg-violet-50"
                 >
                   <Microphone className="w-3.5 h-3.5" />
                   Ghi lại
@@ -1255,41 +1196,36 @@ export default function InterviewRoom() {
               </div>
             )}
           </div>
-        </div>
       </div>
 
       {/* ── Control bar ─────────────────────────────────────── */}
-      <div
-        className="flex-shrink-0 flex items-center justify-center gap-4 py-3 px-6"
-        style={{ borderTop: "1px solid rgba(255,255,255,0.06)", background: "rgba(0,0,0,0.3)", backdropFilter: "blur(12px)" }}
-      >
-        {/* End session */}
+      <div className="flex shrink-0 items-center justify-center gap-3 border-t border-violet-200/80 bg-white/90 px-4 py-2 backdrop-blur-sm">
         <button
+          type="button"
           onClick={handleEndSession}
           title="Kết thúc phỏng vấn"
-          className="w-11 h-11 rounded-full flex items-center justify-center transition-all hover:bg-white/15"
-          style={{ background: "rgba(239,68,68,0.1)", border: "1.5px solid rgba(239,68,68,0.3)" }}
+          className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-violet-200 bg-violet-50 transition-all hover:bg-violet-100"
         >
-          <PhoneDisconnect className="w-5 h-5 text-red-400" />
+          <PhoneDisconnect className="h-5 w-5 text-violet-700" />
         </button>
 
         {/* Mic */}
         <div className="relative">
-          {isListening && <div className="absolute inset-0 rounded-full bg-red-500/30 animate-ping" />}
+          {isListening && <div className="absolute inset-0 rounded-full bg-[#b5e636]/32 animate-ping" />}
           <button
             onClick={toggleListening}
             disabled={!sttSupported}
             title={isListening ? "Dừng ghi âm" : "Bắt đầu trả lời"}
-            className="relative w-16 h-16 rounded-full flex items-center justify-center transition-all shadow-lg disabled:opacity-40 disabled:cursor-not-allowed hover:scale-105 active:scale-95"
+            className="relative flex h-14 w-14 items-center justify-center rounded-full shadow-lg transition-all disabled:cursor-not-allowed disabled:opacity-40"
             style={{
-              background: isListening ? "linear-gradient(135deg, #ef4444, #dc2626)" : "linear-gradient(135deg, #6E35E8, #8B4DFF)",
-              boxShadow: isListening ? "0 0 24px rgba(239,68,68,0.5)" : "0 0 24px rgba(110, 53, 232,0.5)",
+              background: "linear-gradient(135deg, #6E35E8, #8B4DFF)",
+              boxShadow: isListening ? "0 0 24px rgba(110,53,232,0.55)" : "0 0 24px rgba(110, 53, 232,0.5)",
             }}
           >
             {isListening ? (
-              <MicrophoneSlash className="w-7 h-7 text-white" />
+              <Microphone className="h-7 w-7 text-white" />
             ) : (
-              <Microphone className="w-7 h-7 text-white" />
+              <MicrophoneSlash className="h-7 w-7 text-white" />
             )}
           </button>
         </div>
@@ -1297,33 +1233,34 @@ export default function InterviewRoom() {
         {/* Next / Finish */}
         {currentQ < QUESTIONS.length - 1 ? (
           <button
+            type="button"
             onClick={handleNextQuestion}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-2xl text-sm font-semibold transition-all hover:scale-105 active:scale-95"
-            style={{ background: "rgba(180,240,0,0.15)", border: "1.5px solid rgba(180,240,0,0.35)", color: "#B4F000" }}
+            className="flex items-center gap-2 rounded-md bg-gradient-to-r from-[#c4ff47] to-[#d4ff00] px-4 py-2 text-sm font-bold text-violet-950 shadow-[0_6px_20px_rgba(196,255,71,0.2)] transition-all hover:brightness-105"
           >
             {!isPro && currentQ === FREE_LIMIT - 1 ? (
               <>
-                <Lock className="w-4 h-4" />
+                <Lock className="h-4 w-4" />
                 Câu tiếp theo
               </>
             ) : (
               <>
                 Câu tiếp theo
-                <CaretRight className="w-4 h-4" />
+                <CaretRight className="h-4 w-4" />
               </>
             )}
           </button>
         ) : (
           <button
+            type="button"
             onClick={handleNextQuestion}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-2xl text-sm font-semibold transition-all hover:scale-105 active:scale-95"
-            style={{ background: "linear-gradient(135deg, #B4F000, #8EBF00)", color: "#000", boxShadow: "0 4px 20px rgba(180,240,0,0.3)" }}
+            className="flex items-center gap-2 rounded-md bg-gradient-to-r from-[#c4ff47] to-[#d4ff00] px-4 py-2 text-sm font-bold text-violet-950 shadow-[0_6px_20px_rgba(196,255,71,0.2)] transition-all hover:brightness-105"
           >
             Hoàn thành
-            <CheckCircle className="w-4 h-4" />
+            <CheckCircle className="h-4 w-4" />
           </button>
         )}
       </div>
     </div>
+    </MentorPageShell>
   );
 }

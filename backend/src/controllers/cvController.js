@@ -20,7 +20,7 @@ function normalizeSkillItem(item) {
  *   result.skills.cv[]         →      normalized to { name, category, ... }
  */
 function transformToDb(value) {
-  const { matchScore, matchedKeywords, missingKeywords, skills, scores, suggestions } =
+  const { matchScore, matchedKeywords, missingKeywords, skills, scores, suggestions, _ui } =
     value.result;
 
   const normalizedSkills = skills
@@ -32,11 +32,18 @@ function transformToDb(value) {
       }
     : undefined;
 
+  const ui = value.result?._ui;
   return {
     cvFileName:  value.cvFileName,
     cvFileId:    value.cvFileId,
+    cvFileUrl:   value.cvFileUrl || ui?.cvFileUrl || undefined,
+    cvText:      ui?.cvText ? String(ui.cvText).slice(0, 120_000) : undefined,
     jdFileName:  value.jdFileName,
     jdFileId:    value.jdFileId,
+    jdFileUrl:   value.jdFileUrl || ui?.jdFileUrl || undefined,
+    jdText:      ui?.jdText ? String(ui.jdText).slice(0, 120_000) : undefined,
+    field:       value.field || undefined,
+    position:    value.position || undefined,
     mode:        value.mode,
     tier:        value.tier,
     planAtTime:  value.planAtTime,
@@ -50,6 +57,7 @@ function transformToDb(value) {
       },
       ...(scores      && { scores }),
       ...(suggestions && { suggestions }),
+      ...(_ui         && { _ui }),
     },
   };
 }

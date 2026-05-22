@@ -2,7 +2,7 @@ import React, { useState, useCallback } from "react";
 import { Document, Page, pdfjs } from "react-pdf";
 import "react-pdf/dist/Page/TextLayer.css";
 import "react-pdf/dist/Page/AnnotationLayer.css";
-import { FileText, Briefcase, Search as MagnifyingGlass, Eye, CheckCircle2, XCircle, ChevronLeft, ChevronRight } from "lucide-react";
+import { FileText, Briefcase, Eye, CheckCircle2, XCircle, ChevronLeft, ChevronRight } from "lucide-react";
 
 pdfjs.GlobalWorkerOptions.workerSrc = new URL(
   "pdfjs-dist/build/pdf.worker.min.mjs",
@@ -219,52 +219,39 @@ export function DocPanel({ title, fileName, icon, accentColor, file, matchedKws,
 // ─── Main export ──────────────────────────────────────────────────────────────
 export function CVDocumentPreview({
   cvFile, jdFile,
+  cvFileUrl, jdFileUrl,
   cvFileName, jdFileName,
   matchedKws = [],
   missingKws = [],
 }) {
-  const [expanded, setExpanded] = useState(true);
+  const cvSource = cvFile || cvFileUrl || null;
+  const jdSource = jdFile || jdFileUrl || null;
   const total = matchedKws.length + missingKws.length;
 
   return (
     <div className="mb-6">
-      {/* Header toggle */}
-      <button
-        onClick={() => setExpanded(v => !v)}
-        className="w-full flex items-center justify-between mb-3 group"
-      >
-        <div className="flex items-center gap-2.5">
-          <div
-            className="w-8 h-8 rounded-xl flex items-center justify-center"
-            style={{ background: "rgba(110,53,232,0.1)" }}
-          >
-            <Eye className="w-4 h-4" style={{ color: "#6E35E8" }} />
-          </div>
-          <div className="text-left">
-            <h3 className="text-gray-900 font-semibold" style={{ fontSize: "0.9rem" }}>
-              So sánh CV & JD — Keyword Highlight
-            </h3>
-            <p className="text-gray-400" style={{ fontSize: "0.75rem" }}>
-              <span className="text-green-600 font-medium">{matchedKws.length} khớp</span>
-              {" · "}
-              <span className="text-red-500 font-medium">{missingKws.length} thiếu trong CV</span>
-              {" · "}
-              {total} từ khóa JD
-            </p>
-          </div>
-        </div>
+      <div className="mb-3 flex items-center gap-2.5">
         <div
-          className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg"
-          style={{ color: "#6E35E8", background: "rgba(110,53,232,0.07)" }}
+          className="flex h-8 w-8 items-center justify-center rounded-md"
+          style={{ background: "rgba(110,53,232,0.1)" }}
         >
-          <MagnifyingGlass className="w-3.5 h-3.5" />
-          {expanded ? "Thu gọn" : "Xem chi tiết"}
+          <Eye className="h-4 w-4" style={{ color: "#6E35E8" }} />
         </div>
-      </button>
+        <div>
+          <h3 className="font-semibold text-gray-900" style={{ fontSize: "0.9rem" }}>
+            So sánh CV & JD — Keyword Highlight
+          </h3>
+          <p className="text-gray-400" style={{ fontSize: "0.75rem" }}>
+            <span className="font-medium text-green-600">{matchedKws.length} khớp</span>
+            {" · "}
+            <span className="font-medium text-red-500">{missingKws.length} thiếu trong CV</span>
+            {" · "}
+            {total} từ khóa JD
+          </p>
+        </div>
+      </div>
 
-      {/* Legend */}
-      {expanded && (
-        <div className="flex flex-wrap gap-3 mb-4 px-1">
+      <div className="mb-4 flex flex-wrap gap-3 px-1">
           {[
             { bg: "#bbf7d0", border: "#22c55e", label: "Từ khóa khớp (có trong CV)" },
             { bg: "#fed7aa", border: "#ea580c", label: "Từ khóa JD chưa có trong CV" },
@@ -275,17 +262,14 @@ export function CVDocumentPreview({
             </div>
           ))}
         </div>
-      )}
 
-      {/* Side-by-side panels */}
-      {expanded && (
-        <div className="grid md:grid-cols-2 gap-4">
+      <div className="grid gap-4 md:grid-cols-2">
           <DocPanel
             title="CV của bạn"
             fileName={cvFileName || "cv.pdf"}
             icon={<FileText className="w-4 h-4 text-white" />}
             accentColor="linear-gradient(135deg, #4F46E5, #7C3AED)"
-            file={cvFile}
+            file={cvSource}
             matchedKws={matchedKws}
             missingKws={missingKws}
             side="cv"
@@ -295,13 +279,12 @@ export function CVDocumentPreview({
             fileName={jdFileName || "jd.pdf"}
             icon={<Briefcase className="w-4 h-4 text-white" />}
             accentColor="linear-gradient(135deg, #7C3AED, #9333ea)"
-            file={jdFile}
+            file={jdSource}
             matchedKws={matchedKws}
             missingKws={missingKws}
             side="jd"
           />
-        </div>
-      )}
+      </div>
     </div>
   );
 }

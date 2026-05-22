@@ -21,7 +21,7 @@ const PERKS = [
   "3 buổi phỏng vấn AI miễn phí ngay sau đăng ký",
   "Phân tích CV/JD không giới hạn",
   "Truy cập 500+ câu hỏi phỏng vấn theo ngành",
-  "Bảng điều khiển theo dõi tiến bộ cá nhân",
+  "Theo dõi lịch hẹn mentor và lịch sử luyện tập",
 ];
 
 function pwStrength(pw) {

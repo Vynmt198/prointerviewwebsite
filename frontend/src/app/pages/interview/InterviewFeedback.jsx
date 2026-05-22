@@ -8,14 +8,11 @@ import {
   AlertCircle as Warning,
   ChevronDown as CaretDown,
   ChevronUp as CaretUp,
-  Download as DownloadSimple,
-  Share2 as ShareNetwork,
   Mic as Microphone,
   LayoutGrid as SquaresFour,
   Lightbulb,
   Calendar,
   BookOpen,
-  ArrowLeft,
   Eye,
   Volume2 as SpeakerHigh,
   MessageSquareText as ChatTeardropDots,
@@ -27,8 +24,15 @@ import {
 import { CourseRecommendations } from "../../components/courses/CourseRecommendations";
 import { getPlans } from "../../utils/auth";
 import { evaluateInterviewSession } from "../../utils/interviewsApi";
+import { CUSTOMER_SHELL_GUTTER } from "../../components/layout/customerShellLayout";
 
 const IS = { strokeWidth: 1.75, strokeLinecap: "round", strokeLinejoin: "round" };
+
+const CTA_LIME =
+  "bg-gradient-to-r from-[#c4ff47] to-[#d4ff00] text-violet-950 shadow-[0_6px_20px_rgba(196,255,71,0.2)] transition-all hover:brightness-105";
+
+const CTA_PURPLE =
+  "bg-gradient-to-r from-[#6E35E8] to-[#8B4DFF] text-white shadow-[0_6px_20px_rgba(110,53,232,0.2)] transition-all hover:brightness-105";
 
 const FREE_LIMIT = 3;
 
@@ -154,7 +158,6 @@ export function InterviewFeedback() {
 
   // Real AI evaluation state
   const [evaluating,   setEvaluating]   = useState(false);
-  const [evalError,    setEvalError]     = useState("");
   const [realFeedback, setRealFeedback]  = useState(null);   // null = not loaded
   const [sessionMeta,  setSessionMeta]   = useState({ position: "", duration: 0, overallComment: "" });
 
@@ -185,7 +188,6 @@ export function InterviewFeedback() {
     evaluateInterviewSession(sessionId, answers, questionsPayload)
       .then(res => {
         if (!res.success || !res.evaluation?.perQuestion?.length) {
-          setEvalError("Không thể tạo phản hồi AI. Đang hiển thị kết quả mẫu.");
           return;
         }
         // Map sang format mà UI đang dùng: { q, scores, overall, strengths, improvements, suggestion }
@@ -209,7 +211,7 @@ export function InterviewFeedback() {
           overallComment: res.generalComment || "",
         });
       })
-      .catch(() => setEvalError("Lỗi kết nối. Đang hiển thị kết quả mẫu."))
+      .catch(() => {})
       .finally(() => setEvaluating(false));
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -266,78 +268,69 @@ export function InterviewFeedback() {
         .map(a => `${a.label} — ${a.avg.toFixed(1)}/5`)
     : ["Structure (STAR) — 3.2/5", "Credibility — 3.4/5", "Từ đệm"];
 
-  const renderStars = (score, max = 5) => (
+  const renderStars = (score, max = 5, onDark = false) => (
     <div className="flex items-center gap-0.5">
       {[...Array(max)].map((_, i) => (
         <Star
           key={i}
-          className={`h-3.5 w-3.5 ${i < Math.floor(score) ? "fill-amber-400 text-amber-400" : i < score ? "fill-amber-200 text-amber-400" : "fill-white/15 text-white/20"}`}
+          className={`h-3.5 w-3.5 ${
+            i < Math.floor(score)
+              ? onDark
+                ? "fill-[#b5e636] text-[#b5e636]"
+                : "fill-[#b5e636] text-[#b5e636]"
+              : i < score
+                ? onDark
+                  ? "fill-[#b5e636]/50 text-[#b5e636]"
+                  : "fill-[#b5e636]/40 text-[#b5e636]"
+                : onDark
+                  ? "fill-white/15 text-white/25"
+                  : "fill-violet-100 text-violet-200"
+          }`}
         />
       ))}
-      <span className="ml-1.5 text-sm font-semibold text-foreground">{score.toFixed(1)}</span>
+      <span className={`ml-1.5 text-sm font-semibold ${onDark ? "text-white" : "text-violet-950"}`}>
+        {score.toFixed(1)}
+      </span>
     </div>
   );
 
   const scoreColor = (s) =>
-    s >= 4 ? "bg-emerald-500" : s >= 3 ? "bg-amber-400" : "bg-red-400";
+    s >= 4 ? "bg-[#b5e636]" : s >= 3 ? "bg-violet-400" : "bg-violet-300";
 
   const scoreBadge = (s) =>
     s >= 4
-      ? { cls: "bg-emerald-100 text-emerald-700", label: "Tốt" }
+      ? { cls: "bg-lime-50 text-violet-900 ring-1 ring-lime-200/80", label: "Tốt" }
       : s >= 3
-      ? { cls: "bg-amber-100 text-amber-700", label: "Khá" }
-      : { cls: "bg-red-100 text-red-600", label: "Cần cải thiện" };
+        ? { cls: "bg-violet-100 text-violet-800", label: "Khá" }
+        : { cls: "bg-violet-50 text-violet-700", label: "Cần cải thiện" };
 
   return (
-    <MentorPageShell bottomPad="pb-12">
-      {/* Loading overlay */}
+    <MentorPageShell bottomPad="pb-16">
       {evaluating && (
-        <div className="absolute inset-0 z-50 flex flex-col items-center justify-center gap-4 bg-[#070510]/85 backdrop-blur-sm">
-          <div className="h-12 w-12 animate-spin rounded-full border-4 border-violet-400/30 border-t-violet-400" />
-          <p className="text-sm font-semibold text-white">Đang phân tích câu trả lời của bạn...</p>
-          <p className="text-xs text-white/55">AI đang đánh giá theo chuẩn SHRM/DDI</p>
+        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-4 bg-white/80 backdrop-blur-sm">
+          <div className="h-12 w-12 animate-spin rounded-full border-4 border-violet-200 border-t-violet-600" />
+          <p className="text-sm font-semibold text-violet-950">Đang phân tích câu trả lời của bạn...</p>
+          <p className="text-xs text-violet-600">AI đang đánh giá theo chuẩn SHRM/DDI</p>
         </div>
       )}
-      <div className="relative z-10 mx-auto max-w-4xl p-6">
-      {/* Error banner */}
-      {evalError && (
-        <div className="mb-4 flex items-center gap-3 rounded-xl border border-amber-400/35 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
-          <Warning className="h-4 w-4 shrink-0 text-amber-400" />
-          <span>{evalError}</span>
-        </div>
-      )}
-      {/* Header */}
-      <div className="mb-8 flex items-start gap-3 sm:gap-4">
-        <button
-          type="button"
-          onClick={() => navigate(-1)}
-          className="group mt-0.5 flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-white/20 bg-white/10 text-white shadow-[0_1px_0_rgba(255,255,255,0.06)_inset] transition-all hover:border-white/35 hover:bg-white/[0.18] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/45 active:scale-[0.97]"
-          aria-label="Quay lại trang trước"
-          title="Quay lại trang trước"
-        >
-          <ArrowLeft className="h-5 w-5 transition-transform group-hover:-translate-x-0.5" {...IS} />
-        </button>
-        <div className="min-w-0 flex-1">
-          <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-emerald-400/35 bg-emerald-500/15 px-3 py-1.5 text-xs font-semibold text-emerald-100">
-            <Check className="h-3.5 w-3.5" /> Hoàn thành phỏng vấn
-          </div>
-          <h1 className="app-page-title mb-1 text-foreground">
-            Kết quả phỏng vấn của bạn
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            {sessionMeta.position || "Phỏng vấn AI"}{sessionMeta.duration > 0 ? ` · ${sessionMeta.duration} phút` : ""} ·{" "}
-            {isPro ? allQuestions.length : FREE_LIMIT}/{allQuestions.length} câu hỏi
-            {!isPro && (
-              <span
-                className="ml-2 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold text-[#8B4DFF]"
-                style={{ background: "rgba(139, 77, 255,0.08)", border: "1px solid rgba(139, 77, 255,0.2)" }}
-              >
-                <Lock className="h-3 w-3" /> 2 câu bị khóa
-              </span>
-            )}
-          </p>
-        </div>
-      </div>
+
+      <div className={`relative z-10 pb-8 pt-8 sm:pt-10 ${CUSTOMER_SHELL_GUTTER}`}>
+        <div className="mx-auto w-full max-w-4xl">
+          <header className="mb-6">
+            <h1 className="font-headline text-2xl font-extrabold tracking-tight text-violet-950 sm:text-3xl">
+              Kết quả phỏng vấn của bạn
+            </h1>
+            <p className="mt-1.5 text-sm text-violet-600">
+              {sessionMeta.position || "Phỏng vấn AI"}
+              {sessionMeta.duration > 0 ? ` · ${sessionMeta.duration} phút` : ""} ·{" "}
+              {isPro ? allQuestions.length : FREE_LIMIT}/{allQuestions.length} câu hỏi
+              {!isPro && (
+                <span className="ml-2 inline-flex items-center gap-1 rounded-full border border-violet-200 bg-white px-2 py-0.5 text-xs font-semibold text-[#630ed4]">
+                  <Lock className="h-3 w-3" /> 2 câu bị khóa
+                </span>
+              )}
+            </p>
+          </header>
 
       {/* ── Overall Score Banner ─────────────────────────── */}
       <div className="rounded-2xl mb-6 overflow-hidden" style={{ background: "linear-gradient(135deg, #6E35E8 0%, #9B6DFF 100%)" }}>
@@ -350,9 +343,12 @@ export function InterviewFeedback() {
               </div>
               <div style={{ fontSize: "4rem", fontWeight: 800, lineHeight: 1 }}>{overallAvg.toFixed(1)}</div>
               <div className="text-sm text-white/80">/5 sao</div>
-              <div className="flex gap-0.5 justify-center mt-2">
+              <div className="mt-2 flex justify-center gap-0.5">
                 {[...Array(5)].map((_, i) => (
-                  <Star key={i} className={`w-4 h-4 ${i < Math.round(overallAvg) ? "text-amber-400 fill-amber-400" : "text-white/30 fill-white/20"}`} />
+                  <Star
+                    key={i}
+                    className={`h-4 w-4 ${i < Math.round(overallAvg) ? "fill-[#b5e636] text-[#b5e636]" : "fill-white/15 text-white/30"}`}
+                  />
                 ))}
               </div>
             </div>
@@ -383,9 +379,9 @@ export function InterviewFeedback() {
             {shrmDistribution ? (
               <div className="space-y-2">
                 {[
-                  { key: "excellent",  label: "Xuất sắc",      color: "bg-emerald-400", cls: "bg-emerald-100 text-emerald-700" },
-                  { key: "proficient", label: "Đạt yêu cầu",   color: "bg-amber-400",   cls: "bg-amber-100 text-amber-700" },
-                  { key: "developing", label: "Cần cải thiện",  color: "bg-red-400",     cls: "bg-red-100 text-red-600" },
+                  { key: "excellent", label: "Xuất sắc", color: "bg-[#b5e636]", cls: "bg-lime-50 text-violet-900" },
+                  { key: "proficient", label: "Đạt yêu cầu", color: "bg-violet-300", cls: "bg-violet-100 text-violet-800" },
+                  { key: "developing", label: "Cần cải thiện", color: "bg-violet-500/70", cls: "bg-violet-50 text-violet-700" },
                 ].map(({ key, label, color, cls }) => {
                   const count = shrmDistribution[key];
                   const total = allQuestions.length || 1;
@@ -452,7 +448,7 @@ export function InterviewFeedback() {
               <ul className="space-y-1">
                 {speakingTips.map((tip, i) => (
                   <li key={i} className="flex items-start gap-1.5 text-[11px] text-white/82">
-                    <span className="text-[#B4F500] flex-shrink-0 mt-0.5">•</span>
+                    <span className="mt-0.5 flex-shrink-0 text-[#b5e636]">•</span>
                     {tip}
                   </li>
                 ))}
@@ -464,35 +460,33 @@ export function InterviewFeedback() {
 
       {/* AI overall comment */}
       {sessionMeta.overallComment && (
-        <div className="mb-6 rounded-2xl border border-violet-300/25 bg-violet-500/10 px-5 py-4 backdrop-blur-sm">
+        <div className="mb-6 rounded-md border border-violet-200/80 bg-violet-50/50 px-5 py-4">
           <div className="mb-2 flex items-center gap-2">
-            <ChatTeardropDots className="h-4 w-4 text-violet-200" />
-            <p className="text-xs font-semibold uppercase tracking-wide text-violet-100">Nhận xét tổng quan từ AI</p>
+            <ChatTeardropDots className="h-4 w-4 text-violet-600" />
+            <p className="text-xs font-semibold uppercase tracking-wide text-violet-700">Nhận xét tổng quan từ AI</p>
           </div>
-          <p className="text-sm leading-relaxed text-foreground/90">{sessionMeta.overallComment}</p>
+          <p className="text-sm leading-relaxed text-violet-900">{sessionMeta.overallComment}</p>
         </div>
       )}
 
       {/* Per-question feedback */}
       <div className="mb-6">
-        <h2 className="mb-4 text-foreground" style={{ fontSize: "1rem", fontWeight: 600 }}>
-          B. Phân tích từng câu hỏi
-        </h2>
+        <h2 className="mb-4 text-base font-bold text-violet-950">B. Phân tích từng câu hỏi</h2>
         <div className="space-y-3">
           {/* ── Câu hỏi đã mở khóa ─── */}
           {visibleQuestions.map((item, i) => (
-            <div key={i} className="card-premium overflow-hidden">
+            <div key={i} className="overflow-hidden rounded-md border border-violet-200/80 bg-white shadow-sm">
               <button
                 type="button"
                 onClick={() => setExpandedQ(expandedQ === i ? null : i)}
-                className="flex w-full items-center justify-between p-5 text-left transition-colors hover:bg-white/[0.06]"
+                className="flex w-full items-center justify-between p-5 text-left transition-colors hover:bg-violet-50/50"
               >
                 <div className="flex min-w-0 flex-1 items-start gap-4">
-                  <div className="mt-0.5 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-[#6E35E8]/20 ring-1 ring-[#6E35E8]/35">
-                    <span className="text-xs font-bold text-violet-200">{i + 1}</span>
+                  <div className="mt-0.5 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#6E35E8] to-[#8B4DFF]">
+                    <span className="text-xs font-bold text-white">{i + 1}</span>
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="truncate pr-4 text-sm font-medium leading-relaxed text-foreground">{item.q}</p>
+                    <p className="truncate pr-4 text-sm font-medium leading-relaxed text-violet-950">{item.q}</p>
                     <div className="flex items-center gap-3 mt-2">
                       {renderStars(item.overall)}
                       <div className={`px-2 py-0.5 rounded-full text-xs font-semibold ${scoreBadge(item.overall).cls}`}>
@@ -502,95 +496,86 @@ export function InterviewFeedback() {
                   </div>
                 </div>
                 {expandedQ === i ? (
-                  <CaretUp className="h-4 w-4 flex-shrink-0 text-muted-foreground" />
+                  <CaretUp className="h-4 w-4 flex-shrink-0 text-violet-500" />
                 ) : (
-                  <CaretDown className="h-4 w-4 flex-shrink-0 text-muted-foreground" />
+                  <CaretDown className="h-4 w-4 flex-shrink-0 text-violet-500" />
                 )}
               </button>
 
               {expandedQ === i && (
-                <div className="border-t border-white/10 px-5 pb-5">
+                <div className="border-t border-violet-100 px-5 pb-5">
                   {/* Voice transcript */}
                   {transcripts[i] && transcripts[i].trim().length > 0 ? (
-                    <div
-                      className="mt-4 mb-4 rounded-2xl overflow-hidden"
-                      style={{ border: "1.5px solid rgba(110, 53, 232,0.15)" }}
-                    >
-                      <div
-                        className="px-4 py-2.5 flex items-center gap-2"
-                        style={{ background: "rgba(110, 53, 232,0.06)", borderBottom: "1px solid rgba(110, 53, 232,0.1)" }}
-                      >
-                        <div className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: "rgba(110, 53, 232,0.15)" }}>
-                          <Microphone className="w-3 h-3" style={{ color: "#6E35E8" }} />
+                    <div className="mb-4 mt-4 overflow-hidden rounded-md border border-violet-200/80">
+                      <div className="flex items-center gap-2 border-b border-violet-100 bg-violet-50/60 px-4 py-2.5">
+                        <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-violet-100">
+                          <Microphone className="h-3 w-3 text-violet-600" />
                         </div>
-                        <span className="text-xs font-semibold text-violet-100">
+                        <span className="text-xs font-semibold text-violet-800">
                           Câu trả lời của bạn — được ghi nhận từ giọng nói
                         </span>
-                        <span className="ml-auto text-xs text-muted-foreground">
+                        <span className="ml-auto text-xs tabular-nums text-violet-500">
                           {transcripts[i].trim().split(/\s+/).filter(Boolean).length} từ
                         </span>
                       </div>
-                      <div className="px-4 py-3" style={{ background: "rgba(110, 53, 232,0.03)" }}>
+                      <div className="bg-white px-4 py-3">
                         <div className="flex items-start gap-2">
-                          <Quotes className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: "rgba(110, 53, 232,0.3)" }} />
-                          <p className="flex-1 leading-relaxed text-foreground/95" style={{ fontSize: "0.82rem" }}>
+                          <Quotes className="mt-0.5 h-4 w-4 shrink-0 text-violet-300" />
+                          <p className="flex-1 text-sm leading-relaxed text-black">
                             {transcripts[i].trim()}
                           </p>
                         </div>
                       </div>
                     </div>
                   ) : (
-                    <div
-                      className="mt-4 mb-4 rounded-xl px-4 py-3 flex items-center gap-2.5"
-                      style={{ background: "rgba(107,114,128,0.05)", border: "1px dashed rgba(107,114,128,0.2)" }}
-                    >
-                      <Microphone className="h-4 w-4 text-muted-foreground" />
-                      <p className="text-xs text-muted-foreground">
+                    <div className="mb-4 mt-4 flex items-center gap-2.5 rounded-md border border-dashed border-violet-200 bg-violet-50/30 px-4 py-3">
+                      <Microphone className="h-4 w-4 text-violet-400" />
+                      <p className="text-xs text-violet-600">
                         Chưa có ghi âm cho câu này — trả lời bằng giọng nói trong lần phỏng vấn tiếp theo để xem transcript tại đây.
                       </p>
                     </div>
                   )}
 
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 py-4">
+                  <div className="grid grid-cols-2 gap-3 py-4 sm:grid-cols-4">
                     {STAR_LABELS.map((key) => (
-                      <div key={key} className="rounded-xl border border-white/10 bg-white/[0.06] p-2 text-center">
-                        <p className="mb-1 text-xs text-muted-foreground">{key.charAt(0).toUpperCase() + key.slice(1)}</p>
+                      <div key={key} className="rounded-md border border-violet-100 bg-violet-50/40 p-2 text-center">
+                        <p className="mb-1 text-xs capitalize text-violet-600">{key}</p>
                         <div className="flex justify-center">{renderStars(item.scores[key])}</div>
                       </div>
                     ))}
                   </div>
-                  <div className="grid sm:grid-cols-2 gap-4 mb-4">
+                  <div className="mb-4 grid gap-4 sm:grid-cols-2">
                     <div>
-                      <h4 className="mb-2 flex items-center gap-1.5 text-xs font-semibold text-foreground">
-                        <Check className="h-3.5 w-3.5 text-emerald-400" /> Điểm mạnh
+                      <h4 className="mb-2 flex items-center gap-1.5 text-xs font-semibold text-violet-950">
+                        <Check className="h-3.5 w-3.5 text-violet-600" /> Điểm mạnh
                       </h4>
                       <ul className="space-y-1.5">
                         {item.strengths.map((s, j) => (
-                          <li key={j} className="flex items-start gap-1.5 text-xs text-muted-foreground">
-                            <span className="text-emerald-500 flex-shrink-0 mt-0.5">•</span>{s}
+                          <li key={j} className="flex items-start gap-1.5 text-xs text-violet-700">
+                            <span className="mt-0.5 flex-shrink-0 text-[#b5e636]">•</span>{s}
                           </li>
                         ))}
                       </ul>
                     </div>
                     <div>
-                      <h4 className="mb-2 flex items-center gap-1.5 text-xs font-semibold text-foreground">
-                        <Warning className="h-3.5 w-3.5 text-amber-400" /> Cần cải thiện
+                      <h4 className="mb-2 flex items-center gap-1.5 text-xs font-semibold text-violet-950">
+                        <Warning className="h-3.5 w-3.5 text-violet-500" /> Cần cải thiện
                       </h4>
                       <ul className="space-y-1.5">
                         {item.improvements.map((s, j) => (
-                          <li key={j} className="flex items-start gap-1.5 text-xs text-muted-foreground">
-                            <span className="text-amber-500 flex-shrink-0 mt-0.5">•</span>{s}
+                          <li key={j} className="flex items-start gap-1.5 text-xs text-violet-700">
+                            <span className="mt-0.5 flex-shrink-0 text-violet-400">•</span>{s}
                           </li>
                         ))}
                       </ul>
                     </div>
                   </div>
-                  <div className="rounded-xl border border-violet-400/25 bg-violet-500/10 p-4">
+                  <div className="rounded-md border border-violet-200/80 bg-violet-50/50 p-4">
                     <div className="mb-2 flex items-center gap-2">
-                      <Lightbulb className="h-4 w-4 text-violet-200" {...IS} />
-                      <p className="text-xs font-semibold text-violet-100">Gợi ý câu trả lời tốt hơn</p>
+                      <Lightbulb className="h-4 w-4 text-violet-600" {...IS} />
+                      <p className="text-xs font-semibold text-violet-800">Gợi ý câu trả lời tốt hơn</p>
                     </div>
-                    <p className="text-xs leading-relaxed text-foreground/95">{item.suggestion}</p>
+                    <p className="text-xs leading-relaxed text-violet-900">{item.suggestion}</p>
                   </div>
                 </div>
               )}
@@ -603,37 +588,35 @@ export function InterviewFeedback() {
             return (
               <div
                 key={`locked-${i}`}
-                className="relative overflow-hidden rounded-2xl border border-violet-400/20 bg-white/[0.04] shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] backdrop-blur-sm"
+                className="relative overflow-hidden rounded-md border border-violet-200/80 bg-white shadow-sm"
               >
-                {/* Question header — hiện câu hỏi nhưng mờ */}
                 <div
                   className="flex items-center gap-4 p-5"
                   style={{ filter: "blur(2px)", userSelect: "none", pointerEvents: "none" }}
                 >
-                  <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full border border-violet-400/25 bg-violet-500/15">
-                    <span className="text-xs font-bold text-violet-200">{i + 1}</span>
+                  <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-violet-100">
+                    <span className="text-xs font-bold text-violet-400">{i + 1}</span>
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="truncate pr-4 text-sm font-medium leading-relaxed text-white/50">{item.q}</p>
+                    <p className="truncate pr-4 text-sm font-medium leading-relaxed text-violet-400">{item.q}</p>
                     <div className="mt-2 flex items-center gap-2">
                       {[...Array(5)].map((_, si) => (
-                        <Star key={si} className="h-3.5 w-3.5 fill-white/10 text-white/10" />
+                        <Star key={si} className="h-3.5 w-3.5 fill-violet-100 text-violet-100" />
                       ))}
-                      <span className="ml-1 text-xs text-white/25">—</span>
+                      <span className="ml-1 text-xs text-violet-300">—</span>
                     </div>
                   </div>
                 </div>
 
-                {/* Lock overlay */}
-                <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-[#070510]/90 px-6 backdrop-blur-md">
-                  <div className="flex items-center gap-2 rounded-full border border-violet-300/40 bg-violet-500/25 px-3 py-1.5 text-xs font-bold text-white">
-                    <Lock className="h-3.5 w-3.5 shrink-0 text-violet-200" {...IS} />
+                <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-white/92 px-6 backdrop-blur-sm">
+                  <div className="flex items-center gap-2 rounded-full border border-violet-200 bg-violet-50 px-3 py-1.5 text-xs font-bold text-violet-800">
+                    <Lock className="h-3.5 w-3.5 shrink-0 text-violet-600" {...IS} />
                     Câu hỏi {i + 1} · Chỉ dành cho gói Pro
                   </div>
 
                   <div className="text-center">
-                    <p className="mb-1 text-sm font-semibold text-white">Phân tích chi tiết bị khóa</p>
-                    <p className="max-w-xs text-xs leading-relaxed text-white/85">
+                    <p className="mb-1 text-sm font-semibold text-violet-950">Phân tích chi tiết bị khóa</p>
+                    <p className="max-w-xs text-xs leading-relaxed text-violet-600">
                       Nâng cấp Pro để xem điểm số, điểm mạnh, điểm yếu và gợi ý cải thiện cho câu hỏi này.
                     </p>
                   </div>
@@ -641,11 +624,7 @@ export function InterviewFeedback() {
                   <button
                     type="button"
                     onClick={() => navigate("/pricing")}
-                    className="flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-bold text-white shadow-lg transition-all hover:scale-[1.02] active:scale-[0.98]"
-                    style={{
-                      background: "linear-gradient(135deg, #6E35E8, #8B4DFF)",
-                      boxShadow: "0 4px 20px rgba(110, 53, 232,0.4)",
-                    }}
+                    className={`flex items-center gap-2 rounded-md px-5 py-2.5 text-sm font-bold ${CTA_PURPLE}`}
                   >
                     <Lightning className="h-4 w-4 shrink-0" {...IS} />
                     Nâng cấp Pro để mở khóa
@@ -658,21 +637,17 @@ export function InterviewFeedback() {
 
         {/* ── Banner nâng cấp sau danh sách câu hỏi (non-Pro) ── */}
         {!isPro && (
-          <div className="mt-5 flex flex-col items-center gap-4 rounded-2xl border border-violet-300/35 bg-gradient-to-br from-violet-950/70 to-[#0a0618]/90 p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] backdrop-blur-md sm:flex-row">
+          <div className="mt-5 flex flex-col items-center gap-4 rounded-md border border-violet-200/80 bg-violet-50/50 p-5 sm:flex-row">
             <div className="flex-1 text-center sm:text-left">
-              <p className="mb-1 text-sm font-bold text-white">Mở khóa phân tích đầy đủ 5/5 câu hỏi</p>
-              <p className="text-xs leading-relaxed text-white/88">
+              <p className="mb-1 text-sm font-bold text-violet-950">Mở khóa phân tích đầy đủ 5/5 câu hỏi</p>
+              <p className="text-xs leading-relaxed text-violet-600">
                 Nâng cấp gói Pro để xem toàn bộ phản hồi, điểm số chi tiết và gợi ý cải thiện cho tất cả câu hỏi trong buổi phỏng vấn.
               </p>
             </div>
             <button
               type="button"
               onClick={() => navigate("/pricing")}
-              className="flex shrink-0 items-center gap-2 whitespace-nowrap rounded-xl px-6 py-3 text-sm font-bold text-white shadow-lg transition-all hover:scale-[1.02]"
-              style={{
-                background: "linear-gradient(135deg, #6E35E8, #8B4DFF)",
-                boxShadow: "0 4px 20px rgba(110, 53, 232,0.35)",
-              }}
+              className={`flex shrink-0 items-center gap-2 whitespace-nowrap rounded-md px-6 py-3 text-sm font-bold ${CTA_PURPLE}`}
             >
               <Lightning className="h-4 w-4 shrink-0" {...IS} />
               Nâng cấp ngay
@@ -682,60 +657,51 @@ export function InterviewFeedback() {
       </div>
 
       {/* Action buttons */}
-      <div className="mb-6 rounded-2xl border border-violet-200/55 bg-white/88 p-4 shadow-[0_10px_30px_rgba(76,29,149,0.08)] backdrop-blur-sm">
-      <h3 className="mb-3 text-sm font-semibold tracking-tight text-slate-900">Tiếp tục luyện tập</h3>
-      <div className="flex flex-wrap gap-3">
-        <button
-          type="button"
-          onClick={() => navigate("/interview")}
-          className="flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold text-white shadow-md transition-all hover:brightness-110"
-          style={{ background: "linear-gradient(135deg, #6E35E8, #9B6DFF)", boxShadow: "0 4px 16px rgba(110, 53, 232,0.3)" }}
-        >
-          <Microphone className="h-4 w-4 shrink-0" {...IS} />
-          Phỏng vấn lại
-        </button>
+      <div className="mb-6 rounded-md border border-violet-200/80 bg-white p-4 shadow-sm sm:p-5">
+        <h3 className="mb-3 text-sm font-bold text-violet-950">Tiếp tục luyện tập</h3>
+        <div className="flex flex-wrap gap-3">
+          <button
+            type="button"
+            onClick={() => navigate("/interview")}
+            className={`flex items-center gap-2 rounded-md px-5 py-2.5 text-sm font-bold ${CTA_LIME}`}
+          >
+            <Microphone className="h-4 w-4 shrink-0" {...IS} />
+            Phỏng vấn lại
+          </button>
 
-        <button
-          type="button"
-          onClick={() => navigate("/courses")}
-          className="flex items-center gap-2 rounded-xl border border-violet-300/45 bg-white/90 px-5 py-2.5 text-sm font-semibold text-violet-700 shadow-sm transition-all hover:border-violet-400/65 hover:bg-violet-50"
-        >
-          <BookOpen className="h-4 w-4 shrink-0 text-violet-700" {...IS} />
-          <span className="min-w-0">Khóa học</span>
-        </button>
+          <button
+            type="button"
+            onClick={() => navigate("/courses")}
+            className="flex items-center gap-2 rounded-md border border-violet-200/80 bg-white px-5 py-2.5 text-sm font-semibold text-violet-700 shadow-sm transition-all hover:border-violet-300 hover:bg-violet-50"
+          >
+            <BookOpen className="h-4 w-4 shrink-0 text-violet-700" {...IS} />
+            Khóa học
+          </button>
 
-        <button
-          type="button"
-          onClick={() => navigate("/mentors")}
-          className="flex items-center gap-2 rounded-xl border border-[#c4ff47]/50 bg-zinc-950/55 px-5 py-2.5 text-sm font-semibold shadow-sm ring-1 ring-white/5 transition-all hover:border-[#c4ff47]/65 hover:bg-zinc-950/75"
-        >
-          <Calendar className="h-4 w-4 shrink-0 text-[#d4ff6a]" {...IS} />
-          <span className="min-w-0 text-white">Tìm mentor</span>
-          <span className="shrink-0 rounded-full border border-[#c4ff47]/25 bg-[#c4ff47]/12 px-2 py-0.5 text-[10px] font-bold text-[#c4ff47]">
-            Cải thiện 3×
-          </span>
-        </button>
+          <button
+            type="button"
+            onClick={() => navigate("/mentors")}
+            className="flex items-center gap-2 rounded-md border border-violet-200/80 bg-white px-5 py-2.5 text-sm font-semibold text-violet-700 shadow-sm transition-all hover:border-violet-300 hover:bg-violet-50"
+          >
+            <Calendar className="h-4 w-4 shrink-0 text-violet-700" {...IS} />
+            Tìm mentor
+            <span className="shrink-0 rounded-full border border-lime-200/80 bg-lime-50 px-2 py-0.5 text-[10px] font-bold text-violet-900">
+              Cải thiện 3×
+            </span>
+          </button>
 
-        <button
-          type="button"
-          onClick={() => navigate("/dashboard")}
-          className="flex items-center gap-2 rounded-xl border border-white/20 bg-white/[0.1] px-5 py-2.5 text-sm font-medium text-white shadow-sm backdrop-blur-sm transition-all hover:border-white/30 hover:bg-white/[0.14]"
-        >
-          <SquaresFour className="h-4 w-4 shrink-0 text-white" {...IS} />
-          Bảng điều khiển
-        </button>
-        <button
-          type="button"
-          className="flex items-center gap-2 rounded-xl border border-white/20 bg-white/[0.1] px-5 py-2.5 text-sm font-medium text-white shadow-sm backdrop-blur-sm transition-all hover:border-white/30 hover:bg-white/[0.14]"
-        >
-          <DownloadSimple className="h-4 w-4 shrink-0 text-white" {...IS} />
-          Tải PDF
-        </button>
-      </div>
+          <button
+            type="button"
+            onClick={() => navigate("/")}
+            className="flex items-center gap-2 rounded-md border border-violet-200/80 bg-white px-5 py-2.5 text-sm font-medium text-violet-700 shadow-sm transition-all hover:bg-violet-50"
+          >
+            <SquaresFour className="h-4 w-4 shrink-0 text-violet-600" {...IS} />
+            Trang chủ
+          </button>
+        </div>
       </div>
 
-      {/* ── Course Recommendations ─────────────────────────── */}
-      <div className="mb-8 rounded-2xl border border-violet-200/55 bg-white/88 p-4 shadow-[0_10px_30px_rgba(76,29,149,0.08)] backdrop-blur-sm">
+      <div className="mb-8 rounded-md border border-violet-200/80 bg-white p-4 shadow-sm sm:p-5">
         <CourseRecommendations
           tags={["star-method", "behavioral-interview", "interview-skills"]}
           title="Khóa học giúp bạn cải thiện điểm yếu"
@@ -745,6 +711,7 @@ export function InterviewFeedback() {
           weakAreas={weakAreas}
         />
       </div>
+        </div>
       </div>
     </MentorPageShell>
   );

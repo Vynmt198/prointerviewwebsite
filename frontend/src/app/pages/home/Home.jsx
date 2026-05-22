@@ -87,8 +87,8 @@ const FEATURES = [
     bgHover: "rgba(167,139,250,0.)",
     title: "Theo dõi tiến độ",
     desc: "Biểu đồ tiến bộ, lịch sử luyện — biết mình đang ở đâu.",
-    route: "/dashboard",
-    cta: "Xem tiến độ",
+    route: "/my-bookings",
+    cta: "Xem lịch hẹn",
   },
 ];
 
@@ -167,7 +167,7 @@ function HeroInterviewVideoCard() {
   const starBars = [78, 92, 65, 88, 72];
 
   return (
-    <div className="relative mx-auto w-full max-w-[min(100%,328px)] overflow-visible sm:max-w-[380px] lg:mx-0 lg:max-w-[460px] lg:-ml-4 lg:justify-self-end xl:max-w-[480px]">
+    <div className="relative mx-auto mt-8 w-full max-w-[min(100%,280px)] overflow-visible sm:max-w-[332px] lg:mx-0 lg:max-w-[412px] lg:-ml-4 lg:justify-self-end xl:max-w-[432px]">
       <div className="hero-video-frame relative rounded-[1.65rem] bg-white p-2 shadow-[0_16px_44px_rgba(99,14,212,0.14)] sm:rounded-[1.85rem] sm:p-2.5">
         <div
           className="relative overflow-hidden rounded-[1.2rem] bg-slate-100 sm:rounded-[1.35rem]"
@@ -819,8 +819,8 @@ export function Home() {
                 className="mb-5 max-w-2xl leading-relaxed text-slate-600 font-medium"
                 style={{ fontSize: "0.9rem" }}
               >
-                So CV với JD, luyện trả lời với AI, gặp mentor từ Shopee, Vingroup, FPT…
-                Mở app là thấy tiến bộ rõ — không còn phải tự lo một mình trên hành trình tìm việc.
+                ProInterview dựng lại một phòng phỏng vấn ảo với AI nói chuyện, ngắt lời và phản ứng như người thật.
+                Bạn luyện đến khi sẵn sàng — không hồi hộp, không phán xét.
               </p>
 
               <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:justify-start">
@@ -857,7 +857,7 @@ export function Home() {
               <HeroInterviewVideoCard />
             </div>
 
-            <div className="order-2 mt-6 flex w-full justify-center lg:order-3 lg:col-span-2 lg:col-start-1 lg:row-start-2 lg:mt-5">
+            <div className="order-2 mt-14 flex w-full justify-center lg:order-3 lg:col-span-2 lg:col-start-1 lg:row-start-2 lg:mt-[3.25rem]">
               <div
                 className="glass-card w-full max-w-[36rem] px-3 py-3 sm:max-w-[44rem] sm:px-4 sm:py-3.5 lg:max-w-[48rem]"
                 style={{

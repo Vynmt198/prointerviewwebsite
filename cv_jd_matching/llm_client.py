@@ -116,6 +116,14 @@ def _call_cloud(
         )
     except httpx.TimeoutException:
         raise TimeoutError(f"Cloud LLM timeout sau {timeout}s.")
+    except httpx.HTTPStatusError as e:
+        status = e.response.status_code
+        if status == 429:
+            raise RuntimeError(
+                "API LLM bị giới hạn tần suất (429 Too Many Requests). "
+                "Đợi 1–2 phút rồi thử lại, hoặc đổi LLM_API_KEY / LLM_BASE_URL trong cv_jd_matching/.env hoặc backend/.env."
+            )
+        raise RuntimeError(f"Cloud LLM HTTP {status}: {e}")
     except Exception as e:
         raise RuntimeError(f"Cloud LLM error: {e}")
 

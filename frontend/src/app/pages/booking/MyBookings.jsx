@@ -121,11 +121,11 @@ export function MyBookings() {
       >
         <motion.button
           type="button"
-          onClick={() => navigate("/dashboard")}
+          onClick={() => navigate("/")}
           className="flex items-center gap-2 text-sm font-semibold text-slate-500 transition-colors hover:text-[#6E35E8]"
         >
           <ChevronLeft className="h-4 w-4" />
-          Về bảng điều khiển
+          Về trang chủ
         </motion.button>
 
         <div>

@@ -3,7 +3,7 @@ import { authFetch } from "./auth.js";
 /**
  * Upload một file lên backend.
  * @param {File} file - Đối tượng File từ input.
- * @param {'avatar' | 'cv' | 'course-thumbnail' | 'course-video'} type - Loại upload.
+ * @param {'avatar' | 'cv' | 'jd' | 'course-thumbnail' | 'course-video'} type - Loại upload.
  */
 export async function uploadFile(file, type) {
   const formData = new FormData();
@@ -21,7 +21,12 @@ export async function uploadFile(file, type) {
       return { success: false, error: body.error || `Lỗi ${res.status}` };
     }
 
-    return { success: true, url: body.url, fileName: body.fileName };
+    return {
+      success: true,
+      url: body.url,
+      fileId: body.fileId,
+      fileName: body.fileName || file.name,
+    };
   } catch (err) {
     console.error("Upload error:", err);
     return { success: false, error: "Không kết nối được backend để upload." };

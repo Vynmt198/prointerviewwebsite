@@ -8,33 +8,43 @@ import {
   X,
   Zap,
   AlertTriangle as Warning,
-  Mic,
-  Users,
   Briefcase,
   ArrowLeft,
   Lock,
   Percent as SealPercent,
-  PlusCircle,
-  Wrench,
   Trash2 as Trash,
-  BarChart3,
-  Lightbulb,
   Loader2,
   Upload,
   CloudUpload,
-  Download as DownloadSimple,
   Eye,
-  RotateCcw as History,
   RefreshCw,
   BadgeCheck,
 } from "lucide-react";
 import { getPlans, getCVRemaining, incrementCVCount, CV_FREE_LIMIT, isLoggedIn } from "../../utils/auth";
 import { buildLoginPath } from "../../utils/authGate";
 import { apiUrl as expressApiUrl, isExpressBackendConfigured } from "../../utils/api";
-import { CVDocumentPreview } from "../../components/cv/CVDocumentPreview";
-import { CvJdAnalysisPage } from "../../components/cv/CvJdAnalysisFrame";
+import { CvJdAnalysisPage, cvAnalysisPageHeader } from "../../components/cv/CvJdAnalysisFrame";
+import {
+  CV_FIELD_ANALYSIS_PATH,
+  CV_FIELD_HISTORY_PATH,
+  CV_JD_HISTORY_PATH,
+  cvAnalysisResultPath,
+} from "../../components/cv/CvJdAnalysisTabs";
 import { addCVAnalysisRecord } from "../../utils/history";
-import { buildCvAnalysisSavePayload, saveCvAnalysis } from "../../utils/cvApi";
+import {
+  buildCvAnalysisSavePayload,
+  deleteCvAnalysis,
+  fetchCvAnalyses,
+  fetchCvAnalysisById,
+  formatCvSaveError,
+  saveCvAnalysis,
+} from "../../utils/cvApi";
+import { buildFieldAnalysisMockPipeline } from "../../data/cvFieldAnalysisMock.js";
+import {
+  formatSkillSuggestionReason,
+  mapPythonCvPipelineToAnalysis,
+} from "../../utils/cvMappers.js";
+import { uploadCvJdFiles } from "../../utils/cvFileUpload.js";
 import { projectId, publicAnonKey } from "/utils/supabase/info.js";
 
 // ─── API base ─────────────────────────────────────────────────────────────────
@@ -111,17 +121,33 @@ function formatCvAnalyzerHttpError(status, body) {
 }
 
 // ─── Constants ────────────────────────────────────────────────────────────────
-const FIELDS = [
-  "IT / Công nghệ", "Marketing", "Tài chính / Kế toán", "Nhân sự",
-  "Quản lý sản phẩm", "Thiết kế / UX", "Kinh doanh", "Vận hành",
+const DEFAULT_FIELD = "IT / Công nghệ";
+
+/** Ngành chọn được — các mục khác hiển thị badge «Sắp ra mắt». */
+const FIELD_OPTIONS = [
+  { label: DEFAULT_FIELD, available: true },
+  { label: "Marketing", available: false },
+  { label: "Tài chính / Kế toán", available: false },
+  { label: "Nhân sự", available: false },
+  { label: "Quản lý sản phẩm", available: false },
+  { label: "Thiết kế / UX", available: false },
+  { label: "Kinh doanh", available: false },
+  { label: "Vận hành", available: false },
 ];
 
 const FILE_FORMAT_HINT = "Hỗ trợ .pdf, .doc, .docx, .txt · tối đa 10MB";
+
+const UPLOAD_PICK_BTN =
+  "mt-2.5 inline-flex items-center justify-center rounded-lg border border-violet-200 bg-white px-4 py-1.5 text-sm font-semibold text-violet-800 shadow-sm ring-1 ring-violet-100/80 transition hover:border-violet-300 hover:bg-violet-50";
 
 function preventDragDefaults(e) {
   e.preventDefault();
   e.stopPropagation();
 }
+
+/** Chiều cao cố định — CV và JD luôn bằng nhau (chưa chọn / đã chọn) */
+const UPLOAD_ZONE_HEIGHT =
+  "flex h-[10.75rem] w-full flex-col items-center justify-between rounded-2xl border-2 border-dashed border-violet-200/90 bg-violet-50/25 px-5 py-4 text-center transition sm:h-[11rem] sm:px-6 sm:py-5";
 
 function CvUploadDropZone({ kind, hasFile, fileName, fileSizeKb, onPick, onClear, onFile }) {
   const isCv = kind === "cv";
@@ -131,126 +157,91 @@ function CvUploadDropZone({ kind, hasFile, fileName, fileSizeKb, onPick, onClear
   const pickLabel = isCv ? "Chọn CV" : "Chọn JD";
   const zoneLabel = isCv ? "CV của bạn" : "Job Description";
 
-  const shellClass =
-    "flex min-h-[10.5rem] flex-col items-center justify-center rounded-2xl border-2 border-dashed px-6 py-8 text-center transition sm:min-h-[11rem] sm:py-9";
+  const dropHandlers = {
+    onDragEnter: preventDragDefaults,
+    onDragOver: preventDragDefaults,
+    onDrop: (e) => {
+      preventDragDefaults(e);
+      const f = e.dataTransfer.files?.[0];
+      if (f) onFile(f);
+    },
+  };
 
-  const wrap = "h-full px-6 pt-6 sm:px-8 sm:pt-7";
-
-  if (hasFile) {
-    return (
-      <div className={wrap}>
-        <p className="mb-1.5 text-xs font-bold uppercase tracking-wide text-violet-600">{zoneLabel}</p>
-        <div
-          className={`${shellClass} border-violet-200/90 bg-violet-50/25`}
-          onDragEnter={preventDragDefaults}
-          onDragOver={preventDragDefaults}
-          onDrop={(e) => {
-            preventDragDefaults(e);
-            const f = e.dataTransfer.files?.[0];
-            if (f) onFile(f);
-          }}
-        >
-          <div className="mb-2.5 flex items-center justify-center gap-2">
-            <CloudUpload className="h-6 w-6 shrink-0 text-violet-400" strokeWidth={1.5} />
-            <p className="text-left text-xs font-bold leading-snug text-violet-950 sm:text-sm">{headline}</p>
-          </div>
-          <p
-            className="truncate px-1 text-sm font-semibold text-emerald-700"
-            title={fileName}
-          >
-            {fileName}
-          </p>
-          {fileSizeKb != null && (
-            <p className="mt-0.5 text-[11px] font-medium text-emerald-600/90">{fileSizeKb} KB</p>
-          )}
-          <button
-            type="button"
-            onClick={onPick}
-            className="mt-2 text-sm font-semibold text-emerald-700 underline-offset-2 transition hover:text-emerald-800 hover:underline"
-          >
-            Chọn tệp khác
-          </button>
-        </div>
-      </div>
-    );
-  }
+  const shellClass = hasFile
+    ? UPLOAD_ZONE_HEIGHT
+    : `${UPLOAD_ZONE_HEIGHT} cursor-pointer hover:border-violet-300 hover:bg-violet-50/55`;
 
   return (
-    <div className={wrap}>
-      <p className="mb-2 text-xs font-bold uppercase tracking-wide text-violet-600">{zoneLabel}</p>
+    <div className="flex h-full flex-col px-6 pt-6 sm:px-8 sm:pt-7">
+      <p className="mb-1.5 shrink-0 text-xs font-bold uppercase tracking-wide text-violet-600">
+        {zoneLabel}
+      </p>
       <div
-        role="button"
-        tabIndex={0}
-        onClick={onPick}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" || e.key === " ") {
-            e.preventDefault();
-            onPick();
-          }
-        }}
-        onDragEnter={preventDragDefaults}
-        onDragOver={preventDragDefaults}
-        onDrop={(e) => {
-          preventDragDefaults(e);
-          const f = e.dataTransfer.files?.[0];
-          if (f) onFile(f);
-        }}
-        className={`${shellClass} cursor-pointer border-violet-200/90 bg-violet-50/25 hover:border-violet-300 hover:bg-violet-50/55`}
+        {...dropHandlers}
+        role={hasFile ? undefined : "button"}
+        tabIndex={hasFile ? undefined : 0}
+        onClick={hasFile ? undefined : onPick}
+        onKeyDown={
+          hasFile
+            ? undefined
+            : (e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  onPick();
+                }
+              }
+        }
+        className={shellClass}
       >
-        <CloudUpload className="mb-3 h-10 w-10 text-violet-400" strokeWidth={1.5} />
-        <p className="max-w-md text-sm font-bold text-violet-950 sm:text-base">{headline}</p>
-        <p className="mt-1.5 text-xs text-violet-500">{FILE_FORMAT_HINT}</p>
+        <div className="flex w-full max-w-sm items-center justify-center gap-2">
+          <CloudUpload className="h-6 w-6 shrink-0 text-violet-400" strokeWidth={1.5} />
+          <p className="text-left text-xs font-bold leading-snug text-violet-950 sm:text-sm">{headline}</p>
+        </div>
+
+        {/* Khối giữa cố định 2 dòng — tránh lệch chiều cao CV vs JD */}
+        <div className="flex min-h-[2.75rem] w-full max-w-sm flex-col items-center justify-center gap-0.5 px-1">
+          {hasFile ? (
+            <>
+              <p
+                className="max-w-full truncate text-sm font-semibold leading-tight text-emerald-700"
+                title={fileName}
+              >
+                {fileName || "—"}
+              </p>
+              <p className="text-[11px] font-medium leading-none text-emerald-600/90">
+                {fileSizeKb != null ? `${fileSizeKb} KB` : "\u00a0"}
+              </p>
+            </>
+          ) : (
+            <>
+              <p className="text-center text-[11px] font-medium leading-snug text-violet-500">
+                {FILE_FORMAT_HINT}
+              </p>
+              <p className="text-[11px] leading-none text-transparent select-none" aria-hidden>
+                placeholder
+              </p>
+            </>
+          )}
+        </div>
+
         <button
           type="button"
           onClick={(e) => {
             e.stopPropagation();
             onPick();
           }}
-          className="mt-4 rounded-lg border border-violet-200 bg-white px-5 py-2 text-sm font-semibold text-violet-800 shadow-sm transition hover:border-violet-300 hover:bg-violet-50"
+          className={
+            hasFile
+              ? `${UPLOAD_PICK_BTN} mt-0 shrink-0 text-emerald-800 hover:border-emerald-200 hover:bg-emerald-50`
+              : `${UPLOAD_PICK_BTN} mt-0 shrink-0`
+          }
         >
-          {pickLabel}
+          {hasFile ? "Chọn tệp khác" : pickLabel}
         </button>
       </div>
     </div>
   );
 }
-
-const DEMO_MATCHED   = ["React", "TypeScript", "Node.js", "REST API", "Agile", "Git"];
-const DEMO_JD_KWS    = ["React", "TypeScript", "Node.js", "Docker", "AWS", "CI/CD", "REST API", "PostgreSQL", "Agile", "Git"];
-const DEMO_SCORES    = [
-  { criteria: "Clarity (Rõ ràng)",      score: 7, max: 10, status: "good", note: "CV có cấu trúc khá rõ, các mục được trình bày logic." },
-  { criteria: "Structure (STAR)",        score: 6, max: 10, status: "ok",   note: "Phần kinh nghiệm chưa theo format STAR đầy đủ." },
-  { criteria: "Relevance (Liên quan JD)",score: 8, max: 10, status: "good", note: "6/10 từ khóa kỹ thuật trong JD có trong CV." },
-  { criteria: "Credibility (Thuyết phục)",score:5, max: 10, status: "warn", note: "Thiếu số liệu KPI cụ thể." },
-];
-const DEMO_SUGGESTIONS = [
-  {
-    type: "fix", priority: "high",
-    title: "Cải thiện bullet: \"Tối ưu hiệu năng React cho trang chủ…\"",
-    reason: "Thêm STAR format · Nhúng từ khóa JD: performance, load time · Thêm số liệu KPI",
-    before: "• Tối ưu hiệu năng React cho trang chủ",
-    after:  "• Phân tích bottleneck trang chủ (LCP 4.2s), áp dụng lazy loading + code splitting, cải thiện Lighthouse 65→92 và giảm 40% load time.",
-    keywordsAdded: ["lazy loading", "code splitting", "Lighthouse"],
-    starCheck: { situation: true, action: true, result: true },
-    confidence: "high",
-  },
-  {
-    type: "fix", priority: "high",
-    title: "Cải thiện bullet: \"Xây dựng REST API với Node.js…\"",
-    reason: "Thiếu Result đo lường · Thêm từ khóa: scalability, uptime",
-    before: "• Xây dựng REST API với Node.js",
-    after:  "• Thiết kế và triển khai 12 RESTful endpoints (Node.js/Express), xử lý 50k req/day với 99.9% uptime.",
-    keywordsAdded: ["RESTful", "scalability", "uptime"],
-    starCheck: { situation: false, action: true, result: true },
-    confidence: "medium",
-  },
-  { type: "add", priority: "high",   title: "Thêm Docker & AWS vào Kỹ năng",      reason: "JD yêu cầu Docker & AWS bắt buộc.",                   before: "Tools: Git, Webpack, Vite", after: "Tools: Git, Webpack, Docker, AWS (EC2, S3)", keywordsAdded: [], starCheck: {}, confidence: null },
-  { type: "add", priority: "high",   title: "Đề cập CI/CD trong Kinh nghiệm",     reason: "JD yêu cầu CI/CD pipeline.",                          before: "• Quản lý source code qua Git", after: "• Quản lý Git, thiết lập CI/CD với GitHub Actions", keywordsAdded: [], starCheck: {}, confidence: null },
-  { type: "add", priority: "medium", title: "Thêm PostgreSQL vào Database",        reason: "JD đề cập PostgreSQL là DB chính.",                    before: "Database: MySQL, MongoDB", after: "Database: MySQL, MongoDB, PostgreSQL", keywordsAdded: [], starCheck: {}, confidence: null },
-  { type: "remove", priority: "low", title: "Loại bỏ kỹ năng không liên quan JD", reason: "Photoshop/Illustrator làm phân tán khỏi vai trò FE.", before: "Others: Photoshop, Illustrator", after: "Others: Figma, Storybook, Jest", keywordsAdded: [], starCheck: {}, confidence: null },
-];
-
-// ─── Types ────────────────────────────────────────────────────────────────────
 
 // ─── Component ────────────────────────────────────────────────────────────────
 export function CVAnalysis() {
@@ -275,8 +266,20 @@ export function CVAnalysis() {
   const [step, setStep]    = useState("upload");
   const [cvUploaded, setCvUploaded] = useState(false);
   const [jdUploaded, setJdUploaded] = useState(false);
-  const [selectedField, setSelectedField] = useState("");
+  const [selectedField, setSelectedField] = useState(() =>
+    routeMode === "field" ? DEFAULT_FIELD : ""
+  );
   const [fieldOpen, setFieldOpen] = useState(false);
+
+  useEffect(() => {
+    if (routeMode === "field") {
+      setEnableField(true);
+      setEnableJD(false);
+      setSelectedField((prev) =>
+        prev === DEFAULT_FIELD ? prev : DEFAULT_FIELD
+      );
+    }
+  }, [routeMode]);
   const [progress, setProgress] = useState(0);
   const [loadingStage, setLoadingStage] = useState(0);
 
@@ -286,9 +289,6 @@ export function CVAnalysis() {
   const cvInputRef = useRef(null);
   const jdInputRef = useRef(null);
 
-  // Results
-  const [analysisResult, setAnalysisResult] = useState(null);
-  const [savedFileInfo,  setSavedFileInfo]  = useState(null);
   const [analyzeError,   setAnalyzeError]   = useState(null);
 
   // Re-analysis from stored paths
@@ -310,10 +310,6 @@ export function CVAnalysis() {
       navigate("/cv-analysis", { replace: true });
       return;
     }
-    if (!isLoggedIn()) {
-      navigate(buildLoginPath(loginReturnPath), { replace: true });
-      return;
-    }
     if (routeMode === "jd") {
       setEnableJD(true);
       setEnableField(false);
@@ -321,18 +317,16 @@ export function CVAnalysis() {
       setEnableJD(false);
       setEnableField(true);
     }
-  }, [routeMode, navigate, loginReturnPath]);
+  }, [routeMode, navigate]);
 
   const canAnalyze  = plans.starterPro || plans.elitePro || cvRemaining > 0;
-  const isFreeTier  = !plans.starterPro && !plans.elitePro;
-
   const hasCvInput = Boolean(cvUploaded || reuseCV || cvFile);
   const hasJdInput = Boolean(jdUploaded || reuseJD || jdFile);
-  const needsJdForRoute = routeMode === "jd" && enableJD;
+  const needsJdForRoute = routeMode === "jd";
   const readyToAnalyze =
-    needsJdForRoute
+    routeMode === "jd"
       ? hasCvInput && hasJdInput
-      : routeMode === "field" && enableField
+      : routeMode === "field"
         ? hasCvInput && Boolean(selectedField)
         : hasCvInput;
 
@@ -344,57 +338,62 @@ export function CVAnalysis() {
         : "Bắt đầu phân tích"
     : !hasCvInput
       ? "Tải CV để tiếp tục"
-      : routeMode === "field" && !selectedField
+      : enableField && !selectedField
         ? "Chọn ngành để phân tích"
         : "Bắt đầu phân tích";
 
-  // Derived mode based on checkboxes
   const derivedMode = enableJD ? "jd" : enableField ? "field" : "cv-only";
 
-  // ── Derived result data ─────────────────────────────────────────────────
-  const R = analysisResult;
-  const matchScore    = R?.matchScore    ?? 72;
-  const overallScore  = R?.overallScore  ?? matchScore;
-  const matchedSet   = new Set(R ? R.matchedKeywords : DEMO_MATCHED);
-  const cvDisplayKWs = R ? R.matchedKeywords     : DEMO_MATCHED;
-  const jdDisplayKWs = R ? [...R.matchedKeywords, ...R.missingKeywords] : DEMO_JD_KWS;
-  const scoreTableData = R ? [
-    { criteria: "Clarity (Rõ ràng)",       score: R.scores.clarity,     max: 10, status: R.scores.clarity     >= 8 ? "good" : R.scores.clarity     >= 6 ? "ok" : "warn", note: R.scoreNotes?.clarity     ?? "" },
-    { criteria: "Structure (STAR)",         score: R.scores.structure,   max: 10, status: R.scores.structure   >= 8 ? "good" : R.scores.structure   >= 6 ? "ok" : "warn", note: R.scoreNotes?.structure   ?? "" },
-    { criteria: "Relevance (Liên quan JD)", score: R.scores.relevance,   max: 10, status: R.scores.relevance   >= 8 ? "good" : R.scores.relevance   >= 6 ? "ok" : "warn", note: R.scoreNotes?.relevance   ?? "" },
-    { criteria: "Credibility (Thuyết phục)",score: R.scores.credibility, max: 10, status: R.scores.credibility >= 8 ? "good" : R.scores.credibility >= 6 ? "ok" : "warn", note: R.scoreNotes?.credibility ?? "" },
-  ] : DEMO_SCORES;
-  const suggestionsData = R?.suggestions ?? DEMO_SUGGESTIONS;
-  const strengthsData   = R?.strengths   ?? ["React & TypeScript — khớp hoàn toàn với JD", "Node.js + REST API phù hợp", "Agile/Scrum đã có trong CV", "Dự án e-commerce liên quan"];
-  const weaknessesData  = R?.weaknesses  ?? ["Thiếu Docker, AWS, CI/CD", "Không có PostgreSQL", "Mô tả thiếu số liệu KPI", "Kinh nghiệm chưa theo STAR"];
-  const highCount   = suggestionsData.filter(s => s.priority === "high").length;
-  const mediumCount = suggestionsData.filter(s => s.priority === "medium").length;
-  const lowCount    = suggestionsData.filter(s => s.priority === "low").length;
+  const goToResultPage = useCallback(
+    (payload, { replay = false } = {}) => {
+      const mode = routeMode === "field" ? "field" : "jd";
+      navigate(cvAnalysisResultPath(mode, payload.analysisId), {
+        state: {
+          analysis: payload.analysis,
+          savedFileInfo: {
+            analysisId: payload.analysisId ?? null,
+            cvFileUrl: payload.cvFileUrl ?? null,
+            jdFileUrl: payload.jdFileUrl ?? null,
+            cvFileName: payload.cvFileName ?? cvFile?.name ?? reuseCV?.name ?? "cv",
+            jdFileName: payload.jdFileName ?? jdFile?.name ?? reuseJD?.name ?? null,
+          },
+          historySaveWarning: payload.historySaveWarning ?? null,
+          isReplayFromHistory: replay,
+          cvFile,
+          jdFile,
+        },
+      });
+    },
+    [navigate, routeMode, cvFile, jdFile, reuseCV, reuseJD],
+  );
 
-  // ── Reset handler (currently not triggered) ────────────────────────────
   const resetForm = () => {
     setStep("upload"); setCvUploaded(false); setJdUploaded(false);
     setCvFile(null); setJdFile(null); setSelectedField(""); setProgress(0);
-    setAnalysisResult(null); setSavedFileInfo(null); setAnalyzeError(null);
+    setAnalyzeError(null);
     setReuseCV(null); setReuseJD(null);
     setEnableJD(false); setEnableField(false);
   };
+
+  const openHistoryResult = useCallback(
+    (res) => {
+      if (!res?.success || !res.analysis) return false;
+      const mode =
+        res.historyItem?.mode === "field" || routeMode === "field" ? "field" : "jd";
+      navigate(cvAnalysisResultPath(mode, res.analysisId));
+      return true;
+    },
+    [navigate, routeMode],
+  );
 
   // ── Load history when switching to history tab ──────────────────────────
   const loadHistory = useCallback(async () => {
     setHistoryLoading(true);
     setHistoryError(null);
     try {
-      const token = await getForceRefreshedToken();
-      if (!SUPABASE_CONFIGURED) {
-        setHistoryList([]);
-        setHistoryError("Lịch sử CV cần Supabase (VITE_SUPABASE_PROJECT_ID). Phân tích CV+JD vẫn dùng backend.");
-        return;
-      }
-      const res = await fetch(supabaseApiUrl("cv/analyses"), { headers: apiHeaders(token) });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Lỗi tải lịch sử");
-      setHistoryList(data.analyses ?? []);
+      const res = await fetchCvAnalyses();
+      if (!res.success) throw new Error(res.error || "Lỗi tải lịch sử");
+      setHistoryList(res.analyses ?? []);
     } catch (err) {
       setHistoryError(err.message);
     } finally {
@@ -439,16 +438,10 @@ export function CVAnalysis() {
     setStep("loading"); setAnalyzeError(null); setProgress(0); setLoadingStage(0);
 
     const hasJdInput = jdUploaded || !!reuseJD || !!jdFile;
-    let analyzeMode = derivedMode === "cv-only" ? "field" : derivedMode;
-    if (USE_EXPRESS_CV && hasJdInput) analyzeMode = "jd";
+    const analyzeMode =
+      routeMode === "field" ? "field" : routeMode === "jd" ? "jd" : derivedMode === "cv-only" ? "field" : derivedMode;
 
-    if (USE_EXPRESS_CV && analyzeMode !== "jd") {
-      setAnalyzeError(
-        "Bật「Có Job Description」, upload file JD (PDF), rồi bấm Phân tích — hệ thống dùng backend + Python trên Render.",
-      );
-      setStep("upload");
-      return;
-    }
+    if (routeMode === "field" && !selectedField) return;
 
     if (cvFile || reuseCV) {
       // ── Real API path ──────────────────────────────────────────────────
@@ -468,16 +461,6 @@ export function CVAnalysis() {
 
         // ── Helpers ────────────────────────────────────────────────────────
         const applyResult = (d) => {
-          setAnalysisResult(d.analysis);
-          setSavedFileInfo({
-            analysisId:    d.analysisId,
-            cvSignedUrl:   d.cvSignedUrl,
-            jdSignedUrl:   d.jdSignedUrl,
-            cvFileName:    cvFile?.name ?? reuseCV?.name ?? "cv",
-            jdFileName:    jdFile?.name ?? reuseJD?.name ?? null,
-            cvStoragePath,
-            jdStoragePath,
-          });
           addCVAnalysisRecord({
             id: `cv-${Date.now()}`, date: new Date().toLocaleDateString("vi-VN"),
             mode: analyzeMode , cvFile: cvFile?.name ?? reuseCV?.name ?? "cv",
@@ -607,11 +590,17 @@ export function CVAnalysis() {
             type:          "add",
             priority:      item.priority,
             title:         `Bổ sung kỹ năng "${item.skill}"`,
-            reason:        item.reframe_tip && item.reframe_tip !== "N/A"
-                             ? item.reframe_tip
-                             : item.acquisition_path,
-            before:        `Chưa có trong CV — ước tính ${item.estimated_effort ?? "không rõ"}`,
-            after:         item.acquisition_path,
+            reason:        formatSkillSuggestionReason(item, {
+              mode: routeMode === "field" ? "field" : "jd",
+            }),
+            before:        `Chưa có trong CV — ước tính ${item.estimated_effort ?? "chưa rõ"}`,
+            after:
+              item.acquisition_path && String(item.acquisition_path).trim() &&
+              !/^(n\/a|không áp dụng)$/i.test(String(item.acquisition_path).trim())
+                ? item.acquisition_path
+                : item.skill
+                  ? `Bổ sung «${item.skill}» vào mục Kỹ năng hoặc mô tả kinh nghiệm.`
+                  : "",
             keywordsAdded: [],
             starCheck:     {},
             confidence:    null,
@@ -648,61 +637,145 @@ export function CVAnalysis() {
 
           const planFlags = getPlans();
           const planAtTime = planFlags.elitePro ? "enterprise" : planFlags.starterPro ? "pro" : "free";
+          const fileUpload = await uploadCvJdFiles(cvFile, jdFile, { includeJd: true });
           const savePayload = buildCvAnalysisSavePayload({
             analysis: analysisPayload,
             cvFileName: cvFile?.name ?? reuseCV?.name ?? "cv.pdf",
             jdFileName: jdFile?.name ?? reuseJD?.name ?? "",
+            cvFileUrl: fileUpload.cvFileUrl,
+            jdFileUrl: fileUpload.jdFileUrl,
+            cvFileId: fileUpload.cvFileId,
+            jdFileId: fileUpload.jdFileId,
             analyzeMode: "jd",
             tier: analysisTier,
             planAtTime,
             meta: { pythonEndpoint, fallbackTriggered: usedFallback },
           });
           const saveRes = await saveCvAnalysis(savePayload);
+          let historySaveWarning = formatCvSaveError(saveRes);
+          if (fileUpload.warnings.length) {
+            historySaveWarning = [historySaveWarning, ...fileUpload.warnings]
+              .filter(Boolean)
+              .join(" · ");
+          }
           if (!saveRes.success) {
-            console.warn("[CV] Không lưu được lịch sử MongoDB:", saveRes.error);
+            console.warn("[CV] Không lưu được lịch sử MongoDB:", saveRes.error, saveRes.message);
+          } else if (saveRes.analysisId) {
+            window.dispatchEvent(
+              new CustomEvent("cv-analysis-saved", {
+                detail: { mode: "jd", analysisId: saveRes.analysisId },
+              })
+            );
           }
 
           data = {
             success: true,
             analysisId: saveRes.analysisId || null,
+            historySaveWarning,
+            cvFileUrl: fileUpload.cvFileUrl,
+            jdFileUrl: fileUpload.jdFileUrl,
+            cvFileName: cvFile?.name ?? reuseCV?.name ?? "cv.pdf",
+            jdFileName: jdFile?.name ?? reuseJD?.name ?? null,
             analysis: {
               ...analysisPayload,
+              cvFileUrl: fileUpload.cvFileUrl,
+              jdFileUrl: fileUpload.jdFileUrl,
+            },
+          };
+        } else if (analyzeMode === "field") {
+          const fieldName = selectedField || "IT / Công nghệ";
+          let raw = null;
+          let usedFieldFallback = true;
+
+          if (USE_EXPRESS_CV && cvFile) {
+            const formField = new FormData();
+            formField.append("resume", cvFile);
+            formField.append("field", fieldName);
+            try {
+              const pyRes = await fetch(expressApiUrl("/api/cv/analyze/field"), {
+                method: "POST",
+                headers: { Authorization: `Bearer ${token}` },
+                body: formField,
+              });
+              if (pyRes.ok) {
+                raw = await pyRes.json();
+                usedFieldFallback = Boolean(raw._fallback ?? raw._mock);
+              }
+            } catch (err) {
+              console.warn("[CV field] API unavailable, using mock", err);
+            }
+          }
+
+          if (!raw) {
+            raw = buildFieldAnalysisMockPipeline(fieldName);
+            usedFieldFallback = true;
+          }
+
+          clearInterval(timer);
+          setProgress(95);
+          setLoadingStage(4);
+
+          const analysisPayload = mapPythonCvPipelineToAnalysis(raw, {
+            usedFallback: usedFieldFallback,
+            field: fieldName,
+          });
+
+          const planFlags = getPlans();
+          const planAtTime = planFlags.elitePro ? "enterprise" : planFlags.starterPro ? "pro" : "free";
+          const fileUpload = await uploadCvJdFiles(cvFile, null, { includeJd: false });
+          const savePayload = buildCvAnalysisSavePayload({
+            analysis: analysisPayload,
+            cvFileName: cvFile?.name ?? reuseCV?.name ?? "cv.pdf",
+            jdFileName: "",
+            cvFileUrl: fileUpload.cvFileUrl,
+            cvFileId: fileUpload.cvFileId,
+            analyzeMode: "field",
+            tier: "suggestions",
+            planAtTime,
+            meta: {
+              pythonEndpoint: "/analyze/field",
+              fallbackTriggered: usedFieldFallback,
+              llmProvider: raw._mock ? "mock" : "unknown",
+            },
+          });
+          const saveRes = await saveCvAnalysis(savePayload);
+          let historySaveWarning = formatCvSaveError(saveRes);
+          if (fileUpload.warnings.length) {
+            historySaveWarning = [historySaveWarning, ...fileUpload.warnings]
+              .filter(Boolean)
+              .join(" · ");
+          }
+          if (!saveRes.success) {
+            console.warn("[CV] Không lưu được lịch sử field:", saveRes.error, saveRes.message);
+          } else if (saveRes.analysisId) {
+            window.dispatchEvent(
+              new CustomEvent("cv-analysis-saved", {
+                detail: { mode: "field", analysisId: saveRes.analysisId },
+              })
+            );
+          }
+
+          data = {
+            success: true,
+            analysisId: saveRes.analysisId || null,
+            historySaveWarning,
+            cvFileUrl: fileUpload.cvFileUrl,
+            cvFileName: cvFile?.name ?? reuseCV?.name ?? "cv.pdf",
+            analysis: {
+              ...analysisPayload,
+              cvFileUrl: fileUpload.cvFileUrl,
             },
           };
         } else {
-          // ── Supabase Edge Function (field mode / cv-only) ───────────────
-          const fd = buildFd(cvFile, reuseCV, jdFile, reuseJD, analyzeMode, selectedField);
-          const headers = apiHeaders(token);
-          const url = supabaseApiUrl("cv-analysis");
-          if (!url) {
-            throw new Error("Chưa cấu hình Supabase. Dùng chế độ「Có Job Description」+ JD để phân tích qua backend.");
-          }
-
-          const res = await fetch(url, { method: "POST", headers, body: fd });
-
-          clearInterval(timer); setProgress(95); setLoadingStage(4);
-
-          if (!res.ok) {
-            if (res.status === 401) {
-              clearInterval(timer);
-              setStep("upload");
-              setAnalyzeError("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.");
-              navigate(buildLoginPath(loginReturnPath));
-              return;
-            }
-            const errJson = await res.json().catch(() => ({}));
-            throw new Error(errJson.message || errJson.error || `Server ${res.status}`);
-          }
-
-          data = await res.json();
-          if (!data?.success) throw new Error(data?.error || "Phân tích thất bại");
+          throw new Error("Chọn chế độ phân tích CV + JD hoặc theo ngành nghề từ trang hub.");
         }
 
         applyResult(data);
 
         setProgress(100);
-        await new Promise(r => setTimeout(r, 350));
-        setStep("result");
+        await new Promise((r) => setTimeout(r, 350));
+        goToResultPage(data);
+        setStep("upload");
       } catch (err) {
         clearInterval(timer);
         console.error("CV analysis error:", err);
@@ -714,7 +787,14 @@ export function CVAnalysis() {
       let p = 0;
       const iv = setInterval(() => {
         p += Math.random() * 15;
-        if (p >= 100) { p = 100; clearInterval(iv); setTimeout(() => setStep("result"), 400); }
+        if (p >= 100) {
+          p = 100;
+          clearInterval(iv);
+          setTimeout(() => {
+            goToResultPage({ analysis: null, analysisId: null });
+            setStep("upload");
+          }, 400);
+        }
         setProgress(Math.min(p, 100));
         if (p > 20) setLoadingStage(1);
         if (p > 50) setLoadingStage(2);
@@ -727,21 +807,9 @@ export function CVAnalysis() {
   const loadHistoryItem = async (id) => {
     setLoadingAnalysisId(id);
     try {
-      const token = await getForceRefreshedToken();
-      const res = await fetch(supabaseApiUrl(`cv/analyses/${id}`), { headers: apiHeaders(token) });
-      const data = await res.json();
-      if (!res.ok || !data.success) throw new Error(data.error || "Lỗi tải phân tích");
-
-      setAnalysisResult(data.record.analysis);
-      setSavedFileInfo({
-        analysisId:    data.record.analysisId,
-        cvSignedUrl:   data.cvSignedUrl,
-        jdSignedUrl:   data.jdSignedUrl,
-        cvFileName:    data.record.cvFileName,
-        jdFileName:    data.record.jdFileName,
-      });
-      setPageView("analysis");
-      setStep("result");
+      const res = await fetchCvAnalysisById(id);
+      if (!res.success) throw new Error(res.error || "Lỗi tải phân tích");
+      openHistoryResult(res);
     } catch (err) {
       alert(`Lỗi: ${err.message}`);
     } finally {
@@ -775,9 +843,8 @@ export function CVAnalysis() {
     if (!confirm("Xóa phân tích này và các file đính kèm?")) return;
     setDeletingId(id);
     try {
-      const token = await getForceRefreshedToken();
-      const res = await fetch(supabaseApiUrl(`cv/analyses/${id}`), { method: "DELETE", headers: apiHeaders(token) });
-      if (!res.ok) { const e = await res.json(); throw new Error(e.error); }
+      const res = await deleteCvAnalysis(id);
+      if (!res.success) throw new Error(res.error || "Không xóa được");
       setHistoryList(prev => prev.filter(a => a.analysisId !== id));
     } catch (err) {
       alert(`Lỗi xóa: ${err.message}`);
@@ -786,33 +853,34 @@ export function CVAnalysis() {
     }
   };
 
-  const loadingSteps = derivedMode === "jd"
-    ? ["Đọc và xử lý file CV...", "Đọc và xử lý file JD...", "Gemini AI phân tích...", "Tạo gợi ý chi tiết..."]
-    : ["Đọc và xử lý file CV...", "Gemini AI phân tích...", "Chấm điểm tiêu chí...", "Tạo gợi ý chi tiết..."];
+  const loadingSteps =
+    routeMode === "jd"
+      ? ["Đọc và xử lý file CV...", "Đọc và xử lý file JD...", "Gemini AI phân tích...", "Tạo gợi ý chi tiết..."]
+      : routeMode === "field"
+        ? [
+            "Đọc và xử lý file CV...",
+            "So khớp kỹ năng theo ngành...",
+            "Chấm điểm theo tiêu chí ngành...",
+            "Tạo gợi ý cải thiện...",
+          ]
+        : ["Đọc và xử lý file CV...", "Gemini AI phân tích...", "Chấm điểm tiêu chí...", "Tạo gợi ý chi tiết..."];
+
+  const pageHeader =
+    routeMode === "field" || routeMode === "jd"
+      ? cvAnalysisPageHeader(routeMode)
+      : cvAnalysisPageHeader("jd");
 
   // ────────────────────────────────────────────────────────────────────────────
   return (
     <CvJdAnalysisPage
       activeTab="analysis"
-      showTabs={routeMode === "jd"}
-      badge={routeMode === "field" ? "Phân tích theo ngành" : "Phân tích CV + JD"}
-      title={
-        routeMode === "field" ? (
-          <>
-            Phân tích CV <span className="text-[#630ed4]">theo ngành</span>
-          </>
-        ) : undefined
+      cardVariant={routeMode === "field" ? "field" : "default"}
+      showTabs={routeMode === "jd" || routeMode === "field"}
+      tabAnalysisPath={routeMode === "field" ? CV_FIELD_ANALYSIS_PATH : undefined}
+      tabHistoryPath={
+        routeMode === "field" ? CV_FIELD_HISTORY_PATH : CV_JD_HISTORY_PATH
       }
-      subtitle={
-        routeMode === "field"
-          ? "Tải CV, chọn nhóm ngành nghề — AI đánh giá cấu trúc, nội dung và gợi ý cải thiện theo chuẩn ngành."
-          : undefined
-      }
-      subtitleClassName={
-        routeMode === "field"
-          ? "mt-2 max-w-2xl text-sm font-medium leading-relaxed text-violet-800/90 sm:text-[0.9375rem]"
-          : undefined
-      }
+      {...pageHeader}
       tabTrailing={
         routeMode === "jd" && !plans.starterPro && !plans.elitePro && step === "upload" ? (
           <span
@@ -951,7 +1019,7 @@ export function CVAnalysis() {
 
           {/* ── UPLOAD ───────────────────────��──────────────────────────── */}
           {step === "upload" && (
-            <div>
+            <div className={routeMode === "field" ? "min-h-[30rem] sm:min-h-[32rem]" : undefined}>
               {/* Error */}
               {analyzeError && (
                 <div className="flex items-start gap-3 rounded-2xl px-5 py-4 mb-6" style={{ background: "rgba(255,140,66,0.08)", border: "1.5px solid rgba(255,140,66,0.3)" }}>
@@ -992,7 +1060,7 @@ export function CVAnalysis() {
               <div
                 className={
                   routeMode === "jd" && enableJD
-                    ? "grid gap-6 pb-2 lg:grid-cols-2 lg:gap-8"
+                    ? "grid items-stretch gap-6 pb-2 lg:grid-cols-2 lg:gap-8"
                     : "pb-2"
                 }
               >
@@ -1029,13 +1097,13 @@ export function CVAnalysis() {
               </div>
 
               {routeMode === "field" && enableField && (
-                <div className="border-t border-violet-100 px-4 py-4 sm:px-5">
+                <div className="border-t border-violet-100 px-4 py-4 pb-6 sm:px-5 sm:pb-8">
                   <p className="mb-2 text-xs font-bold uppercase tracking-wide text-violet-700">Ngành nghề</p>
-                  <div className="relative">
+                  <div className="relative z-20">
                     <button
                       type="button"
                       onClick={() => setFieldOpen(!fieldOpen)}
-                      className="group flex w-full items-center justify-between rounded-xl border border-violet-200 bg-white px-4 py-3 text-sm transition-colors hover:border-violet-300"
+                      className="group flex w-full items-center justify-between rounded-sm border border-violet-200 bg-white px-4 py-3 text-sm transition-colors hover:border-violet-300"
                     >
                       <span className={selectedField ? "font-semibold text-violet-950" : "text-violet-500"}>
                         {selectedField || "Chọn ngành nghề..."}
@@ -1043,17 +1111,46 @@ export function CVAnalysis() {
                       <ChevronDown className={`h-4 w-4 text-violet-500 transition-transform ${fieldOpen ? "rotate-180" : ""}`} />
                     </button>
                     {fieldOpen && (
-                      <div className="absolute left-0 right-0 top-full z-10 mt-1 max-h-48 overflow-y-auto rounded-xl border border-violet-200 bg-white shadow-lg">
-                        {FIELDS.map(f => (
-                          <button
-                            key={f}
-                            type="button"
-                            onClick={() => { setSelectedField(f); setFieldOpen(false); }}
-                            className="w-full border-b border-violet-50 px-4 py-2.5 text-left text-sm font-medium text-violet-800 last:border-0 hover:bg-violet-50"
-                          >
-                            {f}
-                          </button>
-                        ))}
+                      <div className="mt-2 max-h-64 overflow-y-auto rounded-sm border border-violet-200/90 bg-white shadow-lg ring-1 ring-violet-100/80">
+                        {FIELD_OPTIONS.map((opt) => {
+                          const isSelected = opt.available && selectedField === opt.label;
+                          return (
+                            <button
+                              key={opt.label}
+                              type="button"
+                              disabled={!opt.available}
+                              onClick={() => {
+                                if (!opt.available) return;
+                                setSelectedField(opt.label);
+                                setFieldOpen(false);
+                              }}
+                              className={`flex w-full items-center justify-between gap-3 border-b border-violet-100/90 px-4 py-3 text-left text-sm transition-colors last:border-0 ${
+                                opt.available
+                                  ? isSelected
+                                    ? "bg-violet-50/90 hover:bg-violet-50"
+                                    : "hover:bg-violet-50/60"
+                                  : "cursor-not-allowed bg-gradient-to-r from-slate-50 via-white to-violet-50/40 opacity-95"
+                              }`}
+                            >
+                              <span
+                                className={
+                                  opt.available
+                                    ? isSelected
+                                      ? "font-semibold text-violet-950"
+                                      : "font-medium text-violet-800"
+                                    : "font-medium text-slate-500"
+                                }
+                              >
+                                {opt.label}
+                              </span>
+                              {!opt.available && (
+                                <span className="inline-flex shrink-0 items-center rounded-sm border border-violet-200/70 bg-gradient-to-r from-violet-50 to-indigo-50 px-2 py-1 text-[10px] font-bold tracking-wide text-violet-700 shadow-sm">
+                                  Sắp ra mắt
+                                </span>
+                              )}
+                            </button>
+                          );
+                        })}
                       </div>
                     )}
                   </div>
@@ -1110,488 +1207,6 @@ export function CVAnalysis() {
             </div>
           )}
 
-          {/* ── RESULT ──────────────────────────────────────────────────── */}
-          {step === "result" && (
-            <div className="px-4 py-5 sm:px-6 sm:py-6">
-              {/* Free-tier notice */}
-              {isFreeTier && (
-                <div className="flex items-center gap-4 rounded-2xl px-5 py-4 mb-6" style={{ background: "linear-gradient(135deg,rgba(110, 53, 232,0.08),rgba(139, 77, 255,0.05))", border: "1.5px solid rgba(110, 53, 232,0.2)" }}>
-                  <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: "rgba(110, 53, 232,0.15)" }}><Lock className="w-5 h-5 text-[#6E35E8]" /></div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-bold text-slate-900">Đang xem bản xem trước — Gói Free</p>
-                    <p className="mt-0.5 text-xs text-slate-600">Phần đánh giá chi tiết & gợi ý bị ẩn. Nâng cấp để xem đầy đủ.</p>
-                  </div>
-                  <button onClick={() => navigate("/pricing")} className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-white flex-shrink-0" style={{ background: "linear-gradient(135deg,#6E35E8,#8B4DFF)" }}>
-                    <Zap className="w-3.5 h-3.5" /> Mở khoá
-                  </button>
-                </div>
-              )}
-
-              {/* ── Cloud save status ──────────────────────────────────── */}
-              {savedFileInfo && (
-                <div className="rounded-2xl px-5 py-4 mb-6 flex items-start gap-4 flex-wrap" style={{ background: "rgba(180,240,0,0.07)", border: "1.5px solid rgba(180,240,0,0.25)" }}>
-                  <div className="flex items-center gap-2 flex-shrink-0">
-                    <BadgeCheck className="w-5 h-5" style={{ color: "#4A7A00" }} />
-                    <p className="text-sm font-semibold" style={{ color: "#4A7A00" }}>Files đã lưu lên cloud</p>
-                  </div>
-                  <div className="flex items-center gap-3 flex-wrap ml-auto">
-                    {savedFileInfo.cvSignedUrl && (
-                      <a href={savedFileInfo.cvSignedUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg hover:brightness-105 transition-all" style={{ background: "rgba(110, 53, 232,0.1)", color: "#6E35E8" }}>
-                        <DownloadSimple className="w-3.5 h-3.5" /> Tải CV ({savedFileInfo.cvFileName})
-                      </a>
-                    )}
-                    {savedFileInfo.jdSignedUrl && savedFileInfo.jdFileName && (
-                      <a href={savedFileInfo.jdSignedUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg hover:brightness-105 transition-all" style={{ background: "rgba(110, 53, 232,0.1)", color: "#6E35E8" }}>
-                        <DownloadSimple className="w-3.5 h-3.5" /> Tải JD ({savedFileInfo.jdFileName})
-                      </a>
-                    )}
-                    <span className="text-xs text-slate-500">ID: {savedFileInfo.analysisId?.slice(0, 8)}…</span>
-                  </div>
-                </div>
-              )}
-
-              {/* Gemini badge */}
-              {R && (
-                <div className="flex items-center gap-2 mb-5">
-                  <span className="flex items-center gap-1.5 rounded-lg border border-violet-300/40 px-3 py-1.5 text-xs font-medium text-violet-900" style={{ background: "rgba(110, 53, 232,0.14)" }}>
-                    ✨ {R.summary ?? "Phân tích thực từ Gemini AI"}
-                  </span>
-                </div>
-              )}
-
-              {/* Match Score Banner */}
-              <div className="rounded-2xl p-6 mb-6 text-white" style={{ background: "linear-gradient(135deg,#6E35E8 0%,#9B6DFF 100%)" }}>
-                <div className="flex items-start justify-between flex-wrap gap-4">
-                  <div>
-                    <p className="text-indigo-200 text-sm mb-2">
-                      {derivedMode === "jd" ? `Mức độ phù hợp CV${R?.company ? ` — ${R.company}` : ""}${R?.position ? ` · ${R.position}` : ""}` : "Điểm chất lượng CV"}
-                    </p>
-                    <div className="flex items-end gap-3 mb-2">
-                      <span style={{ fontSize: "3.5rem", fontWeight: 800, lineHeight: 1 }}>{derivedMode === "jd" ? `${matchScore}%` : matchScore}</span>
-                      <div className="mb-1">
-                        <span className="text-indigo-200 text-sm">{derivedMode === "jd" ? "keyword match" : "/ 100 điểm"}</span>
-                        <div className="flex items-center gap-0.5 mt-1 flex-wrap">
-                          {Array.from({ length: 10 }).map((_, i) => (
-                            <div key={i} className="h-1.5 w-5 rounded-full" style={{ background: i < Math.round(matchScore / 10) ? "rgba(255,255,255,0.85)" : "rgba(255,255,255,0.22)" }} />
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                    <p className="text-indigo-100 text-sm">{R?.summary ?? (derivedMode === "jd" ? "Khá tốt Bổ sung từ khóa còn thiếu có thể nâng điểm đáng kể." : "Cải thiện cấu trúc STAR và số liệu để đạt điểm cao hơn.")}</p>
-                  </div>
-                  <div className="flex flex-col gap-2 text-sm min-w-[160px]">
-                    {(derivedMode === "jd" ? [
-                      { label: "Từ khóa khớp",      val: `${(R?.matchedKeywords ?? DEMO_MATCHED).length}/${R?.totalKeywords ?? DEMO_JD_KWS.length}`, color: "bg-white/20" },
-                      { label: "Từ khóa thiếu",     val: `${(R?.missingKeywords ?? DEMO_JD_KWS.filter(k => !DEMO_MATCHED.includes(k))).length} kỹ năng`, color: "bg-red-400/30" },
-                      { label: "Điểm AI tổng hợp",  val: `${overallScore}/100`, color: "bg-violet-400/20" },
-                    ] : [
-                      { label: "Điểm cấu trúc",     val: `${R?.scores.structure ?? 6}/10`, color: "bg-white/20" },
-                      { label: "Độ hoàn thiện",      val: `${matchScore}%`, color: "bg-emerald-400/30" },
-                      { label: "Gợi ý cải thiện",    val: `${suggestionsData.length} mục`, color: "bg-amber-400/20" },
-                    ]).map(s => (
-                      <div key={s.label} className={`flex items-center justify-between gap-4 px-4 py-2 rounded-xl ${s.color}`}>
-                        <span className="text-white/70">{s.label}</span>
-                        <span className="text-white font-semibold">{s.val}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              {/* CV Doc preview */}
-              {derivedMode === "jd" && (
-                <div className="relative mb-6">
-                  <CVDocumentPreview
-                    cvFile={cvFile}
-                    jdFile={jdFile}
-                    cvFileName={cvFile?.name ?? reuseCV?.name}
-                    jdFileName={jdFile?.name ?? reuseJD?.name}
-                    matchedKws={R?.matchedKeywords ?? []}
-                    missingKws={R?.missingKeywords  ?? []}
-                  />
-                  {isFreeTier && (
-                    <div className="absolute bottom-0 left-0 right-0 flex h-2/3 flex-col items-center justify-end rounded-b-2xl pb-8" style={{ background: "linear-gradient(to bottom,transparent 0%,rgba(10,6,24,0.55) 45%,rgba(7,6,14,0.92) 100%)" }}>
-                      <div className="px-6 text-center">
-                        <Lock className="mx-auto mb-2 h-8 w-8 text-violet-300" />
-                        <p className="mb-3 text-sm font-semibold text-white">Chi tiết bị ẩn</p>
-                        <button onClick={() => navigate("/pricing")} className="inline-flex items-center gap-1.5 px-5 py-2 rounded-xl text-xs font-bold text-white" style={{ background: "linear-gradient(135deg,#6E35E8,#8B4DFF)" }}>
-                          <Zap className="w-3.5 h-3.5" /> Xem đầy đủ
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Keywords — nền sáng trong card trắng: dùng slate + emerald/orange đậm */}
-              {derivedMode === "jd" && (
-                <div className="mb-6 grid gap-6 md:grid-cols-2">
-                  <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5 shadow-sm">
-                    <div className="mb-4 flex items-center gap-2">
-                      <FileText className="h-4 w-4 text-[#6E35E8]" />
-                      <h3 className="text-sm font-semibold text-slate-900">Từ khóa khớp với JD</h3>
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      {cvDisplayKWs.map(kw => (
-                        <span
-                          key={kw}
-                          className="rounded-full border border-emerald-500 bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-900"
-                        >
-                          {kw} ✓
-                        </span>
-                      ))}
-                    </div>
-                    <p className="mt-3 text-xs text-slate-600">
-                      <span className="font-semibold text-emerald-800">{cvDisplayKWs.length}</span> từ khóa khớp
-                    </p>
-                  </div>
-                  <div className="relative overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 p-5 shadow-sm">
-                    <div className="mb-4 flex items-center gap-2">
-                      <Briefcase className="h-4 w-4 text-[#6E35E8]" />
-                      <h3 className="text-sm font-semibold text-slate-900">Toàn bộ từ khóa JD</h3>
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      {jdDisplayKWs.map(kw => (
-                        <span
-                          key={kw}
-                          className={
-                            matchedSet.has(kw)
-                              ? "rounded-full border border-emerald-500 bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-900"
-                              : "rounded-full border border-orange-500 bg-orange-100 px-3 py-1 text-xs font-semibold text-orange-950"
-                          }
-                        >
-                          {kw} {!matchedSet.has(kw) && "⚠"}
-                        </span>
-                      ))}
-                    </div>
-                    <p className="mt-3 text-xs text-slate-600">
-                      <span className="font-semibold text-orange-800">{jdDisplayKWs.filter(k => !matchedSet.has(k)).length}</span> từ khóa chưa có trong CV
-                    </p>
-                    {isFreeTier && (
-                      <div className="absolute inset-0 flex items-center justify-center rounded-2xl" style={{ background: "rgba(7,6,14,0.78)", backdropFilter: "blur(8px)" }}>
-                        <div className="px-4 text-center"><Lock className="mx-auto mb-2 h-7 w-7 text-violet-300" /><p className="mb-2 text-xs font-semibold text-white">Từ khóa JD bị ẩn</p><button type="button" onClick={() => navigate("/pricing")} className="rounded-lg px-4 py-1.5 text-xs font-bold text-white" style={{ background: "#6E35E8" }}>Mở khoá</button></div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {/* Detailed scoring — nền card-premium sáng: chữ slate, không dùng text-white */}
-              <div className="relative mb-6 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-                <div className="flex items-center gap-2.5 border-b border-slate-200 bg-violet-50/80 px-6 py-4">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-violet-100">
-                    <BarChart3 className="h-4 w-4 text-[#6E35E8]" />
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-semibold text-slate-900">Đánh giá chi tiết</h3>
-                    <p className="text-xs text-slate-600">4 tiêu chí theo chuẩn tuyển dụng</p>
-                  </div>
-                  {isFreeTier && (
-                    <div className="ml-auto flex items-center gap-1.5 rounded-lg bg-violet-100 px-3 py-1.5">
-                      <Lock className="h-3.5 w-3.5 text-[#6E35E8]" />
-                      <span className="text-xs font-semibold text-[#6E35E8]">Khoá</span>
-                    </div>
-                  )}
-                </div>
-                <div className="p-6" style={isFreeTier ? { filter: "blur(5px)", userSelect: "none", pointerEvents: "none" } : {}}>
-                  <div className="mb-6 flex flex-wrap items-start gap-6">
-                    <div className="flex flex-shrink-0 flex-col items-center">
-                      <div className="relative h-28 w-28">
-                        <svg viewBox="0 0 100 100" className="h-full w-full -rotate-90">
-                          <circle cx="50" cy="50" r="40" fill="none" stroke="#e2e8f0" strokeWidth="10" />
-                          <circle cx="50" cy="50" r="40" fill="none" stroke="url(#sg)" strokeWidth="10" strokeDasharray={`${overallScore * 2.51} 251`} strokeLinecap="round" />
-                          <defs><linearGradient id="sg" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stopColor="#6E35E8" /><stop offset="100%" stopColor="#8B4DFF" /></linearGradient></defs>
-                        </svg>
-                        <div className="absolute inset-0 flex flex-col items-center justify-center">
-                          <span className="text-[1.6rem] font-bold text-slate-900">{overallScore}</span>
-                          <span className="text-xs text-slate-500">/ 100</span>
-                        </div>
-                      </div>
-                      <p className="mt-1 text-xs font-medium text-slate-700">Điểm AI</p>
-                      <p className="mt-0.5 text-center text-[0.65rem] leading-tight text-slate-500">
-                        Clarity · Structure<br />Relevance · Credibility
-                      </p>
-                    </div>
-                    <div className="min-w-0 flex-1 space-y-3">
-                      {scoreTableData.map(row => (
-                        <div key={row.criteria}>
-                          <div className="mb-1 flex items-center justify-between gap-2">
-                            <span className="text-sm font-medium text-slate-800">{row.criteria}</span>
-                            <span
-                              className={`shrink-0 rounded-lg px-2 py-0.5 text-xs font-bold ${
-                                row.status === "good"
-                                  ? "bg-lime-100 text-lime-900"
-                                  : row.status === "ok"
-                                    ? "bg-violet-100 text-violet-900"
-                                    : "bg-orange-100 text-orange-900"
-                              }`}
-                            >
-                              {row.score}/{row.max}
-                            </span>
-                          </div>
-                          <div className="h-2 overflow-hidden rounded-full bg-slate-200">
-                            <div
-                              className="h-full rounded-full transition-all duration-700"
-                              style={{
-                                width: `${(row.score / row.max) * 100}%`,
-                                background: row.status === "good" ? "#84cc16" : row.status === "ok" ? "#8B4DFF" : "#f97316",
-                              }}
-                            />
-                          </div>
-                          {row.note && <p className="mt-0.5 text-[0.72rem] leading-snug text-slate-600">{row.note}</p>}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <div className="rounded-xl border border-lime-200 bg-lime-50 p-4">
-                      <h4 className="mb-3 flex items-center gap-2 text-sm font-semibold text-lime-900">
-                        <Check className="h-4 w-4" /> Điểm mạnh
-                      </h4>
-                      <ul className="space-y-2">
-                        {strengthsData.map((s, i) => (
-                          <li key={i} className="flex items-start gap-2 text-sm text-slate-800">
-                            <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-lime-600" />
-                            {s}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                    <div className="rounded-xl border border-orange-200 bg-orange-50 p-4">
-                      <h4 className="mb-3 flex items-center gap-2 text-sm font-semibold text-orange-900">
-                        <Warning className="h-4 w-4" /> Cần cải thiện
-                      </h4>
-                      <ul className="space-y-2">
-                        {weaknessesData.map((s, i) => (
-                          <li key={i} className="flex items-start gap-2 text-sm text-slate-800">
-                            <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-orange-500" />
-                            {s}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  </div>
-                </div>
-                {isFreeTier && (
-                  <div className="absolute inset-0 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm">
-                    <div className="rounded-2xl border border-violet-200 bg-white px-8 py-6 text-center shadow-xl">
-                      <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-violet-100">
-                        <Lock className="h-6 w-6 text-[#6E35E8]" />
-                      </div>
-                      <p className="mb-1 font-bold text-slate-900">Đánh giá chi tiết bị khoá</p>
-                      <p className="mb-4 max-w-[240px] text-xs text-slate-600">
-                        Nâng cấp <strong className="text-[#6E35E8]">Elite Pro</strong> để xem điểm số và nhận xét chi tiết.
-                      </p>
-                      <button
-                        type="button"
-                        onClick={() => navigate("/pricing")}
-                        className="mx-auto flex items-center gap-2 rounded-xl bg-[#6E35E8] px-6 py-2.5 text-sm font-bold text-white hover:bg-[#5C28D9]"
-                      >
-                        <Zap className="h-4 w-4" /> Nâng cấp
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Suggestions — theme sáng, tương phản rõ */}
-              <div className="relative mb-6 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-                <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 bg-violet-50/80 px-6 py-4">
-                  <div className="flex items-center gap-2.5">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-violet-100">
-                      <Lightbulb className="h-4 w-4 text-[#6E35E8]" />
-                    </div>
-                    <div>
-                      <h3 className="text-sm font-semibold text-slate-900">Gợi ý chỉnh sửa cụ thể</h3>
-                      <p className="text-xs text-slate-600">Bullet rewrites (STAR + JD keywords) · Kỹ năng cần bổ sung</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {highCount > 0 && (
-                      <span className="rounded-lg bg-orange-100 px-2.5 py-1 text-xs font-semibold text-orange-900">
-                        {highCount} Cao
-                      </span>
-                    )}
-                    {mediumCount > 0 && (
-                      <span className="rounded-lg bg-amber-100 px-2.5 py-1 text-xs font-semibold text-amber-900">
-                        {mediumCount} TB
-                      </span>
-                    )}
-                    {lowCount > 0 && (
-                      <span className="rounded-lg bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700">
-                        {lowCount} Thấp
-                      </span>
-                    )}
-                  </div>
-                </div>
-                <div className="divide-y divide-slate-200">
-                  {suggestionsData.map((item, i) => {
-                    if (isFreeTier && i > 1) return null;
-                    const isAdd = item.type === "add";
-                    const isFix = item.type === "fix";
-                    const priorityClass =
-                      item.priority === "high"
-                        ? "bg-orange-100 text-orange-900 border-orange-200"
-                        : item.priority === "medium"
-                          ? "bg-amber-100 text-amber-900 border-amber-200"
-                          : "bg-slate-100 text-slate-700 border-slate-200";
-                    const typeClass = isAdd
-                      ? "bg-lime-100 text-lime-900"
-                      : isFix
-                        ? "bg-violet-100 text-violet-900"
-                        : "bg-orange-100 text-orange-900";
-                    const typeLabel = isAdd ? "Bổ sung" : isFix ? "Chỉnh sửa" : "Loại bỏ";
-                    const isDimmed = isFreeTier && i === 1;
-                    return (
-                      <div
-                        key={i}
-                        className="p-5 transition-colors hover:bg-slate-50/80"
-                        style={isDimmed ? { filter: "blur(4px)", userSelect: "none", pointerEvents: "none", opacity: 0.5 } : {}}
-                      >
-                        <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
-                          <div className="flex flex-wrap items-center gap-2">
-                            <span className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-semibold ${typeClass}`}>
-                              {isAdd && <PlusCircle className="h-3 w-3" />}
-                              {isFix && <Wrench className="h-3 w-3" />}
-                              {!isAdd && !isFix && <Trash className="h-3 w-3" />}
-                              {typeLabel}
-                            </span>
-                            <h4 className="text-sm font-semibold text-slate-900">{item.title}</h4>
-                          </div>
-                          <span className={`shrink-0 rounded-lg border px-2.5 py-1 text-xs font-semibold ${priorityClass}`}>
-                            {item.priority === "high" ? "Ưu tiên cao" : item.priority === "medium" ? "Trung bình" : "Thấp"}
-                          </span>
-                        </div>
-                        <div className="mb-3 rounded-xl border border-violet-100 bg-violet-50/60 p-3.5">
-                          <p className="mb-1 text-xs font-semibold text-[#6E35E8]">💡 Lý do</p>
-                          <p className="text-[0.82rem] leading-relaxed text-slate-700">{item.reason}</p>
-                        </div>
-                        {(item.before || item.after) && (
-                          <div className="mb-3 grid gap-2 md:grid-cols-2">
-                            {item.before && (
-                              <div className="rounded-xl border border-orange-200 bg-orange-50 p-3">
-                                <p className="mb-1.5 text-xs font-semibold text-orange-800">✗ Hiện tại</p>
-                                <code className="block whitespace-pre-wrap font-mono text-[0.76rem] leading-relaxed text-slate-800">
-                                  {item.before}
-                                </code>
-                              </div>
-                            )}
-                            {item.after && (
-                              <div className="rounded-xl border border-lime-200 bg-lime-50 p-3">
-                                <p className="mb-1.5 text-xs font-semibold text-lime-900">✓ Nên sửa thành</p>
-                                <code className="block whitespace-pre-wrap font-mono text-[0.76rem] leading-relaxed text-slate-800">
-                                  {item.after}
-                                </code>
-                              </div>
-                            )}
-                          </div>
-                        )}
-                        {isFix && (item.keywordsAdded?.length > 0 || item.starCheck || item.confidence) && (
-                          <div className="flex flex-wrap gap-3 border-t border-slate-200 pt-2">
-                            {item.starCheck && Object.keys(item.starCheck).length > 0 && (
-                              <div className="flex items-center gap-1.5">
-                                <span className="mr-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-500">STAR:</span>
-                                {[["situation", "S"], ["action", "A"], ["result", "R"]].map(([k, label]) => (
-                                  <span
-                                    key={k}
-                                    className={`inline-flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-bold ${
-                                      item.starCheck[k]
-                                        ? "border border-lime-400 bg-lime-100 text-lime-900"
-                                        : "border border-slate-200 bg-slate-100 text-slate-400"
-                                    }`}
-                                    title={item.starCheck[k] ? `${k} ✓` : `${k} thiếu`}
-                                  >
-                                    {label}
-                                  </span>
-                                ))}
-                              </div>
-                            )}
-                            {item.keywordsAdded?.length > 0 && (
-                              <div className="flex flex-wrap items-center gap-1.5">
-                                <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">Keywords:</span>
-                                {item.keywordsAdded.map((kw, ki) => (
-                                  <span
-                                    key={ki}
-                                    className="inline-flex items-center gap-0.5 rounded-md border border-violet-200 bg-violet-100 px-1.5 py-0.5 text-[10px] font-semibold text-violet-900"
-                                  >
-                                    + {kw}
-                                  </span>
-                                ))}
-                              </div>
-                            )}
-                            {item.confidence && (
-                              <span
-                                className={`ml-auto rounded-md px-2 py-0.5 text-[10px] font-semibold ${
-                                  item.confidence === "high"
-                                    ? "bg-lime-100 text-lime-900"
-                                    : item.confidence === "medium"
-                                      ? "bg-amber-100 text-amber-900"
-                                      : "bg-slate-100 text-slate-600"
-                                }`}
-                              >
-                                Độ tin cậy:{" "}
-                                {item.confidence === "high" ? "Cao" : item.confidence === "medium" ? "Trung bình" : "Thấp"}
-                              </span>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-                {isFreeTier && (
-                  <div className="flex flex-wrap items-center gap-4 border-t border-slate-200 bg-violet-50/50 px-6 py-5">
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm font-bold text-slate-900">🔒 Còn {suggestionsData.length - 1} gợi ý đang bị ẩn</p>
-                      <p className="mt-0.5 text-xs text-slate-600">Bao gồm gợi ý về từ khóa thiếu, số liệu KPI, format STAR</p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => navigate("/pricing")}
-                      className="flex shrink-0 items-center gap-2 rounded-xl bg-[#6E35E8] px-5 py-2.5 text-sm font-bold text-white hover:bg-[#5C28D9]"
-                    >
-                      <Zap className="h-4 w-4" /> Mở khoá toàn bộ
-                    </button>
-                  </div>
-                )}
-              </div>
-
-              {/* CTAs — nền sáng trong card trắng: chữ tối + viền rõ */}
-              <div className="flex gap-3 flex-wrap pt-1">
-                <button
-                  type="button"
-                  onClick={() => navigate("/interview")}
-                  className="flex items-center gap-2 rounded-xl bg-[#6E35E8] px-6 py-3 text-sm font-semibold text-white shadow-md transition-colors hover:bg-[#5C28D9]"
-                >
-                  <Mic className="h-4 w-4 shrink-0" aria-hidden />
-                  Phỏng vấn với AI
-                </button>
-                <button
-                  type="button"
-                  onClick={() => navigate("/mentors")}
-                  className="flex items-center gap-2 rounded-xl border-2 border-emerald-600 bg-emerald-50 px-6 py-3 text-sm font-semibold text-emerald-950 shadow-sm transition-colors hover:bg-emerald-100"
-                >
-                  <Users className="h-4 w-4 shrink-0 text-emerald-800" aria-hidden />
-                  Đặt lịch Mentor
-                </button>
-                <button
-                  type="button"
-                  onClick={() => { setStep("upload"); setAnalysisResult(null); setSavedFileInfo(null); }}
-                  className="flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-6 py-3 text-sm font-semibold text-slate-800 shadow-sm transition-colors hover:border-slate-400 hover:bg-slate-50"
-                >
-                  Phân tích lại
-                </button>
-                <button
-                  type="button"
-                  onClick={() => navigate("/cv-analysis/history")}
-                  className="flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-6 py-3 text-sm font-semibold text-slate-800 shadow-sm transition-colors hover:border-slate-400 hover:bg-slate-50"
-                >
-                  <History className="h-4 w-4 shrink-0 text-slate-600" aria-hidden />
-                  Xem lịch sử
-                </button>
-              </div>
-            </div>
-          )}
         </div>
       )}
       </div>

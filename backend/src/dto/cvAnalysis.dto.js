@@ -56,8 +56,13 @@ const saveAnalysisSchema = Joi.object({
   // ----- File metadata -----
   cvFileName: Joi.string().trim().min(1).max(500).required(),
   cvFileId:   Joi.string().max(200).optional(),
+  cvFileUrl:  Joi.string().max(2000).optional().allow(""),
   jdFileName: Joi.string().trim().max(500).optional().allow(""),
   jdFileId:   Joi.string().max(200).optional(),
+  jdFileUrl:  Joi.string().max(2000).optional().allow(""),
+
+  field:    Joi.string().trim().max(200).optional().allow("", null),
+  position: Joi.string().trim().max(200).optional().allow("", null),
 
   // ----- Analysis configuration -----
   mode: Joi.string().valid("jd", "field").required(),
@@ -83,6 +88,9 @@ const saveAnalysisSchema = Joi.object({
       missingSkillSuggestions: Joi.array().items(skillSuggestionSchema).max(20).default([]),
       executiveSummary:        Joi.string().allow("").max(5000).default(""),
     }).optional(),
+
+    /** Snapshot UI từ FE — đọc lại chi tiết lịch sử field/JD */
+    _ui: Joi.object().unknown(true).optional(),
   }).required(),
 
   // ----- Plan -----
@@ -93,13 +101,13 @@ const saveAnalysisSchema = Joi.object({
     pythonServiceVersion: Joi.string().max(50).optional(),
     llmModel:             Joi.string().max(100).optional(),
     llmProvider:          Joi.string()
-      .valid("groq", "gemini", "openai", "ollama", "deepseek", "glm", "unknown")
+      .valid("groq", "gemini", "openai", "ollama", "deepseek", "glm", "unknown", "mock")
       .default("unknown"),
     processingTimeMs:  Joi.number().min(0).max(600_000).optional(),
     fallbackTriggered: Joi.boolean().default(false),
     fallbackReason:    Joi.string().max(200).optional(),
     pythonEndpoint:    Joi.string()
-      .valid("/analyze", "/analyze/full", "/analyze/suggestions")
+      .valid("/analyze", "/analyze/full", "/analyze/suggestions", "/analyze/field")
       .optional(),
   }).default({}),
 }).required().unknown(false); // strict: reject unknown top-level keys; required() makes undefined invalid
@@ -138,6 +146,13 @@ function validateBusinessRules(value) {
         message: "tier=basic should not include scores",
       });
     }
+  }
+
+  if (value.mode === "field" && !String(value.field ?? "").trim()) {
+    errors.push({
+      field: "field",
+      message: "mode=field requires non-empty field (ngành nghề)",
+    });
   }
 
   return errors.length > 0 ? errors : null;

@@ -52,8 +52,10 @@ function mapApiAnalysisToLocal(doc) {
     cvFile: doc.cvFileName || doc.cvFile || "cv",
     jdFile: doc.jdFileName || doc.jdFile || null,
     matchScore: doc.matchScore ?? doc.score ?? null,
+    matchedKeywords: doc.matchedKeywords || [],
     date: doc.createdAt || doc.date || new Date().toISOString(),
     field: doc.field || null,
+    mode: doc.mode || null,
   };
 }
 

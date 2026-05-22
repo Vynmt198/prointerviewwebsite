@@ -117,6 +117,16 @@ export function isSafeAppRedirect(path, user) {
   return true;
 }
 
+/** Trang chủ customer (không dùng /dashboard). */
+export const CUSTOMER_HOME_PATH = "/";
+
+/** URL cũ /dashboard → trang chủ customer. */
+export function resolveLegacyCustomerPath(path) {
+  const p = typeof path === "string" ? path.trim() : "";
+  if (p === "/dashboard" || p.startsWith("/dashboard/")) return CUSTOMER_HOME_PATH;
+  return p;
+}
+
 /** Hub customer — admin/mentor không dùng làm đích sau login. */
 function isCustomerHubRedirect(path) {
   const r = typeof path === "string" ? path.trim() : "";
@@ -138,8 +148,8 @@ export function getPostLoginPath(user, redirectParam) {
     return "/mentor/dashboard";
   }
 
-  if (isSafeAppRedirect(r, user)) return r;
-  return "/";
+  if (isSafeAppRedirect(r, user)) return resolveLegacyCustomerPath(r);
+  return CUSTOMER_HOME_PATH;
 }
 
 /** Logo / thương hiệu app: đã đăng nhập → hub theo role; chưa → trang chủ. */
