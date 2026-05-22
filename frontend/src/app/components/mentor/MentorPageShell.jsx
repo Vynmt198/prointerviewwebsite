@@ -48,6 +48,8 @@ export function MentorPageShell({
   extraStyles = "",
   bottomPad = "pb-20",
   fillHeight = false,
+  /** false = chỉ dùng app-shell-ambient, không thêm blob/shimmer (tránh nền chia mảng) */
+  showAmbient = true,
 }) {
   const heightBlock = fillHeight
     ? "min-h-0 flex-1 h-full overflow-y-auto overflow-x-clip"
@@ -57,19 +59,23 @@ export function MentorPageShell({
       className={`mentor-surface relative antialiased ${heightBlock} font-sans text-slate-900 selection:bg-violet-100 selection:text-violet-900 bg-transparent ${bottomPad} ${className}`.trim()}
     >
       <style>{`${MENTOR_LIGHT_STYLES}${extraStyles || ""}`}</style>
-      <div
-        className="pointer-events-none fixed -top-[12%] -right-[6%] h-[min(560px,70vw)] w-[min(560px,70vw)] rounded-full bg-[#9B6DFF]/28 blur-[120px] -z-[1]"
-        aria-hidden
-      />
-      <div
-        className="pointer-events-none fixed -bottom-[14%] -left-[8%] h-[min(520px,65vw)] w-[min(520px,65vw)] rounded-full bg-[#c4ff47]/14 blur-[110px] -z-[1]"
-        aria-hidden
-      />
-      <div
-        className="pointer-events-none fixed inset-0 -z-[1] opacity-80"
-        style={{ animation: "shimmer-bg 14s ease-in-out infinite" }}
-        aria-hidden
-      />
+      {showAmbient && (
+        <>
+          <div
+            className="pointer-events-none fixed -top-[12%] -right-[6%] h-[min(560px,70vw)] w-[min(560px,70vw)] rounded-full bg-[#9B6DFF]/28 blur-[120px] -z-[1]"
+            aria-hidden
+          />
+          <div
+            className="pointer-events-none fixed -bottom-[14%] -left-[8%] h-[min(520px,65vw)] w-[min(520px,65vw)] rounded-full bg-[#c4ff47]/14 blur-[110px] -z-[1]"
+            aria-hidden
+          />
+          <div
+            className="pointer-events-none fixed inset-0 -z-[1] opacity-80"
+            style={{ animation: "shimmer-bg 14s ease-in-out infinite" }}
+            aria-hidden
+          />
+        </>
+      )}
       {children}
     </div>
   );

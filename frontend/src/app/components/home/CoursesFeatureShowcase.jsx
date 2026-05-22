@@ -1,4 +1,5 @@
 import React from "react";
+import { HOME_SECTION_INNER } from "../layout/customerShellLayout";
 import {
   GraduationCap,
   Lock,
@@ -235,14 +236,7 @@ export function CoursesFeatureShowcase({ onCtaClick }) {
     >
       <style>{`
         .courses-mock-panel {
-          background-color: #cfc0f5;
-          background-image:
-            radial-gradient(circle at 50% 0%, rgba(99, 14, 212, 0.18) 0%, transparent 52%),
-            radial-gradient(circle, rgba(255, 255, 255, 0.38) 1.75px, transparent 2px),
-            radial-gradient(circle, rgba(99, 14, 212, 0.08) 1.75px, transparent 2px),
-            linear-gradient(165deg, #e4d8fc 0%, #d8caf8 42%, #cfc0f5 100%);
-          background-size: 100% 100%, 20px 20px, 20px 20px, 100% 100%;
-          background-position: center top, 0 0, 10px 10px, 0 0;
+          background: linear-gradient(165deg, #f0ebf8 0%, #ebe4f6 50%, #e6ddf3 100%);
           border: 2px solid rgba(95, 0, 240, 0.4);
           box-shadow: 0 12px 32px rgba(99, 14, 212, 0.1);
         }
@@ -270,7 +264,7 @@ export function CoursesFeatureShowcase({ onCtaClick }) {
           border-bottom: 1px solid rgba(124, 58, 237, 0.1);
         }
       `}</style>
-      <div className="relative z-10 mx-auto flex w-full max-w-7xl items-center overflow-visible px-5 py-2">
+      <div className={`relative z-10 flex w-full items-center overflow-visible py-2 ${HOME_SECTION_INNER}`}>
         <div className="mx-auto grid w-full max-w-6xl origin-center scale-x-[1] scale-y-[1.06] grid-cols-1 items-center gap-5 overflow-visible sm:scale-x-[1.02] sm:scale-y-[1.08] lg:grid-cols-[1.12fr_0.88fr] lg:scale-x-[1.05] lg:scale-y-[1.1] lg:items-center lg:gap-5 xl:max-w-[68rem] xl:scale-x-[1.07] xl:scale-y-[1.12]">
           <div className="relative z-10 flex w-full min-w-0 justify-center px-1 sm:px-2">
             <CoursesLearningMockup />

@@ -35,6 +35,10 @@ import {
   LandingStagger,
   LandingItem,
 } from "../../components/home/landing/LandingReveal";
+import {
+  HOME_SHELL_MAX,
+  HOME_SECTION_INNER,
+} from "../../components/layout/customerShellLayout";
 
 /* ─── Data ──────────────────────────────────────────────── */
 const FEATURES = [
@@ -157,39 +161,117 @@ const STATS = [
 const HOME_AI_DEMO_VIDEO =
   "https://res.cloudinary.com/dee4bvivu/video/upload/v1774336640/Female_delxmy.mp4";
 
-/** Hero: video phỏng vấn + sticker gấu góc phải. */
+/** Hero: video + overlay glass HUD (điểm AI, STAR, waveform, metrics). */
 function HeroInterviewVideoCard() {
+  const waveformHeights = [42, 68, 52, 82, 58, 90, 48, 76, 55, 88, 50, 72, 46, 80];
+  const starBars = [78, 92, 65, 88, 72];
+
   return (
-    <div className="relative mx-auto w-full max-w-[min(100%,268px)] overflow-visible sm:max-w-[300px] lg:max-w-[332px] lg:justify-self-end">
-      <div
-        className="rounded-[22px] p-2 sm:p-2.5"
-        style={{
-          border: "1.5px solid rgba(95, 0, 240, 0.4)",
-          boxShadow: "0 12px 32px rgba(15,23,42,0.1)",
-        }}
-      >
+    <div className="relative mx-auto w-full max-w-[min(100%,328px)] overflow-visible sm:max-w-[380px] lg:mx-0 lg:max-w-[460px] lg:-ml-4 lg:justify-self-end xl:max-w-[480px]">
+      <div className="hero-video-frame relative rounded-[1.65rem] bg-white p-2 shadow-[0_16px_44px_rgba(99,14,212,0.14)] sm:rounded-[1.85rem] sm:p-2.5">
         <div
-          className="relative overflow-hidden rounded-[16px] sm:rounded-[18px] bg-slate-100"
-          style={{ aspectRatio: "19 / 20" }}
+          className="relative overflow-hidden rounded-[1.2rem] bg-slate-100 sm:rounded-[1.35rem]"
+          style={{ aspectRatio: "4 / 3.51" }}
         >
           <video
             autoPlay
             loop
             muted
             playsInline
-            className="h-full w-full object-cover"
+            className="h-full w-full object-cover object-center"
           >
             <source src={HOME_AI_DEMO_VIDEO} type="video/mp4" />
           </video>
+          <div
+            className="pointer-events-none absolute inset-0 bg-gradient-to-b from-white/10 via-transparent to-violet-900/10"
+            aria-hidden
+          />
+
+          {/* 92/100 — góc trên trái */}
+          <div className="hero-video-glass absolute left-2 top-2 z-10 flex items-center gap-2 rounded-xl px-2.5 py-2 sm:left-3 sm:top-3 sm:rounded-2xl sm:px-3 sm:py-2.5">
+            <div className="relative h-10 w-10 shrink-0 sm:h-11 sm:w-11">
+              <svg className="h-full w-full -rotate-90" viewBox="0 0 36 36" aria-hidden>
+                <circle cx="18" cy="18" r="15.2" fill="none" stroke="#e8e0f5" strokeWidth="3" />
+                <circle
+                  cx="18"
+                  cy="18"
+                  r="15.2"
+                  fill="none"
+                  stroke="url(#heroHudScore)"
+                  strokeWidth="3"
+                  strokeLinecap="round"
+                  strokeDasharray="86 96"
+                />
+                <defs>
+                  <linearGradient id="heroHudScore" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stopColor="#6E35E8" />
+                    <stop offset="100%" stopColor="#9B6DFF" />
+                  </linearGradient>
+                </defs>
+              </svg>
+              <span className="absolute inset-0 flex items-center justify-center text-[9px] font-extrabold text-[#5F00F0] sm:text-[10px]">
+                92
+              </span>
+            </div>
+            <p className="text-xs font-extrabold leading-tight text-slate-900 sm:text-sm">
+              92<span className="text-[10px] font-bold text-slate-500 sm:text-[11px]">/100</span>
+            </p>
+          </div>
+
+          {/* Waveform — giữa / trên laptop */}
+          <div className="hero-video-glass absolute left-1/2 top-[42%] z-10 flex h-9 w-[min(88%,13rem)] -translate-x-1/2 items-end justify-center gap-[2px] rounded-xl px-2 py-1.5 sm:h-10 sm:gap-[3px] sm:rounded-2xl sm:px-2.5 sm:py-2">
+            {waveformHeights.map((h, i) => (
+              <span
+                key={i}
+                className="hero-video-wave w-[2.5px] rounded-full bg-gradient-to-t from-[#6E35E8] to-[#b794f6] sm:w-[3px]"
+                style={{ height: `${h}%` }}
+              />
+            ))}
+          </div>
+
+          {/* Thanh STAR — dưới trái */}
+          <div className="hero-video-glass absolute bottom-3 left-2 z-10 rounded-xl px-2.5 py-2 sm:bottom-4 sm:left-3 sm:rounded-2xl sm:px-3 sm:py-2.5">
+            <div className="mb-1.5 flex items-center gap-0.5">
+              {[1, 2, 3, 4, 5].map((n) => (
+                <Star
+                  key={n}
+                  className="h-3 w-3 fill-amber-400 text-amber-400 sm:h-3.5 sm:w-3.5"
+                  strokeWidth={1.5}
+                />
+              ))}
+            </div>
+            <div className="flex flex-col gap-1">
+              {starBars.map((w, i) => (
+                <div key={i} className="h-1.5 w-16 overflow-hidden rounded-full bg-violet-100 sm:w-[4.5rem]">
+                  <div
+                    className="h-full rounded-full bg-gradient-to-r from-[#6E35E8] to-[#9B6DFF]"
+                    style={{ width: `${w}%` }}
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Metrics — phải */}
+          <div className="hero-video-glass absolute bottom-3 right-2 z-10 space-y-1 rounded-xl px-2.5 py-2 text-[9px] font-semibold text-slate-700 sm:bottom-4 sm:right-3 sm:rounded-2xl sm:px-3 sm:py-2.5 sm:text-[10px]">
+            <div className="flex items-center justify-between gap-3">
+              <span>Clarity</span>
+              <span className="tracking-tight text-[#6E35E8]">★★★★★</span>
+            </div>
+            <div className="flex items-center justify-between gap-3">
+              <span>Confidence</span>
+              <span className="font-extrabold text-[#5F00F0]">95%</span>
+            </div>
+            <div className="flex items-center justify-between gap-2">
+              <span>Structure</span>
+              <span className="inline-flex items-center gap-0.5 font-bold text-emerald-600">
+                Excellent
+                <CircleCheck className="h-3 w-3 shrink-0" strokeWidth={2.5} />
+              </span>
+            </div>
+          </div>
         </div>
       </div>
-
-      <img
-        src="/mascot-features-hero.png?v=21"
-        alt=""
-        aria-hidden
-        className="hero-home-mascot-sticker pointer-events-none absolute -bottom-8 -right-8 z-20 hidden h-[7.25rem] w-[7.25rem] object-contain drop-shadow-[0_14px_32px_rgba(110,53,232,0.22)] sm:block sm:-bottom-9 sm:-right-9 sm:h-[8.25rem] sm:w-[8.25rem] lg:-bottom-10 lg:-right-10 lg:h-[9rem] lg:w-[9rem]"
-      />
     </div>
   );
 }
@@ -559,6 +641,25 @@ export function Home() {
           letter-spacing: -0.045em;
           text-shadow: none;
         }
+        .hero-video-glass {
+          border: 1px solid rgba(255, 255, 255, 0.82);
+          background: rgba(255, 255, 255, 0.8);
+          backdrop-filter: blur(14px);
+          -webkit-backdrop-filter: blur(14px);
+          box-shadow: 0 8px 26px rgba(99, 14, 212, 0.14);
+        }
+        .hero-video-wave {
+          animation: heroVideoWave 1.35s ease-in-out infinite;
+        }
+        .hero-video-wave:nth-child(odd) { animation-delay: 0.12s; }
+        .hero-video-wave:nth-child(4n) { animation-delay: 0.28s; }
+        @keyframes heroVideoWave {
+          0%, 100% { transform: scaleY(0.7); opacity: 0.8; }
+          50% { transform: scaleY(1); opacity: 1; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .hero-video-wave { animation: none !important; }
+        }
         .glass-card {
           background: #ffffff;
           backdrop-filter: none;
@@ -581,6 +682,12 @@ export function Home() {
           border-color: rgba(95, 0, 240, 0.48);
           transform: translateY(-2px);
           box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+        }
+        /* Bước Nổi bật — nền tím nhạt */
+        .home-step-featured-dots {
+          background: linear-gradient(180deg, #f0ebf8 0%, #ebe4f6 100%);
+          border-color: rgba(95, 0, 240, 0.42) !important;
+          box-shadow: 0 2px 12px rgba(15, 23, 42, 0.08), 0 0 0 1px rgba(95, 0, 240, 0.14) inset;
         }
         .interview-preview-panel {
           background: #ffffff;
@@ -671,9 +778,8 @@ export function Home() {
           { x: 92, y: 80, size: 36, opacity: 0.46 },
         ])}
 
-        {/* Hero content — 2 cột lg: copy trái + video/mockup phải */}
-        <div className="relative z-10 mx-auto w-full max-w-7xl">
-          <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1.1fr)_minmax(200px,300px)] lg:grid-rows-[auto_auto] lg:items-center lg:gap-x-6 lg:gap-y-4">
+        <div className={`relative z-10 ${HOME_SHELL_MAX}`}>
+          <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(280px,480px)] lg:grid-rows-[auto_auto] lg:items-center lg:gap-x-8 lg:gap-y-4">
             <div className="order-1 text-left lg:col-start-1 lg:row-start-1">
               <div
                 className="mb-4 inline-flex items-center gap-2 rounded-full border-2 px-3 py-1.5 text-xs font-bold bg-white"
@@ -689,7 +795,7 @@ export function Home() {
               <h1
                 className="mb-3 font-headline text-slate-900 leading-[1.1] tracking-tighter cute-heading"
                 style={{
-                  fontSize: "clamp(2.55rem, 5.6vw, 3.85rem)",
+                  fontSize: "clamp(2.25rem, 5vw, 3.5rem)",
                 }}
               >
                 <span className="text-slate-900">
@@ -747,26 +853,24 @@ export function Home() {
               </div>
             </div>
 
-            {/* Cột phải: căn đáy hàng 1 để video không “bay” quá cao so với copy */}
             <div className="order-3 flex w-full justify-start lg:order-2 lg:col-start-2 lg:row-start-1 lg:flex lg:justify-end lg:self-center">
               <HeroInterviewVideoCard />
             </div>
 
-            {/* Thanh stats — full width trong cột hero, căn với navbar */}
-            <div className="order-2 mt-6 w-full lg:order-3 lg:col-span-2 lg:col-start-1 lg:row-start-2 lg:mt-6">
+            <div className="order-2 mt-6 flex w-full justify-center lg:order-3 lg:col-span-2 lg:col-start-1 lg:row-start-2 lg:mt-5">
               <div
-                className="glass-card w-full px-2.5 py-3 sm:px-3 sm:py-3.5"
+                className="glass-card w-full max-w-[36rem] px-3 py-3 sm:max-w-[44rem] sm:px-4 sm:py-3.5 lg:max-w-[48rem]"
                 style={{
                   background: "#ffffff",
                   border: "1px solid rgba(95, 0, 240, 0.32)",
                   boxShadow: "0 4px 16px rgba(15, 23, 42, 0.06)",
                 }}
               >
-                <div className="relative z-[1] grid grid-cols-2 gap-2 sm:gap-3 md:grid-cols-4">
+                <div className="relative z-[1] grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3">
                   {STATS.map((s, i) => (
                     <div
                       key={i}
-                      className="rounded-xl bg-white px-2 py-2.5 text-center transition-transform duration-300 hover:-translate-y-0.5 sm:px-3 sm:py-3.5"
+                      className="rounded-xl bg-white px-2.5 py-3 text-center transition-transform duration-300 hover:-translate-y-0.5 sm:px-3.5 sm:py-3.5"
                       style={{
                         border: "1px solid rgba(95, 0, 240, 0.22)",
                         boxShadow: "none",
@@ -775,13 +879,13 @@ export function Home() {
                       <div
                         className="mb-1.5 font-black text-transparent bg-clip-text bg-gradient-to-r from-[#5F00F0] to-[#9B6DFF]"
                         style={{
-                          fontSize: "clamp(1rem, 2.5vw, 1.25rem)",
+                          fontSize: "clamp(1.05rem, 2.5vw, 1.35rem)",
                           letterSpacing: "-0.03em",
                         }}
                       >
                         {s.value}
                       </div>
-                      <div className="text-[11px] font-semibold leading-snug text-slate-600">
+                      <div className="text-[11px] font-semibold leading-snug text-slate-600 sm:text-xs">
                         {s.label}
                       </div>
                     </div>
@@ -804,7 +908,7 @@ export function Home() {
           { x: 88, y: 20, size: 40, opacity: 0.55 },
           { x: 82, y: 78, size: 32, opacity: 0.44 },
         ])}
-        <div className="max-w-7xl mx-auto px-6 relative z-10 w-full py-2">
+        <div className={`${HOME_SECTION_INNER} relative z-10 py-2`}>
           <LandingReveal className="mb-6 pt-5" y={24}>
             <div className="mx-auto mb-5 flex max-w-4xl flex-col items-center">
               <div className="flex items-center justify-center">
@@ -832,16 +936,12 @@ export function Home() {
               <LandingItem key={i}>
               <div
                 className={`glass-card group min-h-[11.25rem] p-5 sm:min-h-[11.75rem] sm:p-6 relative overflow-hidden h-full transition-[border-color,box-shadow] duration-300 ${i === 1
-                  ? "border-[#6E35E8]/35 shadow-[0_0_0_1px_rgba(167,139,250,0.12)_inset]"
+                  ? "home-step-featured-dots"
                   : i === 2
                     ? "border-violet-400/35 shadow-[0_0_0_1px_rgba(167,139,250,0.15)_inset]"
                     : "border-black/[0.05]"
                   }`}
-                style={i === 1 ? {
-                  background: "linear-gradient(180deg, rgba(244,238,255,0.98) 0%, rgba(237,228,255,0.96) 100%)",
-                  borderColor: "rgba(95,0,240,0.42)",
-                  boxShadow: "0 18px 36px rgba(95,0,240,0.24), 0 2px 12px rgba(15,23,42,0.1), 0 0 0 1px rgba(95,0,240,0.18) inset",
-                } : {
+                style={i === 1 ? undefined : {
                   background: "linear-gradient(180deg, rgba(255,255,255,0.98) 0%, rgba(248,245,255,0.97) 100%)",
                   boxShadow: "0 12px 26px rgba(15,23,42,0.09), 0 2px 10px rgba(95,0,240,0.08)",
                 }}
@@ -852,7 +952,7 @@ export function Home() {
                     {(i === 1 || i === 2) && (
                     <span
                         className={`inline-flex px-2 py-1 text-[10px] sm:text-[11px] font-bold tracking-wide rounded-md border ${i === 1
-                          ? "border-[#6E35E8]/60 bg-[#6E35E8]/24 text-[#5F00F0] shadow-[0_0_14px_rgba(95,0,240,0.22)]"
+                          ? "border-[#6E35E8]/50 bg-white/90 text-[#5F00F0]"
                           : "border-violet-200 bg-violet-100 text-violet-800 shadow-sm"
                           }`}
                       >
@@ -860,15 +960,30 @@ export function Home() {
                       </span>
                     )}
                   </div>
-                  <div className={`absolute top-0 right-0 p-4 transition-opacity pointer-events-none ${i === 1 ? "opacity-[0.22]" : "opacity-[0.18] group-hover:opacity-[0.26]"}`}>
-                    <span className={`text-7xl font-black italic ${i === 1 ? "text-[#5F00F0]/40" : "text-[#5F00F0]/30"}`}>{s.step}</span>
+                  <div
+                    className={`pointer-events-none absolute top-0 right-0 p-4 transition-opacity ${
+                      i === 1 ? "" : "opacity-[0.18] group-hover:opacity-[0.26]"
+                    }`}
+                  >
+                    <span
+                      className={`text-7xl font-black italic leading-none ${
+                        i === 1
+                          ? "text-[#d4c8eb] group-hover:text-[#c9b9e6]"
+                          : "text-[#5F00F0]/30"
+                      }`}
+                    >
+                      {s.step}
+                    </span>
                   </div>
 
                   <div
-                    className={`relative w-11 h-11 rounded-xl flex items-center justify-center mb-4 transition-all duration-500 shadow-lg ${i % 2 === 0
-                      ? "bg-[#6E35E8] text-[#ffffff] shadow-[0_0_24px_rgba(167,139,250,0.)]"
-                      : "bg-white/5 text-[#6E35E8] border border-white/10 group-hover:bg-[#6E35E8]/15 group-hover:border-[#6E35E8]/35"
-                      }`}
+                    className={`relative mb-4 flex h-11 w-11 items-center justify-center rounded-xl shadow-lg transition-all duration-500 ${
+                      i === 0
+                        ? "bg-[#6E35E8] text-[#ffffff] shadow-[0_0_24px_rgba(167,139,250,0.12)]"
+                        : i === 1
+                          ? "border-2 border-[#630ed4] bg-white text-[#630ed4]"
+                          : "border border-white/10 bg-white/5 text-[#6E35E8] group-hover:border-[#6E35E8]/35 group-hover:bg-[#6E35E8]/15"
+                    }`}
                   >
                     <s.icon className="h-[1.35rem] w-[1.35rem]" />
                   </div>
@@ -922,7 +1037,7 @@ export function Home() {
           { x: 91, y: 16, size: 42, opacity: 0.56 },
           { x: 88, y: 72, size: 34, opacity: 0.46 },
         ])}
-        <div className="relative z-10 mx-auto w-full max-w-7xl px-5 py-2">
+        <div className={`relative z-10 ${HOME_SECTION_INNER} py-2`}>
           <div className="grid items-stretch gap-5 lg:grid-cols-2 lg:gap-8">
             <div className="relative h-full min-h-0 overflow-visible">
               <div className="interview-preview-panel interview-preview-card relative flex h-full min-h-0 flex-col rounded-[1.75rem] p-4 sm:rounded-[2rem] sm:p-5 lg:p-6">
@@ -1021,7 +1136,7 @@ export function Home() {
           { x: 92, y: 52, size: 36, opacity: 0.5 },
           { x: 10, y: 86, size: 30, opacity: 0.38 },
         ])}
-        <div className="max-w-7xl mx-auto px-5 lg:px-8 py-0 h-full flex flex-col justify-center relative z-10">
+        <div className={`${HOME_SECTION_INNER} relative z-10 flex h-full flex-col justify-center py-0`}>
           <div className="grid lg:grid-cols-12 gap-6 lg:gap-6 items-start">
             <div className="lg:col-span-5">
               <h2 className="text-slate-900 mb-0 cute-heading flex flex-col items-start gap-0 text-[1.65rem] leading-none sm:text-3xl md:text-4xl lg:text-[2.55rem]">

@@ -1,5 +1,6 @@
 import React from "react";
 import { FileText } from "lucide-react";
+import { HOME_SECTION_INNER } from "../layout/customerShellLayout";
 import {
   CvAnalysisScoreBreakdown,
   CV_HUB_DEMO_MATCH,
@@ -87,7 +88,7 @@ export function CvAnalysisFeatureShowcase({ onCtaClick }) {
           }
         }
       `}</style>
-      <div className="relative z-10 mx-auto flex w-full max-w-7xl items-center overflow-visible px-5 py-2">
+      <div className={`relative z-10 flex w-full items-center overflow-visible py-2 ${HOME_SECTION_INNER}`}>
         <div className="grid w-full origin-center scale-[0.92] grid-cols-1 items-center gap-4 overflow-visible sm:scale-[0.96] lg:grid-cols-2 lg:scale-[0.99] lg:gap-8 xl:scale-[1.02] xl:gap-9">
           <article className="relative z-10 flex flex-col items-start gap-2.5 pl-3 sm:gap-3 sm:pl-5 lg:pl-8 xl:pl-10">
             <span className="inline-flex items-center gap-2 rounded-full border border-violet-400/30 bg-violet-500/10 px-3.5 py-1 text-[11px] font-semibold text-violet-700 sm:text-xs">

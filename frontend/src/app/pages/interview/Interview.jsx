@@ -23,12 +23,12 @@ import {
   BadgeCheck,
   Video,
   Mic,
-  FileCheck,
   CloudUpload,
   FileStack,
   AlertCircle,
   CalendarDays,
   Award,
+  MousePointerClick,
 } from "lucide-react";
 import { getLatestCVAnalysis, getUploadedCV, saveUploadedCV } from "../../utils/history";
 import { hasAuthCredentials, isLoggedIn } from "../../utils/auth";
@@ -96,6 +96,25 @@ const PREVIEW_PASTEL = [
 
 const SELECTED_BADGE =
   "absolute right-3 top-3 flex h-7 w-7 items-center justify-center rounded-full border border-violet-300/60 bg-[#630ed4] shadow-[0_2px_12px_rgba(99,14,212,0.28)]";
+
+function SelectOptionRing({ selected }) {
+  return (
+    <div
+      className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full border-2 transition-all ${
+        selected
+          ? "border-[#630ed4] bg-[#630ed4] shadow-[0_2px_10px_rgba(99,14,212,0.35)]"
+          : "border-violet-400 bg-white group-hover:border-[#630ed4]/70"
+      }`}
+      aria-hidden
+    >
+      {selected ? (
+        <Check className="h-4 w-4 text-white" strokeWidth={3} strokeLinecap="round" strokeLinejoin="round" />
+      ) : (
+        <span className="h-2.5 w-2.5 rounded-full bg-violet-200/90 group-hover:bg-violet-300" />
+      )}
+    </div>
+  );
+}
 
 const HR_PREVIEWS = {
   male: {
@@ -364,9 +383,11 @@ export function Interview() {
   };
 
   const optBase =
-    "relative rounded-2xl border p-5 text-left transition-all duration-300 sm:p-6";
-  const optIdle = "border-violet-300 bg-white/95 hover:border-violet-400/45 hover:bg-violet-50/45";
-  const optOn = "border-violet-500/65 bg-violet-100 shadow-[0_0_24px_rgba(122,35,229,0.18)]";
+    "group relative w-full rounded-2xl border-2 p-6 text-left transition-all duration-200 sm:p-8";
+  const optIdle =
+    "cursor-pointer border-dashed border-violet-300 bg-white hover:border-violet-400 hover:bg-violet-50/90 hover:shadow-[0_8px_24px_rgba(99,14,212,0.1)] active:scale-[0.99]";
+  const optOn =
+    "border-solid border-[#630ed4] bg-violet-50/95 shadow-[0_10px_32px_rgba(99,14,212,0.16)] ring-4 ring-violet-200/70";
 
   return (
     <MentorPageShell bottomPad="pb-24">
@@ -423,7 +444,7 @@ export function Interview() {
         <StepBar current={flowStep} />
 
         {flowStep === 1 && (
-        <section className="mb-6 rounded-2xl border border-violet-100/90 bg-violet-50/30 p-5 sm:p-7">
+        <section className="mb-8 rounded-2xl border border-violet-100/90 bg-violet-50/30 p-6 sm:p-9">
           <div className="mb-6 flex items-center gap-2.5">
             <div className="flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br from-[#6E35E8] to-[#8B4DFF] text-xs font-bold text-white shadow-lg">
               1
@@ -431,24 +452,45 @@ export function Interview() {
             <h2 className="text-sm font-black uppercase tracking-[0.14em] text-violet-900">Chọn nguồn thông tin</h2>
           </div>
 
-          <div className="mb-6 grid gap-4 sm:grid-cols-2">
+          <p className="mb-4 flex items-center justify-center gap-2 text-center text-xs font-bold text-violet-700 sm:text-sm">
+            <MousePointerClick className="h-4 w-4 shrink-0 text-[#630ed4]" {...IS} />
+            Chọn một trong hai thẻ bên dưới
+          </p>
+
+          <div className="mb-6 grid gap-6 lg:grid-cols-2 lg:gap-8">
             <button
               type="button"
+              aria-pressed={option === "A"}
               onClick={() => { if (latestCV) { setOption("A"); setInputMethod(null); } }}
               disabled={!latestCV}
-              className={`${optBase} ${option === "A" ? optOn : optIdle} ${!latestCV ? "opacity-60 cursor-not-allowed" : ""}`}
+              className={`${optBase} ${option === "A" ? optOn : optIdle} ${!latestCV ? "cursor-not-allowed opacity-55" : ""}`}
             >
-              {option === "A" && (
-                <div className={SELECTED_BADGE}>
-                  <Check className="h-3.5 w-3.5 text-white" strokeWidth={2.25} strokeLinecap="round" strokeLinejoin="round" />
-                </div>
-              )}
-              <IconFrame tone="violet" className="mb-3">
-                <FileCheck className="h-5 w-5 text-violet-700" {...IS} strokeWidth={2.25} />
-              </IconFrame>
-              <p className="mb-1 text-sm font-black text-violet-900">Dùng CV/JD đã phân tích</p>
-              <p className="text-xs leading-relaxed text-violet-600">
-                Sử dụng từ phiên phân tích CV/JD trước — AI hiểu rõ bạn nhất
+              <div className="mb-4 flex items-center justify-between gap-2">
+                <SelectOptionRing selected={option === "A"} />
+                <span
+                  className={`rounded-full px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider ${
+                    option === "A" ? "bg-[#630ed4] text-white" : "bg-violet-100 text-violet-700"
+                  }`}
+                >
+                  Tùy chọn 1
+                </span>
+              </div>
+              <div
+                className={`mb-4 flex min-h-[7rem] flex-col items-center justify-center rounded-xl border py-6 sm:min-h-[8rem] ${
+                  option === "A"
+                    ? "border-violet-300/80 bg-white"
+                    : "border-violet-200/80 bg-violet-50/60"
+                }`}
+              >
+                <FileStack
+                  className={`h-11 w-11 ${option === "A" ? "text-[#630ed4]" : "text-violet-500"}`}
+                  {...IS}
+                  strokeWidth={1.5}
+                />
+              </div>
+              <p className="text-center text-base font-extrabold text-violet-950">CV/JD có sẵn</p>
+              <p className="mt-1 text-center text-[11px] leading-relaxed text-violet-600">
+                Dùng kết quả phân tích đã lưu
               </p>
               {latestCV ? (
                 <div className="mt-3 w-full rounded-xl border border-violet-200/80 bg-violet-50/90 p-3 text-left">
@@ -495,20 +537,36 @@ export function Interview() {
 
             <button
               type="button"
+              aria-pressed={option === "B"}
               onClick={() => { setOption("B"); setInputMethod(null); }}
               className={`${optBase} ${option === "B" ? optOn : optIdle}`}
             >
-              {option === "B" && (
-                <div className={SELECTED_BADGE}>
-                  <Check className="h-3.5 w-3.5 text-white" strokeWidth={2.25} strokeLinecap="round" strokeLinejoin="round" />
-                </div>
-              )}
-              <IconFrame tone="violet" className="mb-3">
-                <CloudUpload className="h-5 w-5 text-violet-700" {...IS} />
-              </IconFrame>
-              <p className="mb-1 text-sm font-black text-violet-900">Upload mới / Nhập thông tin</p>
-              <p className="text-xs leading-relaxed text-violet-600">
-                Upload CV hoặc điền thông tin công ty và vị trí ứng tuyển
+              <div className="mb-4 flex items-center justify-between gap-2">
+                <SelectOptionRing selected={option === "B"} />
+                <span
+                  className={`rounded-full px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider ${
+                    option === "B" ? "bg-[#630ed4] text-white" : "bg-violet-100 text-violet-700"
+                  }`}
+                >
+                  Tùy chọn 2
+                </span>
+              </div>
+              <div
+                className={`mb-4 flex min-h-[7rem] flex-col items-center justify-center rounded-xl border py-6 sm:min-h-[8rem] ${
+                  option === "B"
+                    ? "border-violet-300/80 bg-white"
+                    : "border-violet-200/80 bg-violet-50/60"
+                }`}
+              >
+                <CloudUpload
+                  className={`h-11 w-11 ${option === "B" ? "text-[#630ed4]" : "text-violet-500"}`}
+                  {...IS}
+                  strokeWidth={1.5}
+                />
+              </div>
+              <p className="text-center text-base font-extrabold text-violet-950">Tải mới</p>
+              <p className="mt-1 text-center text-[11px] leading-relaxed text-violet-600">
+                Upload CV hoặc nhập tay
               </p>
             </button>
           </div>

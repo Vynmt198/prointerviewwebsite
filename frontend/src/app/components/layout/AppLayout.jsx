@@ -11,13 +11,16 @@ export function AppLayout() {
   const user = getUser();
   const isMentor = user?.role === "mentor";
   const isHome = location.pathname === "/" || location.pathname === "";
+  const ambientModifier = isHome ? " app-shell-ambient--home" : "";
 
   useEffect(() => {
     document.title = resolveDocumentTitle(location.pathname);
   }, [location.pathname]);
 
   const shellClass =
-    "app-user-shell relative min-h-svh w-full overflow-x-hidden bg-[#f3f0f9] text-slate-900 antialiased selection:bg-violet-100 selection:text-violet-900";
+    `app-user-shell relative min-h-svh w-full overflow-x-hidden text-slate-900 antialiased selection:bg-violet-100 selection:text-violet-900 ${
+      isHome ? "bg-[#dcd2eb]" : "bg-[#f3f0f9]"
+    }`;
 
   const shellStyle = {
     fontFamily: "'Lexend', 'Plus Jakarta Sans', system-ui, sans-serif",
@@ -27,7 +30,7 @@ export function AppLayout() {
     return (
       <div className={shellClass} style={shellStyle}>
         <div
-          className={`app-shell-ambient${isHome ? " app-shell-ambient--home" : ""}`}
+          className={`app-shell-ambient${ambientModifier}`}
           aria-hidden
         />
         <SidebarProvider
@@ -52,7 +55,7 @@ export function AppLayout() {
   return (
     <div className={shellClass} style={shellStyle}>
       <div
-        className={`app-shell-ambient${isHome ? " app-shell-ambient--home" : ""}`}
+        className={`app-shell-ambient${ambientModifier}`}
         aria-hidden
       />
       <div className="relative z-[1] flex min-h-svh w-full flex-col">
