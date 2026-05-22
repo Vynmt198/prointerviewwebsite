@@ -48,7 +48,7 @@ const PAGE_TITLES = {
   "/mentor/reviews": { label: "Đánh giá", sub: "Phản hồi từ học viên" },
   "/mentor/peer-review": { label: "Đánh giá chéo", sub: "Peer review mentor" },
   "/session": { label: "Chi tiết buổi", sub: "Lịch hẹn & trạng thái" },
-  "/cv-analysis/history": { label: "Lịch sử phân tích", sub: "Các bản phân tích CV đã lưu" },
+  "/cv-analysis/history": { label: "Lịch sử CV + JD", sub: "Các lần so khớp CV với Job Description" },
   "/mentor/meeting-detail": { label: "Chi tiết buổi mentor", sub: "Thông tin phiên họp" },
   "/mentor/meeting": { label: "Phòng họp", sub: "Buổi mentor trực tuyến" },
 };

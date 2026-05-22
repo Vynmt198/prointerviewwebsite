@@ -25,7 +25,6 @@ import {
   Download as DownloadSimple,
   Eye,
   RotateCcw as History,
-  Search,
   RefreshCw,
   BadgeCheck,
 } from "lucide-react";
@@ -33,7 +32,7 @@ import { getPlans, getCVRemaining, incrementCVCount, CV_FREE_LIMIT, isLoggedIn }
 import { buildLoginPath } from "../../utils/authGate";
 import { apiUrl as expressApiUrl, isExpressBackendConfigured } from "../../utils/api";
 import { CVDocumentPreview } from "../../components/cv/CVDocumentPreview";
-import { MentorPageShell } from "../../components/mentor/MentorPageShell";
+import { CvJdAnalysisPage } from "../../components/cv/CvJdAnalysisFrame";
 import { addCVAnalysisRecord } from "../../utils/history";
 import { buildCvAnalysisSavePayload, saveCvAnalysis } from "../../utils/cvApi";
 import { projectId, publicAnonKey } from "/utils/supabase/info.js";
@@ -117,6 +116,105 @@ const FIELDS = [
   "Quản lý sản phẩm", "Thiết kế / UX", "Kinh doanh", "Vận hành",
 ];
 
+const FILE_FORMAT_HINT = "Hỗ trợ .pdf, .doc, .docx, .txt · tối đa 10MB";
+
+function preventDragDefaults(e) {
+  e.preventDefault();
+  e.stopPropagation();
+}
+
+function CvUploadDropZone({ kind, hasFile, fileName, fileSizeKb, onPick, onClear, onFile }) {
+  const isCv = kind === "cv";
+  const headline = isCv
+    ? "Tải lên CV từ máy tính, chọn hoặc kéo thả"
+    : "Tải lên Job Description, chọn hoặc kéo thả";
+  const pickLabel = isCv ? "Chọn CV" : "Chọn JD";
+  const zoneLabel = isCv ? "CV của bạn" : "Job Description";
+
+  const shellClass =
+    "flex min-h-[10.5rem] flex-col items-center justify-center rounded-2xl border-2 border-dashed px-6 py-8 text-center transition sm:min-h-[11rem] sm:py-9";
+
+  const wrap = "h-full px-6 pt-6 sm:px-8 sm:pt-7";
+
+  if (hasFile) {
+    return (
+      <div className={wrap}>
+        <p className="mb-1.5 text-xs font-bold uppercase tracking-wide text-violet-600">{zoneLabel}</p>
+        <div
+          className={`${shellClass} border-violet-200/90 bg-violet-50/25`}
+          onDragEnter={preventDragDefaults}
+          onDragOver={preventDragDefaults}
+          onDrop={(e) => {
+            preventDragDefaults(e);
+            const f = e.dataTransfer.files?.[0];
+            if (f) onFile(f);
+          }}
+        >
+          <div className="mb-2.5 flex items-center justify-center gap-2">
+            <CloudUpload className="h-6 w-6 shrink-0 text-violet-400" strokeWidth={1.5} />
+            <p className="text-left text-xs font-bold leading-snug text-violet-950 sm:text-sm">{headline}</p>
+          </div>
+          <p
+            className="truncate px-1 text-sm font-semibold text-emerald-700"
+            title={fileName}
+          >
+            {fileName}
+          </p>
+          {fileSizeKb != null && (
+            <p className="mt-0.5 text-[11px] font-medium text-emerald-600/90">{fileSizeKb} KB</p>
+          )}
+          <button
+            type="button"
+            onClick={onPick}
+            className="mt-2 text-sm font-semibold text-emerald-700 underline-offset-2 transition hover:text-emerald-800 hover:underline"
+          >
+            Chọn tệp khác
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className={wrap}>
+      <p className="mb-2 text-xs font-bold uppercase tracking-wide text-violet-600">{zoneLabel}</p>
+      <div
+        role="button"
+        tabIndex={0}
+        onClick={onPick}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            onPick();
+          }
+        }}
+        onDragEnter={preventDragDefaults}
+        onDragOver={preventDragDefaults}
+        onDrop={(e) => {
+          preventDragDefaults(e);
+          const f = e.dataTransfer.files?.[0];
+          if (f) onFile(f);
+        }}
+        className={`${shellClass} cursor-pointer border-violet-200/90 bg-violet-50/25 hover:border-violet-300 hover:bg-violet-50/55`}
+      >
+        <CloudUpload className="mb-3 h-10 w-10 text-violet-400" strokeWidth={1.5} />
+        <p className="max-w-md text-sm font-bold text-violet-950 sm:text-base">{headline}</p>
+        <p className="mt-1.5 text-xs text-violet-500">{FILE_FORMAT_HINT}</p>
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            onPick();
+          }}
+          className="mt-4 rounded-lg border border-violet-200 bg-white px-5 py-2 text-sm font-semibold text-violet-800 shadow-sm transition hover:border-violet-300 hover:bg-violet-50"
+        >
+          {pickLabel}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 const DEMO_MATCHED   = ["React", "TypeScript", "Node.js", "REST API", "Agile", "Git"];
 const DEMO_JD_KWS    = ["React", "TypeScript", "Node.js", "Docker", "AWS", "CI/CD", "REST API", "PostgreSQL", "Agile", "Git"];
 const DEMO_SCORES    = [
@@ -181,8 +279,6 @@ export function CVAnalysis() {
   const [fieldOpen, setFieldOpen] = useState(false);
   const [progress, setProgress] = useState(0);
   const [loadingStage, setLoadingStage] = useState(0);
-  const [dragOverCV, setDragOverCV] = useState(false);
-  const [dragOverJD, setDragOverJD] = useState(false);
 
   // Real file state
   const [cvFile, setCvFile] = useState(null);
@@ -229,6 +325,28 @@ export function CVAnalysis() {
 
   const canAnalyze  = plans.starterPro || plans.elitePro || cvRemaining > 0;
   const isFreeTier  = !plans.starterPro && !plans.elitePro;
+
+  const hasCvInput = Boolean(cvUploaded || reuseCV || cvFile);
+  const hasJdInput = Boolean(jdUploaded || reuseJD || jdFile);
+  const needsJdForRoute = routeMode === "jd" && enableJD;
+  const readyToAnalyze =
+    needsJdForRoute
+      ? hasCvInput && hasJdInput
+      : routeMode === "field" && enableField
+        ? hasCvInput && Boolean(selectedField)
+        : hasCvInput;
+
+  const primaryCtaLabel = needsJdForRoute
+    ? !hasCvInput
+      ? "Tải CV để tiếp tục"
+      : !hasJdInput
+        ? "Tải JD để phân tích"
+        : "Bắt đầu phân tích"
+    : !hasCvInput
+      ? "Tải CV để tiếp tục"
+      : routeMode === "field" && !selectedField
+        ? "Chọn ngành để phân tích"
+        : "Bắt đầu phân tích";
 
   // Derived mode based on checkboxes
   const derivedMode = enableJD ? "jd" : enableField ? "field" : "cv-only";
@@ -308,8 +426,9 @@ export function CVAnalysis() {
       navigate(buildLoginPath(loginReturnPath));
       return;
     }
-    const hasCVInput = cvUploaded || !!reuseCV;
+    const hasCVInput = Boolean(cvUploaded || reuseCV || cvFile);
     if (!hasCVInput) return;
+    if (needsJdForRoute && !Boolean(jdUploaded || reuseJD || jdFile)) return;
     if (!canAnalyze) return;
 
     if (!plans.starterPro && !plans.elitePro) {
@@ -673,69 +792,49 @@ export function CVAnalysis() {
 
   // ────────────────────────────────────────────────────────────────────────────
   return (
-    <MentorPageShell bottomPad="pb-8">
-      <div className="relative z-[1] mx-auto w-full max-w-7xl px-6 pb-4 pt-4 sm:px-8 sm:pb-6 sm:pt-6">
-        <div className="mb-8">
-        <button
-          type="button"
-          onClick={() => navigate("/cv-analysis")}
-          className="mb-4 flex items-center gap-2 text-sm font-semibold text-slate-600 transition-colors hover:text-[#6E35E8]"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Quay lại chọn loại phân tích
-        </button>
-        <div className="mb-4 flex items-center gap-3">
-          <FileText
-            className="size-6 shrink-0 text-lime-900"
-            strokeWidth={2.5}
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-          <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-800 sm:text-[11px]">
-            {routeMode === "field" ? "Phân tích theo ngành" : "Phân tích CV + JD"}
-          </span>
-        </div>
-        <h1 className="app-page-title mb-3">
-          {routeMode === "field" ? (
-            <>
-              Phân tích CV <span className="text-[#6E35E8]">theo ngành</span>
-            </>
-          ) : (
-            <>
-              Phân tích CV <span className="text-[#6E35E8]">với JD</span>
-            </>
-          )}
-        </h1>
-        <p className="app-page-subtitle">
-          {routeMode === "field"
-            ? "Tải CV, chọn nhóm ngành nghề — AI đánh giá cấu trúc, nội dung và gợi ý cải thiện theo chuẩn ngành."
-            : "Tải CV và Job Description (PDF) — so khớp từ khóa, chấm điểm và gợi ý chỉnh sửa theo đúng vị trí tuyển dụng."}
-        </p>
-        </div>
-
-        <div className="w-full rounded-[28px] border border-slate-200 bg-white/95 px-6 pb-10 pt-6 shadow-[0_18px_40px_rgba(15,23,42,0.08)] sm:px-8">
-      {/* Page tabs */}
-      <div className="flex gap-2 mb-6">
-        {[
-          { val: "analysis", label: "Phân tích mới", icon: <Search className="w-4 h-4" /> },
-          { val: "history",  label: "Lịch sử", icon: <History className="w-4 h-4" /> },
-        ].map(t => (
-          <button
-            key={t.val}
-            onClick={() => t.val === "history" ? navigate("/cv-analysis/history") : setPageView(t.val)}
-            className={`flex items-center gap-1.5 rounded-xl px-4 py-2 text-sm font-semibold transition-all ${pageView === t.val ? "text-white shadow" : "border border-slate-300 bg-white text-slate-600 hover:border-[#6E35E8]/35"}`}
-            style={pageView === t.val ? { background: "#6E35E8" } : {}}
+    <CvJdAnalysisPage
+      activeTab="analysis"
+      showTabs={routeMode === "jd"}
+      badge={routeMode === "field" ? "Phân tích theo ngành" : "Phân tích CV + JD"}
+      title={
+        routeMode === "field" ? (
+          <>
+            Phân tích CV <span className="text-[#630ed4]">theo ngành</span>
+          </>
+        ) : undefined
+      }
+      subtitle={
+        routeMode === "field"
+          ? "Tải CV, chọn nhóm ngành nghề — AI đánh giá cấu trúc, nội dung và gợi ý cải thiện theo chuẩn ngành."
+          : undefined
+      }
+      subtitleClassName={
+        routeMode === "field"
+          ? "mt-2 max-w-2xl text-sm font-medium leading-relaxed text-violet-800/90 sm:text-[0.9375rem]"
+          : undefined
+      }
+      tabTrailing={
+        routeMode === "jd" && !plans.starterPro && !plans.elitePro && step === "upload" ? (
+          <span
+            className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-bold sm:text-[11px] ${
+              cvRemaining === 0
+                ? "bg-amber-100 text-amber-800 ring-1 ring-amber-200/80"
+                : "bg-violet-100 text-violet-800 ring-1 ring-violet-200/70"
+            }`}
           >
-            {t.icon}{t.label}
-          </button>
-        ))}
-      </div>
+            {cvRemaining === 0 ? <Lock className="h-3 w-3" /> : <SealPercent className="h-3 w-3" />}
+            {cvRemaining}/{CV_FREE_LIMIT} lượt
+          </span>
+        ) : null
+      }
+    >
+      <div className="px-0 py-0 sm:px-0">
 
       {/* ═══════════════════════��═══════════════════════════════════════════
           HISTORY VIEW
       ════════════════════════════════════════════════════════════════════ */}
       {pageView === "history" && (
-        <div>
+        <div className="px-4 py-5 sm:px-5 sm:py-6">
           <div className="flex items-center justify-between mb-4">
             <p className="text-sm text-slate-600">Các phân tích đã lưu trên cloud — file gốc có thể tải lại</p>
             <button onClick={loadHistory} className="flex items-center gap-1.5 text-xs font-medium text-[#6E35E8] hover:underline">
@@ -877,21 +976,11 @@ export function CVAnalysis() {
                 </div>
               )}
 
-              {/* Usage */}
-              {!plans.starterPro && !plans.elitePro && (
-                <div className="flex items-center justify-between rounded-2xl px-5 py-4 mb-6" style={{ background: cvRemaining === 0 ? "rgba(255,140,66,0.08)" : "rgba(110, 53, 232,0.06)", border: `1.5px solid ${cvRemaining === 0 ? "rgba(255,140,66,0.3)" : "rgba(110, 53, 232,0.15)"}` }}>
-                  <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: cvRemaining === 0 ? "rgba(255,140,66,0.15)" : "rgba(110, 53, 232,0.12)" }}>
-                      {cvRemaining === 0 ? <Lock className="w-4 h-4 text-[#FF8C42]" /> : <SealPercent className="w-4 h-4 text-[#6E35E8]" />}
-                    </div>
-                    <div>
-                      {cvRemaining === 0
-                        ? <><p className="text-sm font-semibold text-[#c2550a]">Đã dùng hết {CV_FREE_LIMIT} lượt miễn phí</p><p className="text-xs text-[#c2550a] opacity-70">Nâng cấp để phân tích không giới hạn</p></>
-                        : <><p className="text-sm font-semibold text-violet-700">{cvRemaining}/{CV_FREE_LIMIT} lượt miễn phí còn lại</p><p className="text-xs text-slate-500">Nâng cấp để dùng không giới hạn</p></>}
-                    </div>
-                  </div>
-                  <button onClick={() => navigate("/pricing")} className="flex items-center gap-1.5 text-xs font-bold px-4 py-2 rounded-xl" style={cvRemaining === 0 ? { background: "#FF8C42", color: "#fff" } : { background: "rgba(110, 53, 232,0.1)", color: "#6E35E8" }}>
-                    <Zap className="w-3.5 h-3.5" />{cvRemaining === 0 ? "Nâng cấp ngay" : "Xem gói CV Pro"}
+              {cvRemaining === 0 && !plans.starterPro && !plans.elitePro && (
+                <div className="mx-4 mb-0 mt-3 flex items-center justify-between gap-2 rounded-xl border border-amber-200/90 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-900 sm:mx-5">
+                  <span>Đã hết lượt miễn phí — nâng cấp để tiếp tục</span>
+                  <button type="button" onClick={() => navigate("/pricing")} className="font-bold text-[#630ed4] hover:underline">
+                    Xem gói
                   </button>
                 </div>
               )}
@@ -900,189 +989,102 @@ export function CVAnalysis() {
               <input ref={cvInputRef} type="file" accept=".pdf,.doc,.docx,.txt" className="hidden" onChange={e => { const f = e.target.files?.[0]; if (f) handleCVFile(f); }} />
               <input ref={jdInputRef} type="file" accept=".pdf,.doc,.docx,.txt" className="hidden" onChange={e => { const f = e.target.files?.[0]; if (f) handleJDFile(f); }} />
 
-              {/* CV upload — kéo thả / chọn file */}
-              <div className="mb-8">
-                <div className="mb-6">
-                  <h3 className="mb-2 text-xl font-bold tracking-tight text-slate-900">Upload CV của bạn</h3>
-                  <p className="text-sm text-slate-600">Bắt đầu bằng việc tải lên CV để phân tích chất lượng</p>
-                </div>
-
-                <div
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" || e.key === " ") cvInputRef.current?.click();
+              <div
+                className={
+                  routeMode === "jd" && enableJD
+                    ? "grid gap-6 pb-2 lg:grid-cols-2 lg:gap-8"
+                    : "pb-2"
+                }
+              >
+                <CvUploadDropZone
+                  kind="cv"
+                  hasFile={cvUploaded || !!reuseCV}
+                  fileName={cvFile?.name ?? reuseCV?.name}
+                  fileSizeKb={cvFile ? Math.round(cvFile.size / 1024) : null}
+                  onPick={() => cvInputRef.current?.click()}
+                  onFile={handleCVFile}
+                  onClear={() => {
+                    setCvUploaded(false);
+                    setCvFile(null);
+                    setReuseCV(null);
+                    if (cvInputRef.current) cvInputRef.current.value = "";
                   }}
-                  onDragOver={(e) => {
-                    e.preventDefault();
-                    setDragOverCV(true);
-                  }}
-                  onDragLeave={() => setDragOverCV(false)}
-                  onDrop={(e) => {
-                    e.preventDefault();
-                    setDragOverCV(false);
-                    const f = e.dataTransfer.files?.[0];
-                    if (f) handleCVFile(f);
-                  }}
-                  onClick={() => cvInputRef.current?.click()}
-                  className={`group relative cursor-pointer rounded-3xl border-2 border-dashed p-10 text-center transition-all sm:p-12 ${
-                    dragOverCV
-                      ? "border-[#6E35E8] bg-[#6E35E8]/10"
-                      : cvUploaded || reuseCV
-                        ? "border-[#c4ff47]/60 bg-[#c4ff47]/[0.08]"
-                        : "border-violet-200 bg-white hover:border-violet-400/50 hover:bg-violet-50/50"
-                  }`}
-                >
-                  {cvUploaded || reuseCV ? (
-                    <div className="flex flex-col items-center">
-                      <div className="mb-5 flex h-20 w-20 items-center justify-center rounded-3xl bg-[#c4ff47]/20">
-                        {reuseCV ? (
-                          <BadgeCheck className="h-10 w-10 text-[#6E35E8]" />
-                        ) : (
-                          <Check className="h-10 w-10 text-[#6E35E8]" />
-                        )}
-                      </div>
-                      <p className="mb-2 text-lg font-bold text-[#1a1035]">
-                        {reuseCV ? "Dùng lại file đã lưu" : "CV đã được tải lên"}
-                      </p>
-                      <p className="mb-1 text-sm font-medium text-violet-800">
-                        {cvFile?.name ?? reuseCV?.name}
-                      </p>
-                      {cvFile && (
-                        <p className="text-sm text-slate-500">
-                          {(cvFile.size / 1024).toFixed(0)} KB ·{" "}
-                          {cvFile.name.split(".").pop()?.toUpperCase()}
-                        </p>
-                      )}
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setCvUploaded(false);
-                          setCvFile(null);
-                          setReuseCV(null);
-                          if (cvInputRef.current) cvInputRef.current.value = "";
-                        }}
-                        className="mt-4 flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm text-slate-500 transition-colors hover:bg-violet-50 hover:text-[#6E35E8]"
-                      >
-                        <X className="h-4 w-4" /> Xóa và tải lại
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="flex flex-col items-center">
-                      <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-[#6E35E8]/10 transition-colors group-hover:bg-[#6E35E8]/15 sm:h-20 sm:w-20 sm:rounded-3xl">
-                        <FileText className="h-8 w-8 text-[#6E35E8] sm:h-10 sm:w-10" />
-                      </div>
-                      <p className="mb-2 text-lg font-bold text-slate-900">Kéo & thả CV vào đây</p>
-                      <p className="mb-6 max-w-md text-sm text-slate-600">
-                        hoặc click vào vùng này để chọn file từ máy tính của bạn
-                      </p>
-                      <span className="inline-flex items-center gap-2 rounded-xl bg-[#6E35E8] px-8 py-3 text-sm font-bold text-white shadow-lg shadow-[#6E35E8]/20 transition group-hover:-translate-y-0.5 group-hover:shadow-xl group-hover:shadow-[#6E35E8]/30">
-                        <Upload className="h-4 w-4" /> Chọn file CV
-                      </span>
-                      <p className="mt-6 flex items-center gap-2 text-sm text-slate-500">
-                        <FileText className="h-4 w-4" /> PDF, DOC, DOCX, TXT · tối đa 10MB
-                      </p>
-                    </div>
-                  )}
-                </div>
+                />
+                {routeMode === "jd" && enableJD && (
+                  <CvUploadDropZone
+                    kind="jd"
+                    hasFile={jdUploaded || !!reuseJD}
+                    fileName={jdFile?.name ?? reuseJD?.name}
+                    fileSizeKb={jdFile ? Math.round(jdFile.size / 1024) : null}
+                    onPick={() => jdInputRef.current?.click()}
+                    onFile={handleJDFile}
+                    onClear={() => {
+                      setJdUploaded(false);
+                      setJdFile(null);
+                      setReuseJD(null);
+                      if (jdInputRef.current) jdInputRef.current.value = "";
+                    }}
+                  />
+                )}
               </div>
 
-              {/* JD Upload — /cv-analysis/jd */}
-              {routeMode === "jd" && enableJD && (
-                <div className="mb-8">
-                  <div className="mb-4">
-                    <h3 className="mb-1 text-base font-bold text-slate-900">Upload Job Description</h3>
-                    <p className="text-sm text-slate-600">Tải lên JD để so sánh với CV của bạn</p>
-                  </div>
-                  
-                  <div
-                    onDragOver={e => { e.preventDefault(); setDragOverJD(true); }}
-                    onDragLeave={() => setDragOverJD(false)}
-                    onDrop={e => { e.preventDefault(); setDragOverJD(false); const f = e.dataTransfer.files?.[0]; if (f) handleJDFile(f); }}
-                    onClick={() => jdInputRef.current?.click()}
-                    className={`group relative cursor-pointer rounded-3xl border-2 border-dashed p-10 text-center backdrop-blur-sm transition-all ${dragOverJD ? "border-[#8B4DFF] bg-[#6E35E8]/10" : (jdUploaded || reuseJD) ? "border-[#c4ff47]/60 bg-[#c4ff47]/[0.08]" : "border-slate-300 bg-white hover:border-violet-400/45 hover:bg-violet-50/40"}`}
-                    style={(jdUploaded || reuseJD) ? { background: "rgba(180,240,0,0.08)" } : {}}
-                  >
-                    {(jdUploaded || reuseJD) ? (
-                      <div className="flex flex-col items-center">
-                        <div className="w-16 h-16 rounded-2xl flex items-center justify-center mb-4" style={{ background: "rgba(180,240,0,0.15)" }}>
-                          {reuseJD ? <BadgeCheck className="w-8 h-8" style={{ color: "#6E9900" }} /> : <Check className="w-8 h-8" style={{ color: "#6E9900" }} />}
-                        </div>
-                        <p className="font-bold mb-1 text-[#4A7A00]">{reuseJD ? "Dùng lại file đã lưu" : "JD đã được tải lên"}</p>
-                        <p className="text-sm text-[#6E9900] mb-1 font-medium">{jdFile?.name ?? reuseJD?.name}</p>
-                        {jdFile && <p className="text-sm text-slate-500">{(jdFile.size / 1024).toFixed(0)} KB · {jdFile.name.split(".").pop()?.toUpperCase()}</p>}
-                        {reuseJD && <p className="text-sm text-slate-500">Đã lưu trên cloud</p>}
-                        <button onClick={e => { e.stopPropagation(); setJdUploaded(false); setJdFile(null); setReuseJD(null); if (jdInputRef.current) jdInputRef.current.value = ""; }} className="mt-3 flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700">
-                          <X className="w-4 h-4" /> Xóa
-                        </button>
-                      </div>
-                    ) : (
-                      <div className="flex flex-col items-center">
-                        <div className="w-16 h-16 rounded-2xl bg-[#8B4DFF]/10 flex items-center justify-center mb-4 group-hover:bg-[#8B4DFF]/15 transition-colors"><Briefcase className="w-8 h-8 text-[#8B4DFF]" /></div>
-                        <p className="mb-1 font-bold text-slate-900">Upload Job Description</p>
-                        <p className="mb-4 text-sm text-slate-600">Kéo & thả hoặc click để chọn</p>
-                        <div className="bg-[#8B4DFF] text-white text-sm font-bold px-6 py-2.5 rounded-xl flex items-center gap-2 shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all">
-                          <Upload className="w-4 h-4" /> Chọn file JD
-                        </div>
-                        <p className="mt-4 text-sm text-slate-500">PDF, DOC, DOCX, TXT</p>
+              {routeMode === "field" && enableField && (
+                <div className="border-t border-violet-100 px-4 py-4 sm:px-5">
+                  <p className="mb-2 text-xs font-bold uppercase tracking-wide text-violet-700">Ngành nghề</p>
+                  <div className="relative">
+                    <button
+                      type="button"
+                      onClick={() => setFieldOpen(!fieldOpen)}
+                      className="group flex w-full items-center justify-between rounded-xl border border-violet-200 bg-white px-4 py-3 text-sm transition-colors hover:border-violet-300"
+                    >
+                      <span className={selectedField ? "font-semibold text-violet-950" : "text-violet-500"}>
+                        {selectedField || "Chọn ngành nghề..."}
+                      </span>
+                      <ChevronDown className={`h-4 w-4 text-violet-500 transition-transform ${fieldOpen ? "rotate-180" : ""}`} />
+                    </button>
+                    {fieldOpen && (
+                      <div className="absolute left-0 right-0 top-full z-10 mt-1 max-h-48 overflow-y-auto rounded-xl border border-violet-200 bg-white shadow-lg">
+                        {FIELDS.map(f => (
+                          <button
+                            key={f}
+                            type="button"
+                            onClick={() => { setSelectedField(f); setFieldOpen(false); }}
+                            className="w-full border-b border-violet-50 px-4 py-2.5 text-left text-sm font-medium text-violet-800 last:border-0 hover:bg-violet-50"
+                          >
+                            {f}
+                          </button>
+                        ))}
                       </div>
                     )}
                   </div>
                 </div>
               )}
 
-              {/* Chọn ngành — chỉ luồng /cv-analysis/field */}
-              {routeMode === "field" && enableField && (
-                <div className="mb-8">
-                  <div className="mb-4">
-                    <h3 className="mb-1 text-base font-bold text-slate-900">Chọn ngành nghề</h3>
-                    <p className="text-sm text-slate-600">CV sẽ được đánh giá theo tiêu chuẩn của ngành này</p>
-                  </div>
-                  
-                  <div className="rounded-2xl border border-slate-300 bg-white p-6 backdrop-blur-sm">
-                    <div className="relative">
-                      <button onClick={() => setFieldOpen(!fieldOpen)} className="group flex w-full items-center justify-between rounded-xl border-2 border-slate-300 bg-white px-5 py-4 text-sm transition-all hover:border-violet-400/40 hover:bg-violet-50/40">
-                        <span className={selectedField ? "font-medium text-slate-900" : "text-slate-500"}>{selectedField || "Chọn ngành nghề..."}</span>
-                        <ChevronDown className={`h-5 w-5 text-slate-400 transition-all group-hover:text-violet-500 ${fieldOpen ? "rotate-180" : ""}`} />
-                      </button>
-                      {fieldOpen && (
-                        <div className="absolute left-0 right-0 top-full z-10 mt-2 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl shadow-slate-200/60">
-                          {FIELDS.map(f => (
-                            <button key={f} onClick={() => { setSelectedField(f); setFieldOpen(false); }} className="w-full border-b border-slate-100 px-5 py-3 text-left text-sm font-medium text-slate-700 transition-colors last:border-0 hover:bg-violet-50 hover:text-violet-700">{f}</button>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Gemini badge */}
-              <div className="mb-6 flex items-center gap-2 border-b border-slate-200 pb-6">
-                <span className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-violet-700" style={{ background: "rgba(110, 53, 232,0.08)", border: "1px solid rgba(139, 77, 255,0.25)" }}>
-                  <CloudUpload className="h-3.5 w-3.5" /> Files được lưu vào Supabase Storage · Phân tích bởi Gemini 1.5 Flash
-                </span>
-              </div>
-
-              {/* Large CTA Button */}
-              <div className="flex justify-center">
+              <div className="border-t border-violet-100 bg-gradient-to-b from-violet-50/40 to-violet-50/70 px-6 py-6 sm:px-8 sm:py-8">
                 <button
+                  type="button"
                   onClick={handleAnalyze}
-                  disabled={!canAnalyze || !(cvUploaded || !!reuseCV)}
-                  className={`flex items-center gap-3 rounded-2xl px-12 py-4 text-base font-bold transition-all ${(canAnalyze && (cvUploaded || reuseCV)) ? "text-white shadow-2xl shadow-[#6E35E8]/30 hover:-translate-y-1 hover:shadow-[#6E35E8]/40" : "cursor-not-allowed bg-slate-200 text-slate-400"}`}
-                  style={(canAnalyze && (cvUploaded || reuseCV)) ? { background: "linear-gradient(135deg,#6E35E8,#9B6DFF)" } : {}}
+                  disabled={!canAnalyze || !readyToAnalyze}
+                  className={`flex w-full max-w-2xl mx-auto items-center justify-center gap-2 rounded-2xl py-4 text-base font-extrabold transition-all sm:py-4 sm:text-lg ${
+                    canAnalyze && readyToAnalyze
+                      ? "bg-gradient-to-r from-[#c4ff47] via-[#d4ff00] to-[#c4ff47] text-violet-950 shadow-[0_8px_28px_rgba(196,255,71,0.35)] hover:brightness-105 active:scale-[0.99]"
+                      : "cursor-not-allowed bg-violet-200/60 text-violet-500"
+                  }`}
                 >
-                  <Zap className="w-5 h-5" />
-                  {(cvUploaded || reuseCV) ? "Bắt đầu phân tích với Gemini AI" : "Vui lòng chọn file CV trước"}
+                  <Zap className="h-5 w-5 shrink-0" strokeWidth={2.25} />
+                  {primaryCtaLabel}
                 </button>
+                <p className="mt-2.5 text-center text-[10px] font-medium text-violet-600/90 sm:text-[11px]">
+                  Dữ liệu được xử lý an toàn · Gemini AI
+                </p>
               </div>
+
             </div>
           )}
 
           {/* ── LOADING ─────────────────────────────────────────────────── */}
           {step === "loading" && (
-            <div className="flex flex-col items-center justify-center py-24 max-w-md mx-auto text-center">
+            <div className="flex flex-col items-center justify-center px-4 py-16 sm:px-6 sm:py-20 max-w-md mx-auto text-center">
               <div className="w-20 h-20 rounded-2xl flex items-center justify-center mb-8 shadow-xl shadow-[#6E35E8]/30" style={{ background: "linear-gradient(135deg,#6E35E8,#9B6DFF)" }}>
                 <Loader2 className="w-10 h-10 text-white animate-spin" />
               </div>
@@ -1110,7 +1112,7 @@ export function CVAnalysis() {
 
           {/* ── RESULT ──────────────────────────────────────────────────── */}
           {step === "result" && (
-            <div>
+            <div className="px-4 py-5 sm:px-6 sm:py-6">
               {/* Free-tier notice */}
               {isFreeTier && (
                 <div className="flex items-center gap-4 rounded-2xl px-5 py-4 mb-6" style={{ background: "linear-gradient(135deg,rgba(110, 53, 232,0.08),rgba(139, 77, 255,0.05))", border: "1.5px solid rgba(110, 53, 232,0.2)" }}>
@@ -1592,8 +1594,7 @@ export function CVAnalysis() {
           )}
         </div>
       )}
-        </div>
       </div>
-    </MentorPageShell>
+    </CvJdAnalysisPage>
   );
 }

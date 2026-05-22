@@ -1,5 +1,6 @@
 import React from "react";
 import { Users, Star, Search, CircleCheck } from "lucide-react";
+import { HOME_SECTION_INNER } from "../layout/customerShellLayout";
 import { SparkleGlyph } from "../decor/SparkleGlyph.jsx";
 import { HOME_DEMO_MENTORS } from "../../data/homeLandingDemo";
 
@@ -320,7 +321,7 @@ function UpziStepCard({ step, index }) {
   );
 }
 
-/** Showcase mentor — Upzi layout, tím chấm bi, CTA lime. */
+/** Showcase mentor — Upzi layout, nền tím nhạt, CTA lime. */
 export function MentorFeatureShowcase({ onCtaClick }) {
   return (
     <section
@@ -329,14 +330,7 @@ export function MentorFeatureShowcase({ onCtaClick }) {
     >
       <style>{`
         .mentor-upzi-panel {
-          background-color: #cfc0f5;
-          background-image:
-            radial-gradient(circle at 50% 0%, rgba(99, 14, 212, 0.18) 0%, transparent 52%),
-            radial-gradient(circle, rgba(255, 255, 255, 0.38) 1.75px, transparent 2px),
-            radial-gradient(circle, rgba(99, 14, 212, 0.08) 1.75px, transparent 2px),
-            linear-gradient(165deg, #e4d8fc 0%, #d8caf8 42%, #cfc0f5 100%);
-          background-size: 100% 100%, 20px 20px, 20px 20px, 100% 100%;
-          background-position: center top, 0 0, 10px 10px, 0 0;
+          background: linear-gradient(165deg, #f0ebf8 0%, #ebe4f6 50%, #e6ddf3 100%);
           border: 2px solid rgba(95, 0, 240, 0.4);
         }
         @keyframes mentor-upzi-rise {
@@ -380,7 +374,7 @@ export function MentorFeatureShowcase({ onCtaClick }) {
         }
       `}</style>
 
-      <div className="relative z-10 mx-auto w-full max-w-7xl overflow-visible px-5 py-2">
+      <div className={`relative z-10 w-full overflow-visible py-2 ${HOME_SECTION_INNER}`}>
         <div className="mentor-showcase-uniform flex w-full flex-col gap-4 sm:gap-5">
           <article className="flex flex-col items-start gap-2 sm:gap-2.5">
             <span className="inline-flex items-center gap-2 rounded-full border border-violet-400/30 bg-violet-500/10 px-3.5 py-1 text-[11px] font-semibold text-violet-800 sm:text-xs">

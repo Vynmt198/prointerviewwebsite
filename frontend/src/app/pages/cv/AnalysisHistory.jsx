@@ -1,9 +1,7 @@
-import { MentorPageShell } from "../../components/mentor/MentorPageShell";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router";
 import {
   FileText,
-  ArrowLeft,
   Search as MagnifyingGlass,
   Calendar,
   BarChart3 as ChartBar,
@@ -13,39 +11,46 @@ import {
   TrendingUp as TrendUp,
   TrendingDown as TrendDown,
   RefreshCw as ArrowsClockwise,
-  Download,
-  Eye,
-  Trash2 as Trash,
-  Filter as FunnelSimple,
-  ChevronDown as CaretDown,
-  CalendarDays as CalendarBlank,
-  Users,
+  Briefcase,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import { fetchCvAnalyses, fetchCvAnalysisById } from "../../utils/cvApi";
 import { hasAuthCredentials, isLoggedIn } from "../../utils/auth";
 import { buildLoginPath } from "../../utils/authGate";
+import { CvJdAnalysisPage } from "../../components/cv/CvJdAnalysisFrame";
+import { CV_JD_ANALYSIS_PATH, CV_JD_HISTORY_PATH } from "../../components/cv/CvJdAnalysisTabs";
+
+const HISTORY_PATH = CV_JD_HISTORY_PATH;
+const JD_ANALYSIS_PATH = CV_JD_ANALYSIS_PATH;
+
+function isJdAnalysis(item) {
+  return item.mode === "jd" || Boolean(item.jdFileName || item.jdFile);
+}
 
 function mapRow(item) {
   const createdAt = item.createdAt || item.date || "";
   return {
     id: item.analysisId || item.id,
-    mode: item.mode || (item.jdFileName ? "jd" : "field"),
-    cvFile: item.cvFileName || item.cvFile || "cv",
+    mode: "jd",
+    cvFile: item.cvFileName || item.cvFile || "cv.pdf",
     jdFile: item.jdFileName || item.jdFile || null,
     matchScore: item.matchScore ?? 0,
     createdAt,
-    date: createdAt
-      ? new Date(createdAt).toLocaleDateString("vi-VN")
-      : "",
+    date: createdAt ? new Date(createdAt).toLocaleDateString("vi-VN") : "",
     company: item.company || null,
-    position: item.position || item.cvFileName || null,
-    field: item.field || null,
+    position: item.position || null,
   };
+}
+
+function scoreTone(score) {
+  if (score >= 75) return { text: "text-lime-900", bg: "bg-lime-100 ring-lime-200/80" };
+  if (score >= 55) return { text: "text-[#630ed4]", bg: "bg-violet-100 ring-violet-200/80" };
+  return { text: "text-amber-800", bg: "bg-amber-100 ring-amber-200/80" };
 }
 
 export function AnalysisHistory() {
   const navigate = useNavigate();
-  const [filterMode, setFilterMode] = useState("all");
   const [sortBy, setSortBy] = useState("date");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedId, setSelectedId] = useState(null);
@@ -55,7 +60,7 @@ export function AnalysisHistory() {
   const [detail, setDetail] = useState(null);
   const [detailLoading, setDetailLoading] = useState(false);
 
-  const loadRows = React.useCallback(async () => {
+  const loadRows = useCallback(async () => {
     setLoading(true);
     setLoadError("");
     const res = await fetchCvAnalyses();
@@ -65,12 +70,13 @@ export function AnalysisHistory() {
       setLoadError(res.error || "Không tải được lịch sử phân tích.");
       return;
     }
-    setRows((res.analyses || []).map((a) => mapRow(a)));
+    const jdOnly = (res.analyses || []).filter(isJdAnalysis).map(mapRow);
+    setRows(jdOnly);
   }, []);
 
   useEffect(() => {
     if (!isLoggedIn()) {
-      navigate(buildLoginPath("/cv-analysis/history"), { replace: true });
+      navigate(buildLoginPath(HISTORY_PATH), { replace: true });
       return;
     }
     if (!hasAuthCredentials()) return;
@@ -88,32 +94,24 @@ export function AnalysisHistory() {
       const res = await fetchCvAnalysisById(selectedId);
       if (cancelled) return;
       setDetailLoading(false);
-      if (res.success && res.analysis) {
-        setDetail(res.analysis);
-      } else {
-        setDetail(null);
-      }
+      if (res.success && res.analysis) setDetail(res.analysis);
+      else setDetail(null);
     })();
     return () => {
       cancelled = true;
     };
   }, [selectedId]);
 
-  // Filter and sort logic
   const filteredData = rows
-    .filter(item => {
-      if (filterMode !== "all" && item.mode !== filterMode) return false;
-      if (searchQuery) {
-        const query = searchQuery.toLowerCase();
-        return (
-          item.cvFile.toLowerCase().includes(query) ||
-          (item.jdFile?.toLowerCase().includes(query)) ||
-          (item.company?.toLowerCase().includes(query)) ||
-          (item.position?.toLowerCase().includes(query)) ||
-          (item.field?.toLowerCase().includes(query))
-        );
-      }
-      return true;
+    .filter((item) => {
+      if (!searchQuery) return true;
+      const q = searchQuery.toLowerCase();
+      return (
+        item.cvFile.toLowerCase().includes(q) ||
+        (item.jdFile?.toLowerCase().includes(q)) ||
+        (item.company?.toLowerCase().includes(q)) ||
+        (item.position?.toLowerCase().includes(q))
+      );
     })
     .sort((a, b) => {
       if (sortBy === "date") {
@@ -122,555 +120,297 @@ export function AnalysisHistory() {
       return b.matchScore - a.matchScore;
     });
 
-  const selectedRow = selectedId ? rows.find((item) => item.id === selectedId) : null;
-
-  // Stats
   const totalAnalyses = rows.length;
   const avgScore = totalAnalyses
     ? Math.round(rows.reduce((sum, item) => sum + item.matchScore, 0) / totalAnalyses)
     : 0;
-  const jdAnalyses = rows.filter((item) => item.mode === "jd").length;
-  const fieldAnalyses = rows.filter((item) => item.mode === "field").length;
+  const bestScore = totalAnalyses ? Math.max(...rows.map((r) => r.matchScore)) : 0;
 
   return (
-    <MentorPageShell bottomPad="pb-8">
-      <div className="relative z-[1] mx-auto w-full max-w-7xl px-6 pb-4 pt-4 sm:px-8 sm:pb-6 sm:pt-6">
-        <div className="mb-8">
-        {/* Header */}
-        <div className="mb-6">
-          <button
-            type="button"
-            onClick={() => navigate(-1)}
-            className="mb-3 flex items-center gap-2 text-sm font-semibold text-slate-600 transition-colors hover:text-[#6E35E8]"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Quay lại
-          </button>
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-            <div className="min-w-0 flex-1">
-              <div className="mb-3 flex items-center gap-3">
-                <FileText
-                  className="size-6 shrink-0 text-lime-900"
-                  strokeWidth={2.5}
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
+    <CvJdAnalysisPage
+      activeTab="history"
+      tabTrailing={
+        totalAnalyses > 0 ? (
+          <span className="inline-flex items-center gap-1 rounded-full bg-violet-100 px-2.5 py-1 text-[10px] font-bold text-violet-800 ring-1 ring-violet-200/70 sm:text-[11px]">
+            {totalAnalyses} bản ghi
+          </span>
+        ) : null
+      }
+    >
+            {/* Stats */}
+            <div className="grid grid-cols-3 divide-x divide-violet-100 border-b border-violet-100">
+              {[
+                { icon: ChartBar, value: totalAnalyses, label: "Tổng lần phân tích" },
+                { icon: Sparkle, value: avgScore, label: "Điểm trung bình" },
+                { icon: FileText, value: bestScore, label: "Điểm cao nhất" },
+              ].map(({ icon: Icon, value, label }) => (
+                <div key={label} className="flex flex-col items-center gap-1.5 px-4 py-6 sm:px-8 sm:py-7">
+                  <Icon className="h-4 w-4 text-[#630ed4]" strokeWidth={2} />
+                  <p className="text-xl font-extrabold text-violet-950 sm:text-2xl">{value}</p>
+                  <p className="text-center text-[10px] font-semibold text-violet-600 sm:text-[11px]">{label}</p>
+                </div>
+              ))}
+            </div>
+
+            {/* Search + sort */}
+            <div className="flex flex-col gap-4 border-b border-violet-100 px-6 py-5 sm:flex-row sm:items-center sm:px-8 sm:py-6">
+              <div className="relative min-w-0 flex-1">
+                <MagnifyingGlass className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-violet-400" />
+                <input
+                  type="search"
+                  placeholder="Tìm theo tên CV, JD, công ty, vị trí..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full rounded-xl border border-violet-200 bg-violet-50/40 py-2.5 pl-10 pr-3 text-sm text-violet-950 placeholder:text-violet-400 focus:border-[#630ed4] focus:outline-none focus:ring-2 focus:ring-violet-200/80"
                 />
-                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-800 sm:text-[11px]">
-                  Phân tích CV/JD
-                </span>
               </div>
-              <h1 className="app-page-title mb-3">
-                Lịch sử phân tích{" "}
-                <span className="text-[#6E35E8]">CV/JD</span>
-              </h1>
-              <p className="app-page-subtitle">
-                Xem lại các kết quả phân tích đã thực hiện
-              </p>
-            </div>
-            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-slate-200 bg-violet-50 shadow-sm sm:mt-1">
-              <FileText className="h-7 w-7 text-[#6E35E8]" strokeWidth={2.25} />
-            </div>
-          </div>
-        </div>
-        </div>
-
-        <div className="w-full rounded-[28px] border border-slate-200 bg-white/90 px-5 py-6 shadow-[0_18px_40px_rgba(15,23,42,0.08)] backdrop-blur-sm sm:px-8 sm:py-8">
-        {/* Stats Cards */}
-        <div className="mb-5 grid grid-cols-1 gap-3 sm:gap-4 md:grid-cols-4">
-          <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-violet-200/80 bg-violet-100">
-                <ChartBar className="h-5 w-5 text-violet-700" strokeWidth={2.25} />
+              <div className="inline-flex shrink-0 rounded-xl bg-violet-100/70 p-1">
+                {[
+                  { value: "date", label: "Mới nhất", icon: Calendar },
+                  { value: "score", label: "Điểm cao", icon: ChartBar },
+                ].map((opt) => {
+                  const active = sortBy === opt.value;
+                  const Icon = opt.icon;
+                  return (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => setSortBy(opt.value)}
+                      className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition-all sm:text-sm ${
+                        active
+                          ? "bg-white text-[#630ed4] shadow-sm ring-1 ring-violet-200/80"
+                          : "text-violet-600 hover:text-violet-900"
+                      }`}
+                    >
+                      <Icon className="h-3.5 w-3.5" />
+                      {opt.label}
+                    </button>
+                  );
+                })}
               </div>
-              <div>
-                <p className="text-2xl font-black text-slate-900">
-                  {totalAnalyses}
-                </p>
-                <p className="text-xs font-semibold text-slate-500">Tổng phân tích</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-lime-200/90 bg-lime-100">
-                <Sparkle className="h-5 w-5 text-emerald-800" strokeWidth={2.25} />
-              </div>
-              <div>
-                <p className="text-2xl font-black text-slate-900">{avgScore}</p>
-                <p className="text-xs font-semibold text-slate-500">Điểm TB</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-violet-200/80 bg-violet-100">
-                <FileText className="h-5 w-5 text-violet-700" strokeWidth={2.25} />
-              </div>
-              <div>
-                <p className="text-2xl font-black text-slate-900">
-                  {jdAnalyses}
-                </p>
-                <p className="text-xs font-semibold text-slate-500">Phân tích CV+JD</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-amber-200/90 bg-amber-100">
-                <Users className="h-5 w-5 text-amber-900" strokeWidth={2.25} />
-              </div>
-              <div>
-                <p className="text-2xl font-black text-slate-900">
-                  {fieldAnalyses}
-                </p>
-                <p className="text-xs font-semibold text-slate-500">Phân tích theo ngành</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Filters & Search */}
-        <div className="mb-5 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
-          <div className="flex flex-col md:flex-row gap-4">
-            {/* Search */}
-            <div className="flex-1 relative">
-              <MagnifyingGlass className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Tìm theo CV, JD, công ty, vị trí..."
-                value={searchQuery}
-                onChange={e => setSearchQuery(e.target.value)}
-                className="w-full pl-11 pr-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#6E35E8] transition-colors"
-              />
             </div>
 
-            {/* Filter by mode */}
-            <div className="flex gap-2">
-              {[
-                { value: "all", label: "Tất cả" },
-                { value: "jd", label: "CV+JD" },
-                { value: "field", label: "Theo ngành" },
-              ].map(option => (
+            {loadError && (
+              <div className="mx-4 mt-4 flex items-center justify-between gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5 text-sm text-amber-900 sm:mx-5">
+                <span>{loadError}</span>
                 <button
-                  key={option.value}
-                  onClick={() => setFilterMode(option.value)}
-                  className={`px-4 py-3 rounded-xl text-sm font-semibold transition-all ${
-                    filterMode === option.value
-                      ? "text-white shadow-md"
-                      : "bg-gray-50 text-gray-600 hover:bg-gray-100"
-                  }`}
-                  style={
-                    filterMode === option.value
-                      ? { background: "#6E35E8" }
-                      : {}
-                  }
+                  type="button"
+                  onClick={loadRows}
+                  className="shrink-0 font-bold text-[#630ed4] hover:underline"
                 >
-                  {option.label}
+                  Thử lại
                 </button>
-              ))}
-            </div>
-
-            {/* Sort */}
-            <div className="flex gap-2">
-              {[
-                { value: "date", label: "Ngày", icon: CalendarBlank },
-                { value: "score", label: "Điểm", icon: ChartBar },
-              ].map(option => (
-                <button
-                  key={option.value}
-                  onClick={() => setSortBy(option.value)}
-                  className={`flex items-center gap-2 px-4 py-3 rounded-xl text-sm font-semibold transition-all ${
-                    sortBy === option.value
-                      ? "text-[#6E35E8] bg-[#6E35E8]/10"
-                      : "bg-gray-50 text-gray-600 hover:bg-gray-100"
-                  }`}
-                >
-                  <option.icon className="w-4 h-4" />
-                  {option.label}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {loadError && (
-          <div className="mb-4 rounded-2xl border border-orange-200 bg-orange-50 px-4 py-3 text-sm text-orange-900">
-            {loadError}
-            <button
-              type="button"
-              onClick={loadRows}
-              className="ml-3 font-semibold text-[#6E35E8] hover:underline"
-            >
-              Thử lại
-            </button>
-          </div>
-        )}
-
-        {/* Results count */}
-        <div className="mb-4">
-          <p className="text-sm font-medium text-slate-600">
-            Hiển thị {filteredData.length} / {totalAnalyses} phân tích
-          </p>
-        </div>
-
-        {loading && (
-          <div className="rounded-2xl border border-slate-200 bg-white py-16 text-center text-sm text-slate-600">
-            Đang tải lịch sử…
-          </div>
-        )}
-
-        {/* Analysis List */}
-        {!loading && filteredData.length === 0 ? (
-          <div className="rounded-2xl border border-slate-200 bg-white p-12 text-center shadow-sm">
-            <MagnifyingGlass className="mx-auto mb-4 h-16 w-16 text-slate-200" />
-            <p className="mb-1 font-medium text-slate-700">
-              {totalAnalyses === 0 ? "Chưa có phân tích nào được lưu" : "Không tìm thấy kết quả"}
-            </p>
-            <p className="text-sm text-slate-500">
-              {totalAnalyses === 0
-                ? "Phân tích CV+JD trên trang Phân tích — kết quả sẽ lưu vào đây sau mỗi lần chạy."
-                : "Thử thay đổi bộ lọc hoặc từ khóa tìm kiếm"}
-            </p>
-            {totalAnalyses === 0 && (
-              <button
-                type="button"
-                onClick={() => navigate("/cv-analysis")}
-                className="mt-4 rounded-xl bg-[#6E35E8] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#5C28D9]"
-              >
-                Phân tích ngay
-              </button>
+              </div>
             )}
-          </div>
-        ) : !loading ? (
-          <div className="grid gap-4">
-            {filteredData.map(item => {
-              const scoreColor =
-                item.matchScore >= 75
-                  ? "#4A7A00"
-                  : item.matchScore >= 55
-                  ? "#6E35E8"
-                  : "#CC5C00";
-              const scoreBg =
-                item.matchScore >= 75
-                  ? "rgba(180,240,0,0.12)"
-                  : item.matchScore >= 55
-                  ? "rgba(110, 53, 232,0.08)"
-                  : "rgba(255,140,66,0.1)";
 
-              const isExpanded = selectedId === item.id;
+            <p className="px-6 pt-5 text-sm font-semibold text-violet-600 sm:px-8">
+              {loading ? "Đang tải…" : `Hiển thị ${filteredData.length} / ${totalAnalyses} phân tích CV + JD`}
+            </p>
 
-              return (
-                <div
-                  key={item.id}
-                  className={`bg-white rounded-2xl border shadow-sm transition-all ${
-                    isExpanded
-                      ? "border-[#6E35E8] shadow-lg"
-                      : "border-gray-100 hover:border-gray-200 hover:shadow-md"
-                  }`}
-                >
-                  {/* Main Row */}
-                  <div
-                    className="p-5 cursor-pointer"
-                    onClick={() =>
-                      setSelectedId(isExpanded ? null : item.id)
-                    }
-                  >
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex-1 min-w-0">
-                        {/* Tags & Date */}
-                        <div className="flex items-center gap-2 mb-2 flex-wrap">
-                          <span
-                            className="text-xs px-2.5 py-1 rounded-lg font-medium"
-                            style={{
-                              background:
-                                item.mode === "jd"
-                                  ? "rgba(110, 53, 232,0.08)"
-                                  : "rgba(255,214,0,0.15)",
-                              color:
-                                item.mode === "jd" ? "#6E35E8" : "#997F00",
-                            }}
-                          >
-                            {item.mode === "jd"
-                              ? "CV+JD"
-                              : item.field ?? "Theo ngành"}
-                          </span>
-                          <span className="text-xs text-gray-400 flex items-center gap-1">
-                            <Calendar className="w-3 h-3" />
-                            {new Date(item.date).toLocaleDateString("vi-VN", {
-                              day: "2-digit",
-                              month: "2-digit",
-                              year: "numeric",
-                            })}
-                          </span>
-                        </div>
+            {/* List */}
+            <div className="px-6 py-6 sm:px-8 sm:py-8">
+              {loading && (
+                <div className="flex items-center justify-center py-16 text-sm font-medium text-violet-600">
+                  Đang tải lịch sử…
+                </div>
+              )}
 
-                        {/* Title */}
-                        <div className="mb-2">
-                          {item.company && item.position ? (
-                            <div>
-                              <h3 className="text-lg font-bold text-[#1F1F1F] mb-1">
-                                {item.position}
-                              </h3>
-                              <p className="text-sm text-gray-500">
-                                {item.company}
-                              </p>
-                            </div>
-                          ) : (
-                            <h3 className="text-lg font-bold text-[#1F1F1F]">
-                              {item.cvFile}
-                            </h3>
-                          )}
-                        </div>
-
-                        {/* Files */}
-                        <div className="flex gap-2 flex-wrap">
-                          <span className="text-xs px-2.5 py-1 rounded-lg bg-gray-50 text-gray-600 flex items-center gap-1">
-                            <FileText className="w-3 h-3" />
-                            {item.cvFile}
-                          </span>
-                          {item.jdFile && (
-                            <span className="text-xs px-2.5 py-1 rounded-lg bg-gray-50 text-gray-600 flex items-center gap-1">
-                              <FileText className="w-3 h-3" />
-                              {item.jdFile}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Score Badge */}
-                      <div
-                        className="flex-shrink-0 text-center px-4 py-3 rounded-xl"
-                        style={{ background: scoreBg }}
+              {!loading && filteredData.length === 0 && (
+                <div className="rounded-2xl border border-dashed border-violet-200 bg-violet-50/40 px-4 py-6 text-center sm:px-5 sm:py-7">
+                  {totalAnalyses === 0 ? (
+                    <>
+                      <p className="text-sm font-bold text-violet-950 sm:text-base">
+                        Chưa có phân tích CV + JD
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => navigate(JD_ANALYSIS_PATH)}
+                        className="mt-3 inline-flex items-center justify-center rounded-2xl bg-gradient-to-r from-[#c4ff47] via-[#d4ff00] to-[#c4ff47] px-5 py-2.5 text-sm font-extrabold text-violet-950 shadow-[0_6px_20px_rgba(196,255,71,0.3)] transition hover:brightness-105 sm:px-6 sm:py-3"
                       >
-                        <span
-                          className="font-bold text-2xl block"
-                          style={{ color: scoreColor }}
-                        >
-                          {item.matchScore}
-                        </span>
-                        <p
-                          className="text-xs font-medium"
-                          style={{ color: scoreColor, opacity: 0.7 }}
-                        >
-                          điểm
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Expanded Details — tải đầy đủ từ GET /api/cv/analyses/:id */}
-                  {isExpanded && selectedRow && (
-                    <div className="border-t border-slate-200 bg-slate-50 p-5">
-                      {detailLoading && (
-                        <p className="text-center text-sm text-slate-600 py-6">Đang tải chi tiết…</p>
-                      )}
-                      {!detailLoading && !detail && (
-                        <p className="text-center text-sm text-slate-500 py-6">Không tải được chi tiết phân tích.</p>
-                      )}
-                      {!detailLoading && detail && (
-                      <>
-                      <div className="grid md:grid-cols-2 gap-6">
-                        {/* Left Column */}
-                        <div>
-                          {/* Keywords Match */}
-                          <div className="mb-6">
-                            <h4 className="text-sm font-bold text-[#1F1F1F] mb-3 flex items-center gap-2">
-                              <Check
-                                className="w-4 h-4 text-[#6E9900]"
-                              />
-                              Từ khóa khớp ({(detail.matchedKeywords || []).length}/
-                              {detail.totalKeywords || (detail.matchedKeywords?.length || 0) + (detail.missingKeywords?.length || 0)})
-                            </h4>
-                            <div className="flex flex-wrap gap-2">
-                              {(detail.matchedKeywords || []).map(kw => (
-                                <span
-                                  key={kw}
-                                  className="px-3 py-1.5 rounded-lg text-xs font-medium"
-                                  style={{
-                                    background: "rgba(180,240,0,0.15)",
-                                    color: "#4A7A00",
-                                  }}
-                                >
-                                  {kw}
-                                </span>
-                              ))}
-                            </div>
-                          </div>
-
-                          {/* Missing Keywords */}
-                          <div className="mb-6">
-                            <h4 className="text-sm font-bold text-[#1F1F1F] mb-3 flex items-center gap-2">
-                              <X
-                                className="w-4 h-4 text-[#CC5C00]"
-                              />
-                              Từ khóa thiếu ({(detail.missingKeywords || []).length})
-                            </h4>
-                            <div className="flex flex-wrap gap-2">
-                              {(detail.missingKeywords || []).map(kw => (
-                                <span
-                                  key={kw}
-                                  className="px-3 py-1.5 rounded-lg text-xs font-medium"
-                                  style={{
-                                    background: "rgba(255,140,66,0.1)",
-                                    color: "#CC5C00",
-                                  }}
-                                >
-                                  {kw}
-                                </span>
-                              ))}
-                            </div>
-                          </div>
-
-                          {/* Score Breakdown */}
-                          <div>
-                            <h4 className="text-sm font-bold text-[#1F1F1F] mb-3 flex items-center gap-2">
-                              <ChartBar
-                                className="w-4 h-4 text-[#6E35E8]"
-                              />
-                              Chi tiết điểm số
-                            </h4>
-                            <div className="space-y-2">
-                              {[
-                                { label: "Clarity", score: detail.scores?.clarity ?? 0 },
-                                { label: "Structure", score: detail.scores?.structure ?? 0 },
-                                { label: "Relevance", score: detail.scores?.relevance ?? 0 },
-                                { label: "Credibility", score: detail.scores?.credibility ?? 0 },
-                              ].map(({ label, score }) => (
-                                <div key={label}>
-                                  <div className="flex items-center justify-between mb-1">
-                                    <span className="text-xs font-medium text-gray-600">
-                                      {label}
-                                    </span>
-                                    <span className="text-xs font-bold text-[#1F1F1F]">
-                                      {score}/10
-                                    </span>
-                                  </div>
-                                  <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-                                    <div
-                                      className="h-full rounded-full transition-all"
-                                      style={{
-                                        width: `${(score / 10) * 100}%`,
-                                        background:
-                                          score >= 8
-                                            ? "#6E9900"
-                                            : score >= 6
-                                            ? "#6E35E8"
-                                            : "#CC5C00",
-                                      }}
-                                    />
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Right Column */}
-                        <div>
-                          {/* Strengths */}
-                          <div className="mb-6">
-                            <h4 className="text-sm font-bold text-[#1F1F1F] mb-3 flex items-center gap-2">
-                              <TrendUp
-                                className="w-4 h-4 text-[#6E9900]"
-                               
-                              />
-                              Điểm mạnh ({(detail.strengths || []).length})
-                            </h4>
-                            <ul className="space-y-2">
-                              {(detail.strengths || []).map((str, idx) => (
-                                <li
-                                  key={idx}
-                                  className="text-xs text-gray-700 pl-4 relative before:content-['✓'] before:absolute before:left-0 before:text-[#6E9900] before:font-bold"
-                                >
-                                  {str}
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-
-                          {/* Weaknesses */}
-                          <div>
-                            <h4 className="text-sm font-bold text-[#1F1F1F] mb-3 flex items-center gap-2">
-                              <TrendDown
-                                className="w-4 h-4 text-[#CC5C00]"
-                               
-                              />
-                              Điểm yếu ({(detail.weaknesses || []).length})
-                            </h4>
-                            <ul className="space-y-2">
-                              {(detail.weaknesses || []).map((weak, idx) => (
-                                <li
-                                  key={idx}
-                                  className="text-xs text-gray-700 pl-4 relative before:content-['!'] before:absolute before:left-0 before:text-[#CC5C00] before:font-bold"
-                                >
-                                  {weak}
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Suggestions Count */}
-                      <div className="mt-6 pt-6 border-t border-gray-200">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-4">
-                            <div className="flex items-center gap-2">
-                              <span
-                                className="w-2 h-2 rounded-full"
-                                style={{ background: "#CC5C00" }}
-                              />
-                              <span className="text-xs text-gray-600">
-                                {(detail.suggestions || []).filter((s) => s.priority === "high").length}{" "}
-                                ưu tiên cao
-                              </span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <span
-                                className="w-2 h-2 rounded-full"
-                                style={{ background: "#6E35E8" }}
-                              />
-                              <span className="text-xs text-gray-600">
-                                {(detail.suggestions || []).filter((s) => s.priority === "medium").length}{" "}
-                                trung bình
-                              </span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <span
-                                className="w-2 h-2 rounded-full"
-                                style={{ background: "#6E9900" }}
-                              />
-                              <span className="text-xs text-gray-600">
-                                {(detail.suggestions || []).filter((s) => s.priority === "low").length}{" "}
-                                thấp
-                              </span>
-                            </div>
-                          </div>
-
-                          <button
-                            type="button"
-                            onClick={() => navigate("/cv-analysis")}
-                            className="flex items-center gap-2 rounded-xl bg-[#6E35E8] px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-[#5C28D9]"
-                          >
-                            <ArrowsClockwise className="h-4 w-4" />
-                            Phân tích lại
-                          </button>
-                        </div>
-                      </div>
-                      </>
-                      )}
-                    </div>
+                        Phân tích CV + JD
+                      </button>
+                    </>
+                  ) : (
+                    <p className="text-sm font-semibold text-violet-800">
+                      Không tìm thấy kết quả — thử từ khóa khác
+                    </p>
                   )}
                 </div>
-              );
-            })}
-          </div>
-        ) : null}
-        </div>
-      </div>
-    </MentorPageShell>
+              )}
+
+              {!loading && filteredData.length > 0 && (
+                <ul className="grid gap-4 lg:grid-cols-2">
+                  {filteredData.map((item) => {
+                    const tone = scoreTone(item.matchScore);
+                    const expanded = selectedId === item.id;
+                    const title = item.position || item.cvFile;
+                    const when = item.createdAt
+                      ? new Date(item.createdAt).toLocaleString("vi-VN", {
+                          day: "2-digit",
+                          month: "2-digit",
+                          year: "numeric",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })
+                      : item.date;
+
+                    return (
+                      <li
+                        key={item.id}
+                        className={`overflow-hidden rounded-2xl border transition-all ${
+                          expanded
+                            ? "border-[#630ed4] shadow-md shadow-violet-500/10"
+                            : "border-violet-200/80 hover:border-violet-300"
+                        }`}
+                      >
+                        <button
+                          type="button"
+                          onClick={() => setSelectedId(expanded ? null : item.id)}
+                          className="flex w-full items-start gap-3 px-4 py-4 text-left sm:gap-4 sm:px-5"
+                        >
+                          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-violet-100 ring-1 ring-violet-200/70">
+                            <FileText className="h-5 w-5 text-[#630ed4]" />
+                          </span>
+                          <div className="min-w-0 flex-1">
+                            <div className="mb-1 flex flex-wrap items-center gap-2">
+                              <span className="rounded-full bg-violet-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[#630ed4]">
+                                CV + JD
+                              </span>
+                              <span className="text-[11px] font-medium text-violet-500">{when}</span>
+                            </div>
+                            <p className="truncate text-sm font-bold text-violet-950 sm:text-base">{title}</p>
+                            {item.company && (
+                              <p className="truncate text-xs font-medium text-violet-600">{item.company}</p>
+                            )}
+                            <div className="mt-2 flex flex-wrap gap-1.5">
+                              <span className="inline-flex max-w-[10rem] items-center gap-1 truncate rounded-lg bg-violet-50 px-2 py-1 text-[11px] font-medium text-violet-800 sm:max-w-xs">
+                                <FileText className="h-3 w-3 shrink-0" />
+                                {item.cvFile}
+                              </span>
+                              {item.jdFile && (
+                                <span className="inline-flex max-w-[10rem] items-center gap-1 truncate rounded-lg bg-violet-50 px-2 py-1 text-[11px] font-medium text-violet-800 sm:max-w-xs">
+                                  <Briefcase className="h-3 w-3 shrink-0" />
+                                  {item.jdFile}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          <div className="flex shrink-0 flex-col items-center gap-1">
+                            <span
+                              className={`inline-flex min-w-[3rem] items-center justify-center rounded-xl px-2.5 py-1.5 text-xl font-extrabold ring-1 ${tone.bg} ${tone.text}`}
+                            >
+                              {item.matchScore}
+                            </span>
+                            <span className="text-[10px] font-semibold text-violet-500">điểm</span>
+                            {expanded ? (
+                              <ChevronUp className="h-4 w-4 text-violet-400" />
+                            ) : (
+                              <ChevronDown className="h-4 w-4 text-violet-400" />
+                            )}
+                          </div>
+                        </button>
+
+                        {expanded && (
+                          <div className="border-t border-violet-100 bg-violet-50/50 px-4 py-4 sm:px-5 sm:py-5">
+                            {detailLoading && (
+                              <p className="py-8 text-center text-sm text-violet-600">Đang tải chi tiết…</p>
+                            )}
+                            {!detailLoading && !detail && (
+                              <p className="py-8 text-center text-sm text-violet-500">
+                                Không tải được chi tiết phân tích.
+                              </p>
+                            )}
+                            {!detailLoading && detail && (
+                              <div className="space-y-5">
+                                <div className="grid gap-5 md:grid-cols-2">
+                                  <div>
+                                    <h4 className="mb-2 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide text-violet-800">
+                                      <Check className="h-3.5 w-3.5 text-lime-800" />
+                                      Từ khóa khớp ({(detail.matchedKeywords || []).length})
+                                    </h4>
+                                    <div className="flex flex-wrap gap-1.5">
+                                      {(detail.matchedKeywords || []).map((kw) => (
+                                        <span
+                                          key={kw}
+                                          className="rounded-lg bg-lime-100 px-2.5 py-1 text-[11px] font-semibold text-lime-900"
+                                        >
+                                          {kw}
+                                        </span>
+                                      ))}
+                                    </div>
+                                  </div>
+                                  <div>
+                                    <h4 className="mb-2 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide text-violet-800">
+                                      <X className="h-3.5 w-3.5 text-amber-700" />
+                                      Từ khóa thiếu ({(detail.missingKeywords || []).length})
+                                    </h4>
+                                    <div className="flex flex-wrap gap-1.5">
+                                      {(detail.missingKeywords || []).map((kw) => (
+                                        <span
+                                          key={kw}
+                                          className="rounded-lg bg-amber-100 px-2.5 py-1 text-[11px] font-semibold text-amber-900"
+                                        >
+                                          {kw}
+                                        </span>
+                                      ))}
+                                    </div>
+                                  </div>
+                                </div>
+
+                                <div className="grid gap-5 md:grid-cols-2">
+                                  <div>
+                                    <h4 className="mb-2 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide text-violet-800">
+                                      <TrendUp className="h-3.5 w-3.5 text-lime-800" />
+                                      Điểm mạnh
+                                    </h4>
+                                    <ul className="space-y-1.5 text-xs leading-relaxed text-violet-900">
+                                      {(detail.strengths || []).map((s, i) => (
+                                        <li key={i} className="flex gap-2">
+                                          <span className="font-bold text-lime-800">✓</span>
+                                          <span>{s}</span>
+                                        </li>
+                                      ))}
+                                    </ul>
+                                  </div>
+                                  <div>
+                                    <h4 className="mb-2 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide text-violet-800">
+                                      <TrendDown className="h-3.5 w-3.5 text-amber-700" />
+                                      Cần cải thiện
+                                    </h4>
+                                    <ul className="space-y-1.5 text-xs leading-relaxed text-violet-900">
+                                      {(detail.weaknesses || []).map((w, i) => (
+                                        <li key={i} className="flex gap-2">
+                                          <span className="font-bold text-amber-700">!</span>
+                                          <span>{w}</span>
+                                        </li>
+                                      ))}
+                                    </ul>
+                                  </div>
+                                </div>
+
+                                <div className="flex flex-wrap items-center justify-between gap-3 border-t border-violet-200/80 pt-4">
+                                  <p className="text-xs text-violet-600">
+                                    {(detail.suggestions || []).length} gợi ý chỉnh sửa đã lưu
+                                  </p>
+                                  <button
+                                    type="button"
+                                    onClick={() => navigate(JD_ANALYSIS_PATH)}
+                                    className="inline-flex items-center gap-2 rounded-xl border border-violet-200 bg-white px-4 py-2 text-xs font-bold text-[#630ed4] transition hover:bg-violet-50"
+                                  >
+                                    <ArrowsClockwise className="h-3.5 w-3.5" />
+                                    Phân tích
+                                  </button>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </div>
+    </CvJdAnalysisPage>
   );
 }
