@@ -16,7 +16,7 @@ const Course = mongoose.model("Course");
 
 export const AdminController = {
   // Lấy danh sách mentor (có cả ứng viên chờ duyệt role customer) — admin UI lọc theo ngữ cảnh.
-  getAllMentors: async (req, res) => {
+  getAllMentors: async (req, res, next) => {
     try {
       // Ép hệ thống kiểm tra và tạo hồ sơ mới nếu bạn vừa sửa ở Compass
       const { ensureMentorProfilesForAllMentorUsers } = await import("../services/mentorProfileService.js");
@@ -35,12 +35,36 @@ export const AdminController = {
       
       res.json({ success: true, mentors: filtered });
     } catch (error) {
-      res.status(500).json({ success: false, error: error.message });
+      next(error);
+    }
+  },
+
+  getMentorById: async (req, res, next) => {
+    try {
+      const { id } = req.params;
+      if (!mongoose.isValidObjectId(id)) {
+        return res.status(400).json({ success: false, error: "mentorId không hợp lệ." });
+      }
+      const mentor = await Mentor.findById(id)
+        .populate("userId", "name email avatar role isActive plan")
+        .lean();
+      if (!mentor) return res.status(404).json({ success: false, error: "Không tìm thấy cố vấn." });
+
+      const sessionsCount = await Booking.countDocuments({ mentorId: mentor._id });
+      res.json({
+        success: true,
+        mentor: {
+          ...mentor,
+          stats: { ...(mentor.stats || {}), sessionsCount },
+        },
+      });
+    } catch (error) {
+      next(error);
     }
   },
 
   // Duyệt/Kích hoạt mentor
-  toggleMentorStatus: async (req, res) => {
+  toggleMentorStatus: async (req, res, next) => {
     try {
       const { id } = req.params;
       const { isActive } = req.body;
@@ -83,11 +107,11 @@ export const AdminController = {
 
       res.json({ success: true, mentor });
     } catch (error) {
-      res.status(500).json({ success: false, error: error.message });
+      next(error);
     }
   },
 
-  rejectMentorApplication: async (req, res) => {
+  rejectMentorApplication: async (req, res, next) => {
     try {
       const { id } = req.params;
       const reason = String(req.body?.reason || "").trim();
@@ -134,22 +158,48 @@ export const AdminController = {
 
       res.json({ success: true, mentor });
     } catch (error) {
-      res.status(500).json({ success: false, error: error.message });
+      next(error);
     }
   },
 
   // Lấy danh sách toàn bộ User
-  getAllUsers: async (req, res) => {
+  getAllUsers: async (req, res, next) => {
     try {
       const users = await User.find().sort({ createdAt: -1 });
       res.json({ success: true, users });
     } catch (error) {
-      res.status(500).json({ success: false, error: error.message });
+      next(error);
+    }
+  },
+
+  getUserById: async (req, res, next) => {
+    try {
+      const { id } = req.params;
+      if (!mongoose.isValidObjectId(id)) {
+        return res.status(400).json({ success: false, error: "userId không hợp lệ." });
+      }
+      const user = await User.findById(id).select("-passwordHash -authSessions").lean();
+      if (!user) return res.status(404).json({ success: false, error: "Không tìm thấy người dùng." });
+
+      const [bookingsCount, enrollmentsCount] = await Promise.all([
+        Booking.countDocuments({ userId: user._id }),
+        Enrollment.countDocuments({ userId: user._id }),
+      ]);
+
+      res.json({
+        success: true,
+        user: {
+          ...user,
+          stats: { bookingsCount, enrollmentsCount },
+        },
+      });
+    } catch (error) {
+      next(error);
     }
   },
 
   // Khóa/Mở khóa User — khóa: vô hiệu JWT + xóa refresh (tokenVersion++, authSessions [])
-  toggleUserStatus: async (req, res) => {
+  toggleUserStatus: async (req, res, next) => {
     try {
       const { id } = req.params;
       const { isActive } = req.body;
@@ -166,12 +216,12 @@ export const AdminController = {
       if (!user) return res.status(404).json({ success: false, error: "Không tìm thấy người dùng" });
       res.json({ success: true, user });
     } catch (error) {
-      res.status(500).json({ success: false, error: error.message });
+      next(error);
     }
   },
 
   // Lấy danh sách toàn bộ Booking
-  getAllBookings: async (req, res) => {
+  getAllBookings: async (req, res, next) => {
     try {
       const bookings = await Booking.find()
         .populate("mentorId", "name email")
@@ -179,11 +229,28 @@ export const AdminController = {
         .sort({ createdAt: -1 });
       res.json({ success: true, bookings });
     } catch (error) {
-      res.status(500).json({ success: false, error: error.message });
+      next(error);
     }
   },
 
-  updateBookingStatus: async (req, res) => {
+  getBookingById: async (req, res, next) => {
+    try {
+      const { id } = req.params;
+      if (!mongoose.isValidObjectId(id)) {
+        return res.status(400).json({ success: false, error: "bookingId không hợp lệ." });
+      }
+      const booking = await Booking.findById(id)
+        .populate({ path: "mentorId", select: "name email userId", populate: { path: "userId", select: "name email" } })
+        .populate("userId", "name email avatar phone")
+        .lean();
+      if (!booking) return res.status(404).json({ success: false, error: "Không tìm thấy lịch hẹn." });
+      res.json({ success: true, booking });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  updateBookingStatus: async (req, res, next) => {
     try {
       const { id } = req.params;
       const nextStatus = String(req.body?.status || "").trim();
@@ -230,12 +297,12 @@ export const AdminController = {
 
       res.json({ success: true, booking });
     } catch (error) {
-      res.status(500).json({ success: false, error: error.message });
+      next(error);
     }
   },
 
   /** Xác nhận đã nhận tiền chuyển khoản (booking paymentMethod = transfer, paymentStatus = pending). */
-  confirmBookingTransferPayment: async (req, res) => {
+  confirmBookingTransferPayment: async (req, res, next) => {
     try {
       const { id } = req.params;
       const force = Boolean(req.body?.force || req.body?.override);
@@ -250,12 +317,12 @@ export const AdminController = {
       }
       res.json({ success: true, booking: result.booking });
     } catch (error) {
-      res.status(500).json({ success: false, error: error.message });
+      next(error);
     }
   },
 
   /** Admin xác nhận đã CK hoàn cho HV (booking paymentStatus = refund_pending). */
-  confirmBookingRefund: async (req, res) => {
+  confirmBookingRefund: async (req, res, next) => {
     try {
       const { id } = req.params;
       const result = await bookingsService.confirmBankRefundByAdmin(id, {
@@ -266,7 +333,7 @@ export const AdminController = {
       }
       res.json({ success: true, booking: result.booking });
     } catch (error) {
-      res.status(500).json({ success: false, error: error.message });
+      next(error);
     }
   },
 
@@ -283,7 +350,7 @@ export const AdminController = {
         .lean();
       res.json({ success: true, enrollments });
     } catch (error) {
-      res.status(500).json({ success: false, error: error.message });
+      next(error);
     }
   },
 
@@ -305,7 +372,7 @@ export const AdminController = {
         .lean();
       res.json({ success: true, enrollments });
     } catch (error) {
-      res.status(500).json({ success: false, error: error.message });
+      next(error);
     }
   },
 
@@ -351,11 +418,11 @@ export const AdminController = {
         },
       });
     } catch (error) {
-      res.status(500).json({ success: false, error: error.message });
+      next(error);
     }
   },
 
-  confirmEnrollmentTransferPayment: async (req, res) => {
+  confirmEnrollmentTransferPayment: async (req, res, next) => {
     try {
       const { id } = req.params;
       const force = Boolean(req.body?.force || req.body?.override);
@@ -379,7 +446,7 @@ export const AdminController = {
         .populate("courseId", "title price");
       res.json({ success: true, enrollment: populated });
     } catch (error) {
-      res.status(500).json({ success: false, error: error.message });
+      next(error);
     }
   },
 
@@ -391,11 +458,11 @@ export const AdminController = {
       }
       res.json({ success: true, payments: result.payments });
     } catch (error) {
-      res.status(500).json({ success: false, error: error.message });
+      next(error);
     }
   },
 
-  confirmSubscriptionTransferPayment: async (req, res) => {
+  confirmSubscriptionTransferPayment: async (req, res, next) => {
     try {
       const { id } = req.params;
       const force = Boolean(req.body?.force || req.body?.override);
@@ -410,21 +477,21 @@ export const AdminController = {
       }
       res.json({ success: true, payment: result.payment });
     } catch (error) {
-      res.status(500).json({ success: false, error: error.message });
+      next(error);
     }
   },
 
-  normalizeTransferReferences: async (req, res) => {
+  normalizeTransferReferences: async (req, res, next) => {
     try {
       const dryRun = Boolean(req.body?.dryRun);
       const result = await normalizeTransferRefs({ dryRun });
       res.json({ success: true, ...result });
     } catch (error) {
-      res.status(500).json({ success: false, error: error.message });
+      next(error);
     }
   },
 
-  getTransactionSupport: async (_req, res) => {
+  getTransactionSupport: async (_req, res, next) => {
     try {
       const hello = await mongoose.connection.db.admin().command({ hello: 1 });
       const setName = String(hello?.setName || "").trim();
@@ -439,7 +506,115 @@ export const AdminController = {
         },
       });
     } catch (error) {
-      res.status(500).json({ success: false, error: error.message });
+      next(error);
+    }
+  },
+
+  getContentStats: async (_req, res, next) => {
+    try {
+      const InterviewSession = mongoose.model("InterviewSession");
+      const CVAnalysis = mongoose.model("CVAnalysis");
+      const [interviews, cvAnalyses, publishedCourses, completedInterviews] = await Promise.all([
+        InterviewSession.countDocuments(),
+        CVAnalysis.countDocuments(),
+        Course.countDocuments({ status: "published" }),
+        InterviewSession.countDocuments({ status: "completed" }),
+      ]);
+      res.json({
+        success: true,
+        content: {
+          interviewSessions: interviews,
+          completedInterviews,
+          cvAnalyses,
+          publishedCourses,
+          aiQuestionSource: "POST /api/interviews/generate-questions (LLM động theo CV/JD)",
+        },
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  getCourseMediaOverview: async (_req, res, next) => {
+    try {
+      const courses = await Course.find({ status: { $in: ["published", "pending_update"] } })
+        .select("title status modules thumbnail updatedAt")
+        .populate({
+          path: "mentorId",
+          select: "userId",
+          populate: { path: "userId", select: "name email" },
+        })
+        .sort({ updatedAt: -1 })
+        .limit(100)
+        .lean();
+
+      const items = courses.map((c) => {
+        const modules = Array.isArray(c.modules) ? c.modules : [];
+        const lessons = modules.flatMap((m) => (Array.isArray(m.lessons) ? m.lessons : []));
+        const videoCount = lessons.filter((l) => String(l?.videoUrl || l?.contentUrl || "").trim()).length;
+        return {
+          _id: c._id,
+          title: c.title,
+          status: c.status,
+          mentorName: c.mentorId?.userId?.name || "—",
+          mentorEmail: c.mentorId?.userId?.email || "",
+          lessonCount: lessons.length,
+          videoCount,
+          thumbnail: c.thumbnail || "",
+          updatedAt: c.updatedAt,
+        };
+      });
+
+      res.json({ success: true, courses: items });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  getSystemOverview: async (_req, res, next) => {
+    try {
+      let mongo = null;
+      try {
+        const hello = await mongoose.connection.db.admin().command({ hello: 1 });
+        const setName = String(hello?.setName || "").trim();
+        const msg = String(hello?.msg || "").trim();
+        mongo = {
+          transactionSupported: Boolean(setName) || msg === "isdbgrid",
+          topology: msg === "isdbgrid" ? "sharded-cluster" : setName ? "replica-set" : "standalone",
+          setName: setName || null,
+        };
+      } catch {
+        mongo = { transactionSupported: false, topology: "unknown", setName: null };
+      }
+
+      res.json({
+        success: true,
+        overview: {
+          auth: {
+            accessTokenTtl: process.env.JWT_ACCESS_EXPIRES_IN || process.env.JWT_EXPIRES_IN || "15m",
+            refreshTokenDays: Number(process.env.REFRESH_TOKEN_DAYS) || 30,
+            jtiBlacklistOnLogout: true,
+            jtiBlacklistOnRefresh: true,
+            sessionFingerprintEnforced: process.env.AUTH_STRICT_SESSION_FINGERPRINT === "true",
+          },
+          plans: [
+            { key: "free", label: "Miễn phí", cvAnalysisLimit: 3, interviewLimit: 1 },
+            { key: "starter_pro", label: "Pro", cvAnalysisLimit: 20, interviewLimit: 10 },
+            { key: "elite_pro", label: "Elite", cvAnalysisLimit: 999, interviewLimit: 999 },
+          ],
+          payments: {
+            primaryChannel: "bank_transfer",
+            note: "Khách CK theo STK trên checkout (VITE_BANK_TRANSFER_*). Admin xác nhận qua payments ledger.",
+          },
+          mongo,
+          services: {
+            cvAnalyzer: process.env.CV_ANALYZER_URL ? "configured" : "missing CV_ANALYZER_URL",
+            llm: process.env.LLM_API_KEY ? "configured" : "missing LLM_API_KEY",
+          },
+        },
+      });
+    } catch (error) {
+      next(error);
     }
   },
 
@@ -455,12 +630,12 @@ export const AdminController = {
         .sort({ updatedAt: -1 });
       res.json({ success: true, courses });
     } catch (error) {
-      res.status(500).json({ success: false, error: error.message });
+      next(error);
     }
   },
 
   // Duyệt khóa học
-  approveCourse: async (req, res) => {
+  approveCourse: async (req, res, next) => {
     try {
       const { id } = req.params;
       const course = await Course.findById(id);
@@ -484,12 +659,12 @@ export const AdminController = {
       await course.save();
       res.json({ success: true, course });
     } catch (error) {
-      res.status(500).json({ success: false, error: error.message });
+      next(error);
     }
   },
 
   // Từ chối khóa học: trả lại nháp để mentor sửa
-  rejectCourse: async (req, res) => {
+  rejectCourse: async (req, res, next) => {
     try {
       const { id } = req.params;
       const course = await Course.findById(id);
@@ -505,12 +680,34 @@ export const AdminController = {
       await course.save();
       res.json({ success: true, course });
     } catch (error) {
-      res.status(500).json({ success: false, error: error.message });
+      next(error);
+    }
+  },
+
+  getReports: async (_req, res) => {
+    try {
+      const { listReportsForAdmin } = await import("../services/reportsService.js");
+      const result = await listReportsForAdmin();
+      if (!result.ok) return res.status(result.status || 500).json({ success: false, error: result.error });
+      res.json({ success: true, reports: result.reports });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  updateReport: async (req, res, next) => {
+    try {
+      const { updateReportStatusForAdmin } = await import("../services/reportsService.js");
+      const result = await updateReportStatusForAdmin(req.userId, req.params.id, req.body ?? {});
+      if (!result.ok) return res.status(result.status).json({ success: false, error: result.error });
+      res.json({ success: true, report: result.report });
+    } catch (error) {
+      next(error);
     }
   },
 
   // Thống kê nhanh cho Dashboard
-  getStats: async (req, res) => {
+  getStats: async (req, res, next) => {
     try {
       const [userCount, mentorCount, bookingCount, recentBookings] = await Promise.all([
         User.countDocuments({ role: "customer" }),
@@ -529,7 +726,7 @@ export const AdminController = {
         }
       });
     } catch (error) {
-      res.status(500).json({ success: false, error: error.message });
+      next(error);
     }
   },
 
@@ -546,11 +743,11 @@ export const AdminController = {
         .lean();
       res.json({ success: true, payouts });
     } catch (error) {
-      res.status(500).json({ success: false, error: error.message });
+      next(error);
     }
   },
 
-  approvePayoutRequest: async (req, res) => {
+  approvePayoutRequest: async (req, res, next) => {
     try {
       const { id } = req.params;
       const payout = await PayoutRequest.findById(id);
@@ -567,12 +764,12 @@ export const AdminController = {
 
       res.json({ success: true, payout });
     } catch (error) {
-      res.status(500).json({ success: false, error: error.message });
+      next(error);
     }
   },
 
   /** Sau khi admin chuyển khoản thủ công cho mentor — chỉ từ trạng thái `approved`. */
-  markPayoutPaid: async (req, res) => {
+  markPayoutPaid: async (req, res, next) => {
     try {
       const { id } = req.params;
       const transferRef = String(req.body?.transferRef || "").trim().slice(0, 500);
@@ -601,11 +798,11 @@ export const AdminController = {
 
       res.json({ success: true, payout });
     } catch (error) {
-      res.status(500).json({ success: false, error: error.message });
+      next(error);
     }
   },
 
-  rejectPayoutRequest: async (req, res) => {
+  rejectPayoutRequest: async (req, res, next) => {
     try {
       const { id } = req.params;
       const reason = String(req.body?.reason || "").trim();
@@ -633,7 +830,7 @@ export const AdminController = {
 
       res.json({ success: true, payout });
     } catch (error) {
-      res.status(500).json({ success: false, error: error.message });
+      next(error);
     }
   },
 

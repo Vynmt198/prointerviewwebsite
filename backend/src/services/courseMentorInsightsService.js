@@ -184,6 +184,174 @@ export async function answerCourseQAForMentor(userId, courseId, qaId, content) {
   return { ok: true, message: "Đã gửi câu trả lời." };
 }
 
+function findLessonInCourse(course, lessonId) {
+  for (const mod of course?.modules || []) {
+    const found = (mod.lessons || []).find((l) => String(l._id) === String(lessonId));
+    if (found) return found;
+  }
+  return null;
+}
+
+async function assertStudentLessonAccess(userId, courseId, lessonId) {
+  if (!isMongoReady()) return { ok: false, status: 503, error: MONGO_ERR };
+  if (!mongoose.isValidObjectId(courseId) || !mongoose.isValidObjectId(lessonId)) {
+    return { ok: false, status: 400, error: "courseId hoặc lessonId không hợp lệ." };
+  }
+
+  const course = await Course.findById(courseId).lean();
+  if (!course) return { ok: false, status: 404, error: "Không tìm thấy khóa học." };
+
+  const lesson = findLessonInCourse(course, lessonId);
+  if (!lesson) return { ok: false, status: 404, error: "Bài học không tồn tại." };
+
+  if (!lesson.isFree) {
+    const enrolled = await Enrollment.findOne({ userId, courseId: course._id }).lean();
+    if (!enrolled) {
+      return { ok: false, status: 403, error: "Bạn chưa ghi danh khóa học này." };
+    }
+    if (!enrollmentAccessGranted(enrolled)) {
+      return {
+        ok: false,
+        status: 403,
+        error: "Hoàn tất thanh toán chuyển khoản để sử dụng Hỏi & Đáp.",
+      };
+    }
+  }
+
+  return { ok: true, course, lesson };
+}
+
+function mapCourseQARowForStudent(q) {
+  const u = q.userId && typeof q.userId === "object" ? q.userId : null;
+  const mentorAnswers = (q.answers || []).filter((a) => a.isMentor);
+  const latestMentorAnswer = mentorAnswers[mentorAnswers.length - 1];
+
+  return {
+    id: String(q._id),
+    question: q.question || "",
+    time: formatRelativeVi(q.createdAt),
+    createdAt: q.createdAt,
+    student: {
+      name: u?.name || "Học viên",
+      avatar: u?.avatar || "",
+    },
+    isAnswered: Boolean(q.isAnswered) || mentorAnswers.length > 0,
+    mentorAnswer: latestMentorAnswer?.content || null,
+    answers: (q.answers || []).map((a) => ({
+      content: a.content,
+      isMentor: Boolean(a.isMentor),
+      time: formatRelativeVi(a.createdAt),
+      createdAt: a.createdAt,
+    })),
+  };
+}
+
+export async function getLessonQAForStudent(userId, courseId, lessonId) {
+  const gate = await assertStudentLessonAccess(userId, courseId, lessonId);
+  if (!gate.ok) return gate;
+
+  const rows = await CourseQA.find({ courseId: gate.course._id, lessonId: gate.lesson._id })
+    .populate({ path: "userId", select: "name avatar" })
+    .sort({ createdAt: -1 })
+    .lean();
+
+  return {
+    ok: true,
+    items: rows.map(mapCourseQARowForStudent),
+  };
+}
+
+export async function createLessonQAForStudent(userId, courseId, lessonId, question) {
+  const gate = await assertStudentLessonAccess(userId, courseId, lessonId);
+  if (!gate.ok) return gate;
+
+  const text = String(question || "").trim();
+  if (!text) return { ok: false, status: 400, error: "Câu hỏi không được để trống." };
+  if (text.length > 2000) {
+    return { ok: false, status: 400, error: "Câu hỏi không được quá 2000 ký tự." };
+  }
+
+  const doc = await CourseQA.create({
+    courseId: gate.course._id,
+    lessonId: gate.lesson._id,
+    userId,
+    question: text,
+  });
+
+  const row = await CourseQA.findById(doc._id)
+    .populate({ path: "userId", select: "name avatar" })
+    .lean();
+
+  return {
+    ok: true,
+    item: mapCourseQARowForStudent(row),
+    message: "Đã gửi câu hỏi cho mentor.",
+  };
+}
+
+export async function getLessonNotesForStudent(userId, courseId, lessonId) {
+  const gate = await assertStudentLessonAccess(userId, courseId, lessonId);
+  if (!gate.ok) return gate;
+
+  const enrollment = await Enrollment.findOne({ userId, courseId: gate.course._id }).lean();
+  if (!enrollment) {
+    return { ok: true, content: "", updatedAt: null };
+  }
+
+  const note = (enrollment.lessonNotes || []).find(
+    (row) => String(row.lessonId) === String(gate.lesson._id),
+  );
+
+  return {
+    ok: true,
+    content: note?.content || "",
+    updatedAt: note?.updatedAt || null,
+  };
+}
+
+export async function saveLessonNotesForStudent(userId, courseId, lessonId, content) {
+  const gate = await assertStudentLessonAccess(userId, courseId, lessonId);
+  if (!gate.ok) return gate;
+
+  const enrollment = await Enrollment.findOne({ userId, courseId: gate.course._id });
+  if (!enrollment) {
+    return { ok: false, status: 403, error: "Ghi danh khóa học để lưu ghi chú." };
+  }
+  if (!enrollmentAccessGranted(enrollment)) {
+    return {
+      ok: false,
+      status: 403,
+      error: "Hoàn tất thanh toán chuyển khoản để lưu ghi chú.",
+    };
+  }
+
+  const text = String(content ?? "");
+  if (text.length > 10000) {
+    return { ok: false, status: 400, error: "Ghi chú không được quá 10000 ký tự." };
+  }
+
+  const targetLessonId = gate.lesson._id;
+  const notes = Array.isArray(enrollment.lessonNotes) ? [...enrollment.lessonNotes] : [];
+  const idx = notes.findIndex((row) => String(row.lessonId) === String(targetLessonId));
+  const now = new Date();
+
+  if (idx >= 0) {
+    notes[idx] = { ...notes[idx], content: text, updatedAt: now };
+  } else {
+    notes.push({ lessonId: targetLessonId, content: text, updatedAt: now });
+  }
+
+  enrollment.lessonNotes = notes;
+  await enrollment.save();
+
+  return {
+    ok: true,
+    content: text,
+    updatedAt: now,
+    message: "Đã lưu ghi chú.",
+  };
+}
+
 export async function getCourseReviewsForMentor(userId, courseId) {
   const gate = await assertMentorOwnsCourse(userId, courseId);
   if (!gate.ok) return gate;

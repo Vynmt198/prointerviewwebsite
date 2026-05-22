@@ -1,8 +1,8 @@
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router";
 import { ArrowRight, GraduationCap, Star, Users, BadgeCheck, PlayCircle } from "lucide-react";
 
-import { RecommendedJourney } from "../home/RecommendedJourney";
-import { COURSES_DATA } from "../../data/coursesData";
+import { fetchCourses, mapApiCourseToCard } from "../../utils/courseApi";
 
 export function CourseRecommendations({
   courses: propCourses,
@@ -15,25 +15,45 @@ export function CourseRecommendations({
   weakAreas,
 }) {
   const navigate = useNavigate();
+  const [apiCourses, setApiCourses] = useState([]);
+  const [loading, setLoading] = useState(!propCourses);
 
-  // Determine courses to display
-  let courses = [];
-  
-  if (propCourses) {
-    courses = propCourses;
-  } else if (tags && tags.length > 0) {
-    // Filter courses by tags
-    courses = COURSES_DATA.filter(course => 
-      course.tags?.some(tag => tags.includes(tag))
-    );
-  } else {
-    // Default: show first 3 courses
-    courses = COURSES_DATA;
-  }
+  useEffect(() => {
+    if (propCourses) {
+      setLoading(false);
+      return;
+    }
+    let cancelled = false;
+    void (async () => {
+      setLoading(true);
+      const res = await fetchCourses();
+      if (cancelled) return;
+      if (res.success && Array.isArray(res.courses)) {
+        setApiCourses(res.courses.map(mapApiCourseToCard));
+      } else {
+        setApiCourses([]);
+      }
+      setLoading(false);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [propCourses]);
 
-  // Limit courses
-  courses = courses.slice(0, maxCourses);
+  const courses = useMemo(() => {
+    if (propCourses) return propCourses.slice(0, maxCourses);
 
+    let pool = apiCourses;
+    if (tags?.length) {
+      const tagged = apiCourses.filter((course) =>
+        course.tags?.some((tag) => tags.includes(tag)),
+      );
+      if (tagged.length > 0) pool = tagged;
+    }
+    return pool.slice(0, maxCourses);
+  }, [propCourses, apiCourses, tags, maxCourses]);
+
+  if (loading) return null;
   if (courses.length === 0) return null;
 
   // Course card renderer
@@ -56,7 +76,7 @@ export function CourseRecommendations({
       }}
     >
       {/* Thumbnail */}
-      <div className={`relative ${compact ? 'h-32' : 'h-40'} overflow-hidden`}>
+      <div className={`relative ${compact ? "h-32" : "h-40"} overflow-hidden`}>
         <img
           src={course.thumbnail}
           alt={course.title}
@@ -120,7 +140,7 @@ export function CourseRecommendations({
             <div className="flex items-center gap-1">
               <Star className="w-3.5 h-3.5" style={{ color: "#FFD600" }} />
               <span style={{ fontSize: "0.875rem", fontWeight: 700, color: "#fff" }}>
-                {course.rating}
+                {course.rating ?? "—"}
               </span>
             </div>
             <div className="flex items-center gap-1" style={{ color: "rgba(255,255,255,0.4)", fontSize: "0.75rem" }}>

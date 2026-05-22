@@ -15,6 +15,7 @@ import {
   BookOpen,
 } from "lucide-react";
 import { adminApi } from "../../utils/adminApi";
+import { toastApiError } from "../../utils/apiToast";
 
 const TILES = [
   { to: "/admin/users", label: "Người dùng", icon: Users, desc: "Danh sách, filter, chi tiết user" },
@@ -48,6 +49,10 @@ export function AdminDashboard() {
   useEffect(() => {
     adminApi.getStats().then((res) => {
       if (res.success) setStats(res.stats);
+      else toastApiError(res.error, "Không tải được thống kê admin.");
+      setLoading(false);
+    }).catch(() => {
+      toastApiError("Lỗi kết nối khi tải dashboard admin.");
       setLoading(false);
     });
   }, []);

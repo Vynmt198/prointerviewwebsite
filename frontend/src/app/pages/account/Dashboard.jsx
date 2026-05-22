@@ -2,8 +2,8 @@ import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router";
 import { motion, AnimatePresence } from "motion/react";
 import { getUser, isLoggedIn, getDisplayName, getInitials } from "../../utils/auth";
-import { toast } from "sonner";
-import { getAllBookings, parseDateMs } from "../../utils/bookings";
+import { toastApiError, toastApiSuccess, tryApi } from "../../utils/apiToast";
+import { parseDateMs } from "../../utils/bookings";
 import { listBookings, cancelBooking } from "../../utils/bookingsApi";
 import { fetchDashboardStats } from "../../utils/dashboardApi";
 import {
@@ -94,13 +94,13 @@ function CancellationModal({ booking, onClose, onConfirm }) {
     if (!booking) return;
     const finalReason = reason === "Khác" ? customReason : reason;
     if (!finalReason) {
-      toast.error("Vui lòng chọn hoặc nhập lý do hủy.");
+      toastApiError("Vui lòng chọn hoặc nhập lý do hủy.");
       return;
     }
     if (needsRefundBank) {
       const acct = String(refundAccountNumber || "").replace(/\D/g, "");
       if (!String(refundBankName || "").trim() || acct.length < 6 || !String(refundAccountHolder || "").trim()) {
-        toast.error("Vui lòng điền đầy đủ ngân hàng, số tài khoản nhận hoàn và tên chủ tài khoản.");
+        toastApiError("Vui lòng điền đầy đủ ngân hàng, số tài khoản nhận hoàn và tên chủ tài khoản.");
         return;
       }
     }
@@ -393,32 +393,32 @@ export function Dashboard() {
   const [streakLoading, setStreakLoading] = useState(false);
 
   const loadData = async () => {
-    const all = getAllBookings();
     const now = Date.now();
     const skipStatus = new Set(["cancelled", "no_show"]);
-    const upcomingFromLocal = all.filter((b) => {
-      if (b.status === "rescheduled" || b.status === "cancelled") return false;
-      if (skipStatus.has(b.status)) return false;
-      if (b.status === "done" && b.reviewId) return false;
-      const [d, m, y] = b.date.split("/").map(Number);
-      const [h] = b.time.split(":").map(Number);
-      const ts = new Date(y, m - 1, d, h).getTime();
-      return ts >= now - 3600_000;
-    });
 
     if (!isLoggedIn()) {
       setStreakStats(null);
       setStreakLoading(false);
-      setUpcomingSessions(upcomingFromLocal);
+      setUpcomingSessions([]);
       setMentorIssueAlerts([]);
       setRefundPendingAlerts([]);
       return;
     }
 
     setStreakLoading(true);
-    const [listRes, statsRes] = await Promise.all([listBookings(), fetchDashboardStats()]);
-    setStreakLoading(false);
+    let listRes = { success: false, bookings: [] };
+    let statsRes = { success: false, stats: null };
+    try {
+      [listRes, statsRes] = await Promise.all([listBookings(), fetchDashboardStats()]);
+    } catch {
+      toastApiError("Lỗi kết nối khi tải dashboard.");
+    } finally {
+      setStreakLoading(false);
+    }
     setStreakStats(statsRes.success ? statsRes.stats : null);
+    if (!listRes.success && listRes.error) {
+      toastApiError(listRes.error);
+    }
 
     const mergeKey = (b) => String(b?.backendId || b?.paymentRef || b?.orderNum || "");
     const map = new Map();
@@ -435,10 +435,6 @@ export function Dashboard() {
         const k = mergeKey(b);
         if (k) map.set(k, b);
       }
-    }
-    for (const b of upcomingFromLocal) {
-      const k = mergeKey(b);
-      if (k && !map.has(k)) map.set(k, b);
     }
     const merged = Array.from(map.values()).sort((a, b) => {
       const ta = parseDateMs(a.date, a.time);
@@ -465,31 +461,32 @@ export function Dashboard() {
   }, []);
 
   const handleCancelConfirm = async (id, reason, refundDest = {}) => {
-    const res = await cancelBooking(id, { reason, ...refundDest });
-    if (res.success) {
-      const pol = res.cancellationPolicy;
-      const refundAmt = Number(pol?.refundAmountVnd ?? 0);
-      const retained = Number(pol?.retainedAmountVnd ?? 0);
-      const pct = typeof pol?.refundPercent === "number" ? pol.refundPercent : null;
-      if (pol?.ledger === "cancelled_pending_transfer") {
-        toast.success("Đã hủy lịch. Giao dịch chờ chuyển khoản đã hủy — chưa thu tiền.");
-      } else if (refundAmt > 0) {
-        const tail = retained > 0 ? ` Giữ lại: ${Math.round(retained).toLocaleString("vi-VN")}₫.` : "";
-        toast.success(
-          `Đã hủy lịch. Yêu cầu hoàn ${Math.round(refundAmt).toLocaleString("vi-VN")}₫${pct != null ? ` (${pct}%)` : ""} đã ghi nhận.${tail} Admin sẽ CK hoàn — bạn được báo khi hoàn xong.`,
-        );
-      } else {
-        toast.success(
-          pct === 0
-            ? "Đã hủy lịch. Theo chính sách, không hoàn tiền."
-            : "Đã hủy lịch.",
-        );
-      }
-      setCancellingBooking(null);
-      loadData(); // Tải lại dữ liệu sau khi hủy
-    } else {
-      toast.error(res.error || "Không thể hủy lịch.");
+    const res = await tryApi(() => cancelBooking(id, { reason, ...refundDest }), {
+      fallback: "Không thể hủy lịch.",
+      silent: true,
+    });
+    if (!res.success) {
+      toastApiError(res.error, "Không thể hủy lịch.");
+      return;
     }
+    const pol = res.cancellationPolicy;
+    const refundAmt = Number(pol?.refundAmountVnd ?? 0);
+    const retained = Number(pol?.retainedAmountVnd ?? 0);
+    const pct = typeof pol?.refundPercent === "number" ? pol.refundPercent : null;
+    if (pol?.ledger === "cancelled_pending_transfer") {
+      toastApiSuccess("Đã hủy lịch. Giao dịch chờ chuyển khoản đã hủy — chưa thu tiền.");
+    } else if (refundAmt > 0) {
+      const tail = retained > 0 ? ` Giữ lại: ${Math.round(retained).toLocaleString("vi-VN")}₫.` : "";
+      toastApiSuccess(
+        `Đã hủy lịch. Yêu cầu hoàn ${Math.round(refundAmt).toLocaleString("vi-VN")}₫${pct != null ? ` (${pct}%)` : ""} đã ghi nhận.${tail} Admin sẽ CK hoàn — bạn được báo khi hoàn xong.`,
+      );
+    } else {
+      toastApiSuccess(
+        pct === 0 ? "Đã hủy lịch. Theo chính sách, không hoàn tiền." : "Đã hủy lịch.",
+      );
+    }
+    setCancellingBooking(null);
+    loadData();
   };
 
   return (

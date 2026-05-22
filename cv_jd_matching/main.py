@@ -20,7 +20,7 @@ load_dotenv(_here.parent / "backend" / ".env")   # backend/.env làm fallback
 
 sys.path.insert(0, str(Path(__file__).parent))
 
-from fastapi import FastAPI, UploadFile, File, HTTPException, Query
+from fastapi import FastAPI, UploadFile, File, HTTPException, Query, Form
 from fastapi.middleware.cors import CORSMiddleware
 
 from pdf_parser import parse_pdf
@@ -29,6 +29,7 @@ from matcher import compute_match
 from scorer import score_resume
 from suggester import generate_suggestions, extract_bullets_from_text
 from llm_client import check_llm_health
+from field_analyzer import analyze_cv_by_field
 
 app = FastAPI(title="Resume Analyzer API", version="0.3.0")
 
@@ -231,6 +232,38 @@ async def analyze_suggestions(
         "suggestions": suggestions,
         "resume_text": resume_data["text"],
         "jd_text":     jd_data["text"],
+    }
+
+
+@app.post("/analyze/field")
+async def analyze_field(
+    resume: UploadFile = File(...),
+    field:  str = Form(default="IT / Công nghệ"),
+    model:  str = Query(default="mistral:7b", description="Ollama model name"),
+):
+    """
+    Phân tích CV theo ngành nghề — không cần file JD.
+    Dùng LLM (LLM_API_KEY) hoặc Ollama; fallback heuristic nếu LLM lỗi parse.
+    """
+    resume_data = await _process_upload("resume", resume)
+
+    result = analyze_cv_by_field(
+        cv_text=resume_data["text"],
+        cv_skills=resume_data["skills"]["skills"],
+        field=field,
+        model=model,
+    )
+
+    return {
+        "resume":      resume_data["skills"],
+        "match":       result["match"],
+        "scores":      result["scores"],
+        "suggestions": result["suggestions"],
+        "resume_text": result["resume_text"],
+        "jd_text":     "",
+        "field":       result.get("field", field),
+        "analysis_mode": "field",
+        "fallback":    bool(result.get("_fallback")),
     }
 
 

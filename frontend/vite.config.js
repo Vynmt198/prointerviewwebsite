@@ -46,7 +46,6 @@ export default defineConfig(({ mode }) => ({
           'vendor-utils': ['date-fns', 'clsx', 'tailwind-merge'],
           'vendor-graphics': ['three', '@react-three/fiber', '@react-three/drei'],
           'vendor-viz': ['recharts'],
-          'vendor-supabase': ['@supabase/supabase-js'],
         }
       }
     }

@@ -1,8 +1,9 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
-import { Search, Clock, User, CheckCircle, XCircle, AlertCircle, RefreshCw } from "lucide-react";
+import { Link } from "react-router";
+import { Search, Clock, User, CheckCircle, XCircle, AlertCircle, RefreshCw, Eye } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { adminApi } from "../../utils/adminApi";
-import { toast } from "sonner";
+import { toastApiError, toastApiSuccess, tryApi } from "../../utils/apiToast";
 
 function vnd(n) {
   return `${Number(n || 0).toLocaleString("vi-VN")} đ`;
@@ -38,12 +39,10 @@ export function AdminBookings() {
 
   const loadBookings = useCallback(async () => {
     setLoading(true);
-    const res = await adminApi.getBookings();
-    if (res.success) {
-      setBookings(res.bookings);
-    } else {
-      toast.error(res.error || "Không thể tải danh sách lịch hẹn.");
-    }
+    const res = await tryApi(() => adminApi.getBookings(), {
+      fallback: "Không thể tải danh sách lịch hẹn.",
+    });
+    if (res.success) setBookings(res.bookings);
     setLoading(false);
   }, []);
 
@@ -65,13 +64,16 @@ export function AdminBookings() {
 
   const executeConfirmBankTransfer = async (bookingId, force, forceNote) => {
     setBusyId(bookingId);
-    const res = await adminApi.confirmBookingTransferPayment(bookingId, force ? { force: true, forceNote } : {});
+    const res = await tryApi(
+      () =>
+        adminApi.confirmBookingTransferPayment(bookingId, force ? { force: true, forceNote } : {}),
+      {
+        fallback: "Không xác nhận được thanh toán.",
+        successMessage: "Đã xác nhận đã nhận chuyển khoản.",
+      },
+    );
     setBusyId("");
-    if (!res.success) {
-      toast.error(res.error || "Không xác nhận được thanh toán.");
-      return;
-    }
-    toast.success("Đã xác nhận đã nhận chuyển khoản.");
+    if (!res.success) return;
     setBookings((prev) =>
       prev.map((b) =>
         String(b._id) === String(bookingId)
@@ -102,13 +104,12 @@ export function AdminBookings() {
       return;
     }
     setBusyId(bookingId);
-    const res = await adminApi.confirmBookingRefund(String(bookingId));
+    const res = await tryApi(() => adminApi.confirmBookingRefund(String(bookingId)), {
+      fallback: "Không xác nhận được hoàn tiền.",
+      successMessage: "Đã đánh dấu hoàn tiền xong.",
+    });
     setBusyId("");
-    if (!res.success) {
-      toast.error(res.error || "Không xác nhận được hoàn tiền.");
-      return;
-    }
-    toast.success("Đã đánh dấu hoàn tiền xong.");
+    if (!res.success) return;
     setBookings((prev) =>
       prev.map((b) =>
         String(b._id) === String(bookingId)
@@ -159,15 +160,14 @@ export function AdminBookings() {
   const handleNormalizeTransferRefs = async () => {
     setNormalizeModalOpen(false);
     setNormalizeBusy(true);
-    const res = await adminApi.normalizeTransferRefs({ dryRun: false });
+    const res = await tryApi(() => adminApi.normalizeTransferRefs({ dryRun: false }), {
+      fallback: "Không thể chuẩn hóa mã chuyển khoản.",
+    });
     setNormalizeBusy(false);
-    if (!res.success) {
-      toast.error(res.error || "Không thể chuẩn hóa mã chuyển khoản.");
-      return;
-    }
+    if (!res.success) return;
     const changed = Number(res.totalChanged || 0);
     const scanned = Number(res.totalScanned || 0);
-    toast.success(`Chuẩn hóa xong: ${changed}/${scanned} bản ghi đã được cập nhật.`);
+    toastApiSuccess(`Chuẩn hóa xong: ${changed}/${scanned} bản ghi đã được cập nhật.`);
     await loadBookings();
   };
 
@@ -176,7 +176,7 @@ export function AdminBookings() {
     const forceNote = String(overrideModal.forceNote || "").trim();
     if (!bookingId) return;
     if (forceNote.length < 3) {
-      toast.error("Cần nhập lý do ngoại lệ tối thiểu 3 ký tự.");
+      toastApiError("Cần nhập lý do ngoại lệ tối thiểu 3 ký tự.");
       return;
     }
     setOverrideModal((prev) => ({ ...prev, open: false }));
@@ -195,13 +195,12 @@ export function AdminBookings() {
       return;
     }
     setBusyId(bookingId);
-    const res = await adminApi.updateBookingStatus(bookingId, nextStatus, "");
+    const res = await tryApi(() => adminApi.updateBookingStatus(bookingId, nextStatus, ""), {
+      fallback: "Không thể cập nhật trạng thái lịch hẹn.",
+      successMessage: "Đã cập nhật trạng thái lịch hẹn.",
+    });
     setBusyId("");
-    if (!res.success) {
-      toast.error(res.error || "Không thể cập nhật trạng thái lịch hẹn.");
-      return;
-    }
-    toast.success("Đã cập nhật trạng thái lịch hẹn.");
+    if (!res.success) return;
     setBookings((prev) => prev.map((b) => (b._id === bookingId ? { ...b, ...res.booking } : b)));
   };
 
@@ -209,13 +208,12 @@ export function AdminBookings() {
     const bookingId = cancelModal.bookingId;
     if (!bookingId) return;
     setBusyId(bookingId);
-    const res = await adminApi.updateBookingStatus(bookingId, "cancelled", cancelModal.reason || "");
+    const res = await tryApi(
+      () => adminApi.updateBookingStatus(bookingId, "cancelled", cancelModal.reason || ""),
+      { fallback: "Không thể hủy lịch hẹn.", successMessage: "Đã hủy lịch hẹn." },
+    );
     setBusyId("");
-    if (!res.success) {
-      toast.error(res.error || "Không thể hủy lịch hẹn.");
-      return;
-    }
-    toast.success("Đã hủy lịch hẹn.");
+    if (!res.success) return;
     setBookings((prev) => prev.map((b) => (b._id === bookingId ? { ...b, ...res.booking } : b)));
     setCancelModal({ open: false, bookingId: "", previousStatus: "pending", reason: "" });
   };
@@ -587,7 +585,14 @@ export function AdminBookings() {
                       </div>
                     </td>
                     <td className={tdCell}>
-                      <div className="flex justify-end">
+                      <div className="flex items-center justify-end gap-2">
+                        <Link
+                          to={`/admin/bookings/${b._id}`}
+                          title="Chi tiết"
+                          className="inline-flex shrink-0 rounded-xl border border-slate-200 bg-slate-50 p-2 text-slate-500 transition-all hover:bg-slate-100 hover:text-slate-900"
+                        >
+                          <Eye size={16} />
+                        </Link>
                         <select
                           value={b.status || "pending"}
                           disabled={busyId === b._id}

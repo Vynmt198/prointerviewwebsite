@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router";
 import { Trash2 as Trash } from "lucide-react";
-import { toast } from "sonner";
+import { toastApiError, toastApiSuccess, tryApi } from "../../utils/apiToast";
 import { deleteAccount, getUser } from "../../utils/auth";
 
 export function AccountDangerZone({ SectionCard, onLogout }) {
@@ -15,20 +15,17 @@ export function AccountDangerZone({ SectionCard, onLogout }) {
 
   const handleDeleteAccount = async () => {
     if (!canDelete) {
-      toast.error("Nhập đúng email tài khoản để xác nhận.");
+      toastApiError("Nhập đúng email tài khoản để xác nhận.");
       return;
     }
     if (!window.confirm("Xóa vĩnh viễn tài khoản và dữ liệu liên quan? Hành động không thể hoàn tác.")) {
       return;
     }
     setDeleting(true);
-    const res = await deleteAccount();
+    const res = await tryApi(() => deleteAccount(), { fallback: "Không xóa được tài khoản." });
     setDeleting(false);
-    if (!res.success) {
-      toast.error(res.error || "Không xóa được tài khoản.");
-      return;
-    }
-    toast.success(res.message || "Đã xóa tài khoản.");
+    if (!res.success) return;
+    toastApiSuccess(res.message || "Đã xóa tài khoản.");
     navigate("/");
   };
 
@@ -79,3 +76,5 @@ export function AccountDangerZone({ SectionCard, onLogout }) {
     </div>
   );
 }
+
+export default AccountDangerZone;

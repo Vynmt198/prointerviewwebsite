@@ -22,7 +22,7 @@ function mergePaymentRef(orderPart, refRaw) {
 }
 
 export const EnrollmentController = {
-  enroll: async (req, res) => {
+  enroll: async (req, res, next) => {
     try {
       const { id: courseId } = req.params;
       const userId = req.userId;
@@ -105,11 +105,11 @@ export const EnrollmentController = {
 
       return res.status(201).json({ success: true, enrollment, orderNum: enrollment.paymentRef });
     } catch (error) {
-      res.status(500).json({ success: false, error: error.message });
+      next(error);
     }
   },
 
-  submitTransfer: async (req, res) => {
+  submitTransfer: async (req, res, next) => {
     try {
       const { id: enrollmentId } = req.params;
       const userId = req.userId;
@@ -160,11 +160,11 @@ export const EnrollmentController = {
 
       res.json({ success: true, enrollment });
     } catch (error) {
-      res.status(500).json({ success: false, error: error.message });
+      next(error);
     }
   },
 
-  getMyEnrollments: async (req, res) => {
+  getMyEnrollments: async (req, res, next) => {
     try {
       const enrollments = await Enrollment.find({ userId: req.userId })
         .populate({
@@ -185,11 +185,11 @@ export const EnrollmentController = {
         }),
       });
     } catch (error) {
-      res.status(500).json({ success: false, error: error.message });
+      next(error);
     }
   },
 
-  updateProgress: async (req, res) => {
+  updateProgress: async (req, res, next) => {
     try {
       const { id: enrollmentId } = req.params;
       const { lessonId, isCompleted } = req.body;
@@ -234,11 +234,11 @@ export const EnrollmentController = {
       await enrollment.save();
       res.json({ success: true, enrollment });
     } catch (error) {
-      res.status(500).json({ success: false, error: error.message });
+      next(error);
     }
   },
 
-  getCertificate: async (req, res) => {
+  getCertificate: async (req, res, next) => {
     try {
       const { id: enrollmentId } = req.params;
       const userId = req.userId;
@@ -284,7 +284,7 @@ export const EnrollmentController = {
         },
       });
     } catch (error) {
-      res.status(500).json({ success: false, error: error.message });
+      next(error);
     }
   },
 };

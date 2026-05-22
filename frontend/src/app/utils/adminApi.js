@@ -36,6 +36,7 @@ function authedFetch(path, options = {}) {
 export const adminApi = {
   getStats: () => authedFetch("/api/admin/stats"),
   getMentors: () => authedFetch("/api/admin/mentors"),
+  getMentorById: (id) => authedFetch(`/api/admin/mentors/${encodeURIComponent(id)}`),
   updateMentorStatus: (id, isActive) =>
     authedFetch(`/api/admin/mentors/${id}/status`, {
       method: "PATCH",
@@ -47,13 +48,18 @@ export const adminApi = {
       body: JSON.stringify({ reason }),
     }),
   getUsers: () => authedFetch("/api/admin/users"),
+  getUserById: (id) => authedFetch(`/api/admin/users/${encodeURIComponent(id)}`),
   updateUserStatus: (id, isActive) =>
     authedFetch(`/api/admin/users/${id}/status`, {
       method: "PATCH",
       body: JSON.stringify({ isActive }),
     }),
   getBookings: () => authedFetch("/api/admin/bookings"),
+  getBookingById: (id) => authedFetch(`/api/admin/bookings/${encodeURIComponent(id)}`),
   getTransactionSupport: () => authedFetch("/api/admin/system/transaction-support"),
+  getSystemOverview: () => authedFetch("/api/admin/system/overview"),
+  getContentStats: () => authedFetch("/api/admin/content/stats"),
+  getCourseMediaOverview: () => authedFetch("/api/admin/content/course-media"),
   updateBookingStatus: (id, status, reason = "") =>
     authedFetch(`/api/admin/bookings/${id}/status`, {
       method: "PATCH",
@@ -113,5 +119,11 @@ export const adminApi = {
     authedFetch(`/api/admin/courses/${id}/reject`, {
       method: "PATCH",
     }),
-  getInterviewMetrics: () => authedFetch("/api/admin/interview-metrics"),
+  getReports: () => authedFetch("/api/admin/reports"),
+  updateReportStatus: (id, body) =>
+    authedFetch(`/api/admin/reports/${encodeURIComponent(id)}`, {
+      method: "PATCH",
+      body: JSON.stringify(body),
+    }),
+  getReviews: () => authedFetch("/api/reviews?limit=100"),
 };

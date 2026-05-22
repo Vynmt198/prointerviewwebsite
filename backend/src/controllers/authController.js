@@ -89,7 +89,8 @@ export class AuthController {
 
   static async refresh(req, res, next) {
     try {
-      const result = await authService.refreshAccessToken(req.body?.refreshToken, req);
+      const accessMeta = authService.parseOptionalBearerAccessMeta(req);
+      const result = await authService.refreshAccessToken(req.body?.refreshToken, req, { accessMeta });
       if (!result.ok) {
         return res.status(result.status).json({ success: false, error: result.error });
       }
@@ -107,11 +108,17 @@ export class AuthController {
 
   static async sessions(req, res, next) {
     try {
-      const result = await authService.listAuthSessions(req.userId);
+      const result = await authService.listAuthSessions(req.userId, {
+        currentSessionId: req.query?.currentSessionId,
+      });
       if (!result.ok) {
         return res.status(result.status).json({ success: false, error: result.error });
       }
-      res.json({ success: true, sessions: result.sessions });
+      res.json({
+        success: true,
+        sessions: result.sessions,
+        security: result.security,
+      });
     } catch (err) {
       next(err);
     }
@@ -120,7 +127,10 @@ export class AuthController {
   static async revokeSession(req, res, next) {
     try {
       const { sessionId } = req.params;
-      const result = await authService.revokeAuthSession(req.userId, sessionId);
+      const result = await authService.revokeAuthSession(req.userId, sessionId, {
+        jti: req.tokenJti,
+        exp: req.tokenExp,
+      });
       if (!result.ok) {
         return res.status(result.status).json({ success: false, error: result.error });
       }
@@ -144,7 +154,13 @@ export class AuthController {
 
   static async patchMe(req, res, next) {
     try {
-      const result = await authService.patchMeUser(req.userId, req.body ?? {}, req);
+      const result = await authService.patchMeUser(req.userId, req.body ?? {}, req, {
+        accessMeta: {
+          sub: String(req.userId ?? ""),
+          jti: req.tokenJti,
+          exp: req.tokenExp,
+        },
+      });
       if (!result.ok) {
         return res.status(result.status).json({ success: false, error: result.error });
       }
@@ -165,7 +181,10 @@ export class AuthController {
 
   static async logout(req, res, next) {
     try {
-      const result = await authService.logoutUser(req.userId);
+      const result = await authService.logoutUser(req.userId, {
+        jti: req.tokenJti,
+        exp: req.tokenExp,
+      });
       if (!result.ok) {
         return res.status(result.status).json({ success: false, error: result.error });
       }

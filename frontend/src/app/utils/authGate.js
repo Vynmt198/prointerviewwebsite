@@ -1,41 +1,12 @@
-import { isLoggedIn, isSafeAppRedirect } from "./auth.js";
-
-/** Path hiện tại (pathname + search) để quay lại sau đăng nhập. */
-export function getAuthReturnPath(location) {
-  if (location && typeof location === "object") {
-    const combined = `${location.pathname || ""}${location.search || ""}`;
-    if (isSafeAppRedirect(combined, null)) return combined;
-  }
-  if (typeof window !== "undefined") {
-    const combined = `${window.location.pathname || ""}${window.location.search || ""}`;
-    if (isSafeAppRedirect(combined, null)) return combined;
-  }
-  return "/";
-}
-
-export function buildLoginPath(returnTo) {
-  const target =
-    typeof returnTo === "string" && isSafeAppRedirect(returnTo, null)
-      ? returnTo.trim()
-      : getAuthReturnPath();
-  return `/login?redirect=${encodeURIComponent(target)}`;
-}
-
-export function buildRegisterPath(returnTo) {
-  const target =
-    typeof returnTo === "string" && isSafeAppRedirect(returnTo, null)
-      ? returnTo.trim()
-      : getAuthReturnPath();
-  return `/register?redirect=${encodeURIComponent(target)}`;
-}
+import { hasAuthCredentials } from "./auth.js";
 
 /** Vào phòng phỏng vấn AI; bắt buộc đăng nhập, sau login quay lại /interview. */
 export function navigateToInterview(navigate) {
-  if (isLoggedIn()) {
+  if (hasAuthCredentials()) {
     navigate("/interview");
     return;
   }
-  navigate(buildLoginPath("/interview"));
+  navigate(`/login?redirect=${encodeURIComponent("/interview")}`);
 }
 
 /**
@@ -44,29 +15,9 @@ export function navigateToInterview(navigate) {
  */
 export function requireLoginNavigate(navigate, path) {
   if (!path || typeof path !== "string") return;
-  if (isLoggedIn()) {
+  if (hasAuthCredentials()) {
     navigate(path);
     return;
   }
-  navigate(buildLoginPath(path));
-}
-
-/** Tính năng cốt lõi — không cho dùng / xem demo khi chưa đăng nhập. */
-export function requiresLoginForPath(path) {
-  const p = typeof path === "string" ? path.trim() : "";
-  if (!p.startsWith("/") || p.startsWith("//")) return false;
-  if (p === "/cv-analysis" || p.startsWith("/cv-analysis/")) return true;
-  if (p === "/interview" || p.startsWith("/interview/")) return true;
-  if (p === "/dashboard" || p.startsWith("/dashboard/")) return true;
-  return false;
-}
-
-/** Click menu / CTA: chưa login → /login?redirect=... */
-export function navigateToFeature(navigate, path) {
-  if (!path || typeof path !== "string") return;
-  if (requiresLoginForPath(path) && !isLoggedIn()) {
-    navigate(buildLoginPath(path));
-    return;
-  }
-  navigate(path);
+  navigate(`/login?redirect=${encodeURIComponent(path)}`);
 }

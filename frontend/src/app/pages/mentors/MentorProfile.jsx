@@ -25,6 +25,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { fetchMentor, fetchMentorPublicReviews } from "../../utils/mentorApi";
 import { ReportMentorModal } from "../../components/modals/ReportMentorModal";
 import { MentorPageShell } from "../../components/mentor/MentorPageShell";
+import { toastApiError } from "../../utils/apiToast";
 
 export function MentorProfile() {
   const navigate = useNavigate();
@@ -53,7 +54,9 @@ export function MentorProfile() {
     fetchMentor(id)
       .then((m) => {
         if (m) setMentor(m);
+        else toastApiError("Không tìm thấy mentor hoặc không tải được hồ sơ.");
       })
+      .catch(() => toastApiError("Lỗi kết nối khi tải hồ sơ mentor."))
       .finally(() => setLoadingMentor(false));
   }, [id]);
 

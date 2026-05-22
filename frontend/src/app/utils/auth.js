@@ -57,9 +57,12 @@ export async function tryRefreshAccessToken() {
   const rt = getRefreshToken();
   if (!rt) return false;
   try {
+    const access = getAccessToken();
+    const headers = { ...jsonHeaders };
+    if (access) headers.Authorization = `Bearer ${access}`;
     const res = await fetch(apiUrl("/api/auth/refresh"), {
       method: "POST",
-      headers: jsonHeaders,
+      headers,
       body: JSON.stringify({ refreshToken: rt }),
     });
     const body = await res.json().catch(() => ({}));
@@ -381,6 +384,33 @@ export function hasAuthCredentials() {
   return !!(getAccessToken() || getRefreshToken());
 }
 
+/** Route cần JWT — đồng bộ logout giữa các tab trình duyệt. */
+export function isProtectedAppPath(pathname) {
+  const raw = String(pathname || "");
+  const p = raw.split("?")[0];
+  if (!p || p === "/") return false;
+  if (p === "/checkout") return true;
+  if (p.startsWith("/meeting/")) return true;
+  if (/^\/courses\/[^/]+\/learn$/.test(p)) return true;
+  if (p.startsWith("/cv-analysis/")) return true;
+  if (p === "/mentors" || p.startsWith("/mentors/")) return false;
+  if (p === "/courses" || /^\/courses\/[^/]+$/.test(p)) return false;
+  if (p.startsWith("/admin")) return true;
+  if (p === "/mentor" || p.startsWith("/mentor/")) return true;
+  const roots = [
+    "/dashboard",
+    "/profile",
+    "/settings",
+    "/my-bookings",
+    "/cv-analysis",
+    "/interview",
+    "/booking",
+  ];
+  if (roots.some((root) => p === root || p.startsWith(`${root}/`))) return true;
+  if (p.startsWith("/session/") || p.startsWith("/review/")) return true;
+  return false;
+}
+
 /**
  * Token còn dùng được cho API: thử /me; hết hạn thì refresh (opaque refresh).
  */
@@ -433,7 +463,7 @@ export function setLoggedIn(user) {
 }
 
 export function isLoggedIn() {
-  return !!localStorage.getItem(AUTH_KEY);
+  return hasAuthCredentials();
 }
 
 export function getUser() {
@@ -473,20 +503,33 @@ export function getCurrentAuthSessionId() {
 
 export async function fetchAuthSessions() {
   if (!hasAuthCredentials()) {
-    return { success: false, error: "Chưa đăng nhập.", sessions: [] };
+    return { success: false, error: "Chưa đăng nhập.", sessions: [], security: null };
   }
   try {
-    const res = await authFetch("/api/auth/sessions", {
+    const currentSessionId = getCurrentAuthSessionId();
+    const q = currentSessionId
+      ? `?currentSessionId=${encodeURIComponent(currentSessionId)}`
+      : "";
+    const res = await authFetch(`/api/auth/sessions${q}`, {
       method: "GET",
       headers: { Accept: "application/json" },
     });
     const body = await res.json().catch(() => ({}));
     if (!res.ok) {
-      return { success: false, error: body.error || `Lỗi ${res.status}`, sessions: [] };
+      return {
+        success: false,
+        error: body.error || `Lỗi ${res.status}`,
+        sessions: [],
+        security: null,
+      };
     }
-    return { success: true, sessions: body.sessions || [] };
+    return {
+      success: true,
+      sessions: body.sessions || [],
+      security: body.security || null,
+    };
   } catch {
-    return { success: false, error: "Không kết nối được server.", sessions: [] };
+    return { success: false, error: "Không kết nối được server.", sessions: [], security: null };
   }
 }
 

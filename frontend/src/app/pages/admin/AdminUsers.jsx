@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
+import { Link } from "react-router";
 import { Users, Search, ShieldAlert, ShieldCheck, Mail, Tag } from "lucide-react";
 import { adminApi } from "../../utils/adminApi";
-import { toast } from "sonner";
+import { tryApi } from "../../utils/apiToast";
 
 export function AdminUsers() {
   const [users, setUsers] = useState([]);
@@ -10,26 +11,24 @@ export function AdminUsers() {
 
   const loadUsers = async () => {
     setLoading(true);
-    const res = await adminApi.getUsers();
-    if (res.success) {
-      setUsers(res.users);
-    } else {
-      toast.error(res.error || "Không thể tải danh sách người dùng.");
-    }
+    const res = await tryApi(() => adminApi.getUsers(), {
+      fallback: "Không thể tải danh sách người dùng.",
+    });
+    if (res.success) setUsers(res.users);
     setLoading(false);
   };
 
   useEffect(() => {
-    loadUsers();
+    void loadUsers();
   }, []);
 
   const handleToggleActive = async (id, currentStatus) => {
-    const res = await adminApi.updateUserStatus(id, !currentStatus);
+    const res = await tryApi(() => adminApi.updateUserStatus(id, !currentStatus), {
+      fallback: "Không thể cập nhật trạng thái người dùng.",
+      successMessage: currentStatus ? "Đã khóa người dùng" : "Đã mở khóa người dùng",
+    });
     if (res.success) {
-      toast.success(currentStatus ? "Đã khóa người dùng" : "Đã mở khóa người dùng");
       setUsers((prev) => prev.map((u) => (u._id === id ? { ...u, isActive: !currentStatus } : u)));
-    } else {
-      toast.error(res.error || "Không thể cập nhật trạng thái người dùng.");
     }
   };
 
@@ -110,7 +109,9 @@ export function AdminUsers() {
                           )}
                         </div>
                         <div>
-                          <p className="font-black text-slate-900">{user.name}</p>
+                          <Link to={`/admin/users/${user._id}`} className="font-black text-slate-900 hover:text-violet-700">
+                            {user.name}
+                          </Link>
                           <p className="flex items-center gap-1 text-[10px] text-slate-500">
                             <Mail size={10} /> {user.email}
                           </p>

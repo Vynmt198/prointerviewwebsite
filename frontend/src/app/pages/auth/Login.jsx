@@ -17,6 +17,7 @@ import {
   getPostLoginPath,
   getBrandClickPath,
 } from "../../utils/auth";
+import { toastApiError } from "../../utils/apiToast";
 import { GoogleSignInBlock } from "../../components/auth/GoogleSignInBlock";
 import { BrandLogo } from "../../components/brand/BrandLogo";
 import { SparkleGlyph } from "../../components/decor/SparkleGlyph.jsx";
@@ -80,7 +81,11 @@ export function Login() {
     setError("");
     const result = await loginUser(email.trim(), typeof password === "string" ? password.trim() : password);
     setLoading(false);
-    if (!result.success) { setError(result.error); return; }
+    if (!result.success) {
+      setError(result.error);
+      toastApiError(result.error, "Đăng nhập thất bại.");
+      return;
+    }
     const user = getUser();
     navigate(getPostLoginPath(user, searchParams.get("redirect")));
   };

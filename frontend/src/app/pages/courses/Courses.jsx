@@ -31,6 +31,7 @@ import {
 
 import { fetchCourses } from "../../utils/courseApi";
 import { enrollmentApi } from "../../utils/enrollmentApi";
+import { toastApiError } from "../../utils/apiToast";
 import { normalizeCourseStats } from "../../utils/courseStats";
 import { enrollmentAccessGranted } from "../../utils/enrollmentAccess.js";
 import { mediaSrc, DEFAULT_COURSE_THUMB, avatarSrc } from "../../utils/mediaUrl";
@@ -453,7 +454,14 @@ export function Courses() {
           };
         });
         setCourses(mapped);
+      } else {
+        toastApiError(res.error, "Không tải được danh sách khóa học.");
+        setCourses([]);
       }
+      setLoading(false);
+    }).catch(() => {
+      toastApiError("Lỗi kết nối khi tải khóa học.");
+      setCourses([]);
       setLoading(false);
     });
 

@@ -2,10 +2,14 @@ import express from "express";
 import cors from "cors";
 import mongoose from "mongoose";
 import dns from "node:dns";
+import helmet from "helmet";
+import hpp from "hpp";
+import rateLimit from "express-rate-limit";
+import { sanitizeObjectKeys } from "./utils/securityGuards.js";
 
 // TUYỆT CHIÊU CUỐI: Ép Node.js ưu tiên IPv4 trên toàn hệ thống để fix lỗi Render ENETUNREACH IPv6
 if (dns.setDefaultResultOrder) {
-  dns.setDefaultResultOrder('ipv4first');
+  dns.setDefaultResultOrder("ipv4first");
 }
 
 import { mentorsRouter } from "./routes/mentors.js";
@@ -26,67 +30,86 @@ import { cvMatchRouter } from "./routes/cvMatch.js";
 import { interviewsRouter } from "./routes/interviews.js";
 import { uploadRouter } from "./routes/upload.js";
 import { mockCoursesRouter } from "./routes/mockCourses.js";
+import { notFoundHandler, globalErrorHandler } from "./middleware/errorHandler.js";
 
 export function createApp() {
   const app = express();
   const isProd = process.env.NODE_ENV === "production";
+  app.disable("x-powered-by");
 
   if (isProd) {
     app.set("trust proxy", 1);
   }
 
-  const corsOrigins = process.env.CORS_ORIGIN
+  const configuredOrigins = process.env.CORS_ORIGIN
     ? process.env.CORS_ORIGIN.split(",").map((s) => s.trim()).filter(Boolean)
-    : true;
+    : [];
+  const defaultDevOrigins = ["http://localhost:5173", "http://127.0.0.1:5173"];
+  const allowOrigins = configuredOrigins.length > 0 ? configuredOrigins : (isProd ? [] : defaultDevOrigins);
+  const staticCorsOrigin = allowOrigins.length > 0 ? allowOrigins : (isProd ? false : true);
 
-  // Route chẩn đoán Email
-  app.get("/api/test-email", async (req, res) => {
-    try {
-      const { sendVerificationEmail } = await import("./services/emailService.js");
-      const result = await sendVerificationEmail(
-        process.env.MAIL_USER || "test@example.com",
-        "Tester",
-        "https://prointerview.ai/verify-test"
-      );
-      res.json({
-        message: "Email test result",
-        success: result.ok,
-        error: result.error || null,
-        env: {
-          MAIL_USER: process.env.MAIL_USER ? "HIDDEN" : "MISSING",
-          MAIL_PASS: process.env.MAIL_PASS ? "HIDDEN" : "MISSING",
-        }
-      });
-    } catch (err) {
-      res.status(500).json({ error: err.message });
-    }
+  const apiLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: isProd ? 500 : 1500,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { success: false, error: "Quá nhiều yêu cầu. Vui lòng thử lại sau." },
   });
+
+  app.use(helmet({
+    crossOriginOpenerPolicy: { policy: "same-origin-allow-popups" },
+  }));
+  app.use(hpp());
+  app.use((req, _res, next) => {
+    sanitizeObjectKeys(req.body);
+    sanitizeObjectKeys(req.params);
+    sanitizeObjectKeys(req.query);
+    next();
+  });
+  app.use("/api", apiLimiter);
 
   app.use(
     cors({
-      origin: corsOrigins,
+      origin(origin, callback) {
+        if (!origin) return callback(null, true);
+        if (allowOrigins.includes(origin)) return callback(null, true);
+        return callback(null, false);
+      },
       credentials: false,
     }),
   );
 
   // Fix lỗi "Cross-Origin-Opener-Policy" cho Google Login trên Render
-  app.use((_req, res, next) => {
-    res.setHeader("Cross-Origin-Opener-Policy", "same-origin-allow-popups");
-    next();
-  });
   app.use(express.json({ limit: "1mb" }));
-  app.use("/public", cors(), express.static("public"));
-  app.use("/uploads", cors(), express.static("public/uploads"));
+  app.use("/public", cors({ origin: staticCorsOrigin }), express.static("public"));
+  app.use("/uploads", cors({ origin: staticCorsOrigin }), express.static("public/uploads"));
 
 
 
-  app.use((_req, res, next) => {
-    res.setHeader("X-Content-Type-Options", "nosniff");
-    res.setHeader("X-Frame-Options", "DENY");
-    res.setHeader("Referrer-Policy", "no-referrer-when-downgrade");
-    res.setHeader("Cross-Origin-Opener-Policy", "same-origin-allow-popups");
-    next();
-  });
+  // Route chẩn đoán Email: chỉ mở ở môi trường dev nội bộ
+  if (!isProd) {
+    app.get("/api/test-email", async (req, res) => {
+      try {
+        const { sendVerificationEmail } = await import("./services/emailService.js");
+        const result = await sendVerificationEmail(
+          process.env.MAIL_USER || "test@example.com",
+          "Tester",
+          "https://prointerview.ai/verify-test"
+        );
+        res.json({
+          message: "Email test result",
+          success: result.ok,
+          error: result.error || null,
+          env: {
+            MAIL_USER: process.env.MAIL_USER ? "HIDDEN" : "MISSING",
+            MAIL_PASS: process.env.MAIL_PASS ? "HIDDEN" : "MISSING",
+          }
+        });
+      } catch (err) {
+        res.status(500).json({ error: err.message });
+      }
+    });
+  }
   
   app.get("/", (_req, res) => {
     res.json({
@@ -150,12 +173,8 @@ export function createApp() {
   app.use("/api/upload", uploadRouter);
   app.use("/api/mock", mockCoursesRouter);
 
-  // Error handler cuối
-  // eslint-disable-next-line no-unused-vars
-  app.use((err, _req, res, _next) => {
-    console.error(err);
-    res.status(500).json({ success: false, error: "Internal server error" });
-  });
+  app.use(notFoundHandler);
+  app.use(globalErrorHandler);
 
   return app;
 }

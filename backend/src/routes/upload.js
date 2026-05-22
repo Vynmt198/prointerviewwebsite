@@ -2,6 +2,8 @@ import { Router } from "express";
 import { authJwt } from "../middleware/authJwt.js";
 import { requireMentor } from "../middleware/requireMentor.js";
 import { UploadController } from "../controllers/uploadController.js";
+import { asyncHandler } from "../middleware/asyncHandler.js";
+import { formatApiError } from "../utils/apiErrors.js";
 import { upload } from "../middleware/upload.js";
 import multer from "multer";
 
@@ -18,15 +20,16 @@ const handleMulterError = (handler) => (req, res, next) => {
       return res.status(400).json({ success: false, error: err.message });
     } else if (err) {
       console.error(`[Upload] Server Error:`, err);
-      return res.status(500).json({ success: false, error: err.message });
+      const { status, error } = formatApiError(err);
+      return res.status(status).json({ success: false, error });
     }
     next();
   });
 };
 
 
-uploadRouter.post("/avatar", authJwt, handleMulterError(upload.single("file")), UploadController.uploadAvatar);
-uploadRouter.post("/cv", authJwt, handleMulterError(upload.single("file")), UploadController.uploadCV);
-uploadRouter.post("/course-thumbnail", authJwt, requireMentor, handleMulterError(upload.single("file")), UploadController.uploadCourseThumbnail);
-uploadRouter.post("/course-video", authJwt, requireMentor, handleMulterError(upload.single("file")), UploadController.uploadCourseVideo);
+uploadRouter.post("/avatar", authJwt, handleMulterError(upload.single("file")), asyncHandler(UploadController.uploadAvatar));
+uploadRouter.post("/cv", authJwt, handleMulterError(upload.single("file")), asyncHandler(UploadController.uploadCV));
+uploadRouter.post("/course-thumbnail", authJwt, requireMentor, handleMulterError(upload.single("file")), asyncHandler(UploadController.uploadCourseThumbnail));
+uploadRouter.post("/course-video", authJwt, requireMentor, handleMulterError(upload.single("file")), asyncHandler(UploadController.uploadCourseVideo));
 

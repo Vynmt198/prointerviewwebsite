@@ -24,7 +24,7 @@ import {
 import { getUser, getDisplayName } from "../../utils/auth";
 import { MentorPageShell } from "../../components/mentor/MentorPageShell";
 import { fetchMentorFinance, requestMentorPayout, updateMentorPayoutAccount } from "../../utils/mentorApi";
-import { toast } from "sonner";
+import { toastApiError, toastApiSuccess } from "../../utils/apiToast";
 
 const MENTOR_FINANCE_EXTRA_CSS = `
         .glass-tag {
@@ -246,9 +246,15 @@ export function MentorFinance() {
       navigate("/");
       return;
     }
-    fetchMentorFinance().then((res) => {
-      if (res.success && res.finance) setFinance(res.finance);
-    });
+    void (async () => {
+      try {
+        const res = await fetchMentorFinance();
+        if (res.success && res.finance) setFinance(res.finance);
+        else if (!res.success) toastApiError(res.error, "Không tải được tài chính mentor.");
+      } catch {
+        toastApiError("Lỗi kết nối khi tải tài chính.");
+      }
+    })();
   }, [navigate, user?.role]);
 
   if (!user || user.role !== "mentor") return null;
@@ -466,25 +472,31 @@ export function MentorFinance() {
             payoutAccountOwnerName={payoutAccountOwnerName}
             payoutAccountMasked={payoutAccountMasked}
             onSavePayoutAccount={async (account) => {
+              try {
               const res = await updateMentorPayoutAccount(account);
               if (!res.success) {
-                toast.error(res.error || "Không lưu được tài khoản nhận tiền.");
+                toastApiError(res.error, "Không lưu được tài khoản nhận tiền.");
                 return { success: false };
               }
               setFinance((prev) => ({
                 ...(prev || {}),
                 payoutAccount: res.payoutAccount || account,
               }));
-              toast.success("Đã lưu tài khoản nhận tiền.");
+              toastApiSuccess("Đã lưu tài khoản nhận tiền.");
               return { success: true };
-            }}
-            onSubmit={async (amount) => {
-              const res = await requestMentorPayout(amount);
-              if (!res.success) {
-                toast.error(res.error || "Không gửi được yêu cầu rút tiền.");
+              } catch {
+                toastApiError("Lỗi kết nối khi lưu tài khoản nhận tiền.");
                 return { success: false };
               }
-              toast.success("Đã gửi yêu cầu rút tiền.");
+            }}
+            onSubmit={async (amount) => {
+              try {
+              const res = await requestMentorPayout(amount);
+              if (!res.success) {
+                toastApiError(res.error, "Không gửi được yêu cầu rút tiền.");
+                return { success: false };
+              }
+              toastApiSuccess("Đã gửi yêu cầu rút tiền.");
               const optimisticRow = {
                 id: res.payout?.id || `local-${Date.now()}`,
                 type: "withdraw",
@@ -502,6 +514,10 @@ export function MentorFinance() {
               const refreshed = await fetchMentorFinance();
               if (refreshed.success && refreshed.finance) setFinance(refreshed.finance);
               return { success: true };
+              } catch {
+                toastApiError("Lỗi kết nối khi gửi yêu cầu rút tiền.");
+                return { success: false };
+              }
             }}
             onClose={() => setShowWithdraw(false)}
           />

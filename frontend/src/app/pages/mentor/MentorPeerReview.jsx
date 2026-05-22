@@ -21,6 +21,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { getUser } from "../../utils/auth";
 import { MentorPageShell } from "../../components/mentor/MentorPageShell";
 import { fetchMentorPeerReviews, submitMentorPeerReview } from "../../utils/mentorApi";
+import { toastApiError, tryApi } from "../../utils/apiToast";
 import { toast } from "sonner";
 
 export function MentorPeerReview() {
@@ -44,19 +45,23 @@ export function MentorPeerReview() {
          navigate("/");
          return;
       }
-      fetchMentorPeerReviews().then((res) => {
+      void (async () => {
+         const res = await tryApi(() => fetchMentorPeerReviews(), {
+            fallback: "Không tải được danh sách peer review.",
+         });
          if (!res.success || !Array.isArray(res.items)) {
             setCoursesForReview([]);
             return;
          }
-         const mapped = res.items.map((item) => ({
-            ...item,
-            cover:
-               item.cover ||
-               "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&q=80&w=400",
-         }));
-         setCoursesForReview(mapped);
-      });
+         setCoursesForReview(
+            res.items.map((item) => ({
+               ...item,
+               cover:
+                  item.cover ||
+                  "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&q=80&w=400",
+            })),
+         );
+      })();
    }, []);
 
    if (!user || user.role !== "mentor") return null;
@@ -88,12 +93,12 @@ export function MentorPeerReview() {
    const submitReview = async () => {
       if (!selectedCourse?.id) return;
       setSubmitting(true);
-      const res = await submitMentorPeerReview(selectedCourse.id, reviewForm);
+      const res = await tryApi(() => submitMentorPeerReview(selectedCourse.id, reviewForm), {
+         fallback: "Không gửi được đánh giá.",
+         successMessage: "Đã gửi đánh giá chéo.",
+      });
       setSubmitting(false);
-      if (!res.success) {
-         toast.error(res.error || "Không gửi được đánh giá.");
-         return;
-      }
+      if (!res.success) return;
       setCoursesForReview((prev) =>
          prev.map((item) =>
             item.id === selectedCourse.id
@@ -101,7 +106,6 @@ export function MentorPeerReview() {
                : item,
          ),
       );
-      toast.success("Đã gửi đánh giá chéo.");
       setSelectedCourse(null);
    };
 

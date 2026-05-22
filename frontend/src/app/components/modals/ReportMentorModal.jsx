@@ -1,12 +1,17 @@
 import { useState } from "react";
-import { toast } from "sonner";
+import { useNavigate } from "react-router";
 import {
   AlertTriangle as Warning,
   X,
   Send as PaperPlaneTilt,
   ShieldAlert as ShieldWarning,
+  Loader2,
 } from "lucide-react";
-import { REPORT_CATEGORIES } from "../../data/mentorMockData";
+import { REPORT_CATEGORIES } from "../../constants/reportCategories";
+import { submitReport, REPORT_REASON_MAP } from "../../utils/reportsApi";
+import { toastApiError, tryApi } from "../../utils/apiToast";
+import { requireLoginNavigate } from "../../utils/authGate";
+import { isLoggedIn } from "../../utils/auth";
 
 export function ReportMentorModal({
   mentorId,
@@ -14,35 +19,60 @@ export function ReportMentorModal({
   relatedMeetingId,
   onClose,
 }) {
+  const navigate = useNavigate();
   const [category, setCategory] = useState("");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
+    if (!isLoggedIn()) {
+      requireLoginNavigate(navigate, window.location.hash.replace(/^#/, "") || "/");
+      return;
+    }
+
     if (!category) {
-      toast.error("Vui lòng chọn loại báo cáo");
+      toastApiError("Vui lòng chọn loại báo cáo");
       return;
     }
 
     if (!title.trim()) {
-      toast.error("Vui lòng nhập tiêu đề báo cáo");
+      toastApiError("Vui lòng nhập tiêu đề báo cáo");
       return;
     }
 
     if (!description.trim() || description.trim().length < 20) {
-      toast.error("Vui lòng mô tả chi tiết vấn đề (tối thiểu 20 ký tự)");
+      toastApiError("Vui lòng mô tả chi tiết vấn đề (tối thiểu 20 ký tự)");
       return;
     }
 
-    // Success
-    toast.success(
-      "Đã gửi báo cáo thành công. Chúng tôi sẽ xem xét và phản hồi trong vòng 24-48h.",
-      { duration: 6000 }
-    );
+    if (!mentorId) {
+      toastApiError("Thiếu thông tin mentor để gửi báo cáo.");
+      return;
+    }
 
-    // Reset and close
+    const reason = REPORT_REASON_MAP[category] || "other";
+    setSubmitting(true);
+    const res = await tryApi(
+      () =>
+        submitReport({
+          targetType: "mentor",
+          targetId: mentorId,
+          reason,
+          title: title.trim(),
+          description: description.trim(),
+          bookingId: relatedMeetingId || undefined,
+        }),
+      {
+        fallback: "Không gửi được báo cáo.",
+        successMessage:
+          "Đã gửi báo cáo thành công. Chúng tôi sẽ xem xét và phản hồi trong vòng 24–48 giờ.",
+      },
+    );
+    setSubmitting(false);
+    if (!res.success) return;
     setCategory("");
     setTitle("");
     setDescription("");
@@ -59,7 +89,6 @@ export function ReportMentorModal({
         className="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header */}
         <div
           className="px-6 py-5 flex items-center justify-between"
           style={{ background: "linear-gradient(135deg, #EF4444, #FF8C42)" }}
@@ -77,6 +106,7 @@ export function ReportMentorModal({
             </div>
           </div>
           <button
+            type="button"
             onClick={onClose}
             className="w-8 h-8 rounded-lg flex items-center justify-center transition-all hover:bg-white/20"
           >
@@ -84,7 +114,6 @@ export function ReportMentorModal({
           </button>
         </div>
 
-        {/* Warning Banner */}
         <div
           className="mx-6 mt-5 p-4 rounded-xl flex items-start gap-3"
           style={{ background: "rgba(255,214,0,0.1)", border: "1px solid rgba(255,214,0,0.25)" }}
@@ -104,7 +133,6 @@ export function ReportMentorModal({
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-5">
-          {/* Category Selection */}
           <div>
             <label className="text-sm font-semibold mb-2 block" style={{ color: "#1F1F1F" }}>
               Loại báo cáo <span style={{ color: "#EF4444" }}>*</span>
@@ -136,7 +164,6 @@ export function ReportMentorModal({
             </div>
           </div>
 
-          {/* Title Input */}
           <div>
             <label className="text-sm font-semibold mb-2 block" style={{ color: "#1F1F1F" }}>
               Tiêu đề <span style={{ color: "#EF4444" }}>*</span>
@@ -155,7 +182,6 @@ export function ReportMentorModal({
             </p>
           </div>
 
-          {/* Description Input */}
           <div>
             <label className="text-sm font-semibold mb-2 block" style={{ color: "#1F1F1F" }}>
               Mô tả chi tiết <span style={{ color: "#EF4444" }}>*</span>
@@ -174,27 +200,37 @@ export function ReportMentorModal({
             </p>
           </div>
 
-          {/* Actions */}
           <div className="flex gap-3 pt-2">
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 py-3 rounded-xl font-semibold text-sm transition-colors hover:bg-gray-200"
+              disabled={submitting}
+              className="flex-1 py-3 rounded-xl font-semibold text-sm transition-colors hover:bg-gray-200 disabled:opacity-50"
               style={{ background: "rgba(22,11,46,0.95)", color: "#f4f4f5" }}
             >
               Huỷ
             </button>
             <button
               type="submit"
-              className="flex-1 py-3 rounded-xl font-semibold text-sm transition-all hover:brightness-110 flex items-center justify-center gap-2"
+              disabled={submitting}
+              className="flex-1 py-3 rounded-xl font-semibold text-sm transition-all hover:brightness-110 flex items-center justify-center gap-2 disabled:opacity-60"
               style={{
                 background: "linear-gradient(135deg, #EF4444, #FF8C42)",
                 color: "#fff",
                 boxShadow: "0 4px 16px rgba(239,68,68,0.3)",
               }}
             >
-              <PaperPlaneTilt className="w-4 h-4" />
-              Gửi báo cáo
+              {submitting ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Đang gửi...
+                </>
+              ) : (
+                <>
+                  <PaperPlaneTilt className="w-4 h-4" />
+                  Gửi báo cáo
+                </>
+              )}
             </button>
           </div>
         </form>

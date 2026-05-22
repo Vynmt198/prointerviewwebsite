@@ -85,3 +85,49 @@ export async function createReport(userId, body) {
   return { ok: true, reportId: String(doc._id) };
 }
 
+export async function listReportsForAdmin() {
+  if (!isMongoReady()) return { ok: false, status: 503, error: MONGO_ERR };
+  const reports = await Report.find()
+    .sort({ createdAt: -1 })
+    .limit(200)
+    .populate("reportedBy", "name email role")
+    .lean();
+  return { ok: true, reports };
+}
+
+export async function updateReportStatusForAdmin(adminUserId, reportId, body = {}) {
+  if (!isMongoReady()) return { ok: false, status: 503, error: MONGO_ERR };
+  if (!mongoose.isValidObjectId(reportId)) {
+    return { ok: false, status: 400, error: "reportId không hợp lệ." };
+  }
+
+  const status = String(body?.status || "").trim();
+  const allowed = new Set(["reviewing", "resolved", "dismissed"]);
+  if (!allowed.has(status)) {
+    return { ok: false, status: 400, error: "status phải là reviewing, resolved hoặc dismissed." };
+  }
+
+  const resolution = String(body?.resolution || "").trim().slice(0, 2000);
+  const doc = await Report.findById(reportId);
+  if (!doc) return { ok: false, status: 404, error: "Không tìm thấy báo cáo." };
+
+  doc.status = status;
+  if (status === "resolved" || status === "dismissed") {
+    doc.resolvedBy = adminUserId;
+    doc.resolvedAt = new Date();
+    doc.resolution =
+      resolution ||
+      (status === "dismissed" ? "Admin đã bác bỏ báo cáo." : "Admin đã xử lý báo cáo.");
+  } else {
+    doc.resolution = resolution || doc.resolution || "";
+  }
+
+  await doc.save();
+
+  const report = await Report.findById(doc._id)
+    .populate("reportedBy", "name email role")
+    .lean();
+
+  return { ok: true, report };
+}
+

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Search, Clock, User, CheckCircle, BookOpen, RefreshCw } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
-import { toast } from "sonner";
+import { toastApiError, tryApi } from "../../utils/apiToast";
 import { adminApi } from "../../utils/adminApi";
 
 function vnd(n) {
@@ -37,14 +37,12 @@ export function AdminCoursePayments() {
   const loadAll = useCallback(async () => {
     setLoading(true);
     const [listRes, financeRes] = await Promise.all([
-      adminApi.getCoursePaymentEnrollments(),
-      adminApi.getCourseFinanceSummary(),
+      tryApi(() => adminApi.getCoursePaymentEnrollments(), {
+        fallback: "Không tải được danh sách học phí khóa học.",
+      }),
+      tryApi(() => adminApi.getCourseFinanceSummary(), { silent: true }),
     ]);
-    if (listRes.success) {
-      setRows(listRes.enrollments || []);
-    } else {
-      toast.error(listRes.error || "Không tải được danh sách học phí khóa học.");
-    }
+    if (listRes.success) setRows(listRes.enrollments || []);
     if (financeRes.success && financeRes.courseFinance) {
       const cf = financeRes.courseFinance;
       setSummary({
@@ -59,16 +57,19 @@ export function AdminCoursePayments() {
 
   const executeConfirm = async (enrollmentId, needsOverride, forceNote) => {
     setBusyId(enrollmentId);
-    const res = await adminApi.confirmEnrollmentTransferPayment(
-      enrollmentId,
-      needsOverride ? { force: true, forceNote } : {},
+    const res = await tryApi(
+      () =>
+        adminApi.confirmEnrollmentTransferPayment(
+          enrollmentId,
+          needsOverride ? { force: true, forceNote } : {},
+        ),
+      {
+        fallback: "Không xác nhận được thanh toán ghi danh.",
+        successMessage: "Đã xác nhận thanh toán học phí khóa học.",
+      },
     );
     setBusyId("");
-    if (!res.success) {
-      toast.error(res.error || "Không xác nhận được thanh toán ghi danh.");
-      return;
-    }
-    toast.success("Đã xác nhận thanh toán học phí khóa học.");
+    if (!res.success) return;
     const enr = res.enrollment;
     if (enr?._id) {
       setRows((prev) =>
@@ -107,7 +108,7 @@ export function AdminCoursePayments() {
     const enrollmentId = String(overrideModal.enrollmentId || "").trim();
     const forceNote = String(overrideModal.forceNote || "").trim();
     if (!enrollmentId || forceNote.length < 3) {
-      toast.error("Cần nhập lý do ngoại lệ tối thiểu 3 ký tự.");
+      toastApiError("Cần nhập lý do ngoại lệ tối thiểu 3 ký tự.");
       return;
     }
     setOverrideModal((prev) => ({ ...prev, open: false, enrollmentId: "" }));

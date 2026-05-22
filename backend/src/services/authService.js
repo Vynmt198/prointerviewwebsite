@@ -5,6 +5,13 @@ import jwt from "jsonwebtoken";
 import { OAuth2Client } from "google-auth-library";
 import { User, toPublicUser } from "../models/User.js";
 import * as emailService from "./emailService.js";
+import {
+  buildSessionFingerprint,
+  deviceLabelFromUserAgent,
+  shortFingerprint,
+  shouldEnforceSessionFingerprint,
+} from "../utils/securityGuards.js";
+import { isAccessTokenJtiRevoked, revokeAccessTokenJti } from "./accessTokenBlacklist.js";
 
 const SALT_ROUNDS = 10;
 const MIN_PASSWORD = 6;
@@ -41,6 +48,12 @@ function clientMeta(req) {
   };
 }
 
+function isSameFingerprint(savedFingerprint, req) {
+  if (!savedFingerprint) return true;
+  const current = buildSessionFingerprint(clientMeta(req));
+  return safeEqualStrings(savedFingerprint, current);
+}
+
 function trimAuthSessions(user) {
   const arr = user.authSessions;
   if (!Array.isArray(arr) || arr.length < MAX_AUTH_SESSIONS) return;
@@ -75,6 +88,7 @@ export function pushNewSession(user, req) {
     expiresAt,
     createdAt: new Date(),
     lastUsedAt: new Date(),
+    fingerprint: buildSessionFingerprint(meta),
     ...meta,
   });
   const last = user.authSessions[user.authSessions.length - 1];
@@ -93,8 +107,9 @@ export function issueAccessToken(user) {
   }
   const expiresIn = accessExpiresIn();
   const tv = Number(user.tokenVersion) || 0;
-  const token = jwt.sign({ sub: user._id.toString(), tv }, secret, { expiresIn });
-  return { ok: true, token, user: toPublicUser(user) };
+  const jti = crypto.randomUUID();
+  const token = jwt.sign({ sub: user._id.toString(), tv, jti }, secret, { expiresIn });
+  return { ok: true, token, jti, user: toPublicUser(user) };
 }
 
 function accessExpiresInSeconds(token) {
@@ -103,11 +118,38 @@ function accessExpiresInSeconds(token) {
   return Math.max(1, decoded.exp - Math.floor(Date.now() / 1000));
 }
 
-/** Đăng xuất: tăng tokenVersion + xóa mọi refresh session. */
-export async function logoutUser(userId) {
+/** Bearer tuỳ chọn (refresh / đổi MK) — lấy jti access token cũ để blacklist. */
+export function parseOptionalBearerAccessMeta(req) {
+  const auth = req?.headers?.authorization;
+  if (typeof auth !== "string" || !auth.startsWith("Bearer ")) return null;
+  const secret = process.env.JWT_SECRET;
+  if (!secret || !String(secret).trim()) return null;
+  try {
+    const payload = jwt.verify(auth.slice(7).trim(), secret);
+    return {
+      sub: String(payload.sub || ""),
+      jti: typeof payload.jti === "string" ? payload.jti : "",
+      exp: typeof payload.exp === "number" ? payload.exp : undefined,
+    };
+  } catch {
+    return null;
+  }
+}
+
+async function blacklistAccessMetaForUser(userId, accessMeta) {
+  const uid = String(userId ?? "").trim();
+  if (!accessMeta?.jti || accessMeta.sub !== uid) return;
+  await revokeAccessTokenJti(uid, accessMeta.jti, accessMeta.exp);
+}
+
+/** Đăng xuất: blacklist access jti hiện tại + tăng tokenVersion + xóa refresh sessions. */
+export async function logoutUser(userId, accessMeta = {}) {
   const uid = String(userId ?? "").trim();
   if (!mongoose.isValidObjectId(uid)) {
     return { ok: false, status: 401, error: "Phiên đăng nhập không hợp lệ." };
+  }
+  if (accessMeta?.jti) {
+    await revokeAccessTokenJti(uid, accessMeta.jti, accessMeta.exp);
   }
   const r = await User.findByIdAndUpdate(
     uid,
@@ -139,7 +181,7 @@ export async function deleteMeUser(userId) {
   return { ok: true };
 }
 
-export async function refreshAccessToken(rawRefresh, req) {
+export async function refreshAccessToken(rawRefresh, req, options = {}) {
   const raw = typeof rawRefresh === "string" ? rawRefresh.trim() : "";
   const idx = raw.indexOf(":");
   if (idx <= 0) {
@@ -165,9 +207,19 @@ export async function refreshAccessToken(rawRefresh, req) {
     return { ok: false, status: 401, error: "Phiên đã hết hạn. Đăng nhập lại." };
   }
   if (!safeEqualStrings(sub.tokenHash, hashRefreshSecret(secret))) {
+    user.authSessions = user.authSessions.filter((s) => !s._id.equals(sid));
+    await user.save();
     return { ok: false, status: 401, error: "Refresh token không hợp lệ." };
   }
+  if (shouldEnforceSessionFingerprint() && !isSameFingerprint(sub.fingerprint, req)) {
+    user.authSessions = user.authSessions.filter((s) => !s._id.equals(sid));
+    await user.save();
+    return { ok: false, status: 401, error: "Phiên đăng nhập không hợp lệ trên thiết bị hiện tại." };
+  }
 
+  await blacklistAccessMetaForUser(user._id.toString(), options.accessMeta);
+
+  sub.lastUsedAt = new Date();
   user.authSessions = user.authSessions.filter((s) => !s._id.equals(sid));
   const { refreshToken } = pushNewSession(user, req);
   await user.save();
@@ -183,28 +235,79 @@ export async function refreshAccessToken(rawRefresh, req) {
   };
 }
 
-export async function listAuthSessions(userId) {
+export async function listAuthSessions(userId, options = {}) {
   const uid = String(userId ?? "").trim();
   if (!mongoose.isValidObjectId(uid)) {
     return { ok: false, status: 401, error: "Phiên không hợp lệ." };
   }
   const u = await User.findById(uid).select("+authSessions").lean();
   if (!u) return { ok: false, status: 401, error: "Tài khoản không tồn tại." };
-  const sessions = (u.authSessions || []).map((s) => ({
-    id: s._id.toString(),
-    createdAt: s.createdAt,
-    lastUsedAt: s.lastUsedAt,
-    expiresAt: s.expiresAt,
-    userAgent: s.userAgent || "",
-    ip: s.ip || "",
-  }));
-  return { ok: true, sessions };
+
+  const currentSessionId = String(options.currentSessionId || "").trim();
+  const rows = u.authSessions || [];
+  const fpCounts = new Map();
+  for (const s of rows) {
+    const fp = s.fingerprint || "";
+    if (!fp) continue;
+    fpCounts.set(fp, (fpCounts.get(fp) || 0) + 1);
+  }
+  let majorityFingerprint = "";
+  let maxCount = 0;
+  for (const [fp, count] of fpCounts.entries()) {
+    if (count > maxCount) {
+      maxCount = count;
+      majorityFingerprint = fp;
+    }
+  }
+  const currentRow = rows.find((s) => s._id.toString() === currentSessionId);
+  const currentFingerprint = currentRow?.fingerprint || majorityFingerprint;
+
+  const sessions = rows.map((s) => {
+    const id = s._id.toString();
+    const fp = s.fingerprint || "";
+    const isCurrent = id === currentSessionId;
+    const isSuspicious =
+      Boolean(fp) &&
+      Boolean(majorityFingerprint) &&
+      fp !== majorityFingerprint &&
+      !isCurrent;
+    return {
+      id,
+      createdAt: s.createdAt,
+      lastUsedAt: s.lastUsedAt,
+      expiresAt: s.expiresAt,
+      userAgent: s.userAgent || "",
+      ip: s.ip || "",
+      fingerprint: fp,
+      fingerprintShort: shortFingerprint(fp),
+      deviceLabel: deviceLabelFromUserAgent(s.userAgent),
+      isCurrent,
+      isSuspicious,
+      matchesCurrentDevice: Boolean(fp && currentFingerprint && fp === currentFingerprint),
+    };
+  });
+
+  const suspiciousCount = sessions.filter((s) => s.isSuspicious).length;
+
+  return {
+    ok: true,
+    sessions,
+    security: {
+      currentSessionId: currentSessionId || null,
+      currentFingerprintShort: shortFingerprint(currentFingerprint),
+      suspiciousSessionCount: suspiciousCount,
+      hasSuspiciousLogin: suspiciousCount > 0,
+    },
+  };
 }
 
-export async function revokeAuthSession(userId, sessionIdStr) {
+export async function revokeAuthSession(userId, sessionIdStr, accessMeta = {}) {
   const uid = String(userId ?? "").trim();
   if (!mongoose.isValidObjectId(uid) || !mongoose.isValidObjectId(sessionIdStr)) {
     return { ok: false, status: 400, error: "Tham số không hợp lệ." };
+  }
+  if (accessMeta?.jti) {
+    await revokeAccessTokenJti(uid, accessMeta.jti, accessMeta.exp);
   }
   const r = await User.findOneAndUpdate(
     { _id: uid, "authSessions._id": sessionIdStr },
@@ -609,7 +712,7 @@ export async function getMeUser(userId) {
   return { ok: true, user: toPublicUser(user) };
 }
 
-export async function patchMeUser(userId, body, req) {
+export async function patchMeUser(userId, body, req, options = {}) {
   const user = await User.findById(userId).select("+passwordHash +googleSub +authSessions");
   if (!user) {
     return { ok: false, status: 401, error: "Tài khoản không tồn tại." };
@@ -724,6 +827,7 @@ export async function patchMeUser(userId, body, req) {
   }
 
   if (passwordChanged) {
+    await blacklistAccessMetaForUser(user._id.toString(), options.accessMeta);
     user.tokenVersion = (user.tokenVersion ?? 0) + 1;
     user.authSessions = [];
   }

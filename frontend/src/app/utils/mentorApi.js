@@ -22,17 +22,19 @@ function normalizeApiError(body, status) {
  * Danh sách mentor — fetch từ Express + MongoDB (GET /api/mentors).
  */
 export async function fetchMentors() {
-  const res = await fetch(apiUrl("/api/mentors"), { headers: jsonHeaders });
-  if (!res.ok) {
-    console.error(`fetchMentors: HTTP ${res.status}`);
-    return [];
+  try {
+    const res = await fetch(apiUrl("/api/mentors"), { headers: jsonHeaders });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      return { success: false, error: normalizeApiError(data, res.status), mentors: [] };
+    }
+    if (data.success && Array.isArray(data.mentors)) {
+      return { success: true, mentors: data.mentors };
+    }
+    return { success: false, error: data.error || "Không tải được danh sách mentor.", mentors: [] };
+  } catch {
+    return { success: false, error: ERROR_MESSAGES.NETWORK, mentors: [] };
   }
-  const data = await res.json();
-  if (data.success && Array.isArray(data.mentors)) {
-    return data.mentors;
-  }
-  console.error("fetchMentors: response không hợp lệ", data);
-  return [];
 }
 
 /**

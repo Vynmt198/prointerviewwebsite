@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import {
   ArrowLeft,
   PlayCircle,
@@ -26,11 +26,18 @@ import {
   Maximize2 as CornersOut,
 } from "lucide-react";
 import { useParams, useNavigate } from "react-router";
-import { fetchCourseById, fetchLessonContent } from "../../utils/courseApi";
+import {
+  fetchCourseById,
+  fetchLessonContent,
+  fetchLessonQA,
+  submitLessonQuestion,
+  fetchLessonNotes,
+  saveLessonNotes,
+} from "../../utils/courseApi";
 import { enrollmentApi } from "../../utils/enrollmentApi";
-import { toast } from "sonner";
+import { toastApiError, toastApiSuccess } from "../../utils/apiToast";
+import { avatarSrc, mediaSrc } from "../../utils/mediaUrl";
 import { enrollmentAccessGranted } from "../../utils/enrollmentAccess.js";
-import { mediaSrc } from "../../utils/mediaUrl";
 
 /* ── Helpers ────────────────────────────────────────────────── */
 const formatDuration = (minutes) => {
@@ -38,9 +45,6 @@ const formatDuration = (minutes) => {
   const m = minutes % 60;
   return h > 0 ? `${h}h ${m > 0 ? m + "m" : ""}`.trim() : `${m}m`;
 };
-
-const NOTES_KEY = (courseId, lessonId) =>
-  `prointerview_course_notes_${courseId}_${lessonId}`;
 
 /* ── Video Player ────────────────────────────────────────────── */
 function VideoPlayer({ lesson, thumbnail }) {
@@ -212,10 +216,10 @@ function CertificateModal({
         if (res.success) {
           setCertData(res.certificate);
         } else {
-          toast.error(res.error || "Không thể lấy chứng chỉ");
+          toastApiError(res.error, "Không thể lấy chứng chỉ");
         }
-      } catch (err) {
-        toast.error("Lỗi kết nối khi lấy chứng chỉ");
+      } catch {
+        toastApiError("Lỗi kết nối khi lấy chứng chỉ");
       } finally {
         setLoading(false);
       }
@@ -341,43 +345,81 @@ function CertificateModal({
 /* ── QA Section ──────────────────────────────────────────────── */
 function QASection({
   courseId,
-  lessonTitle,
-  lessonIdx,
+  lessonId,
   mentorAvatar,
   mentorName,
 }) {
-  const [questions, setQuestions] = useState([]);
+  const [items, setItems] = useState([]);
   const [newQuestion, setNewQuestion] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
 
-  // Load questions from localStorage
   useEffect(() => {
-    const raw = localStorage.getItem(`prointerview_course_qa_${courseId}_${lessonIdx}`);
-    if (raw) setQuestions(JSON.parse(raw) );
-  }, [courseId, lessonIdx]);
+    if (!courseId || !lessonId) return;
+    let cancelled = false;
 
-  // Save questions to localStorage
-  useEffect(() => {
-    localStorage.setItem(`prointerview_course_qa_${courseId}_${lessonIdx}`, JSON.stringify(questions));
-  }, [questions, courseId, lessonIdx]);
+    const load = async () => {
+      setLoading(true);
+      try {
+        const res = await fetchLessonQA(courseId, lessonId);
+        if (cancelled) return;
+        if (!res.success) {
+          toastApiError(res.error, "Không tải được câu hỏi.");
+          setItems([]);
+          return;
+        }
+        setItems(res.items || []);
+      } catch {
+        if (!cancelled) toastApiError("Lỗi kết nối khi tải câu hỏi.");
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
 
-  const addQuestion = () => {
-    if (!newQuestion.trim()) return;
-    setQuestions([...questions, newQuestion.trim()]);
-    setNewQuestion("");
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, [courseId, lessonId]);
+
+  const addQuestion = async () => {
+    const text = newQuestion.trim();
+    if (!text || submitting) return;
+    setSubmitting(true);
+    try {
+      const res = await submitLessonQuestion(courseId, lessonId, text);
+      if (!res.success) {
+        toastApiError(res.error, "Không gửi được câu hỏi.");
+        return;
+      }
+      toastApiSuccess(res.message || "Đã gửi câu hỏi.");
+      setNewQuestion("");
+      if (res.item) {
+        setItems((prev) => [res.item, ...prev]);
+      } else {
+        const reload = await fetchLessonQA(courseId, lessonId);
+        if (reload.success) setItems(reload.items || []);
+      }
+    } catch {
+      toastApiError("Lỗi kết nối khi gửi câu hỏi.");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
     <div>
       <div className="mb-3 flex items-center justify-between">
-        <p className="text-white/60 text-sm">Hỏi & Đáp với Mentor — được lưu tự động</p>
-        <span className="text-xs text-white/30">{questions.length} câu hỏi</span>
+        <p className="text-white/60 text-sm">Hỏi & Đáp với Mentor — đồng bộ trên hệ thống</p>
+        <span className="text-xs text-white/30">{items.length} câu hỏi</span>
       </div>
       <div className="flex items-center gap-3 mb-3">
         <input
           value={newQuestion}
           onChange={(e) => setNewQuestion(e.target.value)}
           placeholder="Nhập câu hỏi của bạn..."
-          className="flex-1 rounded-2xl p-4 text-sm outline-none transition-all"
+          disabled={submitting}
+          className="flex-1 rounded-2xl p-4 text-sm outline-none transition-all disabled:opacity-50"
           style={{
             background: "rgba(255,255,255,0.04)",
             border: "1px solid rgba(255,255,255,0.08)",
@@ -386,27 +428,62 @@ function QASection({
           }}
           onFocus={(e) => (e.target.style.border = "1px solid rgba(110, 53, 232,0.4)")}
           onBlur={(e) => (e.target.style.border = "1px solid rgba(255,255,255,0.08)")}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && !e.shiftKey) {
+              e.preventDefault();
+              addQuestion();
+            }
+          }}
         />
         <button
           onClick={addQuestion}
-          className="px-4 py-2 rounded-xl text-sm font-semibold transition-all hover:brightness-110"
+          disabled={submitting || !newQuestion.trim()}
+          className="px-4 py-2 rounded-xl text-sm font-semibold transition-all hover:brightness-110 disabled:opacity-40"
           style={{ background: "rgba(110, 53, 232,0.2)", color: "#8B4DFF" }}
         >
           <ChatCircle className="w-3.5 h-3.5 inline mr-1.5" />
-          Gửi
+          {submitting ? "Đang gửi…" : "Gửi"}
         </button>
       </div>
-      <div className="space-y-3">
-        {questions.map((q, idx) => (
-          <div key={idx} className="rounded-2xl p-4 bg-gray-900">
-            <div className="flex items-center gap-3 mb-2">
-              <img src={mentorAvatar} alt={mentorName} className="w-8 h-8 rounded-full object-cover shrink-0" />
-              <p className="text-sm font-bold text-[#6E35E8]">{mentorName}</p>
+      {loading ? (
+        <p className="text-sm text-white/40 py-6 text-center">Đang tải câu hỏi…</p>
+      ) : items.length === 0 ? (
+        <p className="text-sm text-white/40 py-6 text-center">Chưa có câu hỏi nào. Hãy là người đầu tiên!</p>
+      ) : (
+        <div className="space-y-3">
+          {items.map((item) => (
+            <div key={item.id} className="rounded-2xl p-4 bg-gray-900">
+              <div className="flex items-center gap-3 mb-2">
+                <img
+                  src={avatarSrc(item.student?.avatar)}
+                  alt={item.student?.name || "Học viên"}
+                  className="w-8 h-8 rounded-full object-cover shrink-0"
+                />
+                <div>
+                  <p className="text-sm font-bold text-white/90">{item.student?.name || "Học viên"}</p>
+                  <p className="text-[10px] text-white/30">{item.time}</p>
+                </div>
+              </div>
+              <p className="text-sm text-gray-300 leading-relaxed">{item.question}</p>
+              {item.mentorAnswer ? (
+                <div
+                  className="mt-3 rounded-xl p-3"
+                  style={{ background: "rgba(110, 53, 232, 0.12)", border: "1px solid rgba(110, 53, 232, 0.2)" }}
+                >
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <img src={avatarSrc(mentorAvatar)} alt={mentorName} className="w-6 h-6 rounded-full object-cover shrink-0" />
+                    <p className="text-xs font-bold text-[#8B4DFF]">{mentorName}</p>
+                    <span className="text-[10px] text-white/30 uppercase tracking-wide">Mentor</span>
+                  </div>
+                  <p className="text-sm text-white/80 leading-relaxed">{item.mentorAnswer}</p>
+                </div>
+              ) : (
+                <p className="mt-2 text-xs text-white/30">Chờ mentor trả lời…</p>
+              )}
             </div>
-            <p className="text-sm text-gray-500 leading-relaxed">{q}</p>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -431,6 +508,10 @@ export function CourseLearning() {
   const [justCompleted, setJustCompleted] = useState(false);
   const [lessonContent, setLessonContent] = useState(null);
   const [lessonLoading, setLessonLoading] = useState(false);
+  const [notesLoading, setNotesLoading] = useState(false);
+  const [notesSaving, setNotesSaving] = useState(false);
+  const notesSaveTimer = useRef(null);
+  const notesLoadedFor = useRef("");
 
   // Load course and enrollment data
   useEffect(() => {
@@ -441,9 +522,10 @@ export function CourseLearning() {
       setEnrollment(null);
       setCompletedLessons([]);
       setPaymentPendingInfo(null);
-      // Get course data
+      try {
       const courseRes = await fetchCourseById(id);
       if (!courseRes.success) {
+        toastApiError(courseRes.error, "Không tải được khóa học.");
         setLoading(false);
         return;
       }
@@ -494,7 +576,11 @@ export function CourseLearning() {
           setPaymentPendingInfo(null);
         }
       }
-      setLoading(false);
+      } catch {
+        toastApiError("Lỗi kết nối khi tải khóa học.");
+      } finally {
+        setLoading(false);
+      }
     };
 
     loadData();
@@ -504,15 +590,73 @@ export function CourseLearning() {
   const currentLesson = lessons[currentLessonIdx];
   const progressPct = lessons.length > 0 ? Math.round((completedLessons.length / lessons.length) * 100) : 0;
 
-  // Reset play state + load notes on lesson change
+  // Reset play state on lesson change
   useEffect(() => {
     if (!currentLesson) return;
-    const saved = localStorage.getItem(NOTES_KEY(id || "", currentLesson.id)) || "";
-    setNotes(saved);
-    setNotes(saved);
+    setNotes("");
     setIsPlaying(false);
     setJustCompleted(false);
   }, [currentLessonIdx, currentLesson, id]);
+
+  // Load notes from API
+  useEffect(() => {
+    if (!id || !currentLesson?.id) return;
+    const key = `${id}:${currentLesson.id}`;
+    notesLoadedFor.current = "";
+    let cancelled = false;
+
+    const loadNotes = async () => {
+      setNotesLoading(true);
+      try {
+        const res = await fetchLessonNotes(id, currentLesson.id);
+        if (cancelled) return;
+        if (!res.success) {
+          if (res.error !== "Chưa đăng nhập.") {
+            toastApiError(res.error, "Không tải được ghi chú.");
+          }
+          setNotes("");
+          return;
+        }
+        setNotes(res.content || "");
+        notesLoadedFor.current = key;
+      } catch {
+        if (!cancelled) toastApiError("Lỗi kết nối khi tải ghi chú.");
+      } finally {
+        if (!cancelled) setNotesLoading(false);
+      }
+    };
+
+    loadNotes();
+    return () => {
+      cancelled = true;
+    };
+  }, [id, currentLesson?.id]);
+
+  // Autosave notes (debounced)
+  useEffect(() => {
+    if (!id || !currentLesson?.id || notesLoading) return;
+    const key = `${id}:${currentLesson.id}`;
+    if (notesLoadedFor.current !== key) return;
+
+    if (notesSaveTimer.current) clearTimeout(notesSaveTimer.current);
+    notesSaveTimer.current = setTimeout(async () => {
+      setNotesSaving(true);
+      try {
+        const res = await saveLessonNotes(id, currentLesson.id, notes);
+        if (!res.success && res.error !== "Chưa đăng nhập.") {
+          toastApiError(res.error, "Không lưu được ghi chú.");
+        }
+      } catch {
+        toastApiError("Lỗi kết nối khi lưu ghi chú.");
+      } finally {
+        setNotesSaving(false);
+      }
+    }, 800);
+
+    return () => {
+      if (notesSaveTimer.current) clearTimeout(notesSaveTimer.current);
+    };
+  }, [notes, id, currentLesson?.id, notesLoading]);
 
   // Load detailed lesson content
   useEffect(() => {
@@ -520,23 +664,22 @@ export function CourseLearning() {
 
     const loadLesson = async () => {
       setLessonLoading(true);
-      const res = await fetchLessonContent(id, currentLesson.id);
-      if (res.success) {
-        setLessonContent(res.lesson);
-      } else {
-        toast.error(res.error || "Không thể lấy nội dung bài học.");
+      try {
+        const res = await fetchLessonContent(id, currentLesson.id);
+        if (res.success) {
+          setLessonContent(res.lesson);
+        } else {
+          toastApiError(res.error, "Không thể lấy nội dung bài học.");
+        }
+      } catch {
+        toastApiError("Lỗi kết nối khi tải nội dung bài học.");
+      } finally {
+        setLessonLoading(false);
       }
-      setLessonLoading(false);
     };
 
     loadLesson();
   }, [id, currentLesson?._id]);
-
-  // Save notes
-  useEffect(() => {
-    if (!currentLesson) return;
-    localStorage.setItem(NOTES_KEY(id || "", currentLesson.id), notes);
-  }, [notes, currentLesson, id]);
 
   // Save progress
   const markComplete = async () => {
@@ -546,17 +689,21 @@ export function CourseLearning() {
     const updated = [...completedLessons, currentLesson.id];
     setCompletedLessons(updated);
     
-    const res = await enrollmentApi.updateProgress(enrollment._id, currentLesson.id, true);
-    if (res.success) {
-      setJustCompleted(true);
-      if (updated.length === lessons.length) {
-        setTimeout(() => setShowCertificate(true), 600);
+    try {
+      const res = await enrollmentApi.updateProgress(enrollment._id, currentLesson.id, true);
+      if (res.success) {
+        setJustCompleted(true);
+        if (updated.length === lessons.length) {
+          setTimeout(() => setShowCertificate(true), 600);
+        }
+        setTimeout(() => setJustCompleted(false), 2800);
+      } else {
+        setCompletedLessons((prev) => prev.filter((lid) => lid !== currentLesson.id));
+        toastApiError(res.error, "Không thể lưu tiến độ.");
       }
-      setTimeout(() => setJustCompleted(false), 2800);
-    } else {
-      // Revert if failed
-      setCompletedLessons(prev => prev.filter(id => id !== currentLesson.id));
-      toast.error("Không thể lưu tiến độ.");
+    } catch {
+      setCompletedLessons((prev) => prev.filter((lid) => lid !== currentLesson.id));
+      toastApiError("Lỗi kết nối khi lưu tiến độ.");
     }
   };
 
@@ -821,12 +968,17 @@ export function CourseLearning() {
             {activeTab === "notes" && (
               <div>
                 <div className="mb-3 flex items-center justify-between">
-                  <p className="text-white/60 text-sm">Ghi chú của bạn cho bài này — được lưu tự động</p>
+                  <p className="text-white/60 text-sm">
+                    Ghi chú của bạn — đồng bộ trên hệ thống
+                    {notesSaving && <span className="ml-2 text-white/30">· đang lưu…</span>}
+                    {notesLoading && <span className="ml-2 text-white/30">· đang tải…</span>}
+                  </p>
                   <span className="text-xs text-white/30">{notes.length} ký tự</span>
                 </div>
                 <textarea
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
+                  disabled={notesLoading}
                   placeholder="Nhập ghi chú của bạn ở đây... Ví dụ: STAR method — S: mô tả bối cảnh rõ ràng trong 1-2 câu..."
                   rows={10}
                   className="w-full rounded-2xl p-4 text-sm resize-none outline-none transition-all"
@@ -859,11 +1011,10 @@ export function CourseLearning() {
             )}
 
             {/* Tab: Hỏi & Đáp */}
-            {activeTab === "qa" && (
+            {activeTab === "qa" && currentLesson && (
               <QASection
                 courseId={id || ""}
-                lessonTitle={currentLesson.title}
-                lessonIdx={currentLessonIdx}
+                lessonId={currentLesson.id}
                 mentorAvatar={course.mentorAvatar}
                 mentorName={course.mentorName}
               />

@@ -24,6 +24,7 @@ import { getUser } from "../../utils/auth";
 import { MentorPageShell } from "../../components/mentor/MentorPageShell";
 import { listMentorBookings } from "../../utils/bookingsApi";
 import { fetchMentorAvailability, updateMyMentorAvailability } from "../../utils/mentorApi";
+import { toastApiError, toastApiSuccess } from "../../utils/apiToast";
 
 const DEFAULT_AVATAR = "https://i.pravatar.cc/120?img=22";
 
@@ -153,16 +154,8 @@ function AvailabilityModal({ onClose, availability, onSaved }) {
       }));
 
     if (rows.length > 0) return rows.sort((a, b) => a.dayOfWeek - b.dayOfWeek);
-    
-    // Chỉ hiện mock data nếu thực sự chưa từng có dữ liệu (null/undefined)
-    if (!hasData) {
-      return [
-        { dayOfWeek: 0, day: "Thứ 2", slots: ["09:00 - 11:00", "14:00 - 16:00"] },
-        { dayOfWeek: 2, day: "Thứ 4", slots: ["14:00 - 16:00"] },
-      ];
-    }
 
-    return []; // Trả về mảng rỗng nếu người dùng đã chủ động xóa hết
+    return [];
   });
   const [saving, setSaving] = useState(false);
   const [newSlotDay, setNewSlotDay] = useState(0);
@@ -206,11 +199,20 @@ function AvailabilityModal({ onClose, availability, onSaved }) {
       .map((row) => ({ dayOfWeek: row.dayOfWeek, slots: toStartSlots(row.slots) }))
       .filter((row) => row.slots.length > 0)
       .sort((a, b) => a.dayOfWeek - b.dayOfWeek);
-    const result = await updateMyMentorAvailability({ recurringSchedule });
-    setSaving(false);
-    if (!result.success) return;
-    onSaved?.(result.availability);
-    onClose();
+    try {
+      const result = await updateMyMentorAvailability({ recurringSchedule });
+      if (!result.success) {
+        toastApiError(result.error, "Không lưu được lịch rảnh.");
+        return;
+      }
+      toastApiSuccess("Đã lưu lịch rảnh.");
+      onSaved?.(result.availability);
+      onClose();
+    } catch {
+      toastApiError("Lỗi kết nối khi lưu lịch rảnh.");
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -352,7 +354,11 @@ export function MentorSchedule() {
     let active = true;
     (async () => {
       const result = await listMentorBookings();
-      if (!active || !result.success) return;
+      if (!active) return;
+      if (!result.success) {
+        toastApiError(result.error, "Không tải được lịch hẹn mentor.");
+        return;
+      }
       const rows = Array.isArray(result.bookings) ? result.bookings : [];
       setMentorMeetings(rows.map(toMeetingItem));
     })();
@@ -366,9 +372,13 @@ export function MentorSchedule() {
     (async () => {
       const mentorLookupId = user?.id || user?._id;
       if (!mentorLookupId) return;
-      const data = await fetchMentorAvailability(mentorLookupId);
-      if (!active) return;
-      if (data) setAvailability(data);
+      try {
+        const data = await fetchMentorAvailability(mentorLookupId);
+        if (!active) return;
+        if (data) setAvailability(data);
+      } catch {
+        if (active) toastApiError("Lỗi kết nối khi tải lịch trống.");
+      }
     })();
     return () => {
       active = false;

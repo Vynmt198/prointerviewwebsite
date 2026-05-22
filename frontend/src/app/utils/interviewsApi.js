@@ -51,7 +51,7 @@ export async function generateInterviewQuestions({ cvText = "", jdText = "", pos
     if (!res.ok || !body.success) {
       return { success: false, error: body.error || `Lỗi ${res.status}` };
     }
-    return { success: true, questions: body.questions, inferredRole: body.inferredRole, inferredSeniority: body.inferredSeniority, coverageScore: body.coverageScore, competencyProfile: body.competencyProfile };
+    return { success: true, questions: body.questions, inferredRole: body.inferredRole, inferredSeniority: body.inferredSeniority, coverageScore: body.coverageScore };
   } catch {
     return { success: false, error: "Không kết nối được backend." };
   }
@@ -134,30 +134,37 @@ export async function saveAnswer(sessionId, { questionIndex, questionText, trans
 }
 
 /**
- * Đánh dấu session hoàn thành (status = completed). Không tạo feedback.
- * Feedback thực sự được tạo bởi evaluateInterviewSession() ở trang /feedback.
- *
- * @param {string} sessionId
- * @param {{ answers?: Array, totalDurationSeconds?: number }} [backup]
- *   backup.answers — toàn bộ transcript, dùng làm safety net nếu fire-and-forget PATCH chưa kịp ghi
- *   backup.totalDurationSeconds — thời gian thực từ timer phía FE
+ * Đánh dấu hoàn thành + feedback (dashboard-stats đếm status completed).
  */
-export async function completeInterviewSession(sessionId, { answers, totalDurationSeconds } = {}) {
+export async function getInterviewSession(sessionId) {
   if (!hasAuthCredentials() || !sessionId) return { success: false, error: "Thiếu phiên." };
   try {
-    const res = await authFetch(`/api/interviews/sessions/${encodeURIComponent(sessionId)}/complete`, {
-      method: "POST",
-      headers: { ...jsonHeaders },
-      body: JSON.stringify({
-        ...(Array.isArray(answers) && answers.length > 0 && { answers }),
-        ...(totalDurationSeconds != null && { totalDurationSeconds }),
-      }),
+    const res = await authFetch(`/api/interviews/sessions/${encodeURIComponent(sessionId)}`, {
+      method: "GET",
+      headers: { Accept: "application/json" },
     });
     const body = await res.json().catch(() => ({}));
     if (!res.ok || !body.success) {
       return { success: false, error: body.error || `Lỗi ${res.status}` };
     }
-    return { success: true, message: body.message };
+    return { success: true, session: body.session };
+  } catch {
+    return { success: false, error: "Không kết nối được backend." };
+  }
+}
+
+export async function completeInterviewSession(sessionId) {
+  if (!hasAuthCredentials() || !sessionId) return { success: false, error: "Thiếu phiên." };
+  try {
+    const res = await authFetch(`/api/interviews/sessions/${encodeURIComponent(sessionId)}/complete`, {
+      method: "POST",
+      headers: { Accept: "application/json" },
+    });
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok || !body.success) {
+      return { success: false, error: body.error || `Lỗi ${res.status}` };
+    }
+    return { success: true };
   } catch {
     return { success: false, error: "Không kết nối được backend." };
   }

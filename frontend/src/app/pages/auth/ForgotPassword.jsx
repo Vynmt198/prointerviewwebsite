@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router";
 import { ArrowLeft, Mail, CheckCircle2, AlertCircle } from "lucide-react";
 import { BrandLogo } from "../../components/brand/BrandLogo";
 import { requestPasswordReset } from "../../utils/auth";
+import { toastApiError } from "../../utils/apiToast";
 
 const INPUT_CLS =
   "w-full px-4 py-3.5 rounded-xl border border-gray-200 text-base outline-none transition-all " +
@@ -24,7 +25,9 @@ export function ForgotPassword() {
     const res = await requestPasswordReset(email.trim());
     setLoading(false);
     if (!res.success) {
-      setError(res.error || "Không thể gửi yêu cầu. Vui lòng thử lại.");
+      const msg = res.error || "Không thể gửi yêu cầu. Vui lòng thử lại.";
+      setError(msg);
+      toastApiError(msg);
       return;
     }
     setSent(true);

@@ -13,6 +13,7 @@ import {
    Shapes
 } from "lucide-react";
 import { toast } from "sonner";
+import { toastApiError, toastApiSuccess } from "../../utils/apiToast";
 import { getUser } from "../../utils/auth";
 import { MentorPageShell } from "../../components/mentor/MentorPageShell";
 import { ArchiveCourseDialog } from "../../components/courses/ArchiveCourseDialog";
@@ -66,6 +67,7 @@ export function MentorCourseManagement() {
       fetchMyMentorCourses().then((res) => {
          if (!res.success || !Array.isArray(res.courses)) {
             setMyCourses([]);
+            if (!res.success) toastApiError(res.error, "Không tải được khóa học của bạn.");
             return;
          }
          setMyCourses(res.courses.map(mapCourseRow));
@@ -84,15 +86,20 @@ export function MentorCourseManagement() {
       const idToArchive = courseId || archiveTarget?.id;
       if (!idToArchive) return;
       setArchiving(true);
+      try {
       const res = await archiveCourse(idToArchive);
-      setArchiving(false);
       if (!res.success) {
-         toast.error(res.error || "Không thể lưu trữ khóa học.");
+         toastApiError(res.error, "Không thể lưu trữ khóa học.");
          return;
       }
-      toast.success(res.message || "Đã lưu trữ khóa học.");
+      toastApiSuccess(res.message || "Đã lưu trữ khóa học.");
       setArchiveTarget(null);
       loadCourses();
+      } catch {
+         toastApiError("Lỗi kết nối khi lưu trữ khóa học.");
+      } finally {
+         setArchiving(false);
+      }
    };
 
    if (!user || user.role !== "mentor") return null;

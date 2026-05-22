@@ -1,18 +1,11 @@
 import mongoose from "mongoose";
 import { User } from "../models/User.js";
+import { normalizePlanKey } from "../utils/planKeys.js";
 
 const MONGO_ERR = "MongoDB chưa kết nối. Kiểm tra MONGO_URI trong .env.";
 
 function isMongoReady() {
   return mongoose.connection.readyState === 1;
-}
-
-function normalizePlanKey(raw) {
-  const k = String(raw ?? "").trim();
-  if (k === "starterPro" || k === "starter_pro") return "starter_pro";
-  if (k === "elitePro" || k === "elite_pro") return "elite_pro";
-  if (k === "free") return "free";
-  return null;
 }
 
 export async function getCurrentPlan(userId) {
