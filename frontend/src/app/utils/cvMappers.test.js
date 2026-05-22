@@ -88,7 +88,7 @@ describe("mapPythonCvPipelineToAnalysis", () => {
 });
 
 describe("buildCvAnalysisSavePayload", () => {
-  it("field mode: basic, jdSource rỗng", () => {
+  it("field mode: mode field, tier suggestions", () => {
     const analysis = mapPythonCvPipelineToAnalysis(FIELD_PIPELINE_RAW, {
       field: "IT / Công nghệ",
     });
@@ -97,33 +97,32 @@ describe("buildCvAnalysisSavePayload", () => {
       cvFileName: "cv.pdf",
       jdFileName: "",
       analyzeMode: "field",
-      selectedField: "IT / Công nghệ",
     });
-    assert.equal(payload.analysisType, "basic");
-    assert.equal(payload.jdSource, "");
-    assert.equal(payload.jdText, "");
-    assert.equal(payload.result._ui.mode, "field");
-    assert.equal(payload.result._ui.field, "IT / Công nghệ");
-    assert.ok(payload.result._ui.matchScore === 40);
+    assert.equal(payload.mode, "field");
+    assert.equal(payload.tier, "suggestions");
+    assert.equal(payload.jdFileName, "");
+    assert.equal(payload.result.matchScore, 40);
+    assert.ok(payload.result.suggestions?.executiveSummary);
   });
 
-  it("jd mode: match + jdSource", () => {
+  it("jd mode: mode jd + jdFileName", () => {
     const payload = buildCvAnalysisSavePayload({
       analysis: {
         matchScore: 80,
         summary: "ok",
-        cvText: "c",
-        jdText: "j",
         matchedKeywords: ["a"],
-        suggestions: [{ title: "tip" }],
+        missingKeywords: [],
+        suggestions: [],
       },
       cvFileName: "c.pdf",
       jdFileName: "j.pdf",
       analyzeMode: "jd",
-      jdSource: "file",
+      tier: "basic",
     });
-    assert.equal(payload.analysisType, "match");
-    assert.equal(payload.jdSource, "file");
+    assert.equal(payload.mode, "jd");
+    assert.equal(payload.jdFileName, "j.pdf");
+    assert.equal(payload.tier, "basic");
+    assert.equal(payload.result.matchScore, 80);
   });
 });
 
@@ -157,7 +156,7 @@ describe("mapAnalysisDocToHistoryItem / mapAnalysisDocToUiResult", () => {
     assert.deepEqual(ui.matchedKeywords, ["seo"]);
   });
 
-  it("round-trip: save payload _ui đọc lại được", () => {
+  it("round-trip: payload DB shape đọc lại UI được", () => {
     const analysis = mapPythonCvPipelineToAnalysis(FIELD_PIPELINE_RAW, {
       field: "IT / Công nghệ",
     });
@@ -165,14 +164,22 @@ describe("mapAnalysisDocToHistoryItem / mapAnalysisDocToUiResult", () => {
       analysis,
       cvFileName: "cv.pdf",
       analyzeMode: "field",
-      selectedField: "IT / Công nghệ",
     });
     const doc = {
       _id: "id1",
-      cvText: payload.cvText,
-      jdText: payload.jdText,
+      cvText: analysis.cvText,
+      jdText: analysis.jdText,
       cvFileName: payload.cvFileName,
-      result: payload.result,
+      mode: payload.mode,
+      result: {
+        match: {
+          score: payload.result.matchScore,
+          matchedKeywords: payload.result.matchedKeywords,
+          missingKeywords: payload.result.missingKeywords,
+        },
+        skills: payload.result.skills,
+        suggestions: payload.result.suggestions,
+      },
     };
     const ui = mapAnalysisDocToUiResult(doc);
     assert.equal(ui.matchScore, 40);

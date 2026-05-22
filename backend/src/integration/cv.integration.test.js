@@ -20,30 +20,37 @@ let User;
 let CVAnalysis;
 let createApp;
 
-const FIELD_UI = {
-  mode: "field",
-  field: "IT / Công nghệ",
-  matchScore: 65,
-  matchedKeywords: ["react", "python"],
-  missingKeywords: ["docker"],
-  summary: "CV IT khá ổn",
-  cvText: "Senior React developer với Python",
-  jdText: "",
-};
-
 const SAVE_BODY = {
-  cvText: FIELD_UI.cvText,
-  jdText: "",
-  analysisType: "basic",
   cvFileName: "cv-test.pdf",
-  cvFileUrl: "http://localhost:5000/uploads/cv-test.pdf",
-  geminiModel: "python-cv-matcher",
+  jdFileName: "",
+  mode: "field",
+  tier: "suggestions",
+  planAtTime: "free",
+  meta: {
+    llmProvider: "unknown",
+    fallbackTriggered: false,
+  },
   result: {
-    _ui: FIELD_UI,
     matchScore: 65,
-    overallSummary: FIELD_UI.summary,
-    matchStrengths: ["react"],
+    matchedKeywords: ["react", "python"],
     missingKeywords: ["docker"],
+    skills: {
+      cv: [{ name: "react" }, { name: "python" }],
+      jd: [],
+      matched: ["react", "python"],
+      missing: ["docker"],
+    },
+    scores: {
+      clarity: 4,
+      structure: 3.5,
+      relevance: 4.5,
+      credibility: 3,
+    },
+    suggestions: {
+      rewrittenBullets: [],
+      missingSkillSuggestions: [],
+      executiveSummary: "CV IT khá ổn",
+    },
   },
 };
 
@@ -70,7 +77,7 @@ async function authHeaders(user) {
 }
 
 describe("CV API integration (MongoDB)", () => {
-  it("POST /api/cv/analyses lưu result._ui và tăng quota", async () => {
+  it("POST /api/cv/analyses lưu result và tăng quota", async () => {
     const user = await User.create({
       name: "CV Test",
       email: `cv-int-${Date.now()}@test.local`,
@@ -89,12 +96,10 @@ describe("CV API integration (MongoDB)", () => {
     assert.ok(body.analysis?._id);
 
     const stored = await CVAnalysis.findById(body.analysis._id).lean();
-    assert.ok(stored.result?._ui);
-    assert.equal(stored.result._ui.mode, "field");
-    assert.equal(stored.result._ui.field, "IT / Công nghệ");
-    assert.equal(stored.analysisType, "basic");
-    assert.equal(stored.jdText, "");
-    assert.equal(stored.cvFileUrl, "http://localhost:5000/uploads/cv-test.pdf");
+    assert.equal(stored.mode, "field");
+    assert.equal(stored.tier, "suggestions");
+    assert.equal(stored.result?.match?.score, 65);
+    assert.deepEqual(stored.result?.match?.matchedKeywords, ["react", "python"]);
 
     const refreshed = await User.findById(user._id);
     assert.equal(refreshed.quota.cvAnalysisUsed, 1);
@@ -109,9 +114,13 @@ describe("CV API integration (MongoDB)", () => {
 
     const created = await CVAnalysis.create({
       userId: user._id,
-      cvText: "text",
-      analysisType: "basic",
-      result: { _ui: { mode: "field", matchScore: 50 } },
+      cvFileName: "cv.pdf",
+      mode: "field",
+      tier: "basic",
+      status: "completed",
+      result: {
+        match: { score: 50, matchedKeywords: ["seo"], missingKeywords: [] },
+      },
     });
 
     const listRes = await fetch(`${http.baseUrl}/api/cv/analyses`, {
@@ -126,7 +135,8 @@ describe("CV API integration (MongoDB)", () => {
     });
     assert.equal(getRes.status, 200);
     const getBody = await getRes.json();
-    assert.equal(getBody.analysis.result._ui.mode, "field");
+    assert.equal(getBody.analysis.mode, "field");
+    assert.equal(getBody.analysis.result.match.score, 50);
 
     const delRes = await fetch(`${http.baseUrl}/api/cv/analyses/${created._id}`, {
       method: "DELETE",
@@ -151,7 +161,9 @@ describe("CV API integration (MongoDB)", () => {
     });
     assert.equal(res.status, 403);
     const body = await res.json();
-    assert.match(body.error, /hết lượt/i);
+    assert.ok(
+      body.error === "quota_exceeded" || /hết lượt/i.test(body.error || body.message || ""),
+    );
   });
 
   it("401 không có token", async () => {
