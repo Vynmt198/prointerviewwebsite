@@ -82,7 +82,7 @@ export function MeetingRoom() {
           const mins = getMinutesUntilBookingStart(b);
           setEarlyNotice(
             mins > 0
-              ? `Buổi hẹn chưa tới giờ (còn khoảng ${mins} phút). Bạn có thể vào thử phòng — lịch hẹn vẫn giữ trên Dashboard.`
+              ? `Buổi hẹn chưa tới giờ (còn khoảng ${mins} phút). Bạn có thể vào thử phòng — lịch hẹn vẫn được giữ.`
               : "Bạn vào phòng trước giờ hẹn. Lịch vẫn hiển thị cho đến khi buổi diễn ra.",
           );
         } else {
@@ -117,7 +117,7 @@ export function MeetingRoom() {
   }, [joined]);
 
   const handleEndCall = () => {
-    navigate(user?.role === "mentor" ? "/mentor/dashboard" : "/dashboard");
+    navigate(user?.role === "mentor" ? "/mentor/dashboard" : "/");
   };
 
   const handleCompleteSession = async () => {

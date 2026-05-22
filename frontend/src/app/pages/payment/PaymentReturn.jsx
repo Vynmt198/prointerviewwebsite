@@ -200,10 +200,10 @@ export function PaymentReturn() {
              <div className="flex flex-col gap-4 animate-in fade-in slide-in-from-bottom-6 duration-1000 delay-500 fill-mode-both">
                 {status === "success" ? (
                    <button
-                      onClick={() => navigate("/dashboard")}
+                      onClick={() => navigate("/")}
                       className="group relative flex h-16 items-center justify-center gap-3 overflow-hidden rounded-[24px] bg-[#c4ff47] font-black text-black transition-all hover:scale-[1.02] active:scale-[0.98] shadow-[0_10px_40px_rgba(196,255,71,0.25)]"
                    >
-                      <span className="text-[10px] uppercase tracking-[0.25em]">Về Bảng điều khiển</span>
+                      <span className="text-[10px] uppercase tracking-[0.25em]">Về trang chủ</span>
                       <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
                    </button>
                 ) : (

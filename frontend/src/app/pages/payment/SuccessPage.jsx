@@ -1,6 +1,6 @@
 import React from "react";
 import { Link, useLocation } from "react-router";
-import { CheckCircle2, ArrowRight, Home } from "lucide-react";
+import { CheckCircle2, ArrowRight } from "lucide-react";
 import { motion } from "motion/react";
 
 export function SuccessPage() {
@@ -53,11 +53,11 @@ export function SuccessPage() {
         )}
 
         <div className="flex flex-col gap-4">
-           <Link to="/dashboard" className="h-16 bg-[#c4ff47] text-black rounded-2xl flex items-center justify-center gap-3 font-black uppercase tracking-widest text-[10px] hover:scale-[1.02] active:scale-[0.98] transition-all shadow-[0_12px_45px_rgba(196,255,71,0.25)]">
-              Vào bảng điều khiển <ArrowRight size={18} />
+           <Link to="/" className="h-16 bg-[#c4ff47] text-black rounded-2xl flex items-center justify-center gap-3 font-black uppercase tracking-widest text-[10px] hover:scale-[1.02] active:scale-[0.98] transition-all shadow-[0_12px_45px_rgba(196,255,71,0.25)]">
+              Về trang chủ <ArrowRight size={18} />
            </Link>
-           <Link to="/" className="h-16 bg-white/5 text-white/30 rounded-2xl flex items-center justify-center gap-3 font-black uppercase tracking-widest text-[10px] hover:text-white hover:bg-white/10 transition-all">
-              Quay về Trang chủ <Home size={18} />
+           <Link to="/pricing" className="h-16 bg-white/5 text-white/30 rounded-2xl flex items-center justify-center gap-3 font-black uppercase tracking-widest text-[10px] hover:text-white hover:bg-white/10 transition-all">
+              Xem bảng giá
            </Link>
         </div>
       </motion.div>

@@ -146,6 +146,8 @@ async def analyze_full(
         raise HTTPException(503, f"Ollama không khả dụng: {e}")
     except TimeoutError as e:
         raise HTTPException(504, f"Ollama timeout: {e}")
+    except RuntimeError as e:
+        raise HTTPException(502, str(e))
 
     return {
         "resume":      resume_data["skills"],
@@ -205,6 +207,8 @@ async def analyze_suggestions(
         raise HTTPException(503, f"Ollama không khả dụng: {e}")
     except TimeoutError as e:
         raise HTTPException(504, f"Ollama timeout (scoring): {e}")
+    except RuntimeError as e:
+        raise HTTPException(502, str(e))
 
     # ── Step 3: Extract bullets from CV text ──────────────────────────────
     # Dùng heuristic extractor; thay bằng structured extractor nếu có
@@ -225,6 +229,8 @@ async def analyze_suggestions(
         raise HTTPException(503, f"Ollama không khả dụng: {e}")
     except TimeoutError as e:
         raise HTTPException(504, f"Ollama timeout (suggestions): {e}")
+    except RuntimeError as e:
+        raise HTTPException(502, str(e))
 
     return {
         "match":       match,

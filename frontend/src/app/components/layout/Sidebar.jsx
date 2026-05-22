@@ -57,7 +57,7 @@ import { requireLoginNavigate } from "../../utils/authGate";
 
 /* ── Nav data ─────────────────────────────────────────────── */
 const customerMainItems = [
-  { title: "Bảng điều khiển", url: "/dashboard", icon: LayoutGrid, requiresAuth: true },
+  { title: "Trang chủ", url: "/", icon: Home, public: true },
   { title: "Phân tích CV/JD", url: "/cv-analysis", icon: FileText, requiresAuth: true },
   { title: "Phỏng vấn AI", url: "/interview", icon: Mic, requiresAuth: true },
   { title: "Khóa học", url: "/courses", icon: GraduationCap, public: true },
@@ -151,8 +151,10 @@ export function AppSidebar() {
   };
 
   const isActive = (url) =>
-    url === "/dashboard" || url === "/mentor/dashboard"
-      ? location.pathname === url
+    url === "/" || url === "/mentor/dashboard"
+      ? url === "/"
+        ? location.pathname === "/"
+        : location.pathname === url
       : location.pathname.startsWith(url);
 
   return (
@@ -304,7 +306,7 @@ export function AppSidebar() {
           <div className="mt-auto pt-3 group-data-[collapsible=icon]:hidden">
             <div className="rounded-2xl border border-violet-200/60 bg-violet-50/80 p-3.5 text-center">
               <p className="text-xs font-bold text-slate-900">Chưa đăng nhập</p>
-              <p className="mt-1 text-[10px] text-slate-500">Đăng nhập để dùng Dashboard, CV, phỏng vấn AI</p>
+              <p className="mt-1 text-[10px] text-slate-500">Đăng nhập để dùng CV, phỏng vấn AI và mentor</p>
               <button
                 type="button"
                 onClick={() => navigate("/login")}

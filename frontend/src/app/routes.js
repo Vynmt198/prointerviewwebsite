@@ -7,9 +7,10 @@ import { ForgotPassword } from "./pages/auth/ForgotPassword";
 import { ResetPassword } from "./pages/auth/ResetPassword";
 import { VerifyEmail } from "./pages/auth/VerifyEmail";
 import { Checkout } from "./pages/booking/Checkout";
-import { Dashboard } from "./pages/account/Dashboard";
+import { getUser } from "./utils/auth.js";
 import { CVAnalysisHub } from "./pages/cv/CVAnalysisHub";
 import { CVAnalysis } from "./pages/cv/CVAnalysis";
+import { CVAnalysisResult } from "./pages/cv/CVAnalysisResult";
 import { AnalysisHistory } from "./pages/cv/AnalysisHistory";
 import { Interview } from "./pages/interview/Interview";
 import { AIGenderSelection } from "./pages/interview/__archived__/AIGenderSelection";
@@ -54,7 +55,7 @@ import { AdminSubscriptionPayments } from "./pages/admin/AdminSubscriptionPaymen
 import { AdminMentorsPending } from "./pages/admin/AdminMentorsPending.jsx";
 import { AdminInterviewMetrics } from "./pages/admin/AdminInterviewMetrics.jsx";
 import { ProtectedOutlet } from "./components/auth/ProtectedOutlet.jsx";
-import { requireAuthLoader } from "./utils/requireAuthLoader.js";
+import { requireAuthLoader, customerOnlyLoader } from "./utils/requireAuthLoader.js";
 import {
   AdminUserDetail,
   AdminMentorDetail,
@@ -82,20 +83,43 @@ export const router = createHashRouter([
       { path: "courses", Component: Courses },
       { path: "courses/:id", Component: CourseDetail },
       { path: "pricing", Component: Pricing },
+      { path: "cv-analysis", Component: CVAnalysisHub },
+      { path: "cv-analysis/jd/history", Component: AnalysisHistory },
+      { path: "cv-analysis/jd/result/:analysisId", Component: CVAnalysisResult },
+      { path: "cv-analysis/jd/result", Component: CVAnalysisResult },
+      { path: "cv-analysis/jd", Component: CVAnalysis },
+      { path: "cv-analysis/field/history", Component: AnalysisHistory },
+      { path: "cv-analysis/field/result/:analysisId", Component: CVAnalysisResult },
+      { path: "cv-analysis/field/result", Component: CVAnalysisResult },
+      { path: "cv-analysis/field", Component: CVAnalysis },
+      {
+        path: "cv-analysis/history",
+        loader: ({ request }) => {
+          const url = new URL(request.url);
+          const mode = url.searchParams.get("mode");
+          return redirect(
+            mode === "field" ? "/cv-analysis/field/history" : "/cv-analysis/jd/history"
+          );
+        },
+      },
+      { path: "interview", loader: customerOnlyLoader, Component: Interview },
+      { path: "interview/gender", loader: customerOnlyLoader, Component: AIGenderSelection },
+      { path: "interview/room", loader: customerOnlyLoader, Component: InterviewRoom },
+      { path: "interview/feedback", loader: customerOnlyLoader, Component: InterviewFeedback },
       {
         loader: requireAuthLoader,
         Component: ProtectedOutlet,
         children: [
-          { path: "dashboard", Component: Dashboard },
+          {
+            path: "dashboard",
+            loader: () => {
+              const user = getUser();
+              if (user?.role === "admin") throw redirect("/admin");
+              if (user?.role === "mentor") throw redirect("/mentor/dashboard");
+              throw redirect("/");
+            },
+          },
           { path: "my-bookings", Component: MyBookings },
-          { path: "cv-analysis", Component: CVAnalysisHub },
-          { path: "cv-analysis/jd", Component: CVAnalysis },
-          { path: "cv-analysis/field", Component: CVAnalysis },
-          { path: "cv-analysis/history", Component: AnalysisHistory },
-          { path: "interview", Component: Interview },
-          { path: "interview/gender", Component: AIGenderSelection },
-          { path: "interview/room", Component: InterviewRoom },
-          { path: "interview/feedback", Component: InterviewFeedback },
           { path: "booking/:id", Component: Booking },
           { path: "booking", Component: Booking },
           { path: "session/:id", Component: SessionDetail },

@@ -84,6 +84,7 @@ const CVAnalysisResultSchema = new mongoose.Schema(
     match:       { type: MatchSchema, required: true },
     scores:      { type: DimensionScoresSchema },   // chỉ có khi tier='full' hoặc 'suggestions'
     suggestions: { type: SuggestionsSchema },       // chỉ có khi tier='suggestions'
+    _ui:         { type: mongoose.Schema.Types.Mixed }, // snapshot FE — đọc lại lịch sử
   },
   { _id: false }
 );
@@ -94,7 +95,7 @@ const MetaSchema = new mongoose.Schema(
     llmModel:             { type: String },           // thay thế geminiModel cũ
     llmProvider:          {
       type: String,
-      enum: ["groq", "gemini", "openai", "ollama", "deepseek", "glm", "unknown"],
+      enum: ["groq", "gemini", "openai", "ollama", "deepseek", "glm", "unknown", "mock"],
       default: "unknown",
     },
     processingTimeMs:     { type: Number },           // thay thế processingMs cũ
@@ -102,7 +103,7 @@ const MetaSchema = new mongoose.Schema(
     fallbackReason:       { type: String },           // 'python_timeout', 'llm_unavailable', etc.
     pythonEndpoint:       {
       type: String,
-      enum: ["/analyze", "/analyze/full", "/analyze/suggestions"],
+      enum: ["/analyze", "/analyze/full", "/analyze/suggestions", "/analyze/field"],
     },
   },
   { _id: false }
@@ -125,10 +126,16 @@ const CVAnalysisSchema = new mongoose.Schema(
     // ----- Source data -----
     cvText:     { type: String },                     // raw text (có thể null nếu chỉ lưu file)
     cvFileName: { type: String, required: true },
-    cvFileId:   { type: String },                     // reference đến uploads nếu có
+    cvFileId:   { type: String },                     // tên file trên disk (uploads/)
+    cvFileUrl:  { type: String },                     // URL tải lại PDF CV
 
     jdText:     { type: String },
     jdFileName: { type: String },
+    jdFileId:   { type: String },
+    jdFileUrl:  { type: String },
+
+    field:    { type: String },
+    position: { type: String },
 
     // ----- Analysis configuration -----
     mode: {

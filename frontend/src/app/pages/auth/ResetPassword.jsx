@@ -55,11 +55,11 @@ export function ResetPassword() {
     <div className="min-h-screen bg-[#fcfaff] text-gray-900 antialiased flex flex-col">
       {/* Header */}
       <div
-        className="flex items-center justify-between px-10 h-20 border-b bg-white"
+        className="relative z-10 flex h-20 flex-shrink-0 items-center justify-between overflow-visible border-b bg-white px-10"
         style={{ borderColor: "rgba(110,53,232,0.1)" }}
       >
-        <button onClick={() => navigate("/")} className="flex items-center gap-2.5 group">
-          <BrandLogo />
+        <button onClick={() => navigate("/")} className="flex shrink-0 items-center gap-2.5 group">
+          <BrandLogo size="auth" />
         </button>
         <Link to="/login" className="text-sm font-semibold text-[#6E35E8]">
           Đăng nhập

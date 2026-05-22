@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router";
-import { ArrowLeft, Mail, CheckCircle2, AlertCircle } from "lucide-react";
+import { Mail, CheckCircle2, AlertCircle } from "lucide-react";
 import { BrandLogo } from "../../components/brand/BrandLogo";
 import { requestPasswordReset } from "../../utils/auth";
 import { toastApiError } from "../../utils/apiToast";
@@ -37,11 +37,11 @@ export function ForgotPassword() {
   return (
     <div className="min-h-screen bg-[#fcfaff] text-gray-900 antialiased">
       <div
-        className="flex items-center justify-between px-10 h-20 border-b"
+        className="relative z-10 flex h-20 flex-shrink-0 items-center justify-between overflow-visible border-b px-10"
         style={{ borderColor: "rgba(110,53,232,0.1)" }}
       >
-        <button onClick={() => navigate("/")} className="flex items-center gap-2.5 group" aria-label="Về trang chủ">
-          <BrandLogo />
+        <button onClick={() => navigate("/")} className="flex shrink-0 items-center gap-2.5 group" aria-label="Về trang chủ">
+          <BrandLogo size="auth" />
         </button>
         <Link to="/login" className="text-sm font-semibold" style={{ color: "#6E35E8" }}>
           Đăng nhập
@@ -49,15 +49,6 @@ export function ForgotPassword() {
       </div>
 
       <div className="mx-auto max-w-md px-6 py-12">
-        <button
-          type="button"
-          onClick={() => navigate(-1)}
-          className="mb-6 inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold text-gray-500 hover:bg-gray-100 hover:text-gray-900 transition-colors"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Quay lại
-        </button>
-
         <h1 className="mb-2 text-3xl font-black tracking-tight" style={{ letterSpacing: "-0.03em" }}>
           Quên mật khẩu
         </h1>

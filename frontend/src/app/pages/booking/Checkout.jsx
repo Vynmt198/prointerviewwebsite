@@ -779,10 +779,12 @@ export function Checkout() {
           <div className="mt-6 flex flex-wrap gap-3">
             <button
               type="button"
-              onClick={() => navigate(isCourse ? "/courses" : isPlanCheckout ? "/dashboard" : "/dashboard")}
+              onClick={() =>
+                navigate(isCourse ? "/courses" : isPlanCheckout ? "/pricing" : "/my-bookings")
+              }
               className="flex-1 min-w-[140px] h-12 rounded-xl bg-white/10 border border-white/15 text-[10px] font-black uppercase tracking-widest hover:bg-white/15"
             >
-              {isCourse ? "Về Khóa học" : isPlanCheckout ? "Về Dashboard" : "Về Dashboard"}
+              {isCourse ? "Về Khóa học" : isPlanCheckout ? "Về Bảng giá" : "Về Lịch hẹn"}
             </button>
             {!submitted && (
               <button

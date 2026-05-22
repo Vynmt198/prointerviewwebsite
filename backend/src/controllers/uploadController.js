@@ -20,7 +20,7 @@ export const UploadController = {
     }
   },
 
-  /** Upload CV */
+  /** Upload CV (PDF/DOC) */
   uploadCV: async (req, res, next) => {
     try {
       if (!req.file) {
@@ -32,8 +32,30 @@ export const UploadController = {
       res.json({ 
         success: true, 
         url: fileUrl,
+        fileId: req.file.filename,
         fileName: req.file.originalname,
         message: "Upload CV thành công" 
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  /** Upload JD (PDF/DOC) — cùng thư mục uploads */
+  uploadJD: async (req, res, next) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ success: false, error: "Không tìm thấy file" });
+      }
+      const baseUrl = getPublicBaseUrl(req);
+      const fileUrl = `${baseUrl}/uploads/${req.file.filename}`;
+
+      res.json({
+        success: true,
+        url: fileUrl,
+        fileId: req.file.filename,
+        fileName: req.file.originalname,
+        message: "Upload JD thành công",
       });
     } catch (error) {
       next(error);

@@ -28,9 +28,10 @@ import { BrandLogo } from "../brand/BrandLogo";
 import { buildLoginPath, buildRegisterPath } from "../../utils/authGate";
 
 const PAGE_TITLES = {
-  "/dashboard": { label: "Bảng điều khiển", sub: "Tổng quan tiến độ học của bạn" },
   "/my-bookings": { label: "Lịch hẹn của tôi", sub: "Tất cả buổi mentor đã đặt" },
   "/cv-analysis": { label: "Phân tích CV", sub: "Chọn phân tích theo JD hoặc ngành nghề" },
+  "/cv-analysis/jd/history": { label: "Lịch sử CV + JD", sub: "Các lần so khớp CV với Job Description" },
+  "/cv-analysis/field/history": { label: "Lịch sử theo ngành", sub: "Các lần phân tích CV theo ngành nghề" },
   "/cv-analysis/jd": { label: "Phân tích CV + JD", sub: "So khớp CV với Job Description" },
   "/cv-analysis/field": { label: "Phân tích theo ngành", sub: "Đánh giá CV theo chuẩn ngành nghề" },
   "/interview": { label: "Phỏng vấn AI", sub: "Thiết lập & bắt đầu phiên luyện tập" },
@@ -48,7 +49,6 @@ const PAGE_TITLES = {
   "/mentor/reviews": { label: "Đánh giá", sub: "Phản hồi từ học viên" },
   "/mentor/peer-review": { label: "Đánh giá chéo", sub: "Peer review mentor" },
   "/session": { label: "Chi tiết buổi", sub: "Lịch hẹn & trạng thái" },
-  "/cv-analysis/history": { label: "Lịch sử CV + JD", sub: "Các lần so khớp CV với Job Description" },
   "/mentor/meeting-detail": { label: "Chi tiết buổi mentor", sub: "Thông tin phiên họp" },
   "/mentor/meeting": { label: "Phòng họp", sub: "Buổi mentor trực tuyến" },
 };
@@ -177,7 +177,7 @@ function CustomerNavbar() {
     }
 
     if (notif.type === "payment") {
-      navigate("/dashboard");
+      navigate("/");
     }
   };
 

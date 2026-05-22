@@ -153,11 +153,11 @@ export function MentorReview() {
           </button>
         ) : (
           <button
-            onClick={() => navigate("/dashboard")}
+            onClick={() => navigate("/")}
             className="px-8 py-3 rounded-2xl text-sm font-black text-white shadow-xl shadow-violet-900/20"
             style={{ background: "linear-gradient(135deg, #6E35E8, #8B4DFF)" }}
           >
-            Về Dashboard
+            Về trang chủ
           </button>
         )}
       </div>
@@ -193,11 +193,11 @@ export function MentorReview() {
           </div>
 
           <button
-            onClick={() => navigate("/dashboard")}
+            onClick={() => navigate("/profile")}
             className="w-full py-5 rounded-[2rem] font-black text-lg text-white shadow-2xl shadow-indigo-900/20 transition-all hover:scale-[1.02] active:scale-95"
             style={{ background: "linear-gradient(135deg, #6E35E8, #8B4DFF)" }}
           >
-            Về trang cá nhân
+            Về hồ sơ
           </button>
         </div>
       </div>

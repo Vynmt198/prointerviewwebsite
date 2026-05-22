@@ -1,5 +1,5 @@
 import { redirect } from "react-router";
-import { hasAuthCredentials } from "./auth.js";
+import { getUser, hasAuthCredentials } from "./auth.js";
 
 /** Lấy path hash hiện tại từ request (createHashRouter), giữ query string. */
 function redirectPathFromRequest(request) {
@@ -11,7 +11,7 @@ function redirectPathFromRequest(request) {
   } catch {
     /* fall through */
   }
-  return "/dashboard";
+  return "/";
 }
 
 /**
@@ -23,5 +23,13 @@ export function requireAuthLoader({ request }) {
     const path = redirectPathFromRequest(request);
     throw redirect(`/login?redirect=${encodeURIComponent(path)}`);
   }
+  return null;
+}
+
+/** Phỏng vấn AI / luyện tập — chỉ customer (ứng viên), không mentor/admin. */
+export function customerOnlyLoader() {
+  const user = getUser();
+  if (user?.role === "mentor") throw redirect("/mentor/dashboard");
+  if (user?.role === "admin") throw redirect("/admin");
   return null;
 }

@@ -640,7 +640,7 @@ export function SessionDetail() {
     setRefundBankName("");
     setRefundAccountNumber("");
     setRefundAccountHolder("");
-    navigate("/dashboard");
+    navigate("/my-bookings");
   };
 
   if (sessionLoading) {
@@ -668,11 +668,11 @@ export function SessionDetail() {
         ) : (
           <button
             type="button"
-            onClick={() => navigate("/dashboard")}
+            onClick={() => navigate("/")}
             className="mt-4 px-4 py-2 rounded-xl text-sm font-medium text-white"
             style={{ background: "#6E35E8" }}
           >
-            Về Dashboard
+            Về trang chủ
           </button>
         )}
       </div>
@@ -1332,10 +1332,10 @@ export function SessionDetail() {
 
             <button
               type="button"
-              onClick={() => navigate("/dashboard")}
+              onClick={() => navigate("/")}
               className="w-full py-3 rounded-xl text-sm font-semibold border border-gray-200 text-gray-600 hover:border-[#6E35E8]/40 hover:text-[#6E35E8] transition-all"
             >
-              Về Dashboard →
+              Về trang chủ →
             </button>
           </div>
         </div>
@@ -1546,10 +1546,10 @@ export function SessionDetail() {
               </div>
             </div>
 
-            <button onClick={() => navigate("/dashboard")}
+            <button onClick={() => navigate("/")}
               className="w-full py-4 rounded-2xl font-bold text-sm text-white flex items-center justify-center gap-2"
               style={{ background: "linear-gradient(135deg,#6E35E8,#8B4DFF)", boxShadow: "0 6px 20px rgba(110, 53, 232,0.3)" }}>
-              Về Dashboard <CaretRight className="w-4 h-4" />
+              Về trang chủ <CaretRight className="w-4 h-4" />
             </button>
           </div>
 

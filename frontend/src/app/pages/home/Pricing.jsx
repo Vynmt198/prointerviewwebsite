@@ -47,8 +47,8 @@ const PLANS = [
       "Bộ câu hỏi phỏng vấn theo ngành nghề",
     ],
     cta: "Bắt đầu ngay",
-    checkoutMonthly: "/dashboard",
-    checkoutYearly: "/dashboard",
+    checkoutMonthly: "/",
+    checkoutYearly: "/",
     popular: false,
     variant: "outline",
   },
@@ -194,7 +194,7 @@ export function Pricing() {
 
   const handleCta = (plan) => {
     if (plan.id === "free") {
-      requireLoginNavigate(navigate, "/dashboard");
+      requireLoginNavigate(navigate, "/");
       return;
     }
     if (currentPlan === plan.id) return;
