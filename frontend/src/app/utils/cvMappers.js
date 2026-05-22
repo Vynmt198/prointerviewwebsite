@@ -1,5 +1,21 @@
 /** Pure mappers — testable without Vite import.meta.env */
 
+/** Bỏ từ khóa 1 ký tự (vd. "r") — tránh highlight sai trong PDF */
+export function filterHighlightKeywords(list) {
+  if (!list) return [];
+  const arr = Array.isArray(list) ? list : [];
+  return arr.map((k) => String(k ?? "").trim()).filter((k) => k.length >= 2);
+}
+
+/** Số lượt CV còn lại từ quota API (elite = không giới hạn). */
+export function computeCvRemainingFromQuota(quota, planKey) {
+  if (planKey === "elite_pro") return Number.POSITIVE_INFINITY;
+  if (!quota) return 0;
+  const limit = Number(quota.cvAnalysisLimit) || 3;
+  const used = Number(quota.cvAnalysisUsed) || 0;
+  return Math.max(0, limit - used);
+}
+
 function extractSkillFromTitle(title) {
   const m = String(title || "").match(/Bổ sung kỹ năng "(.+?)"/);
   return m ? m[1] : String(title || "").trim();
@@ -108,6 +124,87 @@ export function mapAnalysisDocToUiResult(doc) {
     summary: sugg.executiveSummary || r.overallSummary || "",
     cvText: doc.cvText || "",
     jdText: doc.jdText || "",
+  };
+}
+
+/** Map response Python (/analyze/*) → object analysis cho UI */
+export function mapPythonCvPipelineToAnalysis(raw, { usedFallback = false, field = null } = {}) {
+  const m = raw.match ?? {};
+  const s = raw.scores ?? null;
+  const sugg = raw.suggestions ?? {};
+
+  const matchedSkills = m.matching ?? [];
+  const missingSkills = m.missing ?? [];
+
+  const strengths =
+    sugg.strengths ??
+    matchedSkills.slice(0, 6).map((sk) => `Có kỹ năng "${sk}" phù hợp với yêu cầu`);
+  const weaknesses =
+    sugg.weaknesses ??
+    missingSkills.slice(0, 6).map((sk) => `Thiếu kỹ năng "${sk}" cần bổ sung`);
+
+  const bulletSuggestions = (sugg.rewritten_bullets ?? []).map((b) => ({
+    type: "fix",
+    priority: b.confidence === "high" ? "high" : b.confidence === "low" ? "low" : "medium",
+    title: `Cải thiện bullet: "${(b.original ?? "").slice(0, 65)}${(b.original ?? "").length > 65 ? "…" : ""}"`,
+    reason: b.changes_made?.length ? b.changes_made.join(" · ") : "Viết lại theo chuẩn STAR.",
+    before: b.original ?? "",
+    after: b.rewritten ?? "",
+    keywordsAdded: b.keywords_added ?? [],
+    starCheck: b.star_check ?? {},
+    confidence: b.confidence ?? "medium",
+  }));
+
+  const missSuggestions = (sugg.missing_skill_suggestions ?? []).map((item) => ({
+    type: "add",
+    priority: item.priority,
+    title: `Bổ sung kỹ năng "${item.skill}"`,
+    reason:
+      item.reframe_tip && item.reframe_tip !== "N/A" ? item.reframe_tip : item.acquisition_path,
+    before: `Chưa có trong CV — ước tính ${item.estimated_effort ?? "không rõ"}`,
+    after: item.acquisition_path,
+    keywordsAdded: [],
+    starCheck: {},
+    confidence: null,
+  }));
+
+  const jdTotal = m.summary?.jd_total ?? matchedSkills.length + missingSkills.length;
+
+  return {
+    matchScore: Math.round(m.match_score ?? 0),
+    overallScore: Math.round((s?.overall ?? 0) * 10),
+    totalKeywords: m.summary?.jd_total ?? jdTotal,
+    matchedKeywords: matchedSkills,
+    missingKeywords: missingSkills,
+    scores: {
+      clarity: s?.clarity?.score ?? 0,
+      structure: s?.structure?.score ?? 0,
+      relevance: s?.relevance?.score ?? Math.round((m.match_score ?? 0) / 10),
+      credibility: s?.credibility?.score ?? 0,
+    },
+    scoreNotes: {
+      clarity:
+        s?.clarity?.reason ??
+        (usedFallback ? "Phân tích cơ bản — không có điểm AI chi tiết." : ""),
+      structure:
+        s?.structure?.reason ??
+        (usedFallback ? "Phân tích cơ bản — không có điểm AI chi tiết." : ""),
+      relevance:
+        s?.relevance?.reason ??
+        (usedFallback ? `Ước tính từ kỹ năng ngành: ${Math.round(m.match_score ?? 0)}%` : ""),
+      credibility:
+        s?.credibility?.reason ??
+        (usedFallback ? "Phân tích cơ bản — không có điểm AI chi tiết." : ""),
+    },
+    strengths,
+    weaknesses,
+    suggestions: [...bulletSuggestions, ...missSuggestions],
+    summary: sugg.executive_summary ?? s?.summary ?? "",
+    cvText: raw.resume_text ?? "",
+    jdText: raw.jd_text ?? "",
+    position: raw.position ?? null,
+    company: null,
+    field: field ?? raw.field ?? null,
   };
 }
 

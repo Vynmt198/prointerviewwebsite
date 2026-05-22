@@ -1,9 +1,9 @@
 import React from "react";
 import { Users, Star, Search, CircleCheck } from "lucide-react";
 import { SparkleGlyph } from "../decor/SparkleGlyph.jsx";
-import { MENTORS } from "../../data/mockData";
+import { HOME_DEMO_MENTORS } from "../../data/homeLandingDemo";
 
-const HOME_MENTORS = MENTORS.slice(0, 2);
+const HOME_MENTORS = HOME_DEMO_MENTORS;
 const FEATURED = HOME_MENTORS[0];
 const FEATURED_ALT = HOME_MENTORS[1];
 

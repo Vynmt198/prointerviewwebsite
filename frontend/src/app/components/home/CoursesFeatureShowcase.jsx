@@ -7,10 +7,10 @@ import {
   PlayCircle,
   Video,
 } from "lucide-react";
-import { COURSES_DATA } from "../../data/coursesData";
+import { HOME_DEMO_COURSES } from "../../data/homeLandingDemo";
 
 /** Một khóa mẫu cố định (STAR) — tab lọc chỉ minh họa UI. */
-const DEMO_COURSE = COURSES_DATA[0];
+const DEMO_COURSE = HOME_DEMO_COURSES[0];
 const DEMO_FILTER_LABELS = ["Phỏng vấn", "Viết CV", "Technical", "Soft skills"];
 
 /** Avatar mentor trên thẻ khóa (mock) — linh vật, không dùng ảnh stock */
@@ -18,8 +18,8 @@ const COURSE_CARD_MENTOR_AVATAR = "/mascot-course-card-avatar.png?v=1";
 const COURSE_CARD_AVATAR_FALLBACK = "/mascot-courses-ready.png?v=7";
 
 const DEMO_PROGRESS = (() => {
-  const a = COURSES_DATA[0];
-  const b = COURSES_DATA[1];
+  const a = HOME_DEMO_COURSES[0];
+  const b = HOME_DEMO_COURSES[1];
   const aTotal = a?.lessonsCount ?? 12;
   const bTotal = b?.lessonsCount ?? 10;
   const aDone = 3;
