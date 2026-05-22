@@ -12,6 +12,7 @@ import {
   Mail,
 } from "lucide-react";
 import { registerUser, getBrandClickPath } from "../../utils/auth";
+import { toastApiError } from "../../utils/apiToast";
 import { GoogleSignInBlock } from "../../components/auth/GoogleSignInBlock";
 import { BrandLogo } from "../../components/brand/BrandLogo";
 import { SparkleGlyph } from "../../components/decor/SparkleGlyph.jsx";
@@ -67,7 +68,9 @@ export function Register() {
     setLoading(true);
     setError("");
     if (form.role === "admin" && !form.adminInviteCode.trim()) {
-      setError("Vui lòng nhập mã mời quản trị.");
+      const msg = "Vui lòng nhập mã mời quản trị.";
+      setError(msg);
+      toastApiError(msg);
       setLoading(false);
       return;
     }
@@ -77,7 +80,11 @@ export function Register() {
       ...(form.role === "admin" ? { adminInviteCode: form.adminInviteCode.trim() } : {}),
     });
     setLoading(false);
-    if (!result.success) { setError(result.error); return; }
+    if (!result.success) {
+      setError(result.error);
+      toastApiError(result.error, "Đăng ký thất bại.");
+      return;
+    }
     setRegisteredEmail(form.email.trim());
   };
 

@@ -14,6 +14,7 @@ import {
 import { motion, AnimatePresence } from "motion/react";
 import { refreshUserProfile } from "../../utils/auth";
 import { apiUrl } from "../../utils/api.js";
+import { toastApiError } from "../../utils/apiToast";
 
 export function PaymentReturn() {
   const [searchParams] = useSearchParams();
@@ -58,9 +59,14 @@ export function PaymentReturn() {
           }
         } catch (e) {
           console.error("Lỗi khi xác thực tự động:", e);
+          toastApiError("Không xác thực được giao dịch trên server. Kiểm tra email hoặc liên hệ hỗ trợ.");
         }
 
-        await refreshUserProfile();
+        try {
+          await refreshUserProfile();
+        } catch {
+          /* profile refresh best-effort */
+        }
         navigate("/payment-success", { state: { details }, replace: true });
       } else if (["24", "99", "07", "09", "10", "11", "51", "65"].includes(responseCode)) {
         navigate("/payment-failure", { state: { error: getVnpayErrorMsg(responseCode) }, replace: true });

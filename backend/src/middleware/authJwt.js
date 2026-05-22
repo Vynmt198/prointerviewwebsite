@@ -1,5 +1,6 @@
 import jwt from "jsonwebtoken";
 import { User } from "../models/User.js";
+import { isAccessTokenJtiRevoked } from "../services/accessTokenBlacklist.js";
 
 export async function authJwt(req, res, next) {
   const secret = process.env.JWT_SECRET;
@@ -41,7 +42,18 @@ export async function authJwt(req, res, next) {
         error: "Phiên đăng nhập đã kết thúc. Vui lòng đăng nhập lại.",
       });
     }
+    if (payload.jti) {
+      const revoked = await isAccessTokenJtiRevoked(payload.sub, payload.jti);
+      if (revoked) {
+        return res.status(401).json({
+          success: false,
+          error: "Phiên đăng nhập đã kết thúc. Vui lòng đăng nhập lại.",
+        });
+      }
+    }
     req.userId = payload.sub;
+    req.tokenJti = typeof payload.jti === "string" ? payload.jti : "";
+    req.tokenExp = typeof payload.exp === "number" ? payload.exp : undefined;
     next();
   } catch (err) {
     console.error(`[Auth] JWT Verify Error: ${err.message}`);

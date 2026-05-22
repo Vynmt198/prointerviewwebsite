@@ -113,8 +113,16 @@ const userSchema = new Schema(
           lastUsedAt: { type: Date, default: Date.now },
           userAgent: { type: String, default: "" },
           ip: { type: String, default: "" },
+          fingerprint: { type: String, default: "" },
         },
       ],
+      default: [],
+      select: false,
+    },
+
+    /** Access JWT đã thu hồi (logout / revoke phiên hiện tại) — theo jti + hết hạn. */
+    revokedAccessJtis: {
+      type: [{ jti: { type: String, required: true }, expAt: { type: Date, required: true } }],
       default: [],
       select: false,
     },

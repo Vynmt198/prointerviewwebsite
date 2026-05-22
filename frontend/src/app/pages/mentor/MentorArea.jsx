@@ -1,6 +1,6 @@
 import React from "react";
 import { Outlet, useNavigate } from "react-router";
-import { getUser, isLoggedIn } from "../../utils/auth";
+import { getUser, hasAuthCredentials } from "../../utils/auth";
 
 /**
  * Chỉ user đã được cấp role `mentor` (sau khi admin phê duyệt) mới vào được các route /mentor/*.
@@ -11,8 +11,8 @@ export function MentorArea() {
   const user = getUser();
 
   React.useEffect(() => {
-    if (!isLoggedIn()) {
-      navigate("/login", { replace: true });
+    if (!hasAuthCredentials()) {
+      navigate("/login?redirect=/mentor/dashboard", { replace: true });
       return;
     }
     if (user?.role !== "mentor") {
@@ -20,7 +20,7 @@ export function MentorArea() {
     }
   }, [user, navigate]);
 
-  if (!isLoggedIn() || !user || user.role !== "mentor") {
+  if (!hasAuthCredentials() || !user || user.role !== "mentor") {
     return (
       <div className="flex min-h-[40vh] items-center justify-center text-sm text-slate-500">
         Đang chuyển hướng…

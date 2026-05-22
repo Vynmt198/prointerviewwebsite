@@ -23,7 +23,7 @@ import {
 import { motion, AnimatePresence } from "motion/react";
 import { getUser } from "../../utils/auth";
 import { MentorPageShell } from "../../components/mentor/MentorPageShell";
-import { toast } from "sonner";
+import { toastApiError, toastApiSuccess } from "../../utils/apiToast";
 import {
   fetchMentorBookingById,
   listMentorBookings,
@@ -99,6 +99,7 @@ export function MentorMeetingDetail() {
       if (!active) return;
       if (!res.success || !res.booking) {
         setMeeting(null);
+        toastApiError(res.error, "Không tải được chi tiết buổi hẹn.");
         setLoading(false);
         return;
       }
@@ -173,7 +174,7 @@ export function MentorMeetingDetail() {
     if (!canReschedule) {
       const msg = "Bạn đã hết lượt dời lịch cho buổi hẹn này.";
       setActionError(msg);
-      toast.error(msg);
+      toastApiError(msg);
       return;
     }
     const newDate = toBookingDateFormat(rescheduleForm.newDate);
@@ -184,10 +185,11 @@ export function MentorMeetingDetail() {
       return;
     }
     setBusyAction("reschedule");
+    try {
     const res = await mentorRescheduleBooking(meeting.id, { newDate, newTimeSlot, reason });
-    setBusyAction("");
     if (!res.success) {
       setActionError(res.error || "Không thể dời lịch.");
+      toastApiError(res.error, "Không thể dời lịch.");
       return;
     }
     const b = res.booking || {};
@@ -203,21 +205,29 @@ export function MentorMeetingDetail() {
           }
         : prev,
     );
+    toastApiSuccess("Đã dời lịch buổi hẹn.");
     setActionModal("");
     setActionError("");
+    } catch {
+      setActionError("Lỗi kết nối khi dời lịch.");
+      toastApiError("Lỗi kết nối khi dời lịch.");
+    } finally {
+      setBusyAction("");
+    }
   };
 
   const loadAvailableSlots = async () => {
     if (!meeting?.mentorId) return;
     setLoadingSlots(true);
     setActionError("");
+    try {
     const [availability, booked] = await Promise.all([
       fetchMentorAvailability(meeting.mentorId),
       fetchBookedSlots(meeting.mentorId),
     ]);
     if (!availability || !availability.availableSlots) {
-      setLoadingSlots(false);
       setActionError("Không tải được lịch rảnh của mentor.");
+      toastApiError("Không tải được lịch rảnh của mentor.");
       return;
     }
     const bookedMap = booked.success ? booked.booked || {} : {};
@@ -241,7 +251,12 @@ export function MentorMeetingDetail() {
         newTimeSlot: all[0].time,
       }));
     }
-    setLoadingSlots(false);
+    } catch {
+      setActionError("Lỗi kết nối khi tải lịch rảnh.");
+      toastApiError("Lỗi kết nối khi tải lịch rảnh.");
+    } finally {
+      setLoadingSlots(false);
+    }
   };
 
   const handleMentorCancel = async () => {
@@ -251,24 +266,31 @@ export function MentorMeetingDetail() {
       return;
     }
     setBusyAction("cancel");
+    try {
     const res = await mentorCancelBooking(meeting.id, { reason });
-    setBusyAction("");
     if (!res.success) {
       setActionError(res.error || "Không thể hủy buổi mentor.");
+      toastApiError(res.error, "Không thể hủy buổi mentor.");
       return;
     }
     setActionModal("");
     setActionError("");
     if (res.lateCancel) {
-      toast.success(
+      toastApiSuccess(
         "Đã hủy buổi (< 24h). Học viên được hoàn 100% ưu tiên — cần điền STK trên trang buổi hẹn.",
       );
     } else if (res.refundPending) {
-      toast.success("Đã hủy. Yêu cầu hoàn tiền đã được ghi nhận.");
+      toastApiSuccess("Đã hủy. Yêu cầu hoàn tiền đã được ghi nhận.");
     } else {
-      toast.success("Đã hủy. Học viên sẽ chọn đổi lịch, đổi mentor hoặc hoàn tiền trên trang buổi hẹn.");
+      toastApiSuccess("Đã hủy. Học viên sẽ chọn đổi lịch, đổi mentor hoặc hoàn tiền trên trang buổi hẹn.");
     }
     navigate("/mentor/schedule");
+    } catch {
+      setActionError("Lỗi kết nối khi hủy buổi.");
+      toastApiError("Lỗi kết nối khi hủy buổi.");
+    } finally {
+      setBusyAction("");
+    }
   };
 
   return (
@@ -493,7 +515,7 @@ export function MentorMeetingDetail() {
                               if (!canReschedule) {
                                 const msg = "Bạn đã hết lượt dời lịch cho buổi hẹn này.";
                                 setActionError(msg);
-                                toast.error(msg);
+                                toastApiError(msg);
                                 return;
                               }
                               setRescheduleForm({

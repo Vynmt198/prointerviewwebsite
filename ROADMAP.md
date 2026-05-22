@@ -50,14 +50,19 @@ Khi merge xong một route: cập nhật **Phần A** trong `API_INDEX`, đổi 
 | PATCH | `/api/users/:id/role` | `[ADMIN]` — gán role (vd. mentor) |
 | GET | `/api/admin/stats` | `[ADMIN]` |
 | GET | `/api/admin/users` | `[ADMIN]` |
+| GET | `/api/admin/users/:id` | `[ADMIN]` — chi tiết user + stats |
 | GET | `/api/admin/bookings` | `[ADMIN]` |
+| GET | `/api/admin/bookings/:id` | `[ADMIN]` — chi tiết booking |
 | GET | `/api/admin/mentors` | `[ADMIN]` |
+| GET | `/api/admin/mentors/:id` | `[ADMIN]` — chi tiết mentor |
+| GET | `/api/admin/reports` | `[ADMIN]` |
+| PATCH | `/api/admin/reports/:id` | `[ADMIN]` — cập nhật trạng thái báo cáo |
 | PATCH | `/api/admin/users/:id/status` | `[ADMIN]` |
 | PATCH | `/api/admin/mentors/:id/status` | `[ADMIN]` |
 
 Các nhóm endpoint theo phase (bookings, payments, plans, courses, enrollments, mentor, reviews, reports, notifications, …): xem **bảng Phase 1–4** bên dưới — cột **Trạng thái** đã đồng bộ với code hiện tại.
 
-**Ngoài Express (giữ nguyên hoặc migrate sau):** CV — Supabase Edge; avatar stream — D-ID (`API_INDEX.md` phần B).
+**Ngoài Express:** Avatar stream — D-ID (`API_INDEX.md` phần B). **CV:** Express `/api/cv/*` + proxy Python `cv_jd_matching` (FE: `cvApi.js`, `CVAnalysis.jsx`).
 
 ---
 
@@ -95,7 +100,7 @@ Các nhóm endpoint theo phase (bookings, payments, plans, courses, enrollments,
 | ✅ | PATCH | `/api/bookings/:id/confirm` | `[AUTH][MENTOR]` | Xác nhận |
 | ✅ | PATCH | `/api/bookings/:id/complete` | `[AUTH][MENTOR]` | Hoàn thành |
 | ✅ | PATCH | `/api/bookings/:id/notes` | `[AUTH][MENTOR]` | Ghi chú sau buổi |
-| 📋 | POST | `/api/bookings/:id/review` | `[AUTH]` | *(chưa có alias route)* — dùng `POST /api/reviews` (gắn `bookingId` trong body nếu service hỗ trợ) |
+| ✅ | POST | `/api/bookings/:id/review` | `[AUTH]` | Alias gửi review theo booking — body `{ rating, comment?, tags? }` |
 | ✅ | GET | `/api/mentors/:id/availability` | Public hoặc `[AUTH]` | Lịch rảnh (khớp C.2) |
 | ✅ | GET | `/api/mentors/:id/reviews` | Public | Review theo mentor (khớp C.2) |
 | ✅ | PATCH | `/api/mentors/me` | `[AUTH][MENTOR]` | Profile mentor (khớp C.2) |
@@ -126,6 +131,10 @@ Các nhóm endpoint theo phase (bookings, payments, plans, courses, enrollments,
 | ✅ | PATCH | `/api/enrollments/:id/progress` | `[AUTH]` | Cập nhật bài học đã xem — thay `PROGRESS_KEY` |
 | ✅ | GET | `/api/enrollments/:id/certificate` | `[AUTH]` | URL / metadata chứng chỉ (khớp C.7) |
 | ✅ | GET | `/api/courses/:id/lessons/:lessonId` | `[AUTH]` | *(tuỳ thiết kế)* Nội dung bài |
+| ✅ | GET | `/api/courses/:id/lessons/:lessonId/qa` | `[AUTH]` | Danh sách Q&A bài học (học viên) |
+| ✅ | POST | `/api/courses/:id/lessons/:lessonId/qa` | `[AUTH]` | Gửi câu hỏi — thay `localStorage` Q&A |
+| ✅ | GET | `/api/courses/:id/lessons/:lessonId/notes` | `[AUTH]` | Ghi chú bài học (học viên) |
+| ✅ | PUT | `/api/courses/:id/lessons/:lessonId/notes` | `[AUTH]` | Lưu ghi chú `{ content }` |
 | ✅ | POST | `/api/courses` | `[AUTH][MENTOR]` | Tạo khóa |
 | ✅ | PUT | `/api/courses/:id` | `[AUTH][MENTOR]` | Sửa khóa |
 | ✅ | PATCH | `/api/courses/:id/publish` | `[AUTH][MENTOR]` | Xuất bản |
@@ -168,9 +177,9 @@ Các nhóm endpoint theo phase (bookings, payments, plans, courses, enrollments,
 
 | Trạng thái | Method | Endpoint | Auth | Mô tả ngắn |
 |:-----------|:-------|:---------|:-----|:-----------|
-| ✅ | POST | `/api/auth/logout` | `[AUTH]` | Vô hiệu access + xóa refresh sessions |
-| ✅ | POST | `/api/auth/refresh` | — | Làm mới access từ refresh token |
-| ✅ | GET / DELETE | `/api/auth/sessions`, `/api/auth/sessions/:id` | `[AUTH]` | Danh sách / thu hồi phiên |
+| ✅ | POST | `/api/auth/logout` | `[AUTH]` | Blacklist jti access + xóa refresh sessions |
+| ✅ | POST | `/api/auth/refresh` | — (+ Bearer khuyến nghị) | Làm mới access; blacklist jti access cũ |
+| ✅ | GET / DELETE | `/api/auth/sessions`, `/api/auth/sessions/:id` | `[AUTH]` | Phiên + fingerprint; `?currentSessionId=` |
 | ✅ | DELETE | `/api/auth/me` | `[AUTH]` | Xóa tài khoản (Settings → Vùng nguy hiểm) |
 
 *Ghi chú:* `change-password` không dùng — đã gộp `PATCH /api/auth/me` (xem Phần A trong `API_INDEX.md`).
@@ -284,11 +293,16 @@ Chi tiết response lỗi / thành công: tham chiếu `API_INDEX.md` (phần đ
 |:---------|:---------|
 | `PATCH /api/users/:id/role` | Đổi role *(vd. cấp mentor)* |
 | `GET /api/admin/stats` | Thống kê admin |
-| `GET /api/admin/mentors` | Danh sách mentor |
-| `PATCH /api/admin/mentors/:id/status` | Bật / tắt mentor |
 | `GET /api/admin/users` | Danh sách user |
+| `GET /api/admin/users/:id` | Chi tiết user (+ bookings/enrollments count) |
 | `PATCH /api/admin/users/:id/status` | Khóa / mở user |
+| `GET /api/admin/mentors` | Danh sách mentor |
+| `GET /api/admin/mentors/:id` | Chi tiết mentor (+ sessions count) |
+| `PATCH /api/admin/mentors/:id/status` | Bật / tắt mentor |
 | `GET /api/admin/bookings` | Tất cả booking |
+| `GET /api/admin/bookings/:id` | Chi tiết booking (user + mentor populate) |
+| `GET /api/admin/reports` | Danh sách báo cáo mentor |
+| `PATCH /api/admin/reports/:id` | Cập nhật trạng thái (`reviewing` / `resolved` / `dismissed`) |
 
 ---
 

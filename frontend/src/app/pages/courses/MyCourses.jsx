@@ -17,7 +17,7 @@ import {
   Search as MagnifyingGlass
 } from "lucide-react";
 import { enrollmentApi } from "../../utils/enrollmentApi";
-import { toast } from "sonner";
+import { toastApiError } from "../../utils/apiToast";
 import { normalizeCourseStats } from "../../utils/courseStats";
 import { enrollmentAccessGranted } from "../../utils/enrollmentAccess.js";
 
@@ -434,10 +434,9 @@ export function MyCourses() {
 
   const loadData = useCallback(async () => {
     setLoading(true);
-    console.log("[MyCourses] Fetching enrollments...");
+    try {
     const res = await enrollmentApi.getMyEnrollments();
-    console.log("[MyCourses] API Response:", res);
-    
+
     if (res.success) {
       const mapped = res.enrollments
         .filter(e => e.courseId) // Bỏ qua nếu khóa học không tồn tại
@@ -479,12 +478,15 @@ export function MyCourses() {
             coursePrice: Number(c.price ?? 0),
           };
         });
-      console.log("[MyCourses] Mapped courses:", mapped);
       setEnrolledCourses(mapped);
     } else {
-      toast.error(res.error || "Không thể tải danh sách khóa học.");
+      toastApiError(res.error, "Không thể tải danh sách khóa học.");
     }
-    setLoading(false);
+    } catch {
+      toastApiError("Lỗi kết nối khi tải khóa học của bạn.");
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   useEffect(() => {

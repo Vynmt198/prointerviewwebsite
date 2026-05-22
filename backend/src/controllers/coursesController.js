@@ -58,7 +58,7 @@ function normalizeCoursePayload(body = {}) {
 
 export const CoursesController = {
   /** Danh sách khóa học */
-  list: async (req, res) => {
+  list: async (req, res, next) => {
     try {
       const courses = await Course.find({ status: { $in: ["published", "pending_update"] } })
         .populate({
@@ -73,12 +73,12 @@ export const CoursesController = {
         courses: courses.map((c) => serializeCourseForApi(c)),
       });
     } catch (error) {
-      res.status(500).json({ success: false, error: error.message });
+      next(error);
     }
   },
 
   /** Chi tiết khóa học */
-  getById: async (req, res) => {
+  getById: async (req, res, next) => {
     try {
       const course = await Course.findById(req.params.id)
         .populate({
@@ -91,24 +91,24 @@ export const CoursesController = {
       }
       res.json({ success: true, course: serializeCourseForApi(course) });
     } catch (error) {
-      res.status(500).json({ success: false, error: error.message });
+      next(error);
     }
   },
 
   /** Danh sách khóa học của mentor hiện tại */
-  listMine: async (req, res) => {
+  listMine: async (req, res, next) => {
     try {
       const mentor = await Mentor.findOne({ userId: req.userId }).select("_id").lean();
       if (!mentor) return res.status(403).json({ success: false, error: "Tài khoản chưa là mentor." });
       const courses = await Course.find({ mentorId: mentor._id }).sort({ updatedAt: -1 }).lean();
       return res.json({ success: true, courses });
     } catch (error) {
-      return res.status(500).json({ success: false, error: error.message });
+      return next(error);
     }
   },
 
   /** Nội dung bài học */
-  getLessonContent: async (req, res) => {
+  getLessonContent: async (req, res, next) => {
     try {
       const { id: courseId, lessonId } = req.params;
       const userId = req.userId;
@@ -146,12 +146,12 @@ export const CoursesController = {
 
       res.json({ success: true, lesson });
     } catch (error) {
-      res.status(500).json({ success: false, error: error.message });
+      next(error);
     }
   },
 
   /** Tạo khóa học (Mentor) */
-  create: async (req, res) => {
+  create: async (req, res, next) => {
     try {
       const userId = req.userId;
       const mentor = await Mentor.findOne({ userId });
@@ -170,12 +170,12 @@ export const CoursesController = {
 
       res.status(201).json({ success: true, course });
     } catch (error) {
-      res.status(500).json({ success: false, error: error.message });
+      next(error);
     }
   },
 
   /** Cập nhật khóa học */
-  update: async (req, res) => {
+  update: async (req, res, next) => {
     try {
       const { id } = req.params;
       const course = await Course.findById(id);
@@ -191,12 +191,12 @@ export const CoursesController = {
       const updated = await Course.findByIdAndUpdate(id, payload, { new: true });
       res.json({ success: true, course: updated });
     } catch (error) {
-      res.status(500).json({ success: false, error: error.message });
+      next(error);
     }
   },
 
   /** Mentor gửi khóa học chờ admin duyệt */
-  publish: async (req, res) => {
+  publish: async (req, res, next) => {
     try {
       const { id } = req.params;
       const course = await Course.findById(id);
@@ -240,12 +240,12 @@ export const CoursesController = {
 
       return res.json({ success: true, course, message: "Đã gửi khóa học để admin duyệt." });
     } catch (error) {
-      res.status(500).json({ success: false, error: error.message });
+      next(error);
     }
   },
 
   /** Lưu trữ / Xóa mềm */
-  archive: async (req, res) => {
+  archive: async (req, res, next) => {
     try {
       const { id } = req.params;
       const course = await Course.findById(id);
@@ -261,31 +261,31 @@ export const CoursesController = {
 
       res.json({ success: true, message: "Đã lưu trữ khóa học" });
     } catch (error) {
-      res.status(500).json({ success: false, error: error.message });
+      next(error);
     }
   },
 
-  mentorStudents: async (req, res) => {
+  mentorStudents: async (req, res, next) => {
     try {
       const result = await courseMentorInsights.getCourseStudentsForMentor(req.userId, req.params.id);
       if (!result.ok) return res.status(result.status).json({ success: false, error: result.error });
       return res.json({ success: true, students: result.students, summary: result.summary });
     } catch (error) {
-      return res.status(500).json({ success: false, error: error.message });
+      return next(error);
     }
   },
 
-  mentorQA: async (req, res) => {
+  mentorQA: async (req, res, next) => {
     try {
       const result = await courseMentorInsights.getCourseQAForMentor(req.userId, req.params.id);
       if (!result.ok) return res.status(result.status).json({ success: false, error: result.error });
       return res.json({ success: true, items: result.items, pendingCount: result.pendingCount });
     } catch (error) {
-      return res.status(500).json({ success: false, error: error.message });
+      return next(error);
     }
   },
 
-  mentorAnswerQA: async (req, res) => {
+  mentorAnswerQA: async (req, res, next) => {
     try {
       const result = await courseMentorInsights.answerCourseQAForMentor(
         req.userId,
@@ -296,27 +296,94 @@ export const CoursesController = {
       if (!result.ok) return res.status(result.status).json({ success: false, error: result.error });
       return res.json({ success: true, message: result.message });
     } catch (error) {
-      return res.status(500).json({ success: false, error: error.message });
+      return next(error);
     }
   },
 
-  mentorReviews: async (req, res) => {
+  studentLessonQA: async (req, res, next) => {
+    try {
+      const result = await courseMentorInsights.getLessonQAForStudent(
+        req.userId,
+        req.params.id,
+        req.params.lessonId,
+      );
+      if (!result.ok) return res.status(result.status).json({ success: false, error: result.error });
+      return res.json({ success: true, items: result.items });
+    } catch (error) {
+      return next(error);
+    }
+  },
+
+  studentCreateLessonQA: async (req, res, next) => {
+    try {
+      const result = await courseMentorInsights.createLessonQAForStudent(
+        req.userId,
+        req.params.id,
+        req.params.lessonId,
+        req.body?.question,
+      );
+      if (!result.ok) return res.status(result.status).json({ success: false, error: result.error });
+      return res.status(201).json({ success: true, item: result.item, message: result.message });
+    } catch (error) {
+      return next(error);
+    }
+  },
+
+  studentLessonNotes: async (req, res, next) => {
+    try {
+      const result = await courseMentorInsights.getLessonNotesForStudent(
+        req.userId,
+        req.params.id,
+        req.params.lessonId,
+      );
+      if (!result.ok) return res.status(result.status).json({ success: false, error: result.error });
+      return res.json({
+        success: true,
+        content: result.content,
+        updatedAt: result.updatedAt,
+      });
+    } catch (error) {
+      return next(error);
+    }
+  },
+
+  studentSaveLessonNotes: async (req, res, next) => {
+    try {
+      const result = await courseMentorInsights.saveLessonNotesForStudent(
+        req.userId,
+        req.params.id,
+        req.params.lessonId,
+        req.body?.content,
+      );
+      if (!result.ok) return res.status(result.status).json({ success: false, error: result.error });
+      return res.json({
+        success: true,
+        content: result.content,
+        updatedAt: result.updatedAt,
+        message: result.message,
+      });
+    } catch (error) {
+      return next(error);
+    }
+  },
+
+  mentorReviews: async (req, res, next) => {
     try {
       const result = await courseMentorInsights.getCourseReviewsForMentor(req.userId, req.params.id);
       if (!result.ok) return res.status(result.status).json({ success: false, error: result.error });
       return res.json({ success: true, reviews: result.reviews, summary: result.summary });
     } catch (error) {
-      return res.status(500).json({ success: false, error: error.message });
+      return next(error);
     }
   },
 
-  mentorAnalytics: async (req, res) => {
+  mentorAnalytics: async (req, res, next) => {
     try {
       const result = await courseMentorInsights.getCourseAnalyticsForMentor(req.userId, req.params.id);
       if (!result.ok) return res.status(result.status).json({ success: false, error: result.error });
       return res.json({ success: true, lessonStats: result.lessonStats, totals: result.totals });
     } catch (error) {
-      return res.status(500).json({ success: false, error: error.message });
+      return next(error);
     }
   },
 };

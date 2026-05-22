@@ -2,7 +2,7 @@ import { getPublicBaseUrl } from "../utils/publicBaseUrl.js";
 
 export const UploadController = {
   /** Upload ảnh đại diện */
-  uploadAvatar: async (req, res) => {
+  uploadAvatar: async (req, res, next) => {
     try {
       if (!req.file) {
         return res.status(400).json({ success: false, error: "Không tìm thấy file" });
@@ -16,12 +16,12 @@ export const UploadController = {
         message: "Upload ảnh đại diện thành công" 
       });
     } catch (error) {
-      res.status(500).json({ success: false, error: error.message });
+      next(error);
     }
   },
 
   /** Upload CV */
-  uploadCV: async (req, res) => {
+  uploadCV: async (req, res, next) => {
     try {
       if (!req.file) {
         return res.status(400).json({ success: false, error: "Không tìm thấy file" });
@@ -36,12 +36,12 @@ export const UploadController = {
         message: "Upload CV thành công" 
       });
     } catch (error) {
-      res.status(500).json({ success: false, error: error.message });
+      next(error);
     }
   },
 
   /** Upload thumbnail khóa học */
-  uploadCourseThumbnail: async (req, res) => {
+  uploadCourseThumbnail: async (req, res, next) => {
     try {
       if (!req.file) {
         return res.status(400).json({ success: false, error: "Không tìm thấy file" });
@@ -55,12 +55,12 @@ export const UploadController = {
         message: "Upload ảnh bìa khóa học thành công" 
       });
     } catch (error) {
-      res.status(500).json({ success: false, error: error.message });
+      next(error);
     }
   },
 
   /** Upload video bài học */
-  uploadCourseVideo: async (req, res) => {
+  uploadCourseVideo: async (req, res, next) => {
     try {
       console.log("[UploadController] Received video upload request");
       if (!req.file) {
@@ -78,7 +78,7 @@ export const UploadController = {
         message: "Upload video bài học thành công" 
       });
     } catch (error) {
-      res.status(500).json({ success: false, error: error.message });
+      next(error);
     }
   }
 };

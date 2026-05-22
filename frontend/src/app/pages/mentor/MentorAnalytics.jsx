@@ -40,6 +40,7 @@ import {
 import { getUser } from "../../utils/auth";
 import { MentorPageShell } from "../../components/mentor/MentorPageShell";
 import { fetchMentorAnalytics } from "../../utils/mentorApi";
+import { toastApiError } from "../../utils/apiToast";
 
 const MENTOR_ANALYTICS_INPUT_CSS = `
         .input-glass {
@@ -68,7 +69,8 @@ export function MentorAnalytics() {
     }
     fetchMentorAnalytics().then((res) => {
       if (res.success && res.analytics) setAnalytics(res.analytics);
-    });
+      else if (!res.success) toastApiError(res.error, "Không tải được dữ liệu phân tích.");
+    }).catch(() => toastApiError("Lỗi kết nối khi tải phân tích."));
   }, [navigate, user?.role]);
 
   if (!user || user.role !== "mentor") return null;

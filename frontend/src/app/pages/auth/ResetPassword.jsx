@@ -3,6 +3,7 @@ import { Link, useNavigate, useSearchParams } from "react-router";
 import { ArrowLeft, Lock, CheckCircle2, AlertCircle } from "lucide-react";
 import { BrandLogo } from "../../components/brand/BrandLogo";
 import { resetPassword } from "../../utils/auth";
+import { toastApiError } from "../../utils/apiToast";
 
 const INPUT_CLS =
   "w-full px-4 py-3.5 rounded-xl border border-gray-200 text-base outline-none transition-all " +
@@ -44,7 +45,9 @@ export function ResetPassword() {
     if (res.success) {
       setDone(true);
     } else {
-      setError(res.error || "Có lỗi xảy ra. Vui lòng thử lại sau.");
+      const msg = res.error || "Có lỗi xảy ra. Vui lòng thử lại sau.";
+      setError(msg);
+      toastApiError(msg);
     }
   };
 

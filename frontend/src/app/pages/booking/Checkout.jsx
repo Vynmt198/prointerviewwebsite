@@ -28,6 +28,7 @@ import {
   createSubscriptionTransferPending,
   submitSubscriptionTransfer,
 } from "../../utils/paymentsApi";
+import { toastApiError, toastApiSuccess } from "../../utils/apiToast";
 
 /* ─── Plan meta ─────────────────────────────────────────── */
 
@@ -303,9 +304,15 @@ export function Checkout() {
       return;
     }
     setBookingMentor(null);
-    void fetchMentor(mentorId).then((m) => {
-      if (m) setBookingMentor(m);
-    });
+    (async () => {
+      try {
+        const m = await fetchMentor(mentorId);
+        if (m) setBookingMentor(m);
+        else toastApiError("Không tải được thông tin mentor.");
+      } catch {
+        toastApiError("Lỗi kết nối khi tải mentor.");
+      }
+    })();
   }, [isBooking, mentorId]);
 
   React.useEffect(() => {
@@ -314,9 +321,15 @@ export function Checkout() {
       return;
     }
     setCourseInfo(null);
-    void fetchCourseById(courseId).then((r) => {
-      if (r.success && r.course) setCourseInfo(r.course);
-    });
+    (async () => {
+      try {
+        const r = await fetchCourseById(courseId);
+        if (r.success && r.course) setCourseInfo(r.course);
+        else toastApiError(r.error, "Không tải được khóa học.");
+      } catch {
+        toastApiError("Lỗi kết nối khi tải khóa học.");
+      }
+    })();
   }, [isCourse, courseId]);
 
   const bookingPrice = Number(bookingMentor?.price ?? searchParams.get("price") ?? 0);
@@ -358,12 +371,17 @@ export function Checkout() {
       return;
     }
     setRebookCreditLoading(true);
-    void fetchRebookCredit(rebookFrom)
-      .then((r) => {
+    (async () => {
+      try {
+        const r = await fetchRebookCredit(rebookFrom);
         if (r.success && r.credit?.available) setRebookCredit(r.credit);
         else setRebookCredit(null);
-      })
-      .finally(() => setRebookCreditLoading(false));
+      } catch {
+        setRebookCredit(null);
+      } finally {
+        setRebookCreditLoading(false);
+      }
+    })();
   }, [isBooking, rebookFrom]);
 
   const [appStep, setAppStep] = useState("checkout");
@@ -431,17 +449,23 @@ export function Checkout() {
   const submitTransferReference = async () => {
     if (isBooking) {
       if (!bankBookingId) {
-        setCardError("Thiếu mã booking. Hãy quay lại bước thanh toán và tạo lịch lại.");
+        const msg = "Thiếu mã booking. Hãy quay lại bước thanh toán và tạo lịch lại.";
+        setCardError(msg);
+        toastApiError(msg);
         return;
       }
     } else if (isCourse) {
       if (!bankEnrollmentId) {
-        setCardError("Thiếu mã ghi danh. Hãy quay lại bước thanh toán.");
+        const msg = "Thiếu mã ghi danh. Hãy quay lại bước thanh toán.";
+        setCardError(msg);
+        toastApiError(msg);
         return;
       }
     } else if (isPlanCheckout) {
       if (!bankSubscriptionPaymentId) {
-        setCardError("Thiếu mã giao dịch. Hãy quay lại bước thanh toán.");
+        const msg = "Thiếu mã giao dịch. Hãy quay lại bước thanh toán.";
+        setCardError(msg);
+        toastApiError(msg);
         return;
       }
     } else {
@@ -451,23 +475,36 @@ export function Checkout() {
     setCardError("");
     try {
       let ok = false;
+      let errMsg = "";
       if (isBooking) {
         const res = await submitBookingTransferReference(bankBookingId, transferOrderNum || "");
         ok = res.success;
-        if (!ok) setCardError(res.error || "Không lưu được.");
+        errMsg = res.error || "Không ghi nhận chuyển khoản booking.";
       } else if (isCourse) {
         const res = await enrollmentApi.submitEnrollmentTransfer(bankEnrollmentId, transferOrderNum || "");
         ok = res.success;
-        if (!ok) setCardError(res.error || "Không lưu được.");
+        errMsg = res.error || "Không ghi nhận chuyển khoản ghi danh.";
       } else if (isPlanCheckout) {
         const res = await submitSubscriptionTransfer(
           bankSubscriptionPaymentId,
           transferOrderNum || "",
         );
         ok = res.success;
-        if (!ok) setCardError(res.error || "Không lưu được.");
+        errMsg = res.error || "Không ghi nhận chuyển khoản gói cước.";
       }
-      if (ok) setAppStep("transfer_submitted");
+      if (ok) {
+        setAppStep("transfer_submitted");
+        toastApiSuccess(
+          "Đã ghi nhận chuyển khoản. Admin sẽ đối soát và xác nhận trong thời gian sớm nhất.",
+        );
+      } else {
+        setCardError(errMsg);
+        toastApiError(errMsg);
+      }
+    } catch {
+      const msg = "Lỗi kết nối khi gửi xác nhận chuyển khoản.";
+      setCardError(msg);
+      toastApiError(msg);
     } finally {
       setTransferBusy(false);
     }
@@ -494,11 +531,16 @@ export function Checkout() {
           if (apiRes.providerRef) setTransferOrderNum(apiRes.providerRef);
           setBankSubscriptionPaymentId(apiRes.paymentId);
           setAppStep("awaiting_transfer");
+          toastApiSuccess("Đã tạo đơn chờ chuyển khoản. Vui lòng CK theo thông tin bên dưới.");
         } else {
-          setCardError(apiRes.error || "Không thể tạo giao dịch chờ chuyển khoản.");
+          const msg = apiRes.error || "Không thể tạo giao dịch chờ chuyển khoản.";
+          setCardError(msg);
+          toastApiError(msg);
         }
       } catch {
-        setCardError("Lỗi hệ thống khi tạo giao dịch gói cước.");
+        const msg = "Lỗi hệ thống khi tạo giao dịch gói cước.";
+        setCardError(msg);
+        toastApiError(msg);
       }
       return;
     }
@@ -530,11 +572,16 @@ export function Checkout() {
           if (serverOrder) setTransferOrderNum(serverOrder);
           setBankEnrollmentId(String(eid));
           setAppStep("awaiting_transfer");
+          toastApiSuccess("Đã tạo ghi danh chờ chuyển khoản.");
         } else {
-          setCardError(apiRes.error || "Không thể tạo ghi danh chờ chuyển khoản.");
+          const msg = apiRes.error || "Không thể tạo ghi danh chờ chuyển khoản.";
+          setCardError(msg);
+          toastApiError(msg);
         }
       } catch {
-        setCardError("Lỗi hệ thống khi ghi danh.");
+        const msg = "Lỗi hệ thống khi ghi danh.";
+        setCardError(msg);
+        toastApiError(msg);
       }
       return;
     }
@@ -545,13 +592,15 @@ export function Checkout() {
     }
 
     if (rebookCreditTooLow) {
-      setCardError(
-        `Buổi mới ${fmt(bookingTotalEstimate)} cao hơn credit ${fmt(rebookCreditVnd)}. Chọn mentor rẻ hơn hoặc hoàn tiền ở buổi cũ.`,
-      );
+      const msg = `Buổi mới ${fmt(bookingTotalEstimate)} cao hơn credit ${fmt(rebookCreditVnd)}. Chọn mentor rẻ hơn hoặc hoàn tiền ở buổi cũ.`;
+      setCardError(msg);
+      toastApiError(msg);
       return;
     }
     if (rebookSameMentor) {
-      setCardError("Chọn mentor khác hoặc quay buổi cũ chọn «Đổi lịch».");
+      const msg = "Chọn mentor khác hoặc quay buổi cũ chọn «Đổi lịch».";
+      setCardError(msg);
+      toastApiError(msg);
       return;
     }
 
@@ -579,7 +628,9 @@ export function Checkout() {
           }
           navigate(`/session/${encodeURIComponent(apiRes.booking.id)}`);
         } else {
-          setCardError(apiRes.error || "Không thể áp dụng credit đổi mentor.");
+          const msg = apiRes.error || "Không thể áp dụng credit đổi mentor.";
+          setCardError(msg);
+          toastApiError(msg);
         }
         return;
       }
@@ -605,13 +656,17 @@ export function Checkout() {
         if (serverOrder) setTransferOrderNum(serverOrder);
         setBankBookingId(apiRes.booking.id);
         setAppStep("awaiting_transfer");
+        toastApiSuccess("Đã tạo lịch chờ chuyển khoản. Vui lòng CK theo thông tin bên dưới.");
       } else {
         const msg = apiRes.error || "Không thể tạo lịch chờ chuyển khoản.";
         console.warn("[POST /api/bookings]", msg);
         setCardError(msg);
+        toastApiError(msg);
       }
     } catch {
-      setCardError("Lỗi hệ thống khi tạo lịch hẹn.");
+      const msg = "Lỗi hệ thống khi tạo lịch hẹn.";
+      setCardError(msg);
+      toastApiError(msg);
     }
   };
 

@@ -8,13 +8,12 @@ import {
   CheckCircle,
   ShieldCheck,
   UserCircle,
-  Trash2 as Trash,
   ChevronRight,
 } from "lucide-react";
-import { toast } from "sonner";
+import { toastApiError, toastApiSuccess } from "../../utils/apiToast";
 import { logout, getUser, updateUser, refreshUserProfile } from "../../utils/auth";
-import { LoginSessionsSection } from "../../components/account/LoginSessionsSection.jsx";
-import { AccountDangerZone } from "../../components/account/AccountDangerZone.jsx";
+import { LoginSessionsSection } from "../../components/account/LoginSessionsSection";
+import { AccountDangerZone } from "../../components/account/AccountDangerZone";
 
 const NOTIF_PREFS_KEY = "prointerview_notif_prefs";
 
@@ -154,9 +153,9 @@ function NotificationsTab() {
         JSON.stringify(push.map(({ id, value }) => ({ id, value }))),
       );
       setDirty(false);
-      toast.success("Đã lưu cài đặt thông báo");
+      toastApiSuccess("Đã lưu cài đặt thông báo");
     } catch {
-      toast.error("Không lưu được cài đặt trên trình duyệt.");
+      toastApiError("Không lưu được cài đặt trên trình duyệt.");
     } finally {
       setSaving(false);
     }
@@ -215,37 +214,42 @@ function SecurityTab({ profileFromServer, onProfileSynced }) {
     const np = newPassword.trim();
     const cp = confirmPassword.trim();
     if (np.length < MIN_PASS) {
-      toast.error(`Mật khẩu mới cần ít nhất ${MIN_PASS} ký tự.`);
+      toastApiError(`Mật khẩu mới cần ít nhất ${MIN_PASS} ký tự.`);
       return;
     }
     if (np !== cp) {
-      toast.error("Mật khẩu xác nhận không khớp.");
+      toastApiError("Mật khẩu xác nhận không khớp.");
       return;
     }
     if (needsCurrentPassword && !currentPassword.trim()) {
-      toast.error("Vui lòng nhập mật khẩu hiện tại.");
+      toastApiError("Vui lòng nhập mật khẩu hiện tại.");
       return;
     }
     setSaving(true);
-    const payload = { newPassword: np };
-    if (needsCurrentPassword) {
-      payload.currentPassword = currentPassword.trim();
-    } else if (currentPassword.trim()) {
-      payload.currentPassword = currentPassword.trim();
-    }
-    const result = await updateUser(payload);
-    setSaving(false);
-    if (result?.success) {
-      setCurrentPassword("");
-      setNewPassword("");
-      setConfirmPassword("");
-      const u = await refreshUserProfile();
-      const next = u ?? getUser();
-      setSessionUser(next);
-      onProfileSynced?.(next);
-      toast.success("Đã cập nhật mật khẩu.");
-    } else {
-      toast.error(result?.error || "Không lưu được.");
+    try {
+      const payload = { newPassword: np };
+      if (needsCurrentPassword) {
+        payload.currentPassword = currentPassword.trim();
+      } else if (currentPassword.trim()) {
+        payload.currentPassword = currentPassword.trim();
+      }
+      const result = await updateUser(payload);
+      if (result?.success) {
+        setCurrentPassword("");
+        setNewPassword("");
+        setConfirmPassword("");
+        const u = await refreshUserProfile();
+        const next = u ?? getUser();
+        setSessionUser(next);
+        onProfileSynced?.(next);
+        toastApiSuccess("Đã cập nhật mật khẩu.");
+      } else {
+        toastApiError(result?.error, "Không lưu được mật khẩu.");
+      }
+    } catch {
+      toastApiError("Lỗi kết nối khi đổi mật khẩu.");
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -333,25 +337,7 @@ function SecurityTab({ profileFromServer, onProfileSynced }) {
 
 /* ─── TAB: Account ──────────────────────────────────────── */
 function AccountTab({ onLogout }) {
-  return (
-    <div className="space-y-8 animate-in fade-in duration-500">
-      <SectionCard title="Tài khoản" icon={Trash}>
-         <div className="border border-red-300/40 bg-red-50/60 p-8 rounded-2xl flex flex-col lg:flex-row lg:items-center justify-between gap-8">
-            <div className="max-w-md text-center lg:text-left">
-               <h4 className="text-slate-900 text-3xl font-black tracking-tight mb-3">Vùng nguy hiểm</h4>
-               <p className="text-base font-semibold text-slate-600">Bạn có muốn hủy kích hoạt tài khoản vĩnh viễn?</p>
-            </div>
-            <button
-              type="button"
-              onClick={onLogout}
-              className="px-10 py-4 rounded-2xl border border-red-300 text-red-500 text-[10px] font-black uppercase tracking-widest hover:bg-red-500 hover:text-white transition-all"
-            >
-              Đăng xuất tài khoản
-            </button>
-         </div>
-      </SectionCard>
-    </div>
-  );
+  return <AccountDangerZone SectionCard={SectionCard} onLogout={onLogout} />;
 }
 
 /* ─── Main Settings Page ────────────────────────────────── */

@@ -2,7 +2,7 @@ import { Notification } from "../models/index.js";
 
 export const NotificationsController = {
   /** Lấy danh sách thông báo của user hiện tại */
-  list: async (req, res) => {
+  list: async (req, res, next) => {
     try {
       const userId = req.userId;
       const notifications = await Notification.find({ userId })
@@ -11,12 +11,12 @@ export const NotificationsController = {
       res.json({ success: true, notifications });
     } catch (error) {
       console.error("[Notifications Error] list:", error);
-      res.status(500).json({ success: false, error: error.message });
+      next(error);
     }
   },
 
   /** Đánh dấu đã đọc */
-  markAsRead: async (req, res) => {
+  markAsRead: async (req, res, next) => {
     try {
       const { id } = req.params;
       const userId = req.userId;
@@ -33,34 +33,34 @@ export const NotificationsController = {
 
       res.json({ success: true, notification });
     } catch (error) {
-      res.status(500).json({ success: false, error: error.message });
+      next(error);
     }
   },
 
   /** Đánh dấu tất cả đã đọc */
-  markAllRead: async (req, res) => {
+  markAllRead: async (req, res, next) => {
     try {
       const userId = req.userId;
       await Notification.updateMany({ userId, isRead: false }, { $set: { isRead: true } });
       res.json({ success: true });
     } catch (error) {
-      res.status(500).json({ success: false, error: error.message });
+      next(error);
     }
   },
 
   /** Đếm số lượng chưa đọc */
-  getUnreadCount: async (req, res) => {
+  getUnreadCount: async (req, res, next) => {
     try {
       const userId = req.userId;
       const count = await Notification.countDocuments({ userId, isRead: false });
       res.json({ success: true, count });
     } catch (error) {
-      res.status(500).json({ success: false, error: error.message });
+      next(error);
     }
   },
 
   /** Xóa thông báo */
-  delete: async (req, res) => {
+  delete: async (req, res, next) => {
     try {
       const { id } = req.params;
       const userId = req.userId;
@@ -68,7 +68,7 @@ export const NotificationsController = {
       if (!deleted) return res.status(404).json({ success: false, error: "Không tìm thấy thông báo để xóa" });
       res.json({ success: true, message: "Đã xóa thông báo" });
     } catch (error) {
-      res.status(500).json({ success: false, error: error.message });
+      next(error);
     }
   },
 };

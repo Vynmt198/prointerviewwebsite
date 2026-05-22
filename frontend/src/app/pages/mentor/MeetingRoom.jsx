@@ -10,8 +10,7 @@ import {
   ArrowLeft,
 } from "lucide-react";
 import { motion } from "motion/react";
-import { getUser } from "../../utils/auth";
-import { joinMeeting, createMeetingSession } from "../../utils/meetings";
+import { getUser, hasAuthCredentials } from "../../utils/auth";
 import {
   fetchBookingById,
   fetchMentorBookingById,
@@ -24,6 +23,7 @@ import {
   getMinutesUntilBookingStart,
   isBookingInLiveWindow,
 } from "../../utils/meetingLinks";
+import { toastApiError, toastApiSuccess } from "../../utils/apiToast";
 
 export function MeetingRoom() {
   const { sessionId } = useParams();
@@ -39,64 +39,69 @@ export function MeetingRoom() {
 
   useEffect(() => {
     const u = getUser();
-    if (!u || !sessionId) {
-      navigate("/");
+    if (!hasAuthCredentials() || !u || !sessionId) {
+      navigate(`/login?redirect=${encodeURIComponent(`/meeting/${sessionId || ""}`)}`, { replace: true });
       return;
     }
 
     let active = true;
 
     async function loadMeeting() {
-      const asMentor = u.role === "mentor";
-      const fetchFn = asMentor ? fetchMentorBookingById : fetchBookingById;
-      const res = await fetchFn(sessionId);
+      try {
+        const asMentor = u.role === "mentor";
+        const fetchFn = asMentor ? fetchMentorBookingById : fetchBookingById;
+        const res = await fetchFn(sessionId);
 
-      if (!active) return;
+        if (!active) return;
 
-      if (!res.success || !res.booking) {
-        setError(res.error || "Phòng họp không tồn tại hoặc bạn không có quyền truy cập.");
-        return;
+        if (!res.success || !res.booking) {
+          const msg = res.error || "Phòng họp không tồn tại hoặc bạn không có quyền truy cập.";
+          setError(msg);
+          toastApiError(msg);
+          return;
+        }
+
+        const b = res.booking;
+        const entry = canEnterMeetingRoom(b);
+        if (!entry.ok) {
+          setError(entry.message);
+          toastApiError(entry.message);
+          return;
+        }
+
+        const startRes = await startBookingMeeting(sessionId, { asMentor });
+        if (!active) return;
+        if (!startRes.success) {
+          const msg = startRes.error || entry.message;
+          setError(msg);
+          toastApiError(msg);
+          return;
+        }
+
+        if (!isBookingInLiveWindow(b)) {
+          const mins = getMinutesUntilBookingStart(b);
+          setEarlyNotice(
+            mins > 0
+              ? `Buổi hẹn chưa tới giờ (còn khoảng ${mins} phút). Bạn có thể vào thử phòng — lịch hẹn vẫn giữ trên Dashboard.`
+              : "Bạn vào phòng trước giờ hẹn. Lịch vẫn hiển thị cho đến khi buổi diễn ra.",
+          );
+        } else {
+          setEarlyNotice("");
+        }
+
+        setMeeting({
+          sessionId: b.id || b._id || sessionId,
+          mentorName: b.mentorName || b.mentor?.name || "Mentor",
+          customerName: b.customerName || b.user?.name || b.customer?.name || "Học viên",
+        });
+        setJoined(true);
+        setJitsiUrl(buildProInterviewMeetUrl(sessionId, u.name || u.email || "User"));
+      } catch {
+        if (!active) return;
+        const msg = "Lỗi kết nối khi mở phòng họp.";
+        setError(msg);
+        toastApiError(msg);
       }
-
-      const b = res.booking;
-      const entry = canEnterMeetingRoom(b);
-      if (!entry.ok) {
-        setError(entry.message);
-        return;
-      }
-
-      const startRes = await startBookingMeeting(sessionId, { asMentor });
-      if (!active) return;
-      if (!startRes.success) {
-        setError(startRes.error || entry.message);
-        return;
-      }
-
-      if (!isBookingInLiveWindow(b)) {
-        const mins = getMinutesUntilBookingStart(b);
-        setEarlyNotice(
-          mins > 0
-            ? `Buổi hẹn chưa tới giờ (còn khoảng ${mins} phút). Bạn có thể vào thử phòng — lịch hẹn vẫn giữ trên Dashboard.`
-            : "Bạn vào phòng trước giờ hẹn. Lịch vẫn hiển thị cho đến khi buổi diễn ra.",
-        );
-      } else {
-        setEarlyNotice("");
-      }
-
-      const m = createMeetingSession({
-        sessionId: b.id || b._id,
-        mentorEmail: b.mentorEmail,
-        customerEmail: b.customerEmail,
-        mentorName: b.mentorName,
-        customerName: b.customerName,
-        scheduledTime: b.timeSlot,
-        scheduledDate: b.date,
-      });
-
-      setMeeting(m);
-      joinMeeting(sessionId, m.joinCode, u.email, asMentor ? "mentor" : "customer");
-      setJoined(true);
-      setJitsiUrl(buildProInterviewMeetUrl(sessionId, u.name || u.email || "User"));
     }
 
     loadMeeting();
@@ -117,11 +122,16 @@ export function MeetingRoom() {
 
   const handleCompleteSession = async () => {
     if (!window.confirm("Bạn có chắc chắn muốn kết thúc và hoàn thành buổi học này?")) return;
-    const res = await completeMentorBooking(sessionId);
-    if (res.success) {
-      navigate(`/mentor/session-feedback/${sessionId}`);
-    } else {
-      alert(res.error || "Không thể kết thúc buổi học.");
+    try {
+      const res = await completeMentorBooking(sessionId);
+      if (res.success) {
+        toastApiSuccess("Đã kết thúc buổi học.");
+        navigate(`/mentor/session-feedback/${sessionId}`);
+      } else {
+        toastApiError(res.error, "Không thể kết thúc buổi học.");
+      }
+    } catch {
+      toastApiError("Lỗi kết nối khi kết thúc buổi học.");
     }
   };
 

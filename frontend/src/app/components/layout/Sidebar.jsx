@@ -18,6 +18,9 @@ import {
   BookText,
   ClipboardList,
   Shield,
+  Home,
+  LogIn,
+  UserPlus,
 } from "lucide-react";
 import {
   Sidebar,
@@ -46,17 +49,19 @@ import {
   getBrandClickPath,
   getPlans,
   getDisplayName,
+  hasAuthCredentials,
   PLANS_CHANGED_EVENT,
 } from "../../utils/auth";
 import { SidebarBrandButton } from "./SidebarBrandButton";
+import { requireLoginNavigate } from "../../utils/authGate";
 
 /* ── Nav data ─────────────────────────────────────────────── */
 const customerMainItems = [
-  { title: "Bảng điều khiển", url: "/dashboard", icon: LayoutGrid },
-  { title: "Phân tích CV/JD", url: "/cv-analysis", icon: FileText },
-  { title: "Phỏng vấn AI", url: "/interview", icon: Mic },
-  { title: "Khóa học", url: "/courses", icon: GraduationCap },
-  { title: "Tìm Mentor", url: "/mentors", icon: Users },
+  { title: "Bảng điều khiển", url: "/dashboard", icon: LayoutGrid, requiresAuth: true },
+  { title: "Phân tích CV/JD", url: "/cv-analysis", icon: FileText, requiresAuth: true },
+  { title: "Phỏng vấn AI", url: "/interview", icon: Mic, requiresAuth: true },
+  { title: "Khóa học", url: "/courses", icon: GraduationCap, public: true },
+  { title: "Tìm Mentor", url: "/mentors", icon: Users, public: true },
 ];
 
 const mentorMainItems = [
@@ -70,9 +75,26 @@ const mentorMainItems = [
 ];
 
 const secondaryItems = [
-  { title: "Hồ sơ", url: "/profile", icon: User },
-  { title: "Cài đặt", url: "/settings", icon: Settings },
+  { title: "Hồ sơ", url: "/profile", icon: User, requiresAuth: true },
+  { title: "Cài đặt", url: "/settings", icon: Settings, requiresAuth: true },
 ];
+
+/** Menu khách (chưa đăng nhập) trên trang công khai trong AppLayout. */
+const guestMainItems = [
+  { title: "Trang chủ", url: "/", icon: Home, public: true },
+  { title: "Khóa học", url: "/courses", icon: GraduationCap, public: true },
+  { title: "Tìm Mentor", url: "/mentors", icon: Users, public: true },
+  { title: "Bảng giá", url: "/pricing", icon: Zap, public: true },
+];
+
+const guestSecondaryItems = [
+  { title: "Đăng nhập", url: "/login", icon: LogIn, public: true },
+  { title: "Đăng ký", url: "/register", icon: UserPlus, public: true },
+];
+
+function navRequiresAuth(item) {
+  return item.requiresAuth !== false && item.public !== true;
+}
 
 /* ── Component ───────────────────────────────────────────── */
 export function AppSidebar() {
@@ -80,6 +102,7 @@ export function AppSidebar() {
   const navigate = useNavigate();
 
   const user = getUser();
+  const loggedIn = hasAuthCredentials();
   const [plans, setPlans] = React.useState(getPlans);
   React.useEffect(() => {
     const refresh = () => setPlans(getPlans());
@@ -92,16 +115,35 @@ export function AppSidebar() {
   }, []);
   const displayName = getDisplayName(user);
   const initials = getInitials(displayName);
-  const isMentor = user?.role === "mentor";
+  const isMentor = loggedIn && user?.role === "mentor";
   const isElite = !!plans?.elitePro;
   const isPro = !!plans?.starterPro && !isElite;
   const upgradeTitle = isPro ? "Nâng cấp lên Elite" : "Nâng cấp lên Pro";
   const upgradeButton = isPro ? "Xem gói Elite →" : "Xem gói Pro →";
   const upgradeHint = isPro ? "Mở khóa toàn bộ tính năng" : "AI không giới hạn";
-  const secondaryNav = [
-    ...(user?.role === "admin" ? [{ title: "Quản trị", url: "/admin", icon: Shield }] : []),
-    ...secondaryItems,
-  ];
+  const mainNavItems = !loggedIn
+    ? guestMainItems
+    : isMentor
+      ? mentorMainItems
+      : customerMainItems;
+  const secondaryNav = !loggedIn
+    ? guestSecondaryItems
+    : [
+        ...(user?.role === "admin" ? [{ title: "Quản trị", url: "/admin", icon: Shield, requiresAuth: true }] : []),
+        ...secondaryItems,
+      ];
+
+  const goNav = (item) => {
+    if (navRequiresAuth(item) && !loggedIn) {
+      requireLoginNavigate(navigate, item.url);
+      return;
+    }
+    if (item.url === "/") {
+      navigate("/");
+      return;
+    }
+    navigate(item.url);
+  };
 
   const handleLogout = async () => {
     await logout();
@@ -148,61 +190,14 @@ export function AppSidebar() {
 
           <SidebarGroupContent>
             <SidebarMenu className="gap-0.5">
-              {isMentor
-                ? mentorMainItems.map((item) => {
+              {mainNavItems.map((item) => {
                   const active = isActive(item.url);
                   return (
                     <SidebarMenuItem key={item.title}>
                       <SidebarMenuButton
                         isActive={active}
                         tooltip={item.title}
-                        onClick={() => navigate(item.url)}
-                        className="
-                            h-10 rounded-xl gap-3 transition-all text-sidebar-foreground/75
-                            hover:bg-sidebar-accent hover:text-sidebar-accent-foreground
-                            group-data-[collapsible=icon]:!justify-center
-                            group-data-[collapsible=icon]:!w-10
-                            group-data-[collapsible=icon]:!mx-auto
-                            group-data-[collapsible=icon]:px-0
-                          "
-                        style={
-                          active
-                            ? {
-                              background: "linear-gradient(135deg, #6E35E8 0%, #8B4DFF 100%)",
-                              color: "#fff",
-                              boxShadow: "0 4px 12px rgba(110,53,232,0.35)",
-                            }
-                            : undefined
-                        }
-                      >
-                        <item.icon
-                          className={`size-[18px] shrink-0 ${active ? "text-white" : "text-sidebar-foreground/70"}`}
-                        />
-                        <span
-                          className="text-[0.8125rem] truncate group-data-[collapsible=icon]:hidden"
-                          style={{ fontWeight: active ? 600 : 400 }}
-                        >
-                          {item.title}
-                        </span>
-                        {/* active dot */}
-                        {active && (
-                          <span
-                            className="ml-auto size-1.5 rounded-full shrink-0 group-data-[collapsible=icon]:hidden"
-                            style={{ background: "#c4ff47" }}
-                          />
-                        )}
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  );
-                })
-                : customerMainItems.map((item) => {
-                  const active = isActive(item.url);
-                  return (
-                    <SidebarMenuItem key={item.title}>
-                      <SidebarMenuButton
-                        isActive={active}
-                        tooltip={item.title}
-                        onClick={() => navigate(item.url)}
+                        onClick={() => goNav(item)}
                         className="
                             h-10 rounded-xl gap-3 transition-all text-sidebar-foreground/75
                             hover:bg-sidebar-accent hover:text-sidebar-accent-foreground
@@ -269,7 +264,7 @@ export function AppSidebar() {
                     <SidebarMenuButton
                       isActive={active}
                       tooltip={item.title}
-                      onClick={() => navigate(item.url)}
+                      onClick={() => goNav(item)}
                       className="
                         h-10 rounded-xl gap-3 transition-all text-sidebar-foreground/75
                         hover:bg-sidebar-accent hover:text-sidebar-accent-foreground
@@ -305,8 +300,24 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
+        {!loggedIn && (
+          <div className="mt-auto pt-3 group-data-[collapsible=icon]:hidden">
+            <div className="rounded-2xl border border-violet-200/60 bg-violet-50/80 p-3.5 text-center">
+              <p className="text-xs font-bold text-slate-900">Chưa đăng nhập</p>
+              <p className="mt-1 text-[10px] text-slate-500">Đăng nhập để dùng Dashboard, CV, phỏng vấn AI</p>
+              <button
+                type="button"
+                onClick={() => navigate("/login")}
+                className="mt-3 w-full rounded-xl bg-violet-600 py-2 text-xs font-bold text-white hover:bg-violet-700"
+              >
+                Đăng nhập
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* ── Upgrade CTA (expanded only) ─────── */}
-        {!isMentor && !isElite && (
+        {loggedIn && !isMentor && !isElite && (
           <div className="mt-auto pt-3 group-data-[collapsible=icon]:hidden">
             <div
               className="rounded-2xl border border-[rgba(110,53,232,0.2)] bg-white/75 p-3.5 shadow-sm backdrop-blur-sm"
@@ -337,7 +348,7 @@ export function AppSidebar() {
         )}
 
         {/* ── Upgrade icon (collapsed only) ──── */}
-        {!isMentor && !isElite && (
+        {loggedIn && !isMentor && !isElite && (
           <div className="hidden mt-auto pt-2 group-data-[collapsible=icon]:flex group-data-[collapsible=icon]:justify-center">
             <button
               onClick={() => navigate("/pricing")}
@@ -356,6 +367,28 @@ export function AppSidebar() {
 
       <SidebarFooter className="p-2">
         <SidebarMenu>
+          {!loggedIn ? (
+            <SidebarMenuItem>
+              <div className="flex flex-col gap-2 px-1 group-data-[collapsible=icon]:items-center">
+                <button
+                  type="button"
+                  onClick={() => navigate("/login")}
+                  className="flex h-10 w-full items-center justify-center gap-2 rounded-xl bg-violet-600 text-xs font-bold text-white hover:bg-violet-700 group-data-[collapsible=icon]:w-10 group-data-[collapsible=icon]:px-0"
+                >
+                  <LogIn className="size-4 shrink-0" />
+                  <span className="group-data-[collapsible=icon]:hidden">Đăng nhập</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => navigate("/register")}
+                  className="flex h-9 w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-700 hover:bg-slate-50 group-data-[collapsible=icon]:hidden"
+                >
+                  <UserPlus className="size-4" />
+                  Tạo tài khoản
+                </button>
+              </div>
+            </SidebarMenuItem>
+          ) : (
           <SidebarMenuItem>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -442,6 +475,7 @@ export function AppSidebar() {
               </DropdownMenuContent>
             </DropdownMenu>
           </SidebarMenuItem>
+          )}
         </SidebarMenu>
       </SidebarFooter>
 

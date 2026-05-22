@@ -3,6 +3,7 @@ import { Link, useNavigate, useSearchParams } from "react-router";
 import { CheckCircle2, AlertCircle, Loader2, Mail } from "lucide-react";
 import { BrandLogo } from "../../components/brand/BrandLogo";
 import { verifyEmail } from "../../utils/auth";
+import { toastApiError, toastApiSuccess } from "../../utils/apiToast";
 
 export function VerifyEmail() {
   const navigate = useNavigate();
@@ -23,10 +24,14 @@ export function VerifyEmail() {
       const res = await verifyEmail(token);
       if (res.success) {
         setStatus("success");
-        setMessage(res.message || "Xác thực email thành công!");
+        const okMsg = res.message || "Xác thực email thành công!";
+        setMessage(okMsg);
+        toastApiSuccess(okMsg);
       } else {
         setStatus("error");
-        setMessage(res.error || "Xác thực thất bại hoặc token đã hết hạn.");
+        const errMsg = res.error || "Xác thực thất bại hoặc token đã hết hạn.";
+        setMessage(errMsg);
+        toastApiError(errMsg);
       }
     };
 

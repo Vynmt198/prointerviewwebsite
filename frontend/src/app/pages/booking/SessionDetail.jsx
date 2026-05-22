@@ -30,7 +30,7 @@ import {
   X,
   CircleDollarSign,
 } from "lucide-react";
-import { toast } from "sonner";
+import { toastApiError, toastApiSuccess } from "../../utils/apiToast";
 import { isLoggedIn } from "../../utils/auth";
 import {
   cancelBooking,
@@ -227,16 +227,27 @@ export function SessionDetail() {
     let cancelled = false;
     setApiBooking(undefined);
     setLoadError("");
-    void fetchBookingById(id).then((r) => {
-      if (cancelled) return;
-      if (r.success && r.booking) {
-        setApiBooking(r.booking);
-        setLoadError("");
-      } else {
+    (async () => {
+      try {
+        const r = await fetchBookingById(id);
+        if (cancelled) return;
+        if (r.success && r.booking) {
+          setApiBooking(r.booking);
+          setLoadError("");
+        } else {
+          const msg = r.error || "Không tải được buổi hẹn.";
+          setApiBooking(null);
+          setLoadError(msg);
+          toastApiError(msg);
+        }
+      } catch {
+        if (cancelled) return;
+        const msg = "Lỗi kết nối khi tải buổi hẹn.";
         setApiBooking(null);
-        setLoadError(r.error || "Không tải được buổi hẹn.");
+        setLoadError(msg);
+        toastApiError(msg);
       }
-    });
+    })();
     return () => {
       cancelled = true;
     };
@@ -354,32 +365,38 @@ export function SessionDetail() {
     }
     let cancelled = false;
     setLoadingRescheduleSlots(true);
-    void Promise.all([
-      fetchMentorAvailability(sessionData.mentorId),
-      fetchBookedSlots(sessionData.mentorId),
-    ]).then(([availability, bookedRes]) => {
-      if (cancelled) return;
-      setLoadingRescheduleSlots(false);
-      if (!availability?.availableSlots) {
-        setRescheduleSlotOptions([]);
-        return;
-      }
-      const bookedMap = bookedRes.success ? bookedRes.booked || {} : {};
-      const options = [];
-      for (const [date, slots] of Object.entries(availability.availableSlots || {})) {
-        const bookingDate = toBookingDateFormat(date);
-        for (const slot of Array.isArray(slots) ? slots : []) {
-          const taken = Array.isArray(bookedMap[date]) ? bookedMap[date].includes(slot) : false;
-          if (!taken) options.push({ date: bookingDate, slot, label: `${bookingDate} • ${slot}` });
+    void (async () => {
+      try {
+        const [availability, bookedRes] = await Promise.all([
+          fetchMentorAvailability(sessionData.mentorId),
+          fetchBookedSlots(sessionData.mentorId),
+        ]);
+        if (cancelled) return;
+        if (!availability?.availableSlots) {
+          setRescheduleSlotOptions([]);
+          return;
         }
+        const bookedMap = bookedRes.success ? bookedRes.booked || {} : {};
+        const options = [];
+        for (const [date, slots] of Object.entries(availability.availableSlots || {})) {
+          const bookingDate = toBookingDateFormat(date);
+          for (const slot of Array.isArray(slots) ? slots : []) {
+            const taken = Array.isArray(bookedMap[date]) ? bookedMap[date].includes(slot) : false;
+            if (!taken) options.push({ date: bookingDate, slot, label: `${bookingDate} • ${slot}` });
+          }
+        }
+        options.sort((a, b) => `${a.date} ${a.slot}`.localeCompare(`${b.date} ${b.slot}`));
+        setRescheduleSlotOptions(options);
+        if (options.length > 0) {
+          setRescheduleDate(options[0].date);
+          setRescheduleSlot(options[0].slot);
+        }
+      } catch {
+        if (!cancelled) toastApiError("Lỗi kết nối khi tải slot đổi lịch.");
+      } finally {
+        if (!cancelled) setLoadingRescheduleSlots(false);
       }
-      options.sort((a, b) => `${a.date} ${a.slot}`.localeCompare(`${b.date} ${b.slot}`));
-      setRescheduleSlotOptions(options);
-      if (options.length > 0) {
-        setRescheduleDate(options[0].date);
-        setRescheduleSlot(options[0].slot);
-      }
-    });
+    })();
     return () => {
       cancelled = true;
     };
@@ -389,14 +406,21 @@ export function SessionDetail() {
     if (!mongoBookingId) return;
     if (choice === "change_mentor") {
       setResolutionBusy(true);
-      const res = await resolveMentorCancelBooking(mongoBookingId, { choice: "change_mentor" });
+      let res;
+      try {
+        res = await resolveMentorCancelBooking(mongoBookingId, { choice: "change_mentor" });
+      } catch {
+        setResolutionBusy(false);
+        toastApiError("Lỗi kết nối khi ghi nhận lựa chọn.");
+        return;
+      }
       setResolutionBusy(false);
       if (!res.success) {
-        toast.error(res.error || "Không ghi nhận lựa chọn.");
+        toastApiError(res.error, "Không ghi nhận lựa chọn.");
         return;
       }
       const credit = Number(res.rebookCreditVnd ?? res.booking?.rebookCreditVnd ?? 0);
-      toast.success(
+      toastApiSuccess(
         credit > 0
           ? `Đã kích hoạt credit ${credit.toLocaleString("vi-VN")}₫ — chọn mentor khác, không cần CK lại nếu giá ≤ credit.`
           : "Hãy chọn mentor mới để đặt lịch.",
@@ -413,43 +437,57 @@ export function SessionDetail() {
     if (choice === "refund") {
       const acct = String(refundAccountNumber || "").replace(/\D/g, "");
       if (!String(refundBankName || "").trim() || acct.length < 6 || !String(refundAccountHolder || "").trim()) {
-        toast.error("Vui lòng điền đầy đủ ngân hàng, STK và tên chủ tài khoản.");
+        toastApiError("Vui lòng điền đầy đủ ngân hàng, STK và tên chủ tài khoản.");
         return;
       }
       setResolutionBusy(true);
-      const res = await resolveMentorCancelBooking(mongoBookingId, {
-        choice: "refund",
-        refundReceiveBankName: String(refundBankName || "").trim(),
-        refundReceiveAccountNumber: acct,
-        refundReceiveAccountHolder: String(refundAccountHolder || "").trim(),
-      });
-      setResolutionBusy(false);
-      if (!res.success) {
-        toast.error(res.error || "Không gửi yêu cầu hoàn tiền.");
+      let res;
+      try {
+        res = await resolveMentorCancelBooking(mongoBookingId, {
+          choice: "refund",
+          refundReceiveBankName: String(refundBankName || "").trim(),
+          refundReceiveAccountNumber: acct,
+          refundReceiveAccountHolder: String(refundAccountHolder || "").trim(),
+        });
+      } catch {
+        setResolutionBusy(false);
+        toastApiError("Lỗi kết nối khi gửi yêu cầu hoàn tiền.");
         return;
       }
-      toast.success("Đã gửi yêu cầu hoàn 100%. Admin sẽ CK khi đối soát.");
+      setResolutionBusy(false);
+      if (!res.success) {
+        toastApiError(res.error, "Không gửi yêu cầu hoàn tiền.");
+        return;
+      }
+      toastApiSuccess("Đã gửi yêu cầu hoàn 100%. Admin sẽ CK khi đối soát.");
       if (res.booking) setApiBooking(res.booking);
       setMentorResolutionStep("");
       return;
     }
     if (choice === "reschedule") {
       if (!rescheduleDate || !rescheduleSlot) {
-        toast.error("Vui lòng chọn ngày và giờ mới.");
+        toastApiError("Vui lòng chọn ngày và giờ mới.");
         return;
       }
       setResolutionBusy(true);
-      const res = await resolveMentorCancelBooking(mongoBookingId, {
-        choice: "reschedule",
-        newDate: rescheduleDate,
-        newTimeSlot: rescheduleSlot,
-      });
-      setResolutionBusy(false);
-      if (!res.success) {
-        toast.error(res.error || "Không đổi được lịch.");
+      let res;
+      try {
+        res = await resolveMentorCancelBooking(mongoBookingId, {
+          choice: "reschedule",
+          newDate: rescheduleDate,
+          newTimeSlot: rescheduleSlot,
+        });
+      } catch {
+        setResolutionBusy(false);
+        toastApiError("Lỗi kết nối khi đổi lịch.");
         return;
       }
-      toast.success("Đã đổi lịch — buổi hẹn được khôi phục với thời gian mới.");
+      setResolutionBusy(false);
+      if (!res.success) {
+        toastApiError(res.error, "Không đổi được lịch.");
+        return;
+      }
+      toastApiSuccess("Đã đổi lịch — buổi hẹn được khôi phục với thời gian mới.");
       if (res.booking) setApiBooking(res.booking);
       setMentorResolutionStep("");
     }
@@ -485,38 +523,48 @@ export function SessionDetail() {
   const handleReportNoShow = async () => {
     if (!mongoBookingId) return;
     setReportNoShowBusy(true);
-    const res = await reportBookingNoShow(mongoBookingId, {
-      note: "Học viên báo mentor không tham gia buổi hẹn.",
-    });
-    setReportNoShowBusy(false);
-    if (!res.success) {
-      toast.error(res.error || "Không gửi được báo no-show.");
-      return;
+    try {
+      const res = await reportBookingNoShow(mongoBookingId, {
+        note: "Học viên báo mentor không tham gia buổi hẹn.",
+      });
+      if (!res.success) {
+        toastApiError(res.error, "Không gửi được báo no-show.");
+        return;
+      }
+      toastApiSuccess("Đã ghi nhận no-show. Hoàn 100% — vui lòng điền STK nếu được yêu cầu.");
+      if (res.booking) setApiBooking(res.booking);
+    } catch {
+      toastApiError("Lỗi kết nối khi gửi báo no-show.");
+    } finally {
+      setReportNoShowBusy(false);
     }
-    toast.success("Đã ghi nhận no-show. Hoàn 100% — vui lòng điền STK nếu được yêu cầu.");
-    if (res.booking) setApiBooking(res.booking);
   };
 
   const handleSubmitRefundDestination = async () => {
     if (!mongoBookingId) return;
     const acct = String(refundAccountNumber || "").replace(/\D/g, "");
     if (!String(refundBankName || "").trim() || acct.length < 6 || !String(refundAccountHolder || "").trim()) {
-      toast.error("Vui lòng điền đầy đủ ngân hàng, STK và tên chủ tài khoản.");
+      toastApiError("Vui lòng điền đầy đủ ngân hàng, STK và tên chủ tài khoản.");
       return;
     }
     setRefundDestBusy(true);
-    const res = await updateBookingRefundDestination(mongoBookingId, {
-      refundReceiveBankName: String(refundBankName || "").trim(),
-      refundReceiveAccountNumber: acct,
-      refundReceiveAccountHolder: String(refundAccountHolder || "").trim(),
-    });
-    setRefundDestBusy(false);
-    if (!res.success) {
-      toast.error(res.error || "Không lưu được STK nhận hoàn.");
-      return;
+    try {
+      const res = await updateBookingRefundDestination(mongoBookingId, {
+        refundReceiveBankName: String(refundBankName || "").trim(),
+        refundReceiveAccountNumber: acct,
+        refundReceiveAccountHolder: String(refundAccountHolder || "").trim(),
+      });
+      if (!res.success) {
+        toastApiError(res.error, "Không lưu được STK nhận hoàn.");
+        return;
+      }
+      toastApiSuccess("Đã lưu tài khoản nhận hoàn. Admin sẽ CK khi đối soát.");
+      if (res.booking) setApiBooking(res.booking);
+    } catch {
+      toastApiError("Lỗi kết nối khi lưu STK nhận hoàn.");
+    } finally {
+      setRefundDestBusy(false);
     }
-    toast.success("Đã lưu tài khoản nhận hoàn. Admin sẽ CK khi đối soát.");
-    if (res.booking) setApiBooking(res.booking);
   };
 
   /* ── Rating / Feedback ── */
@@ -547,22 +595,29 @@ export function SessionDetail() {
     if (needsRefundBankDetails) {
       const acct = String(refundAccountNumber || "").replace(/\D/g, "");
       if (!String(refundBankName || "").trim() || acct.length < 6 || !String(refundAccountHolder || "").trim()) {
-        toast.error("Vui lòng điền đầy đủ ngân hàng, STK nhận hoàn và tên chủ tài khoản.");
+        toastApiError("Vui lòng điền đầy đủ ngân hàng, STK nhận hoàn và tên chủ tài khoản.");
         return;
       }
     }
     setCancelBusy(true);
-    const res = await cancelBooking(mongoBookingId, {
-      reason: String(cancelReason || "").trim(),
-      refundReceiveBankName: needsRefundBankDetails ? String(refundBankName || "").trim() : "",
-      refundReceiveAccountNumber: needsRefundBankDetails
-        ? String(refundAccountNumber || "").replace(/\D/g, "")
-        : "",
-      refundReceiveAccountHolder: needsRefundBankDetails ? String(refundAccountHolder || "").trim() : "",
-    });
+    let res;
+    try {
+      res = await cancelBooking(mongoBookingId, {
+        reason: String(cancelReason || "").trim(),
+        refundReceiveBankName: needsRefundBankDetails ? String(refundBankName || "").trim() : "",
+        refundReceiveAccountNumber: needsRefundBankDetails
+          ? String(refundAccountNumber || "").replace(/\D/g, "")
+          : "",
+        refundReceiveAccountHolder: needsRefundBankDetails ? String(refundAccountHolder || "").trim() : "",
+      });
+    } catch {
+      setCancelBusy(false);
+      toastApiError("Lỗi kết nối khi hủy lịch.");
+      return;
+    }
     setCancelBusy(false);
     if (!res.success) {
-      toast.error(res.error || "Không hủy được lịch.");
+      toastApiError(res.error, "Không hủy được lịch.");
       return;
     }
     const pol = res.cancellationPolicy;
@@ -579,7 +634,7 @@ export function SessionDetail() {
     } else if (pol?.ledger === "cancelled_pending_transfer") {
       extra = " Giao dịch chờ CK đã hủy — chưa thu tiền.";
     }
-    toast.success(`Đã hủy lịch.${extra}`);
+    toastApiSuccess(`Đã hủy lịch.${extra}`);
     setCancelModalOpen(false);
     setCancelReason("");
     setRefundBankName("");

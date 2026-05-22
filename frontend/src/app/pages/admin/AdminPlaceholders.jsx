@@ -3,7 +3,7 @@ import { useParams, Link } from "react-router";
 import { AdminPanel } from "./AdminPanel.jsx";
 import { useEffect, useState } from "react";
 import { adminApi } from "../../utils/adminApi.js";
-import { toast } from "sonner";
+import { toastApiError, toastApiSuccess, tryApi } from "../../utils/apiToast";
 import { AnimatePresence, motion } from "motion/react";
 
 function vnd(amount) {
@@ -13,12 +13,12 @@ function vnd(amount) {
 function copyAdminText(text, successMsg = "Đã sao chép.") {
   const t = String(text || "").trim();
   if (!t) {
-    toast.error("Không có nội dung để sao chép.");
+    toastApiError("Không có nội dung để sao chép.");
     return;
   }
   void navigator.clipboard.writeText(t).then(
-    () => toast.success(successMsg),
-    () => toast.error("Trình duyệt không cho phép sao chép."),
+    () => toastApiSuccess(successMsg),
+    () => toastApiError("Trình duyệt không cho phép sao chép."),
   );
 }
 
@@ -36,66 +36,143 @@ function statusLabel(status) {
   return key || "Không xác định";
 }
 
-export function AdminUsers() {
-  return (
-    <AdminPanel
-      title="Quản lý người dùng"
-      description="Bảng users: email, tên, ngày đăng ký, gói, trạng thái — lọc theo gói / ngày / trạng thái, tìm theo email hoặc tên."
-      bullets={[
-        "Pagination server-side",
-        "Chi tiết user: hồ sơ, lịch sử gói, sử dụng AI/CV, lịch hẹn cố vấn, biểu đồ hoạt động",
-        "Actions: khóa/mở khóa, reset password, đổi gói thủ công, activity logs",
-      ]}
-    />
-  );
-}
-
 export function AdminUserDetail() {
   const { id } = useParams();
-  return (
-    <AdminPanel
-      title={`Chi tiết user · ${id ?? "—"}`}
-      description="Thông tin cá nhân, lịch sử nâng cấp gói, sử dụng AI/CV, lịch hẹn cố vấn, thống kê mức sử dụng."
-      bullets={["Khóa / mở khóa", "Reset mật khẩu", "Manual upgrade/downgrade", "Xem activity logs"]}
-    >
-      <Link to="/admin/users" className="text-sm font-semibold text-violet-700 hover:underline">
-        ← Quay lại danh sách
-      </Link>
-    </AdminPanel>
-  );
-}
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-export function AdminMentors() {
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      setLoading(true);
+      const res = await tryApi(() => adminApi.getUserById(id), {
+        fallback: "Không tải được người dùng.",
+        silent: true,
+      });
+      if (cancelled) return;
+      if (!res.success) {
+        const msg = res.error || "Không tải được";
+        setError(msg);
+        toastApiError(msg);
+      } else {
+        setUser(res.user || null);
+        if (!res.user) setError("Không tìm thấy người dùng.");
+      }
+      if (!cancelled) setLoading(false);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [id]);
+
+  const toggleActive = async () => {
+    if (!user) return;
+    const res = await tryApi(() => adminApi.updateUserStatus(user._id, user.isActive === false), {
+      fallback: "Không cập nhật được trạng thái.",
+      successMessage: user.isActive !== false ? "Đã khóa" : "Đã mở khóa",
+    });
+    if (res.success) setUser({ ...user, isActive: user.isActive === false });
+  };
+
   return (
-    <AdminPanel
-      title="Quản lý cố vấn"
-      description="Danh sách: tên, chuyên môn, giá giờ, rating, tổng buổi, thu nhập — lọc & tìm kiếm."
-      bullets={[
-        "Duyệt đơn pending tại /admin/mentors/pending",
-        "Chi tiết: profile, buổi đã dạy, thu nhập, reviews, lịch, biểu đồ",
-        "Khóa cố vấn, tỉ lệ hoa hồng, lịch sử rút tiền",
-      ]}
-    />
+    <AdminPanel title="Chi tiết người dùng" description="Thông tin tài khoản và quota.">
+      <Link to="/admin/users" className="mb-4 inline-block text-sm font-semibold text-violet-700 hover:underline">
+        ← Danh sách người dùng
+      </Link>
+      {loading && <p className="text-sm text-slate-500">Đang tải…</p>}
+      {error && !loading && <p className="text-sm text-red-600">{error}</p>}
+      {user && (
+        <motion.div className="rounded-2xl border border-slate-200 bg-white p-6 space-y-4">
+          <p className="text-xl font-black text-slate-900">{user.name}</p>
+          <p className="text-sm text-slate-600">{user.email}</p>
+          <div className="grid gap-3 sm:grid-cols-2 text-sm">
+            <p><span className="font-semibold">Vai trò:</span> {user.role}</p>
+            <p><span className="font-semibold">Gói:</span> {user.plan || "free"}</p>
+            <p><span className="font-semibold">CV đã dùng:</span> {user.quota?.cvAnalysisUsed ?? 0} / {user.quota?.cvAnalysisLimit ?? 3}</p>
+            <p><span className="font-semibold">Phỏng vấn AI:</span> {user.quota?.interviewUsed ?? 0} / {user.quota?.interviewLimit ?? user.quota?.interviewQuestionsAllowed ?? 1}</p>
+            <p><span className="font-semibold">Lịch hẹn:</span> {user.stats?.bookingsCount ?? 0}</p>
+            <p><span className="font-semibold">Khóa học:</span> {user.stats?.enrollmentsCount ?? 0}</p>
+            <p><span className="font-semibold">Trạng thái:</span> {user.isActive === false ? "Đã khóa" : "Hoạt động"}</p>
+            <p><span className="font-semibold">Đăng ký:</span> {user.createdAt ? new Date(user.createdAt).toLocaleString("vi-VN") : "—"}</p>
+          </div>
+          <button
+            type="button"
+            onClick={toggleActive}
+            className="rounded-xl bg-violet-600 px-4 py-2 text-sm font-bold text-white"
+          >
+            {user.isActive === false ? "Mở khóa" : "Khóa tài khoản"}
+          </button>
+        </motion.div>
+      )}
+    </AdminPanel>
   );
 }
 
 export function AdminMentorDetail() {
   const { id } = useParams();
+  const [mentor, setMentor] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      setLoading(true);
+      const res = await tryApi(() => adminApi.getMentorById(id), {
+        fallback: "Không tải được cố vấn.",
+        silent: true,
+      });
+      if (cancelled) return;
+      if (!res.success) {
+        setError(res.error || "Không tải được cố vấn.");
+      } else {
+        setMentor(res.mentor || null);
+        if (!res.mentor) setError("Không tìm thấy cố vấn.");
+      }
+      if (!cancelled) setLoading(false);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [id]);
+
+  const toggleActive = async () => {
+    if (!mentor) return;
+    const next = !mentor.isActive;
+    const res = await tryApi(() => adminApi.updateMentorStatus(mentor._id, next), {
+      fallback: "Không cập nhật được trạng thái.",
+      successMessage: next ? "Đã kích hoạt cố vấn" : "Đã khóa cố vấn",
+    });
+    if (res.success) setMentor({ ...mentor, isActive: next, isVerified: next ? true : mentor.isVerified });
+  };
+
   return (
-    <AdminPanel title={`Cố vấn · ${id ?? "—"}`} description="Hồ sơ đầy đủ và thống kê hiệu suất.">
-      <Link to="/admin/mentors" className="text-sm font-semibold text-violet-700 hover:underline">
+    <AdminPanel title="Chi tiết cố vấn" description="Hồ sơ mentor trên hệ thống.">
+      <Link to="/admin/mentors" className="mb-4 inline-block text-sm font-semibold text-violet-700 hover:underline">
         ← Danh sách cố vấn
       </Link>
+      {loading && <p className="text-sm text-slate-500">Đang tải…</p>}
+      {error && !loading && <p className="text-sm text-red-600">{error}</p>}
+      {mentor && (
+        <motion.div className="rounded-2xl border border-slate-200 bg-white p-6 space-y-3 text-sm">
+          <p className="text-xl font-black">{mentor.name || mentor.userId?.name}</p>
+          <p className="text-slate-600">{mentor.userId?.email}</p>
+          <p><span className="font-semibold">Chuyên môn:</span> {(mentor.expertise || []).join(", ") || mentor.title || "—"}</p>
+          <p><span className="font-semibold">Giá/giờ:</span> {vnd(mentor.pricePerHour || mentor.hourlyRate)}</p>
+          <p><span className="font-semibold">Rating:</span> {mentor.rating ?? "—"} · Buổi: {mentor.stats?.sessionsCount ?? mentor.totalSessions ?? 0}</p>
+          <p><span className="font-semibold">Duyệt:</span> {mentor.isVerified ? "Đã duyệt" : "Chờ / chưa duyệt"} · {mentor.isActive ? "Đang hoạt động" : "Tạm khóa"}</p>
+          {mentor.bio && <p className="text-slate-600 whitespace-pre-wrap">{mentor.bio}</p>}
+          <button
+            type="button"
+            onClick={toggleActive}
+            className="rounded-xl bg-violet-600 px-4 py-2 text-sm font-bold text-white"
+          >
+            {mentor.isActive ? "Khóa cố vấn" : "Kích hoạt cố vấn"}
+          </button>
+        </motion.div>
+      )}
     </AdminPanel>
-  );
-}
-
-export function AdminMentorsPending() {
-  return (
-    <AdminPanel
-      title="Duyệt đăng ký cố vấn"
-      description="Đơn chờ duyệt — Approve / Reject kèm lý do, xem chứng chỉ & kinh nghiệm."
-    />
   );
 }
 
@@ -445,38 +522,46 @@ export function AdminPayouts() {
 
   const loadRows = async () => {
     setLoading(true);
-    const res = await adminApi.getPayouts();
+    const res = await tryApi(() => adminApi.getPayouts(), {
+      fallback: "Không tải được danh sách payout.",
+    });
     if (res.success) setRows(res.payouts || []);
-    else toast.error(res.error || "Không tải được danh sách payout.");
     setLoading(false);
   };
 
   useEffect(() => {
-    loadRows();
+    void loadRows();
   }, []);
 
   const handleApprove = async (id) => {
     setBusyId(id);
-    const res = await adminApi.approvePayout(id);
+    const res = await tryApi(() => adminApi.approvePayout(id), {
+      fallback: "Không duyệt được yêu cầu.",
+      successMessage: "Đã duyệt. Hãy chuyển khoản cho cố vấn rồi bấm “Đã chuyển khoản”.",
+    });
     setBusyId("");
-    if (!res.success) return toast.error(res.error || "Không duyệt được yêu cầu.");
-    toast.success("Đã duyệt. Hãy chuyển khoản cho cố vấn rồi bấm “Đã chuyển khoản”.");
-    loadRows();
+    if (res.success) await loadRows();
   };
 
   const confirmMarkPaid = async () => {
     const id = markPaidModal.payoutId;
     if (!id) return;
     setBusyId(id);
-    const res = await adminApi.markPayoutPaid(id, {
-      transferRef: String(markPaidModal.transferRef || "").trim(),
-      note: String(markPaidModal.note || "").trim(),
-    });
+    const res = await tryApi(
+      () =>
+        adminApi.markPayoutPaid(id, {
+          transferRef: String(markPaidModal.transferRef || "").trim(),
+          note: String(markPaidModal.note || "").trim(),
+        }),
+      {
+        fallback: "Không ghi nhận được đã chi.",
+        successMessage: "Đã ghi nhận đã chuyển khoản cho cố vấn.",
+      },
+    );
     setBusyId("");
-    if (!res.success) return toast.error(res.error || "Không ghi nhận được đã chi.");
-    toast.success("Đã ghi nhận đã chuyển khoản cho cố vấn.");
+    if (!res.success) return;
     setMarkPaidModal({ open: false, payoutId: "", transferRef: "", note: "" });
-    loadRows();
+    await loadRows();
   };
 
   const handleReject = async (id) => {
@@ -490,12 +575,14 @@ export function AdminPayouts() {
     const note = String(rejectModal.note || "").trim();
     const mergedReason = note ? `${standardizedReason}. Ghi chú: ${note}` : standardizedReason;
     setBusyId(rejectModal.payoutId);
-    const res = await adminApi.rejectPayout(rejectModal.payoutId, mergedReason);
+    const res = await tryApi(() => adminApi.rejectPayout(rejectModal.payoutId, mergedReason), {
+      fallback: "Không từ chối được yêu cầu.",
+      successMessage: "Đã từ chối yêu cầu rút tiền.",
+    });
     setBusyId("");
-    if (!res.success) return toast.error(res.error || "Không từ chối được yêu cầu.");
-    toast.success("Đã từ chối yêu cầu rút tiền.");
+    if (!res.success) return;
     setRejectModal({ open: false, payoutId: "", reasonKey: "account_invalid", note: "" });
-    loadRows();
+    await loadRows();
   };
 
   const filteredRows = rows.filter((r) => (filter === "all" ? true : r.status === filter));
@@ -813,30 +900,189 @@ export function AdminPayouts() {
 
 export function AdminBookingDetail() {
   const { id } = useParams();
+  const [booking, setBooking] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [busy, setBusy] = useState(false);
+
+  const load = async () => {
+    setLoading(true);
+    const res = await tryApi(() => adminApi.getBookingById(id), {
+      fallback: "Không tải được booking.",
+    });
+    if (res.success) setBooking(res.booking || null);
+    else setBooking(null);
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    void load();
+  }, [id]);
+
+  const confirmCk = async () => {
+    if (!booking) return;
+    setBusy(true);
+    const res = await tryApi(
+      () => adminApi.confirmBookingTransferPayment(booking._id || booking.id, {}),
+      {
+        fallback: "Không xác nhận được chuyển khoản.",
+        successMessage: "Đã xác nhận chuyển khoản.",
+      },
+    );
+    setBusy(false);
+    if (res.success) await load();
+  };
+
   return (
-    <AdminPanel title={`Lịch hẹn · ${id ?? "—"}`} description="Chi tiết, review, lịch sử đổi lịch/hủy lịch.">
-      <Link to="/admin/bookings" className="text-sm font-semibold text-violet-700 hover:underline">
+    <AdminPanel title="Chi tiết lịch hẹn" description="Thông tin booking và xác nhận CK.">
+      <Link to="/admin/bookings" className="mb-4 inline-block text-sm font-semibold text-violet-700 hover:underline">
         ← Danh sách booking
       </Link>
+      {loading && <p className="text-sm text-slate-500">Đang tải…</p>}
+      {!loading && !booking && <p className="text-sm text-red-600">Không tìm thấy booking.</p>}
+      {booking && (
+        <motion.div className="rounded-2xl border border-slate-200 bg-white p-6 space-y-3 text-sm">
+          <p className="text-lg font-black">{booking.position || booking.sessionType || "Buổi mentor"}</p>
+          <p>Trạng thái: <strong>{statusLabel(booking.status)}</strong> · TT: {statusLabel(booking.paymentStatus)}</p>
+          <p>Học viên: {booking.userId?.name || "—"} ({booking.userId?.email || "—"})</p>
+          <p>Cố vấn: {booking.mentorId?.name || booking.mentorId?.userId?.name || "—"}</p>
+          <p>Ngày: {booking.date} · {booking.timeSlot}</p>
+          <p>Tổng: {vnd(booking.totalAmount || booking.price)}</p>
+          <p>Mã CK: {booking.paymentRef || booking.orderNum || "—"}</p>
+          {booking.notes && <p className="text-slate-600 whitespace-pre-wrap">Ghi chú: {booking.notes}</p>}
+          {booking.paymentMethod === "transfer" && booking.paymentStatus === "pending" && (
+            <button
+              type="button"
+              disabled={busy}
+              onClick={confirmCk}
+              className="rounded-xl bg-emerald-600 px-4 py-2 text-sm font-bold text-white disabled:opacity-50"
+            >
+              Xác nhận đã nhận CK
+            </button>
+          )}
+        </motion.div>
+      )}
     </AdminPanel>
   );
 }
 
 export function AdminContentQuestions() {
+  const [stats, setStats] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    void (async () => {
+      setLoading(true);
+      const res = await tryApi(() => adminApi.getContentStats(), {
+        fallback: "Không tải được thống kê nội dung.",
+        silent: true,
+      });
+      if (res.success) setStats(res.content || null);
+      setLoading(false);
+    })();
+  }, []);
+
   return (
     <AdminPanel
-      title="Nội dung — Câu hỏi phỏng vấn mẫu"
-      description="Theo ngành — CRUD câu hỏi, quản lý categories."
-    />
+      title="Nội dung — Câu hỏi phỏng vấn AI"
+      description="Câu hỏi được sinh động theo CV/JD khi học viên bắt đầu phiên."
+    >
+      {loading ? (
+        <p className="text-sm text-slate-500">Đang tải…</p>
+      ) : (
+        <div className="space-y-4">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {[
+              { label: "Phiên phỏng vấn AI", value: stats?.interviewSessions ?? 0 },
+              { label: "Đã hoàn thành", value: stats?.completedInterviews ?? 0 },
+              { label: "Phân tích CV", value: stats?.cvAnalyses ?? 0 },
+              { label: "Khóa đã xuất bản", value: stats?.publishedCourses ?? 0 },
+            ].map((card) => (
+              <div key={card.label} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                <p className="text-2xl font-black text-violet-700">{card.value}</p>
+                <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">{card.label}</p>
+              </div>
+            ))}
+          </div>
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700 space-y-2">
+            <p>
+              <span className="font-semibold">Nguồn câu hỏi:</span>{" "}
+              {stats?.aiQuestionSource || "POST /api/interviews/generate-questions"}
+            </p>
+            <p>
+              Mỗi phiên tạo bộ câu hỏi riêng qua LLM (OpenAI-compatible). Không dùng ngân hàng câu hỏi tĩnh
+              — phù hợp JD/CV thực tế của từng học viên.
+            </p>
+            <p className="text-xs text-slate-500">
+              CRUD câu hỏi mẫu theo ngành có thể bổ sung sau; hiện ưu tiên chất lượng phỏng vấn cá nhân hoá.
+            </p>
+          </div>
+        </div>
+      )}
+    </AdminPanel>
   );
 }
 
 export function AdminContentVideos() {
+  const [courses, setCourses] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    void (async () => {
+      setLoading(true);
+      const res = await tryApi(() => adminApi.getCourseMediaOverview(), {
+        fallback: "Không tải được danh sách video khóa học.",
+      });
+      if (res.success) setCourses(res.courses || []);
+      setLoading(false);
+    })();
+  }, []);
+
+  const totals = courses.reduce(
+    (acc, c) => {
+      acc.lessons += Number(c.lessonCount || 0);
+      acc.videos += Number(c.videoCount || 0);
+      return acc;
+    },
+    { lessons: 0, videos: 0 },
+  );
+
   return (
     <AdminPanel
-      title="Nội dung — Video HR (Cloudinary)"
-      description="Danh sách video HR, upload/replace, quản lý URL."
-    />
+      title="Nội dung — Video khóa học"
+      description="Video bài học do mentor upload qua POST /api/upload/course-video."
+    >
+      {loading ? (
+        <p className="text-sm text-slate-500">Đang tải…</p>
+      ) : (
+        <div className="space-y-4">
+          <p className="text-sm text-slate-600">
+            Tổng: <strong>{courses.length}</strong> khóa · <strong>{totals.videos}</strong> bài có video /{" "}
+            <strong>{totals.lessons}</strong> bài học
+          </p>
+          {courses.length === 0 ? (
+            <p className="text-sm text-slate-500">Chưa có khóa học xuất bản với video.</p>
+          ) : (
+            <div className="space-y-3">
+              {courses.map((c) => (
+                <div key={c._id} className="rounded-2xl border border-slate-200 bg-white p-4 text-sm">
+                  <p className="font-bold text-slate-900">{c.title}</p>
+                  <p className="mt-1 text-xs text-slate-500">
+                    Mentor: {c.mentorName} · Trạng thái: {statusLabel(c.status)} · Video: {c.videoCount}/
+                    {c.lessonCount}
+                  </p>
+                  {c.thumbnail ? (
+                    <p className="mt-2 text-xs text-slate-500 truncate">Thumbnail: {c.thumbnail}</p>
+                  ) : null}
+                </div>
+              ))}
+            </div>
+          )}
+          <p className="text-xs text-slate-500">
+            Avatar phỏng vấn AI (D-ID) cấu hình trong mã nguồn phòng phỏng vấn; route demo: /avatar-demo.
+          </p>
+        </div>
+      )}
+    </AdminPanel>
   );
 }
 
@@ -847,29 +1093,35 @@ export function AdminContentCourses() {
 
   const loadPending = async () => {
     setLoading(true);
-    const res = await adminApi.getPendingCourses();
+    const res = await tryApi(() => adminApi.getPendingCourses(), {
+      fallback: "Không tải được khóa học chờ duyệt.",
+    });
     if (res.success) setItems(res.courses || []);
     setLoading(false);
   };
 
   useEffect(() => {
-    loadPending();
+    void loadPending();
   }, []);
 
   const handleApprove = async (id) => {
     setBusyId(id);
-    const res = await adminApi.approveCourse(id);
+    const res = await tryApi(() => adminApi.approveCourse(id), {
+      fallback: "Không duyệt được khóa học.",
+      successMessage: "Đã duyệt khóa học.",
+    });
     setBusyId("");
-    if (!res.success) return;
-    await loadPending();
+    if (res.success) await loadPending();
   };
 
   const handleReject = async (id) => {
     setBusyId(id);
-    const res = await adminApi.rejectCourse(id);
+    const res = await tryApi(() => adminApi.rejectCourse(id), {
+      fallback: "Không từ chối được khóa học.",
+      successMessage: "Đã từ chối khóa học.",
+    });
     setBusyId("");
-    if (!res.success) return;
-    await loadPending();
+    if (res.success) await loadPending();
   };
 
   return (
@@ -930,42 +1182,278 @@ export function AdminContentCourses() {
 }
 
 export function AdminAnalytics() {
+  const [stats, setStats] = useState(null);
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    (async () => {
+      setLoading(true);
+      const [sRes, uRes] = await Promise.all([adminApi.getStats(), adminApi.getUsers()]);
+      if (sRes.success) setStats(sRes.stats);
+      if (uRes.success) setUsers(uRes.users || []);
+      setLoading(false);
+    })();
+  }, []);
+
+  const planCounts = users.reduce(
+    (acc, u) => {
+      const p = u.plan || "free";
+      acc[p] = (acc[p] || 0) + 1;
+      return acc;
+    },
+    { free: 0, starter_pro: 0, elite_pro: 0 },
+  );
+
   return (
-    <AdminPanel
-      title="Thống kê & báo cáo"
-      description="Tổng quan: người dùng, cố vấn, doanh thu, lượt phỏng vấn AI, lượt phân tích CV, lịch hẹn hoàn thành."
-      bullets={[
-        "Biểu đồ: new users, revenue, pie Free/Pro/Elite, AI usage, booking trends",
-        "Top cố vấn và người dùng nổi bật",
-        "Export CSV/PDF",
-      ]}
-    />
+    <AdminPanel title="Thống kê & báo cáo" description="Tổng quan nền tảng từ API admin.">
+      {loading ? (
+        <p className="text-sm text-slate-500">Đang tải…</p>
+      ) : (
+        <motion.div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {[
+            { label: "Khách hàng", value: stats?.users ?? 0 },
+            { label: "Cố vấn", value: stats?.mentors ?? 0 },
+            { label: "Lịch hẹn", value: stats?.bookings ?? 0 },
+            { label: "Gói Pro", value: planCounts.starter_pro ?? 0 },
+            { label: "Gói Elite", value: planCounts.elite_pro ?? 0 },
+            { label: "Free", value: planCounts.free ?? 0 },
+          ].map((card) => (
+            <motion.div key={card.label} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+              <p className="text-3xl font-black text-violet-700">{card.value}</p>
+              <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">{card.label}</p>
+            </motion.div>
+          ))}
+        </motion.div>
+      )}
+    </AdminPanel>
   );
 }
 
 export function AdminSystemSettings() {
+  const [overview, setOverview] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    void (async () => {
+      setLoading(true);
+      const res = await tryApi(() => adminApi.getSystemOverview(), {
+        fallback: "Không tải được cấu hình hệ thống.",
+        silent: true,
+      });
+      if (res.success) setOverview(res.overview || null);
+      setLoading(false);
+    })();
+  }, []);
+
   return (
-    <AdminPanel
-      title="Cài đặt hệ thống"
-      description="Giá gói Pro/Elite, discount codes, % platform fee booking, Gemini quota, Cloudinary, email templates, roles, audit log."
-    />
+    <AdminPanel title="Cài đặt hệ thống" description="Tổng quan cấu hình auth, gói cước và dịch vụ.">
+      {loading ? (
+        <p className="text-sm text-slate-500">Đang tải…</p>
+      ) : overview ? (
+        <div className="space-y-4">
+          <div className="rounded-2xl border border-slate-200 bg-white p-4">
+            <p className="font-bold text-slate-900">Xác thực & phiên</p>
+            <ul className="mt-2 space-y-1 text-sm text-slate-700">
+              <li>Access token TTL: <code>{overview.auth?.accessTokenTtl}</code></li>
+              <li>Refresh token: <code>{overview.auth?.refreshTokenDays}</code> ngày</li>
+              <li>Blacklist JTI khi logout: {overview.auth?.jtiBlacklistOnLogout ? "Bật" : "Tắt"}</li>
+              <li>Blacklist JTI khi refresh: {overview.auth?.jtiBlacklistOnRefresh ? "Bật" : "Tắt"}</li>
+              <li>Fingerprint phiên (prod strict): {overview.auth?.sessionFingerprintEnforced ? "Bật" : "Tắt"}</li>
+            </ul>
+          </div>
+          <div className="rounded-2xl border border-slate-200 bg-white p-4">
+            <p className="font-bold text-slate-900">Gói cước & quota</p>
+            <div className="mt-2 overflow-x-auto">
+              <table className="min-w-full text-sm">
+                <thead>
+                  <tr className="text-left text-xs uppercase text-slate-500">
+                    <th className="py-2 pr-4">Gói</th>
+                    <th className="py-2 pr-4">CV/tháng</th>
+                    <th className="py-2">Phỏng vấn AI</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(overview.plans || []).map((p) => (
+                    <tr key={p.key} className="border-t border-slate-100">
+                      <td className="py-2 pr-4 font-medium">{p.label || p.key}</td>
+                      <td className="py-2 pr-4">{p.cvAnalysisLimit}</td>
+                      <td className="py-2">{p.interviewLimit}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
+            <p className="font-bold text-slate-900">Thanh toán</p>
+            <p className="mt-1">{overview.payments?.note}</p>
+            <p className="mt-2 text-xs">Kênh chính: {overview.payments?.primaryChannel}</p>
+          </div>
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm">
+            <p className="font-bold text-slate-900">Dịch vụ tích hợp</p>
+            <p className="mt-1">CV analyzer: {overview.services?.cvAnalyzer}</p>
+            <p>LLM phỏng vấn: {overview.services?.llm}</p>
+            <p className="mt-2 font-bold text-slate-900">MongoDB</p>
+            <pre className="mt-1 overflow-auto text-xs">{JSON.stringify(overview.mongo, null, 2)}</pre>
+          </div>
+        </div>
+      ) : (
+        <p className="text-sm text-red-600">Không tải được cấu hình.</p>
+      )}
+    </AdminPanel>
   );
 }
 
 export function AdminReviews() {
+  const [reviews, setReviews] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    void (async () => {
+      setLoading(true);
+      const res = await tryApi(() => adminApi.getReviews(), {
+        fallback: "Không tải được danh sách đánh giá.",
+      });
+      if (res.success) setReviews(res.reviews || []);
+      setLoading(false);
+    })();
+  }, []);
+
   return (
-    <AdminPanel
-      title="Đánh giá cố vấn"
-      description="Danh sách review — ẩn/xóa, reply với tư cách admin."
-    />
+    <AdminPanel title="Đánh giá cố vấn" description="Danh sách review công khai trên hệ thống.">
+      {loading && <p className="text-sm text-slate-500">Đang tải…</p>}
+      {!loading && reviews.length === 0 && (
+        <p className="text-sm text-slate-500">Chưa có đánh giá.</p>
+      )}
+      <div className="space-y-3">
+        {reviews.map((r) => (
+          <motion.div key={r._id} className="rounded-2xl border border-slate-200 bg-white p-4 text-sm">
+            <p className="font-bold text-slate-900">★ {r.rating}/5</p>
+            <p className="mt-1 text-slate-700">{r.comment || "(Không có nội dung)"}</p>
+            <p className="mt-2 text-xs text-slate-500">
+              User: {r.userId?.name || r.userId} · Mentor: {r.mentorId?.name || r.mentorId}
+            </p>
+          </motion.div>
+        ))}
+      </div>
+    </AdminPanel>
   );
 }
 
 export function AdminSupport() {
+  const [reports, setReports] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [busyId, setBusyId] = useState("");
+
+  const loadReports = async () => {
+    setLoading(true);
+    const res = await tryApi(() => adminApi.getReports(), {
+      fallback: "Không tải được danh sách báo cáo.",
+    });
+    if (res.success) setReports(res.reports || []);
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    void loadReports();
+  }, []);
+
+  const updateStatus = async (reportId, status) => {
+    setBusyId(reportId);
+    const res = await tryApi(
+      () => adminApi.updateReportStatus(reportId, { status }),
+      {
+        fallback: "Không cập nhật được báo cáo.",
+        successMessage: status === "resolved" ? "Đã xử lý báo cáo" : status === "dismissed" ? "Đã bác bỏ báo cáo" : "Đã cập nhật",
+      },
+    );
+    setBusyId("");
+    if (res.success) {
+      setReports((prev) =>
+        prev.map((r) => (String(r._id) === String(reportId) ? { ...r, ...(res.report || {}), status } : r)),
+      );
+    }
+  };
+
+  const reasonLabel = {
+    late: "Trễ hẹn",
+    unprofessional: "Thiếu chuyên nghiệp",
+    inappropriate: "Không phù hợp",
+    no_show: "Không tham gia",
+    fraud: "Gian lận",
+    other: "Khác",
+  };
+
+  const statusBadge = (status) => {
+    if (status === "resolved") return "bg-emerald-500/10 text-emerald-800 border border-emerald-400/25";
+    if (status === "dismissed") return "bg-slate-100 text-slate-600 border border-slate-200";
+    if (status === "reviewing") return "bg-amber-500/10 text-amber-900 border border-amber-400/25";
+    return "bg-orange-500/10 text-orange-900 border border-orange-400/25";
+  };
+
   return (
-    <AdminPanel
-      title="Hỗ trợ & khiếu nại"
-      description="Phiếu hỗ trợ (người dùng/cố vấn/lỗi), tranh chấp lịch hẹn, yêu cầu hoàn tiền."
-    />
+    <AdminPanel title="Hỗ trợ & khiếu nại" description="Báo cáo từ người dùng (mentor, booking, khóa học…).">
+      {loading && <p className="text-sm text-slate-500">Đang tải…</p>}
+      {!loading && reports.length === 0 && (
+        <p className="text-sm text-slate-500">Chưa có báo cáo nào.</p>
+      )}
+      <motion.div className="space-y-3">
+        {reports.map((rep) => {
+          const pending = rep.status === "pending" || rep.status === "reviewing";
+          const busy = busyId === rep._id;
+          return (
+            <motion.div key={rep._id} className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <p className="font-bold text-slate-900">
+                  {reasonLabel[rep.reason] || rep.reason} · {rep.targetType}
+                </p>
+                <span className={`inline-flex px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${statusBadge(rep.status)}`}>
+                  {rep.status || "pending"}
+                </span>
+              </div>
+              <p className="mt-1 text-slate-600 whitespace-pre-wrap">{rep.description}</p>
+              <p className="mt-2 text-xs text-slate-500">
+                Người gửi: {rep.reportedBy?.name || "—"} ({rep.reportedBy?.email || ""}) ·{" "}
+                {rep.createdAt ? new Date(rep.createdAt).toLocaleString("vi-VN") : ""}
+              </p>
+              {rep.resolution && (
+                <p className="mt-2 text-xs text-emerald-800 bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2">
+                  Xử lý: {rep.resolution}
+                </p>
+              )}
+              {pending && (
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    disabled={busy}
+                    onClick={() => updateStatus(rep._id, "reviewing")}
+                    className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-1.5 text-[10px] font-black uppercase tracking-wider text-amber-900 disabled:opacity-50"
+                  >
+                    Đang xử lý
+                  </button>
+                  <button
+                    type="button"
+                    disabled={busy}
+                    onClick={() => updateStatus(rep._id, "resolved")}
+                    className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-[10px] font-black uppercase tracking-wider text-emerald-800 disabled:opacity-50"
+                  >
+                    Đã xử lý
+                  </button>
+                  <button
+                    type="button"
+                    disabled={busy}
+                    onClick={() => updateStatus(rep._id, "dismissed")}
+                    className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-[10px] font-black uppercase tracking-wider text-slate-600 disabled:opacity-50"
+                  >
+                    Bác bỏ
+                  </button>
+                </div>
+              )}
+            </motion.div>
+          );
+        })}
+      </motion.div>
+    </AdminPanel>
   );
 }

@@ -20,6 +20,7 @@ import { getUser, getDisplayName } from "../../utils/auth";
 import { MentorPageShell } from "../../components/mentor/MentorPageShell";
 import { listMentorBookings } from "../../utils/bookingsApi";
 import { fetchMentorDashboard } from "../../utils/mentorApi";
+import { toastApiError } from "../../utils/apiToast";
 
 const DEFAULT_AVATAR = "https://i.pravatar.cc/120?img=12";
 
@@ -293,9 +294,13 @@ export function MentorDashboard() {
       if (bookingsRes.success) {
         const rows = Array.isArray(bookingsRes.bookings) ? bookingsRes.bookings : [];
         setMentorBookings(rows.map(toMentorMeeting));
+      } else if (bookingsRes.error) {
+        toastApiError(bookingsRes.error, "Không tải được lịch hẹn.");
       }
       if (dashboardRes.success) {
         setDashboard(dashboardRes.dashboard || null);
+      } else if (dashboardRes.error) {
+        toastApiError(dashboardRes.error, "Không tải được thống kê dashboard.");
       }
     })();
     return () => {

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { toast } from "sonner";
+import { toastApiError, toastApiSuccess } from "../../utils/apiToast";
 import {
   CalendarOff as CalendarX,
   Clock,
@@ -19,12 +19,12 @@ export function RescheduleModal({ meeting, onClose }) {
     e.preventDefault();
 
     if (!newDate || !newTime) {
-      toast.error("Vui lòng chọn ngày và giờ mới");
+      toastApiError("Vui lòng chọn ngày và giờ mới");
       return;
     }
 
     if (!reason.trim()) {
-      toast.error("Vui lòng nhập lý do dời lịch");
+      toastApiError("Vui lòng nhập lý do dời lịch");
       return;
     }
 
@@ -32,14 +32,13 @@ export function RescheduleModal({ meeting, onClose }) {
     const newDateTime = new Date(`${newDate}T${newTime}`);
     const now = new Date();
     if (newDateTime <= now) {
-      toast.error("Thời gian mới phải sau thời điểm hiện tại");
+      toastApiError("Thời gian mới phải sau thời điểm hiện tại");
       return;
     }
 
     // Success
-    toast.success(
+    toastApiSuccess(
       `Đã gửi yêu cầu dời lịch đến ${meeting.mentee.name}. Mentee sẽ nhận thông báo qua email và có thể chấp nhận hoặc đề xuất thời gian khác.`,
-      { duration: 6000 }
     );
 
     // Reset and close

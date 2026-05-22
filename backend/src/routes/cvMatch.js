@@ -1,6 +1,7 @@
 import { Router } from "express";
 import multer from "multer";
 import { authJwt } from "../middleware/authJwt.js";
+import { asyncHandler } from "../middleware/asyncHandler.js";
 
 export const cvMatchRouter = Router();
 
@@ -8,11 +9,14 @@ const upload = multer({ storage: multer.memoryStorage() });
 
 const CV_ANALYZER_URL = process.env.CV_ANALYZER_URL || "http://localhost:8000";
 
-async function proxyToAnalyzer(path, files, res) {
+async function proxyToAnalyzer(path, files, res, extraFields = {}) {
   const form = new FormData();
   for (const [field, file] of Object.entries(files)) {
     const blob = new Blob([file.buffer], { type: "application/pdf" });
     form.append(field, blob, file.originalname);
+  }
+  for (const [key, value] of Object.entries(extraFields)) {
+    if (value != null && value !== "") form.append(key, String(value));
   }
 
   let response;
@@ -51,12 +55,12 @@ cvMatchRouter.post(
   "/analyze",
   authJwt,
   upload.fields([{ name: "resume", maxCount: 1 }, { name: "jd", maxCount: 1 }]),
-  async (req, res) => {
+  asyncHandler(async (req, res) => {
     const resume = req.files?.["resume"]?.[0];
     const jd = req.files?.["jd"]?.[0];
     if (!resume || !jd) return res.status(400).json({ success: false, error: "Cần upload cả resume và jd (PDF)" });
     await proxyToAnalyzer("/analyze", { resume, jd }, res);
-  }
+  }),
 );
 
 // POST /api/cv/analyze/full — skill matching + Ollama scoring
@@ -64,12 +68,12 @@ cvMatchRouter.post(
   "/analyze/full",
   authJwt,
   upload.fields([{ name: "resume", maxCount: 1 }, { name: "jd", maxCount: 1 }]),
-  async (req, res) => {
+  asyncHandler(async (req, res) => {
     const resume = req.files?.["resume"]?.[0];
     const jd = req.files?.["jd"]?.[0];
     if (!resume || !jd) return res.status(400).json({ success: false, error: "Cần upload cả resume và jd (PDF)" });
     await proxyToAnalyzer("/analyze/full", { resume, jd }, res);
-  }
+  }),
 );
 
 // POST /api/cv/analyze/suggestions — full pipeline + suggestions
@@ -77,10 +81,23 @@ cvMatchRouter.post(
   "/analyze/suggestions",
   authJwt,
   upload.fields([{ name: "resume", maxCount: 1 }, { name: "jd", maxCount: 1 }]),
-  async (req, res) => {
+  asyncHandler(async (req, res) => {
     const resume = req.files?.["resume"]?.[0];
     const jd = req.files?.["jd"]?.[0];
     if (!resume || !jd) return res.status(400).json({ success: false, error: "Cần upload cả resume và jd (PDF)" });
     await proxyToAnalyzer("/analyze/suggestions", { resume, jd }, res);
-  }
+  }),
+);
+
+// POST /api/cv/analyze/field — CV + ngành nghề (không JD)
+cvMatchRouter.post(
+  "/analyze/field",
+  authJwt,
+  upload.fields([{ name: "resume", maxCount: 1 }]),
+  asyncHandler(async (req, res) => {
+    const resume = req.files?.["resume"]?.[0];
+    const field = req.body?.field || "IT / Công nghệ";
+    if (!resume) return res.status(400).json({ success: false, error: "Cần upload CV (PDF)" });
+    await proxyToAnalyzer("/analyze/field", { resume }, res, { field });
+  }),
 );

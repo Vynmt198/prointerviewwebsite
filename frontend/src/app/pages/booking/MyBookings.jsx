@@ -7,6 +7,7 @@ import { listBookings } from "../../utils/bookingsApi";
 import { apiBookingToLocal } from "../../utils/bookingMappers";
 import { parseDateMs } from "../../utils/bookings";
 import { isLoggedIn } from "../../utils/auth";
+import { toastApiError } from "../../utils/apiToast";
 
 const TABS = [
   { id: "upcoming", label: "Sắp tới" },
@@ -68,16 +69,26 @@ export function MyBookings() {
     }
     setLoading(true);
     setError("");
-    const res = await listBookings();
-    setLoading(false);
-    if (!res.success) {
-      setError(res.error || "Không tải được danh sách lịch hẹn.");
+    try {
+      const res = await listBookings();
+      if (!res.success) {
+        const msg = res.error || "Không tải được danh sách lịch hẹn.";
+        setError(msg);
+        toastApiError(msg);
+        setRows([]);
+        return;
+      }
+      const mapped = (res.bookings || []).map(apiBookingToLocal).filter(Boolean);
+      mapped.sort((a, b) => parseDateMs(b.date, b.time) - parseDateMs(a.date, a.time));
+      setRows(mapped);
+    } catch {
+      const msg = "Lỗi kết nối khi tải lịch hẹn.";
+      setError(msg);
+      toastApiError(msg);
       setRows([]);
-      return;
+    } finally {
+      setLoading(false);
     }
-    const mapped = (res.bookings || []).map(apiBookingToLocal).filter(Boolean);
-    mapped.sort((a, b) => parseDateMs(b.date, b.time) - parseDateMs(a.date, a.time));
-    setRows(mapped);
   }, []);
 
   useEffect(() => {

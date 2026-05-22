@@ -128,7 +128,7 @@ Mỗi domain một file trong **`src/models/`**. Import chung: **`src/models/ind
 | `CVAnalysis.js` | `cv_analyses` | Phân tích CV / JD |
 | `InterviewSession.js` | `interview_sessions` | Phiên phỏng vấn AI |
 | `Course.js` | `courses` | Khóa học |
-| `Enrollment.js` | `enrollments` | Ghi danh khóa học |
+| `Enrollment.js` | `enrollments` | Ghi danh; tiến độ; CK; `lessonNotes[]` ghi chú học viên theo `lessonId` |
 | `Review.js` | `reviews` | Đánh giá mentor/course |
 | `Notification.js` | `notifications` | Thông báo |
 | `Payment.js` | `payments` | Thanh toán |

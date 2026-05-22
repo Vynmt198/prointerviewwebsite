@@ -19,7 +19,10 @@
     "db:normalize-transfer-refs": "node src/scripts/normalizeTransferRefs.js",
     "db:migrate-cv-analysis": "node src/scripts/migrate-cv-analysis.js",
     "db:migrate-cv-analysis:dry": "node src/scripts/migrate-cv-analysis.js --dry-run",
-    "test": "node --test src/utils/*.test.js",
+    "test": "npm run test:node && npm run test:dto && npm run test:python-cv",
+    "test:node": "node --test src/utils/apiErrors.test.js src/utils/cvAnalysisValidation.test.js src/utils/planKeys.test.js src/utils/bookingSchedule.test.js src/utils/securityGuards.test.js src/services/bookingsDate.test.js src/integration/cv.integration.test.js src/integration/cvMatch.integration.test.js src/integration/payments-transfer.integration.test.js src/integration/security.integration.test.js",
+    "test:payments": "node --test src/integration/payments-transfer.integration.test.js",
+    "test:python-cv": "cd ../cv_jd_matching && python -m unittest discover -s tests -p test_*.py -v",
     "test:dto": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --testPathPatterns=__tests__"
   },
   "jest": {
@@ -38,6 +41,8 @@
     "express": "^5.2.1",
     "express-rate-limit": "^7.5.1",
     "google-auth-library": "^9.15.1",
+    "helmet": "^8.1.0",
+    "hpp": "^0.2.3",
     "joi": "^18.2.1",
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^9.4.1",
@@ -47,6 +52,7 @@
   "devDependencies": {
     "cross-env": "^10.1.0",
     "jest": "^30.4.2",
+    "mongodb-memory-server": "^11.1.0",
     "nodemon": "^3.1.14"
   }
 }

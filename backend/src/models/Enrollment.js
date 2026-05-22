@@ -12,6 +12,15 @@ const enrollmentSchema = new Schema(
     progressPercent: { type: Number, default: 0, min: 0, max: 100 },
     lastAccessedAt: { type: Date },
 
+    /** Ghi chú học viên theo bài (CourseLearning). */
+    lessonNotes: [
+      {
+        lessonId: { type: Schema.Types.ObjectId, required: true },
+        content: { type: String, default: "" },
+        updatedAt: { type: Date, default: Date.now },
+      },
+    ],
+
     isCompleted: { type: Boolean, default: false },
     completedAt: { type: Date },
     certificateUrl: { type: String, default: "" },

@@ -14,7 +14,7 @@ import {
   MessageSquare
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
-import { toast } from "sonner";
+import { toastApiError, toastApiSuccess } from "../../utils/apiToast";
 import { MentorPageShell } from "../../components/mentor/MentorPageShell";
 import { fetchMentorBookingById, updateMentorNotes } from "../../utils/bookingsApi";
 
@@ -37,12 +37,19 @@ export function MentorSessionFeedback() {
   useEffect(() => {
     let active = true;
     (async () => {
-      const res = await fetchMentorBookingById(sessionId);
-      if (!active) return;
-      if (res.success && res.booking) {
-        setBooking(res.booking);
+      try {
+        const res = await fetchMentorBookingById(sessionId);
+        if (!active) return;
+        if (res.success && res.booking) {
+          setBooking(res.booking);
+        } else {
+          toastApiError(res.error, "Không tải được thông tin buổi học.");
+        }
+      } catch {
+        if (active) toastApiError("Lỗi kết nối khi tải buổi học.");
+      } finally {
+        if (active) setLoading(false);
       }
-      setLoading(false);
     })();
     return () => { active = false; };
   }, [sessionId]);
@@ -64,16 +71,16 @@ ${generalNotes || "Không có ghi chú thêm."}
       const res = await updateMentorNotes(sessionId, { notes: combinedNotes });
       
       if (res.success) {
+        toastApiSuccess("Đã lưu phản hồi buổi học.");
         setShowSuccess(true);
         setTimeout(() => {
           navigate("/mentor/schedule");
         }, 3000);
       } else {
-        toast.error(res.error || "Có lỗi xảy ra khi lưu đánh giá.");
+        toastApiError(res.error, "Có lỗi xảy ra khi lưu đánh giá.");
       }
-    } catch (error) {
-      console.error("Submit error:", error);
-      toast.error("Lỗi kết nối máy chủ khi gửi báo cáo.");
+    } catch {
+      toastApiError("Lỗi kết nối máy chủ khi gửi báo cáo.");
     } finally {
       setSaving(false);
     }

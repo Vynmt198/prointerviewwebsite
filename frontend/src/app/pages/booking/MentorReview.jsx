@@ -12,7 +12,7 @@ import {
   User,
   AlertCircle
 } from "lucide-react";
-import { toast } from "sonner";
+import { toastApiError, tryApi } from "../../utils/apiToast";
 import { isLoggedIn } from "../../utils/auth";
 import { submitReview } from "../../utils/reviewsApi";
 import { fetchBookingById } from "../../utils/bookingsApi";
@@ -57,27 +57,28 @@ export function MentorReview() {
       setLoading(true);
       setLoadError("");
       setSession(null);
-      try {
-        if (!isLoggedIn()) {
-          setLoadError("Vui lòng đăng nhập để đánh giá buổi phỏng vấn.");
-          return;
-        }
-        if (!isMongoObjectId(sessionId)) {
-          setLoadError("Mã buổi hẹn không hợp lệ.");
-          return;
-        }
-        const res = await fetchBookingById(sessionId);
-        if (res.success && res.booking) {
-          setSession(apiBookingToLocal(res.booking));
-        } else {
-          setLoadError(res.error || "Không tải được buổi hẹn.");
-        }
-      } catch (err) {
-        console.error("Failed to load session:", err);
-        setLoadError("Lỗi kết nối máy chủ.");
-      } finally {
+      if (!isLoggedIn()) {
+        setLoadError("Vui lòng đăng nhập để đánh giá buổi phỏng vấn.");
         setLoading(false);
+        return;
       }
+      if (!isMongoObjectId(sessionId)) {
+        setLoadError("Mã buổi hẹn không hợp lệ.");
+        setLoading(false);
+        return;
+      }
+      const res = await tryApi(() => fetchBookingById(sessionId), {
+        fallback: "Không tải được buổi hẹn.",
+        silent: true,
+      });
+      if (res.success && res.booking) {
+        setSession(apiBookingToLocal(res.booking));
+      } else {
+        const msg = res.error || "Không tải được buổi hẹn.";
+        setLoadError(msg);
+        toastApiError(msg);
+      }
+      setLoading(false);
     };
     loadSession();
   }, [sessionId]);
@@ -87,28 +88,20 @@ export function MentorReview() {
   const handleSubmit = async () => {
     if (!canSubmit || !session) return;
     setSubmitting(true);
-    
-    try {
-      const res = await submitReview({
-        targetType: "mentor",
-        targetId: session.mentorId,
-        bookingId: session.backendId || session.sessionId,
-        rating: overallRating,
-        comment: text,
-        tags: highlights
-      });
-
-      if (res.success) {
-        toast.success("Cảm ơn bạn đã gửi đánh giá!");
-        setSubmitted(true);
-      } else {
-        toast.error(res.error || "Không thể gửi đánh giá.");
-      }
-    } catch (error) {
-      toast.error("Lỗi kết nối máy chủ.");
-    } finally {
-      setSubmitting(false);
-    }
+    const res = await tryApi(
+      () =>
+        submitReview({
+          targetType: "mentor",
+          targetId: session.mentorId,
+          bookingId: session.backendId || session.sessionId,
+          rating: overallRating,
+          comment: text,
+          tags: highlights,
+        }),
+      { fallback: "Không thể gửi đánh giá.", successMessage: "Cảm ơn bạn đã gửi đánh giá!" },
+    );
+    setSubmitting(false);
+    if (res.success) setSubmitted(true);
   };
   if (loading) {
     return (

@@ -2,19 +2,22 @@ import { useEffect, useState } from "react";
 import { RouterProvider } from "react-router";
 import { Toaster } from "./components/ui/sonner";
 import { router } from "./routes";
-import { restoreSession } from "./utils/auth";
+import { restoreSession, hasAuthCredentials, isProtectedAppPath } from "./utils/auth";
+
+const AUTH_STORAGE_KEYS = new Set([
+  "prointerview_auth",
+  "prointerview_access_token",
+  "prointerview_refresh_token",
+]);
 
 export default function App() {
   // Khôi phục phiên JWT (/api/auth/me) sau khi refresh trang
-  // after a page refresh. We show nothing until the check is done to avoid
-  // a flash where protected pages redirect the user away unnecessarily.
   const [sessionChecked, setSessionChecked] = useState(false);
 
   useEffect(() => {
     // VNPay FIX: Nếu thấy tham số vnp_ ở URL gốc (trước dấu #), chuyển hướng vào router nội bộ
     if (window.location.search.includes("vnp_ResponseCode")) {
       const search = window.location.search;
-      // Chuyển params vào sau dấu # để HashRouter nhận diện được
       window.location.href = window.location.origin + window.location.pathname + "#/payment-return" + search;
       return;
     }
@@ -23,6 +26,22 @@ export default function App() {
       .catch((err) => console.log("restoreSession error:", err))
       .finally(() => setSessionChecked(true));
   }, []);
+
+  // Tab khác đăng xuất → tab này cũng về login nếu đang ở trang cần auth
+  useEffect(() => {
+    if (!sessionChecked) return undefined;
+    const onStorage = (event) => {
+      if (!AUTH_STORAGE_KEYS.has(event.key) || event.newValue != null) return;
+      if (hasAuthCredentials()) return;
+      const hash = window.location.hash.replace(/^#/, "") || "/";
+      const path = hash.split("?")[0] || "/";
+      if (isProtectedAppPath(path)) {
+        window.location.hash = `#/login?redirect=${encodeURIComponent(path)}`;
+      }
+    };
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, [sessionChecked]);
 
   if (!sessionChecked) {
     return (

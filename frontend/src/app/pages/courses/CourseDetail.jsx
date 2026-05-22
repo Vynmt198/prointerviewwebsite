@@ -36,7 +36,7 @@ import {
 import { fetchCourseById, submitReview } from "../../utils/courseApi";
 import { enrollmentApi } from "../../utils/enrollmentApi";
 import { getUser } from "../../utils/auth";
-import { toast } from "sonner";
+import { toastApiError, toastApiSuccess } from "../../utils/apiToast";
 import { requireLoginNavigate } from "../../utils/authGate";
 import { MentorPageShell } from "../../components/mentor/MentorPageShell";
 import { normalizeCourseStats } from "../../utils/courseStats";
@@ -212,12 +212,12 @@ function ReviewsSection({ course, enrolled }) {
     if (res.success) {
       setSubmitted(true);
       setShowReviewDialog(false);
-      // Reset form
       setReviewRating(0);
       setReviewComment("");
       setHoverRating(0);
+      toastApiSuccess("Đã gửi đánh giá. Cảm ơn bạn!");
     } else {
-      alert(res.error || "Gửi đánh giá thất bại.");
+      toastApiError(res.error, "Gửi đánh giá thất bại.");
     }
   };
 
@@ -556,8 +556,13 @@ export function CourseDetail() {
 
   useEffect(() => {
     if (!id) return;
-    fetchCourseById(id).then((res) => {
-      if (res.success) {
+    let cancelled = false;
+    (async () => {
+      setLoading(true);
+      try {
+        const res = await fetchCourseById(id);
+        if (cancelled) return;
+        if (res.success) {
         const c = res.course;
         const allLessons = (c.modules || []).flatMap((module) =>
           (module.lessons || []).map((lesson) => ({
@@ -595,18 +600,31 @@ export function CourseDetail() {
           updatedAt: c.updatedAt || new Date().toISOString(),
           reviews: [] 
         });
+        } else {
+          toastApiError(res.error, "Không tải được khóa học.");
+        }
+      } catch {
+        if (!cancelled) toastApiError("Lỗi kết nối khi tải khóa học.");
+      } finally {
+        if (!cancelled) setLoading(false);
       }
-      setLoading(false);
-    });
 
-    enrollmentApi.getMyEnrollments().then((res) => {
-      if (res.success) {
-        const row = res.enrollments.find(
-          (e) => String(e.courseId?._id || e.courseId || "") === String(id),
-        );
-        setEnrollmentRow(row || null);
+      try {
+        const enr = await enrollmentApi.getMyEnrollments();
+        if (cancelled) return;
+        if (enr.success) {
+          const row = enr.enrollments.find(
+            (e) => String(e.courseId?._id || e.courseId || "") === String(id),
+          );
+          setEnrollmentRow(row || null);
+        }
+      } catch {
+        /* enrollment optional on load */
       }
-    });
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, [id]);
 
   const hasPaidEnrollment = enrollmentAccessGranted(enrollmentRow);
@@ -618,16 +636,20 @@ export function CourseDetail() {
       navigate(`/checkout?type=course&courseId=${id}&price=${course.price}`);
       return;
     }
-    const res = await enrollmentApi.enroll(id);
-    if (res.success) {
-      setEnrollmentRow(res.enrollment || enrollmentRow);
-      toast.success("Đăng ký khóa học thành công!");
-    } else {
-      if (res.error === "Chưa đăng nhập.") {
-        requireLoginNavigate(navigate, `/courses/${id}`);
-        return;
+    try {
+      const res = await enrollmentApi.enroll(id);
+      if (res.success) {
+        setEnrollmentRow(res.enrollment || enrollmentRow);
+        toastApiSuccess("Đăng ký khóa học thành công!");
+      } else {
+        if (res.error === "Chưa đăng nhập.") {
+          requireLoginNavigate(navigate, `/courses/${id}`);
+          return;
+        }
+        toastApiError(res.error, "Không thể đăng ký khóa học.");
       }
-      toast.error(res.error || "Không thể đăng ký khóa học.");
+    } catch {
+      toastApiError("Lỗi kết nối khi đăng ký khóa học.");
     }
   };
 

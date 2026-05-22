@@ -6,6 +6,7 @@ import { Booking } from "../models/Booking.js";
 import { User } from "../models/User.js";
 import { Enrollment } from "../models/Enrollment.js";
 import { runInTransaction } from "../helpers/dbHelper.js";
+import { planKeyFromSubscriptionMeta } from "../utils/planKeys.js";
 
 const MONGO_ERR = "MongoDB chưa kết nối. Kiểm tra MONGO_URI trong .env.";
 
@@ -413,7 +414,7 @@ export async function recordTransferPending({
 }
 
 function normalizeSubscriptionPlanKey(raw) {
-  return String(raw || "").toLowerCase().includes("elite") ? "elite_pro" : "starter_pro";
+  return planKeyFromSubscriptionMeta(raw) || "starter_pro";
 }
 
 /** Gói Pro/Elite — chuyển khoản: tạo payment pending + mã PI làm nội dung CK. */

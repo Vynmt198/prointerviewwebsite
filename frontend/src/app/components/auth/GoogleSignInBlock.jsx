@@ -44,15 +44,19 @@ export function GoogleSignInBlock({ onError }) {
         return; 
       }
       console.log("[GoogleSignIn] Sending credential to backend...");
-      const result = await loginWithGoogleCredential(cred);
-      console.log("[GoogleSignIn] Backend result:", result);
-      if (!result.success) { 
-        onError?.(result.error); 
-        return; 
+      try {
+        const result = await loginWithGoogleCredential(cred);
+        console.log("[GoogleSignIn] Backend result:", result);
+        if (!result.success) {
+          onError?.(result.error || "Đăng nhập Google thất bại.");
+          return;
+        }
+        const user = getUser();
+        console.log("[GoogleSignIn] Login successful, user:", user?.email);
+        navigate(getPostLoginPath(user, params.get("redirect")));
+      } catch {
+        onError?.("Lỗi kết nối khi đăng nhập Google. Thử lại sau.");
       }
-      const user = getUser();
-      console.log("[GoogleSignIn] Login successful, user:", user?.email);
-      navigate(getPostLoginPath(user, params.get("redirect")));
     },
     [navigate, onError, params],
   );

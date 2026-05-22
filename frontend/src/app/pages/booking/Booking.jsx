@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect } from "react";
+import React, { useMemo, useState, useEffect, useRef } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router";
 import {
   Calendar as CalendarBlank,
@@ -23,7 +23,8 @@ import {
 } from "lucide-react";
 import { fetchMentor, fetchMentorAvailability } from "../../utils/mentorApi";
 import { fetchBookedSlots, fetchRebookCredit } from "../../utils/bookingsApi";
-import { getSuggestedBookingData, getCVAnalysisHistory } from "../../utils/history";
+import { toastApiError } from "../../utils/apiToast";
+import { getSuggestedBookingDataAsync, saveUploadedCV, saveUploadedJD } from "../../utils/history";
 import { MentorPageShell } from "../../components/mentor/MentorPageShell";
 import { avatarSrc } from "../../utils/mediaUrl";
 
@@ -106,14 +107,31 @@ export function Booking() {
       return;
     }
     setMentorLoading(true);
-    
-    Promise.all([fetchMentor(id), fetchBookedSlots(id), fetchMentorAvailability(id)]).then(([m, slotsRes, availability]) => {
-      setMentor(m);
-      setMentorAvailability(availability);
-      if (slotsRes.success) {
-        setBookedSlots(slotsRes.booked);
+
+    (async () => {
+      try {
+        const [m, slotsRes, availability] = await Promise.all([
+          fetchMentor(id),
+          fetchBookedSlots(id),
+          fetchMentorAvailability(id),
+        ]);
+        if (!m) {
+          toastApiError("Không tải được thông tin mentor. Thử lại sau.");
+        }
+        setMentor(m);
+        setMentorAvailability(availability);
+        if (slotsRes.success) {
+          setBookedSlots(slotsRes.booked);
+        } else if (slotsRes.error) {
+          toastApiError(slotsRes.error, "Không tải được lịch đã đặt của mentor.");
+        }
+      } catch {
+        toastApiError("Lỗi kết nối khi tải trang đặt lịch.");
+        setMentor(null);
+      } finally {
+        setMentorLoading(false);
       }
-    }).finally(() => setMentorLoading(false));
+    })();
   }, [id]);
 
   const [step, setStep] = useState(1);
@@ -126,6 +144,8 @@ export function Booking() {
   const [showSmartBanner, setShowSmartBanner] = useState(false);
   const [selectedCvFile, setSelectedCvFile] = useState("");
   const [selectedJdFile, setSelectedJdFile] = useState("");
+  const cvInputRef = useRef(null);
+  const jdInputRef = useRef(null);
   const calendarWeeks = useMemo(() => {
     const now = new Date();
     const thisWeekStart = startOfIsoWeek(now);
@@ -134,10 +154,10 @@ export function Booking() {
   }, []);
 
   useEffect(() => {
-    getCVAnalysisHistory();
-    const suggested = getSuggestedBookingData();
-    setSuggestedData(suggested);
-    if (suggested?.position) setShowSmartBanner(true);
+    void getSuggestedBookingDataAsync().then((suggested) => {
+      setSuggestedData(suggested);
+      if (suggested?.position) setShowSmartBanner(true);
+    });
   }, []);
 
   useEffect(() => {
@@ -145,10 +165,15 @@ export function Booking() {
       setRebookCredit(null);
       return;
     }
-    void fetchRebookCredit(rebookFrom).then((r) => {
-      if (r.success && r.credit?.available) setRebookCredit(r.credit);
-      else setRebookCredit(null);
-    });
+    (async () => {
+      try {
+        const r = await fetchRebookCredit(rebookFrom);
+        if (r.success && r.credit?.available) setRebookCredit(r.credit);
+        else setRebookCredit(null);
+      } catch {
+        setRebookCredit(null);
+      }
+    })();
   }, [rebookFrom]);
 
   const handleUseSmartFill = () => {
@@ -159,7 +184,29 @@ export function Booking() {
     setShowSmartBanner(false);
   };
 
+  const handleCvFileChange = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setSelectedCvFile(file.name);
+    setForm((prev) => ({ ...prev, cv: true }));
+    saveUploadedCV({ name: file.name, size: file.size, type: file.type });
+    e.target.value = "";
+  };
+
+  const handleJdFileChange = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setSelectedJdFile(file.name);
+    setForm((prev) => ({ ...prev, jd: true }));
+    saveUploadedJD({ name: file.name, size: file.size, type: file.type });
+    e.target.value = "";
+  };
+
   const handleProceed = () => {
+    if (!selectedCvFile) {
+      toastApiError("Vui lòng tải lên CV (chọn file PDF/DOC).");
+      return;
+    }
     const params = new URLSearchParams({
       type: "booking",
       mentorId: mentor.id,
@@ -168,8 +215,8 @@ export function Booking() {
       time: selectedTime ?? "",
       position: form.position,
       note: form.note,
-      cvFile: form.cv ? "Nguyen_Tuan_CV.pdf" : "",
-      jdFile: form.jd ? "JD_Target.pdf" : "",
+      cvFile: selectedCvFile,
+      jdFile: form.jd && selectedJdFile ? selectedJdFile : "",
     });
     if (rebookFrom) params.set("rebookFrom", rebookFrom);
     navigate(`/checkout?${params.toString()}`);
@@ -637,23 +684,32 @@ export function Booking() {
                   <label className="mb-2 block text-[10px] font-black uppercase tracking-wider text-slate-500">
                     Tải lên CV <span className="font-normal normal-case text-slate-600">(bắt buộc)</span>
                   </label>
+                  <input
+                    ref={cvInputRef}
+                    type="file"
+                    accept=".pdf,.doc,.docx,application/pdf,application/msword"
+                    className="hidden"
+                    onChange={handleCvFileChange}
+                  />
                   <div
                     role="button"
                     tabIndex={0}
-                    onClick={() => setForm({ ...form, cv: true })}
+                    onClick={() => cvInputRef.current?.click()}
                     onKeyDown={(e) => {
-                      if (e.key === "Enter" || e.key === " ") setForm({ ...form, cv: true });
+                      if (e.key === "Enter" || e.key === " ") cvInputRef.current?.click();
                     }}
                     className={`cursor-pointer rounded-xl border-2 border-dashed p-4 text-center transition-all ${
-                      form.cv
+                      form.cv && selectedCvFile
                         ? "border-lime-400 bg-lime-50"
                         : "border-slate-300 hover:border-violet-300 hover:bg-violet-50/40"
                     }`}
                   >
-                    {form.cv ? (
+                    {form.cv && selectedCvFile ? (
                       <div className="flex items-center justify-center gap-2 text-sm font-bold text-[#2f4200]">
-                        <Check className="h-4 w-4" strokeWidth={2.5} />
-                        Nguyen_Tuan_CV.pdf
+                        <Check className="h-4 w-4 shrink-0" strokeWidth={2.5} />
+                        <span className="truncate max-w-[280px]" title={selectedCvFile}>
+                          {selectedCvFile}
+                        </span>
                       </div>
                     ) : (
                       <div className="flex items-center justify-center gap-3">
@@ -671,23 +727,32 @@ export function Booking() {
                   <label className="mb-2 block text-[10px] font-black uppercase tracking-wider text-slate-500">
                     Tải lên JD <span className="font-normal normal-case text-slate-600">(khuyến khích)</span>
                   </label>
+                  <input
+                    ref={jdInputRef}
+                    type="file"
+                    accept=".pdf,.doc,.docx,application/pdf,application/msword"
+                    className="hidden"
+                    onChange={handleJdFileChange}
+                  />
                   <div
                     role="button"
                     tabIndex={0}
-                    onClick={() => setForm({ ...form, jd: true })}
+                    onClick={() => jdInputRef.current?.click()}
                     onKeyDown={(e) => {
-                      if (e.key === "Enter" || e.key === " ") setForm({ ...form, jd: true });
+                      if (e.key === "Enter" || e.key === " ") jdInputRef.current?.click();
                     }}
                     className={`cursor-pointer rounded-xl border-2 border-dashed p-4 text-center transition-all ${
-                      form.jd
+                      form.jd && selectedJdFile
                         ? "border-lime-400 bg-lime-50"
                         : "border-slate-300 hover:border-violet-300 hover:bg-violet-50/40"
                     }`}
                   >
-                    {form.jd ? (
+                    {form.jd && selectedJdFile ? (
                       <div className="flex items-center justify-center gap-2 text-sm font-bold text-[#2f4200]">
-                        <Check className="h-4 w-4" strokeWidth={2.5} />
-                        Shopee_JD.pdf
+                        <Check className="h-4 w-4 shrink-0" strokeWidth={2.5} />
+                        <span className="truncate max-w-[280px]" title={selectedJdFile}>
+                          {selectedJdFile}
+                        </span>
                       </div>
                     ) : (
                       <div className="flex items-center justify-center gap-3">
@@ -740,21 +805,21 @@ export function Booking() {
                       </span>
                       <span className="font-semibold text-slate-900">Google Meet</span>
                     </div>
-                    {form.cv && (
-                      <div className="flex justify-between">
-                        <span className="text-slate-500">CV</span>
-                        <span className="flex items-center gap-1 font-semibold text-[#2f4200]">
-                          <Check className="h-3 w-3" strokeWidth={3} />
-                          Đã tải lên
+                    {form.cv && selectedCvFile && (
+                      <div className="flex justify-between gap-2">
+                        <span className="text-slate-500 shrink-0">CV</span>
+                        <span className="flex min-w-0 items-center gap-1 font-semibold text-[#2f4200]">
+                          <Check className="h-3 w-3 shrink-0" strokeWidth={3} />
+                          <span className="truncate" title={selectedCvFile}>{selectedCvFile}</span>
                         </span>
                       </div>
                     )}
-                    {form.jd && (
-                      <div className="flex justify-between">
-                        <span className="text-slate-500">JD</span>
-                        <span className="flex items-center gap-1 font-semibold text-[#2f4200]">
-                          <Check className="h-3 w-3" strokeWidth={3} />
-                          Đã tải lên
+                    {form.jd && selectedJdFile && (
+                      <div className="flex justify-between gap-2">
+                        <span className="text-slate-500 shrink-0">JD</span>
+                        <span className="flex min-w-0 items-center gap-1 font-semibold text-[#2f4200]">
+                          <Check className="h-3 w-3 shrink-0" strokeWidth={3} />
+                          <span className="truncate" title={selectedJdFile}>{selectedJdFile}</span>
                         </span>
                       </div>
                     )}
@@ -798,10 +863,10 @@ export function Booking() {
               </div>
               <button
                 type="button"
-                disabled={!form.position || !form.cv}
+                disabled={!form.position || !form.cv || !selectedCvFile}
                 onClick={handleProceed}
                 className={`ml-auto flex items-center gap-2 rounded-2xl px-8 py-4 text-sm font-black uppercase tracking-wide transition-all active:scale-[0.98] ${
-                  form.position && form.cv
+                  form.position && form.cv && selectedCvFile
                     ? "bg-gradient-to-br from-[#6E35E8] to-[#8B4DFF] text-white shadow-[0_8px_28px_rgba(110,53,232,0.35)] hover:shadow-[0_12px_36px_rgba(110,53,232,0.45)]"
                     : "cursor-not-allowed border border-slate-200 bg-slate-100 text-slate-400"
                 }`}

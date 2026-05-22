@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
+import { Link } from "react-router";
 import { Users, Search, Filter, CheckCircle, XCircle, Eye, ShieldCheck, Star } from "lucide-react";
 import { adminApi } from "../../utils/adminApi";
-import { toast } from "sonner";
+import { tryApi } from "../../utils/apiToast";
 
 export function AdminMentors() {
   const [mentors, setMentors] = useState([]);
@@ -10,41 +11,40 @@ export function AdminMentors() {
 
   const loadMentors = async () => {
     setLoading(true);
-    const res = await adminApi.getMentors();
+    const res = await tryApi(() => adminApi.getMentors(), {
+      fallback: "Không thể tải danh sách cố vấn.",
+    });
     if (res.success) {
       const active = res.mentors.filter(
         (m) => m.isActive && m.isVerified && m.userId?.role === "mentor",
       );
       setMentors(active);
-    } else {
-      toast.error(res.error || "Không thể tải danh sách cố vấn.");
     }
     setLoading(false);
   };
 
   useEffect(() => {
-    loadMentors();
+    void loadMentors();
   }, []);
 
   const handleToggleActive = async (mentor) => {
     const nextStatus = !mentor.isActive;
-    const res = await adminApi.updateMentorStatus(mentor._id, nextStatus);
-    if (res.success) {
-      toast.success(nextStatus ? "Đã duyệt cố vấn" : "Đã khóa cố vấn");
-      setMentors((prev) =>
-        prev.map((m) =>
-          m._id === mentor._id
-            ? {
-                ...m,
-                isActive: nextStatus,
-                isVerified: nextStatus ? true : m.isVerified,
-              }
-            : m,
-        ),
-      );
-    } else {
-      toast.error(res.error || "Không thể cập nhật trạng thái cố vấn.");
-    }
+    const res = await tryApi(() => adminApi.updateMentorStatus(mentor._id, nextStatus), {
+      fallback: "Không thể cập nhật trạng thái cố vấn.",
+      successMessage: nextStatus ? "Đã duyệt cố vấn" : "Đã khóa cố vấn",
+    });
+    if (!res.success) return;
+    setMentors((prev) =>
+      prev.map((m) =>
+        m._id === mentor._id
+          ? {
+              ...m,
+              isActive: nextStatus,
+              isVerified: nextStatus ? true : m.isVerified,
+            }
+          : m,
+      ),
+    );
   };
 
   const filtered = mentors.filter(
@@ -185,12 +185,13 @@ export function AdminMentors() {
                         >
                           <ShieldCheck size={16} />
                         </button>
-                        <button
-                          type="button"
-                          className="rounded-xl border border-slate-200 bg-slate-50 p-2 text-slate-500 transition-all hover:bg-slate-100 hover:text-slate-900"
+                        <Link
+                          to={`/admin/mentors/${mentor._id}`}
+                          title="Chi tiết"
+                          className="inline-flex rounded-xl border border-slate-200 bg-slate-50 p-2 text-slate-500 transition-all hover:bg-slate-100 hover:text-slate-900"
                         >
                           <Eye size={16} />
-                        </button>
+                        </Link>
                       </div>
                     </td>
                   </tr>

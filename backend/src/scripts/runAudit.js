@@ -36,7 +36,5 @@ const testsOk = await runNpmTest();
 
 console.log("\n--- Tóm tắt ---\n");
 console.log(`Tests: ${testsOk ? "PASS" : "FAIL"}`);
-if (apiUp) {
-  console.log("Gợi ý: npm run test:e2e:subscription (CK gói E2E)");
-}
+if (apiUp) console.log("API: OK — luồng nghiệp vụ kiểm tra qua UI; test: npm test (backend + Python CV)");
 process.exit(testsOk ? 0 : 1);

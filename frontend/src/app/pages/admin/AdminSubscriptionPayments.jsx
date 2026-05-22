@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Crown, RefreshCw, User, Clock, CheckCircle } from "lucide-react";
-import { toast } from "sonner";
+import { toastApiError, tryApi } from "../../utils/apiToast";
 import { adminApi } from "../../utils/adminApi";
 
 function vnd(n) {
@@ -25,28 +25,28 @@ export function AdminSubscriptionPayments() {
 
   const loadAll = useCallback(async () => {
     setLoading(true);
-    const res = await adminApi.getPendingSubscriptionPayments();
-    if (res.success) {
-      setRows(res.payments || []);
-    } else {
-      toast.error(res.error || "Không tải được danh sách gói cước chờ CK.");
-    }
+    const res = await tryApi(() => adminApi.getPendingSubscriptionPayments(), {
+      fallback: "Không tải được danh sách gói cước chờ CK.",
+    });
+    if (res.success) setRows(res.payments || []);
     setLoading(false);
   }, []);
 
   const executeConfirm = async (paymentId, needsOverride, forceNote) => {
     setBusyId(paymentId);
-    const res = await adminApi.confirmSubscriptionTransferPayment(
-      paymentId,
-      needsOverride ? { force: true, forceNote } : {},
+    const res = await tryApi(
+      () =>
+        adminApi.confirmSubscriptionTransferPayment(
+          paymentId,
+          needsOverride ? { force: true, forceNote } : {},
+        ),
+      {
+        fallback: "Không xác nhận được thanh toán gói.",
+        successMessage: "Đã kích hoạt gói cước cho học viên.",
+      },
     );
     setBusyId("");
-    if (!res.success) {
-      toast.error(res.error || "Không xác nhận được thanh toán gói.");
-      return;
-    }
-    toast.success("Đã kích hoạt gói cước cho học viên.");
-    setRows((prev) => prev.filter((r) => String(r.id) !== String(paymentId)));
+    if (res.success) setRows((prev) => prev.filter((r) => String(r.id) !== String(paymentId)));
   };
 
   const confirmRow = async (row) => {
@@ -67,7 +67,7 @@ export function AdminSubscriptionPayments() {
     const paymentId = String(overrideModal.paymentId || "").trim();
     const forceNote = String(overrideModal.forceNote || "").trim();
     if (!paymentId || forceNote.length < 3) {
-      toast.error("Cần nhập lý do ngoại lệ tối thiểu 3 ký tự.");
+      toastApiError("Cần nhập lý do ngoại lệ tối thiểu 3 ký tự.");
       return;
     }
     setOverrideModal((prev) => ({ ...prev, open: false, paymentId: "" }));

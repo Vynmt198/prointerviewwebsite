@@ -63,6 +63,7 @@ import { fetchMyMentorProfile } from "../../utils/mentorApi";
 import { uploadFile } from "../../utils/uploadApi";
 import { MentorPageShell } from "../../components/mentor/MentorPageShell";
 import { toast } from "sonner";
+import { toastApiError, toastApiSuccess } from "../../utils/apiToast";
 import { mediaSrc, DEFAULT_COURSE_THUMB, avatarSrc } from "../../utils/mediaUrl";
 
 const COURSE_STATUS_META = {
@@ -245,16 +246,20 @@ function LessonsTab({ lessons, onLessonsChange }) {
    const setLessonVideo = async (lessonId, file) => {
       if (!file) return;
       const loadingToast = toast.loading(`Đang upload video: ${file.name}...`);
-      const res = await uploadFile(file, "course-video");
-      toast.dismiss(loadingToast);
-
-      if (res.success) {
-         toast.success("Upload video thành công!");
-         commit((prev) =>
-            prev.map((lesson) => (lesson.id === lessonId ? { ...lesson, videoFileName: file.name, videoUrl: res.url } : lesson)),
-         );
-      } else {
-         toast.error(res.error || "Upload video thất bại.");
+      try {
+         const res = await uploadFile(file, "course-video");
+         if (res.success) {
+            toastApiSuccess("Upload video thành công!");
+            commit((prev) =>
+               prev.map((lesson) => (lesson.id === lessonId ? { ...lesson, videoFileName: file.name, videoUrl: res.url } : lesson)),
+            );
+         } else {
+            toastApiError(res.error, "Upload video thất bại.");
+         }
+      } catch {
+         toastApiError("Lỗi kết nối khi upload video.");
+      } finally {
+         toast.dismiss(loadingToast);
       }
    };
 
@@ -440,15 +445,20 @@ function QATab({ courseId, items, onAnswered }) {
       const content = String(drafts[qaId] || "").trim();
       if (!content) return;
       setSending(qaId);
-      const res = await answerCourseMentorQA(courseId, qaId, content);
-      setSending(null);
-      if (!res.success) {
-         toast.error(res.error || "Không gửi được câu trả lời.");
-         return;
+      try {
+         const res = await answerCourseMentorQA(courseId, qaId, content);
+         if (!res.success) {
+            toastApiError(res.error, "Không gửi được câu trả lời.");
+            return;
+         }
+         toastApiSuccess(res.message || "Đã gửi câu trả lời.");
+         setDrafts((prev) => ({ ...prev, [qaId]: "" }));
+         onAnswered?.();
+      } catch {
+         toastApiError("Lỗi kết nối khi gửi câu trả lời.");
+      } finally {
+         setSending(null);
       }
-      toast.success(res.message || "Đã gửi câu trả lời.");
-      setDrafts((prev) => ({ ...prev, [qaId]: "" }));
-      onAnswered?.();
    };
 
    return (
@@ -669,25 +679,29 @@ function CreateCourseForm({ navigate, mentorRejectReason = "" }) {
    const updateLessonVideo = async (chapterId, lessonId, file) => {
       if (!file) return;
       const loadingToast = toast.loading(`Đang upload video: ${file.name}...`);
-      const res = await uploadFile(file, "course-video");
-      toast.dismiss(loadingToast);
-
-      if (res.success) {
-         toast.success("Upload video thành công!");
-         setChapters(prev =>
-            prev.map(ch =>
-               ch.id !== chapterId
-                  ? ch
-                  : {
-                        ...ch,
-                        lessons: ch.lessons.map(lesson =>
-                           lesson.id === lessonId ? { ...lesson, videoFileName: file.name, videoUrl: res.url } : lesson,
-                        ),
-                     },
-            ),
-         );
-      } else {
-         toast.error(res.error || "Upload video thất bại.");
+      try {
+         const res = await uploadFile(file, "course-video");
+         if (res.success) {
+            toastApiSuccess("Upload video thành công!");
+            setChapters((prev) =>
+               prev.map((ch) =>
+                  ch.id !== chapterId
+                     ? ch
+                     : {
+                          ...ch,
+                          lessons: ch.lessons.map((lesson) =>
+                             lesson.id === lessonId ? { ...lesson, videoFileName: file.name, videoUrl: res.url } : lesson,
+                          ),
+                       },
+               ),
+            );
+         } else {
+            toastApiError(res.error, "Upload video thất bại.");
+         }
+      } catch {
+         toastApiError("Lỗi kết nối khi upload video.");
+      } finally {
+         toast.dismiss(loadingToast);
       }
    };
    const removeLesson = (chapterId, lessonId) =>
@@ -1008,14 +1022,19 @@ function CreateCourseForm({ navigate, mentorRejectReason = "" }) {
                                     const file = e.target.files?.[0];
                                     if (!file) return;
                                     setIsUploadingThumbnail(true);
-                                    const res = await uploadFile(file, "course-thumbnail");
-                                    setIsUploadingThumbnail(false);
-                                    if (res.success) {
-                                       setThumbnailUrl(res.url);
-                                       setThumbnailFileName(file.name);
-                                       toast.success("Đã upload ảnh bìa!");
-                                    } else {
-                                       toast.error(res.error || "Upload ảnh thất bại.");
+                                    try {
+                                       const res = await uploadFile(file, "course-thumbnail");
+                                       if (res.success) {
+                                          setThumbnailUrl(res.url);
+                                          setThumbnailFileName(file.name);
+                                          toastApiSuccess("Đã upload ảnh bìa!");
+                                       } else {
+                                          toastApiError(res.error, "Upload ảnh thất bại.");
+                                       }
+                                    } catch {
+                                       toastApiError("Lỗi kết nối khi upload ảnh bìa.");
+                                    } finally {
+                                       setIsUploadingThumbnail(false);
                                     }
                                  }}
                               />
@@ -1069,14 +1088,18 @@ function CreateCourseForm({ navigate, mentorRejectReason = "" }) {
                         <div className="flex gap-3">
                            <button
                               onClick={async () => {
-                                 const payload = buildCoursePayloadFromForm(form, chapters, thumbnailUrl);
-                                 const r = await createCourseDraft(payload);
-                                 if (!r.success) {
-                                    toast.error(r.error || "Không thể lưu nháp.");
-                                    return;
+                                 try {
+                                    const payload = buildCoursePayloadFromForm(form, chapters, thumbnailUrl);
+                                    const r = await createCourseDraft(payload);
+                                    if (!r.success) {
+                                       toastApiError(r.error, "Không thể lưu nháp.");
+                                       return;
+                                    }
+                                    toastApiSuccess("Đã lưu nháp khóa học.");
+                                    navigate(`/mentor/courses/${r.course?._id}/edit`);
+                                 } catch {
+                                    toastApiError("Lỗi kết nối khi lưu nháp khóa học.");
                                  }
-                                 toast.success("Đã lưu nháp khóa học.");
-                                 navigate(`/mentor/courses/${r.course?._id}/edit`);
                               }}
                               className="px-8 py-3 rounded-2xl border border-slate-200 text-slate-900 text-sm font-black"
                            >
@@ -1084,20 +1107,24 @@ function CreateCourseForm({ navigate, mentorRejectReason = "" }) {
                            </button>
                            <button
                               onClick={async () => {
-                                 const payload = buildCoursePayloadFromForm(form, chapters, thumbnailUrl);
-                                 const r = await createCourseDraft(payload);
-                                 if (!r.success) {
-                                    toast.error(r.error || "Không thể tạo khóa học.");
-                                    return;
+                                 try {
+                                    const payload = buildCoursePayloadFromForm(form, chapters, thumbnailUrl);
+                                    const r = await createCourseDraft(payload);
+                                    if (!r.success) {
+                                       toastApiError(r.error, "Không thể tạo khóa học.");
+                                       return;
+                                    }
+                                    const pub = await publishCourse(r.course?._id);
+                                    if (!pub.success) {
+                                       toastApiError(pub.error, "Tạo nháp thành công nhưng chưa đăng được.");
+                                       navigate(`/mentor/courses/${r.course?._id}/edit`);
+                                       return;
+                                    }
+                                    toastApiSuccess("Đã gửi khóa học chờ admin duyệt.");
+                                    navigate("/mentor/courses");
+                                 } catch {
+                                    toastApiError("Lỗi kết nối khi gửi khóa học duyệt.");
                                  }
-                                 const pub = await publishCourse(r.course?._id);
-                                 if (!pub.success) {
-                                    toast.error(pub.error || "Tạo nháp thành công nhưng chưa đăng được.");
-                                    navigate(`/mentor/courses/${r.course?._id}/edit`);
-                                    return;
-                                 }
-                                 toast.success("Đã gửi khóa học chờ admin duyệt.");
-                                 navigate("/mentor/courses");
                               }}
                               className="px-8 py-3 rounded-2xl bg-primary-fixed text-black text-sm font-black"
                            >
@@ -1178,6 +1205,8 @@ export function MentorCourseEdit() {
                setAnalyticsStats(res.lessonStats || []);
             }
          }
+      } catch {
+         setTabError("Lỗi kết nối khi tải dữ liệu tab.");
       } finally {
          setTabLoading(false);
       }
@@ -1188,22 +1217,31 @@ export function MentorCourseEdit() {
    }, [activeTab, id, isCreateMode]);
 
    useEffect(() => {
-      fetchMyMentorProfile().then((res) => {
-         if (!res?.success || !res?.mentor) return;
-         const review = res.mentor.adminReview || {};
-         if (review.status === "rejected" && String(review.reason || "").trim()) {
-            setMentorRejectReason(String(review.reason || "").trim());
+      void (async () => {
+         try {
+            const res = await fetchMyMentorProfile();
+            if (!res?.success || !res?.mentor) return;
+            const review = res.mentor.adminReview || {};
+            if (review.status === "rejected" && String(review.reason || "").trim()) {
+               setMentorRejectReason(String(review.reason || "").trim());
+            }
+         } catch {
+            /* im lặng — chỉ hiển thị banner từ chối khi có dữ liệu */
          }
-      });
+      })();
    }, []);
 
    useEffect(() => {
       if (isCreateMode) return;
-      setLoading(true);
-      fetchCourseById(id || "").then((res) => {
+      let cancelled = false;
+      void (async () => {
+         setLoading(true);
+         try {
+         const res = await fetchCourseById(id || "");
+         if (cancelled) return;
          if (!res.success || !res.course) {
+            if (!res.success) toastApiError(res.error, "Không tải được khóa học.");
             setCourse(null);
-            setLoading(false);
             return;
          }
          const c = res.course;
@@ -1230,8 +1268,18 @@ export function MentorCourseEdit() {
             raw: c,
          });
          setEditableLessons(mappedLessons);
-         setLoading(false);
-      });
+         } catch {
+            if (!cancelled) {
+               toastApiError("Lỗi kết nối khi tải khóa học.");
+               setCourse(null);
+            }
+         } finally {
+            if (!cancelled) setLoading(false);
+         }
+      })();
+      return () => {
+         cancelled = true;
+      };
    }, [id, isCreateMode]);
 
    if (isCreateMode) {
@@ -1244,15 +1292,20 @@ export function MentorCourseEdit() {
    const handleArchiveConfirm = async () => {
       if (!id) return;
       setArchiving(true);
-      const res = await archiveCourse(id);
-      setArchiving(false);
-      if (!res.success) {
-         toast.error(res.error || "Không thể lưu trữ khóa học.");
-         return;
+      try {
+         const res = await archiveCourse(id);
+         if (!res.success) {
+            toastApiError(res.error, "Không thể lưu trữ khóa học.");
+            return;
+         }
+         toastApiSuccess(res.message || "Đã lưu trữ khóa học.");
+         setShowArchiveDialog(false);
+         navigate("/mentor/courses");
+      } catch {
+         toastApiError("Lỗi kết nối khi lưu trữ khóa học.");
+      } finally {
+         setArchiving(false);
       }
-      toast.success(res.message || "Đã lưu trữ khóa học.");
-      setShowArchiveDialog(false);
-      navigate("/mentor/courses");
    };
 
    if (loading) {
@@ -1343,13 +1396,18 @@ export function MentorCourseEdit() {
                               const file = e.target.files?.[0];
                               if (!file) return;
                               setIsUploadingThumbnail(true);
-                              const res = await uploadFile(file, "course-thumbnail");
-                              setIsUploadingThumbnail(false);
-                              if (res.success) {
-                                 setThumbnailUrl(res.url);
-                                 toast.success("Đã upload ảnh mới!");
-                              } else {
-                                 toast.error(res.error || "Upload thất bại");
+                              try {
+                                 const res = await uploadFile(file, "course-thumbnail");
+                                 if (res.success) {
+                                    setThumbnailUrl(res.url);
+                                    toastApiSuccess("Đã upload ảnh mới!");
+                                 } else {
+                                    toastApiError(res.error, "Upload thất bại");
+                                 }
+                              } catch {
+                                 toastApiError("Lỗi kết nối khi upload ảnh.");
+                              } finally {
+                                 setIsUploadingThumbnail(false);
                               }
                            }}
                         />
@@ -1487,42 +1545,45 @@ export function MentorCourseEdit() {
                   <button
                      type="button"
                      onClick={async () => {
-                        const chapters = [
-                           {
-                              title: "Chương 1",
-                              lessons: lessons.map((l) => ({
-                                 title: l.title,
-                                 duration: Number(l.duration || 0),
-                                 isPreview: Boolean(l.isPreview),
-                                 videoUrl: l.videoUrl || l.videoFileName || "",
+                        try {
+                           const chapters = [
+                              {
+                                 title: "Chương 1",
+                                 lessons: lessons.map((l) => ({
+                                    title: l.title,
+                                    duration: Number(l.duration || 0),
+                                    isPreview: Boolean(l.isPreview),
+                                    videoUrl: l.videoUrl || l.videoFileName || "",
+                                 })),
+                              },
+                           ];
+                           const payload = {
+                              title: course.raw?.title || course.title,
+                              description: course.raw?.description || "",
+                              category: mapTopicToCategory(course.raw?.topics),
+                              level: course.raw?.level || "basic",
+                              price: course.raw?.price || 0,
+                              outcomes: course.raw?.whatYoullLearn || [],
+                              tags: course.raw?.tags || [],
+                              thumbnail: thumbnailUrl || course.raw?.thumbnail || "",
+                              chapters,
+                           };
 
-                              })),
-                           },
-                        ];
-                        const payload = {
-                           title: course.raw?.title || course.title,
-                           description: course.raw?.description || "",
-                           category: mapTopicToCategory(course.raw?.topics),
-                           level: course.raw?.level || "basic",
-                           price: course.raw?.price || 0,
-                           outcomes: course.raw?.whatYoullLearn || [],
-                           tags: course.raw?.tags || [],
-                           thumbnail: thumbnailUrl || course.raw?.thumbnail || "",
-                           chapters,
-                        };
-
-                        const saved = await updateCourseDraft(course.id, payload);
-                        if (!saved.success) {
-                           toast.error(saved.error || "Không thể lưu thay đổi trước khi gửi duyệt.");
-                           return;
+                           const saved = await updateCourseDraft(course.id, payload);
+                           if (!saved.success) {
+                              toastApiError(saved.error, "Không thể lưu thay đổi trước khi gửi duyệt.");
+                              return;
+                           }
+                           const pub = await publishCourse(course.id, payload);
+                           if (!pub.success) {
+                              toastApiError(pub.error, "Không thể gửi bản cập nhật.");
+                              return;
+                           }
+                           toastApiSuccess("Đã gửi bản cập nhật để admin duyệt. Khóa hiện tại vẫn đang public.");
+                           navigate("/mentor/courses");
+                        } catch {
+                           toastApiError("Lỗi kết nối khi gửi bản cập nhật.");
                         }
-                        const pub = await publishCourse(course.id, payload);
-                        if (!pub.success) {
-                           toast.error(pub.error || "Không thể gửi bản cập nhật.");
-                           return;
-                        }
-                        toast.success("Đã gửi bản cập nhật để admin duyệt. Khóa hiện tại vẫn đang public.");
-                        navigate("/mentor/courses");
                      }}
                      className="rounded-xl bg-violet-600 px-6 py-3 text-xs font-bold uppercase tracking-wide text-white shadow-md shadow-violet-600/25 hover:bg-violet-700"
                   >

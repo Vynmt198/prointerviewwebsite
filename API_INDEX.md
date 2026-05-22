@@ -114,11 +114,11 @@ File trong repo: `API_INDEX.md`. Cập nhật khi thêm route, đổi FE hoặc 
 | POST | `/api/auth/register` | — | Đăng ký (rate limit theo IP) |
 | POST | `/api/auth/login` | — | Email + mật khẩu → access + **refresh token** |
 | POST | `/api/auth/google` | — | Google ID token (GIS) → access + refresh |
-| POST | `/api/auth/refresh` | — | Body `{ refreshToken }` → access + refresh mới (xoay vòng) |
+| POST | `/api/auth/refresh` | — (tuỳ chọn Bearer access cũ) | Body `{ refreshToken }` → access + refresh mới; **blacklist jti** access cũ nếu gửi Bearer |
 | GET | `/api/auth/me` | Bearer | Profile hiện tại |
-| POST | `/api/auth/logout` | Bearer | `tokenVersion++` + xóa mọi refresh session |
-| GET | `/api/auth/sessions` | Bearer | Danh sách phiên đăng nhập (thiết bị, IP, thời gian) |
-| DELETE | `/api/auth/sessions/:sessionId` | Bearer | Thu hồi một phiên (refresh đó hết hiệu lực) |
+| POST | `/api/auth/logout` | Bearer | Blacklist **jti** access hiện tại + `tokenVersion++` + xóa refresh sessions |
+| GET | `/api/auth/sessions` | Bearer | `?currentSessionId=` (id từ refresh token) → phiên + `security` |
+| DELETE | `/api/auth/sessions/:sessionId` | Bearer | Thu hồi phiên; nếu là phiên hiện tại → blacklist jti access |
 | PATCH | `/api/auth/me` | Bearer | Profile + **đặt/đổi mật khẩu** |
 
 #### Chi tiết từng endpoint
@@ -128,17 +128,17 @@ File trong repo: `API_INDEX.md`. Cập nhật khi thêm route, đổi FE hoặc 
 | `POST /register` | `name`, `email`, `password`, `role?` (`admin` cần `adminInviteCode`) | `201` `{ success: true }` — **không** có `token` | `400`, `403`, `409` |
 | `POST /login` | `email`, `password` | `{ success, token, refreshToken, expiresIn, user }` | `401`, `429`, `503` |
 | `POST /google` | `credential` | `{ success, token, refreshToken, expiresIn, user }` | `400`–`503` |
-| `POST /refresh` | `{ refreshToken }` | `{ success, token, refreshToken, expiresIn, user }` | `400`, `401` |
-| `GET /me` | `Authorization: Bearer` | `{ success, user }` | `401` |
-| `GET /sessions` | Bearer | `{ success, sessions: [{ id, createdAt, lastUsedAt, expiresAt, userAgent, ip }] }` | `401` |
-| `DELETE /sessions/:sessionId` | Bearer | `{ success: true }` | `400`, `401`, `404` |
-| `POST /logout` | `Authorization: Bearer` | `{ success: true }` — vô hiệu access + xóa refresh mọi thiết bị | `401` |
+| `POST /refresh` | `{ refreshToken }` + header `Authorization: Bearer` (access cũ, khuyến nghị) | `{ success, token, refreshToken, expiresIn, user }` — access cũ bị blacklist theo **jti** | `400`, `401` |
+| `GET /me` | `Authorization: Bearer` | `{ success, user }` | `401` nếu token hết hạn, `tv` lệch, hoặc **jti** đã thu hồi |
+| `GET /sessions` | Bearer; query `?currentSessionId=<sessionId từ refresh>` | `{ success, sessions: [{ id, createdAt, lastUsedAt, expiresAt, userAgent, ip, fingerprint, fingerprintShort, deviceLabel, isCurrent, isSuspicious, matchesCurrentDevice }], security: { suspiciousCount, majorityFingerprintShort, currentSessionId } }` | `401` |
+| `DELETE /sessions/:sessionId` | Bearer | `{ success: true }` — thu hồi refresh; phiên hiện tại → blacklist access **jti** | `400`, `401`, `404` |
+| `POST /logout` | `Authorization: Bearer` | `{ success: true }` — blacklist **jti** access + `tokenVersion++` + xóa mọi refresh | `401` |
 | `PATCH /me` | JSON: mật khẩu +/ hoặc profile | `{ success, user }`; **đổi mật khẩu** thêm `token`, `refreshToken`, `expiresIn` | `400`, `401`, `409` |
 
 **Đổi mật khẩu (`PATCH /me`):** gửi `newPassword` hoặc `password`. Chưa liên kết Google → bắt buộc `currentPassword`. Đã liên kết Google → `currentPassword` tùy chọn. Đổi mật khẩu → `tokenVersion++`, xóa mọi refresh cũ, trả **access + refresh mới**.  
 **Không** dùng `POST /api/auth/change-password` — gộp trong `PATCH /me`.
 
-**Token:** Access JWT có claim `tv` khớp `User.tokenVersion`. **Refresh** dạng `sessionObjectId:secret` (opaque), lưu hash trong `authSessions` (tối đa 10 phiên/user). Env gợi ý: `JWT_ACCESS_EXPIRES_IN` hoặc `JWT_EXPIRES_IN` (mặc định access **15m** nếu không set), `REFRESH_TOKEN_DAYS` (mặc định 30), `REFRESH_TOKEN_PEPPER` (tuỳ chọn, mặc định dùng `JWT_SECRET`).
+**Token:** Access JWT có claim `tv` khớp `User.tokenVersion` và **`jti`** (UUID). Blacklist jti lưu trên `User.revokedAccessJtis` (tự prune theo `expAt`) khi logout, refresh (xoay token), thu hồi phiên hiện tại, đổi mật khẩu. **Refresh** dạng `sessionObjectId:secret` (opaque), lưu hash trong `authSessions` (tối đa 10 phiên/user). FE gửi `Authorization: Bearer` kèm `POST /refresh` để vô hiệu access cũ ngay. Env gợi ý: `JWT_ACCESS_EXPIRES_IN` hoặc `JWT_EXPIRES_IN` (mặc định access **15m** nếu không set), `REFRESH_TOKEN_DAYS` (mặc định 30), `REFRESH_TOKEN_PEPPER` (tuỳ chọn, mặc định dùng `JWT_SECRET`), `AUTH_STRICT_SESSION_FINGERPRINT=true` (prod).
 
 **Khóa tài khoản (admin):** `PATCH /api/admin/users/:id/status` với `isActive: false` → tăng `tokenVersion`, xóa `authSessions`, user không dùng được access/refresh.
 
@@ -162,7 +162,7 @@ File trong repo: `API_INDEX.md`. Cập nhật khi thêm route, đổi FE hoặc 
 
 **FE:** `frontend/src/app/utils/auth.js`, `Settings.jsx`, …
 
-**Logout:** không có `POST /logout` server — FE `logout()` xóa `localStorage` (`prointerview_auth`, `prointerview_access_token`).
+**Logout:** `POST /api/auth/logout` (Bearer) — blacklist jti + tăng `tokenVersion`; FE `logout()` gọi API rồi xóa `localStorage` (`prointerview_auth`, `prointerview_access_token`, `prointerview_refresh_token`).
 
 ---
 
@@ -186,6 +186,10 @@ File trong repo: `API_INDEX.md`. Cập nhật khi thêm route, đổi FE hoặc 
 | GET | `/api/courses` | — | Danh sách khóa học (published) |
 | GET | `/api/courses/:id` | — | Chi tiết khóa học |
 | GET | `/api/courses/:id/lessons/:lessonId` | Bearer | Nội dung bài học (có kiểm tra ghi danh) |
+| GET | `/api/courses/:id/lessons/:lessonId/qa` | Bearer | Danh sách Q&A theo bài (học viên đã ghi danh / bài preview) |
+| POST | `/api/courses/:id/lessons/:lessonId/qa` | Bearer | Gửi câu hỏi `{ question }` — lưu `CourseQA` |
+| GET | `/api/courses/:id/lessons/:lessonId/notes` | Bearer | Ghi chú bài học (học viên đã ghi danh) |
+| PUT | `/api/courses/:id/lessons/:lessonId/notes` | Bearer | Lưu ghi chú `{ content }` trên `Enrollment` |
 | POST | `/api/courses` | Bearer + Mentor | Tạo khóa học mới |
 | PUT | `/api/courses/:id` | Bearer + Mentor | Cập nhật khóa học |
 | PATCH | `/api/courses/:id/publish` | Bearer + Mentor | Xuất bản khóa học |
@@ -213,10 +217,21 @@ File trong repo: `API_INDEX.md`. Cập nhật khi thêm route, đổi FE hoặc 
 | Method | Path | Auth | Mô tả |
 |:-------|:-----|:-----|:------|
 | GET | `/api/cv/quota` | Bearer | Kiểm tra quota phân tích CV |
-| POST | `/api/cv/analyses` | Bearer | Tạo bản phân tích CV mới |
+| POST | `/api/cv/analyses` | Bearer | Lưu kết quả phân tích (sau khi chạy Python) |
 | GET | `/api/cv/analyses` | Bearer | Danh sách lịch sử phân tích |
 | GET | `/api/cv/analyses/:id` | Bearer | Chi tiết bản phân tích |
 | DELETE | `/api/cv/analyses/:id` | Bearer | Xóa bản phân tích |
+
+**Proxy Python** (`backend/src/routes/cvMatch.js`, cần `CV_ANALYZER_URL`):
+
+| Method | Path | Mô tả |
+|:-------|:-----|:------|
+| POST | `/api/cv/analyze` | Khớp từ khóa CV+JD (không LLM) |
+| POST | `/api/cv/analyze/full` | Khớp + chấm điểm (LLM/Ollama) |
+| POST | `/api/cv/analyze/suggestions` | Pipeline đầy đủ + gợi ý (JD) |
+| POST | `/api/cv/analyze/field` | Phân tích theo ngành (`field` form field) |
+
+**FE:** `frontend/src/app/utils/cvApi.js`, `cvMappers.js` — `CVAnalysis.jsx`, `AnalysisHistory.jsx`. Cần đăng nhập; không còn Supabase Edge cho CV.
 
 ---
 
@@ -244,6 +259,30 @@ File trong repo: `API_INDEX.md`. Cập nhật khi thêm route, đổi FE hoặc 
 | POST | `/api/upload/cv` | Bearer | Tải lên CV |
 | POST | `/api/upload/course-thumbnail` | Bearer + Mentor | Tải lên ảnh bìa khóa học |
 
+### A.10. Module Admin — `/api/admin`
+
+**File:** `backend/src/routes/admin.js` · **Auth:** `[ADMIN]`
+
+| Method | Path | Mô tả |
+|:-------|:-----|:------|
+| GET | `/api/admin/stats` | Thống kê tổng quan |
+| GET | `/api/admin/users` | Danh sách user |
+| GET | `/api/admin/users/:id` | Chi tiết user + `stats.bookingsCount`, `stats.enrollmentsCount` |
+| PATCH | `/api/admin/users/:id/status` | Khóa / mở — body `{ isActive: boolean }` |
+| GET | `/api/admin/mentors` | Danh sách mentor |
+| GET | `/api/admin/mentors/:id` | Chi tiết mentor + `stats.sessionsCount` |
+| PATCH | `/api/admin/mentors/:id/status` | Bật / tắt mentor |
+| GET | `/api/admin/bookings` | Tất cả booking |
+| GET | `/api/admin/bookings/:id` | Chi tiết booking (populate user/mentor) |
+| GET | `/api/admin/reports` | Danh sách báo cáo |
+| PATCH | `/api/admin/reports/:id` | Cập nhật trạng thái — `{ status, resolution? }` (`reviewing` / `resolved` / `dismissed`) |
+| GET | `/api/admin/system/overview` | Auth, gói, dịch vụ, Mongo topology |
+| GET | `/api/admin/system/transaction-support` | Kiểm tra MongoDB transactions |
+| GET | `/api/admin/content/stats` | Thống kê phiên AI, CV, khóa học |
+| GET | `/api/admin/content/course-media` | Danh sách khóa + số bài video |
+
+**FE:** `frontend/src/app/utils/adminApi.js` — `AdminUsers`, `AdminMentors`, `AdminBookings`, `AdminPlaceholders` (detail + support).
+
 ---
 | Trường hợp | Response |
 |:-----------|:---------|
@@ -258,33 +297,9 @@ File trong repo: `API_INDEX.md`. Cập nhật khi thêm route, đổi FE hoặc 
 
 ## Phần B — Tích hợp ngoài (FE gọi trực tiếp)
 
-### B.1. Supabase Edge — phân tích CV
+### B.1. ~~Supabase Edge — phân tích CV~~ (đã migrate)
 
-| | |
-|:--|:--|
-| **File FE** | `frontend/src/app/pages/cv/CVAnalysis.jsx` |
-| **Base** | `https://${projectId}.supabase.co/functions/v1/make-server-64a0c849/` |
-
-| Method | Path (sau base) | Mô tả |
-|:-------|:----------------|:------|
-| GET | `cv/analyses` | Lịch sử — FE đọc `data.analyses` |
-| POST | `cv-analysis` | Upload — `FormData`, không set `Content-Type` tay |
-| GET | `cv/analyses/:id` | Chi tiết |
-| DELETE | `cv/analyses/:id` | Xóa |
-
-**FormData (`buildFd`):**
-
-| Key | Khi nào |
-|:----|:--------|
-| `cv` | File CV mới |
-| `cvPath` | Tái sử dụng CV đã lưu |
-| `jd` | File JD (mode JD) |
-| `jdPath` | JD đã lưu |
-| `mode` | Ví dụ `field`, `jd` |
-| `field` | Lĩnh vực (optional) |
-
-Token: `getFreshAccessToken()` (JWT backend). Không token hoặc `401` → FE có thể chạy **demo mock**.  
-**Tương lai:** có thể chuẩn hóa `POST /api/cv/analyses` trên Express.
+CV đã chuyển sang **Phần A.7** (`/api/cv` + proxy Python). Không dùng Supabase Edge cho luồng CV production.
 
 ---
 
@@ -392,6 +407,10 @@ Danh sách phẳng method/path (C.1–C.13) để tra cứu nhanh. **Đã có ro
 | GET | `/api/courses/:id` |
 | POST | `/api/courses/:id/enroll` |
 | GET | `/api/courses/:id/lessons/:lessonId` |
+| GET | `/api/courses/:id/lessons/:lessonId/qa` |
+| POST | `/api/courses/:id/lessons/:lessonId/qa` |
+| GET | `/api/courses/:id/lessons/:lessonId/notes` |
+| PUT | `/api/courses/:id/lessons/:lessonId/notes` |
 | POST | `/api/courses` |
 | PUT | `/api/courses/:id` |
 | PATCH | `/api/courses/:id/publish` |
@@ -459,9 +478,28 @@ Danh sách phẳng method/path (C.1–C.13) để tra cứu nhanh. **Đã có ro
 | Method | Path |
 |:-------|:-----|
 | POST | `/api/reports` |
+| GET | `/api/admin/reports` |
+| PATCH | `/api/admin/reports/:id` |
 | POST | `/api/upload/avatar` |
 | POST | `/api/upload/cv` |
 | POST | `/api/upload/course-thumbnail` |
+
+### C.14. Admin — `/api/admin`
+
+| Method | Path |
+|:-------|:-----|
+| GET | `/api/admin/stats` |
+| GET | `/api/admin/users` |
+| GET | `/api/admin/users/:id` |
+| PATCH | `/api/admin/users/:id/status` |
+| GET | `/api/admin/mentors` |
+| GET | `/api/admin/mentors/:id` |
+| PATCH | `/api/admin/mentors/:id/status` |
+| GET | `/api/admin/bookings` |
+| GET | `/api/admin/bookings/:id` |
+| PATCH | `/api/admin/bookings/:id/status` |
+| PATCH | `/api/admin/bookings/:id/confirm-transfer-payment` |
+| PATCH | `/api/admin/bookings/:id/confirm-refund` |
 
 ---
 
@@ -562,7 +600,7 @@ Chi tiết collection và field: [`backend/DATABASE.md`](./backend/DATABASE.md).
 | `apiUrl`, proxy dev | `frontend/src/app/utils/api.js` |
 | Auth client | `frontend/src/app/utils/auth.js` |
 | Mentor client | `frontend/src/app/utils/mentorApi.js` |
-| CV + Supabase Edge | `frontend/src/app/pages/cv/CVAnalysis.jsx` |
+| CV (Express + Python) | `frontend/src/app/utils/cvApi.js`, `pages/cv/CVAnalysis.jsx` |
 | D-ID stream | `frontend/src/app/hooks/useDIDStream.js` |
 | Entry server | `backend/src/server.js` |
 | Auth controller | `backend/src/controllers/authController.js` |

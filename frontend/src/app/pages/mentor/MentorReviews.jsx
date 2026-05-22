@@ -14,6 +14,7 @@ import {
 import { getUser } from "../../utils/auth";
 import { MentorPageShell } from "../../components/mentor/MentorPageShell";
 import { fetchMentorReviews } from "../../utils/mentorApi";
+import { toastApiError } from "../../utils/apiToast";
 
 export function MentorReviews() {
   const navigate = useNavigate();
@@ -30,6 +31,7 @@ export function MentorReviews() {
     fetchMentorReviews().then((res) => {
       if (!res.success || !Array.isArray(res.items)) {
         setReviewedMeetings([]);
+        if (!res.success) toastApiError(res.error, "Không tải được đánh giá.");
         return;
       }
       const mapped = res.items.map((r) => ({

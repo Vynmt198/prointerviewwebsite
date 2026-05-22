@@ -1,5 +1,29 @@
 import { apiUrl } from "./api.js";
 import { authFetch, hasAuthCredentials } from "./auth.js";
+import { normalizeCourseStats } from "./courseStats.js";
+import { mediaSrc, DEFAULT_COURSE_THUMB, avatarSrc } from "./mediaUrl.js";
+
+/** Map document khóa học từ GET /api/courses → shape card UI (Home, Courses, gợi ý). */
+export function mapApiCourseToCard(c) {
+  const { rating, reviewsCount } = normalizeCourseStats(c?.stats);
+  return {
+    id: c._id,
+    title: c.title,
+    description: c.description,
+    thumbnail: mediaSrc(c.thumbnail, DEFAULT_COURSE_THUMB),
+    category: c.topics?.[0] || "Kỹ năng khác",
+    level: c.level === "basic" ? "Beginner" : c.level === "intermediate" ? "Intermediate" : "Advanced",
+    mentorName: c.mentorId?.userId?.name || "Khuất danh",
+    mentorAvatar: avatarSrc(c.mentorId?.userId?.avatar),
+    mentorTitle: c.mentorId?.userId?.desiredPosition || "Chuyên gia",
+    rating,
+    reviewsCount,
+    studentsCount: Math.max(0, Number(c.stats?.enrollmentCount) || reviewsCount || 0),
+    duration: c.totalDurationMinutes || 120,
+    price: c.price || 0,
+    tags: c.tags || [],
+  };
+}
 
 const jsonHeaders = {
   Accept: "application/json",
@@ -222,6 +246,82 @@ export async function submitReview(data) {
     });
     const json = await res.json().catch(() => ({}));
     return { success: res.ok, review: json.review, error: json.error };
+  } catch {
+    return { success: false, error: "Không kết nối được backend." };
+  }
+}
+
+/** Q&A bài học — học viên đã ghi danh (hoặc bài preview miễn phí) */
+export async function fetchLessonQA(courseId, lessonId) {
+  if (!hasAuthCredentials()) return { success: false, error: "Chưa đăng nhập.", items: [] };
+  try {
+    const res = await authFetch(
+      `/api/courses/${encodeURIComponent(courseId)}/lessons/${encodeURIComponent(lessonId)}/qa`,
+      {
+        method: "GET",
+        headers: { ...jsonHeaders },
+      },
+    );
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok) return { success: false, error: body.error || `Lỗi ${res.status}`, items: [] };
+    return { success: true, items: body.items || [] };
+  } catch {
+    return { success: false, error: "Không kết nối được backend.", items: [] };
+  }
+}
+
+export async function submitLessonQuestion(courseId, lessonId, question) {
+  if (!hasAuthCredentials()) return { success: false, error: "Chưa đăng nhập." };
+  try {
+    const res = await authFetch(
+      `/api/courses/${encodeURIComponent(courseId)}/lessons/${encodeURIComponent(lessonId)}/qa`,
+      {
+        method: "POST",
+        headers: { ...jsonHeaders },
+        body: JSON.stringify({ question }),
+      },
+    );
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok) return { success: false, error: body.error || `Lỗi ${res.status}` };
+    return { success: true, item: body.item, message: body.message };
+  } catch {
+    return { success: false, error: "Không kết nối được backend." };
+  }
+}
+
+/** Ghi chú bài học — học viên đã ghi danh */
+export async function fetchLessonNotes(courseId, lessonId) {
+  if (!hasAuthCredentials()) return { success: false, error: "Chưa đăng nhập.", content: "" };
+  try {
+    const res = await authFetch(
+      `/api/courses/${encodeURIComponent(courseId)}/lessons/${encodeURIComponent(lessonId)}/notes`,
+      {
+        method: "GET",
+        headers: { ...jsonHeaders },
+      },
+    );
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok) return { success: false, error: body.error || `Lỗi ${res.status}`, content: "" };
+    return { success: true, content: body.content ?? "", updatedAt: body.updatedAt ?? null };
+  } catch {
+    return { success: false, error: "Không kết nối được backend.", content: "" };
+  }
+}
+
+export async function saveLessonNotes(courseId, lessonId, content) {
+  if (!hasAuthCredentials()) return { success: false, error: "Chưa đăng nhập." };
+  try {
+    const res = await authFetch(
+      `/api/courses/${encodeURIComponent(courseId)}/lessons/${encodeURIComponent(lessonId)}/notes`,
+      {
+        method: "PUT",
+        headers: { ...jsonHeaders },
+        body: JSON.stringify({ content }),
+      },
+    );
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok) return { success: false, error: body.error || `Lỗi ${res.status}` };
+    return { success: true, content: body.content ?? content, message: body.message };
   } catch {
     return { success: false, error: "Không kết nối được backend." };
   }

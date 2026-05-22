@@ -17,7 +17,8 @@ import {
 } from "lucide-react";
 import { fetchMentors } from "../../utils/mentorApi";
 import { fetchRebookCredit } from "../../utils/bookingsApi";
-import { FIELDS } from "../../data/mockData";
+import { toastApiError } from "../../utils/apiToast";
+import { MENTOR_FILTER_FIELDS } from "../../constants/mentorFilterFields";
 
 const EXPERIENCE_OPTIONS = ["Tất cả", "1-3 năm", "4-6 năm", "7+ năm"];
 const PRICE_OPTIONS = [
@@ -58,8 +59,15 @@ export function Mentors() {
       return;
     }
     void fetchRebookCredit(rebookFrom).then((r) => {
-      if (r.success && r.credit?.available) setRebookCredit(r.credit);
-      else setRebookCredit(null);
+      if (r.success && r.credit?.available) {
+        setRebookCredit(r.credit);
+        return;
+      }
+      setRebookCredit(null);
+      if (r && !r.success && r.error) toastApiError(r.error);
+    }).catch(() => {
+      setRebookCredit(null);
+      toastApiError("Không tải được thông tin tín dụng đặt lại.");
     });
   }, [rebookFrom]);
 
@@ -69,17 +77,26 @@ export function Mentors() {
   };
 
   useEffect(() => {
+    setLoading(true);
     fetchMentors()
-      .then((data) => { 
-        console.log("Mentors loaded:", data); 
-        setMentors(data); 
-        setLoading(false); 
+      .then((res) => {
+        if (res.success) {
+          setMentors(res.mentors || []);
+          setError(null);
+        } else {
+          const msg = res.error || "Không tải được danh sách mentor.";
+          setError(msg);
+          setMentors([]);
+          toastApiError(msg);
+        }
       })
-      .catch((e) => { 
-        console.error("Error loading mentors:", e);
-        setError(String(e)); 
-        setLoading(false); 
-      });
+      .catch((e) => {
+        const msg = e?.message || "Lỗi kết nối khi tải danh sách mentor.";
+        setError(msg);
+        setMentors([]);
+        toastApiError(msg);
+      })
+      .finally(() => setLoading(false));
   }, []);
 
   // Close dropdown when clicking outside
@@ -154,7 +171,7 @@ export function Mentors() {
           >
             {id === "field" && (
               <>
-                {["Tất cả", ...FIELDS].map((f) => (
+                {["Tất cả", ...MENTOR_FILTER_FIELDS].map((f) => (
                   <button
                     key={f}
                     onClick={() => {
@@ -466,7 +483,22 @@ export function Mentors() {
           <AlertCircle className="mx-auto mb-3 h-10 w-10 text-orange-300/90" />
           <p className="font-medium text-white/55">Không thể tải danh sách mentor</p>
           <button
-            onClick={() => { setLoading(true); fetchMentors().then((d) => { setMentors(d); setLoading(false); setError(null); }); }}
+            onClick={() => {
+              setLoading(true);
+              fetchMentors()
+                .then((res) => {
+                  if (res.success) {
+                    setMentors(res.mentors || []);
+                    setError(null);
+                  } else {
+                    const msg = res.error || "Không tải được danh sách mentor.";
+                    setError(msg);
+                    toastApiError(msg);
+                  }
+                })
+                .catch(() => toastApiError("Lỗi kết nối khi tải danh sách mentor."))
+                .finally(() => setLoading(false));
+            }}
             className="mt-3 text-sm font-semibold px-4 py-2 rounded-xl text-white"
             style={{ background: "#6E35E8" }}
           >

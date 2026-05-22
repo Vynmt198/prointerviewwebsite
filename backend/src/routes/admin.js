@@ -1,38 +1,55 @@
 import { Router } from "express";
 import { authJwt } from "../middleware/authJwt.js";
 import { requireAdmin } from "../middleware/requireAdmin.js";
+import { asyncHandler } from "../middleware/asyncHandler.js";
 import { AdminController } from "../controllers/adminController.js";
 
 export const adminRouter = Router();
 
-// Tất cả các route admin đều yêu cầu Đăng nhập + Quyền Admin
 adminRouter.use(authJwt, requireAdmin);
 
-adminRouter.get("/stats", AdminController.getStats);
-adminRouter.get("/mentors", AdminController.getAllMentors);
-adminRouter.patch("/mentors/:id/status", AdminController.toggleMentorStatus);
-adminRouter.patch("/mentors/:id/reject", AdminController.rejectMentorApplication);
+adminRouter.get("/stats", asyncHandler(AdminController.getStats));
+adminRouter.get("/reports", asyncHandler(AdminController.getReports));
+adminRouter.patch("/reports/:id", asyncHandler(AdminController.updateReport));
+adminRouter.get("/mentors", asyncHandler(AdminController.getAllMentors));
+adminRouter.get("/mentors/:id", asyncHandler(AdminController.getMentorById));
+adminRouter.patch("/mentors/:id/status", asyncHandler(AdminController.toggleMentorStatus));
+adminRouter.patch("/mentors/:id/reject", asyncHandler(AdminController.rejectMentorApplication));
 
-adminRouter.get("/users", AdminController.getAllUsers);
-adminRouter.patch("/users/:id/status", AdminController.toggleUserStatus);
+adminRouter.get("/users", asyncHandler(AdminController.getAllUsers));
+adminRouter.get("/users/:id", asyncHandler(AdminController.getUserById));
+adminRouter.patch("/users/:id/status", asyncHandler(AdminController.toggleUserStatus));
 
-adminRouter.get("/bookings", AdminController.getAllBookings);
-adminRouter.get("/system/transaction-support", AdminController.getTransactionSupport);
-adminRouter.get("/finance/courses", AdminController.getCourseFinanceSummary);
-adminRouter.patch("/bookings/:id/confirm-transfer-payment", AdminController.confirmBookingTransferPayment);
-adminRouter.patch("/bookings/:id/confirm-refund", AdminController.confirmBookingRefund);
-adminRouter.get("/enrollments/pending-transfer", AdminController.getPendingEnrollmentTransfers);
-adminRouter.get("/enrollments/course-payments", AdminController.getCoursePaymentEnrollments);
-adminRouter.patch("/enrollments/:id/confirm-transfer-payment", AdminController.confirmEnrollmentTransferPayment);
-adminRouter.post("/payments/normalize-transfer-refs", AdminController.normalizeTransferReferences);
-adminRouter.get("/payments/subscription-pending", AdminController.getPendingSubscriptionPayments);
-adminRouter.patch("/payments/:id/confirm-subscription-transfer", AdminController.confirmSubscriptionTransferPayment);
-adminRouter.patch("/bookings/:id/status", AdminController.updateBookingStatus);
-adminRouter.get("/payouts", AdminController.getPayoutRequests);
-adminRouter.patch("/payouts/:id/approve", AdminController.approvePayoutRequest);
-adminRouter.patch("/payouts/:id/mark-paid", AdminController.markPayoutPaid);
-adminRouter.patch("/payouts/:id/reject", AdminController.rejectPayoutRequest);
-adminRouter.get("/courses/pending", AdminController.getPendingCourses);
-adminRouter.patch("/courses/:id/approve", AdminController.approveCourse);
-adminRouter.patch("/courses/:id/reject", AdminController.rejectCourse);
-adminRouter.get("/interview-metrics", AdminController.getInterviewMetrics);
+adminRouter.get("/bookings", asyncHandler(AdminController.getAllBookings));
+adminRouter.get("/bookings/:id", asyncHandler(AdminController.getBookingById));
+adminRouter.get("/system/transaction-support", asyncHandler(AdminController.getTransactionSupport));
+adminRouter.get("/system/overview", asyncHandler(AdminController.getSystemOverview));
+adminRouter.get("/content/stats", asyncHandler(AdminController.getContentStats));
+adminRouter.get("/content/course-media", asyncHandler(AdminController.getCourseMediaOverview));
+adminRouter.get("/finance/courses", asyncHandler(AdminController.getCourseFinanceSummary));
+adminRouter.patch(
+  "/bookings/:id/confirm-transfer-payment",
+  asyncHandler(AdminController.confirmBookingTransferPayment),
+);
+adminRouter.patch("/bookings/:id/confirm-refund", asyncHandler(AdminController.confirmBookingRefund));
+adminRouter.get("/enrollments/pending-transfer", asyncHandler(AdminController.getPendingEnrollmentTransfers));
+adminRouter.get("/enrollments/course-payments", asyncHandler(AdminController.getCoursePaymentEnrollments));
+adminRouter.patch(
+  "/enrollments/:id/confirm-transfer-payment",
+  asyncHandler(AdminController.confirmEnrollmentTransferPayment),
+);
+adminRouter.post("/payments/normalize-transfer-refs", asyncHandler(AdminController.normalizeTransferReferences));
+adminRouter.get("/payments/subscription-pending", asyncHandler(AdminController.getPendingSubscriptionPayments));
+adminRouter.patch(
+  "/payments/:id/confirm-subscription-transfer",
+  asyncHandler(AdminController.confirmSubscriptionTransferPayment),
+);
+adminRouter.patch("/bookings/:id/status", asyncHandler(AdminController.updateBookingStatus));
+adminRouter.get("/payouts", asyncHandler(AdminController.getPayoutRequests));
+adminRouter.patch("/payouts/:id/approve", asyncHandler(AdminController.approvePayoutRequest));
+adminRouter.patch("/payouts/:id/mark-paid", asyncHandler(AdminController.markPayoutPaid));
+adminRouter.patch("/payouts/:id/reject", asyncHandler(AdminController.rejectPayoutRequest));
+adminRouter.get("/courses/pending", asyncHandler(AdminController.getPendingCourses));
+adminRouter.patch("/courses/:id/approve", asyncHandler(AdminController.approveCourse));
+adminRouter.patch("/courses/:id/reject", asyncHandler(AdminController.rejectCourse));
+adminRouter.get("/interview-metrics", asyncHandler(AdminController.getInterviewMetrics));
