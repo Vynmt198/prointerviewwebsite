@@ -195,12 +195,10 @@ export function MentorCourseManagement() {
                   {filtered.map((course) => (
                      <div key={course.id} className="glass-card flex flex-col group h-full">
                         <div className="relative h-60 overflow-hidden">
-                           <img 
-                              src={course.cover} 
-                              className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" 
-                              onError={(e) => {
-                                 e.target.src = "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&q=80";
-                              }}
+                           <img
+                              src={course.cover}
+                              alt=""
+                              className="h-full w-full object-cover transition-transform duration-1000 group-hover:scale-110"
                            />
 
                            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />

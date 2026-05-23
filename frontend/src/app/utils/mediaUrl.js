@@ -46,6 +46,17 @@ export function resolveMediaUrl(src) {
   const raw = stored || (typeof src === "string" ? src.trim() : "");
   if (!raw) return "";
   if (/^https?:\/\//i.test(raw)) {
+    const uploadsIdx = raw.indexOf("/uploads/");
+    if (uploadsIdx >= 0) {
+      const rel = raw.slice(uploadsIdx);
+      const base = (API_BASE_URL || "").replace(/\/$/, "");
+      if (base) {
+        if (LOCAL_BACKEND.test(raw)) return `${base}${rel}`;
+        return rel.startsWith("/") ? `${base}${rel}` : `${base}/${rel}`;
+      }
+      // Dev qua Vite (:5173): dùng /uploads/... để proxy tới backend (tránh sai port 5000 vs 5001).
+      return rel;
+    }
     const base = (API_BASE_URL || "").replace(/\/$/, "");
     if (base && LOCAL_BACKEND.test(raw)) {
       const normalized = raw.replace(LOCAL_BACKEND, base);

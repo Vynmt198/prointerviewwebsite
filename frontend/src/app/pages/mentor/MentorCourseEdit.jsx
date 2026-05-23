@@ -74,7 +74,7 @@ import {
 } from "../../components/mentor/course-create/mentorCourseCreateTheme";
 import { toast } from "sonner";
 import { toastApiError, toastApiSuccess } from "../../utils/apiToast";
-import { mediaSrc, DEFAULT_COURSE_THUMB, avatarSrc } from "../../utils/mediaUrl";
+import { mediaSrc, DEFAULT_COURSE_THUMB, avatarSrc, normalizeStoredUploadUrl } from "../../utils/mediaUrl";
 import { getVideoDurationMinutes } from "../../utils/videoDuration";
 
 const COURSE_STATUS_META = {
@@ -575,7 +575,7 @@ function buildCoursePayloadFromForm(form, chapters, thumbnailUrl) {
       price: Number(form.price || 0),
       outcomes: form.outcomes,
       tags: form.tags,
-      thumbnail: thumbnailUrl || "",
+      thumbnail: normalizeStoredUploadUrl(thumbnailUrl) || "",
       chapters: chapters.map((chapter) => ({
          title: chapter.title,
          lessons: (chapter.lessons || []).map((lesson) => ({
@@ -1012,7 +1012,7 @@ export function MentorCourseEdit() {
             id: c._id,
             title: c.title,
             status: c.status || "draft",
-            thumbnail: c.thumbnail || "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&q=80",
+            thumbnail: mediaSrc(c.thumbnail, DEFAULT_COURSE_THUMB),
             studentsCount: c.stats?.enrollmentCount || 0,
             rating: c.stats?.rating || 0,
             mentorAvatar: c.mentorId?.userId?.avatar || "https://api.dicebear.com/7.x/avataaars/svg?seed=Lucky",
@@ -1021,6 +1021,7 @@ export function MentorCourseEdit() {
             raw: c,
          });
          setEditableLessons(mappedLessons);
+         setThumbnailUrl(normalizeStoredUploadUrl(c.thumbnail) || "");
          } catch {
             if (!cancelled) {
                toastApiError("Lỗi kết nối khi tải khóa học.");
@@ -1318,7 +1319,10 @@ export function MentorCourseEdit() {
                               price: course.raw?.price || 0,
                               outcomes: course.raw?.whatYoullLearn || [],
                               tags: course.raw?.tags || [],
-                              thumbnail: thumbnailUrl || course.raw?.thumbnail || "",
+                              thumbnail:
+                                 normalizeStoredUploadUrl(thumbnailUrl) ||
+                                 normalizeStoredUploadUrl(course.raw?.thumbnail) ||
+                                 "",
                               chapters,
                            };
 

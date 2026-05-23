@@ -4,6 +4,30 @@ function publicBase() {
   return (process.env.BACKEND_URL || "").replace(/\/$/, "");
 }
 
+/** Lưu MongoDB dạng `/uploads/...` — tránh gắn cứng host/port. */
+export function normalizeUploadPathForStorage(value) {
+  const raw = typeof value === "string" ? value.trim() : "";
+  if (!raw) return "";
+
+  let path = raw;
+  if (/^https?:\/\//i.test(raw)) {
+    try {
+      const u = new URL(raw);
+      path = u.pathname || raw;
+    } catch {
+      const idx = raw.indexOf("/uploads/");
+      path = idx >= 0 ? raw.slice(idx) : raw;
+    }
+  }
+
+  if (path.startsWith("/uploads/")) return path;
+  if (path.startsWith("uploads/")) return `/${path}`;
+  if (/\.(png|jpe?g|gif|webp|mov|mp4)$/i.test(path) || path.startsWith("file-")) {
+    return `/uploads/${path.replace(/^\/+/, "")}`;
+  }
+  return raw;
+}
+
 /**
  * Chuẩn hóa đường dẫn upload lưu trong MongoDB → URL đầy đủ tới backend hiện tại.
  * - `file-xxx.png` → `https://api.../uploads/file-xxx.png`
@@ -14,6 +38,13 @@ export function resolveStoredUploadUrl(value) {
   if (!raw) return "";
 
   if (/^https?:\/\//i.test(raw)) {
+    const uploadsIdx = raw.indexOf("/uploads/");
+    if (uploadsIdx >= 0) {
+      const rel = raw.slice(uploadsIdx);
+      const base = publicBase();
+      if (base) return `${base}${rel}`;
+      return rel;
+    }
     const base = publicBase();
     if (base && LOCAL_BACKEND.test(raw)) {
       return raw.replace(LOCAL_BACKEND, base);
