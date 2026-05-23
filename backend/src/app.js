@@ -89,7 +89,16 @@ export function createApp() {
   // Fix lỗi "Cross-Origin-Opener-Policy" cho Google Login trên Render
   app.use(express.json({ limit: "1mb" }));
   app.use("/public", cors({ origin: staticCorsOrigin }), express.static("public"));
-  app.use("/uploads", cors({ origin: staticCorsOrigin }), express.static("public/uploads"));
+  // SPA (5173) / Vercel load ảnh qua origin khác — bỏ CORP same-origin mặc định của Helmet.
+  app.use(
+    "/uploads",
+    cors({ origin: staticCorsOrigin }),
+    (_req, res, next) => {
+      res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
+      next();
+    },
+    express.static("public/uploads"),
+  );
 
 
 

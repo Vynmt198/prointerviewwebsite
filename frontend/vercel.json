@@ -3,6 +3,10 @@
     {
       "source": "/api/:path*",
       "destination": "https://prointerview-backend.onrender.com/api/:path*"
+    },
+    {
+      "source": "/uploads/:path*",
+      "destination": "https://prointerview-backend.onrender.com/uploads/:path*"
     }
   ],
   "headers": [

@@ -7,13 +7,13 @@ export const UploadController = {
       if (!req.file) {
         return res.status(400).json({ success: false, error: "Không tìm thấy file" });
       }
+      const rel = `/uploads/${req.file.filename}`;
       const baseUrl = getPublicBaseUrl(req);
-      const fileUrl = `${baseUrl}/uploads/${req.file.filename}`;
-      
-      res.json({ 
-        success: true, 
-        url: fileUrl,
-        message: "Upload ảnh đại diện thành công" 
+      res.json({
+        success: true,
+        url: rel,
+        absoluteUrl: `${baseUrl}${rel}`,
+        message: "Upload ảnh đại diện thành công",
       });
     } catch (error) {
       next(error);
@@ -26,15 +26,15 @@ export const UploadController = {
       if (!req.file) {
         return res.status(400).json({ success: false, error: "Không tìm thấy file" });
       }
+      const rel = `/uploads/${req.file.filename}`;
       const baseUrl = getPublicBaseUrl(req);
-      const fileUrl = `${baseUrl}/uploads/${req.file.filename}`;
-      
-      res.json({ 
-        success: true, 
-        url: fileUrl,
+      res.json({
+        success: true,
+        url: rel,
+        absoluteUrl: `${baseUrl}${rel}`,
         fileId: req.file.filename,
         fileName: req.file.originalname,
-        message: "Upload CV thành công" 
+        message: "Upload CV thành công",
       });
     } catch (error) {
       next(error);
@@ -47,12 +47,12 @@ export const UploadController = {
       if (!req.file) {
         return res.status(400).json({ success: false, error: "Không tìm thấy file" });
       }
+      const rel = `/uploads/${req.file.filename}`;
       const baseUrl = getPublicBaseUrl(req);
-      const fileUrl = `${baseUrl}/uploads/${req.file.filename}`;
-
       res.json({
         success: true,
-        url: fileUrl,
+        url: rel,
+        absoluteUrl: `${baseUrl}${rel}`,
         fileId: req.file.filename,
         fileName: req.file.originalname,
         message: "Upload JD thành công",
@@ -68,13 +68,13 @@ export const UploadController = {
       if (!req.file) {
         return res.status(400).json({ success: false, error: "Không tìm thấy file" });
       }
+      const rel = `/uploads/${req.file.filename}`;
       const baseUrl = getPublicBaseUrl(req);
-      const fileUrl = `${baseUrl}/uploads/${req.file.filename}`;
-      
-      res.json({ 
-        success: true, 
-        url: fileUrl,
-        message: "Upload ảnh bìa khóa học thành công" 
+      res.json({
+        success: true,
+        url: rel,
+        absoluteUrl: `${baseUrl}${rel}`,
+        message: "Upload ảnh bìa khóa học thành công",
       });
     } catch (error) {
       next(error);
@@ -91,13 +91,13 @@ export const UploadController = {
       }
       console.log(`[UploadController] File saved: ${req.file.filename}`);
 
+      const rel = `/uploads/${req.file.filename}`;
       const baseUrl = getPublicBaseUrl(req);
-      const fileUrl = `${baseUrl}/uploads/${req.file.filename}`;
-      
-      res.json({ 
-        success: true, 
-        url: fileUrl,
-        message: "Upload video bài học thành công" 
+      res.json({
+        success: true,
+        url: rel,
+        absoluteUrl: `${baseUrl}${rel}`,
+        message: "Upload video bài học thành công",
       });
     } catch (error) {
       next(error);

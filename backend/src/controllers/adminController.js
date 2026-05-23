@@ -9,6 +9,7 @@ import { PayoutRequest } from "../models/PayoutRequest.js";
 import { Enrollment } from "../models/Enrollment.js";
 import { InterviewSession } from "../models/InterviewSession.js";
 import { Notification } from "../models/index.js";
+import { serializeCourseForApi, resolveStoredUploadUrl } from "../utils/resolveStoredUploadUrl.js";
 const User = mongoose.model("User");
 const Mentor = mongoose.model("Mentor");
 const Booking = mongoose.model("Booking");
@@ -638,16 +639,23 @@ export const AdminController = {
   },
 
   // Danh sách khóa học chờ duyệt
-  getPendingCourses: async (_req, res) => {
+  getPendingCourses: async (_req, res, next) => {
     try {
       const courses = await Course.find({ status: { $in: ["pending_review", "pending_update"] } })
         .populate({
           path: "mentorId",
-          select: "userId",
+          select: "userId title company",
           populate: { path: "userId", select: "name email avatar" },
         })
         .sort({ updatedAt: -1 });
-      res.json({ success: true, courses });
+
+      const items = courses.map((c) => serializePendingCourseForAdmin(c));
+      const counts = {
+        total: items.length,
+        pendingReview: items.filter((x) => x.status === "pending_review").length,
+        pendingUpdate: items.filter((x) => x.status === "pending_update").length,
+      };
+      res.json({ success: true, courses: items, counts });
     } catch (error) {
       next(error);
     }
@@ -955,3 +963,129 @@ export const AdminController = {
     }
   },
 };
+
+function summarizeModules(modules = []) {
+  let lessonCount = 0;
+  let videoCount = 0;
+  let previewCount = 0;
+  let durationMinutes = 0;
+  const chapters = (Array.isArray(modules) ? modules : []).map((mod, idx) => {
+    const lessons = (mod.lessons || []).map((lesson) => {
+      lessonCount += 1;
+      const videoUrl = String(lesson.videoUrl || "").trim();
+      const hasVideo = Boolean(videoUrl);
+      if (hasVideo) videoCount += 1;
+      if (lesson.isFree) previewCount += 1;
+      durationMinutes += Number(lesson.durationMinutes) || 0;
+      return {
+        title: lesson.title || "Bài học",
+        durationMinutes: Number(lesson.durationMinutes) || 0,
+        hasVideo,
+        isPreview: Boolean(lesson.isFree),
+        videoUrl: videoUrl ? resolveStoredUploadUrl(videoUrl) : "",
+      };
+    });
+    return {
+      title: mod.title || `Chương ${idx + 1}`,
+      lessonCount: lessons.length,
+      lessons,
+    };
+  });
+  return {
+    chapterCount: chapters.length,
+    lessonCount,
+    videoCount,
+    previewCount,
+    durationMinutes,
+    chapters,
+  };
+}
+
+function pickReviewFields(src = {}) {
+  return {
+    title: src.title || "",
+    description: src.description || "",
+    thumbnail: src.thumbnail ? resolveStoredUploadUrl(src.thumbnail) : "",
+    level: src.level || "",
+    price: Number(src.price) || 0,
+    isFree: Boolean(src.isFree),
+    topics: Array.isArray(src.topics) ? src.topics : [],
+    tags: Array.isArray(src.tags) ? src.tags : [],
+    whatYoullLearn: Array.isArray(src.whatYoullLearn) ? src.whatYoullLearn.filter(Boolean) : [],
+  };
+}
+
+function detectPendingChanges(current, pending) {
+  const changes = [];
+  const pairs = [
+    ["Tiêu đề", "title"],
+    ["Mô tả", "description"],
+    ["Cấp độ", "level"],
+    ["Giá (VND)", "price", (v) => Number(v || 0).toLocaleString("vi-VN")],
+  ];
+  for (const [label, key, fmt] of pairs) {
+    const a = current[key];
+    const b = pending[key];
+    const left = fmt ? fmt(a) : a;
+    const right = fmt ? fmt(b) : b;
+    if (b != null && String(left) !== String(right)) {
+      changes.push({ label, from: left || "—", to: right || "—" });
+    }
+  }
+  const curMod = current.modules?.length ?? 0;
+  const nextMod = pending.modules?.length;
+  if (Number.isFinite(nextMod) && nextMod !== curMod) {
+    changes.push({ label: "Số chương", from: String(curMod), to: String(nextMod) });
+  }
+  const curLessons = summarizeModules(current.modules).lessonCount;
+  const nextLessons = summarizeModules(pending.modules).lessonCount;
+  if (pending.modules && nextLessons !== curLessons) {
+    changes.push({ label: "Số bài học", from: String(curLessons), to: String(nextLessons) });
+  }
+  if (pending.thumbnail && pending.thumbnail !== current.thumbnail) {
+    changes.push({ label: "Ảnh bìa", from: "Đã có", to: "Đã đổi" });
+  }
+  return changes;
+}
+
+/** Khóa học chờ admin — nội dung review + thống kê chương/bài. */
+export function serializePendingCourseForAdmin(course) {
+  const doc = serializeCourseForApi(course);
+  const isUpdate = doc.status === "pending_update";
+  const pending = doc.pendingUpdate && typeof doc.pendingUpdate === "object" ? doc.pendingUpdate : null;
+  const reviewSource = isUpdate && pending ? { ...doc, ...pending } : doc;
+  const content = summarizeModules(reviewSource.modules);
+  const review = pickReviewFields(reviewSource);
+  const mentor = doc.mentorId && typeof doc.mentorId === "object" ? doc.mentorId : null;
+  const mentorUser = mentor?.userId && typeof mentor.userId === "object" ? mentor.userId : null;
+
+  return {
+    _id: doc._id,
+    status: doc.status,
+    createdAt: doc.createdAt,
+    updatedAt: doc.updatedAt,
+    publishedAt: doc.publishedAt,
+    mentor: mentor
+      ? {
+          name: mentorUser?.name || "Cố vấn",
+          email: mentorUser?.email || "",
+          avatar: mentorUser?.avatar ? resolveStoredUploadUrl(mentorUser.avatar) : "",
+          title: mentor.title || "",
+          company: mentor.company || "",
+        }
+      : { name: "Cố vấn", email: "", avatar: "", title: "", company: "" },
+    review: {
+      ...review,
+      ...content,
+      priceLabel: review.isFree || review.price <= 0 ? "Miễn phí" : `${review.price.toLocaleString("vi-VN")} ₫`,
+    },
+    pendingChanges:
+      isUpdate && pending
+        ? detectPendingChanges(
+            { ...pickReviewFields(doc), modules: doc.modules },
+            { ...pickReviewFields(pending), modules: pending.modules },
+          )
+        : [],
+    publishedSnapshot: isUpdate ? pickReviewFields(doc) : null,
+  };
+}

@@ -17,6 +17,27 @@ export function normalizeStoredUploadUrl(url) {
   return raw;
 }
 
+/** Dev/prod: khi API host ≠ trang hiện tại → dùng `/uploads/...` cùng origin (Vite/Vercel proxy). */
+function preferSameOriginUploadPath(path) {
+  if (typeof window === "undefined") return null;
+  const base = (API_BASE_URL || "").replace(/\/$/, "");
+  if (!base) return path;
+  try {
+    if (new URL(base).origin !== window.location.origin) return path;
+  } catch {
+    return null;
+  }
+  return null;
+}
+
+function joinUploadPath(path) {
+  const rel = path.startsWith("/") ? path : `/${path}`;
+  const sameOrigin = preferSameOriginUploadPath(rel);
+  if (sameOrigin) return sameOrigin;
+  const base = (API_BASE_URL || "").replace(/\/$/, "");
+  return `${base}${rel}`;
+}
+
 /**
  * Chuẩn hóa URL ảnh/upload từ API (full URL, /uploads/..., hoặc chỉ tên file).
  */
@@ -27,18 +48,41 @@ export function resolveMediaUrl(src) {
   if (/^https?:\/\//i.test(raw)) {
     const base = (API_BASE_URL || "").replace(/\/$/, "");
     if (base && LOCAL_BACKEND.test(raw)) {
-      return raw.replace(LOCAL_BACKEND, base);
+      const normalized = raw.replace(LOCAL_BACKEND, base);
+      if (typeof window !== "undefined") {
+        try {
+          const path = new URL(normalized).pathname;
+          if (path.startsWith("/uploads/")) {
+            const sameOrigin = preferSameOriginUploadPath(path);
+            if (sameOrigin) return sameOrigin;
+          }
+        } catch {
+          /* keep normalized */
+        }
+      }
+      return normalized;
+    }
+    if (typeof window !== "undefined") {
+      try {
+        const path = new URL(raw).pathname;
+        if (path.startsWith("/uploads/")) {
+          const sameOrigin = preferSameOriginUploadPath(path);
+          if (sameOrigin) return sameOrigin;
+        }
+      } catch {
+        /* keep raw */
+      }
     }
     return raw;
   }
   if (raw.startsWith("/uploads/")) {
-    return `${API_BASE_URL || ""}${raw}`;
+    return joinUploadPath(raw);
   }
   if (raw.startsWith("uploads/")) {
-    return `${API_BASE_URL || ""}/${raw}`;
+    return joinUploadPath(`/${raw}`);
   }
   if (/\.(png|jpe?g|gif|webp|mov|mp4)$/i.test(raw) || raw.startsWith("file-")) {
-    return `${API_BASE_URL || ""}/uploads/${raw.replace(/^\/+/, "")}`;
+    return joinUploadPath(`/uploads/${raw.replace(/^\/+/, "")}`);
   }
   return raw;
 }
