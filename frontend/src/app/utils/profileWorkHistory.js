@@ -86,7 +86,7 @@ export function formatWorkEntryPeriod(entry) {
   if (entry.startMonth) {
     return `Từ ${formatMonthLabel(entry.startMonth)}`;
   }
-  if (entry.isCurrent) return "Hiện tại (chưa ghi tháng bắt đầu)";
+  if (entry.isCurrent) return "";
   return "";
 }
 

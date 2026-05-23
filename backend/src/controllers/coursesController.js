@@ -2,7 +2,11 @@ import { Course } from "../models/Course.js";
 import { Enrollment } from "../models/Enrollment.js";
 import { Mentor } from "../models/Mentor.js";
 import { enrollmentAccessGranted } from "../helpers/enrollmentAccess.js";
-import { serializeCourseForApi, resolveStoredUploadUrl } from "../utils/resolveStoredUploadUrl.js";
+import {
+  serializeCourseForApi,
+  resolveStoredUploadUrl,
+  normalizeUploadPathForStorage,
+} from "../utils/resolveStoredUploadUrl.js";
 import * as courseMentorInsights from "../services/courseMentorInsightsService.js";
 
 function normalizeCoursePayload(body = {}) {
@@ -43,7 +47,7 @@ function normalizeCoursePayload(body = {}) {
   return {
     title: String(body.title || "").trim(),
     description: String(body.description || "").trim(),
-    thumbnail: String(body.thumbnail || "").trim(),
+    thumbnail: normalizeUploadPathForStorage(body.thumbnail),
     level: ["basic", "intermediate", "advanced"].includes(String(body.level))
       ? String(body.level)
       : "basic",
@@ -100,8 +104,11 @@ export const CoursesController = {
     try {
       const mentor = await Mentor.findOne({ userId: req.userId }).select("_id").lean();
       if (!mentor) return res.status(403).json({ success: false, error: "Tài khoản chưa là mentor." });
-      const courses = await Course.find({ mentorId: mentor._id }).sort({ updatedAt: -1 }).lean();
-      return res.json({ success: true, courses });
+      const courses = await Course.find({ mentorId: mentor._id }).sort({ updatedAt: -1 });
+      return res.json({
+        success: true,
+        courses: courses.map((c) => serializeCourseForApi(c)),
+      });
     } catch (error) {
       return next(error);
     }
@@ -176,7 +183,7 @@ export const CoursesController = {
         status: "draft"
       });
 
-      res.status(201).json({ success: true, course });
+      res.status(201).json({ success: true, course: serializeCourseForApi(course) });
     } catch (error) {
       next(error);
     }
@@ -197,7 +204,7 @@ export const CoursesController = {
 
       const payload = normalizeCoursePayload(req.body ?? {});
       const updated = await Course.findByIdAndUpdate(id, payload, { new: true });
-      res.json({ success: true, course: updated });
+      res.json({ success: true, course: serializeCourseForApi(updated) });
     } catch (error) {
       next(error);
     }

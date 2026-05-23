@@ -1,6 +1,23 @@
 import { Plus, Trash2 } from "lucide-react";
 import { emptyWorkEntry, formatWorkEntryPeriod } from "../../utils/profileWorkHistory";
 
+const fieldClass =
+  "w-full rounded-md border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-200/80 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-500";
+
+const labelClass = "mb-1.5 block text-sm font-medium text-slate-700";
+
+function PeriodSummary({ entry }) {
+  const period = formatWorkEntryPeriod(entry);
+  if (!period) return null;
+
+  return (
+    <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1 rounded-md border border-violet-100 bg-violet-50/80 px-3 py-2 text-sm">
+      <span className="text-slate-500">Hiển thị trên hồ sơ:</span>
+      <span className="font-semibold text-violet-900">{period}</span>
+    </div>
+  );
+}
+
 export function ProfileWorkHistoryEditor({ entries, onChange, disabled = false }) {
   const list = Array.isArray(entries) && entries.length ? entries : [emptyWorkEntry()];
 
@@ -21,120 +38,142 @@ export function ProfileWorkHistoryEditor({ entries, onChange, disabled = false }
     onChange(list.filter((_, i) => i !== index));
   };
 
+  const setCurrentAt = (index, isCurrent) => {
+    if (isCurrent) {
+      onChange(
+        list.map((item, i) => ({
+          ...item,
+          isCurrent: i === index,
+          endMonth: i === index ? "" : item.endMonth,
+        })),
+      );
+      return;
+    }
+    updateEntry(index, { isCurrent: false });
+  };
+
   return (
     <div className="space-y-4">
-      <p className="text-xs leading-relaxed text-[#2D1B69]/55">
-        Thêm từng mốc việc làm (quá khứ hoặc hiện tại). Chọn tháng bắt đầu / kết thúc; tick{" "}
-        <strong className="text-[#2D1B69]/75">Đang làm việc</strong> nếu vẫn làm ở đó.
+      <p className="text-sm leading-relaxed text-slate-600">
+        Thêm từng công việc (quá khứ hoặc hiện tại). Điền <strong>chức danh</strong> và{" "}
+        <strong>công ty</strong>, chọn tháng bắt đầu / kết thúc. Nếu vẫn đang làm, tick &quot;Đang làm việc
+        tại đây&quot;.
       </p>
 
       {list.map((entry, index) => (
         <div
           key={index}
-          className="rounded-xl border border-[#6E35E8]/15 bg-[#f8f5ff]/60 p-4 space-y-3"
+          className="space-y-4 rounded-lg border border-slate-200 bg-white p-4 shadow-sm sm:p-5"
         >
-          <div className="flex items-center justify-between gap-2">
-            <span className="text-[10px] font-black uppercase tracking-widest text-[#7a23e5]">
-              {entry.isCurrent ? "Công việc hiện tại" : `Kinh nghiệm #${index + 1}`}
-            </span>
+          <div className="flex items-center justify-between gap-3 border-b border-slate-100 pb-3">
+            <h4 className="text-sm font-semibold text-slate-900">
+              {entry.isCurrent ? "Công việc hiện tại" : `Kinh nghiệm ${index + 1}`}
+            </h4>
             {!disabled && list.length > 1 ? (
               <button
                 type="button"
                 onClick={() => removeEntry(index)}
-                className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-[10px] font-bold text-[#7a23e5] hover:bg-[#6E35E8]/10"
+                className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-red-600 hover:bg-red-50"
               >
-                <Trash2 size={12} /> Xóa
+                <Trash2 size={14} aria-hidden />
+                Xóa
               </button>
             ) : null}
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-2">
-            <input
-              disabled={disabled}
-              className="input-glass w-full disabled:cursor-not-allowed disabled:opacity-70"
-              placeholder="Chức danh (VD: HR)"
-              value={entry.role}
-              onChange={(e) => updateEntry(index, { role: e.target.value })}
-            />
-            <input
-              disabled={disabled}
-              className="input-glass w-full disabled:cursor-not-allowed disabled:opacity-70"
-              placeholder="Công ty (VD: FPT Software)"
-              value={entry.company}
-              onChange={(e) => updateEntry(index, { company: e.target.value })}
-            />
-          </div>
-
-          <div className="grid gap-3 sm:grid-cols-2">
-            <label className="space-y-1">
-              <span className="text-[10px] font-bold uppercase tracking-wide text-[#2D1B69]/45">
-                Từ (tháng/năm)
-              </span>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <label className={labelClass} htmlFor={`work-role-${index}`}>
+                Chức danh
+              </label>
               <input
-                type="month"
+                id={`work-role-${index}`}
                 disabled={disabled}
-                className="input-glass w-full [color-scheme:light] disabled:cursor-not-allowed disabled:opacity-70"
-                value={entry.startMonth}
-                onChange={(e) => updateEntry(index, { startMonth: e.target.value })}
+                className={fieldClass}
+                placeholder="VD: Nhân sự (HR)"
+                value={entry.role}
+                onChange={(e) => updateEntry(index, { role: e.target.value })}
               />
-            </label>
-            <label className="space-y-1">
-              <span className="text-[10px] font-bold uppercase tracking-wide text-[#2D1B69]/45">
-                Đến (tháng/năm)
-              </span>
+            </div>
+            <div>
+              <label className={labelClass} htmlFor={`work-company-${index}`}>
+                Công ty / tổ chức
+              </label>
               <input
-                type="month"
-                disabled={disabled || entry.isCurrent}
-                className="input-glass w-full [color-scheme:light] disabled:cursor-not-allowed disabled:opacity-70"
-                value={entry.isCurrent ? "" : entry.endMonth}
-                onChange={(e) => updateEntry(index, { endMonth: e.target.value })}
+                id={`work-company-${index}`}
+                disabled={disabled}
+                className={fieldClass}
+                placeholder="VD: FPT Software"
+                value={entry.company}
+                onChange={(e) => updateEntry(index, { company: e.target.value })}
               />
-            </label>
+            </div>
           </div>
-          {formatWorkEntryPeriod(entry) ? (
-            <p className="text-xs font-semibold text-[#7a23e5]">
-              Thời gian: {formatWorkEntryPeriod(entry)}
-            </p>
-          ) : (
-            <p className="text-xs text-[#2D1B69]/50">
-              Chưa có thời gian — chọn tháng bắt đầu (và kết thúc nếu không còn làm).
-            </p>
-          )}
 
-          <label className="flex cursor-pointer items-center gap-2 text-sm text-[#2D1B69]/80">
+          <label className="flex cursor-pointer items-start gap-2.5 rounded-md border border-slate-100 bg-slate-50/80 px-3 py-2.5">
             <input
               type="checkbox"
               disabled={disabled}
               checked={entry.isCurrent}
-              className="size-4 rounded border-[#6E35E8]/30 text-[#6E35E8]"
-              onChange={(e) => {
-                const isCurrent = e.target.checked;
-                updateEntry(index, {
-                  isCurrent,
-                  endMonth: isCurrent ? "" : entry.endMonth,
-                });
-                if (isCurrent) {
-                  onChange(
-                    list.map((item, i) => ({
-                      ...item,
-                      isCurrent: i === index,
-                      endMonth: i === index ? "" : item.endMonth,
-                    })),
-                  );
-                }
-              }}
+              className="mt-0.5 size-4 shrink-0 rounded border-slate-300 text-violet-600 focus:ring-violet-500"
+              onChange={(e) => setCurrentAt(index, e.target.checked)}
             />
-            Đang làm việc tại đây
+            <span className="text-sm text-slate-700">
+              <span className="font-medium text-slate-900">Đang làm việc tại đây</span>
+              <span className="mt-0.5 block text-xs text-slate-500">
+                Chỉ một mục được đánh dấu hiện tại. Khi bật, ô &quot;Đến&quot; sẽ tự ẩn.
+              </span>
+            </span>
           </label>
 
-          <textarea
-            disabled={disabled}
-            rows={2}
-            className="input-glass w-full resize-y min-h-[56px] disabled:cursor-not-allowed disabled:opacity-70"
-            placeholder="Mô tả ngắn (tùy chọn)..."
-            value={entry.note}
-            onChange={(e) => updateEntry(index, { note: e.target.value })}
-          />
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <label className={labelClass} htmlFor={`work-start-${index}`}>
+                Tháng bắt đầu
+              </label>
+              <input
+                id={`work-start-${index}`}
+                type="month"
+                disabled={disabled}
+                className={`${fieldClass} [color-scheme:light]`}
+                value={entry.startMonth}
+                onChange={(e) => updateEntry(index, { startMonth: e.target.value })}
+              />
+            </div>
+            <div>
+              <label className={labelClass} htmlFor={`work-end-${index}`}>
+                Tháng kết thúc
+              </label>
+              <input
+                id={`work-end-${index}`}
+                type="month"
+                disabled={disabled || entry.isCurrent}
+                className={`${fieldClass} [color-scheme:light]`}
+                value={entry.isCurrent ? "" : entry.endMonth}
+                onChange={(e) => updateEntry(index, { endMonth: e.target.value })}
+              />
+              {entry.isCurrent ? (
+                <p className="mt-1.5 text-xs text-slate-500">Không cần điền khi vẫn đang làm việc.</p>
+              ) : null}
+            </div>
+          </div>
+
+          <PeriodSummary entry={entry} />
+
+          <div>
+            <label className={labelClass} htmlFor={`work-note-${index}`}>
+              Mô tả ngắn <span className="font-normal text-slate-400">(tùy chọn)</span>
+            </label>
+            <textarea
+              id={`work-note-${index}`}
+              disabled={disabled}
+              rows={3}
+              className={`${fieldClass} min-h-[72px] resize-y`}
+              placeholder="Nhiệm vụ chính, thành tích nổi bật..."
+              value={entry.note}
+              onChange={(e) => updateEntry(index, { note: e.target.value })}
+            />
+          </div>
         </div>
       ))}
 
@@ -142,9 +181,10 @@ export function ProfileWorkHistoryEditor({ entries, onChange, disabled = false }
         <button
           type="button"
           onClick={addEntry}
-          className="inline-flex items-center gap-2 rounded-xl border border-dashed border-[#6E35E8]/35 px-4 py-2.5 text-xs font-bold text-[#7a23e5] hover:bg-[#f8f5ff]"
+          className="inline-flex items-center gap-2 rounded-md border border-dashed border-violet-300 bg-violet-50/50 px-4 py-2.5 text-sm font-medium text-violet-800 hover:bg-violet-50"
         >
-          <Plus size={14} /> Thêm kinh nghiệm
+          <Plus size={16} aria-hidden />
+          Thêm kinh nghiệm khác
         </button>
       ) : null}
     </div>
