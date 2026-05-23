@@ -294,6 +294,7 @@ export async function recordTransferPending({
   session = null,
   providerRef: providerRefInput,
   planKey,
+  billing,
 }) {
   if (!isMongoReady()) return { ok: false, error: MONGO_ERR };
   if (!mongoose.isValidObjectId(userId) || !mongoose.isValidObjectId(referenceId)) {
@@ -339,6 +340,9 @@ export async function recordTransferPending({
           ? "elite_pro"
           : "starter_pro";
       }
+      if (billing && t === "subscription") {
+        $set["providerResponse.billing"] = billing === "yearly" ? "yearly" : "monthly";
+      }
       await Payment.updateOne({ _id: existing._id }, { $set });
       const refreshed = await Payment.findById(existing._id).select("providerRef status").lean();
       return {
@@ -365,6 +369,7 @@ export async function recordTransferPending({
     planKey && t === "subscription"
       ? {
           plan: String(planKey).toLowerCase().includes("elite") ? "elite_pro" : "starter_pro",
+          billing: billing === "yearly" ? "yearly" : "monthly",
         }
       : {};
   let created;
@@ -418,7 +423,7 @@ function normalizeSubscriptionPlanKey(raw) {
 }
 
 /** Gói Pro/Elite — chuyển khoản: tạo payment pending + mã PI làm nội dung CK. */
-export async function createSubscriptionTransferPending(userId, { amount, planKey, orderNum }) {
+export async function createSubscriptionTransferPending(userId, { amount, planKey, orderNum, billing }) {
   if (!isMongoReady()) return { ok: false, status: 503, error: MONGO_ERR };
   if (!mongoose.isValidObjectId(userId)) return { ok: false, status: 401, error: "Phiên không hợp lệ." };
   const ref = String(orderNum || "").trim().slice(0, 100);
@@ -443,6 +448,7 @@ export async function createSubscriptionTransferPending(userId, { amount, planKe
     amount,
     providerRef: ref,
     planKey: plan,
+    billing,
   });
   if (!ledger.ok) return { ok: false, status: 500, error: ledger.error || "Không tạo được giao dịch chờ CK." };
   return {
@@ -706,8 +712,13 @@ export async function listPaymentHistory(userId, limit = 50) {
 async function applySubscriptionPlanFromPayment(pay) {
   if (!pay || pay.type !== "subscription") return;
   const plan = pay.providerResponse?.plan === "elite_pro" ? "elite_pro" : "starter_pro";
+  const billing = pay.providerResponse?.billing === "yearly" ? "yearly" : "monthly";
   const planExpiresAt = new Date();
-  planExpiresAt.setMonth(planExpiresAt.getMonth() + 1);
+  if (billing === "yearly") {
+    planExpiresAt.setFullYear(planExpiresAt.getFullYear() + 1);
+  } else {
+    planExpiresAt.setMonth(planExpiresAt.getMonth() + 1);
+  }
   const quota =
     plan === "elite_pro"
       ? { cvAnalysisLimit: 999, interviewLimit: 999 }

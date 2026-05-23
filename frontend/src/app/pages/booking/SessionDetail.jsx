@@ -146,7 +146,7 @@ function getPaymentMeta(paymentStatus) {
   return {
     title: "Chờ xử lý thanh toán",
     titleClass: "text-amber-600",
-    note: "Đơn đang chờ xác nhận thanh toán.",
+    note: "Đơn đang chờ SePay xác nhận chuyển khoản.",
     noteClass: "text-amber-600",
     iconClass: "text-amber-500",
   };

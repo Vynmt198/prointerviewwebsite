@@ -833,7 +833,7 @@ export function CourseDetail() {
                   ) : hasPendingPayment && canTakeStudentActions ? (
                     <div className="space-y-2">
                       <p className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-center text-xs font-semibold text-amber-900">
-                        Đã ghi danh — đang chờ admin xác nhận chuyển khoản trước khi vào học đầy đủ.
+                        Đã ghi danh — đang chờ SePay xác nhận chuyển khoản (CK đúng mã PI và số tiền).
                       </p>
                       <button
                         type="button"

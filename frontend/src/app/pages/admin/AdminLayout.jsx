@@ -12,7 +12,7 @@ const ADMIN_HEADER_RULES = [
   [/^\/admin\/mentors\/[^/]+$/, "Chi tiết cố vấn", "Hồ sơ mentor"],
   [/^\/admin\/mentors$/, "Cố vấn", "Danh sách mentor"],
   [/^\/admin\/bookings\/[^/]+$/, "Chi tiết lịch hẹn", "Phiên & thanh toán"],
-  [/^\/admin\/bookings$/, "Lịch hẹn & thanh toán", "Lịch hẹn cố vấn và xác nhận thanh toán chuyển khoản"],
+  [/^\/admin\/bookings$/, "Lịch hẹn & thanh toán", "Lịch hẹn cố vấn — CK được SePay tự đối soát"],
   [/^\/admin\/course-payments$/, "Học phí khóa học", "Ghi danh khóa học chờ đối soát chuyển khoản"],
   [/^\/admin\/subscription-payments$/, "Gói cước Pro/Elite", "Nâng cấp tài khoản chờ xác nhận CK"],
   [/^\/admin\/transactions$/, "Giao dịch", "Lịch sử thanh toán"],

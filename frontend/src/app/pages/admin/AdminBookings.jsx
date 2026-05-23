@@ -25,11 +25,6 @@ export function AdminBookings() {
   const [busyId, setBusyId] = useState("");
   const [normalizeBusy, setNormalizeBusy] = useState(false);
   const [normalizeModalOpen, setNormalizeModalOpen] = useState(false);
-  const [overrideModal, setOverrideModal] = useState({
-    open: false,
-    bookingId: "",
-    forceNote: "Đã đối soát thủ công qua sao kê ngân hàng.",
-  });
   const [cancelModal, setCancelModal] = useState({
     open: false,
     bookingId: "",
@@ -45,52 +40,6 @@ export function AdminBookings() {
     if (res.success) setBookings(res.bookings);
     setLoading(false);
   }, []);
-
-  const confirmBankTransfer = async (booking) => {
-    const bookingId = booking?._id;
-    if (!bookingId) return;
-
-    const needsOverride = !booking?.transferSubmittedAt;
-    if (needsOverride) {
-      setOverrideModal({
-        open: true,
-        bookingId: String(bookingId),
-        forceNote: "Đã đối soát thủ công qua sao kê ngân hàng.",
-      });
-      return;
-    }
-    await executeConfirmBankTransfer(String(bookingId), false, "");
-  };
-
-  const executeConfirmBankTransfer = async (bookingId, force, forceNote) => {
-    setBusyId(bookingId);
-    const res = await tryApi(
-      () =>
-        adminApi.confirmBookingTransferPayment(bookingId, force ? { force: true, forceNote } : {}),
-      {
-        fallback: "Không xác nhận được thanh toán.",
-        successMessage: "Đã xác nhận đã nhận chuyển khoản.",
-      },
-    );
-    setBusyId("");
-    if (!res.success) return;
-    setBookings((prev) =>
-      prev.map((b) =>
-        String(b._id) === String(bookingId)
-          ? {
-              ...b,
-              paymentStatus: "paid",
-              status: res.booking?.status || "confirmed",
-              paidAt: res.booking?.paidAt || new Date().toISOString(),
-              paymentRef: res.booking?.paymentRef ?? b.paymentRef,
-              transferConfirmedAt: res.booking?.transferConfirmedAt ?? new Date().toISOString(),
-              transferForceConfirm: Boolean(res.booking?.transferForceConfirm),
-              transferForceNote: String(res.booking?.transferForceNote || ""),
-            }
-          : b,
-      ),
-    );
-  };
 
   const confirmBookingRefund = async (booking) => {
     const bookingId = booking?._id;
@@ -169,18 +118,6 @@ export function AdminBookings() {
     const scanned = Number(res.totalScanned || 0);
     toastApiSuccess(`Chuẩn hóa xong: ${changed}/${scanned} bản ghi đã được cập nhật.`);
     await loadBookings();
-  };
-
-  const confirmOverrideTransfer = async () => {
-    const bookingId = String(overrideModal.bookingId || "").trim();
-    const forceNote = String(overrideModal.forceNote || "").trim();
-    if (!bookingId) return;
-    if (forceNote.length < 3) {
-      toastApiError("Cần nhập lý do ngoại lệ tối thiểu 3 ký tự.");
-      return;
-    }
-    setOverrideModal((prev) => ({ ...prev, open: false }));
-    await executeConfirmBankTransfer(bookingId, true, forceNote);
   };
 
   const handleStatusChange = async (bookingId, nextStatus, previousStatus = "pending") => {
@@ -545,14 +482,9 @@ export function AdminBookings() {
                           </span>
                         ) : null}
                         {b.paymentMethod === "transfer" && b.paymentStatus === "pending" ? (
-                          <button
-                            type="button"
-                            disabled={busyId === b._id}
-                            onClick={() => void confirmBankTransfer(b)}
-                            className="mt-1 rounded-lg border border-emerald-300 bg-emerald-50 px-2 py-1.5 text-[9px] font-black uppercase tracking-wider text-emerald-900 hover:bg-emerald-100 disabled:opacity-50"
-                          >
-                            Xác nhận đã thanh toán
-                          </button>
+                          <span className="mt-1 rounded-lg border border-violet-200 bg-violet-50 px-2 py-1.5 text-[9px] font-black uppercase tracking-wider text-violet-800">
+                            Chờ SePay tự động
+                          </span>
                         ) : null}
                         {pst === "refund_pending" && Number(b.cancelRefundAmountVnd) > 0 ? (
                           <div className="mt-2 w-full max-w-[220px] rounded-xl border border-sky-200 bg-sky-50 p-2.5 text-left">
@@ -653,52 +585,6 @@ export function AdminBookings() {
                   className="rounded-xl border border-violet-300 bg-violet-50 py-3 text-xs font-black uppercase tracking-wider text-violet-700 disabled:opacity-50"
                 >
                   {normalizeBusy ? "Đang xử lý..." : "Xác nhận chạy"}
-                </button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-        {overrideModal.open && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm"
-            onClick={() => setOverrideModal((prev) => ({ ...prev, open: false, bookingId: "" }))}
-          >
-            <motion.div
-              initial={{ scale: 0.96, y: 16, opacity: 0 }}
-              animate={{ scale: 1, y: 0, opacity: 1 }}
-              exit={{ scale: 0.96, y: 16, opacity: 0 }}
-              className="w-full max-w-lg rounded-3xl border border-slate-200 bg-white p-6 shadow-xl"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <h4 className="text-xl font-black text-slate-900">Xác nhận ngoại lệ chuyển khoản</h4>
-              <p className="mt-2 text-sm text-slate-600">
-                Người dùng chưa bấm <span className="font-semibold">“Tôi đã chuyển khoản”</span>. Hãy nhập lý do để lưu
-                audit trước khi xác nhận.
-              </p>
-              <textarea
-                value={overrideModal.forceNote}
-                onChange={(e) => setOverrideModal((prev) => ({ ...prev, forceNote: e.target.value }))}
-                className="mt-4 min-h-24 w-full rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-900 outline-none focus:border-violet-400"
-                placeholder="Ví dụ: Đã đối soát thủ công theo sao kê ngân hàng."
-              />
-              <div className="mt-5 grid grid-cols-2 gap-3">
-                <button
-                  type="button"
-                  onClick={() => setOverrideModal((prev) => ({ ...prev, open: false, bookingId: "" }))}
-                  className="rounded-xl border border-slate-200 bg-slate-50 py-3 text-xs font-black uppercase tracking-wider text-slate-800"
-                >
-                  Không xác nhận
-                </button>
-                <button
-                  type="button"
-                  onClick={() => void confirmOverrideTransfer()}
-                  disabled={busyId === overrideModal.bookingId}
-                  className="rounded-xl border border-emerald-300 bg-emerald-50 py-3 text-xs font-black uppercase tracking-wider text-emerald-700 disabled:opacity-50"
-                >
-                  {busyId === overrideModal.bookingId ? "Đang xử lý..." : "Xác nhận ngoại lệ"}
                 </button>
               </div>
             </motion.div>

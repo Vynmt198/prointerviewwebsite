@@ -1,4 +1,5 @@
 import * as paymentsService from "../services/paymentsService.js";
+import * as sepayWebhookService from "../services/sepayWebhookService.js";
 
 export class PaymentsController {
   static async initiate(req, res, next) {
@@ -102,6 +103,44 @@ export class PaymentsController {
     try {
       const result = await paymentsService.handleIpnVnpay(req.query ?? {});
       res.status(result.ok ? 200 : (result.status || 400)).json(result.data);
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  static async webhookSepay(req, res, next) {
+    try {
+      const auth =
+        req.headers.authorization ??
+        req.headers.Authorization ??
+        req.headers["x-sepay-api-key"] ??
+        "";
+      const result = await sepayWebhookService.handleSepayWebhook(req.body ?? {}, auth);
+      if (!result.ok) {
+        return res.status(result.status || 400).json({ success: false, error: result.error });
+      }
+      res.status(200).json({ success: true });
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  static async transferStatus(req, res, next) {
+    try {
+      const orderRef = req.query.orderRef ?? req.query.orderNum ?? "";
+      const result = await sepayWebhookService.getTransferStatusForUser(req.userId, orderRef);
+      if (!result.ok) {
+        return res.status(result.status || 400).json({ success: false, error: result.error });
+      }
+      res.json({
+        success: true,
+        orderRef: result.orderRef,
+        status: result.status,
+        entityType: result.entityType,
+        entityId: result.entityId,
+        redirectTo: result.redirectTo,
+        sepayAuto: Boolean(result.sepayAuto),
+      });
     } catch (err) {
       next(err);
     }

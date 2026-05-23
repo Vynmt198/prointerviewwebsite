@@ -21,7 +21,7 @@ const TILES = [
   { to: "/admin/users", label: "Người dùng", icon: Users, desc: "Danh sách, filter, chi tiết user" },
   { to: "/admin/mentors", label: "Cố vấn", icon: GraduationCap, desc: "Cố vấn, duyệt chờ xét" },
   { to: "/admin/finance", label: "Tài chính", icon: Wallet, desc: "Lịch hẹn, học phí khóa học, rút tiền cố vấn" },
-  { to: "/admin/bookings", label: "Lịch hẹn & thanh toán", icon: Calendar, desc: "Lịch hẹn mentor và xác nhận thanh toán chuyển khoản" },
+  { to: "/admin/bookings", label: "Lịch hẹn & thanh toán", icon: Calendar, desc: "Lịch hẹn mentor — thanh toán CK tự xác nhận qua SePay" },
   {
     to: "/admin/subscription-payments",
     label: "Duyệt gói Pro/Elite",
