@@ -955,19 +955,34 @@ export function Checkout() {
     bookingTime,
   ]);
 
+  const pollErrorShownRef = useRef(false);
+
+  const runTransferPoll = async () => {
+    const r = await fetchTransferStatus(transferOrderNum);
+    if (r.success && r.status === "paid") {
+      handlePaymentSuccess(r);
+      return;
+    }
+    if (!r.success && !pollErrorShownRef.current) {
+      pollErrorShownRef.current = true;
+      toastApiError(
+        r.error ||
+          "Không kiểm tra được trạng thanh toán. Kiểm tra đăng nhập và kết nối API (VITE_API_URL / CORS).",
+      );
+    }
+  };
+
   useEffect(() => {
     if (!orderCreated || paymentConfirmed || !showBankQr || !transferOrderNum) {
       setAwaitingAutoConfirm(false);
       return undefined;
     }
     setAwaitingAutoConfirm(true);
+    pollErrorShownRef.current = false;
     let cancelled = false;
     const poll = async () => {
-      const r = await fetchTransferStatus(transferOrderNum);
-      if (cancelled || !r.success) return;
-      if (r.status === "paid") {
-        handlePaymentSuccess(r);
-      }
+      if (cancelled) return;
+      await runTransferPoll();
     };
     const t0 = window.setTimeout(poll, 2000);
     const iv = window.setInterval(poll, 3000);
@@ -1170,9 +1185,18 @@ export function Checkout() {
                   </button>
                 ) : null}
                 {showBankQr && orderCreated && !paymentConfirmed && awaitingAutoConfirm ? (
-                  <div className="flex items-center justify-center gap-2 text-sm text-violet-800">
-                    <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-violet-200 border-t-[#6E35E8]" />
-                    Đang chờ xác nhận thanh toán…
+                  <div className="text-center">
+                    <div className="flex items-center justify-center gap-2 text-sm text-violet-800">
+                      <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-violet-200 border-t-[#6E35E8]" />
+                      Đang chờ xác nhận thanh toán…
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => void runTransferPoll()}
+                      className="mt-2 text-xs font-semibold text-[#6E35E8] hover:underline"
+                    >
+                      Đã CK — bấm kiểm tra lại
+                    </button>
                   </div>
                 ) : null}
                 {showBankQr && !orderCreated && !payBlocked ? (
