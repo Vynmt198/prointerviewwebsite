@@ -1,9 +1,40 @@
 import mongoose from "mongoose";
 import { Mentor } from "../models/Mentor.js";
+import { Notification } from "../models/Notification.js";
 import { Review } from "../models/Review.js";
 import { User } from "../models/User.js";
 
 const MONGO_ERR = "MongoDB chưa kết nối. Kiểm tra MONGO_URI trong .env.";
+
+export const MENTOR_PENDING_NOTIFICATION_TITLE = "Đăng ký mentor — đang chờ duyệt";
+
+/** Tạo / mở lại thông báo «chờ duyệt mentor» (có thể đánh dấu đã đọc qua API notifications). */
+export async function ensureMentorPendingNotification(userId) {
+  if (!isMongoReady() || !mongoose.isValidObjectId(userId)) return null;
+  const uid = new mongoose.Types.ObjectId(userId);
+  const filter = { userId: uid, type: "system", title: MENTOR_PENDING_NOTIFICATION_TITLE };
+  const existing = await Notification.findOne(filter).sort({ createdAt: -1 });
+  if (existing) return existing;
+  return Notification.create({
+    userId: uid,
+    type: "system",
+    title: MENTOR_PENDING_NOTIFICATION_TITLE,
+    body: "Hồ sơ mentor đã gửi. Admin sẽ phản hồi trong 24–48 giờ làm việc.",
+    metadata: { actionUrl: "/profile" },
+  });
+}
+
+export async function markMentorPendingNotificationsRead(userId) {
+  if (!isMongoReady() || !mongoose.isValidObjectId(userId)) return;
+  await Notification.updateMany(
+    {
+      userId: new mongoose.Types.ObjectId(userId),
+      type: "system",
+      title: MENTOR_PENDING_NOTIFICATION_TITLE,
+    },
+    { $set: { isRead: true, readAt: new Date() } },
+  );
+}
 
 function isMongoReady() {
   return mongoose.connection.readyState === 1;
@@ -62,6 +93,8 @@ function workHistoryJsonToText(raw) {
 function buildProfileWorkExperienceText(user, body, title, company, experienceYears) {
   const fromUser = String(user?.profileWorkExperience ?? "").trim();
   const fromBody = String(body?.workExperience ?? body?.profileWorkExperience ?? "").trim();
+  if (fromBody.startsWith("{")) return fromBody;
+  if (fromUser.startsWith("{")) return fromUser;
   const fromJson = workHistoryJsonToText(fromUser) || workHistoryJsonToText(fromBody);
   if (fromJson) return fromJson;
   if (fromUser && !fromUser.startsWith("{")) return fromUser;
@@ -200,6 +233,12 @@ export async function applyForMentor(userId, body) {
   }
 
   /** Không đổi role User tại đây — chỉ admin phê duyệt mới cấp `mentor` (PATCH /api/admin/mentors/:id/status). */
+
+  try {
+    await ensureMentorPendingNotification(uid);
+  } catch {
+    /* không chặn đăng ký nếu tạo thông báo lỗi */
+  }
 
   return { ok: true, mentor: toPublicMentorMe(mentor) };
 }

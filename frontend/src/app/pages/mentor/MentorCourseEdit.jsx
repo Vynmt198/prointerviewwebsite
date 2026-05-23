@@ -135,7 +135,7 @@ function ReviewsTab({ reviews, summary }) {
          <motion.div className="grid grid-cols-1 gap-4 md:grid-cols-4">
             {stats.map((s, i) => (
                <motion.div key={i} className="glass-card p-6">
-                  <h3 className="text-3xl font-black text-slate-900 tracking-tighter mb-1">{s.value}</h3>
+                  <h3 className="text-xl font-black sm:text-2xl text-slate-900 tracking-tighter mb-1">{s.value}</h3>
                   <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">{s.label}</p>
                </motion.div>
             ))}
@@ -294,7 +294,7 @@ function LessonsTab({ lessons, onLessonsChange }) {
                                  className="w-[380px] max-w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-900 outline-none focus:border-primary-fixed"
                               />
                            ) : (
-                              <h4 className="text-sm font-black text-slate-900 group-hover:text-primary-fixed transition-colors">{lesson.title}</h4>
+                              <h4 className="text-sm font-black text-slate-900 group-hover:text-violet-700 transition-colors">{lesson.title}</h4>
                            )}
                            <div className="mt-2 flex flex-wrap items-center gap-2">
                               <input
@@ -310,7 +310,7 @@ function LessonsTab({ lessons, onLessonsChange }) {
                                  onClick={() => toggleLessonPreview(lesson.id)}
                                  className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest ${
                                     lesson.isPreview
-                                       ? "bg-primary-fixed/20 text-primary-fixed border border-primary-fixed/30"
+                                       ? "bg-primary-fixed/20 text-violet-700 border border-primary-fixed/30"
                                        : "bg-slate-50 border border-slate-200 text-zinc-400"
                                  }`}
                               >
@@ -393,7 +393,7 @@ function StudentsTab({ students, summary }) {
          <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
             {statCards.map((s, i) => (
                <div key={i} className="glass-card p-6">
-                  <h3 className="text-3xl font-black text-slate-900 tracking-tighter mb-1">{s.value}</h3>
+                  <h3 className="text-xl font-black sm:text-2xl text-slate-900 tracking-tighter mb-1">{s.value}</h3>
                   <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">{s.label}</p>
                </div>
             ))}
@@ -734,7 +734,7 @@ function CreateCourseForm({ navigate, mentorRejectReason = "" }) {
 
    return (
       <MentorPageShell bottomPad="pb-24" extraStyles={MENTOR_COURSE_EDIT_EXTRA_CSS}>
-         <div className="relative z-10 p-10 max-w-6xl mx-auto pt-16">
+         <div className="relative z-10 mx-auto max-w-6xl px-10 pb-10">
             {mentorRejectReason ? (
                <div className="mb-8 rounded-2xl border border-orange-400/30 bg-orange-500/10 p-5">
                   <div className="flex items-start gap-3">
@@ -751,14 +751,14 @@ function CreateCourseForm({ navigate, mentorRejectReason = "" }) {
             <div className="flex items-center justify-between mb-8">
                <button
                   onClick={() => navigate("/mentor/courses")}
-                  className="text-[10px] font-black text-primary-fixed uppercase tracking-widest flex items-center gap-2 hover:translate-x-1 transition-transform"
+                  className="text-[10px] font-black text-violet-700 uppercase tracking-widest flex items-center gap-2 hover:translate-x-1 transition-transform"
                >
                   <ArrowLeft size={14} /> Quay lại quản lý khóa học
                </button>
             </div>
 
             <div className="glass-card p-10">
-               <h1 className="text-4xl font-black text-slate-900 tracking-tight mb-8">Tạo khóa học mới</h1>
+               <h1 className="mb-6 text-2xl font-black tracking-tight text-slate-900 sm:text-3xl">Tạo khóa học mới</h1>
 
                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
                   {[
@@ -837,7 +837,7 @@ function CreateCourseForm({ navigate, mentorRejectReason = "" }) {
                               onChange={(e) => updateField("price", Number(e.target.value || 0))}
                               className="flex-1 bg-slate-50 border border-slate-200 rounded-2xl px-5 py-4 text-slate-900 outline-none focus:border-primary-fixed"
                            />
-                           <span className="px-4 py-2 rounded-xl bg-primary-fixed/20 text-primary-fixed text-xs font-black uppercase tracking-widest">
+                           <span className="px-4 py-2 rounded-xl bg-primary-fixed/20 text-violet-700 text-xs font-black uppercase tracking-widest">
                               {Number(form.price) > 0 ? "Trả phí" : "Miễn phí"}
                            </span>
                         </div>
@@ -964,7 +964,7 @@ function CreateCourseForm({ navigate, mentorRejectReason = "" }) {
                                                 onClick={() => toggleLessonPreview(chapter.id, lesson.id)}
                                                 className={`px-3 py-2 rounded-xl text-xs font-black uppercase tracking-wider ${
                                                    lesson.isPreview
-                                                      ? "bg-primary-fixed/20 text-primary-fixed"
+                                                      ? "bg-primary-fixed/20 text-violet-700"
                                                       : "bg-slate-50 border border-slate-200 text-zinc-300"
                                                 }`}
                                              >
@@ -1320,8 +1320,8 @@ export function MentorCourseEdit() {
       return (
          <div className="min-h-screen bg-[#f8f4ff] flex items-center justify-center text-slate-900">
             <div className="text-center">
-               <BookOpen size={64} className="mx-auto mb-6 text-primary-fixed opacity-20" />
-               <h2 className="text-4xl font-black mb-10 tracking-tighter">Không tìm thấy khóa học</h2>
+               <BookOpen size={64} className="mx-auto mb-6 text-violet-700 opacity-20" />
+               <h2 className="mb-8 text-xl font-black tracking-tight sm:text-2xl">Không tìm thấy khóa học</h2>
                <button onClick={() => navigate("/mentor/courses")} className="px-10 py-4 rounded-3xl bg-primary-fixed text-black text-xs font-black uppercase tracking-widest shadow-xl">Quay lại quản lý</button>
             </div>
          </div>
@@ -1341,7 +1341,7 @@ export function MentorCourseEdit() {
 
    return (
       <MentorPageShell bottomPad="pb-36">
-         <div className="relative z-10 mx-auto max-w-6xl px-6 pb-8 pt-16 sm:px-8">
+         <div className="relative z-10 mx-auto max-w-6xl px-6 pb-8 sm:px-8">
             {mentorRejectReason ? (
                <div className="mb-8 rounded-2xl border border-orange-400/30 bg-orange-500/10 p-5">
                   <div className="flex items-start gap-3">

@@ -295,7 +295,7 @@ export function MentorMeetingDetail() {
 
   return (
     <MentorPageShell bottomPad="pb-32" extraStyles={MENTOR_MEETING_DETAIL_EXTRA_CSS}>
-      <div className="relative z-10 p-10 max-w-7xl mx-auto pt-20">
+      <div className="relative z-10 mx-auto max-w-7xl px-10 pb-10">
         {/* Header Navigation */}
         <div className="flex items-center justify-between mb-16">
            <button type="button" onClick={() => navigate(-1)} className="group flex items-center gap-3 text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 transition-all hover:text-slate-900">
@@ -314,18 +314,18 @@ export function MentorMeetingDetail() {
               {/* Session Core Info Card */}
               <div className="glass-card p-12 relative overflow-hidden group neon-border">
                  <div className="absolute top-0 right-0 p-12 opacity-5 scale-150 rotate-12 group-hover:rotate-0 transition-all duration-1000">
-                    <Video size={180} className="text-primary-fixed" />
+                    <Video size={180} className="text-violet-700" />
                  </div>
                  <div className="relative z-10">
                     <div className="flex items-center gap-4 mb-8">
-                       <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest ${isCompleted ? 'bg-primary-fixed/20 text-primary-fixed border border-primary-fixed/20' : 'bg-orange-500/20 text-orange-400 border border-orange-500/20'}`}>
+                       <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest ${isCompleted ? 'bg-primary-fixed/20 text-violet-700 border border-primary-fixed/20' : 'bg-orange-500/20 text-orange-400 border border-orange-500/20'}`}>
                           {isCompleted ? 'Đã hoàn thành' : 'Sắp diễn ra'}
                        </span>
                        <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest flex items-center gap-2">
                          <Layout size={14} /> {meetingTypeLabel}
                        </span>
                     </div>
-                    <h1 className="text-6xl font-black text-slate-900 font-headline tracking-tighter mb-10 max-w-2xl leading-none">
+                    <h1 className="mb-6 max-w-2xl font-headline text-2xl font-black leading-tight tracking-tight text-slate-900 sm:text-3xl">
                        {isCompleted ? 'Báo cáo chi tiết buổi Mentor' : 'Sẵn sàng phỏng vấn cùng Mentee'}
                     </h1>
                     
@@ -333,19 +333,19 @@ export function MentorMeetingDetail() {
                        <div className="space-y-2">
                           <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">Thời gian bắt đầu</p>
                           <p className="text-xl font-black text-slate-900 flex items-center gap-3">
-                             <Clock size={20} className="text-primary-fixed" /> {meeting.scheduledTime}
+                             <Clock size={20} className="text-violet-700" /> {meeting.scheduledTime}
                           </p>
                        </div>
                        <div className="space-y-2">
                           <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">Ngày diễn ra</p>
                           <p className="text-xl font-black text-slate-900 flex items-center gap-3">
-                            <Calendar size={20} className="text-primary-fixed" /> {formatMeetingDate(meeting.scheduledDate, meeting.scheduledTime)}
+                            <Calendar size={20} className="text-violet-700" /> {formatMeetingDate(meeting.scheduledDate, meeting.scheduledTime)}
                           </p>
                        </div>
                        <div className="space-y-2">
                           <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">Thời lượng</p>
                           <p className="text-xl font-black text-slate-900 flex items-center gap-3">
-                             <ShieldCheck size={20} className="text-primary-fixed" /> {meeting.duration} Phút
+                             <ShieldCheck size={20} className="text-violet-700" /> {meeting.duration} Phút
                           </p>
                        </div>
                     </div>
@@ -357,7 +357,7 @@ export function MentorMeetingDetail() {
                  <div className="glass-card p-12">
                     <div className="flex items-center justify-between mb-12">
                        <h4 className="text-2xl font-black text-slate-900 font-headline tracking-tight flex items-center gap-4">
-                          <Target className="text-primary-fixed" size={24} /> Kết quả STAR Framework
+                          <Target className="text-violet-700" size={24} /> Kết quả STAR Framework
                        </h4>
                        <div className="flex items-center gap-3 px-6 py-3 rounded-2xl bg-slate-50 border border-slate-200">
                           <Star className="text-[#FFD600] fill-current" size={18} />
@@ -410,7 +410,7 @@ export function MentorMeetingDetail() {
                   
                   <div className="mb-12">
                     <h5 className="text-[11px] font-black text-indigo-500 uppercase tracking-[0.3em] mb-3">BÁO CÁO PHÂN TÍCH</h5>
-                    <h2 className="text-3xl font-black text-slate-900 tracking-tight">Đánh giá từ chuyên gia</h2>
+                    <h2 className="text-xl font-black sm:text-2xl text-slate-900 tracking-tight">Đánh giá từ chuyên gia</h2>
                   </div>
                   
                   <div className="space-y-1">
@@ -471,11 +471,11 @@ export function MentorMeetingDetail() {
                  <p className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.3em] mb-10">Hồ sơ Mentee</p>
                  <div className="flex flex-col items-center text-center mb-10">
                     <img src={meeting.mentee.avatar} className="w-32 h-32 rounded-[40px] object-cover ring-8 ring-white/5 shadow-2xl mb-6" />
-                    <h3 className="text-3xl font-black text-slate-900 tracking-tighter">{meeting.mentee.name}</h3>
-                    <p className="text-sm font-black text-primary-fixed uppercase tracking-widest mt-2">{meeting.mentee.level}</p>
+                    <h3 className="text-xl font-black sm:text-2xl text-slate-900 tracking-tighter">{meeting.mentee.name}</h3>
+                    <p className="text-sm font-black text-violet-700 uppercase tracking-widest mt-2">{meeting.mentee.level}</p>
                  </div>
                  
-                 <div className="space-y-6 pt-10 border-t border-slate-200">
+                 <div className="space-y-6 border-t border-slate-200">
                     <div className="flex items-center gap-4">
                        <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-zinc-500"><Briefcase size={18} /></div>
                        <div>

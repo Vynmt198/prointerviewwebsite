@@ -211,7 +211,7 @@ export function MeetingRoom() {
           </div>
           <div>
             <p className="text-[10px] font-black text-white/50 uppercase tracking-widest">Phòng ProInterview</p>
-            <p className="text-xs font-bold text-[#c4ff47] uppercase tracking-tighter">#{sessionId.slice(-8)}</p>
+            <p className="text-xs font-bold uppercase tracking-tighter text-violet-700">#{sessionId.slice(-8)}</p>
           </div>
         </div>
 

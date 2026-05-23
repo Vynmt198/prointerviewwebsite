@@ -76,14 +76,14 @@ export function MentorReviews() {
 
   return (
     <MentorPageShell bottomPad="pb-32">
-      <div className="relative z-10 p-8 max-w-7xl mx-auto pt-16">
+      <div className="relative z-10 mx-auto max-w-7xl px-8 pb-8">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
           <div>
-            <h1 className="mb-4 text-4xl font-black uppercase tracking-tighter text-slate-900 sm:text-5xl md:text-6xl">
+            <h1 className="mb-3 font-headline text-2xl font-black uppercase tracking-tight text-slate-900 sm:text-3xl">
                Đánh giá <span className="text-violet-700">từ Mentees</span>
             </h1>
-            <p className="text-slate-600 text-lg font-medium">Lắng nghe ý kiến và xây dựng uy tín Mentor của bạn</p>
+            <p className="text-slate-600 text-sm font-medium">Lắng nghe ý kiến và xây dựng uy tín Mentor của bạn</p>
           </div>
         </div>
 
@@ -91,11 +91,11 @@ export function MentorReviews() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
           <div className="glass-card p-7 sm:p-8 relative overflow-hidden group">
             <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover:opacity-10 transition-opacity">
-               <Star size={120} className="text-primary-fixed" />
+               <Star size={120} className="text-violet-700" />
             </div>
             <p className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.3em] mb-4">Điểm trung bình</p>
             <div className="flex items-end gap-3 mb-6">
-              <h3 className="text-6xl font-black text-slate-900 tracking-tighter">{avgRating.toFixed(1)}</h3>
+              <h3 className="text-2xl font-black tracking-tight text-slate-900 sm:text-3xl">{avgRating.toFixed(1)}</h3>
               <p className="text-xl font-bold text-zinc-600 mb-2">/5.0</p>
             </div>
             <div className="flex gap-1.5">
@@ -110,7 +110,7 @@ export function MentorReviews() {
                <MessageCircle size={120} className="text-secondary" />
             </div>
             <p className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.3em] mb-4">Tổng số nhận xét</p>
-            <h3 className="text-6xl font-black text-slate-900 tracking-tighter mb-4">{reviewedMeetings.length}</h3>
+            <h3 className="mb-3 text-2xl font-black tracking-tight text-slate-900 sm:text-3xl">{reviewedMeetings.length}</h3>
             <p className="text-xs font-bold uppercase tracking-widest text-violet-700 flex items-center gap-2">
                <TrendingUp size={14} className="text-violet-600" /> +2 tuần qua
             </p>
@@ -121,7 +121,7 @@ export function MentorReviews() {
                <Award size={120} className="text-violet-400" />
             </div>
             <p className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.3em] mb-4">Tỷ lệ hài lòng</p>
-            <h3 className="mb-4 text-5xl font-black tracking-tighter text-violet-800 sm:text-6xl">
+            <h3 className="mb-3 text-2xl font-black tracking-tight text-violet-800 sm:text-3xl">
               {reviewedMeetings.length > 0 ? Math.round((recommendCount / reviewedMeetings.length) * 100) : 0}%
             </h3>
             <p className="text-xs font-bold text-zinc-600 uppercase tracking-widest">Dựa trên recommend của mentee</p>
@@ -181,7 +181,7 @@ export function MentorReviews() {
                        </div>
                     </div>
                     <div>
-                      <h3 className="text-2xl font-black text-slate-900 tracking-tighter mb-1 group-hover:text-primary-fixed transition-colors">
+                      <h3 className="text-2xl font-black text-slate-900 tracking-tighter mb-1 group-hover:text-violet-700 transition-colors">
                         {meeting.mentee.name}
                       </h3>
                       <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-4">
@@ -204,7 +204,7 @@ export function MentorReviews() {
                      </p>
                      <div className="flex gap-2">
                         {meeting.menteeReview.wouldRecommend && (
-                           <span className="px-4 py-1.5 rounded-lg bg-primary-fixed/10 text-primary-fixed text-[10px] font-black uppercase tracking-widest border border-primary-fixed/20">Recommend</span>
+                           <span className="px-4 py-1.5 rounded-lg bg-primary-fixed/10 text-violet-700 text-[10px] font-black uppercase tracking-widest border border-primary-fixed/20">Recommend</span>
                         )}
                          <span className="px-4 py-1.5 rounded-lg bg-slate-50 text-zinc-500 text-[10px] font-black uppercase tracking-widest border border-slate-200">Public</span>
                      </div>
@@ -212,17 +212,17 @@ export function MentorReviews() {
                 </div>
 
                 <div className="mt-8 relative p-7 rounded-[32px] bg-slate-50 border border-slate-200">
-                  <Quote size={80} className="absolute -top-4 -left-4 text-primary-fixed opacity-[0.08] -rotate-12" />
+                  <Quote size={80} className="absolute -top-4 -left-4 text-violet-700 opacity-[0.08] -rotate-12" />
                   <p className="text-xl font-medium text-slate-700 leading-relaxed italic z-10 relative">
                     "{meeting.menteeReview.comment}"
                   </p>
                   <div className="absolute bottom-6 right-8">
                      {meeting.menteeReview.reply ? (
-                        <p className="text-[10px] font-black text-primary-fixed uppercase tracking-widest">
+                        <p className="text-[10px] font-black text-violet-700 uppercase tracking-widest">
                           Đã phản hồi
                         </p>
                      ) : (
-                        <button className="flex items-center gap-2 text-[10px] font-black text-zinc-600 uppercase tracking-widest hover:text-primary-fixed transition-colors">
+                        <button className="flex items-center gap-2 text-[10px] font-black text-zinc-600 uppercase tracking-widest hover:text-violet-700 transition-colors">
                            Phản hồi nhận xét <ArrowRight size={14} />
                         </button>
                      )}

@@ -23,6 +23,7 @@ import { hasAuthCredentials, isLoggedIn } from "../../utils/auth";
 import { buildLoginPath } from "../../utils/authGate";
 import { generateInterviewQuestions, extractCvTextFromFile, createInterviewSession } from "../../utils/interviewsApi";
 import { CUSTOMER_SHELL_GUTTER, CUSTOMER_SHELL_MAX } from "../../components/layout/customerShellLayout";
+import { CustomerPageHeader } from "../../components/layout/CustomerPageHeader";
 
 const CTA_LIME =
   "bg-gradient-to-r from-[#c4ff47] to-[#d4ff00] text-violet-950 shadow-[0_8px_28px_rgba(196,255,71,0.25)] hover:brightness-110";
@@ -456,14 +457,16 @@ export function Interview() {
 
       <div className={`relative flex min-h-0 flex-col bg-transparent pb-8 pt-8 sm:pt-10 ${CUSTOMER_SHELL_GUTTER}`}>
         <div className={`${CUSTOMER_SHELL_MAX} mx-auto flex w-full max-w-3xl flex-col`}>
-          <header className="mb-5">
-            <h1 className="font-headline text-2xl font-extrabold tracking-tight text-violet-950 sm:text-3xl">
-              Phỏng vấn AI
-            </h1>
-            <p className="mt-1.5 text-sm leading-relaxed text-violet-600">
-              Chọn nguồn CV → chọn HR AI → vào phòng phỏng vấn (~30 phút, có feedback từng câu).
-            </p>
-          </header>
+          <CustomerPageHeader
+            className="mb-5 w-full"
+            badge="Phỏng vấn AI"
+            title={
+              <>
+                Luyện nói trước, <span className="text-[#630ed4]">tự tin hơn</span>
+              </>
+            }
+            subtitle="Đưa CV, chọn HR AI — luyện trả lời sát hồ sơ, góp ý từng câu, biết sửa gì trước khi gặp HR công ty."
+          />
 
         <div className="w-full rounded-md border border-violet-200/80 bg-white px-4 py-5 shadow-sm sm:px-6 sm:py-6">
         <InterviewStepBar current={flowStep} />
@@ -523,7 +526,7 @@ export function Interview() {
                     <CloudUpload className="h-5 w-5 shrink-0 text-[#630ed4]" {...IS} />
                     <p className="font-bold text-violet-950">Tải CV mới</p>
                   </div>
-                  <p className="mt-0.5 text-xs text-violet-600">Chọn thẻ → upload file trong ô bên dưới</p>
+                  <p className="mt-0.5 text-xs text-violet-600">Chọn thẻ, rồi upload file trong ô bên dưới</p>
                 </div>
               </div>
             </button>

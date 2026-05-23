@@ -17,7 +17,6 @@ import {
   Settings,
   Star,
   LifeBuoy,
-  User,
   LogOut,
   ChevronsUpDown,
 } from "lucide-react";
@@ -321,23 +320,6 @@ export function AdminSidebar() {
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent side="top" align="end" className="mb-1 w-56">
-                <div className="border-b border-border px-3 py-2.5">
-                  <p className="truncate text-sm font-semibold text-foreground">{displayName}</p>
-                  <p className="mt-0.5 truncate text-xs text-muted-foreground">{user?.email || ""}</p>
-                </div>
-                <DropdownMenuItem asChild>
-                  <Link to="/admin/settings" className="flex cursor-pointer items-center gap-2.5">
-                    <User className="size-4" />
-                    Hồ sơ cá nhân
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link to="/admin/settings" className="flex cursor-pointer items-center gap-2.5">
-                    <Settings className="size-4" />
-                    Cài đặt
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
                 <DropdownMenuItem
                   onClick={handleLogout}
                   className="flex cursor-pointer items-center gap-2.5 text-destructive focus:text-destructive"

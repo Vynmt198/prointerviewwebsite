@@ -5,7 +5,6 @@ import {
   Calendar as CalendarBlank,
   Users,
   Star,
-  LineChart as ChartLine,
   CheckCircle,
   CircleDollarSign as CurrencyCircleDollar,
   X,
@@ -138,7 +137,7 @@ function MenteeProgressModal({
                      <span className="rounded-lg bg-slate-100 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-slate-700">{meetingTypeLabel}</span>
                      <span className="rounded-lg bg-violet-100 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-violet-800">{meeting.mentee.level}</span>
                   </div>
-                  <h2 className="mb-1 text-3xl font-black tracking-tighter text-slate-900">{meeting.mentee.name}</h2>
+                  <h2 className="mb-1 text-xl font-black tracking-tighter text-slate-900 sm:text-2xl">{meeting.mentee.name}</h2>
                   <p className="text-sm font-medium text-slate-600">{meeting.position} @ {meeting.company}</p>
                </div>
             </div>
@@ -166,7 +165,7 @@ function MenteeProgressModal({
                     />
                  </svg>
                  <div className="absolute inset-0 flex flex-col items-center justify-center">
-                    <span className="text-3xl font-black tracking-tighter" style={{ color: scoreColor }}>{overall.toFixed(1)}</span>
+                    <span className="text-xl font-black sm:text-2xl tracking-tighter" style={{ color: scoreColor }}>{overall.toFixed(1)}</span>
                     <span className="text-[10px] font-black uppercase tracking-widest opacity-50">Score</span>
                  </div>
               </div>
@@ -190,7 +189,7 @@ function MenteeProgressModal({
            {/* STAR Framework Detail */}
            <div className="space-y-6">
               <h5 className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.2em] flex items-center gap-3">
-                 <ChartBar size={14} className="text-primary-fixed" /> Phân tích khung năng lực STAR
+                 <ChartBar size={14} className="text-violet-700" /> Phân tích khung năng lực STAR
               </h5>
               <div className="grid grid-cols-1 gap-5">
                  {starComponents.map((comp) => (
@@ -219,7 +218,7 @@ function MenteeProgressModal({
            {/* Feedback Grid */}
            <div className="grid md:grid-cols-2 gap-6">
               <div className="p-6 rounded-[28px] bg-primary-fixed/[0.03] border border-primary-fixed/10">
-                 <h6 className="text-[10px] font-black text-primary-fixed uppercase tracking-widest mb-4 flex items-center gap-2">
+                 <h6 className="text-[10px] font-black text-violet-700 uppercase tracking-widest mb-4 flex items-center gap-2">
                     <Lightning size={12} /> Điểm mạnh
                  </h6>
                  <ul className="space-y-3">
@@ -347,40 +346,42 @@ export function MentorDashboard() {
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(148,163,184,0.5); border-radius: 10px; }
       `}</style>
-      <div className="relative z-10 mx-auto max-w-7xl px-6 pb-10 pt-16 sm:px-8 sm:pt-20">
-        <div className="mb-10 flex flex-col justify-between gap-6 md:mb-14 md:flex-row md:items-end md:gap-8">
+      <div className="relative z-10 mx-auto max-w-7xl px-6 pb-10 sm:px-8">
+        <div className="mb-8 flex flex-col justify-between gap-4 md:mb-10 md:flex-row md:items-end md:gap-6">
           <div>
-            <h1 className="mb-3 font-headline text-4xl font-black tracking-tighter text-slate-900 sm:text-5xl md:text-6xl break-words">
+            <h1 className="mb-2 font-headline text-2xl font-black tracking-tight text-slate-900 sm:text-3xl break-words">
                Xin chào,{" "}
                <span className="text-violet-700">{getDisplayName(user, "Mentor")}!</span>
             </h1>
-            <p className="max-w-xl text-base font-medium leading-relaxed text-slate-600 sm:text-lg">Bảng điều khiển tối ưu dành cho Mentor của ProInterview</p>
+            <p className="max-w-xl text-sm font-medium leading-relaxed text-slate-600">
+              Bảng điều khiển tối ưu dành cho Mentor của ProInterview
+            </p>
           </div>
           <div className="flex gap-4">
-              <button type="button" onClick={() => navigate("/mentor/schedule")} className="flex items-center gap-2 rounded-3xl bg-gradient-to-r from-[#c4ff47] to-[#8fbc24] px-8 py-4 text-xs font-black uppercase tracking-widest text-[#0a0814] shadow-[0_10px_30px_rgba(196,255,71,0.25)] transition-all hover:brightness-110">
-                 <Plus size={18} /> Tạo lịch mới
+              <button type="button" onClick={() => navigate("/mentor/schedule")} className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-[#c4ff47] to-[#8fbc24] px-5 py-2.5 text-[10px] font-black uppercase tracking-widest text-[#0a0814] shadow-[0_8px_24px_rgba(196,255,71,0.22)] transition-all hover:brightness-110">
+                 <Plus size={16} /> Tạo lịch mới
               </button>
           </div>
         </div>
 
         {/* Vital Stats Grid */}
-        <div className="mb-10 grid grid-cols-1 gap-6 md:mb-14 md:grid-cols-3 md:gap-8">
+        <div className="mb-8 grid grid-cols-1 gap-4 md:mb-10 md:grid-cols-3 md:gap-5">
            {[
              { label: "Tổng buổi mentor", value: stats.totalSessions, sub: `+${stats.thisMonthSessions} tháng này`, icon: Users, color: "#6E35E8" },
              { label: "Lịch hẹn sắp tới", value: stats.upcomingMeetings, sub: "Trong 7 ngày tới", icon: CalendarBlank, color: "#f59e0b" },
              { label: "Doanh thu tạm tính", value: `${(stats.totalEarnings / 1000000).toFixed(1)}M`, sub: "Sẵn sàng rút tiền", icon: CurrencyCircleDollar, color: "#B4F500" }
            ].map((stat, i) => (
-             <div key={i} className="glass-card group relative overflow-hidden bg-gradient-to-br from-white to-slate-50 p-8 sm:p-10">
-                <div className="absolute right-0 top-0 h-32 w-32 translate-x-1/2 -translate-y-1/2 rounded-full bg-gradient-to-br from-violet-100/80 to-transparent" />
-                <div className="mb-6 flex items-center gap-4">
-                   <div className="flex h-12 w-12 items-center justify-center rounded-2xl border-2 border-slate-200 bg-white shadow-sm transition-all group-hover:border-violet-200">
-                      <stat.icon size={22} style={{ color: stat.color }} />
+             <div key={i} className="glass-card group relative overflow-hidden bg-gradient-to-br from-white to-slate-50 p-5 sm:p-6">
+                <div className="absolute right-0 top-0 h-24 w-24 translate-x-1/2 -translate-y-1/2 rounded-full bg-gradient-to-br from-violet-100/80 to-transparent" />
+                <div className="mb-4 flex items-center gap-3">
+                   <div className="flex h-10 w-10 items-center justify-center rounded-lg border-2 border-slate-200 bg-white shadow-sm transition-all group-hover:border-violet-200">
+                      <stat.icon size={18} style={{ color: stat.color }} />
                    </div>
-                   <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">{stat.label}</span>
+                   <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500">{stat.label}</span>
                 </div>
-                <h3 className="mb-2 text-4xl font-black tracking-tighter text-slate-900 sm:text-5xl">{stat.value}</h3>
-                <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-slate-500">
-                   <ArrowUpRight size={14} className="text-lime-600" /> {stat.sub}
+                <h3 className="mb-1.5 text-2xl font-black tracking-tight text-slate-900 sm:text-3xl">{stat.value}</h3>
+                <p className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-slate-500">
+                   <ArrowUpRight size={14} className="text-violet-600" /> {stat.sub}
                 </p>
              </div>
            ))}
@@ -390,15 +391,14 @@ export function MentorDashboard() {
            {/* Main Controls & Lists */}
            <div className="lg:col-span-8 space-y-10">
               {/* Quick Navigation Cards */}
-              <div className="grid sm:grid-cols-3 gap-6">
+              <div className="grid gap-4 sm:grid-cols-2">
                  {[
                    { label: "Lịch trình", desc: "Quản lý meetings", icon: CalendarBlank, path: "/mentor/schedule", color: "#6E35E8" },
                    { label: "Tài chính", desc: "Thu nhập & Rút tiền", icon: CurrencyCircleDollar, path: "/mentor/finance", color: "#B4F500" },
-                   { label: "Phân tích", desc: "Hiệu suất Mentees", icon: ChartLine, path: "/mentor/analytics", color: "#f59e0b" }
                  ].map((nav, i) => (
-                   <button type="button" key={i} onClick={() => navigate(nav.path)} className="glass-card group flex items-center gap-5 bg-white p-6 text-left">
-                      <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 transition-transform group-hover:scale-105">
-                         <nav.icon size={24} style={{ color: nav.color }} />
+                   <button type="button" key={i} onClick={() => navigate(nav.path)} className="glass-card group flex items-center gap-4 bg-white p-4 text-left">
+                      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 transition-transform group-hover:scale-105">
+                         <nav.icon size={20} style={{ color: nav.color }} />
                       </div>
                       <div>
                          <p className="mb-1 text-xs font-black uppercase tracking-widest text-slate-900">{nav.label}</p>
@@ -409,9 +409,11 @@ export function MentorDashboard() {
               </div>
 
               {/* Upcoming Detailed Feed */}
-              <div className="glass-card bg-white p-8 sm:p-10">
-                 <div className="mb-8 flex items-center justify-between sm:mb-10">
-                    <h4 className="font-headline text-xl font-black tracking-tight text-slate-900 sm:text-2xl">Lịch phỏng vấn sắp tới</h4>
+              <div className="glass-card bg-white p-5 sm:p-6">
+                 <div className="mb-6 flex items-center justify-between sm:mb-7">
+                    <h4 className="font-headline text-lg font-black tracking-tight text-slate-900 sm:text-xl">
+                      Lịch phỏng vấn sắp tới
+                    </h4>
                     <button type="button" onClick={() => navigate("/mentor/schedule")} className="text-[10px] font-black uppercase tracking-widest text-violet-700 hover:underline">Xem tất cả lịch trình</button>
                  </div>
                  
@@ -449,9 +451,9 @@ export function MentorDashboard() {
 
            {/* Sidebar: Recent Activity & Peer Review */}
            <div className="lg:col-span-4 space-y-10">
-              <div className="glass-card bg-white p-8 sm:p-10">
-                 <h4 className="mb-6 flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 sm:mb-8">
-                    <CheckCircle size={14} className="text-lime-600" /> Hoàn thành gần đây
+              <div className="glass-card bg-white p-5 sm:p-6">
+                 <h4 className="mb-5 flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">
+                    <CheckCircle size={14} className="text-violet-600" /> Hoàn thành gần đây
                  </h4>
                  <div className="space-y-5">
                     {recentCompleted.length === 0 && (
@@ -478,21 +480,25 @@ export function MentorDashboard() {
                       </div>
                     ))}
                  </div>
-                 <button type="button" onClick={() => navigate("/mentor/analytics")} className="mt-8 w-full rounded-2xl border border-slate-200 bg-slate-50 py-4 text-[10px] font-black uppercase tracking-widest text-slate-700 transition-all hover:bg-slate-100 sm:mt-10">
+                 <button type="button" onClick={() => navigate("/mentor/analytics")} className="mt-6 w-full rounded-lg border border-slate-200 bg-slate-50 py-3 text-[10px] font-black uppercase tracking-widest text-slate-700 transition-all hover:bg-slate-100">
                     Xem toàn bộ lịch sử
                  </button>
               </div>
 
               {/* Peer Review Call-to-action */}
-              <div className="glass-card group relative overflow-hidden border-violet-200 bg-gradient-to-br from-violet-50 to-white p-8 sm:p-10">
-                 <div className="pointer-events-none absolute right-0 top-0 p-6 opacity-[0.12] transition-all duration-700 group-hover:rotate-0 sm:p-8" style={{ transform: "rotate(12deg)" }}>
-                    <SealCheck size={120} className="text-violet-500" />
+              <div className="glass-card group relative overflow-hidden border-violet-200 bg-gradient-to-br from-violet-50 to-white p-5 sm:p-6">
+                 <div className="pointer-events-none absolute right-0 top-0 p-4 opacity-[0.12] transition-all duration-700 group-hover:rotate-0" style={{ transform: "rotate(12deg)" }}>
+                    <SealCheck size={80} className="text-violet-500" />
                  </div>
-                 <p className="relative mb-3 text-[10px] font-black uppercase tracking-[0.3em] text-violet-700">Peer Review</p>
-                 <h4 className="relative mb-3 text-xl font-black tracking-tighter text-slate-900 sm:text-2xl">Tham gia Đánh giá Khóa học</h4>
-                 <p className="relative mb-6 text-xs font-medium leading-relaxed text-slate-600 sm:mb-8">Góp ý nội dung cho đồng nghiệp và nhận point thưởng từ ProInterview.</p>
-                 <button type="button" onClick={() => navigate("/mentor/peer-review")} className="relative flex items-center gap-2 text-xs font-black text-violet-800 transition-all hover:gap-4">
-                    Bắt đầu ngay <ArrowRight size={18} className="text-lime-700" />
+                 <p className="relative mb-2 text-[10px] font-black uppercase tracking-[0.25em] text-violet-700">Peer Review</p>
+                 <h4 className="relative mb-2 text-base font-black tracking-tight text-slate-900 sm:text-lg">
+                   Tham gia Đánh giá Khóa học
+                 </h4>
+                 <p className="relative mb-4 text-xs font-medium leading-relaxed text-slate-600">
+                   Góp ý nội dung cho đồng nghiệp và nhận point thưởng từ ProInterview.
+                 </p>
+                 <button type="button" onClick={() => navigate("/mentor/peer-review")} className="relative flex items-center gap-2 text-[11px] font-black text-violet-800 transition-all hover:gap-3">
+                    Bắt đầu ngay <ArrowRight size={16} className="text-violet-700" />
                  </button>
               </div>
            </div>

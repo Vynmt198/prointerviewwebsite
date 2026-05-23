@@ -6,6 +6,7 @@ import {
   CV_HUB_DEMO_MATCH,
 } from "./CvAnalysisScoreBreakdown";
 import { CUSTOMER_SHELL_GUTTER, CUSTOMER_SHELL_MAX } from "../layout/customerShellLayout";
+import { CustomerPageBadge } from "../layout/CustomerPageHeader";
 
 const HUB_STYLES = `
   .cv-hub-enter {
@@ -57,12 +58,9 @@ export function CvAnalysisHubHero({ onJd, onField }) {
           {/* Trái — hero + linh vật */}
           <div className="relative flex shrink-0 flex-col justify-center py-3 sm:py-4 lg:min-w-[25rem] lg:max-w-[33rem] lg:flex-[0.92] lg:py-2 xl:max-w-[34rem]">
             <div className="relative z-10 flex flex-col gap-2.5 pr-16 sm:gap-3 sm:pr-20 lg:-translate-y-24 lg:pr-0">
-              <div className="inline-flex w-fit items-center gap-1.5 rounded-full border border-violet-200/80 bg-white/90 px-3 py-1 shadow-sm backdrop-blur-sm">
-                <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#630ed4]" />
-                <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#5b598c] sm:text-[11px]">
-                  Phân tích CV &amp; JD
-                </span>
-              </div>
+              <CustomerPageBadge className="w-fit">
+                Phân tích CV
+              </CustomerPageBadge>
 
               <h1 className="max-w-[min(100%,32rem)] font-headline tracking-tight">
                 <span className="block text-[clamp(1.8rem,4.35vw,2.65rem)] font-extrabold leading-[1.15] text-[#1a1b23]">

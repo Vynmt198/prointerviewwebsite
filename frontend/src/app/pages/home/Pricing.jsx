@@ -12,6 +12,7 @@ import { requireLoginNavigate } from "../../utils/authGate";
 import { getUser, isLoggedIn } from "../../utils/auth";
 import { fetchCurrentPlan } from "../../utils/plansApi";
 import { CUSTOMER_SHELL_GUTTER, CUSTOMER_SHELL_MAX } from "../../components/layout/customerShellLayout";
+import { CustomerPageHeader } from "../../components/layout/CustomerPageHeader";
 
 const FAQ_DATA = [
   {
@@ -206,23 +207,21 @@ export function Pricing() {
     <MentorPageShell className="pricing-page" bottomPad="pb-16" showAmbient={false}>
       <div className={CUSTOMER_SHELL_GUTTER}>
         <div className={`${CUSTOMER_SHELL_MAX} py-10 sm:py-14`}>
-          <header className="mb-8 text-center sm:mb-10">
-            <div className="mb-3 inline-flex items-center gap-1.5 rounded-full border border-violet-200/80 bg-white/90 px-3 py-1 shadow-sm">
-              <span className="h-1.5 w-1.5 rounded-full bg-[#630ed4]" aria-hidden />
-              <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-violet-700">
-                Bảng giá
-              </span>
-            </div>
-            <h1 className="font-headline text-[clamp(1.75rem,3.5vw,2.5rem)] font-extrabold tracking-tight text-slate-900">
-              Sẵn sàng hơn cho{" "}
-              <span className="bg-gradient-to-r from-[#5F00F0] to-[#9B6DFF] bg-clip-text text-transparent">
-                mọi buổi phỏng vấn
-              </span>
-            </h1>
-            <p className="mx-auto mt-3 max-w-2xl text-base font-medium leading-relaxed text-violet-700/90">
-              Chọn gói phù hợp — luyện tập, cải thiện và chinh phục nhà tuyển dụng.
-            </p>
-          </header>
+          <CustomerPageHeader
+            centered
+            className="mb-8 sm:mb-10"
+            badge="Bảng giá"
+            title={
+              <>
+                Sẵn sàng hơn cho{" "}
+                <span className="bg-gradient-to-r from-[#5F00F0] to-[#9B6DFF] bg-clip-text text-transparent">
+                  mọi buổi phỏng vấn
+                </span>
+              </>
+            }
+            subtitle="Chọn gói phù hợp — luyện tập, cải thiện và chinh phục nhà tuyển dụng."
+            subtitleClassName="mt-3 max-w-2xl text-base font-medium leading-relaxed text-violet-700/90"
+          />
 
           <BillingToggle billing={billing} onChange={setBilling} savePercent={YEARLY_SAVE_PCT} />
 

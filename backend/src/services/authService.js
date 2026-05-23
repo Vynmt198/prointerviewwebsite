@@ -767,7 +767,10 @@ export async function patchMeUser(userId, body, req, options = {}) {
     user.skills = skills;
     user.expertise = skills;
   }
-  if (typeof body.avatar === "string") user.avatar = body.avatar;
+  if (typeof body.avatar === "string") {
+    const av = body.avatar.trim();
+    if (av) user.avatar = av;
+  }
   if (Array.isArray(body.expertise)) {
     user.expertise = body.expertise;
     user.skills = body.expertise;

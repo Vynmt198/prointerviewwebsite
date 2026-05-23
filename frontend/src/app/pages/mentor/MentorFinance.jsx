@@ -135,10 +135,10 @@ function WithdrawalModal({
         <div className="p-10 text-center">
           {success ? (
             <div className="space-y-6 animate-in fade-in zoom-in duration-500">
-              <div className="w-24 h-24 rounded-full bg-primary-fixed/20 border border-primary-fixed/40 flex items-center justify-center mx-auto text-primary-fixed">
+              <div className="w-24 h-24 rounded-full bg-primary-fixed/20 border border-primary-fixed/40 flex items-center justify-center mx-auto text-violet-700">
                 <CheckCircle size={48} />
               </div>
-              <h2 className="text-3xl font-black text-slate-900 tracking-tighter">Yêu cầu thành công!</h2>
+              <h2 className="text-xl font-black sm:text-2xl text-slate-900 tracking-tighter">Yêu cầu thành công!</h2>
               <p className="text-sm text-zinc-500 font-medium px-4">Số tiền của bạn đang được hệ thống xử lý và sẽ chuyển khoản trong vòng 1-2 ngày làm việc.</p>
               <button onClick={onClose} className="w-full py-4 rounded-2xl bg-white text-black text-[10px] font-black uppercase tracking-widest shadow-xl">Đóng cửa sổ</button>
             </div>
@@ -150,7 +150,7 @@ function WithdrawalModal({
               </div>
               <div className="p-6 rounded-[32px] bg-slate-50 border border-slate-200 text-left">
                  <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-2">Số dư khả dụng</p>
-                 <h3 className="text-2xl font-black text-primary-fixed tracking-tight">{balance.toLocaleString()} ₫</h3>
+                 <h3 className="text-2xl font-black text-violet-700 tracking-tight">{balance.toLocaleString()} ₫</h3>
               </div>
               <div className="space-y-4 text-left">
                  <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest ml-1">Ngân hàng nhận tiền</label>
@@ -309,14 +309,14 @@ export function MentorFinance() {
 
   return (
     <MentorPageShell bottomPad="pb-32" extraStyles={MENTOR_FINANCE_EXTRA_CSS}>
-      <div className="relative z-10 p-10 max-w-7xl mx-auto pt-20">
+      <div className="relative z-10 mx-auto max-w-7xl px-10 pb-10">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-10 mb-16">
           <div>
-            <h1 className="text-6xl font-black text-slate-900 font-headline tracking-tighter mb-4 uppercase">
+            <h1 className="mb-3 font-headline text-2xl font-black uppercase tracking-tight text-slate-900 sm:text-3xl">
                Quản lý <span className="text-secondary tracking-tighter">Tài chính</span>
             </h1>
-            <p className="text-slate-600 text-lg font-medium">Theo dõi thu nhập, giao dịch và quản lý dòng tiền của bạn</p>
+            <p className="text-slate-600 text-sm font-medium">Theo dõi thu nhập, giao dịch và quản lý dòng tiền của bạn</p>
           </div>
         </div>
 
@@ -328,9 +328,9 @@ export function MentorFinance() {
                  <Wallet size={160} className="text-[#6E35E8]" />
               </div>
               <div className="relative z-10">
-                 <p className="text-[10px] font-black text-primary-fixed uppercase tracking-[0.4em] mb-6">Số dư khả dụng</p>
+                 <p className="text-[10px] font-black text-violet-700 uppercase tracking-[0.4em] mb-6">Số dư khả dụng</p>
                  <div className="flex items-baseline gap-4 mb-10">
-                    <h2 className="text-7xl font-black text-slate-900 tracking-tighter">{availableBalance.toLocaleString()}</h2>
+                    <h2 className="text-xl font-black sm:text-2xl tracking-tight text-slate-900 sm:text-4xl">{availableBalance.toLocaleString()}</h2>
                     <p className="text-2xl font-black text-zinc-500 uppercase tracking-widest mb-1">vnđ</p>
                  </div>
                  <div className="flex flex-wrap gap-4">
@@ -354,7 +354,7 @@ export function MentorFinance() {
               <div className="glass-card p-10 flex items-center justify-between border-t border-t-secondary/20">
                  <div>
                     <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-3">Chờ giải ngân</p>
-                    <h3 className="text-4xl font-black text-slate-900 tracking-tighter">{pendingBalance.toLocaleString()} ₫</h3>
+                    <h3 className="text-2xl font-black tracking-tight text-slate-900 sm:text-3xl">{pendingBalance.toLocaleString()} ₫</h3>
                     <p className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest mt-2">Dự kiến sau 7 ngày</p>
                  </div>
                  <div className="w-14 h-14 rounded-2xl bg-secondary/10 flex items-center justify-center text-secondary">
@@ -365,15 +365,15 @@ export function MentorFinance() {
               <div className="glass-card p-10 flex items-center justify-between">
                  <div>
                     <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-3">Tổng thu nhập</p>
-                    <h3 className="text-4xl font-black text-slate-900 tracking-tighter">{totalEarned.toLocaleString()} ₫</h3>
+                    <h3 className="text-2xl font-black tracking-tight text-slate-900 sm:text-3xl">{totalEarned.toLocaleString()} ₫</h3>
                     <p className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest mt-2 flex items-center gap-2">
-                       <ArrowUpRight size={14} className="text-primary-fixed" />
+                       <ArrowUpRight size={14} className="text-violet-700" />
                        {totalSessions > 0
                          ? `Theo ${totalSessions} buổi đã hoàn thành + học phí khóa (sau phí nền tảng)`
                          : "Tổng giá trị buổi hoàn thành & khóa học (sau phí nền tảng)"}
                     </p>
                  </div>
-                 <div className="w-14 h-14 rounded-2xl bg-primary-fixed/10 flex items-center justify-center text-primary-fixed">
+                 <div className="w-14 h-14 rounded-2xl bg-primary-fixed/10 flex items-center justify-center text-violet-700">
                     <ChartPie size={28} />
                  </div>
               </div>
@@ -417,7 +417,7 @@ export function MentorFinance() {
                       <tr key={i} className="hover:bg-slate-50 transition-colors group">
                          <td className="px-10 py-8">
                             <div className="flex items-center gap-4">
-                               <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${tx.type === 'income' ? 'bg-primary-fixed/10 text-primary-fixed' : 'bg-orange-500/10 text-orange-400'}`}>
+                               <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${tx.type === 'income' ? 'bg-primary-fixed/10 text-violet-700' : 'bg-orange-500/10 text-orange-400'}`}>
                                   {tx.type === 'income' ? <ArrowUpRight size={18} /> : <ArrowDownRight size={18} />}
                                </div>
                                <div>
@@ -430,7 +430,7 @@ export function MentorFinance() {
                             <p className="text-xs font-black text-slate-900">{new Date(tx.date).toLocaleDateString("vi-VN")}</p>
                          </td>
                          <td className="px-10 py-8">
-                            <p className={`text-sm font-black tracking-tight ${tx.type === 'income' ? 'text-primary-fixed' : 'text-slate-700'}`}>
+                            <p className={`text-sm font-black tracking-tight ${tx.type === 'income' ? 'text-violet-700' : 'text-slate-700'}`}>
                                {tx.type === 'income' ? '+' : '-'}{tx.amount.toLocaleString()} ₫
                             </p>
                          </td>
@@ -549,8 +549,8 @@ export function MentorFinance() {
               <div className="rounded-2xl border border-slate-200 bg-slate-50 px-5 py-4 mb-5">
                 <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-2">Số tiền giao dịch</p>
                 <p
-                  className={`text-3xl font-black tracking-tight ${
-                    selectedTx.type === "income" ? "text-primary-fixed" : "text-orange-300"
+                  className={`text-xl font-black sm:text-2xl tracking-tight ${
+                    selectedTx.type === "income" ? "text-violet-700" : "text-orange-300"
                   }`}
                 >
                   {selectedTx.type === "income" ? "+" : "-"}

@@ -40,6 +40,10 @@ const MENTOR_LIGHT_STYLES = `
           letter-spacing: -0.045em;
           text-shadow: none;
         }
+        /* Chữ accent lime (primary-fixed) → tím trên các trang mentor */
+        .mentor-surface .text-primary-fixed {
+          color: #7a23e5;
+        }
 `;
 
 export function MentorPageShell({

@@ -59,11 +59,10 @@ export function isProfileCvCompleteForMentor(cv) {
 export const MENTOR_APPLY_INCOMPLETE_MSG =
   "Vui lòng điền đầy đủ thông tin hồ sơ cá nhân để đăng ký làm mentor.";
 
-export const MENTOR_APPLY_PENDING_MSG =
-  "Bạn đã gửi hồ sơ mentor. Hệ thống đang chờ admin xét duyệt (24–48 giờ làm việc).";
-
-export const PROFILE_CV_MENTOR_HINT =
-  "Hoàn thành đầy đủ ở các mục Giới thiệu bản thân, Quá trình học tập, Thông tin đăng ký làm mentor và 1 trong 2 mục Kinh nghiệm làm việc hoặc Hoạt động ngoại khóa.";
+export const MENTOR_APPLY_RESUBMIT_CONFIRM_TITLE =
+  "Hồ sơ mentor đang chờ admin duyệt";
+export const MENTOR_APPLY_RESUBMIT_CONFIRM_BODY =
+  "Bạn có chắc muốn gửi lại? Admin chỉ xem bản gửi mới nhất.";
 
 export function mentorApplyBlockedMessage(missing) {
   if (!missing?.length) return "";

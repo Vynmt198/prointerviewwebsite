@@ -42,7 +42,7 @@ import {
 } from "../../utils/courseApi";
 import { enrollmentApi } from "../../utils/enrollmentApi";
 import { toastApiError, toastApiSuccess } from "../../utils/apiToast";
-import { avatarSrc, mediaSrc } from "../../utils/mediaUrl";
+import { avatarSrc, mediaSrc, DEFAULT_COURSE_THUMB } from "../../utils/mediaUrl";
 import { enrollmentAccessGranted } from "../../utils/enrollmentAccess.js";
 import { landingPrimaryButtonClass } from "../../constants/landingTheme";
 import { readLearningDarkMode, writeLearningDarkMode } from "../../utils/learningDarkMode";
@@ -952,7 +952,7 @@ export function CourseLearning() {
       const flatCourse = {
         id: c._id,
         title: c.title,
-        thumbnail: c.thumbnail || "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&q=80",
+        thumbnail: mediaSrc(c.thumbnail, DEFAULT_COURSE_THUMB),
         mentorId: c.mentorId?._id,
         mentorName: c.mentorId?.userId?.name || "Khuất danh",
         mentorAvatar: avatarSrc(c.mentorId?.userId?.avatar) || "https://api.dicebear.com/7.x/avataaars/svg?seed=Lucky",

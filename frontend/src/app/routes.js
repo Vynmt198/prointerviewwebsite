@@ -38,6 +38,7 @@ import { MentorFinance } from "./pages/mentor/MentorFinance";
 import { Courses } from "./pages/courses/Courses";
 import { CourseDetail } from "./pages/courses/CourseDetail";
 import { CourseLearning } from "./pages/courses/CourseLearning";
+import { MyCourses } from "./pages/courses/MyCourses";
 import { MentorCourseManagement } from "./pages/mentor/MentorCourseManagement";
 import { MentorCourseEdit } from "./pages/mentor/MentorCourseEdit";
 import { MentorPeerReview } from "./pages/mentor/MentorPeerReview";
@@ -120,6 +121,7 @@ export const router = createHashRouter([
             },
           },
           { path: "my-bookings", Component: MyBookings },
+          { path: "my-courses", Component: MyCourses },
           { path: "booking/:id", Component: Booking },
           { path: "booking", Component: Booking },
           { path: "session/:id", Component: SessionDetail },

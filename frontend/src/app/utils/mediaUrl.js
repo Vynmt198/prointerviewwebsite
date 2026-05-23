@@ -2,13 +2,27 @@ import { API_BASE_URL } from "./api.js";
 
 export const DEFAULT_AVATAR = "https://api.dicebear.com/7.x/avataaars/svg?seed=ProInterview";
 
+export const DEFAULT_COURSE_THUMB =
+  "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&q=80";
+
+const LOCAL_BACKEND = /^https?:\/\/(?:127\.0\.0\.1|localhost)(?::\d+)?/i;
+
+/** Lưu DB dạng `/uploads/...` — tránh gắn cứng host/port. */
+export function normalizeStoredUploadUrl(url) {
+  const raw = String(url ?? "").trim();
+  if (!raw) return "";
+  const idx = raw.indexOf("/uploads/");
+  if (idx >= 0) return raw.slice(idx);
+  if (raw.startsWith("uploads/")) return `/${raw}`;
+  return raw;
+}
+
 /**
  * Chuẩn hóa URL ảnh/upload từ API (full URL, /uploads/..., hoặc chỉ tên file).
  */
-const LOCAL_BACKEND = /^https?:\/\/(?:127\.0\.0\.1|localhost)(?::\d+)?/i;
-
 export function resolveMediaUrl(src) {
-  const raw = typeof src === "string" ? src.trim() : "";
+  const stored = normalizeStoredUploadUrl(src);
+  const raw = stored || (typeof src === "string" ? src.trim() : "");
   if (!raw) return "";
   if (/^https?:\/\//i.test(raw)) {
     const base = (API_BASE_URL || "").replace(/\/$/, "");
@@ -39,6 +53,3 @@ export function avatarSrc(src, fallback = DEFAULT_AVATAR) {
 export function mediaSrc(src, fallback = "") {
   return resolveMediaUrl(src) || fallback;
 }
-
-export const DEFAULT_COURSE_THUMB =
-  "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&q=80";

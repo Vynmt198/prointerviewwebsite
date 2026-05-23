@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router";
-import { Bell, LogIn, LogOut, Menu, Settings, Shield, User, UserPlus, X } from "lucide-react";
+import { Bell, BookOpen, Calendar, LogIn, LogOut, Menu, Settings, Shield, User, UserPlus, X } from "lucide-react";
 import { TopNavShell } from "./TopNavShell";
 import {
   fetchNotifications,
@@ -40,7 +40,8 @@ const PAGE_TITLES = {
   "/settings": { label: "Cài đặt", sub: "Tuỳ chỉnh tài khoản" },
   "/pricing": { label: "Bảng giá", sub: "Nâng cấp để mở khoá đầy đủ tính năng" },
   "/booking": { label: "Đặt lịch", sub: "Chọn thời gian phù hợp với mentor" },
-  "/courses": { label: "Khóa học", sub: "Khám phá các khóa học nâng cao kỹ năng" },
+  "/courses": { label: "Khóa học", sub: "Video ngắn từ mentor — ôn kỹ năng trước phỏng vấn" },
+  "/my-courses": { label: "Khóa học của tôi", sub: "Tiến độ và khóa bạn đã đăng ký" },
   "/mentor/dashboard": { label: "Mentor", sub: "Bảng điều khiển mentor" },
   "/mentor/schedule": { label: "Lịch họp", sub: "Quản lý slot & buổi họp" },
   "/mentor/courses": { label: "Khóa học", sub: "Quản lý nội dung khóa" },
@@ -178,6 +179,14 @@ function CustomerNavbar() {
 
     if (notif.type === "payment") {
       navigate("/");
+      return;
+    }
+
+    if (
+      notif.type === "system" &&
+      (notif.title?.includes("mentor") || notif.body?.toLowerCase().includes("mentor"))
+    ) {
+      navigate("/profile");
     }
   };
 
@@ -230,31 +239,31 @@ function CustomerNavbar() {
           {loggedIn ? (
             <>
               <DropdownMenu open={notifOpen} onOpenChange={setNotifOpen}>
-                <DropdownMenuTrigger asChild>
-                  <button
-                    type="button"
-                    className="relative inline-flex size-9 items-center justify-center rounded-xl transition-all focus:outline-none"
-                    style={{
-                      background: notifOpen ? "rgba(110,53,232,0.1)" : "transparent",
-                      border: notifOpen ? "1px solid rgba(110,53,232,0.25)" : "1px solid transparent",
-                    }}
-                    aria-label="Thông báo"
-                  >
-                    <Bell className="h-5 w-5 text-[#6E35E8]/75" />
-                    {unreadCount > 0 && (
-                      <span
-                        className="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full font-bold text-[#1d1a26]"
-                        style={{
-                          background: "linear-gradient(135deg, #B4F500, #D4FF00)",
-                          fontSize: "0.6rem",
-                          boxShadow: "0 2px 8px rgba(180,245,0,0.45)",
-                        }}
-                      >
-                        {unreadCount}
-                      </span>
-                    )}
-                  </button>
-                </DropdownMenuTrigger>
+                  <DropdownMenuTrigger asChild>
+                    <button
+                      type="button"
+                      className="relative inline-flex size-9 items-center justify-center rounded-xl transition-all focus:outline-none"
+                      style={{
+                        background: notifOpen ? "rgba(110,53,232,0.1)" : "transparent",
+                        border: notifOpen ? "1px solid rgba(110,53,232,0.25)" : "1px solid transparent",
+                      }}
+                      aria-label="Thông báo"
+                    >
+                      <Bell className="h-5 w-5 text-[#6E35E8]/75" />
+                      {unreadCount > 0 && (
+                        <span
+                          className="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full font-bold text-[#1d1a26]"
+                          style={{
+                            background: "linear-gradient(135deg, #B4F500, #D4FF00)",
+                            fontSize: "0.6rem",
+                            boxShadow: "0 2px 8px rgba(180,245,0,0.45)",
+                          }}
+                        >
+                          {unreadCount > 9 ? "9+" : unreadCount}
+                        </span>
+                      )}
+                    </button>
+                  </DropdownMenuTrigger>
                 <DropdownMenuContent
                   align="end"
                   className="w-80 overflow-hidden border border-slate-200/90 bg-white p-0 text-slate-900 shadow-xl"
@@ -328,6 +337,14 @@ function CustomerNavbar() {
                     <User className="mr-2 size-4" />
                     Hồ sơ
                   </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate("/my-courses")}>
+                    <BookOpen className="mr-2 size-4" />
+                    Khóa học của tôi
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate("/my-bookings")}>
+                    <Calendar className="mr-2 size-4" />
+                    Lịch hẹn của tôi
+                  </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => navigate("/settings")}>
                     <Settings className="mr-2 size-4" />
                     Cài đặt
@@ -339,7 +356,10 @@ function CustomerNavbar() {
                     </DropdownMenuItem>
                   ) : null}
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleLogout} className="text-red-600 focus:text-red-600">
+                  <DropdownMenuItem
+                    onClick={handleLogout}
+                    className="font-semibold text-[#6E35E8] focus:text-[#6E35E8]"
+                  >
                     <LogOut className="mr-2 size-4" />
                     Đăng xuất
                   </DropdownMenuItem>
@@ -493,7 +513,7 @@ function MentorNavbar() {
 
   return (
     <header
-      className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b px-5 antialiased backdrop-blur-xl"
+      className="z-30 flex h-16 shrink-0 items-center gap-4 border-b px-5 antialiased backdrop-blur-xl"
       style={{
         background: "rgba(255, 255, 255, 0.92)",
         borderColor: "rgba(186, 165, 255, 0.45)",
