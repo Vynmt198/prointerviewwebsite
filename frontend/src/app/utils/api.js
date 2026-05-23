@@ -15,8 +15,8 @@ function resolveApiBase() {
     return "";
   }
 
-  // Prod Vercel: nếu chưa set VITE_API_URL, dùng Render backend mặc định (tránh gọi /api trên Vercel → 404).
-  return "https://prointerview-backend.onrender.com";
+  // Prod: /api trên cùng domain Vercel → vercel.json rewrite sang Render (tránh lỗi CORS).
+  return "";
 }
 
 export const API_BASE_URL = resolveApiBase();

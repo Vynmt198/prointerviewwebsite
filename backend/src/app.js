@@ -45,8 +45,14 @@ export function createApp() {
     ? process.env.CORS_ORIGIN.split(",").map((s) => s.trim()).filter(Boolean)
     : [];
   const defaultDevOrigins = ["http://localhost:5173", "http://127.0.0.1:5173"];
-  const allowOrigins = configuredOrigins.length > 0 ? configuredOrigins : (isProd ? [] : defaultDevOrigins);
-  const staticCorsOrigin = allowOrigins.length > 0 ? allowOrigins : (isProd ? false : true);
+  const defaultProdOrigins = ["https://pro-interview-mu.vercel.app"];
+  const allowOrigins =
+    configuredOrigins.length > 0
+      ? configuredOrigins
+      : isProd
+        ? defaultProdOrigins
+        : defaultDevOrigins;
+  const staticCorsOrigin = allowOrigins.length > 0 ? allowOrigins : true;
 
   const apiLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
@@ -73,6 +79,7 @@ export function createApp() {
       origin(origin, callback) {
         if (!origin) return callback(null, true);
         if (allowOrigins.includes(origin)) return callback(null, true);
+        if (isProd && /\.vercel\.app$/i.test(origin)) return callback(null, true);
         return callback(null, false);
       },
       credentials: false,
@@ -149,6 +156,9 @@ export function createApp() {
             host: mongoose.connection.host || null,
           }
         : null,
+      sepayWebhookConfigured: Boolean(
+        String(process.env.SEPAY_WEBHOOK_API_KEY || process.env.SEPAY_API_KEY || "").trim(),
+      ),
       timestamp: new Date().toISOString(),
     });
   });
