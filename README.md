@@ -119,7 +119,7 @@ cd frontend && npm run dev
 # Terminal 3 — CV/JD Service (tuỳ chọn)
 cd cv_jd_matching
 pip install -r requirements.txt
-uvicorn main:app --reload --host 127.0.0.1 --port 8000
+python -m uvicorn main:app --reload --host 127.0.0.1 --port 8000
 ```
 
 ### Tài khoản dev mặc định (sau seed)

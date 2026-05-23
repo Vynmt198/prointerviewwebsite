@@ -143,14 +143,14 @@ export function useDIDStream({ apiKey, sourceImageUrl } = {}) {
         throw new Error(`SDP exchange thất bại: ${sdpRes.status}`);
       }
 
-      // Timeout 7s: nếu WebRTC không vào "connected" → fallback sang pre-recorded video
+      // Timeout 15s: nếu WebRTC không vào "connected" → fallback sang pre-recorded video
       connectTimerRef.current = setTimeout(() => {
         if (pcRef.current && pcRef.current.connectionState !== "connected") {
           console.warn("[D-ID] connection timeout → fallback");
           setStatus("error");
           setError("Kết nối D-ID timeout");
         }
-      }, 7000);
+      }, 15000);
     } catch (err) {
       console.error("[D-ID] connect():", err);
       setStatus("error");
