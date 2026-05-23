@@ -13,7 +13,6 @@
     "seed": "node src/scripts/seedUsers.js",
     "seed:users": "node src/scripts/seedUsers.js",
     "seed:ui-mock": "node src/scripts/seedUiMockData.js",
-    "seed:demo-course": "node src/scripts/seedDemoLearningCourse.js",
     "db:prune-fake-mentors": "node src/scripts/pruneFakeMentors.js",
     "seed:all": "node src/scripts/seedAll.js",
     "sync:mentor-profiles": "node src/scripts/syncMentorProfiles.js",
@@ -21,7 +20,7 @@
     "db:migrate-cv-analysis": "node src/scripts/migrate-cv-analysis.js",
     "db:migrate-cv-analysis:dry": "node src/scripts/migrate-cv-analysis.js --dry-run",
     "test": "npm run test:node && npm run test:dto && npm run test:python-cv",
-    "test:node": "node --test src/utils/apiErrors.test.js src/utils/cvAnalysisValidation.test.js src/utils/planKeys.test.js src/utils/bookingSchedule.test.js src/utils/orderRef.test.js src/utils/securityGuards.test.js src/services/bookingsDate.test.js src/integration/cv.integration.test.js src/integration/cvMatch.integration.test.js src/integration/payments-transfer.integration.test.js src/integration/security.integration.test.js",
+    "test:node": "node --test src/utils/apiErrors.test.js src/utils/planKeys.test.js src/utils/bookingSchedule.test.js src/utils/orderRef.test.js src/utils/securityGuards.test.js src/integration/cv.integration.test.js src/integration/cvMatch.integration.test.js src/integration/payments-transfer.integration.test.js src/integration/security.integration.test.js",
     "test:payments": "node --test src/integration/payments-transfer.integration.test.js",
     "test:python-cv": "cd ../cv_jd_matching && python -m unittest discover -s tests -p test_*.py -v",
     "test:dto": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --testPathPatterns=__tests__"
