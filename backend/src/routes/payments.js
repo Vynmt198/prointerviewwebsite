@@ -15,5 +15,7 @@ paymentsRouter.patch(
 paymentsRouter.get("/history", authJwt, asyncHandler(PaymentsController.history));
 paymentsRouter.post("/webhook/momo", asyncHandler(PaymentsController.webhookMomo));
 paymentsRouter.post("/webhook/zalopay", asyncHandler(PaymentsController.webhookZalopay));
+paymentsRouter.post("/webhook/sepay", asyncHandler(PaymentsController.webhookSepay));
+paymentsRouter.get("/transfer-status", authJwt, asyncHandler(PaymentsController.transferStatus));
 paymentsRouter.get("/vnpay/ipn", asyncHandler(PaymentsController.vnpayIpn));
 paymentsRouter.get("/vnpay/vnpay-return", asyncHandler(PaymentsController.vnpayReturn));

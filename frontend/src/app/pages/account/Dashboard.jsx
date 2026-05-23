@@ -1,8 +1,9 @@
-import { useState, useEffect, useMemo } from "react";
-import { useNavigate } from "react-router";
+import { useState, useEffect, useMemo, useRef } from "react";
+import { useNavigate, useSearchParams } from "react-router";
 import { motion, AnimatePresence } from "motion/react";
-import { getUser, isLoggedIn, getDisplayName, getInitials } from "../../utils/auth";
+import { getUser, isLoggedIn, getDisplayName, getInitials, setLoggedIn } from "../../utils/auth";
 import { toastApiError, toastApiSuccess, tryApi } from "../../utils/apiToast";
+import { fetchCurrentPlan } from "../../utils/plansApi";
 import { parseDateMs } from "../../utils/bookings";
 import { listBookings, cancelBooking } from "../../utils/bookingsApi";
 import { fetchDashboardStats } from "../../utils/dashboardApi";
@@ -349,6 +350,88 @@ function getPaymentBadge(paymentStatus, status) {
   };
 }
 
+function planDisplayName(plan) {
+  const p = String(plan || "free").toLowerCase();
+  if (p === "elite_pro") return "Elite Pro";
+  if (p === "starter_pro") return "Pro";
+  return "Miễn phí";
+}
+
+function formatPlanExpires(iso) {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (!Number.isFinite(d.getTime())) return "";
+  return d.toLocaleDateString("vi-VN", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  });
+}
+
+function PlanUpgradeSuccessBanner({ planInfo, onDismiss }) {
+  if (!planInfo) return null;
+  const name = planDisplayName(planInfo.plan);
+  const expires = formatPlanExpires(planInfo.planExpiresAt);
+  const cvLimit = planInfo.quota?.cvAnalysisLimit;
+  const interviewLimit = planInfo.quota?.interviewLimit;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: -8 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -8 }}
+      className="dashboard-glass-soft relative overflow-hidden rounded-2xl border border-emerald-200/80 bg-gradient-to-r from-emerald-50/95 to-white p-4 sm:p-5"
+      role="status"
+      aria-live="polite"
+    >
+      <div className="pointer-events-none absolute -right-8 -top-8 h-24 w-24 rounded-full bg-emerald-200/40 blur-2xl" />
+      <div className="relative flex gap-3 sm:gap-4">
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-emerald-500 shadow-md shadow-emerald-500/25">
+          <MsIcon name="verified" filled size={26} className="text-white" />
+        </div>
+        <div className="min-w-0 flex-1 pr-8">
+          <p className="text-[10px] font-black uppercase tracking-widest text-emerald-700/80">
+            Nâng cấp thành công
+          </p>
+          <h2 className="mt-0.5 text-base font-black text-slate-900 sm:text-lg">
+            Gói {name} đã được kích hoạt
+          </h2>
+          <p className="mt-1 text-sm leading-relaxed text-slate-600">
+            {expires
+              ? `Hiệu lực đến ${expires}. `
+              : ""}
+            Bạn có thể dùng AI phỏng vấn và phân tích CV/JD theo hạn mức gói ngay bây giờ.
+          </p>
+          {(cvLimit != null || interviewLimit != null) && (
+            <p className="mt-2 text-xs font-semibold text-emerald-800/90">
+              {interviewLimit != null && (
+                <span>
+                  Phỏng vấn AI:{" "}
+                  {interviewLimit >= 999 ? "không giới hạn" : `${interviewLimit}/tháng`}
+                </span>
+              )}
+              {cvLimit != null && interviewLimit != null ? " · " : null}
+              {cvLimit != null && (
+                <span>
+                  CV/JD: {cvLimit >= 999 ? "không giới hạn" : `${cvLimit}/tháng`}
+                </span>
+              )}
+            </p>
+          )}
+        </div>
+        <button
+          type="button"
+          onClick={onDismiss}
+          className="absolute right-2 top-2 rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
+          aria-label="Đóng thông báo"
+        >
+          <MsIcon name="close" size={20} />
+        </button>
+      </div>
+    </motion.div>
+  );
+}
+
 function LearningStreakCard({ days, loading }) {
   const streakLabel = loading ? "—" : `${days} ngày`;
 
@@ -369,6 +452,50 @@ function LearningStreakCard({ days, loading }) {
 
 export function Dashboard() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const planUpgradedHandledRef = useRef(false);
+  const [planUpgradeBanner, setPlanUpgradeBanner] = useState(null);
+
+  useEffect(() => {
+    if (planUpgradedHandledRef.current) return;
+    if (searchParams.get("planUpgraded") !== "1") return;
+    planUpgradedHandledRef.current = true;
+
+    const next = new URLSearchParams(searchParams);
+    next.delete("planUpgraded");
+    setSearchParams(next, { replace: true });
+
+    (async () => {
+      try {
+        const pr = await fetchCurrentPlan();
+        if (pr.success) {
+          setLoggedIn({
+            ...getUser(),
+            plan: pr.plan,
+            planExpiresAt: pr.planExpiresAt,
+          });
+          setPlanUpgradeBanner({
+            plan: pr.plan,
+            planExpiresAt: pr.planExpiresAt,
+            quota: pr.quota,
+          });
+          toastApiSuccess(`Gói ${planDisplayName(pr.plan)} đã sẵn sàng trên tài khoản của bạn.`);
+          return;
+        }
+      } catch {
+        /* fallback below */
+      }
+      const u = getUser();
+      if (u?.plan && u.plan !== "free") {
+        setPlanUpgradeBanner({
+          plan: u.plan,
+          planExpiresAt: u.planExpiresAt,
+          quota: null,
+        });
+        toastApiSuccess("Thanh toán gói đã được xác nhận.");
+      }
+    })();
+  }, [searchParams, setSearchParams]);
 
   useEffect(() => {
     const user = getUser();
@@ -543,7 +670,16 @@ export function Dashboard() {
           />
         </motion.div>
 
-<motion.button
+        <AnimatePresence>
+          {planUpgradeBanner ? (
+            <PlanUpgradeSuccessBanner
+              planInfo={planUpgradeBanner}
+              onDismiss={() => setPlanUpgradeBanner(null)}
+            />
+          ) : null}
+        </AnimatePresence>
+
+        <motion.button
           type="button"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}

@@ -80,6 +80,8 @@ Các nhóm endpoint theo phase (bookings, payments, plans, courses, enrollments,
 | ✅ | POST | `/api/payments/initiate` | `[AUTH]` | Tạo đơn MoMo/ZaloPay sandbox → trả `qr` / `payUrl` cho `Checkout.jsx` |
 | ✅ | POST | `/api/payments/webhook/momo` | *(server secret / IP whitelist)* | Xác nhận thanh toán |
 | ✅ | POST | `/api/payments/webhook/zalopay` | *(tương tự)* | |
+| ✅ | POST | `/api/payments/webhook/sepay` | `Authorization: Apikey SEPAY_WEBHOOK_API_KEY` | Webhook tiền vào TPBank — tự xác nhận đơn `PI…` |
+| ✅ | GET | `/api/payments/transfer-status` | Bearer JWT | Poll trạng thái CK (checkout SePay) |
 | ✅ | GET | `/api/payments/history` | `[AUTH]` | *(tuỳ chọn)* Lịch sử giao dịch |
 | ✅ | GET | `/api/plans/current` | `[AUTH]` | Plan + quota — khớp `Pricing` / hiển thị sau checkout |
 | ✅ | POST | `/api/plans/activate` | `[AUTH]` | Kích hoạt plan sau payment (hoặc gộp vào webhook) |

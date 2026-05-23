@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Search, Clock, User, CheckCircle, BookOpen, RefreshCw } from "lucide-react";
-import { AnimatePresence, motion } from "motion/react";
-import { toastApiError, tryApi } from "../../utils/apiToast";
+import { motion } from "motion/react";
+import { tryApi } from "../../utils/apiToast";
 import { adminApi } from "../../utils/adminApi";
 
 function vnd(n) {
@@ -27,13 +27,6 @@ export function AdminCoursePayments() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [filter, setFilter] = useState("all");
-  const [busyId, setBusyId] = useState("");
-  const [overrideModal, setOverrideModal] = useState({
-    open: false,
-    enrollmentId: "",
-    forceNote: "Đã đối soát thủ công qua sao kê ngân hàng.",
-  });
-
   const loadAll = useCallback(async () => {
     setLoading(true);
     const [listRes, financeRes] = await Promise.all([
@@ -54,66 +47,6 @@ export function AdminCoursePayments() {
     }
     setLoading(false);
   }, []);
-
-  const executeConfirm = async (enrollmentId, needsOverride, forceNote) => {
-    setBusyId(enrollmentId);
-    const res = await tryApi(
-      () =>
-        adminApi.confirmEnrollmentTransferPayment(
-          enrollmentId,
-          needsOverride ? { force: true, forceNote } : {},
-        ),
-      {
-        fallback: "Không xác nhận được thanh toán ghi danh.",
-        successMessage: "Đã xác nhận thanh toán học phí khóa học.",
-      },
-    );
-    setBusyId("");
-    if (!res.success) return;
-    const enr = res.enrollment;
-    if (enr?._id) {
-      setRows((prev) =>
-        prev.map((r) =>
-          String(r._id) === String(enrollmentId)
-            ? {
-                ...r,
-                ...enr,
-                paymentStatus: "paid",
-                paidAt: enr.paidAt || new Date().toISOString(),
-                transferConfirmedAt: enr.transferConfirmedAt || new Date().toISOString(),
-              }
-            : r,
-        ),
-      );
-    } else {
-      await loadAll();
-    }
-  };
-
-  const confirmTransfer = async (row) => {
-    const enrollmentId = row?._id;
-    if (!enrollmentId) return;
-    if (!row?.transferSubmittedAt) {
-      setOverrideModal({
-        open: true,
-        enrollmentId: String(enrollmentId),
-        forceNote: "Đã đối soát thủ công qua sao kê ngân hàng.",
-      });
-      return;
-    }
-    await executeConfirm(String(enrollmentId), false, "");
-  };
-
-  const confirmOverride = async () => {
-    const enrollmentId = String(overrideModal.enrollmentId || "").trim();
-    const forceNote = String(overrideModal.forceNote || "").trim();
-    if (!enrollmentId || forceNote.length < 3) {
-      toastApiError("Cần nhập lý do ngoại lệ tối thiểu 3 ký tự.");
-      return;
-    }
-    setOverrideModal((prev) => ({ ...prev, open: false, enrollmentId: "" }));
-    await executeConfirm(enrollmentId, true, forceNote);
-  };
 
   useEffect(() => {
     void loadAll();
@@ -145,7 +78,7 @@ export function AdminCoursePayments() {
     if (status === "pending") {
       return (
         <span className="flex items-center gap-1.5 rounded-full border border-orange-200 bg-orange-50 px-3 py-1 text-[9px] font-black uppercase tracking-widest text-orange-800">
-          <Clock size={10} /> Chờ xác nhận
+          <Clock size={10} /> Chờ SePay
         </span>
       );
     }
@@ -172,8 +105,8 @@ export function AdminCoursePayments() {
             <span className="text-violet-700">Học phí</span> khóa học
           </h2>
           <p className="max-w-2xl text-sm font-medium text-slate-600">
-            Danh sách ghi danh có phí qua chuyển khoản — giống trang lịch hẹn: xem trạng thái thanh toán, mã CK và
-            xác nhận đã nhận tiền. Dữ liệu lưu trong hệ thống, không mất sau khi duyệt.
+            Danh sách ghi danh có phí qua chuyển khoản — SePay tự xác nhận khi CK đúng mã PI và số tiền. Trang này chỉ
+            theo dõi trạng thái, không cần admin bấm xác nhận thu tiền.
           </p>
         </div>
         <div className="flex w-full min-w-0 flex-wrap items-center gap-3 sm:w-auto sm:justify-end">
@@ -205,7 +138,7 @@ export function AdminCoursePayments() {
         className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4"
       >
         <div className="rounded-2xl border border-amber-200 bg-amber-50/80 p-4">
-          <p className="text-[10px] font-black uppercase tracking-widest text-amber-900">Chờ xác nhận CK</p>
+          <p className="text-[10px] font-black uppercase tracking-widest text-amber-900">Chờ SePay (CK)</p>
           <p className="mt-1 text-2xl font-black text-amber-950">{summary.pendingTransferCount}</p>
           <p className="mt-1 text-sm font-semibold text-amber-900">{vnd(summary.pendingTransferAmount)}</p>
         </div>
@@ -358,14 +291,9 @@ export function AdminCoursePayments() {
                             </span>
                           ) : null}
                           {st === "pending" ? (
-                            <button
-                              type="button"
-                              disabled={busyId === r._id}
-                              onClick={() => void confirmTransfer(r)}
-                              className="mt-1 rounded-lg border border-emerald-300 bg-emerald-50 px-2 py-1.5 text-[9px] font-black uppercase tracking-wider text-emerald-900 hover:bg-emerald-100 disabled:opacity-50"
-                            >
-                              Xác nhận đã thanh toán
-                            </button>
+                            <span className="mt-1 rounded-lg border border-violet-200 bg-violet-50 px-2 py-1.5 text-[9px] font-black uppercase tracking-wider text-violet-800">
+                              SePay tự động
+                            </span>
                           ) : null}
                         </div>
                       </td>
@@ -378,52 +306,6 @@ export function AdminCoursePayments() {
         </div>
       </div>
 
-      <AnimatePresence>
-        {overrideModal.open && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm"
-            onClick={() => setOverrideModal((prev) => ({ ...prev, open: false, enrollmentId: "" }))}
-          >
-            <motion.div
-              initial={{ scale: 0.96, y: 16, opacity: 0 }}
-              animate={{ scale: 1, y: 0, opacity: 1 }}
-              exit={{ scale: 0.96, y: 16, opacity: 0 }}
-              className="w-full max-w-lg rounded-3xl border border-slate-200 bg-white p-6 shadow-xl"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <h4 className="text-xl font-black text-slate-900">Xác nhận ngoại lệ chuyển khoản</h4>
-              <p className="mt-2 text-sm text-slate-600">
-                Học viên chưa bấm “Tôi đã chuyển khoản”. Nhập lý do trước khi xác nhận học phí.
-              </p>
-              <textarea
-                value={overrideModal.forceNote}
-                onChange={(e) => setOverrideModal((prev) => ({ ...prev, forceNote: e.target.value }))}
-                className="mt-4 min-h-24 w-full rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-900 outline-none focus:border-violet-400"
-              />
-              <div className="mt-5 grid grid-cols-2 gap-3">
-                <button
-                  type="button"
-                  onClick={() => setOverrideModal((prev) => ({ ...prev, open: false, enrollmentId: "" }))}
-                  className="rounded-xl border border-slate-200 bg-slate-50 py-3 text-xs font-black uppercase tracking-wider text-slate-800"
-                >
-                  Không xác nhận
-                </button>
-                <button
-                  type="button"
-                  onClick={() => void confirmOverride()}
-                  disabled={busyId === overrideModal.enrollmentId}
-                  className="rounded-xl border border-emerald-300 bg-emerald-50 py-3 text-xs font-black uppercase tracking-wider text-emerald-700 disabled:opacity-50"
-                >
-                  {busyId === overrideModal.enrollmentId ? "Đang xử lý..." : "Xác nhận ngoại lệ"}
-                </button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </div>
   );
 }

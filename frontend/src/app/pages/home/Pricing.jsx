@@ -24,7 +24,7 @@ const FAQ_DATA = [
   },
   {
     q: "Thanh toán qua kênh nào?",
-    a: "Hiện hỗ trợ chuyển khoản ngân hàng. Sau khi chuyển khoản, admin xác nhận và gói được kích hoạt trên tài khoản.",
+    a: "Hiện hỗ trợ chuyển khoản ngân hàng (VietQR). Sau khi CK đúng mã và số tiền, SePay tự xác nhận và gói được kích hoạt trong vài phút.",
   },
   {
     q: "Chính sách hoàn tiền?",

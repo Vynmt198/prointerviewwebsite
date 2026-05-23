@@ -33,13 +33,13 @@ export async function initiatePayment(payload) {
   }
 }
 
-export async function createSubscriptionTransferPending({ amount, planKey, orderNum }) {
+export async function createSubscriptionTransferPending({ amount, planKey, orderNum, billing }) {
   if (!hasAuthCredentials()) return { success: false, error: "Chưa đăng nhập." };
   try {
     const res = await authFetch("/api/payments/subscription/transfer-pending", {
       method: "POST",
       headers: { ...jsonHeaders },
-      body: JSON.stringify({ amount, planKey, orderNum }),
+      body: JSON.stringify({ amount, planKey, orderNum, billing }),
     });
     const body = await res.json().catch(() => ({}));
     if (!res.ok) return { success: false, error: body.error || `Lỗi ${res.status}` };
@@ -68,6 +68,36 @@ export async function submitSubscriptionTransfer(paymentId, reference) {
     const body = await res.json().catch(() => ({}));
     if (!res.ok) return { success: false, error: body.error || `Lỗi ${res.status}` };
     return { success: Boolean(body.success) };
+  } catch {
+    return { success: false, error: "Không kết nối được backend." };
+  }
+}
+
+/** Poll trạng thái CK theo mã PI (SePay webhook + admin). */
+export async function fetchTransferStatus(orderRef) {
+  if (!hasAuthCredentials()) return { success: false, error: "Chưa đăng nhập." };
+  const ref = String(orderRef || "").trim();
+  if (!ref) return { success: false, error: "Thiếu mã đơn." };
+  try {
+    const q = `?orderRef=${encodeURIComponent(ref)}`;
+    const res = await authFetch(`/api/payments/transfer-status${q}`, {
+      method: "GET",
+      headers: { ...jsonHeaders },
+    });
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok) return { success: false, error: body.error || `Lỗi ${res.status}` };
+    if (body.success) {
+      return {
+        success: true,
+        orderRef: body.orderRef,
+        status: body.status,
+        entityType: body.entityType,
+        entityId: body.entityId,
+        redirectTo: body.redirectTo,
+        sepayAuto: Boolean(body.sepayAuto),
+      };
+    }
+    return { success: false, error: body.error || "Không lấy được trạng thái." };
   } catch {
     return { success: false, error: "Không kết nối được backend." };
   }

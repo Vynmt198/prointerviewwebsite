@@ -39,6 +39,18 @@ export const EnrollmentController = {
         }
         const bodyPm = String(req.body?.paymentMethod || "").trim();
         if (price > 0 && bodyPm === "transfer") {
+          const coursePrice = Math.round(price);
+          const clientOrder = extractOrderPart(req.body?.orderNum);
+          let dirty = false;
+          if (Math.round(Number(existing.pricePaid ?? 0)) !== coursePrice) {
+            existing.pricePaid = coursePrice;
+            dirty = true;
+          }
+          if (clientOrder && extractOrderPart(existing.paymentRef) !== clientOrder) {
+            existing.paymentRef = clientOrder;
+            dirty = true;
+          }
+          if (dirty) await existing.save();
           const orderPart = extractOrderPart(existing.paymentRef) || String(existing._id).slice(-8);
           return res.json({
             success: true,

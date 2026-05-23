@@ -450,6 +450,8 @@ Danh sách phẳng method/path (C.1–C.13) để tra cứu nhanh. **Đã có ro
 | POST | `/api/payments/initiate` |
 | POST | `/api/payments/webhook/momo` |
 | POST | `/api/payments/webhook/zalopay` |
+| POST | `/api/payments/webhook/sepay` — header `Authorization: Apikey <SEPAY_WEBHOOK_API_KEY>`; body JSON SePay (`transferType: in`, `transferAmount`, `content` chứa mã `PI…`); trả `{ success: true }` |
+| GET | `/api/payments/transfer-status?orderRef=PI…` — Bearer JWT; poll checkout (`status`: `pending` \| `submitted` \| `paid` \| `not_found`) |
 | GET | `/api/payments/history` |
 
 ### C.11. Plans — `/api/plans`

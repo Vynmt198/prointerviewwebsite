@@ -622,6 +622,11 @@ export async function createBooking(userId, body) {
     // Nếu là chính user này đang đặt lại khung giờ cũ (ví dụ: quay lại trang Checkout hoặc tải lại)
     // và booking cũ vẫn đang ở trạng thái chờ thanh toán
     if (String(dup.userId) === uid && dup.status === "pending" && dup.paymentStatus === "pending") {
+      const clientOrder = extractOrderPart(body.orderNum);
+      if (clientOrder && extractOrderPart(dup.paymentRef) !== clientOrder) {
+        dup.paymentRef = clientOrder;
+        await dup.save();
+      }
       return { ok: true, booking: toPublicBooking(dup, mentor) };
     }
     return { ok: false, status: 409, error: "Khung giờ này đã được đặt. Chọn giờ khác." };
