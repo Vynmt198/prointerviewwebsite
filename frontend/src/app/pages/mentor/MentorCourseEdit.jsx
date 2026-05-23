@@ -62,9 +62,20 @@ import { ArchiveCourseDialog } from "../../components/courses/ArchiveCourseDialo
 import { fetchMyMentorProfile } from "../../utils/mentorApi";
 import { uploadFile } from "../../utils/uploadApi";
 import { MentorPageShell } from "../../components/mentor/MentorPageShell";
+import { CourseCreateStepper } from "../../components/mentor/course-create/CourseCreateStepper";
+import { CourseCreateStep1, CourseCreateFooter } from "../../components/mentor/course-create/CourseCreateStep1";
+import { CourseCreateStep2 } from "../../components/mentor/course-create/CourseCreateStep2";
+import {
+  mentorGhostBtnClass,
+  mentorSectionCardClass,
+  mentorCreateScopeClass,
+  mentorCreateShellClass,
+  mentorValidationKeyframes,
+} from "../../components/mentor/course-create/mentorCourseCreateTheme";
 import { toast } from "sonner";
 import { toastApiError, toastApiSuccess } from "../../utils/apiToast";
 import { mediaSrc, DEFAULT_COURSE_THUMB, avatarSrc } from "../../utils/mediaUrl";
+import { getVideoDurationMinutes } from "../../utils/videoDuration";
 
 const COURSE_STATUS_META = {
    published: { label: "Đã đăng", className: "bg-emerald-50 text-emerald-700 border-emerald-200" },
@@ -198,7 +209,7 @@ function LessonsTab({ lessons, onLessonsChange }) {
       const newLesson = {
          id: `new-${Date.now()}-${nextIndex}`,
          title: `Bài ${nextIndex}: Nội dung mới`,
-         duration: 10,
+         duration: 0,
          isPreview: false,
          videoFileName: "",
       };
@@ -229,14 +240,6 @@ function LessonsTab({ lessons, onLessonsChange }) {
       }
    };
 
-   const updateLessonDuration = (lessonId, value) => {
-      commit((prev) =>
-         prev.map((lesson) =>
-            lesson.id === lessonId ? { ...lesson, duration: Math.max(1, Number(value || 1)) } : lesson,
-         ),
-      );
-   };
-
    const toggleLessonPreview = (lessonId) => {
       commit((prev) =>
          prev.map((lesson) => (lesson.id === lessonId ? { ...lesson, isPreview: !lesson.isPreview } : lesson)),
@@ -247,11 +250,25 @@ function LessonsTab({ lessons, onLessonsChange }) {
       if (!file) return;
       const loadingToast = toast.loading(`Đang upload video: ${file.name}...`);
       try {
+         const durationMinutes = await getVideoDurationMinutes(file);
          const res = await uploadFile(file, "course-video");
          if (res.success) {
-            toastApiSuccess("Upload video thành công!");
+            toastApiSuccess(
+               durationMinutes > 0
+                  ? `Upload thành công · ${durationMinutes} phút`
+                  : "Upload video thành công!",
+            );
             commit((prev) =>
-               prev.map((lesson) => (lesson.id === lessonId ? { ...lesson, videoFileName: file.name, videoUrl: res.url } : lesson)),
+               prev.map((lesson) =>
+                  lesson.id === lessonId
+                     ? {
+                          ...lesson,
+                          videoFileName: file.name,
+                          videoUrl: res.url,
+                          duration: durationMinutes > 0 ? durationMinutes : lesson.duration,
+                       }
+                     : lesson,
+               ),
             );
          } else {
             toastApiError(res.error, "Upload video thất bại.");
@@ -297,14 +314,11 @@ function LessonsTab({ lessons, onLessonsChange }) {
                               <h4 className="text-sm font-black text-slate-900 group-hover:text-violet-700 transition-colors">{lesson.title}</h4>
                            )}
                            <div className="mt-2 flex flex-wrap items-center gap-2">
-                              <input
-                                 type="number"
-                                 min={1}
-                                 value={lesson.duration}
-                                 onChange={(e) => updateLessonDuration(lesson.id, e.target.value)}
-                                 className="w-20 bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-xs text-slate-900 outline-none focus:border-primary-fixed"
-                              />
-                              <span className="text-[10px] font-black text-zinc-600 uppercase tracking-widest">phút</span>
+                              <span className="rounded-lg bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600">
+                                 {lesson.videoFileName && lesson.duration > 0
+                                    ? `${lesson.duration} phút (từ video)`
+                                    : "Thời lượng: upload video để tự lấy"}
+                              </span>
                               <button
                                  type="button"
                                  onClick={() => toggleLessonPreview(lesson.id)}
@@ -597,9 +611,6 @@ function CreateCourseForm({ navigate, mentorRejectReason = "" }) {
    const [chapters, setChapters] = useState([]);
    const [thumbnailUrl, setThumbnailUrl] = useState("");
    const [thumbnailFileName, setThumbnailFileName] = useState("");
-   const [isUploadingThumbnail, setIsUploadingThumbnail] = useState(false);
-
-
    const updateField = (key, value) => setForm(prev => ({ ...prev, [key]: value }));
    const updateOutcome = (index, value) =>
       setForm(prev => {
@@ -614,7 +625,7 @@ function CreateCourseForm({ navigate, mentorRejectReason = "" }) {
          {
             id: `ch-${Date.now()}-${prev.length + 1}`,
             title: `Chương ${prev.length + 1}`,
-            lessons: [{ id: `l-${Date.now()}-1`, title: "Bài 1: Giới thiệu", duration: 15, isPreview: true, videoFileName: "" }],
+            lessons: [{ id: `l-${Date.now()}-1`, title: "Bài 1: Giới thiệu", duration: 0, isPreview: true, videoFileName: "" }],
          },
       ]);
    const updateChapterTitle = (id, value) =>
@@ -631,7 +642,7 @@ function CreateCourseForm({ navigate, mentorRejectReason = "" }) {
                   {
                      id: `l-${Date.now()}-${nextLessonIndex}`,
                      title: `Bài ${nextLessonIndex}: Nội dung mới`,
-                     duration: 15,
+                     duration: 0,
                      isPreview: false,
                      videoFileName: "",
                   },
@@ -647,19 +658,6 @@ function CreateCourseForm({ navigate, mentorRejectReason = "" }) {
                : {
                     ...ch,
                     lessons: ch.lessons.map(lesson => (lesson.id === lessonId ? { ...lesson, title: value } : lesson)),
-                 },
-         ),
-      );
-   const updateLessonDuration = (chapterId, lessonId, value) =>
-      setChapters(prev =>
-         prev.map(ch =>
-            ch.id !== chapterId
-               ? ch
-               : {
-                    ...ch,
-                    lessons: ch.lessons.map(lesson =>
-                       lesson.id === lessonId ? { ...lesson, duration: Math.max(1, Number(value || 1)) } : lesson,
-                    ),
                  },
          ),
       );
@@ -680,9 +678,14 @@ function CreateCourseForm({ navigate, mentorRejectReason = "" }) {
       if (!file) return;
       const loadingToast = toast.loading(`Đang upload video: ${file.name}...`);
       try {
+         const durationMinutes = await getVideoDurationMinutes(file);
          const res = await uploadFile(file, "course-video");
          if (res.success) {
-            toastApiSuccess("Upload video thành công!");
+            toastApiSuccess(
+               durationMinutes > 0
+                  ? `Upload thành công · ${durationMinutes} phút`
+                  : "Upload video thành công!",
+            );
             setChapters((prev) =>
                prev.map((ch) =>
                   ch.id !== chapterId
@@ -690,7 +693,14 @@ function CreateCourseForm({ navigate, mentorRejectReason = "" }) {
                      : {
                           ...ch,
                           lessons: ch.lessons.map((lesson) =>
-                             lesson.id === lessonId ? { ...lesson, videoFileName: file.name, videoUrl: res.url } : lesson,
+                             lesson.id === lessonId
+                                ? {
+                                     ...lesson,
+                                     videoFileName: file.name,
+                                     videoUrl: res.url,
+                                     duration: durationMinutes > 0 ? durationMinutes : lesson.duration,
+                                  }
+                                : lesson,
                           ),
                        },
                ),
@@ -734,404 +744,147 @@ function CreateCourseForm({ navigate, mentorRejectReason = "" }) {
 
    return (
       <MentorPageShell bottomPad="pb-24" extraStyles={MENTOR_COURSE_EDIT_EXTRA_CSS}>
-         <div className="relative z-10 mx-auto max-w-6xl px-10 pb-10">
+         <style>{mentorValidationKeyframes}</style>
+         <div className="relative z-10 mx-auto max-w-4xl px-4 pb-8 pt-8 sm:px-6 sm:pt-12">
             {mentorRejectReason ? (
-               <div className="mb-8 rounded-2xl border border-orange-400/30 bg-orange-500/10 p-5">
+               <div className="mb-6 rounded-2xl border border-amber-200 bg-amber-50 p-4 sm:p-5">
                   <div className="flex items-start gap-3">
-                     <WarningCircle size={18} className="mt-0.5 shrink-0 text-orange-300" />
+                     <WarningCircle size={18} className="mt-0.5 shrink-0 text-amber-600" />
                      <div>
-                        <p className="text-[10px] font-black uppercase tracking-widest text-orange-200">
+                        <p className="text-xs font-bold uppercase tracking-wide text-amber-800">
                            Góp ý từ lần duyệt trước
                         </p>
-                        <p className="mt-2 text-sm text-slate-800">{mentorRejectReason}</p>
+                        <p className="mt-1.5 text-sm text-amber-900/90">{mentorRejectReason}</p>
                      </div>
                   </div>
                </div>
             ) : null}
-            <div className="flex items-center justify-between mb-8">
-               <button
-                  onClick={() => navigate("/mentor/courses")}
-                  className="text-[10px] font-black text-violet-700 uppercase tracking-widest flex items-center gap-2 hover:translate-x-1 transition-transform"
-               >
-                  <ArrowLeft size={14} /> Quay lại quản lý khóa học
-               </button>
-            </div>
 
-            <div className="glass-card p-10">
-               <h1 className="mb-6 text-2xl font-black tracking-tight text-slate-900 sm:text-3xl">Tạo khóa học mới</h1>
+            <button
+               type="button"
+               onClick={() => navigate("/mentor/courses")}
+               className="mb-6 inline-flex items-center gap-2 text-sm font-medium text-violet-700 transition hover:text-violet-900"
+            >
+               <ArrowLeft size={16} />
+               Quay lại quản lý khóa học
+            </button>
 
-               <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-                  {[
-                     { i: 1, label: "Thông tin cơ bản" },
-                     { i: 2, label: "Nội dung khóa học" },
-                     { i: 3, label: "Xem trước & Đăng" },
-                  ].map((s) => (
-                     <div key={s.i} className="flex items-center gap-3">
-                        <div
-                           className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-black ${
-                              step >= s.i ? "bg-[#6E35E8] text-white" : "bg-slate-100 text-zinc-500"
-                           }`}
-                        >
-                           {s.i}
-                        </div>
-                        <p className={`text-sm font-bold ${step >= s.i ? "text-slate-900" : "text-zinc-500"}`}>{s.label}</p>
-                     </div>
-                  ))}
-               </div>
+            <header className="mb-8">
+               <p className="text-xs font-semibold uppercase tracking-widest text-violet-600">Mentor · Khóa học</p>
+               <h1 className="mt-1 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">Tạo khóa học mới</h1>
+               <p className="mt-2 max-w-xl text-sm text-slate-500">
+                  Điền thông tin, thêm nội dung video, sau đó gửi admin duyệt trước khi hiển thị công khai.
+               </p>
+            </header>
+
+            <div className={`${mentorCreateScopeClass} ${mentorCreateShellClass}`}>
+               <CourseCreateStepper step={step} />
 
                {step === 1 && (
-                  <div className="space-y-7">
-                     <div>
-                        <label className="block text-sm font-bold text-slate-700 mb-2">Tiêu đề khóa học *</label>
-                        <input
-                           value={form.title}
-                           onChange={(e) => updateField("title", e.target.value)}
-                           placeholder="VD: Làm chủ STAR Method trong phỏng vấn hành vi"
-                           className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-4 text-slate-900 outline-none focus:border-primary-fixed"
-                        />
-                     </div>
-                     <div>
-                        <label className="block text-sm font-bold text-slate-700 mb-2">Mô tả khóa học *</label>
-                        <textarea
-                           rows={4}
-                           value={form.description}
-                           onChange={(e) => updateField("description", e.target.value)}
-                           placeholder="Mô tả chi tiết nội dung, giá trị và những gì học viên sẽ đạt được..."
-                           className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-4 text-slate-900 outline-none focus:border-primary-fixed resize-none"
-                        />
-                     </div>
-                     <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                        <div>
-                           <label className="block text-sm font-bold text-slate-700 mb-2">Danh mục *</label>
-                           <select
-                              value={form.category}
-                              onChange={(e) => updateField("category", e.target.value)}
-                              className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-4 text-slate-900 outline-none focus:border-primary-fixed"
-                           >
-                              <option value="">Chọn danh mục</option>
-                              <option value="behavioral-interview">Behavioral Interview</option>
-                              <option value="technical-interview">Technical Interview</option>
-                              <option value="career-development">Career Development</option>
-                           </select>
-                        </div>
-                        <div>
-                           <label className="block text-sm font-bold text-slate-700 mb-2">Cấp độ</label>
-                           <select
-                              value={form.level}
-                              onChange={(e) => updateField("level", e.target.value)}
-                              className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-4 text-slate-900 outline-none focus:border-primary-fixed"
-                           >
-                              <option value="basic">Cơ bản</option>
-                              <option value="intermediate">Trung cấp</option>
-                              <option value="advanced">Nâng cao</option>
-                           </select>
-                        </div>
-                     </div>
-                     <div>
-                        <label className="block text-sm font-bold text-slate-700 mb-2">Giá khóa học (VND)</label>
-                        <div className="flex items-center gap-3">
-                           <input
-                              type="number"
-                              min={0}
-                              value={form.price}
-                              onChange={(e) => updateField("price", Number(e.target.value || 0))}
-                              className="flex-1 bg-slate-50 border border-slate-200 rounded-2xl px-5 py-4 text-slate-900 outline-none focus:border-primary-fixed"
-                           />
-                           <span className="px-4 py-2 rounded-xl bg-primary-fixed/20 text-violet-700 text-xs font-black uppercase tracking-widest">
-                              {Number(form.price) > 0 ? "Trả phí" : "Miễn phí"}
-                           </span>
-                        </div>
-                     </div>
-                     <div>
-                        <label className="block text-sm font-bold text-slate-700 mb-2">
-                           Học viên sẽ học được gì? (tối thiểu 3 mục)
-                        </label>
-                        <div className="space-y-3">
-                           {form.outcomes.map((outcome, idx) => (
-                              <div key={idx} className="flex items-center gap-3">
-                                 <div className="w-6 h-6 rounded-full bg-white/10 text-zinc-400 flex items-center justify-center text-xs font-black">
-                                    {idx + 1}
-                                 </div>
-                                 <input
-                                    value={outcome}
-                                    onChange={(e) => updateOutcome(idx, e.target.value)}
-                                    placeholder={`Kết quả học tập ${idx + 1}...`}
-                                    className="flex-1 bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3 text-slate-900 outline-none focus:border-primary-fixed"
-                                 />
-                                 {idx === form.outcomes.length - 1 && (
-                                    <button
-                                       type="button"
-                                       onClick={addOutcome}
-                                       className="w-8 h-8 rounded-lg bg-slate-50 border border-slate-200 text-zinc-300 hover:text-slate-900"
-                                    >
-                                       +
-                                    </button>
-                                 )}
-                              </div>
-                           ))}
-                        </div>
-                     </div>
-                     <div>
-                        <label className="block text-sm font-bold text-slate-700 mb-2">Tags (phân cách bởi dấu phẩy)</label>
-                        <input
-                           value={form.tags}
-                           onChange={(e) => updateField("tags", e.target.value)}
-                           placeholder="star-method, behavioral-interview, interview-skills"
-                           className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-4 text-slate-900 outline-none focus:border-primary-fixed"
-                        />
-                     </div>
-                     <div className="flex justify-between items-start pt-2 gap-6">
-                        <button
-                           onClick={() => navigate("/mentor/courses")}
-                           className="px-6 py-3 rounded-2xl border border-slate-200 text-sm font-bold text-zinc-300 hover:text-slate-900 transition-all"
-                        >
-                           Hủy
-                        </button>
-                        <div className="text-right">
-                           {!canContinueStep1 && (
-                              <p className="text-xs text-orange-300 mb-2 max-w-[420px]">
-                                 {validationMessages[0]}
-                              </p>
-                           )}
-                           <button
-                              disabled={!canContinueStep1}
-                              onClick={() => setStep(2)}
-                              className="px-8 py-3 rounded-2xl bg-[#6E35E8] text-white text-sm font-bold disabled:opacity-40"
-                           >
-                              Tiếp theo
-                           </button>
-                        </div>
-                     </div>
-                  </div>
+                  <CourseCreateStep1
+                     form={form}
+                     updateField={updateField}
+                     updateOutcome={updateOutcome}
+                     addOutcome={addOutcome}
+                     validationMessages={validationMessages}
+                     canContinue={canContinueStep1}
+                     onCancel={() => navigate("/mentor/courses")}
+                     onNext={() => setStep(2)}
+                  />
                )}
 
                {step === 2 && (
-                  <div className="space-y-6">
-                     <div className="glass-card p-8 border border-dashed border-slate-200">
-                        <h3 className="text-lg font-black text-slate-900 mb-3">Nội dung khóa học</h3>
-                        <p className="text-sm text-zinc-400 mb-5">
-                           Thêm bài học, đánh dấu Preview và upload video cho từng bài.
-                        </p>
-                        <button
-                           type="button"
-                           onClick={addChapter}
-                           className="px-6 py-3 rounded-xl bg-slate-100 border border-slate-200 text-sm font-bold text-slate-900"
-                        >
-                           + Thêm chương đầu tiên
-                        </button>
-                     </div>
-                     {chapters.length > 0 && (
-                        <div className="space-y-4">
-                           {chapters.map((chapter, chapterIdx) => (
-                              <div key={chapter.id} className="glass-card p-6">
-                                 <div className="flex items-center gap-3 mb-4">
-                                    <span className="text-xs font-black text-zinc-400 uppercase tracking-widest">Chương {chapterIdx + 1}</span>
-                                    <input
-                                       value={chapter.title}
-                                       onChange={(e) => updateChapterTitle(chapter.id, e.target.value)}
-                                       className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-sm text-slate-900 outline-none focus:border-primary-fixed"
-                                    />
-                                    <button
-                                       type="button"
-                                       onClick={() => removeChapter(chapter.id)}
-                                       className="px-3 py-2 rounded-xl border border-slate-200 text-xs font-bold text-zinc-300 hover:text-red-300"
-                                    >
-                                       Xóa
-                                    </button>
-                                 </div>
-                                 <div className="space-y-3">
-                                    {chapter.lessons.map((lesson, lessonIdx) => (
-                                       <div key={lesson.id} className="rounded-xl border border-slate-200 bg-slate-50 p-3 space-y-3">
-                                          <div className="flex items-center gap-3">
-                                          <span className="w-6 h-6 rounded-full bg-white/10 text-[10px] font-black text-zinc-400 flex items-center justify-center">
-                                             {lessonIdx + 1}
-                                          </span>
-                                          <input
-                                             value={lesson.title}
-                                             onChange={(e) => updateLessonTitle(chapter.id, lesson.id, e.target.value)}
-                                             className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-sm text-slate-900 outline-none focus:border-primary-fixed"
-                                          />
-                                             <input
-                                                type="number"
-                                                min={1}
-                                                value={lesson.duration}
-                                                onChange={(e) => updateLessonDuration(chapter.id, lesson.id, e.target.value)}
-                                                className="w-20 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-900 outline-none focus:border-primary-fixed"
-                                             />
-                                             <span className="text-xs text-zinc-400">phút</span>
-                                             <button
-                                                type="button"
-                                                onClick={() => toggleLessonPreview(chapter.id, lesson.id)}
-                                                className={`px-3 py-2 rounded-xl text-xs font-black uppercase tracking-wider ${
-                                                   lesson.isPreview
-                                                      ? "bg-primary-fixed/20 text-violet-700"
-                                                      : "bg-slate-50 border border-slate-200 text-zinc-300"
-                                                }`}
-                                             >
-                                                {lesson.isPreview ? "Preview" : "Ẩn"}
-                                             </button>
-                                             <button
-                                                type="button"
-                                                onClick={() => removeLesson(chapter.id, lesson.id)}
-                                                className="px-2 py-2 rounded-lg border border-slate-200 text-zinc-300 hover:text-red-300"
-                                             >
-                                                <X size={14} />
-                                             </button>
-                                          </div>
-                                          <div className="flex items-center gap-3">
-                                             <label className="px-3 py-2 rounded-lg bg-slate-50 border border-slate-200 text-xs font-bold text-zinc-200 cursor-pointer hover:text-slate-900">
-                                                Upload video
-                                                <input
-                                                   type="file"
-                                                   accept="video/mp4,video/quicktime,video/x-msvideo,video/webm"
-                                                   className="hidden"
-                                                   onChange={(e) => {
-                                                      const file = e.target.files?.[0];
-                                                      if (file) updateLessonVideo(chapter.id, lesson.id, file);
-                                                   }}
-                                                />
-                                             </label>
-                                             <p className="text-xs text-zinc-400 truncate">
-                                                {lesson.videoFileName || "Chưa chọn file video"}
-                                             </p>
-                                          </div>
-                                       </div>
-                                    ))}
-                                    <button
-                                       type="button"
-                                       onClick={() => addLessonToChapter(chapter.id)}
-                                       className="px-4 py-2 rounded-lg bg-slate-50 border border-slate-200 text-xs font-bold text-zinc-200"
-                                    >
-                                       + Thêm bài học
-                                    </button>
-                                 </div>
-                              </div>
-                           ))}
-                        </div>
-                     )}
-                     <div className="glass-card p-6">
-                        <h4 className="text-sm font-black text-slate-900 mb-3">Ảnh đại diện khóa học</h4>
-                        <div className="border border-dashed border-slate-200 rounded-2xl p-6">
-                           <label className="px-4 py-2 rounded-lg bg-slate-50 border border-slate-200 text-xs font-bold text-zinc-200 cursor-pointer hover:text-slate-900">
-                              Chọn file ảnh
-                              <input
-                                 type="file"
-                                 accept="image/png,image/jpeg,image/webp"
-                                 className="hidden"
-                                  onChange={async (e) => {
-                                    const file = e.target.files?.[0];
-                                    if (!file) return;
-                                    setIsUploadingThumbnail(true);
-                                    try {
-                                       const res = await uploadFile(file, "course-thumbnail");
-                                       if (res.success) {
-                                          setThumbnailUrl(res.url);
-                                          setThumbnailFileName(file.name);
-                                          toastApiSuccess("Đã upload ảnh bìa!");
-                                       } else {
-                                          toastApiError(res.error, "Upload ảnh thất bại.");
-                                       }
-                                    } catch {
-                                       toastApiError("Lỗi kết nối khi upload ảnh bìa.");
-                                    } finally {
-                                       setIsUploadingThumbnail(false);
-                                    }
-                                 }}
-                              />
-                           </label>
-                           <p className="text-xs text-zinc-400 mt-3">
-                              {thumbnailFileName || "Chưa chọn ảnh đại diện (PNG, JPG, WEBP — tối đa 5MB)."}
-                           </p>
-                        </div>
-                        <div className="mt-4 rounded-xl bg-primary-fixed/10 border border-primary-fixed/25 p-3 text-xs text-zinc-300">
-                           Upload video bài học: hỗ trợ MP4, MOV, AVI, WEBM. Tối đa 2GB mỗi video.
-                        </div>
-                     </div>
-                     <div className="flex justify-between">
-                        <button onClick={() => setStep(1)} className="px-6 py-3 rounded-2xl border border-slate-200 text-sm font-bold text-zinc-300">
-                           Quay lại
-                        </button>
-                        <div className="text-right">
-                           {!canContinueStep2 && (
-                              <p className="text-xs text-orange-300 mb-2">
-                                 Cần ít nhất 1 bài học và 1 video đã chọn để tiếp tục.
-                              </p>
-                           )}
-                           <button
-                              disabled={!canContinueStep2}
-                              onClick={() => setStep(3)}
-                              className="px-8 py-3 rounded-2xl bg-[#6E35E8] text-white text-sm font-bold disabled:opacity-40"
-                           >
-                           Tiếp theo
-                           </button>
-                        </div>
-                     </div>
-                  </div>
+                  <CourseCreateStep2
+                     chapters={chapters}
+                     addChapter={addChapter}
+                     removeChapter={removeChapter}
+                     updateChapterTitle={updateChapterTitle}
+                     addLessonToChapter={addLessonToChapter}
+                     updateLessonTitle={updateLessonTitle}
+                     toggleLessonPreview={toggleLessonPreview}
+                     removeLesson={removeLesson}
+                     updateLessonVideo={updateLessonVideo}
+                     thumbnailUrl={thumbnailUrl}
+                     thumbnailFileName={thumbnailFileName}
+                     onThumbnailUploaded={(url, name) => {
+                        setThumbnailUrl(url);
+                        setThumbnailFileName(name);
+                     }}
+                     canContinue={canContinueStep2}
+                     onBack={() => setStep(1)}
+                     onNext={() => setStep(3)}
+                  />
                )}
 
                {step === 3 && (
                   <div className="space-y-6">
-                     <div className="glass-card p-8">
-                        <h3 className="text-lg font-black text-slate-900 mb-4">Xem trước thông tin khóa học</h3>
-                        <p className="text-sm text-zinc-400 mb-2">Tiêu đề: <span className="text-slate-900">{form.title || "(chưa nhập)"}</span></p>
-                        <p className="text-sm text-zinc-400 mb-2">Danh mục: <span className="text-slate-900">{form.category || "(chưa chọn)"}</span></p>
-                        <p className="text-sm text-zinc-400 mb-2">Cấp độ: <span className="text-slate-900">{form.level}</span></p>
-                        <p className="text-sm text-zinc-400 mb-2">Giá: <span className="text-slate-900">{formatPrice(Number(form.price || 0))}</span></p>
-                        <p className="text-sm text-zinc-400 mb-2">Số chương: <span className="text-slate-900">{chapters.length}</span></p>
-                        <p className="text-sm text-zinc-400 mb-2">Số bài học: <span className="text-slate-900">{totalLessons}</span></p>
-                        <p className="text-sm text-zinc-400">Video đã upload: <span className="text-slate-900">{lessonsWithVideo}</span></p>
+                     <div className={mentorSectionCardClass}>
+                        <h3 className="mb-4 text-lg font-bold text-slate-900">Xem trước trước khi gửi</h3>
+                        <dl className="grid gap-3 sm:grid-cols-2">
+                           {[
+                              ["Tiêu đề", form.title || "(chưa nhập)"],
+                              ["Danh mục", form.category || "(chưa chọn)"],
+                              ["Cấp độ", form.level],
+                              ["Giá", formatPrice(Number(form.price || 0))],
+                              ["Số chương", String(chapters.length)],
+                              ["Số bài học", String(totalLessons)],
+                              ["Video đã upload", String(lessonsWithVideo)],
+                           ].map(([label, value]) => (
+                              <div key={label} className="rounded-xl bg-slate-50 px-4 py-3">
+                                 <dt className="text-xs font-medium uppercase tracking-wide text-slate-500">{label}</dt>
+                                 <dd className="mt-1 text-sm font-semibold text-slate-900">{value}</dd>
+                              </div>
+                           ))}
+                        </dl>
                      </div>
-                     <div className="flex justify-between">
-                        <button onClick={() => setStep(2)} className="px-6 py-3 rounded-2xl border border-slate-200 text-sm font-bold text-zinc-300">
-                           Quay lại
-                        </button>
-                        <div className="flex gap-3">
-                           <button
-                              onClick={async () => {
-                                 try {
-                                    const payload = buildCoursePayloadFromForm(form, chapters, thumbnailUrl);
-                                    const r = await createCourseDraft(payload);
-                                    if (!r.success) {
-                                       toastApiError(r.error, "Không thể lưu nháp.");
-                                       return;
-                                    }
-                                    toastApiSuccess("Đã lưu nháp khóa học.");
-                                    navigate(`/mentor/courses/${r.course?._id}/edit`);
-                                 } catch {
-                                    toastApiError("Lỗi kết nối khi lưu nháp khóa học.");
-                                 }
-                              }}
-                              className="px-8 py-3 rounded-2xl border border-slate-200 text-slate-900 text-sm font-black"
-                           >
-                              Lưu nháp
-                           </button>
-                           <button
-                              onClick={async () => {
-                                 try {
-                                    const payload = buildCoursePayloadFromForm(form, chapters, thumbnailUrl);
-                                    const r = await createCourseDraft(payload);
-                                    if (!r.success) {
-                                       toastApiError(r.error, "Không thể tạo khóa học.");
-                                       return;
-                                    }
-                                    const pub = await publishCourse(r.course?._id);
-                                    if (!pub.success) {
-                                       toastApiError(pub.error, "Tạo nháp thành công nhưng chưa đăng được.");
+                     <CourseCreateFooter
+                        onBack={() => setStep(2)}
+                        extra={
+                           <>
+                              <button
+                                 type="button"
+                                 onClick={async () => {
+                                    try {
+                                       const payload = buildCoursePayloadFromForm(form, chapters, thumbnailUrl);
+                                       const r = await createCourseDraft(payload);
+                                       if (!r.success) {
+                                          toastApiError(r.error, "Không thể lưu nháp.");
+                                          return;
+                                       }
+                                       toastApiSuccess("Đã lưu nháp khóa học.");
                                        navigate(`/mentor/courses/${r.course?._id}/edit`);
-                                       return;
+                                    } catch {
+                                       toastApiError("Lỗi kết nối khi lưu nháp khóa học.");
                                     }
-                                    toastApiSuccess("Đã gửi khóa học chờ admin duyệt.");
-                                    navigate("/mentor/courses");
-                                 } catch {
-                                    toastApiError("Lỗi kết nối khi gửi khóa học duyệt.");
-                                 }
-                              }}
-                              className="px-8 py-3 rounded-2xl bg-primary-fixed text-black text-sm font-black"
-                           >
-                              Gửi admin duyệt
-                           </button>
-                        </div>
-                     </div>
+                                 }}
+                                 className={mentorGhostBtnClass}
+                              >
+                                 Lưu nháp
+                              </button>
+                           </>
+                        }
+                        onPrimary={async () => {
+                           try {
+                              const payload = buildCoursePayloadFromForm(form, chapters, thumbnailUrl);
+                              const r = await createCourseDraft(payload);
+                              if (!r.success) {
+                                 toastApiError(r.error, "Không thể tạo khóa học.");
+                                 return;
+                              }
+                              const pub = await publishCourse(r.course?._id);
+                              if (!pub.success) {
+                                 toastApiError(pub.error, "Tạo nháp thành công nhưng chưa đăng được.");
+                                 navigate(`/mentor/courses/${r.course?._id}/edit`);
+                                 return;
+                              }
+                              toastApiSuccess("Đã gửi khóa học chờ admin duyệt.");
+                              navigate("/mentor/courses");
+                           } catch {
+                              toastApiError("Lỗi kết nối khi gửi khóa học duyệt.");
+                           }
+                        }}
+                        primaryLabel="Gửi admin duyệt"
+                     />
                   </div>
                )}
             </div>

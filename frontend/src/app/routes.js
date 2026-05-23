@@ -66,12 +66,12 @@ import {
   AdminBookingDetail,
   AdminContentQuestions,
   AdminContentVideos,
-  AdminContentCourses,
   AdminAnalytics,
   AdminSystemSettings,
   AdminReviews,
   AdminSupport,
 } from "./pages/admin/AdminPlaceholders.jsx";
+import { AdminContentCourses } from "./pages/admin/AdminContentCourses.jsx";
 
 export const router = createHashRouter([
   {

@@ -1185,18 +1185,9 @@ export function Checkout() {
                   </button>
                 ) : null}
                 {showBankQr && orderCreated && !paymentConfirmed && awaitingAutoConfirm ? (
-                  <div className="text-center">
-                    <div className="flex items-center justify-center gap-2 text-sm text-violet-800">
-                      <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-violet-200 border-t-[#6E35E8]" />
-                      Đang chờ xác nhận thanh toán…
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => void runTransferPoll()}
-                      className="mt-2 text-xs font-semibold text-[#6E35E8] hover:underline"
-                    >
-                      Đã CK — bấm kiểm tra lại
-                    </button>
+                  <div className="flex items-center justify-center gap-2 text-center text-sm text-violet-800">
+                    <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-violet-200 border-t-[#6E35E8]" />
+                    Đang chờ xác nhận thanh toán…
                   </div>
                 ) : null}
                 {showBankQr && !orderCreated && !payBlocked ? (
