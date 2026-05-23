@@ -5,6 +5,7 @@ import {
 } from "../layout/customerShellLayout";
 import { MentorPageShell } from "../mentor/MentorPageShell";
 import { CvJdAnalysisTabs } from "./CvJdAnalysisTabs";
+import { CustomerPageHeader } from "../layout/CustomerPageHeader";
 
 export const CV_JD_CARD_CLASS =
   "w-full overflow-hidden rounded-[1.75rem] border border-violet-200/80 bg-white shadow-[0_16px_40px_rgba(99,14,212,0.1)]";
@@ -78,20 +79,13 @@ export function CvJdAnalysisPage({
         <div className={CUSTOMER_SHELL_MAX}>
           <div className={CV_JD_PAGE_WRAP}>
             {showHeader ? (
-              <header className="w-full">
-                <div className="mb-2 inline-flex items-center gap-1.5 rounded-full border border-violet-200/80 bg-white/90 px-3 py-1 shadow-sm">
-                  <span className="h-1.5 w-1.5 rounded-full bg-[#630ed4]" aria-hidden />
-                  <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-violet-700 sm:text-[11px]">
-                    {badge}
-                  </span>
-                </div>
-                <h1 className="font-headline text-[clamp(1.75rem,3.5vw,2.5rem)] font-extrabold leading-tight tracking-tight text-violet-950">
-                  {title}
-                </h1>
-                {subtitle ? (
-                  <p className={subtitleClassName}>{subtitle}</p>
-                ) : null}
-              </header>
+              <CustomerPageHeader
+                badge={badge}
+                title={title}
+                subtitle={subtitle}
+                subtitleClassName={subtitleClassName}
+                className="w-full"
+              />
             ) : null}
 
             <div className={cardClass}>

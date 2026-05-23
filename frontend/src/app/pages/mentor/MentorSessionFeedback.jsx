@@ -96,7 +96,7 @@ ${generalNotes || "Không có ghi chú thêm."}
 
   return (
     <MentorPageShell bottomPad="pb-32">
-      <div className="relative z-10 p-10 max-w-4xl mx-auto pt-20">
+      <div className="relative z-10 mx-auto max-w-4xl px-10 pb-10">
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -115,7 +115,7 @@ ${generalNotes || "Không có ghi chú thêm."}
           </div>
 
           <div className="text-center space-y-4 mb-20">
-            <h1 className="text-6xl font-black text-slate-900 tracking-tighter leading-none">
+            <h1 className="text-2xl font-black leading-tight tracking-tight text-slate-900 sm:text-3xl">
               Đánh giá <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-violet-600">chuyên sâu</span>
             </h1>
             <p className="text-slate-500 font-medium text-lg">Ghi nhận tiến trình và định hướng cho học viên</p>
@@ -223,7 +223,7 @@ ${generalNotes || "Không có ghi chú thêm."}
                 <div className="w-24 h-24 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-8">
                   <CheckCircle2 size={48} />
                 </div>
-                <h2 className="text-3xl font-extrabold text-slate-900 mb-4 tracking-tight">Tuyệt vời!</h2>
+                <h2 className="text-xl font-extrabold text-slate-900 mb-4 tracking-tight sm:text-2xl">Tuyệt vời!</h2>
                 <p className="text-slate-500 font-medium leading-relaxed mb-8">
                   Đánh giá của bạn đã được gửi đi thành công. Cảm ơn bạn đã đồng hành cùng học viên.
                 </p>

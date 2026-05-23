@@ -103,6 +103,21 @@ export const AdminController = {
             },
           },
         );
+        try {
+          const { markMentorPendingNotificationsRead } = await import(
+            "../services/mentorMeService.js"
+          );
+          await markMentorPendingNotificationsRead(mentor.userId);
+          await Notification.create({
+            userId: mentor.userId,
+            type: "system",
+            title: "Hồ sơ mentor đã được duyệt",
+            body: "Chúc mừng! Bạn có thể truy cập khu vực Mentor trên ProInterview.",
+            metadata: { actionUrl: "/mentor/dashboard" },
+          });
+        } catch (notifErr) {
+          console.error("[Admin] mentor approved notification:", notifErr);
+        }
       }
 
       res.json({ success: true, mentor });
@@ -139,6 +154,10 @@ export const AdminController = {
       if (mentor.userId) {
         await User.updateOne({ _id: mentor.userId }, { $set: { role: "customer" } });
         try {
+          const { markMentorPendingNotificationsRead } = await import(
+            "../services/mentorMeService.js"
+          );
+          await markMentorPendingNotificationsRead(mentor.userId);
           const reasonShort =
             reason.length > 220 ? `${reason.slice(0, 217)}…` : reason;
           await Notification.create({

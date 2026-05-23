@@ -111,14 +111,14 @@ export function MentorPeerReview() {
 
    return (
       <MentorPageShell bottomPad="pb-32">
-         <div className="relative z-10 p-8 max-w-7xl mx-auto pt-16">
+         <div className="relative z-10 mx-auto max-w-7xl px-8 pb-8">
             {/* Header Section */}
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
                <div className="max-w-3xl">
-                  <h1 className="text-6xl font-black text-slate-900 font-headline tracking-tighter mb-6 uppercase">
+                  <h1 className="mb-4 font-headline text-2xl font-black uppercase tracking-tight text-slate-900 sm:text-3xl">
                      Đánh giá <span className="text-secondary tracking-tighter">Chéo Khóa học</span>
                   </h1>
-                  <p className="text-slate-600 text-lg font-medium leading-relaxed">
+                  <p className="text-slate-600 text-sm font-medium leading-relaxed">
                      Với tư cách mentor trong hệ thống ProInterview, bạn có hành quyền đánh giá chuyên môn các khóa học của đồng nghiệp để đảm bảo chất lượng nội dung toàn hệ thống.
                   </p>
                </div>
@@ -142,7 +142,7 @@ export function MentorPeerReview() {
                         </div>
                         <div className="h-2 w-2 rounded-full bg-slate-200 transition-colors group-hover:bg-lime-400" />
                      </div>
-                     <h3 className="text-4xl font-black text-slate-900 tracking-tighter mb-1">{stat.value}</h3>
+                     <h3 className="mb-1 text-2xl font-black tracking-tight text-slate-900 sm:text-3xl">{stat.value}</h3>
                      <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest leading-none">{stat.label}</p>
                   </div>
                ))}
@@ -151,10 +151,10 @@ export function MentorPeerReview() {
             {/* Informational Toast */}
             <div className="glass-card mb-12 p-7 relative overflow-hidden group">
                <div className="absolute top-0 right-0 p-10 rotate-12 opacity-5 scale-125 group-hover:rotate-0 transition-all duration-1000">
-                  <ShieldCheck size={140} className="text-primary-fixed" />
+                  <ShieldCheck size={140} className="text-violet-700" />
                </div>
                <div className="relative z-10 flex items-start gap-5">
-                  <div className="w-14 h-14 rounded-2xl bg-primary-fixed/20 flex items-center justify-center text-primary-fixed shrink-0">
+                  <div className="w-14 h-14 rounded-2xl bg-primary-fixed/20 flex items-center justify-center text-violet-700 shrink-0">
                      <Zap size={28} />
                   </div>
                   <div>
@@ -223,7 +223,7 @@ export function MentorPeerReview() {
                            </div>
                         </div>
                         <div className="p-6">
-                           <h4 className="text-xl font-black text-slate-900 tracking-tighter mb-2 group-hover:text-primary-fixed transition-colors">
+                           <h4 className="text-xl font-black text-slate-900 tracking-tighter mb-2 group-hover:text-violet-700 transition-colors">
                               {course.title}
                            </h4>
                            <p className="text-[10px] font-black text-zinc-600 uppercase tracking-widest mb-6">Tác giả: <span className="text-slate-900">{course.mentor}</span></p>
@@ -243,7 +243,7 @@ export function MentorPeerReview() {
                               </div>
                               <button
                                  onClick={() => startReview(course)}
-                                 className="flex items-center gap-2 text-[10px] font-black text-slate-900 uppercase tracking-widest hover:text-primary-fixed transition-all group/btn"
+                                 className="flex items-center gap-2 text-[10px] font-black text-slate-900 uppercase tracking-widest hover:text-violet-700 transition-all group/btn"
                               >
                                  {course.status === "reviewed" ? "Đã đánh giá" : "Bắt đầu đánh giá"} <ChevronRight size={14} className="group-hover/btn:translate-x-1 transition-transform" />
                               </button>
@@ -288,7 +288,7 @@ export function MentorPeerReview() {
                         </div>
                         <button
                            onClick={() => navigate(`/courses/${selectedCourse.id}`)}
-                           className="inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-primary-fixed hover:opacity-80"
+                           className="inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-violet-700 hover:opacity-80"
                         >
                            <BookOpen size={14} /> Xem chi tiết khóa học
                         </button>

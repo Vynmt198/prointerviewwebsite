@@ -1,10 +1,24 @@
-import { Notification } from "../models/index.js";
+import { Notification, Mentor } from "../models/index.js";
+import { ensureMentorPendingNotification } from "../services/mentorMeService.js";
 
 export const NotificationsController = {
   /** Lấy danh sách thông báo của user hiện tại */
   list: async (req, res, next) => {
     try {
       const userId = req.userId;
+      const mentorPending = await Mentor.findOne({
+        userId,
+        "adminReview.status": "pending",
+      })
+        .select("_id")
+        .lean();
+      if (mentorPending) {
+        try {
+          await ensureMentorPendingNotification(userId);
+        } catch {
+          /* ignore */
+        }
+      }
       const notifications = await Notification.find({ userId })
         .sort({ createdAt: -1 })
         .limit(50);

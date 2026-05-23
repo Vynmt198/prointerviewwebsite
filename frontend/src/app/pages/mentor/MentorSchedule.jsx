@@ -231,7 +231,7 @@ function AvailabilityModal({ onClose, availability, onSaved }) {
         <div className="p-8 border-b border-slate-200 flex items-center justify-between bg-slate-50">
            <div>
               <h2 className="text-2xl font-black text-slate-900 tracking-tighter">Cài đặt Thời gian rảnh</h2>
-              <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mt-1 text-primary-fixed">Quản lý lịch làm việc định kỳ hàng tuần</p>
+              <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mt-1 text-violet-700">Quản lý lịch làm việc định kỳ hàng tuần</p>
            </div>
            <button onClick={onClose} className="w-10 h-10 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center text-zinc-500 hover:text-slate-900 transition-all">
               <X size={18} />
@@ -240,7 +240,7 @@ function AvailabilityModal({ onClose, availability, onSaved }) {
 
         <div className="p-8 overflow-y-auto space-y-8 custom-scrollbar">
            <div className="p-6 rounded-3xl bg-primary-fixed/5 border border-primary-fixed/10 flex items-center gap-4">
-              <div className="w-10 h-10 rounded-xl bg-primary-fixed/20 flex items-center justify-center text-primary-fixed">
+              <div className="w-10 h-10 rounded-xl bg-primary-fixed/20 flex items-center justify-center text-violet-700">
                  <Globe size={20} />
               </div>
               <div>
@@ -253,7 +253,7 @@ function AvailabilityModal({ onClose, availability, onSaved }) {
               {workingHours.map((row, idx) => (
                 <div key={idx} className="p-6 rounded-[32px] bg-slate-50 border border-slate-200 flex flex-col md:flex-row md:items-center justify-between gap-6 group">
                    <div className="w-24 shrink-0">
-                      <p className="text-sm font-black text-slate-900 group-hover:text-primary-fixed transition-colors">{row.day}</p>
+                      <p className="text-sm font-black text-slate-900 group-hover:text-violet-700 transition-colors">{row.day}</p>
                    </div>
                     <div className="flex-1 flex flex-wrap gap-2">
                        {row.slots.map((s, i) => (
@@ -441,14 +441,14 @@ export function MentorSchedule() {
 
   return (
     <MentorPageShell bottomPad="pb-32" extraStyles={MENTOR_SCHEDULE_EXTRA_CSS}>
-      <div className="relative z-10 p-10 max-w-7xl mx-auto pt-20">
+      <div className="relative z-10 mx-auto max-w-7xl px-10 pb-10">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-10 mb-16">
           <div>
-            <h1 className="text-6xl font-black text-slate-900 font-headline tracking-tighter mb-4 uppercase">
-               Lịch trình <span className="text-primary-fixed tracking-tighter">Hệ thống</span>
+            <h1 className="mb-3 font-headline text-2xl font-black uppercase tracking-tight text-slate-900 sm:text-3xl">
+               Lịch trình <span className="text-violet-700 tracking-tighter">Hệ thống</span>
             </h1>
-            <p className="text-zinc-500 text-lg font-medium">Bố trí thời gian rảnh và quản lý các buổi hẹn mentor</p>
+            <p className="text-zinc-500 text-sm font-medium">Bố trí thời gian rảnh và quản lý các buổi hẹn mentor</p>
           </div>
           <div className="flex gap-4">
             <button onClick={() => setShowAvailability(true)} className="px-8 py-4 rounded-3xl bg-secondary text-black text-xs font-black uppercase tracking-widest hover:scale-105 transition-all shadow-xl flex items-center gap-2">
@@ -462,7 +462,7 @@ export function MentorSchedule() {
            <div className="lg:col-span-12 xl:col-span-7 glass-card p-10">
               <div className="flex items-center justify-between mb-10">
                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-center text-primary-fixed">
+                    <div className="w-12 h-12 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-center text-violet-700">
                        <CalendarIcon size={22} />
                     </div>
                     <div>
@@ -498,7 +498,7 @@ export function MentorSchedule() {
                    );
                  })}
               </div>
-              <div className="mt-10 pt-10 border-t border-slate-200 flex items-center gap-8 justify-center sm:justify-start">
+              <div className="mt-10 border-t border-slate-200 flex items-center gap-8 justify-center sm:justify-start">
                  <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-zinc-500">
                     <div className="w-3 h-3 rounded-full bg-primary-fixed" /> Hôm nay
                  </div>
@@ -513,7 +513,7 @@ export function MentorSchedule() {
               <div className="glass-card p-10 h-full">
                  <div className="flex items-center justify-between mb-8">
                     <h4 className="text-lg font-black text-slate-900 uppercase tracking-tighter">Ngày {selectedDate.getDate()} thg {selectedDate.getMonth() + 1}</h4>
-                    <button className="w-10 h-10 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center text-primary-fixed hover:bg-slate-100 transition-all"><Plus size={18} /></button>
+                    <button className="w-10 h-10 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center text-violet-700 hover:bg-slate-100 transition-all"><Plus size={18} /></button>
                  </div>
 
                  <div className="space-y-4">
@@ -532,7 +532,7 @@ export function MentorSchedule() {
                             </div>
                          </div>
                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-4 text-xs font-black text-primary-fixed uppercase tracking-widest">
+                            <div className="flex items-center gap-4 text-xs font-black text-violet-700 uppercase tracking-widest">
                                <Clock3 size={14} /> {meeting.scheduledTime}
                             </div>
                             <span

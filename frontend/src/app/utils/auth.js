@@ -412,6 +412,7 @@ export function isProtectedAppPath(pathname) {
     "/profile",
     "/settings",
     "/my-bookings",
+    "/my-courses",
     "/cv-analysis",
     "/interview",
     "/booking",

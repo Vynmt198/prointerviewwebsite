@@ -58,6 +58,22 @@ export async function fetchCourseById(id) {
   }
 }
 
+/** Đánh giá khóa học — GET /api/reviews?targetType=course&targetId= */
+export async function fetchReviewsForCourse(courseId) {
+  try {
+    const q = new URLSearchParams({ targetType: "course", targetId: String(courseId) });
+    const res = await fetch(apiUrl(`/api/reviews?${q}`), {
+      method: "GET",
+      headers: jsonHeaders,
+    });
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok) return { success: false, reviews: [], error: body.error };
+    return { success: true, reviews: body.reviews || [] };
+  } catch {
+    return { success: false, reviews: [] };
+  }
+}
+
 export async function fetchMyMentorCourses() {
   if (!hasAuthCredentials()) return { success: false, error: "Chưa đăng nhập.", courses: [] };
   try {

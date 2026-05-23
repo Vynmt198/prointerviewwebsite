@@ -18,6 +18,7 @@ const ROUTE_TITLES = {
   "/login": "Đăng nhập",
   "/register": "Đăng ký",
   "/my-bookings": "Lịch hẹn của tôi",
+  "/my-courses": "Khóa học của tôi",
   "/cv-analysis": "Phân tích CV",
   "/cv-analysis/jd/history": "Lịch sử CV + JD",
   "/cv-analysis/jd": "Phân tích CV + JD",

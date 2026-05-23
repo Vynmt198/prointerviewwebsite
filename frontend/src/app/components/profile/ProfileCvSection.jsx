@@ -66,3 +66,19 @@ export function ProfileCvTextarea({
     />
   );
 }
+
+const hintEmphasis = "font-bold text-[#2D1B69]";
+
+/** Gợi ý điều kiện đăng ký mentor — các mục bắt buộc in đậm. */
+export function ProfileCvMentorHint() {
+  return (
+    <p className="profile-muted mt-2 text-sm leading-relaxed">
+      Hoàn thành đầy đủ ở các mục{" "}
+      <strong className={hintEmphasis}>Giới thiệu bản thân</strong>,{" "}
+      <strong className={hintEmphasis}>Quá trình học tập</strong>,{" "}
+      <strong className={hintEmphasis}>Thông tin đăng ký làm mentor</strong> và 1 trong 2 mục{" "}
+      <strong className={hintEmphasis}>Kinh nghiệm làm việc</strong> hoặc{" "}
+      <strong className={hintEmphasis}>Hoạt động ngoại khóa</strong>.
+    </p>
+  );
+}

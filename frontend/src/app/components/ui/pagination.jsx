@@ -5,7 +5,7 @@ import {
 } from "lucide-react";
 
 import { cn } from "./utils";
-import { buttonVariants, ButtonProps } from "./button";
+import { buttonVariants } from "./button";
 
 function Pagination({ className, ...props }) {
   return (
@@ -36,8 +36,6 @@ function PaginationItem({ ...props }) {
   return <li data-slot="pagination-item" {...props} />;
 }
 
-  React.ComponentProps<"a">;
-
 function PaginationLink({
   className,
   isActive,
@@ -46,7 +44,7 @@ function PaginationLink({
 }) {
   return (
     <a
-      aria-current={isActive ? "page" }
+      aria-current={isActive ? "page" : undefined}
       data-slot="pagination-link"
       data-active={isActive}
       className={cn(

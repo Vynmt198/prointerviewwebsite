@@ -123,17 +123,17 @@ export function MentorCourseManagement() {
 
    return (
       <MentorPageShell bottomPad="pb-32">
-         <div className="relative z-10 p-8 max-w-7xl mx-auto pt-16">
+         <div className="relative z-10 mx-auto max-w-7xl px-8 pb-8">
             {/* Header Unit */}
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
                <div>
-                  <div className="flex items-center gap-3 text-[10px] font-black text-primary-fixed uppercase tracking-[0.3em] mb-4">
+                  <div className="flex items-center gap-3 text-[10px] font-black text-violet-700 uppercase tracking-[0.3em] mb-4">
                      <Shapes size={14} /> Hệ thống Đào tạo
                   </div>
-                  <h1 className="mb-4 text-5xl font-black uppercase leading-none tracking-tighter text-slate-900 sm:text-6xl md:text-7xl">
+                  <h1 className="mb-3 font-headline text-2xl font-black uppercase leading-none tracking-tight text-slate-900 sm:text-3xl">
                      Khóa học <span className="text-violet-700">của tôi</span>
                   </h1>
-                  <p className="text-slate-600 text-lg font-medium">Xây dựng nội dung, theo dõi doanh thu và học viên của bạn</p>
+                  <p className="text-slate-600 text-sm font-medium">Xây dựng nội dung, theo dõi doanh thu và học viên của bạn</p>
                </div>
                <div className="flex gap-4">
                   <button onClick={() => navigate("/mentor/courses/new/edit")} className="px-10 py-5 rounded-3xl bg-primary-fixed text-black text-xs font-black uppercase tracking-widest hover:scale-105 transition-all shadow-[0_15px_40px_rgba(196, 255, 71,0.3)] flex items-center gap-3">
@@ -156,7 +156,7 @@ export function MentorCourseManagement() {
                         <div className="w-12 h-12 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
                            <stat.icon size={22} style={{ color: stat.color }} />
                         </div>
-                        <h3 className="text-5xl font-black text-slate-900 tracking-tighter mb-2 leading-none">{stat.value}</h3>
+                        <h3 className="mb-2 text-2xl font-black leading-none tracking-tight text-slate-900 sm:text-3xl">{stat.value}</h3>
                         <p className="text-[10px] font-black text-zinc-600 uppercase tracking-[0.2em]">{stat.label}</p>
                      </div>
                      <div className="absolute -bottom-6 -right-6 w-24 h-24 bg-gradient-to-br from-white/[0.03] to-transparent rounded-full" />
@@ -224,7 +224,7 @@ export function MentorCourseManagement() {
                            </div>
                         </div>
                         <div className="p-8 flex-1 flex flex-col">
-                           <h4 className="text-xl font-black text-slate-900 tracking-tighter mb-4 group-hover:text-primary-fixed transition-colors leading-tight">
+                           <h4 className="text-xl font-black text-slate-900 tracking-tighter mb-4 group-hover:text-violet-700 transition-colors leading-tight">
                               {course.title}
                            </h4>
                            <div className="grid grid-cols-2 gap-6 mb-10 mt-auto">
@@ -267,7 +267,7 @@ export function MentorCourseManagement() {
                   ))}
                   <div
                      onClick={() => navigate("/mentor/courses/new/edit")}
-                     className="glass-card border-2 border-dashed border-slate-200 flex flex-col items-center justify-center p-10 text-zinc-700 hover:border-primary-fixed hover:text-primary-fixed transition-all cursor-pointer group min-h-[360px]"
+                     className="glass-card border-2 border-dashed border-slate-200 flex flex-col items-center justify-center p-10 text-zinc-700 hover:border-primary-fixed hover:text-violet-700 transition-all cursor-pointer group min-h-[360px]"
                   >
                      <div className="w-16 h-16 rounded-full bg-slate-50 border border-slate-200 flex items-center justify-center mb-5 group-hover:scale-110 transition-transform">
                         <PlusCircle size={32} className="opacity-40 group-hover:opacity-100" />

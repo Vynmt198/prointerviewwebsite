@@ -92,7 +92,7 @@ export function MentorAnalytics() {
   const getTrendIcon = (trend) => {
     switch (trend) {
       case "improving":
-        return <TrendUp className="w-5 h-5 text-primary-fixed" />;
+        return <TrendUp className="w-5 h-5 text-violet-700" />;
       case "declining":
         return <TrendDown className="w-5 h-5 text-orange-500" />;
       default:
@@ -107,14 +107,14 @@ export function MentorAnalytics() {
 
   return (
     <MentorPageShell bottomPad="pb-32" extraStyles={MENTOR_ANALYTICS_INPUT_CSS}>
-      <div className="relative z-10 mx-auto max-w-7xl p-10 pt-20">
+      <div className="relative z-10 mx-auto max-w-7xl px-10 pb-10">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-10 mb-16">
           <div>
-            <h1 className="text-6xl font-black text-slate-900 font-headline tracking-tighter mb-4 uppercase">
+            <h1 className="mb-3 font-headline text-2xl font-black uppercase tracking-tight text-slate-900 sm:text-3xl">
                Phân tích <span className="text-secondary tracking-tighter">& Thông kê</span>
             </h1>
-            <p className="text-lg font-medium leading-relaxed text-slate-600">Theo dõi dữ liệu thực tế và tiến độ của các mentees</p>
+            <p className="text-sm font-medium leading-relaxed text-slate-600">Theo dõi dữ liệu thực tế và tiến độ của các mentees</p>
           </div>
         </div>
 
@@ -133,7 +133,7 @@ export function MentorAnalytics() {
                    </div>
                    <span className="text-[10px] font-black text-zinc-600 uppercase tracking-widest">{stat.trend}</span>
                 </div>
-                <h3 className="text-4xl font-black text-slate-900 tracking-tighter mb-1">{stat.value}</h3>
+                <h3 className="mb-1 text-2xl font-black tracking-tight text-slate-900 sm:text-3xl">{stat.value}</h3>
                 <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest leading-none">{stat.label}</p>
              </div>
            ))}
@@ -147,7 +147,7 @@ export function MentorAnalytics() {
                  <div className="flex items-center justify-between mb-10">
                     <div>
                        <h4 className="text-xl font-black text-slate-900 tracking-tight flex items-center gap-3 mb-2">
-                          <ChartLineIcon className="text-primary-fixed" size={20} /> Hiệu suất đào tạo tuần
+                          <ChartLineIcon className="text-violet-700" size={20} /> Hiệu suất đào tạo tuần
                        </h4>
                        <p className="text-xs font-medium text-zinc-500 uppercase tracking-widest">Dữ liệu hoàn thành các buổi phỏng vấn thử</p>
                     </div>
@@ -218,7 +218,7 @@ export function MentorAnalytics() {
                  <div className="mt-8 space-y-4">
                     <div className="flex items-center justify-between p-4 rounded-2xl bg-slate-50 border border-slate-200">
                        <span className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">Trung bình STAR</span>
-                       <span className="text-sm font-black text-primary-fixed">4.2/5.0</span>
+                       <span className="text-sm font-black text-violet-700">4.2/5.0</span>
                     </div>
                     <p className="text-[10px] text-zinc-600 font-bold uppercase tracking-widest text-center">Phân tích dựa trên 150+ buổi mentor</p>
                  </div>
@@ -230,7 +230,7 @@ export function MentorAnalytics() {
         <div className="mt-16 glass-card overflow-hidden">
            <div className="p-10 border-b border-slate-200 flex flex-col md:flex-row md:items-center justify-between gap-6 bg-white/[0.01]">
               <div className="flex items-center gap-4">
-                 <div className="w-12 h-12 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-center text-primary-fixed">
+                 <div className="w-12 h-12 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-center text-violet-700">
                     <Users size={20} />
                  </div>
                  <div>
@@ -290,7 +290,7 @@ export function MentorAnalytics() {
                          <td className="px-10 py-6">
                             <div className="flex items-center gap-2">
                                {getTrendIcon(mentee.progressTrend)}
-                               <span className={`text-[10px] font-black uppercase tracking-widest ${mentee.progressTrend === 'improving' ? 'text-primary-fixed' : 'text-zinc-500'}`}>
+                               <span className={`text-[10px] font-black uppercase tracking-widest ${mentee.progressTrend === 'improving' ? 'text-violet-700' : 'text-zinc-500'}`}>
                                   {mentee.progressTrend === 'improving' ? 'Cải thiện' : 'Ổn định'}
                                </span>
                             </div>
@@ -331,8 +331,8 @@ export function MentorAnalytics() {
                   <div className="flex items-center gap-6">
                      <img src={selectedMentee.menteeAvatar} className="w-16 h-16 rounded-[24px] object-cover ring-4 ring-white/5" />
                      <div>
-                        <h2 className="text-3xl font-black text-slate-900 tracking-tighter">{selectedMentee.menteeName}</h2>
-                        <p className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.2em] mt-1 text-primary-fixed">Phân tích hành vi & STAR</p>
+                        <h2 className="text-xl font-black sm:text-2xl text-slate-900 tracking-tighter">{selectedMentee.menteeName}</h2>
+                        <p className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.2em] mt-1 text-violet-700">Phân tích hành vi & STAR</p>
                      </div>
                   </div>
                   <button onClick={() => setSelectedMentee(null)} className="w-12 h-12 rounded-xl bg-slate-50 flex items-center justify-center text-zinc-500">
@@ -362,10 +362,10 @@ export function MentorAnalytics() {
                         <h5 className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">Ưu điểm & Hạn chế</h5>
                         <div className="space-y-4">
                            <div className="p-6 rounded-3xl bg-primary-fixed/5 border border-primary-fixed/10">
-                              <h6 className="text-[10px] font-black text-primary-fixed uppercase tracking-widest mb-4 flex items-center gap-2"><Lightning size={12} /> Điểm mạnh</h6>
+                              <h6 className="text-[10px] font-black text-violet-700 uppercase tracking-widest mb-4 flex items-center gap-2"><Lightning size={12} /> Điểm mạnh</h6>
                               <ul className="space-y-2">
                                  {selectedMentee.strengths.map((s, i) => (
-                                   <li key={i} className="text-xs font-medium text-slate-600 flex gap-2"><span className="text-primary-fixed">•</span> {s}</li>
+                                   <li key={i} className="text-xs font-medium text-slate-600 flex gap-2"><span className="text-violet-700">•</span> {s}</li>
                                  ))}
                               </ul>
                            </div>

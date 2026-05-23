@@ -10,5 +10,6 @@ export function getPublicBaseUrl(req) {
     const host = String(req.headers["x-forwarded-host"] || req.get("host") || "").split(",")[0].trim();
     if (host) return `${proto}://${host}`;
   }
-  return "http://localhost:5000";
+  const port = Number(process.env.PORT) || 5000;
+  return `http://127.0.0.1:${port}`;
 }

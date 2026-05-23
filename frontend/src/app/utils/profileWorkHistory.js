@@ -64,6 +64,32 @@ function formatMonthLabel(ym) {
   return `${m}/${y}`;
 }
 
+/** Gợi ý tháng bắt đầu từ tổng số năm KN (khi dữ liệu cũ chưa có startMonth). */
+export function inferStartMonthFromExperienceYears(years) {
+  const n = Number(years);
+  if (!Number.isFinite(n) || n <= 0) return "";
+  const now = new Date();
+  const startYear = now.getFullYear() - Math.max(1, Math.round(n));
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  return `${startYear}-${month}`;
+}
+
+/** Một dòng hiển thị khoảng thời gian làm việc. */
+export function formatWorkEntryPeriod(entry) {
+  if (!entry) return "";
+  if (entry.isCurrent && entry.startMonth) {
+    return `${formatMonthLabel(entry.startMonth)} — Hiện tại`;
+  }
+  if (entry.startMonth && entry.endMonth) {
+    return `${formatMonthLabel(entry.startMonth)} — ${formatMonthLabel(entry.endMonth)}`;
+  }
+  if (entry.startMonth) {
+    return `Từ ${formatMonthLabel(entry.startMonth)}`;
+  }
+  if (entry.isCurrent) return "Hiện tại (chưa ghi tháng bắt đầu)";
+  return "";
+}
+
 /** Hiển thị cho admin / export text. */
 export function formatWorkHistoryLines(entries) {
   const list = Array.isArray(entries) ? entries : [];

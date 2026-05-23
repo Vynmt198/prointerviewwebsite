@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router";
 import { motion } from "motion/react";
-import { Calendar, ChevronLeft, Video, Star, FileText } from "lucide-react";
+import { Calendar, Video, Star, FileText } from "lucide-react";
 import { MentorPageShell } from "../../components/mentor/MentorPageShell";
 import { listBookings } from "../../utils/bookingsApi";
 import { apiBookingToLocal } from "../../utils/bookingMappers";
@@ -119,15 +119,6 @@ export function MyBookings() {
         animate={{ opacity: 1, y: 0 }}
         className="mx-auto max-w-3xl space-y-8"
       >
-        <motion.button
-          type="button"
-          onClick={() => navigate("/")}
-          className="flex items-center gap-2 text-sm font-semibold text-slate-500 transition-colors hover:text-[#6E35E8]"
-        >
-          <ChevronLeft className="h-4 w-4" />
-          Về trang chủ
-        </motion.button>
-
         <div>
           <h1 className="text-2xl font-black tracking-tight text-slate-900 sm:text-3xl">Lịch hẹn của tôi</h1>
           <p className="mt-2 text-sm text-slate-500">Tất cả buổi mentor bạn đã đặt trên ProInterview</p>

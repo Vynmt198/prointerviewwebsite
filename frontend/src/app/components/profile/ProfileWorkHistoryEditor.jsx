@@ -1,5 +1,5 @@
 import { Plus, Trash2 } from "lucide-react";
-import { emptyWorkEntry } from "../../utils/profileWorkHistory";
+import { emptyWorkEntry, formatWorkEntryPeriod } from "../../utils/profileWorkHistory";
 
 export function ProfileWorkHistoryEditor({ entries, onChange, disabled = false }) {
   const list = Array.isArray(entries) && entries.length ? entries : [emptyWorkEntry()];
@@ -73,7 +73,7 @@ export function ProfileWorkHistoryEditor({ entries, onChange, disabled = false }
               <input
                 type="month"
                 disabled={disabled}
-                className="input-glass w-full disabled:cursor-not-allowed disabled:opacity-70"
+                className="input-glass w-full [color-scheme:light] disabled:cursor-not-allowed disabled:opacity-70"
                 value={entry.startMonth}
                 onChange={(e) => updateEntry(index, { startMonth: e.target.value })}
               />
@@ -85,12 +85,21 @@ export function ProfileWorkHistoryEditor({ entries, onChange, disabled = false }
               <input
                 type="month"
                 disabled={disabled || entry.isCurrent}
-                className="input-glass w-full disabled:cursor-not-allowed disabled:opacity-70"
+                className="input-glass w-full [color-scheme:light] disabled:cursor-not-allowed disabled:opacity-70"
                 value={entry.isCurrent ? "" : entry.endMonth}
                 onChange={(e) => updateEntry(index, { endMonth: e.target.value })}
               />
             </label>
           </div>
+          {formatWorkEntryPeriod(entry) ? (
+            <p className="text-xs font-semibold text-[#7a23e5]">
+              Thời gian: {formatWorkEntryPeriod(entry)}
+            </p>
+          ) : (
+            <p className="text-xs text-[#2D1B69]/50">
+              Chưa có thời gian — chọn tháng bắt đầu (và kết thúc nếu không còn làm).
+            </p>
+          )}
 
           <label className="flex cursor-pointer items-center gap-2 text-sm text-[#2D1B69]/80">
             <input

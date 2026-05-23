@@ -2,7 +2,7 @@ import { Course } from "../models/Course.js";
 import { Enrollment } from "../models/Enrollment.js";
 import { Mentor } from "../models/Mentor.js";
 import { enrollmentAccessGranted } from "../helpers/enrollmentAccess.js";
-import { serializeCourseForApi } from "../utils/resolveStoredUploadUrl.js";
+import { serializeCourseForApi, resolveStoredUploadUrl } from "../utils/resolveStoredUploadUrl.js";
 import * as courseMentorInsights from "../services/courseMentorInsightsService.js";
 
 function normalizeCoursePayload(body = {}) {
@@ -144,7 +144,15 @@ export const CoursesController = {
         }
       }
 
-      res.json({ success: true, lesson });
+      const lessonPayload = lesson.toObject ? lesson.toObject() : { ...lesson };
+      if (lessonPayload.videoUrl) {
+        lessonPayload.videoUrl = resolveStoredUploadUrl(lessonPayload.videoUrl);
+      }
+      if (lessonPayload.documentUrl) {
+        lessonPayload.documentUrl = resolveStoredUploadUrl(lessonPayload.documentUrl);
+      }
+
+      res.json({ success: true, lesson: lessonPayload });
     } catch (error) {
       next(error);
     }

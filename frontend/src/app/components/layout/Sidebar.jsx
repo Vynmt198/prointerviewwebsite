@@ -15,6 +15,7 @@ import {
   Star,
   CircleDollarSign,
   GraduationCap,
+  BookOpen,
   BookText,
   ClipboardList,
   Shield,
@@ -434,38 +435,53 @@ export function AppSidebar() {
               </DropdownMenuTrigger>
 
               <DropdownMenuContent side="top" align="end" className="w-56 mb-1">
-                {/* Header */}
-                <div className="px-3 py-2.5 border-b border-border">
-                  <p className="text-sm font-semibold text-foreground truncate">{displayName}</p>
-                  <p className="text-xs text-muted-foreground truncate mt-0.5">
-                    {user?.email || ""}
-                  </p>
-                </div>
+                {!isMentor && user?.role !== "admin" && (
+                  <>
+                    <div className="px-3 py-2.5 border-b border-border">
+                      <p className="text-sm font-semibold text-foreground truncate">{displayName}</p>
+                      <p className="text-xs text-muted-foreground truncate mt-0.5">
+                        {user?.email || ""}
+                      </p>
+                    </div>
 
-                <DropdownMenuItem asChild>
-                  <Link to="/profile" className="flex items-center gap-2.5 cursor-pointer">
-                    <User className="size-4" />
-                    Hồ sơ cá nhân
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link to="/settings" className="flex items-center gap-2.5 cursor-pointer">
-                    <Settings className="size-4" />
-                    Cài đặt
-                  </Link>
-                </DropdownMenuItem>
-                {!isMentor && !isElite && (
-                  <DropdownMenuItem
-                    onClick={() => navigate("/pricing")}
-                    className="flex items-center gap-2.5 cursor-pointer"
-                    style={{ color: "#6E35E8", fontWeight: 600 }}
-                  >
-                    <Zap className="size-4" />
-                    {upgradeTitle} ↗
-                  </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link to="/profile" className="flex items-center gap-2.5 cursor-pointer">
+                        <User className="size-4" />
+                        Hồ sơ cá nhân
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link to="/my-courses" className="flex items-center gap-2.5 cursor-pointer">
+                        <BookOpen className="size-4" />
+                        Khóa học của tôi
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link to="/my-bookings" className="flex items-center gap-2.5 cursor-pointer">
+                        <Calendar className="size-4" />
+                        Lịch hẹn của tôi
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link to="/settings" className="flex items-center gap-2.5 cursor-pointer">
+                        <Settings className="size-4" />
+                        Cài đặt
+                      </Link>
+                    </DropdownMenuItem>
+                    {!isElite && (
+                      <DropdownMenuItem
+                        onClick={() => navigate("/pricing")}
+                        className="flex items-center gap-2.5 cursor-pointer"
+                        style={{ color: "#6E35E8", fontWeight: 600 }}
+                      >
+                        <Zap className="size-4" />
+                        {upgradeTitle} ↗
+                      </DropdownMenuItem>
+                    )}
+
+                    <DropdownMenuSeparator />
+                  </>
                 )}
-
-                <DropdownMenuSeparator />
 
                 <DropdownMenuItem
                   onClick={handleLogout}

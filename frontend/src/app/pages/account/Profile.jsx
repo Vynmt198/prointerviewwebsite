@@ -5,7 +5,6 @@ import {
   User,
   Mail as EnvelopeSimple,
   Phone,
-  Briefcase,
   Check,
   Star,
   Mic as Microphone,
@@ -36,20 +35,23 @@ import {
   getCvSectionKeysToExpand,
   getProfileCvMissing,
   mentorApplyBlockedMessage,
-  MENTOR_APPLY_PENDING_MSG,
-  PROFILE_CV_MENTOR_HINT,
+  MENTOR_APPLY_RESUBMIT_CONFIRM_BODY,
+  MENTOR_APPLY_RESUBMIT_CONFIRM_TITLE,
 } from "../../utils/profileCvValidation";
 import {
   ProfileCvAccordionSection,
+  ProfileCvMentorHint,
   ProfileCvStaticSection,
   ProfileCvTextarea,
 } from "../../components/profile/ProfileCvSection";
 import { ProfileWorkHistoryEditor } from "../../components/profile/ProfileWorkHistoryEditor";
 import { uploadFile } from "../../utils/uploadApi";
+import { normalizeStoredUploadUrl, resolveMediaUrl } from "../../utils/mediaUrl";
 import {
   emptyWorkEntry,
   estimateExperienceYears,
   formatWorkHistoryLines,
+  inferStartMonthFromExperienceYears,
   parseWorkHistory,
   pickCurrentWorkEntry,
   serializeWorkHistory,
@@ -62,17 +64,27 @@ function buildCvProfileFromSources(u, mentor) {
       : u?.field
         ? String(u.field)
         : "";
-  const rawWork = u?.profileWorkExperience || mentor?.profileWorkExperience || "";
+  const userWork = String(u?.profileWorkExperience ?? "").trim();
+  const mentorWork = String(mentor?.profileWorkExperience ?? "").trim();
+  const rawWork = userWork.startsWith("{")
+    ? userWork
+    : mentorWork.startsWith("{")
+      ? mentorWork
+      : userWork || mentorWork;
   let workHistory = parseWorkHistory(rawWork);
   const hasStructured = String(rawWork).trim().startsWith("{");
   if (!hasStructured && (mentor?.title || u?.position || mentor?.company || u?.currentCompany)) {
     const cur = pickCurrentWorkEntry(workHistory) || emptyWorkEntry();
+    const yearsHint = mentor?.experienceYears ?? u?.experience;
+    const startMonth =
+      cur.startMonth || inferStartMonthFromExperienceYears(yearsHint);
     workHistory = [
       {
         ...cur,
         role: mentor?.title || u?.position || cur.role,
         company: mentor?.company || u?.currentCompany || cur.company,
         isCurrent: true,
+        startMonth,
       },
       ...workHistory.slice(1),
     ];
@@ -165,6 +177,7 @@ export function Profile() {
   const [applying, setApplying] = useState(false);
   const [mentorApplyError, setMentorApplyError] = useState("");
   const [avatarUrl, setAvatarUrl] = useState(user?.avatar || "");
+  const [avatarBroken, setAvatarBroken] = useState(false);
   const [avatarUploading, setAvatarUploading] = useState(false);
   const avatarInputRef = React.useRef(null);
   const [cvProfile, setCvProfile] = useState(() => buildCvProfileFromSources(user, null));
@@ -177,6 +190,7 @@ export function Profile() {
     skills: false,
     mentorExtra: false,
   });
+  const [resubmitConfirmOpen, setResubmitConfirmOpen] = useState(false);
 
   const toggleCvSection = (key) => {
     setOpenCvSections((prev) => ({ ...prev, [key]: !prev[key] }));
@@ -197,9 +211,6 @@ export function Profile() {
   const mentorReviewStatus = mentorProfile
     ? mentorProfile?.adminReview?.status || (mentorProfile?.isVerified ? "approved" : "pending")
     : "";
-  const mentorFormLockedPending = !isMentor && mentorReviewStatus === "pending";
-  const profileCanEdit = !mentorFormLockedPending;
-
   const handleSaveProfile = async () => {
     setSaving(true);
     const userRes = await updateUser({
@@ -247,6 +258,7 @@ export function Profile() {
       if (mentorRes.mentor) setMentorProfile(mentorRes.mentor);
     }
 
+    syncAvatarFromSession();
     setSaving(false);
     setSaveMsg("saved");
     setTimeout(() => setSaveMsg(null), 2500);
@@ -256,14 +268,8 @@ export function Profile() {
     document.getElementById("profile-cv")?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
-  /** Một nút «Đăng ký làm Mentor»: thiếu → nhắc điền đủ; chờ duyệt → đã gửi; đủ → gửi / gửi lại. */
+  /** «Đăng ký / Gửi lại mentor»: thiếu → nhắc điền; chờ duyệt (lần 2+) → xác nhận rồi gửi. */
   const handleSidebarMentorRegister = () => {
-    if (mentorReviewStatus === "pending") {
-      setMentorApplyError(MENTOR_APPLY_PENDING_MSG);
-      scrollToCv();
-      return;
-    }
-
     const missing = getProfileCvMissing(cvProfile);
     if (missing.length) {
       setMentorApplyError(mentorApplyBlockedMessage(missing));
@@ -272,12 +278,24 @@ export function Profile() {
       return;
     }
 
+    if (mentorReviewStatus === "pending") {
+      setResubmitConfirmOpen(true);
+      return;
+    }
+
+    setMentorApplyError("");
+    handleApplyMentor();
+  };
+
+  const confirmResubmitMentor = () => {
+    setResubmitConfirmOpen(false);
     setMentorApplyError("");
     handleApplyMentor();
   };
 
   const handleApplyMentor = async () => {
-    const wasResubmit = mentorReviewStatus === "rejected";
+    const wasResubmit =
+      mentorReviewStatus === "rejected" || mentorReviewStatus === "pending";
 
     setApplying(true);
     const saved = await persistCvProfileToUser(cvProfile);
@@ -322,23 +340,17 @@ export function Profile() {
       alert(up.error || "Upload ảnh thất bại.");
       return;
     }
-    const res = await updateUser({ avatar: up.url });
+    const storedAvatar = normalizeStoredUploadUrl(up.url);
+    const res = await updateUser({ avatar: storedAvatar });
     setAvatarUploading(false);
     if (res.success) {
-      setAvatarUrl(up.url);
+      setAvatarUrl(getUser()?.avatar || storedAvatar);
       setSaveMsg("avatar");
       setTimeout(() => setSaveMsg(null), 2500);
     } else {
       alert(res.error || "Không lưu được ảnh đại diện.");
     }
   };
-
-  const STATS = [
-    { label: "Tổng phỏng vấn AI", value: "15", icon: Microphone, color: "#6E35E8" },
-    { label: "Phỏng vấn Mentor", value: "3", icon: Users, color: "#B4F500" },
-    { label: "Điểm STAR tốt nhất", value: "4.8/5", icon: Star, color: "#7a23e5" },
-    { label: "Tỷ lệ cải thiện", value: "+71%", icon: TrendUp, color: "#B4F500" },
-  ];
 
   const FORM_FIELDS = [
     { label: "Họ và tên", key: "name", icon: User },
@@ -388,9 +400,35 @@ export function Profile() {
     };
   }, []);
 
-  React.useEffect(() => {
-    restoreSession().catch(() => {});
+  const syncAvatarFromSession = React.useCallback(async () => {
+    const raw = getUser()?.avatar || "";
+    const normalized = normalizeStoredUploadUrl(raw);
+    if (raw && normalized.startsWith("/uploads/") && normalized !== raw) {
+      const fixed = await updateUser({ avatar: normalized });
+      if (fixed?.success) {
+        setAvatarUrl(getUser()?.avatar || normalized);
+        setAvatarBroken(false);
+        return;
+      }
+    }
+    setAvatarUrl(raw);
+    setAvatarBroken(false);
   }, []);
+
+  React.useEffect(() => {
+    setAvatarBroken(false);
+  }, [avatarUrl]);
+
+  React.useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      await restoreSession().catch(() => {});
+      if (!cancelled) syncAvatarFromSession();
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [syncAvatarFromSession]);
 
   React.useEffect(() => {
     if (!user?.email) return;
@@ -582,22 +620,33 @@ export function Profile() {
         }
       `}</style>
       <div className="profile-page relative z-10 mx-auto max-w-6xl px-6 pb-8 pt-8 sm:px-8 sm:pt-10">
-        <div className="profile-divider mb-10 border-b pb-10 md:mb-12">
-          <div className="flex flex-col justify-between gap-6 md:flex-row md:items-end">
-          <div className="min-w-0 flex-1">
-            <h1 className="font-headline app-page-title mb-0">
-              Hồ sơ cá nhân
-            </h1>
-          </div>
-          </div>
-        </div>
-
         {mentorApplyError && !isMentor && (
           <div className="profile-banner-info mb-6 flex gap-3 rounded-2xl px-4 py-3 text-sm font-medium">
             <AlertTriangle size={18} className="profile-accent-purple mt-0.5 shrink-0" />
             <p>{mentorApplyError}</p>
           </div>
         )}
+
+        {!isMentor &&
+          mentorProfile?.adminReview?.status === "rejected" &&
+          mentorProfile?.adminReview?.reason && (
+            <div className="profile-banner-lime mb-6 rounded-2xl p-5">
+              <div className="flex items-start gap-3">
+                <AlertTriangle size={18} className="profile-accent-purple mt-0.5 shrink-0" />
+                <div>
+                  <p className="profile-accent-purple text-xs font-black uppercase tracking-widest">
+                    Hồ sơ mentor bị từ chối
+                  </p>
+                  <p className="profile-muted mt-2 text-sm leading-relaxed">
+                    {mentorProfile.adminReview.reason}
+                  </p>
+                  <p className="profile-muted mt-2 text-[11px]">
+                    Chỉnh sửa <strong>Hồ sơ cá nhân</strong> bên dưới, rồi bấm <strong>Đăng ký làm Mentor</strong> để gửi lại.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
 
         {/* Status messages */}
         {saveMsg === "avatar" && (
@@ -632,13 +681,67 @@ export function Profile() {
           </div>
         )}
 
+        {resubmitConfirmOpen && (
+          <div
+            className="glass-card fixed bottom-10 right-10 z-[60] w-[min(100vw-2rem,22rem)] animate-in fade-in slide-in-from-bottom-5 rounded-2xl border border-[rgba(110,53,232,0.22)] p-5 shadow-2xl"
+            role="dialog"
+            aria-labelledby="mentor-resubmit-confirm-title"
+            aria-describedby="mentor-resubmit-confirm-desc"
+          >
+            <div className="mb-3 flex items-start gap-3">
+              <AlertTriangle size={20} className="profile-accent-purple mt-0.5 shrink-0" />
+              <div>
+                <p
+                  id="mentor-resubmit-confirm-title"
+                  className="text-sm font-black leading-snug text-[#2D1B69]"
+                >
+                  {MENTOR_APPLY_RESUBMIT_CONFIRM_TITLE}
+                </p>
+                <p id="mentor-resubmit-confirm-desc" className="profile-muted mt-2 text-xs leading-relaxed">
+                  {MENTOR_APPLY_RESUBMIT_CONFIRM_BODY}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setResubmitConfirmOpen(false)}
+                className="profile-muted -mr-1 -mt-1 shrink-0 rounded-lg p-1 transition hover:text-[#2D1B69]"
+                aria-label="Đóng"
+              >
+                <X size={16} />
+              </button>
+            </div>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setResubmitConfirmOpen(false)}
+                className="flex-1 rounded-xl border border-[rgba(110,53,232,0.2)] bg-white/80 py-2.5 text-[10px] font-black uppercase tracking-widest text-[#5c4d7a] transition hover:bg-white"
+              >
+                Huỷ
+              </button>
+              <button
+                type="button"
+                disabled={applying}
+                onClick={confirmResubmitMentor}
+                className="profile-btn-purple flex-1 rounded-xl py-2.5 text-[10px] font-black uppercase tracking-widest disabled:opacity-50"
+              >
+                {applying ? "Đang gửi…" : "Gửi lại"}
+              </button>
+            </div>
+          </div>
+        )}
+
         <div className="grid lg:grid-cols-12 gap-10">
           <div className="lg:col-span-4 space-y-10">
             <div className="glass-card p-10 text-center">
                <div className="glow-halo relative mx-auto mb-8 w-fit">
                   <div className="w-32 h-32 rounded-[34px] bg-[#f8f5ff] border-[3px] border-[#7a23e5] overflow-hidden flex items-center justify-center text-[2.3rem] font-black text-[#7a23e5] shadow-[0_10px_24px_rgba(122,35,229,0.25)]">
-                     {avatarUrl ? (
-                       <img src={avatarUrl} alt="" className="h-full w-full object-cover" />
+                     {avatarUrl && !avatarBroken ? (
+                       <img
+                         src={resolveMediaUrl(avatarUrl)}
+                         alt=""
+                         className="h-full w-full object-cover"
+                         onError={() => setAvatarBroken(true)}
+                       />
                      ) : (
                        initials
                      )}
@@ -670,34 +773,17 @@ export function Profile() {
                       type="button"
                       disabled={applying}
                       onClick={handleSidebarMentorRegister}
-                      className="profile-banner-lime group flex w-full items-center justify-between rounded-2xl border p-4 text-left transition-all hover:brightness-95 disabled:opacity-60"
+                      className="profile-btn-lime group flex w-full items-center justify-between rounded-2xl px-4 py-4 text-left transition-all hover:brightness-110 active:scale-[0.99] disabled:opacity-60"
                     >
-                      <div className="flex items-center gap-3">
-                        <Lightning size={18} className="profile-accent-purple" />
-                        <span className="profile-accent-purple text-[10px] font-black uppercase tracking-widest">
-                          Đăng ký làm Mentor
-                        </span>
-                      </div>
-                      <span className="flex h-10 w-10 items-center justify-center rounded-full bg-white/80 text-[#7a23e5]">
+                      <span className="text-[10px] font-black uppercase tracking-widest">
+                        Đăng ký làm Mentor
+                      </span>
+                      <span className="flex h-10 w-10 items-center justify-center rounded-full bg-white/80 text-[#2D1B69]">
                         <CaretRight size={16} />
                       </span>
                     </button>
                  </div>
                )}
-            </div>
-
-            <div className="glass-card p-8">
-               <h3 className="profile-muted mb-8 flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.2em]">
-                  <TrendUp size={14} className="profile-accent-purple" strokeWidth={2} /> Thống kê vận hành
-               </h3>
-               <div className="grid grid-cols-2 gap-6">
-                  {STATS.map((stat, i) => (
-                    <div key={i}>
-                       <p className="profile-muted mb-2 text-[9px] font-bold uppercase leading-none tracking-wide">{stat.label}</p>
-                       <p className="text-xl font-black tracking-tighter" style={{ color: stat.color }}>{stat.value}</p>
-                    </div>
-                  ))}
-               </div>
             </div>
 
           </div>
@@ -707,9 +793,9 @@ export function Profile() {
               <div className="profile-divider mb-8 border-b pb-6">
                 <h2 className="font-headline flex items-center gap-3 text-xl font-black tracking-tight sm:text-2xl">
                   <User size={20} className="profile-accent-purple" strokeWidth={2} />
-                  Hồ sơ <span className="profile-accent-lime">cá nhân</span>
+                  Hồ sơ <span className="profile-accent-purple">cá nhân</span>
                 </h2>
-                <p className="profile-muted mt-2 text-sm">{PROFILE_CV_MENTOR_HINT}</p>
+                {!isMentor && <ProfileCvMentorHint />}
               </div>
 
               <div className="profile-cv-accordion-list">
@@ -721,11 +807,10 @@ export function Profile() {
                           <Icon size={12} /> {label}
                         </label>
                         <input
-                          disabled={!profileCanEdit}
-                          className="input-glass w-full disabled:cursor-not-allowed disabled:opacity-70"
+                          className="input-glass w-full"
                           value={form[key]}
                           onChange={(e) => setForm({ ...form, [key]: e.target.value })}
-                          placeholder={profileCanEdit ? `Nhập ${label.toLowerCase()}...` : "Dữ liệu trống"}
+                          placeholder={`Nhập ${label.toLowerCase()}...`}
                         />
                       </div>
                     ))}
@@ -738,7 +823,6 @@ export function Profile() {
                   onToggle={() => toggleCvSection("intro")}
                 >
                   <ProfileCvTextarea
-                    disabled={!profileCanEdit}
                     placeholder="Giới thiệu thế mạnh, mục tiêu nghề nghiệp và lý do muốn làm Mentor..."
                     value={cvProfile.intro}
                     onChange={(e) => {
@@ -755,7 +839,6 @@ export function Profile() {
                   onToggle={() => toggleCvSection("work")}
                 >
                   <ProfileWorkHistoryEditor
-                    disabled={!profileCanEdit}
                     entries={cvProfile.workHistory}
                     onChange={(workHistory) => {
                       setMentorApplyError("");
@@ -767,10 +850,9 @@ export function Profile() {
                       Tổng số năm kinh nghiệm (tùy chọn)
                     </label>
                     <input
-                      disabled={!profileCanEdit}
                       type="number"
                       min={0}
-                      className="input-glass w-full disabled:cursor-not-allowed disabled:opacity-70"
+                      className="input-glass w-full"
                       placeholder="Tự tính từ thời gian nếu để trống"
                       value={cvProfile.yearsOfExperience}
                       onChange={(e) => {
@@ -787,7 +869,6 @@ export function Profile() {
                   onToggle={() => toggleCvSection("education")}
                 >
                   <ProfileCvTextarea
-                    disabled={!profileCanEdit}
                     placeholder="Trường, chuyên ngành, thời gian học, thành tích nổi bật..."
                     value={cvProfile.education}
                     onChange={(e) => {
@@ -804,7 +885,6 @@ export function Profile() {
                   onToggle={() => toggleCvSection("extracurricular")}
                 >
                   <ProfileCvTextarea
-                    disabled={!profileCanEdit}
                     placeholder="Câu lạc bộ, tình nguyện, dự án cộng đồng..."
                     value={cvProfile.extracurricular}
                     onChange={(e) => {
@@ -821,7 +901,6 @@ export function Profile() {
                   onToggle={() => toggleCvSection("awards")}
                 >
                   <ProfileCvTextarea
-                    disabled={!profileCanEdit}
                     placeholder="Các giải thưởng, huy chương, danh hiệu (cách nhau dấu phẩy hoặc mỗi dòng một mục)..."
                     value={cvProfile.awards}
                     onChange={(e) => {
@@ -838,7 +917,6 @@ export function Profile() {
                   onToggle={() => toggleCvSection("skills")}
                 >
                   <ProfileCvTextarea
-                    disabled={!profileCanEdit}
                     placeholder="Kỹ năng chuyên môn, chứng chỉ (VD: React, AWS, PMP...)"
                     value={cvProfile.skillsCerts}
                     onChange={(e) => {
@@ -855,113 +933,48 @@ export function Profile() {
                     isOpen={openCvSections.mentorExtra}
                     onToggle={() => toggleCvSection("mentorExtra")}
                   >
-                    <input
-                      disabled={!profileCanEdit}
-                      type="text"
-                      inputMode="numeric"
-                      className="input-glass w-full max-w-md"
-                      placeholder="Mức phí mong muốn (VNĐ / 60 phút)"
-                      value={cvProfile.targetRate}
-                      onChange={(e) =>
-                        setCvProfile({ ...cvProfile, targetRate: e.target.value.replace(/\D/g, "") })
-                      }
-                    />
+                    <div className="relative max-w-md">
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        className="input-glass w-full pr-12"
+                        placeholder="VD: 300.000 (VNĐ / 60 phút)"
+                        value={
+                          cvProfile.targetRate
+                            ? Number(cvProfile.targetRate).toLocaleString("vi-VN")
+                            : ""
+                        }
+                        onChange={(e) =>
+                          setCvProfile({
+                            ...cvProfile,
+                            targetRate: e.target.value.replace(/\D/g, ""),
+                          })
+                        }
+                      />
+                      <span className="profile-muted pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-sm font-bold">
+                        ₫
+                      </span>
+                    </div>
                   </ProfileCvAccordionSection>
                 )}
 
-                {profileCanEdit && (
-                  <div className="profile-divider border-t pt-8">
-                    <button
-                      type="button"
-                      disabled={saving}
-                      onClick={handleSaveProfile}
-                      className="profile-btn-purple flex w-full items-center justify-center gap-2 rounded-2xl py-4 text-[10px] font-black uppercase tracking-widest transition-all hover:brightness-110 active:scale-[0.99] disabled:opacity-50"
-                    >
-                      {saving ? (
-                        <div className="w-4 h-4 border-2 border-white/30 border-t-white animate-spin rounded-full" />
-                      ) : (
-                        <>
-                          <Check size={14} /> Cập nhật hồ sơ
-                        </>
-                      )}
-                    </button>
-                  </div>
-                )}
+                <div className="profile-divider border-t pt-8">
+                  <button
+                    type="button"
+                    disabled={saving}
+                    onClick={handleSaveProfile}
+                    className="profile-btn-lime flex w-full items-center justify-center rounded-2xl py-4 text-[10px] font-black uppercase tracking-widest transition-all hover:brightness-110 active:scale-[0.99] disabled:opacity-50"
+                  >
+                    {saving ? (
+                      <div className="h-4 w-4 animate-spin rounded-full border-2 border-[#2D1B69]/25 border-t-[#2D1B69]" />
+                    ) : (
+                      "Cập nhật hồ sơ"
+                    )}
+                  </button>
+                </div>
 
               </div>
             </div>
-
-            {mentorProfile && (
-              <div className="glass-card p-10">
-                <div className="flex items-center justify-between mb-10">
-                  <h2 className="font-headline flex items-center gap-3 text-xl font-black tracking-tight sm:text-2xl">
-                    <Briefcase size={20} className="profile-accent-purple" strokeWidth={2} /> Hồ sơ mentor
-                  </h2>
-                  {mentorReviewStatus === "pending" ? (
-                    <span className="profile-badge-pending rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-widest">
-                      Đang chờ duyệt
-                    </span>
-                  ) : mentorReviewStatus === "approved" ? (
-                    <span className="profile-badge-approved rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-widest">
-                      Đã duyệt
-                    </span>
-                  ) : mentorReviewStatus === "rejected" ? (
-                    <span className="profile-badge-rejected rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-widest">
-                      Đã từ chối
-                    </span>
-                  ) : null}
-                </div>
-                {mentorProfile?.adminReview?.status === "rejected" && mentorProfile?.adminReview?.reason ? (
-                  <div className="profile-banner-lime mb-8 rounded-2xl p-5">
-                    <div className="flex items-start gap-3">
-                      <AlertTriangle size={18} className="profile-accent-purple mt-0.5 shrink-0" />
-                      <div>
-                        <p className="profile-accent-purple text-xs font-black uppercase tracking-widest">
-                          Hồ sơ từng bị từ chối
-                        </p>
-                        <p className="mt-2 text-sm font-semibold">Lý do gần nhất từ admin:</p>
-                        <p className="profile-muted mt-1 text-sm leading-relaxed">{mentorProfile.adminReview.reason}</p>
-                        <p className="profile-muted mt-2 text-[11px]">
-                          Chỉnh sửa hồ sơ phía trên, rồi bấm <strong>Đăng ký làm Mentor</strong> ở cột trái để gửi lại.
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                ) : null}
-                <p className="profile-muted mb-6 text-sm">
-                  Chỉnh sửa hồ sơ trong khối <strong>Hồ sơ cá nhân</strong> phía trên, rồi bấm <strong>Cập nhật hồ sơ</strong>.
-                </p>
-                <div className="grid md:grid-cols-2 gap-8">
-                  {[
-                    { label: "Chức danh mentor", key: "title" },
-                    { label: "Công ty", key: "company" },
-                    { label: "Năm kinh nghiệm", key: "yearsOfExperience", type: "number" },
-                    { label: "Mức phí / giờ (VNĐ)", key: "targetRate", type: "number" },
-                    { label: "Kỹ năng (cách nhau dấu phẩy)", key: "skillsCerts" },
-                    { label: "Phản hồi trung bình", key: "responseTime" },
-                    { label: "Múi giờ", key: "timezone" },
-                  ].map((field) => (
-                    <div key={field.key} className="space-y-3">
-                      <label className="profile-muted text-[10px] font-bold uppercase tracking-[0.18em]">{field.label}</label>
-                      <input
-                        disabled={!profileCanEdit}
-                        type={field.type || "text"}
-                        className="input-glass w-full"
-                        value={cvProfile[field.key] || ""}
-                        onChange={(e) => setCvProfile({ ...cvProfile, [field.key]: e.target.value })}
-                        placeholder={profileCanEdit ? `Nhập ${field.label.toLowerCase()}...` : "Dữ liệu trống"}
-                      />
-                    </div>
-                  ))}
-                </div>
-                {mentorProfile?.finance?.bankAccount?.bankName && (
-                  <p className="profile-muted mt-6 text-xs">
-                    Tài khoản nhận tiền hiện tại: {mentorProfile.finance.bankAccount.bankName} - ****
-                    {String(mentorProfile.finance.bankAccount.accountNumber || "").slice(-4)}
-                  </p>
-                )}
-              </div>
-            )}
 
           </div>
         </div>

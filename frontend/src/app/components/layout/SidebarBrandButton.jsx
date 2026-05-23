@@ -33,7 +33,7 @@ export function SidebarBrandButton({
           <img
             src="/Logo.png"
             alt="ProInterview"
-            className="h-9 w-auto max-w-[132px] object-contain object-left brightness-[0.92] contrast-[1.12] saturate-[1.05]"
+            className="h-9 w-auto max-w-[132px] translate-x-[0.7rem] translate-y-[0.3rem] object-contain object-left brightness-[0.92] contrast-[1.12] saturate-[1.05]"
           />
         </div>
         {badge}
@@ -41,7 +41,7 @@ export function SidebarBrandButton({
       <img
         src={LOGO_MARK_SRC}
         alt=""
-        className="hidden h-8 w-8 shrink-0 object-contain object-center group-data-[collapsible=icon]:block"
+        className="hidden h-8 w-8 shrink-0 translate-x-[0.7rem] translate-y-[0.3rem] object-contain object-center group-data-[collapsible=icon]:block"
         aria-hidden
       />
     </SidebarMenuButton>
