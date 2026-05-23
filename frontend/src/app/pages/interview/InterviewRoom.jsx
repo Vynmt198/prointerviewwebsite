@@ -454,7 +454,9 @@ export default function InterviewRoom() {
     apiKey: DID_API_KEY,
     sourceImageUrl: DID_AVATAR_URLS[hrGender],
   });
-  const isDIDActive = Boolean(DID_API_KEY) && didStatus !== "error";
+  // Only switch to D-ID avatar panel when it's actually ready — NOT during connecting.
+  // While connecting, HRVideoPanel handles audio and flow transition (onAskingDone).
+  const isDIDActive = Boolean(DID_API_KEY) && (didStatus === "connected" || didStatus === "speaking");
   const hrName = HR_NAMES[hrGender];
   const hrTitle = HR_TITLES[hrGender];
   const hrVideoUrl = HR_IDLE_URLS[hrGender];
@@ -542,16 +544,25 @@ export default function InterviewRoom() {
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  /* ── D-ID: kết nối khi phỏng vấn bắt đầu ───────────────── */
+  /* ── D-ID: preconnect ngay khi mount (giảm latency) ─────── */
+  useEffect(() => {
+    if (!DID_API_KEY) return;
+    didConnect();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  /* ── D-ID: retry nếu kết nối bị drop khi chuyển sang question */
   useEffect(() => {
     if (phase !== "question" || !DID_API_KEY) return;
+    if (didStatus === "connected" || didStatus === "connecting") return;
     didConnect();
-  }, [phase]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [phase, didStatus]); // eslint-disable-line react-hooks/exhaustive-deps
 
   /* ── D-ID: đọc câu hỏi khi avatar kết nối hoặc câu hỏi thay đổi */
   useEffect(() => {
     if (phase !== "question" || didStatus !== "connected") return;
     if (lastSpokenQRef.current === currentQ) return;
+    // Guard: nếu HRVideoPanel đã chuyển sang "listening" rồi thì không re-speak
+    if (hrPhase !== "asking") return;
     lastSpokenQRef.current = currentQ;
     speakWithText(
       QUESTIONS[currentQ],
@@ -563,7 +574,7 @@ export default function InterviewRoom() {
       },
       DID_VOICES[hrGender],
     );
-  }, [phase, didStatus, currentQ]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [phase, didStatus, currentQ, hrPhase]); // eslint-disable-line react-hooks/exhaustive-deps
 
   /* ── STT ─────────────────────────────────────────────────── */
   useEffect(() => {
