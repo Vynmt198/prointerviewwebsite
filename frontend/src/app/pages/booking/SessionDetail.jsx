@@ -48,6 +48,15 @@ import {
 } from "../../utils/meetingLinks";
 import { MentorCancelSessionPanel } from "./MentorCancelSessionPanel";
 import { fetchMentorAvailability } from "../../utils/mentorApi";
+import {
+  BRAND_LIME,
+  BRAND_LIME_BORDER,
+  BRAND_LIME_SOFT,
+  BRAND_PURPLE,
+  BRAND_PURPLE_HOVER,
+  BRAND_PURPLE_SOFT,
+  BRAND_PURPLE_SOFT_LIGHT,
+} from "../../constants/brandColors";
 
 function toBookingDateFormat(input) {
   const s = String(input || "").trim();
@@ -1352,7 +1361,7 @@ export function SessionDetail() {
             {/* Done header */}
             <div className="flex items-center gap-4 rounded-md border border-violet-200/80 bg-white p-5 shadow-sm">
               <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-md bg-violet-100">
-                <Trophy className="h-6 w-6 text-[#6d2fd6]" />
+                <Trophy className="h-6 w-6" style={{ color: BRAND_PURPLE }} />
               </div>
               <div className="min-w-0 flex-1">
                 <p className="text-base font-bold text-violet-950">Buổi phỏng vấn đã hoàn thành</p>
@@ -1366,27 +1375,33 @@ export function SessionDetail() {
             {sessionData?.isReviewed ? (
               <div className="rounded-md border border-violet-200/80 bg-white p-8 text-center shadow-sm sm:p-10">
                 <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-md bg-violet-100">
-                  <CheckCircle className="h-8 w-8 text-[#6d2fd6]" />
+                  <CheckCircle className="h-8 w-8" style={{ color: BRAND_PURPLE }} />
                 </div>
                 <h3 className="mb-2 text-xl font-bold text-violet-950">Cảm ơn bạn đã đóng góp</h3>
                 <p className="mx-auto mb-6 max-w-md text-sm leading-relaxed text-violet-600">
                   Đánh giá của bạn đã được gửi thành công. Những chia sẻ này giúp cộng đồng ngày càng phát triển hơn.
                 </p>
                 <div className="mx-auto inline-flex items-center gap-2 rounded-md border border-violet-200/80 bg-violet-50/60 px-4 py-2.5">
-                  <Star className="h-4 w-4 text-[#93f72b]" fill="currentColor" />
+                  <Star className="h-4 w-4" style={{ color: BRAND_LIME }} fill="currentColor" />
                   <span className="text-xs font-bold uppercase tracking-wide text-violet-700">Đã hoàn thành đánh giá</span>
                 </div>
               </div>
             ) : (
               <div className="rounded-md border border-violet-200/80 bg-white p-8 shadow-sm sm:p-10">
                 <div className="flex flex-col items-center text-center">
-                  <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-md border border-lime-200/80 bg-lime-50/80">
-                    <Star className="h-7 w-7 text-[#93f72b]" fill="currentColor" />
+                  <div
+                    className="mb-5 flex h-14 w-14 items-center justify-center rounded-md border"
+                    style={{ borderColor: BRAND_LIME_BORDER, backgroundColor: BRAND_LIME_SOFT }}
+                  >
+                    <Star className="h-7 w-7" style={{ color: BRAND_LIME }} fill="currentColor" />
                   </div>
                   <h3 className="mb-2 text-xl font-bold text-violet-950">Bạn thấy buổi phỏng vấn thế nào?</h3>
                   <p className="mb-8 max-w-md text-sm leading-relaxed text-violet-600">
                     Chia sẻ trải nghiệm giúp{" "}
-                    <span className="font-bold text-[#6d2fd6]">{sessionData.mentorName}</span> và cộng đồng.
+                    <span className="font-bold" style={{ color: BRAND_PURPLE }}>
+                      {sessionData.mentorName}
+                    </span>{" "}
+                    và cộng đồng.
                   </p>
 
                   <div className="mb-8 flex gap-2 sm:gap-3">
@@ -1400,7 +1415,15 @@ export function SessionDetail() {
                         className="rounded-md p-1 transition hover:scale-105 active:scale-95"
                         aria-label={`Đánh giá ${i} sao`}
                       >
-                        <Star className="h-10 w-10 text-violet-200 transition-colors hover:text-[#93f72b] sm:h-11 sm:w-11" />
+                        <Star
+                          className="h-10 w-10 text-violet-200 transition-colors sm:h-11 sm:w-11"
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.color = BRAND_LIME;
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.color = "";
+                          }}
+                        />
                       </button>
                     ))}
                   </div>
@@ -1408,7 +1431,8 @@ export function SessionDetail() {
                   <button
                     type="button"
                     onClick={() => navigate(`/review/${sessionData.sessionId}`)}
-                    className="flex w-full items-center justify-center gap-2 rounded-md bg-[#6d2fd6] py-3.5 text-sm font-bold text-white shadow-sm transition hover:brightness-110"
+                    className="flex w-full items-center justify-center gap-2 rounded-md py-3.5 text-sm font-bold text-white shadow-sm transition hover:brightness-110"
+                    style={{ backgroundColor: BRAND_PURPLE }}
                   >
                     Viết đánh giá ngay <CaretRight className="h-4 w-4" />
                   </button>
@@ -1419,7 +1443,9 @@ export function SessionDetail() {
 
             {/* Mentor feedback */}
             <div className="rounded-md border border-violet-200/80 bg-white p-6 shadow-sm sm:p-8">
-              <p className="mb-1 text-[10px] font-bold uppercase tracking-wider text-[#6d2fd6]">Kết quả đánh giá</p>
+              <p className="mb-1 text-[10px] font-bold uppercase tracking-wider" style={{ color: BRAND_PURPLE }}>
+                Kết quả đánh giá
+              </p>
               <h2 className="mb-6 text-lg font-bold text-violet-950">Nhận xét từ chuyên gia</h2>
               <div className="space-y-1">
                 {(() => {
@@ -1450,12 +1476,15 @@ export function SessionDetail() {
                           className="border-b border-violet-100 py-4 first:pt-0 last:border-0 last:pb-0"
                         >
                           <div className="flex items-baseline gap-3">
-                            <div className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-[#6d2fd6]" />
+                            <div
+                              className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full"
+                              style={{ backgroundColor: BRAND_PURPLE }}
+                            />
                             <div className="min-w-0 flex-1">
-                              <p className="mb-1 text-[10px] font-bold uppercase tracking-wide text-violet-500">
+                              <p className="mb-1 text-[10px] font-bold uppercase tracking-wide text-neutral-600">
                                 {title}
                               </p>
-                              <p className="text-sm font-semibold leading-relaxed text-violet-900">{content}</p>
+                              <p className="text-sm font-semibold leading-relaxed text-neutral-900">{content}</p>
                             </div>
                           </div>
                         </div>
@@ -1464,7 +1493,7 @@ export function SessionDetail() {
 
                     return (
                       <div key={idx} className="py-3 first:pt-0 last:pb-0">
-                        <p className="text-sm leading-relaxed text-violet-800">{cleanLine}</p>
+                        <p className="text-sm leading-relaxed text-neutral-900">{cleanLine}</p>
                       </div>
                     );
                   });
@@ -1479,8 +1508,9 @@ export function SessionDetail() {
                 {[
                   {
                     icon: Sparkles,
-                    color: "#6d2fd6",
-                    bg: "rgba(109, 47, 214, 0.08)",
+                    iconColor: BRAND_PURPLE,
+                    labelColor: BRAND_PURPLE,
+                    bg: BRAND_PURPLE_SOFT_LIGHT,
                     title: "Luyện tập với AI Interview",
                     desc: "Áp dụng feedback vào mock interview AI",
                     action: () => navigate("/interview"),
@@ -1488,21 +1518,23 @@ export function SessionDetail() {
                   },
                   {
                     icon: FileText,
-                    color: "#6d2fd6",
-                    bg: "rgba(109, 47, 214, 0.06)",
+                    iconColor: BRAND_PURPLE,
+                    labelColor: BRAND_PURPLE,
+                    bg: BRAND_PURPLE_SOFT,
                     title: "Tối ưu lại CV",
                     desc: "Phân tích CV với keyword mentor vừa đề xuất",
                     action: () => navigate("/cv-analysis"),
                     label: "Phân tích →",
                   },
                   {
-                    icon: Calendar,
-                    color: "#4a7a00",
-                    bg: "rgba(180, 240, 0, 0.14)",
-                    title: "Đặt lịch buổi tiếp theo",
-                    desc: "Tiếp tục luyện tập để chinh phục phỏng vấn",
-                    action: () => navigate("/mentors"),
-                    label: "Tìm mentor →",
+                    icon: CheckCircle,
+                    iconColor: BRAND_LIME,
+                    labelColor: BRAND_PURPLE,
+                    bg: BRAND_LIME_SOFT,
+                    title: "Khóa học gợi ý",
+                    desc: "Bổ sung kỹ năng sau buổi phỏng vấn với mentor",
+                    action: () => navigate("/courses"),
+                    label: "Khóa học →",
                   },
                 ].map((item) => (
                   <div
@@ -1519,13 +1551,13 @@ export function SessionDetail() {
                       className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md"
                       style={{ background: item.bg }}
                     >
-                      <item.icon className="h-5 w-5" style={{ color: item.color }} />
+                      <item.icon className="h-5 w-5" style={{ color: item.iconColor }} />
                     </div>
                     <div className="min-w-0 flex-1">
                       <p className="text-sm font-semibold text-violet-950">{item.title}</p>
-                      <p className="text-xs text-violet-600">{item.desc}</p>
+                      <p className="text-xs text-neutral-900">{item.desc}</p>
                     </div>
-                    <span className="shrink-0 text-xs font-bold" style={{ color: item.color }}>
+                    <span className="shrink-0 text-xs font-bold" style={{ color: item.labelColor }}>
                       {item.label}
                     </span>
                   </div>
@@ -1572,21 +1604,24 @@ export function SessionDetail() {
               {sessionData.isReviewed ? (
                 <div>
                   <div className="mb-2 flex items-center gap-1.5">
-                    <div className="h-2 w-2 rounded-full bg-[#93f72b]" />
-                    <span className="text-xs font-semibold text-[#4a7a00]">Đã đánh giá mentor</span>
+                    <div className="h-2 w-2 rounded-full" style={{ backgroundColor: BRAND_LIME }} />
+                    <span className="text-xs font-semibold text-neutral-900">Đã đánh giá mentor</span>
                   </div>
                   <p className="text-xs text-violet-600">Cảm ơn bạn đã gửi nhận xét sau buổi phỏng vấn.</p>
                 </div>
               ) : (
                 <div>
                   <div className="mb-3 flex items-center gap-1.5">
-                    <div className="h-2 w-2 rounded-full bg-[#6d2fd6]" />
-                    <span className="text-xs font-semibold text-violet-800">Chờ đánh giá</span>
+                    <div className="h-2 w-2 rounded-full" style={{ backgroundColor: BRAND_PURPLE }} />
+                    <span className="text-xs font-semibold" style={{ color: BRAND_PURPLE_HOVER }}>
+                      Chờ đánh giá
+                    </span>
                   </div>
                   <button
                     type="button"
                     onClick={() => navigate(`/review/${sessionData.sessionId}`)}
-                    className="w-full rounded-md bg-[#6d2fd6] py-2.5 text-sm font-bold text-white transition hover:brightness-110"
+                    className="w-full rounded-md py-2.5 text-sm font-bold text-white transition hover:brightness-110"
+                    style={{ backgroundColor: BRAND_PURPLE }}
                   >
                     Đánh giá ngay
                   </button>
