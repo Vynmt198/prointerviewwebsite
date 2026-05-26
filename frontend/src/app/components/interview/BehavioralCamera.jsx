@@ -284,7 +284,7 @@ export function BehavioralCamera({
     height
   ) => {
     // Draw landmarks as small dots
-    ctx.fillStyle = "rgba(110, 53, 232, 0.5)";
+    ctx.fillStyle = "rgba(128, 55, 244, 0.5)";
     landmarks.forEach((landmark) => {
       const x = landmark.x * width;
       const y = landmark.y * height;
@@ -432,7 +432,7 @@ export function BehavioralCamera({
           height: "180px",
           background: "rgba(0,0,0,0.8)",
           border: cameraEnabled
-            ? "2px solid rgba(110, 53, 232,0.5)"
+            ? "2px solid rgba(128, 55, 244,0.5)"
             : "2px solid rgba(255,255,255,0.1)",
         }}
       >
@@ -491,9 +491,9 @@ export function BehavioralCamera({
                     onClick={startCamera}
                     className="mt-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all hover:brightness-110"
                     style={{
-                      background: "rgba(110, 53, 232,0.9)",
+                      background: "rgba(128, 55, 244,0.9)",
                       color: "#fff",
-                      boxShadow: "0 2px 8px rgba(110, 53, 232,0.3)",
+                      boxShadow: "0 2px 8px rgba(128, 55, 244,0.3)",
                     }}
                   >
                     Thử lại
@@ -520,7 +520,7 @@ export function BehavioralCamera({
           style={{
             background: cameraEnabled
               ? "rgba(239,68,68,0.8)"
-              : "rgba(110, 53, 232,0.8)",
+              : "rgba(128, 55, 244,0.8)",
             backdropFilter: "blur(8px)",
           }}
           title={cameraEnabled ? "Tắt camera" : "Bật camera"}
@@ -538,7 +538,7 @@ export function BehavioralCamera({
         <div className="mt-3 space-y-2">
           {/* Eye Contact */}
           <div className="flex items-center gap-2">
-            <Eye className="w-3.5 h-3.5 text-[#9B6DFF] flex-shrink-0" />
+            <Eye className="w-3.5 h-3.5 text-[#a66ff8] flex-shrink-0" />
             <div className="flex-1">
               <div className="flex items-center justify-between mb-0.5">
                 <span className="text-white/60 text-xs">Giao tiếp bằng mắt</span>
@@ -548,7 +548,7 @@ export function BehavioralCamera({
               </div>
               <div className="h-1 bg-white/10 rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-gradient-to-r from-[#6E35E8] to-[#9B6DFF] transition-all duration-500 rounded-full"
+                  className="h-full bg-gradient-to-r from-[#8037f4] to-[#a66ff8] transition-all duration-500 rounded-full"
                   style={{ width: `${metrics.eyeContact}%` }}
                 />
               </div>

@@ -42,12 +42,12 @@ export function VerifyEmail() {
     <div className="min-h-screen bg-[#fcfaff] text-gray-900 antialiased flex flex-col">
       <div
         className="relative z-10 flex h-20 flex-shrink-0 items-center justify-between overflow-visible border-b bg-white px-10"
-        style={{ borderColor: "rgba(110,53,232,0.1)" }}
+        style={{ borderColor: "rgba(128,55,244,0.1)" }}
       >
         <button onClick={() => navigate("/")} className="flex shrink-0 items-center gap-2.5 group">
           <BrandLogo size="auth" />
         </button>
-        <Link to="/login" className="text-sm font-semibold" style={{ color: "#6E35E8" }}>
+        <Link to="/login" className="text-sm font-semibold" style={{ color: "#8037f4" }}>
           Đăng nhập
         </Link>
       </div>
@@ -56,7 +56,7 @@ export function VerifyEmail() {
         <div className="max-w-md w-full bg-white rounded-3xl border border-gray-200 p-8 shadow-sm text-center">
           {status === "loading" && (
             <div className="flex flex-col items-center py-8">
-              <Loader2 className="h-12 w-12 text-[#6E35E8] animate-spin mb-4" />
+              <Loader2 className="h-12 w-12 text-[#8037f4] animate-spin mb-4" />
               <h1 className="text-2xl font-black mb-2">Đang xác thực...</h1>
               <p className="text-gray-500">Vui lòng đợi trong giây lát khi chúng tôi xác nhận email của bạn.</p>
             </div>
@@ -74,7 +74,7 @@ export function VerifyEmail() {
               <Link
                 to="/login"
                 className="w-full inline-flex items-center justify-center rounded-2xl px-6 py-4 text-base font-black text-white transition-all active:scale-[0.98]"
-                style={{ background: "linear-gradient(135deg, #6E35E8, #9B6DFF)" }}
+                style={{ background: "#8037f4" }}
               >
                 Đăng nhập ngay
               </Link>
@@ -94,7 +94,7 @@ export function VerifyEmail() {
                 <Link
                   to="/forgot-password"
                   className="w-full inline-flex items-center justify-center rounded-2xl px-6 py-4 text-base font-black text-white transition-all active:scale-[0.98]"
-                  style={{ background: "linear-gradient(135deg, #6E35E8, #9B6DFF)" }}
+                  style={{ background: "#8037f4" }}
                 >
                   Gửi lại yêu cầu
                 </Link>

@@ -130,7 +130,7 @@ export function LoginSessionsSection({ SectionCard }) {
               <div className="flex min-w-0 items-start gap-4">
                 <div
                   className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${
-                    suspicious ? "bg-amber-100 text-amber-800" : "bg-[#c4ff47]/12 text-[#4d6600]"
+                    suspicious ? "bg-amber-100 text-amber-800" : "bg-[#93f72b]/12 text-[#4d6600]"
                   }`}
                 >
                   {suspicious ? <ShieldAlert size={20} strokeWidth={2} /> : <Monitor size={20} strokeWidth={2} />}

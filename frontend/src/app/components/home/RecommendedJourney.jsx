@@ -17,9 +17,9 @@ const JOURNEY_STEPS = [
     title: "Phỏng vấn AI",
     desc: "Luyện tập với AI và nhận phản hồi chi tiết",
     route: "/interview",
-    color: "#6E35E8",
-    bgColor: "rgba(110, 53, 232,0.12)",
-    borderColor: "rgba(110, 53, 232,0.35)",
+    color: "#8037f4",
+    bgColor: "rgba(128, 55, 244,0.12)",
+    borderColor: "rgba(128, 55, 244,0.35)",
   },
   {
     number: "02",
@@ -54,15 +54,15 @@ export function RecommendedJourney({
       <div
         className="p-5 rounded-2xl"
         style={{
-          background: "rgba(110, 53, 232,0.08)",
-          border: "1px solid rgba(110, 53, 232,0.2)",
+          background: "rgba(128, 55, 244,0.08)",
+          border: "1px solid rgba(128, 55, 244,0.2)",
         }}
       >
         <div className="flex items-start gap-3 mb-4">
           <div
             className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
             style={{
-              background: "linear-gradient(135deg, #6E35E8, #9B6DFF)",
+              background: "#8037f4",
             }}
           >
             <Lightning className="w-5 h-5 text-white" />
@@ -165,8 +165,8 @@ export function RecommendedJourney({
     <div
       className="p-8 rounded-3xl"
       style={{
-        background: "linear-gradient(135deg, rgba(110, 53, 232,0.12) 0%, rgba(180,240,0,0.08) 100%)",
-        border: "1px solid rgba(110, 53, 232,0.25)",
+        background: "linear-gradient(135deg, rgba(128, 55, 244,0.12) 0%, rgba(180,240,0,0.08) 100%)",
+        border: "1px solid rgba(128, 55, 244,0.25)",
       }}
     >
       {/* Header */}
@@ -174,8 +174,8 @@ export function RecommendedJourney({
         <div
           className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold mb-4"
           style={{
-            background: "rgba(110, 53, 232,0.2)",
-            border: "1px solid rgba(110, 53, 232,0.35)",
+            background: "rgba(128, 55, 244,0.2)",
+            border: "1px solid rgba(128, 55, 244,0.35)",
             color: "#B89DFF",
           }}
         >
@@ -207,7 +207,7 @@ export function RecommendedJourney({
           className="hidden md:block absolute top-12 left-[16.66%] right-[16.66%] h-0.5"
           style={{
             background:
-              "linear-gradient(90deg, rgba(110, 53, 232,0.3), rgba(180,240,0,0.3), rgba(255,184,0,0.3))",
+              "linear-gradient(90deg, rgba(128, 55, 244,0.3), rgba(180,240,0,0.3), rgba(255,184,0,0.3))",
           }}
         />
 
@@ -232,7 +232,7 @@ export function RecommendedJourney({
                     className="w-24 h-24 rounded-2xl flex items-center justify-center relative transition-all group-hover:scale-105"
                     style={{
                       background: isCompleted
-                        ? "linear-gradient(135deg, #c4ff47, #8fbc24)"
+                        ? "#93f72b"
                         : isActive
                         ? `linear-gradient(135deg, ${step.color}DD, ${step.color})`
                         : step.bgColor,

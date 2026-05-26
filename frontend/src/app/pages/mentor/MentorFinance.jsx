@@ -323,9 +323,9 @@ export function MentorFinance() {
         {/* Main Wallet Cards */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 mb-16">
            {/* Primary Balance */}
-           <div className="lg:col-span-7 glass-card p-12 bg-gradient-to-br from-[#6E35E8]/20 to-transparent overflow-hidden group">
+           <div className="lg:col-span-7 glass-card p-12 bg-gradient-to-br from-[#8037f4]/20 to-transparent overflow-hidden group">
               <div className="absolute top-0 right-0 p-12 rotate-12 opacity-10 group-hover:rotate-0 transition-all duration-700">
-                 <Wallet size={160} className="text-[#6E35E8]" />
+                 <Wallet size={160} className="text-[#8037f4]" />
               </div>
               <div className="relative z-10">
                  <p className="text-[10px] font-black text-violet-700 uppercase tracking-[0.4em] mb-6">Số dư khả dụng</p>

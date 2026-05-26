@@ -50,7 +50,7 @@ export default function App() {
           className="pointer-events-none absolute inset-0"
           style={{
             backgroundImage:
-              "linear-gradient(rgba(110, 53, 232, 0.045) 1px, transparent 1px), linear-gradient(90deg, rgba(110, 53, 232, 0.045) 1px, transparent 1px)",
+              "linear-gradient(rgba(128, 55, 244, 0.045) 1px, transparent 1px), linear-gradient(90deg, rgba(128, 55, 244, 0.045) 1px, transparent 1px)",
             backgroundSize: "64px 64px",
           }}
           aria-hidden
@@ -62,7 +62,7 @@ export default function App() {
             className="h-16 w-auto object-contain sm:h-20"
           />
           <div
-            className="h-7 w-7 animate-spin rounded-full border-2 border-[#6E35E8]/25 border-t-[#6E35E8]"
+            className="h-7 w-7 animate-spin rounded-full border-2 border-[#8037f4]/25 border-t-[#8037f4]"
             role="status"
             aria-label="Đang tải"
           />

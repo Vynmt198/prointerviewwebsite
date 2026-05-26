@@ -1,9 +1,16 @@
-import { defineConfig } from 'vite'
+import { defineConfig, loadEnv } from 'vite'
 import path from 'path'
 import tailwindcss from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react'
 
-export default defineConfig(({ mode }) => ({
+/** macOS AirPlay thường chiếm :5000 — backend dev mặc định :5001 (xem backend/.env PORT). */
+const DEFAULT_DEV_BACKEND = 'http://localhost:5001'
+
+export default defineConfig(({ mode }) => {
+  const env = loadEnv(mode, process.cwd(), '')
+  const devBackend = (env.VITE_DEV_BACKEND_URL || DEFAULT_DEV_BACKEND).replace(/\/$/, '')
+
+  return {
   esbuild: {
     drop: mode === 'production' ? ['console', 'debugger'] : [],
   },
@@ -14,11 +21,11 @@ export default defineConfig(({ mode }) => ({
     },
     proxy: {
       '/api': {
-        target: 'http://localhost:5000',
+        target: devBackend,
         changeOrigin: true,
       },
       '/uploads': {
-        target: 'http://localhost:5000',
+        target: devBackend,
         changeOrigin: true,
       },
     },
@@ -52,4 +59,5 @@ export default defineConfig(({ mode }) => ({
   },
   // File types to support raw imports. Never add .css, .tsx, or .ts files to this.
   assetsInclude: ['**/*.svg', '**/*.csv'],
-}))
+  }
+})

@@ -362,7 +362,7 @@ export function MentorProfile() {
 
           {/* Sidebar đặt lịch */}
           <aside className="lg:sticky lg:top-6 lg:self-start">
-            <div className="glass-card overflow-hidden border-violet-200/60 p-5 shadow-[0_12px_40px_rgba(110,53,232,0.08)] sm:p-6">
+            <div className="glass-card overflow-hidden border-violet-200/60 p-5 shadow-[0_12px_40px_rgba(128,55,244,0.08)] sm:p-6">
               <div className="border-b border-violet-100 pb-5 text-center">
                 <p className="text-xs font-medium uppercase tracking-wider text-slate-500">
                   Chi phí mentor

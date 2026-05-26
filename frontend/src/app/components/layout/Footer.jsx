@@ -7,6 +7,7 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import { BrandLogo } from "../brand/BrandLogo";
+import { FOOTER_TAGLINE } from "../../constants/brandVoice";
 
 /* ── Social icon SVGs ── */
 function FacebookIcon({ className, style }) {
@@ -81,13 +82,13 @@ function FooterDark() {
       style={{
         background:
           "linear-gradient(180deg, #05040b 0%, #080614 48%, #0b0718 100%)",
-        borderTop: "1px solid rgba(110, 53, 232, 0.18)",
+        borderTop: "1px solid rgba(128, 55, 244, 0.18)",
         boxShadow: "0 -1px 0 rgba(0, 0, 0, 0.45)",
       }}
     >
       {/* Ánh violet rất nhẹ — không làm sáng cả khối */}
       <div
-        className="pointer-events-none absolute z-0 h-[min(72vw,520px)] w-[min(72vw,520px)] rounded-full bg-[#5F00F0]/14 blur-[100px] sm:h-[520px] sm:w-[520px] sm:blur-[110px]"
+        className="pointer-events-none absolute z-0 h-[min(72vw,520px)] w-[min(72vw,520px)] rounded-full bg-[#6d2fd6]/14 blur-[100px] sm:h-[520px] sm:w-[520px] sm:blur-[110px]"
         style={{ left: "-14%", top: "38%" }}
         aria-hidden
       />
@@ -101,14 +102,14 @@ function FooterDark() {
               <BrandLogo size="footer" />
             </div>
             <p className="text-white/65 text-sm leading-relaxed mb-6" style={{ maxWidth: 320 }}>
-              Nền tảng luyện phỏng vấn AI thông minh hàng đầu Việt Nam — giúp bạn tự tin chinh phục mọi cơ hội nghề nghiệp.
+              {FOOTER_TAGLINE}
             </p>
 
             <div className="mb-6">
               <p className="mb-2 text-xs font-bold uppercase tracking-[0.15em] text-white/40">Liên hệ</p>
               <a
                 href={`mailto:${CONTACT_EMAIL}`}
-                className="inline-flex max-w-[min(100%,320px)] items-start gap-2 break-all text-sm font-semibold text-[#B4F500] transition-colors hover:text-white"
+                className="inline-flex max-w-[min(100%,320px)] items-start gap-2 break-all text-sm font-semibold text-[#93f72b] transition-colors hover:text-white"
               >
                 <Mail className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
                 {CONTACT_EMAIL}
@@ -117,7 +118,7 @@ function FooterDark() {
 
             {/* Social links */}
             <div className="mb-6">
-              <p className="text-white/40 text-xs uppercase tracking-[0.15em] mb-4 font-bold">Kết nối với chúng tôi</p>
+              <p className="text-white/40 text-xs uppercase tracking-[0.15em] mb-4 font-bold">Kết nối với ProInterview</p>
               <div className="flex gap-3">
                 {SOCIAL_LINKS.map((s) => {
                   const Icon = s.icon;
@@ -133,7 +134,7 @@ function FooterDark() {
                       onMouseLeave={() => setHoveredSocial(null)}
                       className="w-11 h-11 rounded-xl flex items-center justify-center transition-all duration-300"
                       style={{
-                        background: isHovered ? s.color : "rgba(110, 53, 232, 0.08)",
+                        background: isHovered ? s.color : "rgba(128, 55, 244, 0.08)",
                         border: `1.5px solid ${isHovered ? s.color : "rgba(155, 109, 255, 0.2)"}`,
                         transform: isHovered ? "translateY(-4px)" : "none",
                         boxShadow: isHovered ? `0 8px 28px ${s.color}55` : "none",
@@ -150,11 +151,11 @@ function FooterDark() {
             <div
               className="inline-flex items-center gap-2.5 px-4 py-2.5 rounded-xl"
               style={{
-                background: "rgba(110, 53, 232, 0.12)",
+                background: "rgba(128, 55, 244, 0.12)",
                 border: "1px solid rgba(155, 109, 255, 0.28)",
               }}
             >
-              <ShieldCheck className="h-5 w-5 shrink-0 text-[#B4F500]" />
+              <ShieldCheck className="h-5 w-5 shrink-0 text-[#93f72b]" />
               <span className="text-white/70 text-xs font-semibold">Bảo mật SSL 256-bit</span>
             </div>
           </div>
@@ -177,7 +178,7 @@ function FooterDark() {
                     >
                       <ArrowRight
                         className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition-all -translate-x-2 group-hover:translate-x-0"
-                        style={{ color: "#B4F500" }}
+                        style={{ color: "#93f72b" }}
                       />
                       <span className="group-hover:translate-x-1 transition-transform duration-200">
                         {link.label}
@@ -195,7 +196,7 @@ function FooterDark() {
       <div
         className="relative z-[1]"
         style={{
-          borderTop: "1px solid rgba(110, 53, 232, 0.14)",
+          borderTop: "1px solid rgba(128, 55, 244, 0.14)",
           background: "linear-gradient(180deg, #05040c 0%, #080612 100%)",
         }}
       >
@@ -210,7 +211,7 @@ function FooterDark() {
             <span className="ml-1">🇻🇳</span>
           </div>
           <div className="flex items-center gap-2 text-white/35 text-xs">
-            <div className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#B4F500]" />
+            <div className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#93f72b]" />
             <span>24/7 Support Available</span>
           </div>
         </div>
@@ -229,7 +230,7 @@ function FooterLight() {
   return (
     <footer className="relative overflow-hidden border-t border-violet-200/50 bg-[#f3f0f9]">
       <div
-        className="pointer-events-none absolute z-0 h-[min(72vw,520px)] w-[min(72vw,520px)] rounded-full bg-[#6E35E8]/10 blur-[100px] sm:h-[520px] sm:w-[520px] sm:blur-[110px]"
+        className="pointer-events-none absolute z-0 h-[min(72vw,520px)] w-[min(72vw,520px)] rounded-full bg-[#8037f4]/10 blur-[100px] sm:h-[520px] sm:w-[520px] sm:blur-[110px]"
         style={{ left: "-14%", top: "38%" }}
         aria-hidden
       />
@@ -241,14 +242,14 @@ function FooterLight() {
               <BrandLogo size="footer" />
             </div>
             <p className="mb-6 max-w-[320px] text-sm leading-relaxed text-slate-600">
-              Nền tảng luyện phỏng vấn AI thông minh hàng đầu Việt Nam — giúp bạn tự tin chinh phục mọi cơ hội nghề nghiệp.
+              {FOOTER_TAGLINE}
             </p>
 
             <div className="mb-6">
               <p className="mb-2 text-xs font-bold uppercase tracking-[0.15em] text-slate-500">Liên hệ</p>
               <a
                 href={`mailto:${CONTACT_EMAIL}`}
-                className="inline-flex max-w-[min(100%,320px)] items-start gap-2 break-all text-sm font-semibold text-[#6E35E8] underline-offset-2 transition-colors hover:text-[#5F00F0] hover:underline"
+                className="inline-flex max-w-[min(100%,320px)] items-start gap-2 break-all text-sm font-semibold text-[#8037f4] underline-offset-2 transition-colors hover:text-[#6d2fd6] hover:underline"
               >
                 <Mail className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
                 {CONTACT_EMAIL}
@@ -257,7 +258,7 @@ function FooterLight() {
 
             <div className="mb-6">
               <p className="mb-4 text-xs font-bold uppercase tracking-[0.15em] text-slate-500">
-                Kết nối với chúng tôi
+                Kết nối với ProInterview
               </p>
               <div className="flex gap-3">
                 {SOCIAL_LINKS.map((s) => {
@@ -294,7 +295,7 @@ function FooterLight() {
             </div>
 
             <div className="inline-flex items-center gap-2.5 rounded-xl border border-violet-200/80 bg-white/90 px-4 py-2.5 shadow-sm">
-              <ShieldCheck className="h-5 w-5 shrink-0 text-[#6E35E8]" />
+              <ShieldCheck className="h-5 w-5 shrink-0 text-[#8037f4]" />
               <span className="text-xs font-semibold text-slate-700">Bảo mật SSL 256-bit</span>
             </div>
           </div>
@@ -313,11 +314,11 @@ function FooterLight() {
                     <button
                       type="button"
                       onClick={() => link.path !== "#" && navigate(link.path)}
-                      className="group flex items-center gap-2 text-left text-sm text-slate-600 transition-all duration-200 hover:text-[#6E35E8]"
+                      className="group flex items-center gap-2 text-left text-sm text-slate-600 transition-all duration-200 hover:text-[#8037f4]"
                     >
                       <ArrowRight
                         className="h-3.5 w-3.5 -translate-x-2 opacity-0 transition-all group-hover:translate-x-0 group-hover:opacity-100"
-                        style={{ color: "#B4F500" }}
+                        style={{ color: "#93f72b" }}
                       />
                       <span className="transition-transform duration-200 group-hover:translate-x-1">
                         {link.label}
@@ -343,7 +344,7 @@ function FooterLight() {
             <span className="ml-1">🇻🇳</span>
           </div>
           <div className="flex items-center gap-2 text-xs text-slate-500">
-            <div className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#B4F500]" />
+            <div className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#93f72b]" />
             <span>24/7 Support Available</span>
           </div>
         </div>

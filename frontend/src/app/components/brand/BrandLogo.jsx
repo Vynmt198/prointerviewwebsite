@@ -37,7 +37,7 @@ export function BrandLogo({ className = "", compact = false, size }) {
         {loadError ? (
           <div
             className={`${fallbackFrame} flex items-center justify-center shadow-2xl`}
-            style={{ background: "linear-gradient(135deg, #6E35E8, #9B6DFF)" }}
+            style={{ background: "#8037f4" }}
           >
             <Lightning className="w-6 h-6 text-white" />
           </div>

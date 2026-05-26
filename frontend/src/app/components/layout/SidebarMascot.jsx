@@ -10,7 +10,7 @@ export function SidebarMascot() {
       <img
         src="/mascot-sidebar.png?v=4"
         alt="Gấu Piupiu"
-        className="mascot-corner-bob h-24 w-24 shrink-0 object-contain drop-shadow-[0_6px_14px_rgba(110,53,232,0.18)]"
+        className="mascot-corner-bob h-24 w-24 shrink-0 object-contain drop-shadow-[0_6px_14px_rgba(128,55,244,0.18)]"
       />
       <style>{`
         .mascot-corner-bob {

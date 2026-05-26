@@ -13,15 +13,15 @@ const MENTOR_LIGHT_STYLES = `
            transition: transform 0.3s ease, border-color 0.25s ease, box-shadow 0.3s ease;
            position: relative;
            overflow: hidden;
-           box-shadow: 0 8px 18px rgba(110, 53, 232, 0.07);
+           box-shadow: 0 8px 18px rgba(128, 55, 244, 0.07);
         }
         .glass-card::before {
            content: none;
         }
         .glass-card:hover {
-           border-color: rgba(110, 53, 232, 0.35);
+           border-color: rgba(128, 55, 244, 0.35);
            transform: translateY(-2px);
-           box-shadow: 0 12px 28px rgba(110, 53, 232, 0.12);
+           box-shadow: 0 12px 28px rgba(128, 55, 244, 0.12);
         }
         .glow-halo {
            position: relative;
@@ -40,10 +40,7 @@ const MENTOR_LIGHT_STYLES = `
           letter-spacing: -0.045em;
           text-shadow: none;
         }
-        /* Chữ accent lime (primary-fixed) → tím trên các trang mentor */
-        .mentor-surface .text-primary-fixed {
-          color: #7a23e5;
-        }
+        /* primary-fixed = lime CTA (#93f72b); giữ màu token Tailwind */
 `;
 
 export function MentorPageShell({
@@ -66,11 +63,11 @@ export function MentorPageShell({
       {showAmbient && (
         <>
           <div
-            className="pointer-events-none fixed -top-[12%] -right-[6%] h-[min(560px,70vw)] w-[min(560px,70vw)] rounded-full bg-[#9B6DFF]/28 blur-[120px] -z-[1]"
+            className="pointer-events-none fixed -top-[12%] -right-[6%] h-[min(560px,70vw)] w-[min(560px,70vw)] rounded-full bg-[#a66ff8]/28 blur-[120px] -z-[1]"
             aria-hidden
           />
           <div
-            className="pointer-events-none fixed -bottom-[14%] -left-[8%] h-[min(520px,65vw)] w-[min(520px,65vw)] rounded-full bg-[#c4ff47]/14 blur-[110px] -z-[1]"
+            className="pointer-events-none fixed -bottom-[14%] -left-[8%] h-[min(520px,65vw)] w-[min(520px,65vw)] rounded-full bg-[#93f72b]/14 blur-[110px] -z-[1]"
             aria-hidden
           />
           <div

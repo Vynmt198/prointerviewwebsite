@@ -859,7 +859,7 @@ export function CVAnalysis() {
       : routeMode === "field"
         ? [
             "Đọc và xử lý file CV...",
-            "So khớp kỹ năng theo ngành...",
+            "Phân tích khớp kỹ năng theo ngành...",
             "Chấm điểm theo tiêu chí ngành...",
             "Tạo gợi ý cải thiện...",
           ]
@@ -905,14 +905,14 @@ export function CVAnalysis() {
         <div className="px-4 py-5 sm:px-5 sm:py-6">
           <div className="flex items-center justify-between mb-4">
             <p className="text-sm text-slate-600">Các phân tích đã lưu trên cloud — file gốc có thể tải lại</p>
-            <button onClick={loadHistory} className="flex items-center gap-1.5 text-xs font-medium text-[#6E35E8] hover:underline">
+            <button onClick={loadHistory} className="flex items-center gap-1.5 text-xs font-medium text-[#8037f4] hover:underline">
               <RefreshCw className="w-3.5 h-3.5" /> Làm mới
             </button>
           </div>
 
           {historyLoading && (
             <div className="flex items-center justify-center py-20">
-              <Loader2 className="w-8 h-8 text-[#6E35E8] animate-spin" />
+              <Loader2 className="w-8 h-8 text-[#8037f4] animate-spin" />
             </div>
           )}
 
@@ -927,7 +927,7 @@ export function CVAnalysis() {
               <CloudUpload className="mx-auto mb-4 h-14 w-14 text-slate-300" />
               <p className="font-medium text-slate-700">Chưa có phân tích nào được lưu</p>
               <p className="mt-1 text-sm text-slate-500">Tải lên CV và phân tích để kết quả được lưu tại đây</p>
-              <button onClick={() => setPageView("analysis")} className="mt-4 inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white" style={{ background: "#6E35E8" }}>
+              <button onClick={() => setPageView("analysis")} className="mt-4 inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white" style={{ background: "#8037f4" }}>
                 <Upload className="w-4 h-4" /> Phân tích ngay
               </button>
             </div>
@@ -937,15 +937,15 @@ export function CVAnalysis() {
             <div className="grid md:grid-cols-2 gap-4">
               {historyList.map(item => {
                 const score = item.matchScore ?? 0;
-                const scoreColor = score >= 75 ? "#4A7A00" : score >= 55 ? "#6E35E8" : "#CC5C00";
-                const scoreBg    = score >= 75 ? "rgba(180,240,0,0.12)" : score >= 55 ? "rgba(110, 53, 232,0.08)" : "rgba(255,140,66,0.1)";
+                const scoreColor = score >= 75 ? "#4A7A00" : score >= 55 ? "#8037f4" : "#CC5C00";
+                const scoreBg    = score >= 75 ? "rgba(180,240,0,0.12)" : score >= 55 ? "rgba(128, 55, 244,0.08)" : "rgba(255,140,66,0.1)";
                 return (
                   <div key={item.analysisId} className="card-premium p-5 hover:shadow-md transition-shadow">
                     {/* top row */}
                     <div className="flex items-start justify-between gap-3 mb-3">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1 flex-wrap">
-                          <span className="text-xs px-2 py-0.5 rounded-md font-medium" style={{ background: item.mode === "jd" ? "rgba(110, 53, 232,0.08)" : "rgba(255,214,0,0.15)", color: item.mode === "jd" ? "#6E35E8" : "#997F00" }}>
+                          <span className="text-xs px-2 py-0.5 rounded-md font-medium" style={{ background: item.mode === "jd" ? "rgba(128, 55, 244,0.08)" : "rgba(255,214,0,0.15)", color: item.mode === "jd" ? "#8037f4" : "#997F00" }}>
                             {item.mode === "jd" ? "CV+JD" : item.field ?? "Theo ngành"}
                           </span>
                           {item.company && <span className="truncate text-xs text-white/50">{item.company}</span>}
@@ -962,12 +962,12 @@ export function CVAnalysis() {
                     {/* files row */}
                     <div className="flex gap-2 mb-4 flex-wrap">
                       {item.hasCvFile && (
-                        <span className="flex items-center gap-1 text-xs px-2 py-1 rounded-lg" style={{ background: "rgba(110, 53, 232,0.07)", color: "#6E35E8" }}>
+                        <span className="flex items-center gap-1 text-xs px-2 py-1 rounded-lg" style={{ background: "rgba(128, 55, 244,0.07)", color: "#8037f4" }}>
                           <BadgeCheck className="w-3 h-3" /> {item.cvFileName}
                         </span>
                       )}
                       {item.hasJdFile && item.jdFileName && (
-                        <span className="flex items-center gap-1 text-xs px-2 py-1 rounded-lg" style={{ background: "rgba(110, 53, 232,0.07)", color: "#6E35E8" }}>
+                        <span className="flex items-center gap-1 text-xs px-2 py-1 rounded-lg" style={{ background: "rgba(128, 55, 244,0.07)", color: "#8037f4" }}>
                           <BadgeCheck className="w-3 h-3" /> {item.jdFileName}
                         </span>
                       )}
@@ -979,7 +979,7 @@ export function CVAnalysis() {
                         onClick={() => loadHistoryItem(item.analysisId)}
                         disabled={loadingAnalysisId === item.analysisId}
                         className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-semibold text-white transition-all hover:brightness-105"
-                        style={{ background: "linear-gradient(135deg,#6E35E8,#8B4DFF)" }}
+                        style={{ background: "#8037f4" }}
                       >
                         {loadingAnalysisId === item.analysisId
                           ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -989,7 +989,7 @@ export function CVAnalysis() {
                       <button
                         onClick={() => reAnalyze(item)}
                         title="Phân tích lại với file đã lưu"
-                        className="p-2 rounded-xl text-[#6E35E8] hover:bg-[#6E35E8]/10 transition-colors"
+                        className="p-2 rounded-xl text-[#8037f4] hover:bg-[#8037f4]/10 transition-colors"
                       >
                         <RefreshCw className="w-4 h-4" />
                       </button>
@@ -1047,7 +1047,7 @@ export function CVAnalysis() {
               {cvRemaining === 0 && !plans.starterPro && !plans.elitePro && (
                 <div className="mx-4 mb-0 mt-3 flex items-center justify-between gap-2 rounded-xl border border-amber-200/90 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-900 sm:mx-5">
                   <span>Đã hết lượt miễn phí — nâng cấp để tiếp tục</span>
-                  <button type="button" onClick={() => navigate("/pricing")} className="font-bold text-[#630ed4] hover:underline">
+                  <button type="button" onClick={() => navigate("/pricing")} className="font-bold text-[#6d2fd6] hover:underline">
                     Xem gói
                   </button>
                 </div>
@@ -1164,7 +1164,7 @@ export function CVAnalysis() {
                   disabled={!canAnalyze || !readyToAnalyze}
                   className={`flex w-full max-w-2xl mx-auto items-center justify-center gap-2 rounded-2xl py-4 text-base font-extrabold transition-all sm:py-4 sm:text-lg ${
                     canAnalyze && readyToAnalyze
-                      ? "bg-gradient-to-r from-[#c4ff47] via-[#d4ff00] to-[#c4ff47] text-violet-950 shadow-[0_8px_28px_rgba(196,255,71,0.35)] hover:brightness-105 active:scale-[0.99]"
+                      ? "bg-gradient-to-r from-[#93f72b] via-[#93f72b] to-[#93f72b] text-violet-950 shadow-[0_8px_28px_rgba(196,255,71,0.35)] hover:brightness-105 active:scale-[0.99]"
                       : "cursor-not-allowed bg-violet-200/60 text-violet-500"
                   }`}
                 >
@@ -1182,15 +1182,15 @@ export function CVAnalysis() {
           {/* ── LOADING ─────────────────────────────────────────────────── */}
           {step === "loading" && (
             <div className="flex flex-col items-center justify-center px-4 py-16 sm:px-6 sm:py-20 max-w-md mx-auto text-center">
-              <div className="w-20 h-20 rounded-2xl flex items-center justify-center mb-8 shadow-xl shadow-[#6E35E8]/30" style={{ background: "linear-gradient(135deg,#6E35E8,#9B6DFF)" }}>
+              <div className="w-20 h-20 rounded-2xl flex items-center justify-center mb-8 shadow-xl shadow-[#8037f4]/30" style={{ background: "#8037f4" }}>
                 <Loader2 className="w-10 h-10 text-white animate-spin" />
               </div>
               <h2 className="mb-3 text-xl font-semibold text-slate-900">Đang xử lý...</h2>
               <p className="mb-8 text-sm text-slate-600">Hệ thống đang đọc file PDF và phân tích — vui lòng đợi.</p>
               <div className="mb-3 h-2.5 w-full overflow-hidden rounded-full bg-slate-200">
-                <div className="h-full rounded-full transition-all duration-700" style={{ width: `${progress}%`, background: "linear-gradient(90deg,#6E35E8,#9B6DFF)" }} />
+                <div className="h-full rounded-full transition-all duration-700" style={{ width: `${progress}%`, background: "#8037f4" }} />
               </div>
-              <p className="text-[#6E35E8] text-sm font-medium mb-6">{Math.round(progress)}%</p>
+              <p className="text-[#8037f4] text-sm font-medium mb-6">{Math.round(progress)}%</p>
               <div className="space-y-2 text-left w-full">
                 {loadingSteps.map((t, i) => (
                   <div
@@ -1199,7 +1199,7 @@ export function CVAnalysis() {
                       loadingStage > i ? "text-slate-800" : loadingStage === i ? "text-slate-700" : "text-slate-400"
                     }`}
                   >
-                    {loadingStage > i ? <Check className="w-4 h-4 text-emerald-600 flex-shrink-0" /> : <Loader2 className={`w-4 h-4 flex-shrink-0 text-[#6E35E8] ${loadingStage === i ? "animate-spin" : "opacity-40"}`} />}
+                    {loadingStage > i ? <Check className="w-4 h-4 text-emerald-600 flex-shrink-0" /> : <Loader2 className={`w-4 h-4 flex-shrink-0 text-[#8037f4] ${loadingStage === i ? "animate-spin" : "opacity-40"}`} />}
                     <span>{t}</span>
                   </div>
                 ))}

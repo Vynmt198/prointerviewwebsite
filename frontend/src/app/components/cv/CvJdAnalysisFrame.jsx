@@ -15,10 +15,10 @@ export const CV_JD_CARD_FIELD_CLASS =
   "w-full overflow-visible rounded-[1.75rem] border border-violet-200/80 bg-white shadow-[0_16px_40px_rgba(99,14,212,0.1)]";
 
 const JD_SUBTITLE =
-  "Tải CV và Job Description — so khớp từ khóa, chấm điểm và gợi ý chỉnh sửa theo đúng vị trí tuyển dụng.";
+  "Tải CV và Job Description, phân tích khớp từ khóa, chấm điểm và gợi ý chỉnh sửa theo đúng vị trí tuyển dụng.";
 
 const FIELD_SUBTITLE =
-  "Tải CV, chọn nhóm ngành nghề — AI đánh giá cấu trúc, nội dung và gợi ý cải thiện theo chuẩn ngành.";
+  "Tải CV, chọn nhóm ngành nghề. AI đánh giá cấu trúc, nội dung và gợi ý cải thiện theo chuẩn ngành.";
 
 const FIELD_SUBTITLE_CLASS =
   "mt-2 max-w-2xl text-sm font-medium leading-relaxed text-violet-800/90 sm:text-[0.9375rem]";
@@ -30,7 +30,7 @@ export function cvAnalysisPageHeader(mode) {
       badge: "Phân tích theo ngành",
       title: (
         <>
-          Phân tích CV <span className="text-[#630ed4]">theo ngành</span>
+          Phân tích CV <span className="text-[#6d2fd6]">theo ngành</span>
         </>
       ),
       subtitle: FIELD_SUBTITLE,
@@ -41,7 +41,7 @@ export function cvAnalysisPageHeader(mode) {
     badge: "Phân tích CV + JD",
     title: (
       <>
-        Phân tích CV <span className="text-[#630ed4]">với JD</span>
+        Phân tích CV <span className="text-[#6d2fd6]">với JD</span>
       </>
     ),
     subtitle: JD_SUBTITLE,
@@ -62,7 +62,7 @@ export function CvJdAnalysisPage({
   badge = "Phân tích CV + JD",
   title = (
     <>
-      Phân tích CV <span className="text-[#630ed4]">với JD</span>
+      Phân tích CV <span className="text-[#6d2fd6]">với JD</span>
     </>
   ),
   subtitle = JD_SUBTITLE,

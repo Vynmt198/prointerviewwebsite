@@ -100,7 +100,7 @@ export function CVAnalysisResult() {
     <CvJdAnalysisPage showTabs={false} showHeader={false}>
       {loading && (
         <div className="flex items-center justify-center py-24">
-          <Loader2 className="h-8 w-8 animate-spin text-[#6E35E8]" />
+          <Loader2 className="h-8 w-8 animate-spin text-[#8037f4]" />
         </div>
       )}
 
@@ -110,7 +110,7 @@ export function CVAnalysisResult() {
           <button
             type="button"
             onClick={() => navigate(analysisPath)}
-            className="mt-4 inline-flex items-center gap-2 rounded-xl bg-[#6E35E8] px-5 py-2.5 text-sm font-semibold text-white"
+            className="mt-4 inline-flex items-center gap-2 rounded-xl bg-[#8037f4] px-5 py-2.5 text-sm font-semibold text-white"
           >
             Quay lại phân tích
           </button>

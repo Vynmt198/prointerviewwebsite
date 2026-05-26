@@ -130,8 +130,8 @@ export function MentorPeerReview() {
             {/* Global Stats Bar */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-5 mb-12">
                {[
-                  { label: "Cần đánh giá", value: pendingCount, icon: Clock, color: "#6E35E8" },
-                  { label: "Đã hoàn thành", value: reviewedCount, icon: CheckCircle2, color: "#c4ff47" },
+                  { label: "Cần đánh giá", value: pendingCount, icon: Clock, color: "#8037f4" },
+                  { label: "Đã hoàn thành", value: reviewedCount, icon: CheckCircle2, color: "#93f72b" },
                   { label: "Review điểm cao", value: highScoreCount, icon: TrendingUp, color: "#secondary" },
                   { label: "Rating trung bình", value: avgRating, icon: Star, color: "#f59e0b" }
                ].map((stat, i) => (

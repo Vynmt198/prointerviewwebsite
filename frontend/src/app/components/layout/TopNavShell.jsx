@@ -11,7 +11,7 @@ export function TopNavShell({ variant = "light", scrolled = true, children }) {
         WebkitBackdropFilter: "blur(20px)",
         border: "1px solid rgba(148, 120, 255, 0.28)",
         borderRadius: "40px 10px 40px 10px",
-        boxShadow: "0 4px 28px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(110, 53, 232, 0.15) inset",
+        boxShadow: "0 4px 28px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(128, 55, 244, 0.15) inset",
       }
     : {
         background: "rgba(255, 255, 255, 0.94)",
@@ -20,7 +20,7 @@ export function TopNavShell({ variant = "light", scrolled = true, children }) {
         border: "2px solid rgba(186, 165, 255, 0.55)",
         borderRadius: "40px 10px 40px 10px",
         boxShadow:
-          "0 0 0 1px rgba(255,255,255,0.9) inset, 0 4px 28px rgba(110, 53, 232, 0.12), 0 2px 10px rgba(0,0,0,0.04)",
+          "0 0 0 1px rgba(255,255,255,0.9) inset, 0 4px 28px rgba(128, 55, 244, 0.12), 0 2px 10px rgba(0,0,0,0.04)",
       };
 
   return (

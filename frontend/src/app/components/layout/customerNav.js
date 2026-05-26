@@ -9,8 +9,8 @@ export const HOME_LANDING_ANCHORS = [
 export const CUSTOMER_NAV_ITEMS = [
   { title: "Phân tích CV", url: "/cv-analysis" },
   { title: "Phỏng vấn AI", url: "/interview" },
-  { title: "Khóa học", url: "/courses" },
   { title: "Tìm Mentor", url: "/mentors" },
+  { title: "Khóa học", url: "/courses" },
   { title: "Bảng giá", url: "/pricing" },
 ];
 

@@ -139,7 +139,7 @@ export function AdminSidebar() {
               tooltip="ProInterview — Quản trị"
               onClick={() => navigate("/admin")}
               badge={
-                <span className="shrink-0 rounded-md bg-[#B4F500] px-1.5 py-0.5 text-[7px] font-bold tracking-wide text-[#2D1B69]">
+                <span className="shrink-0 rounded-md bg-[#93f72b] px-1.5 py-0.5 text-[7px] font-bold tracking-wide text-[#2D1B69]">
                   ADMIN
                 </span>
               }
@@ -189,9 +189,9 @@ export function AdminSidebar() {
                               style={
                                 active
                                   ? {
-                                      background: "linear-gradient(135deg, #6E35E8 0%, #8B4DFF 100%)",
+                                      background: "#8037f4",
                                       color: "#fff",
-                                      boxShadow: "0 4px 12px rgba(110,53,232,0.35)",
+                                      boxShadow: "0 4px 12px rgba(128,55,244,0.35)",
                                     }
                                   : undefined
                               }
@@ -208,7 +208,7 @@ export function AdminSidebar() {
                               {active && (
                                 <span
                                   className="ml-auto size-1.5 shrink-0 rounded-full group-data-[collapsible=icon]:hidden"
-                                  style={{ background: "#c4ff47" }}
+                                  style={{ background: "#93f72b" }}
                                 />
                               )}
                             </SidebarMenuButton>
@@ -253,9 +253,9 @@ export function AdminSidebar() {
                       style={
                         active
                           ? {
-                              background: "linear-gradient(135deg, #6E35E8 0%, #8B4DFF 100%)",
+                              background: "#8037f4",
                               color: "#fff",
-                              boxShadow: "0 4px 12px rgba(110,53,232,0.35)",
+                              boxShadow: "0 4px 12px rgba(128,55,244,0.35)",
                             }
                           : undefined
                       }
@@ -301,9 +301,9 @@ export function AdminSidebar() {
                   <div
                     className="flex size-7 shrink-0 items-center justify-center rounded-full font-bold text-white"
                     style={{
-                      background: "linear-gradient(135deg, #6E35E8 0%, #8B4DFF 100%)",
+                      background: "#8037f4",
                       fontSize: "0.65rem",
-                      boxShadow: "0 2px 8px rgba(110,53,232,0.4)",
+                      boxShadow: "0 2px 8px rgba(128,55,244,0.4)",
                     }}
                   >
                     {initials}

@@ -35,7 +35,7 @@ const PLANS = {
     monthlyPrice: 79000,
     yearlyPrice: 63000,
     badge: "PHỔ BIẾN",
-    accentColor: "#6E35E8",
+    accentColor: "#8037f4",
     features: ["10 buổi AI phỏng vấn/tháng", "AI nhận dạng giọng nói", "20 lần phân tích CV/JD/tháng", "Phản hồi chi tiết từng câu", "Xuất kết quả PDF"],
   },
   elitePro: {
@@ -44,7 +44,7 @@ const PLANS = {
     monthlyPrice: 99000,
     yearlyPrice: 79000,
     badge: "TỐT NHẤT",
-    accentColor: "#c4ff47",
+    accentColor: "#93f72b",
     features: ["AI phỏng vấn không giới hạn", "AI nhận dạng giọng nói — Turbo 2×", "CV/JD phân tích không giới hạn", "Phân tích hành vi: Giao tiếp mắt, Tư thế", "Phân tích giọng nói: Tốc độ, Từ đệm", "Mentor 1:1 ưu tiên"],
   },
 };
@@ -146,7 +146,7 @@ function StepBar({ current, steps = STEPS_BOOKING }) {
               <div
                 className={`flex h-9 w-9 items-center justify-center rounded-full text-sm font-bold transition-all ${
                   done || active
-                    ? "bg-[#6E35E8] text-white shadow-md shadow-violet-500/25"
+                    ? "bg-[#8037f4] text-white shadow-md shadow-violet-500/25"
                     : "border border-slate-200 bg-white text-slate-400"
                 }`}
               >
@@ -154,7 +154,7 @@ function StepBar({ current, steps = STEPS_BOOKING }) {
               </div>
               <span
                 className={`text-[11px] font-semibold uppercase tracking-wide ${
-                  done || active ? "text-[#6E35E8]" : "text-slate-400"
+                  done || active ? "text-[#8037f4]" : "text-slate-400"
                 }`}
               >
                 {label}
@@ -163,7 +163,7 @@ function StepBar({ current, steps = STEPS_BOOKING }) {
             {i < steps.length - 1 && (
               <div
                 className={`mx-4 mb-6 h-0.5 w-10 rounded-full md:w-16 ${
-                  i < current ? "bg-[#6E35E8]" : "bg-slate-200"
+                  i < current ? "bg-[#8037f4]" : "bg-slate-200"
                 }`}
               />
             )}
@@ -196,7 +196,7 @@ function CheckoutPayPanel({ mode, fmt, rebookCreditVnd, bookingTotalEstimate, bo
   if (mode === PAY_MODE.REBOOK_LOADING) {
     return (
       <div className="mb-6 flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-600">
-        <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-slate-200 border-t-[#6E35E8]" />
+        <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-slate-200 border-t-[#8037f4]" />
         Đang kiểm tra credit…
       </div>
     );
@@ -220,7 +220,7 @@ function CheckoutPayPanel({ mode, fmt, rebookCreditVnd, bookingTotalEstimate, bo
           <button
             type="button"
             onClick={() => navigate(`/mentors?rebookFrom=${encodeURIComponent(rebookFrom)}`)}
-            className="rounded-lg bg-[#6E35E8] px-3 py-2 text-[10px] font-bold uppercase text-white hover:bg-[#5F00F0]"
+            className="rounded-lg bg-[#8037f4] px-3 py-2 text-[10px] font-bold uppercase text-white hover:bg-[#6d2fd6]"
           >
             Mentor khác
           </button>
@@ -246,7 +246,7 @@ function CheckoutPayPanel({ mode, fmt, rebookCreditVnd, bookingTotalEstimate, bo
           <button
             type="button"
             onClick={() => navigate(`/mentors?rebookFrom=${encodeURIComponent(rebookFrom)}`)}
-            className="rounded-lg bg-[#6E35E8] px-3 py-2 text-[10px] font-black uppercase text-white"
+            className="rounded-lg bg-[#8037f4] px-3 py-2 text-[10px] font-black uppercase text-white"
           >
             Mentor khác
           </button>
@@ -281,7 +281,7 @@ function OrderLineItem({ isBooking, isCourse, bookingMentor, courseInfo, plan, b
             <p className={`mt-1 ${labelMuted}`}>Giảng viên: {courseInfo.mentorId.userId.name}</p>
           )}
         </div>
-        <p className="shrink-0 text-right text-lg font-bold text-[#6E35E8]">{fmt(baseTotal)}</p>
+        <p className="shrink-0 text-right text-lg font-bold text-[#8037f4]">{fmt(baseTotal)}</p>
       </div>
     );
   }
@@ -306,23 +306,23 @@ function OrderLineItem({ isBooking, isCourse, bookingMentor, courseInfo, plan, b
             <div className={`mt-2 flex flex-wrap gap-3 ${textMuted} text-xs`}>
               {bookingDate && (
                 <span className="inline-flex items-center gap-1">
-                  <Calendar className="h-3.5 w-3.5 text-[#6E35E8]" />
+                  <Calendar className="h-3.5 w-3.5 text-[#8037f4]" />
                   {bookingDate}
                 </span>
               )}
               {bookingTime && (
                 <span className="inline-flex items-center gap-1">
-                  <Clock className="h-3.5 w-3.5 text-[#6E35E8]" />
+                  <Clock className="h-3.5 w-3.5 text-[#8037f4]" />
                   {bookingTime}
                 </span>
               )}
               <span className="inline-flex items-center gap-1">
-                <Video className="h-3.5 w-3.5 text-[#6E35E8]" />
+                <Video className="h-3.5 w-3.5 text-[#8037f4]" />
                 Jitsi trên ProInterview · 60 phút
               </span>
             </div>
           </div>
-          <p className="shrink-0 text-lg font-bold text-[#6E35E8]">{fmt(baseTotal)}</p>
+          <p className="shrink-0 text-lg font-bold text-[#8037f4]">{fmt(baseTotal)}</p>
         </div>
       </div>
     );
@@ -331,13 +331,13 @@ function OrderLineItem({ isBooking, isCourse, bookingMentor, courseInfo, plan, b
     <div className={`${checkoutCard} p-4 sm:p-5`}>
       <div className="flex items-start justify-between gap-4">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-wide text-[#6E35E8]">Gói cước</p>
+          <p className="text-xs font-semibold uppercase tracking-wide text-[#8037f4]">Gói cước</p>
           <p className="mt-1 text-lg font-semibold text-slate-900">{plan.name}</p>
           <p className={`mt-1 ${labelMuted}`}>
             {billing === "yearly" ? "Gói năm" : "Gói tháng"}
           </p>
         </div>
-        <p className="text-lg font-bold text-[#6E35E8]">{fmt(baseTotal)}</p>
+        <p className="text-lg font-bold text-[#8037f4]">{fmt(baseTotal)}</p>
       </div>
     </div>
   );
@@ -490,7 +490,7 @@ function BankTransferBlock({
               </div>
               <CopyBtn text={transferOrderNum} />
             </div>
-            <p className="mt-1.5 text-xs font-semibold text-[#6E35E8]">Số tiền: {fmt(payAmount)}</p>
+            <p className="mt-1.5 text-xs font-semibold text-[#8037f4]">Số tiền: {fmt(payAmount)}</p>
           </div>
         </div>
 
@@ -1015,14 +1015,14 @@ export function Checkout() {
             onClick={() => navigate("/")}
             className="flex items-center gap-2.5"
           >
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-[#6E35E8] to-[#9B6DFF] shadow-md">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-[#8037f4] to-[#a66ff8] shadow-md">
               <Sparkle className="h-4 w-4 text-white" />
             </div>
             <span className="text-base font-bold text-slate-900">ProInterview</span>
           </button>
           <div className="flex items-center gap-4">
             <div className={`hidden items-center gap-1.5 sm:flex ${labelMuted}`}>
-              <Phone className="h-3.5 w-3.5 text-[#6E35E8]" />
+              <Phone className="h-3.5 w-3.5 text-[#8037f4]" />
               <span>Hỗ trợ: 1800 1234</span>
             </div>
             <button
@@ -1101,7 +1101,7 @@ export function Checkout() {
                   {couponApplied ? (
                     <div className="flex items-center justify-between rounded-lg border border-violet-200 bg-violet-50 px-3 py-2">
                       <div className="flex items-center gap-2">
-                        <Tag className="h-4 w-4 text-[#6E35E8]" />
+                        <Tag className="h-4 w-4 text-[#8037f4]" />
                         <span className="text-sm font-semibold text-slate-900">{coupon.toUpperCase()}</span>
                       </div>
                       <span className="rounded-md bg-violet-100 px-2 py-0.5 text-[10px] font-semibold uppercase text-violet-700">
@@ -1111,7 +1111,7 @@ export function Checkout() {
                   ) : (
                     <div className="flex gap-2">
                       <input
-                        className="min-w-0 flex-1 rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-[#6E35E8] focus:outline-none focus:ring-1 focus:ring-violet-200"
+                        className="min-w-0 flex-1 rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-[#8037f4] focus:outline-none focus:ring-1 focus:ring-violet-200"
                         placeholder="Nhập mã khuyến mãi"
                         value={coupon}
                         onChange={(e) => setCoupon(e.target.value)}
@@ -1130,7 +1130,7 @@ export function Checkout() {
                   <ul className="mt-4 space-y-2">
                     {plan.features.slice(0, 3).map((f, i) => (
                       <li key={i} className={`flex items-start gap-2 text-xs ${textMuted}`}>
-                        <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#6E35E8]" />
+                        <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#8037f4]" />
                         {f}
                       </li>
                     ))}
@@ -1186,7 +1186,7 @@ export function Checkout() {
                 ) : null}
                 {showBankQr && orderCreated && !paymentConfirmed && awaitingAutoConfirm ? (
                   <div className="flex items-center justify-center gap-2 text-center text-sm text-violet-800">
-                    <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-violet-200 border-t-[#6E35E8]" />
+                    <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-violet-200 border-t-[#8037f4]" />
                     Đang chờ xác nhận thanh toán…
                   </div>
                 ) : null}

@@ -20,7 +20,7 @@ function ChipList({ items, empty }) {
       {list.map((t) => (
         <span
           key={t}
-          className="rounded-md border border-[#6E35E8]/15 bg-white px-2 py-0.5 text-xs font-medium text-[#2D1B69]"
+          className="rounded-md border border-[#8037f4]/15 bg-white px-2 py-0.5 text-xs font-medium text-[#2D1B69]"
         >
           {t}
         </span>
@@ -49,7 +49,7 @@ function AdminModalPortal({ onClose, children, maxWidthClass = "max-w-2xl" }) {
       <div
         role="dialog"
         aria-modal="true"
-        className={`relative z-10 w-full ${maxWidthClass} max-h-[min(90vh,calc(100dvh-2rem))] overflow-y-auto rounded-2xl border border-[#6E35E8]/18 bg-white p-6 shadow-[0_24px_60px_rgba(110,53,232,0.18)]`}
+        className={`relative z-10 w-full ${maxWidthClass} max-h-[min(90vh,calc(100dvh-2rem))] overflow-y-auto rounded-2xl border border-[#8037f4]/18 bg-white p-6 shadow-[0_24px_60px_rgba(128,55,244,0.18)]`}
         onClick={(e) => e.stopPropagation()}
       >
         {children}
@@ -70,7 +70,7 @@ function MentorPreviewAvatar({ mentor }) {
       <img
         src={avatar}
         alt=""
-        className="size-14 shrink-0 rounded-2xl object-cover ring-2 ring-[#6E35E8]/20"
+        className="size-14 shrink-0 rounded-2xl object-cover ring-2 ring-[#8037f4]/20"
         onError={() => setImgFailed(true)}
       />
     );
@@ -78,8 +78,8 @@ function MentorPreviewAvatar({ mentor }) {
 
   return (
     <div
-      className="flex size-14 shrink-0 items-center justify-center rounded-2xl text-base font-black text-white ring-2 ring-[#6E35E8]/20"
-      style={{ background: "linear-gradient(135deg, #6E35E8 0%, #8B4DFF 100%)" }}
+      className="flex size-14 shrink-0 items-center justify-center rounded-2xl text-base font-black text-white ring-2 ring-[#8037f4]/20"
+      style={{ background: "#8037f4" }}
       aria-hidden
     >
       {initials}
@@ -90,7 +90,7 @@ function MentorPreviewAvatar({ mentor }) {
 function PreviewSection({ label, children }) {
   return (
     <div className="py-3.5 first:pt-0 last:pb-0">
-      <p className="text-[10px] font-black uppercase tracking-[0.14em] text-[#7a23e5]">{label}</p>
+      <p className="text-[10px] font-black uppercase tracking-[0.14em] text-[#8037f4]">{label}</p>
       <div className="mt-1.5">{children}</div>
     </div>
   );
@@ -328,7 +328,7 @@ export function AdminMentorsPending() {
       {previewMentor ? (
         <AdminModalPortal onClose={() => setPreviewMentor(null)}>
           <div aria-labelledby="admin-mentor-preview-title">
-            <div className="flex items-start justify-between gap-4 border-b border-[#6E35E8]/10 pb-4">
+            <div className="flex items-start justify-between gap-4 border-b border-[#8037f4]/10 pb-4">
               <div>
                 <h3 id="admin-mentor-preview-title" className="text-lg font-black text-[#2D1B69]">
                   Hồ sơ ứng tuyển cố vấn
@@ -340,13 +340,13 @@ export function AdminMentorsPending() {
               <button
                 type="button"
                 onClick={() => setPreviewMentor(null)}
-                className="shrink-0 rounded-lg border border-[#6E35E8]/20 px-3 py-1.5 text-xs font-bold text-[#7a23e5] transition hover:bg-[#f8f5ff]"
+                className="shrink-0 rounded-lg border border-[#8037f4]/20 px-3 py-1.5 text-xs font-bold text-[#8037f4] transition hover:bg-[#f8f5ff]"
               >
                 Đóng
               </button>
             </div>
 
-            <div className="mt-5 flex gap-4 rounded-xl bg-[#f8f5ff] p-4 ring-1 ring-[#6E35E8]/12">
+            <div className="mt-5 flex gap-4 rounded-xl bg-[#f8f5ff] p-4 ring-1 ring-[#8037f4]/12">
               <MentorPreviewAvatar mentor={previewMentor} />
               <div className="min-w-0 flex-1">
                 <p className="font-black text-[#2D1B69]">{previewMentor.userId?.name || previewMentor.name}</p>
@@ -363,7 +363,7 @@ export function AdminMentorsPending() {
                       ? `${previewMentor.experienceYears} năm`
                       : "—"}
                   </span>
-                  <span className="mx-2 text-[#6E35E8]/25">|</span>
+                  <span className="mx-2 text-[#8037f4]/25">|</span>
                   Đề xuất giá/giờ:{" "}
                   <span className="font-semibold text-[#2D1B69]">{formatVnd(previewMentor.pricePerHour)}</span>
                 </p>
@@ -373,7 +373,7 @@ export function AdminMentorsPending() {
             {(() => {
               const profile = getMentorPreviewFromApplication(previewMentor);
               return (
-            <div className="mt-5 divide-y divide-[#6E35E8]/10">
+            <div className="mt-5 divide-y divide-[#8037f4]/10">
               <PreviewSection label="Giới thiệu bản thân">
                 <PreviewText value={previewMentor.bio} />
               </PreviewSection>
@@ -407,7 +407,7 @@ export function AdminMentorsPending() {
               );
             })()}
 
-            <div className="mt-6 flex flex-wrap justify-end gap-3 border-t border-[#6E35E8]/10 pt-5">
+            <div className="mt-6 flex flex-wrap justify-end gap-3 border-t border-[#8037f4]/10 pt-5">
               <button
                 type="button"
                 onClick={() => {
@@ -415,7 +415,7 @@ export function AdminMentorsPending() {
                   setPreviewMentor(null);
                   openRejectModal(m);
                 }}
-                className="rounded-xl border border-[#6E35E8]/25 bg-white px-4 py-2 text-xs font-black uppercase tracking-wider text-[#7a23e5] transition hover:border-[#7a23e5] hover:bg-[#f8f5ff]"
+                className="rounded-xl border border-[#8037f4]/25 bg-white px-4 py-2 text-xs font-black uppercase tracking-wider text-[#8037f4] transition hover:border-[#8037f4] hover:bg-[#f8f5ff]"
               >
                 Từ chối
               </button>
@@ -426,7 +426,7 @@ export function AdminMentorsPending() {
                   setPreviewMentor(null);
                   await handleApprove(id);
                 }}
-                className="rounded-xl border border-[#93D600]/50 bg-[#B4F500] px-4 py-2 text-xs font-black uppercase tracking-wider text-[#2D1B69] shadow-[0_8px_20px_rgba(180,245,0,0.35)] transition hover:brightness-95"
+                className="rounded-xl border border-[#7fe015]/50 bg-[#93f72b] px-4 py-2 text-xs font-black uppercase tracking-wider text-[#2D1B69] shadow-[0_8px_20px_rgba(180,245,0,0.35)] transition hover:brightness-95"
               >
                 Phê duyệt
               </button>

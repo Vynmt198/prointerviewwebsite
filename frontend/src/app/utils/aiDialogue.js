@@ -55,33 +55,33 @@ function pick(arr) {
 function getCasualReply(input) {
   const word = input.trim();
   const replies = [
-    `"${word}" hả? 😄 Tôi chưa hiểu ý bạn lắm, nhưng tôi sẵn sàng lắng nghe Hãy thử trả lời câu hỏi phỏng vấn đang hiển thị nhé.`,
-    `Hmm, "${word}"... 🤔 Tôi là AI phỏng vấn nên không quen xử lý câu đó! Bạn muốn chia sẻ gì về câu hỏi phỏng vấn không?`,
-    `Ồ, bạn nói "${word}" à? 😊 Tôi nghĩ bạn đang thử xem tôi phản ứng thế nào. Thẳng thắn mà nói — tôi ở đây để giúp bạn luyện phỏng vấn thôi Bắt đầu thử nhé?`,
-    `"${word}"... Tôi chưa được lập trình để hiểu điều đó 🤖 Nhưng tôi hoàn toàn có thể giúp bạn ace buổi phỏng vấn tiếp theo Hãy thử trả lời câu hỏi đang hiển thị.`,
+    `"${word}" hả? 😄 Mình chưa hiểu ý bạn lắm, nhưng mình sẵn sàng lắng nghe Hãy thử trả lời câu hỏi phỏng vấn đang hiển thị nhé.`,
+    `Hmm, "${word}"... 🤔 Mình là AI phỏng vấn nên không quen xử lý câu đó! Bạn muốn chia sẻ gì về câu hỏi phỏng vấn không?`,
+    `Ồ, bạn nói "${word}" à? 😊 Mình nghĩ bạn đang thử xem mình phản ứng thế nào. Thẳng thắn mà nói — mình ở đây để giúp bạn luyện phỏng vấn thôi. Bắt đầu thử nhé?`,
+    `"${word}"... Mình chưa quen với câu đó 🤖 Nhưng mình có thể giúp bạn luyện phỏng vấn tốt hơn. Hãy thử trả lời câu hỏi đang hiển thị nhé.`,
   ];
   return pick(replies);
 }
 
 // ─── Mild insult replies ──────────────────────────────────────────────────────
 const MILD_INSULT_REPLIES = [
-  "Ủa, bạn vừa nói vậy với tôi à? 😅 Tôi là AI nên không tự ái đâu, nhưng trong buổi phỏng vấn thật thì hãy giữ thái độ chuyên nghiệp nhé! Quay lại câu hỏi nào 💪",
-  "Haha, tôi là AI nên không buồn được 😄 Nhưng nhà tuyển dụng thật sẽ không vui đâu nhé! Thử trả lời câu hỏi xem bạn làm tốt đến đâu nào?",
-  "Bạn đang test giới hạn của tôi à? 🤖 Thú vị đấy Nhưng thay vì thế, hãy thử thách bản thân với câu hỏi phỏng vấn — đó mới là challenge thật sự!",
+  "Ủa, bạn vừa nói vậy với mình à? 😅 Mình là AI nên không tự ái đâu, nhưng trong buổi phỏng vấn thật thì hãy giữ thái độ chuyên nghiệp nhé! Quay lại câu hỏi nào 💪",
+  "Haha, mình là AI nên không buồn được 😄 Nhưng nhà tuyển dụng thật sẽ không vui đâu nhé! Thử trả lời câu hỏi xem bạn làm tốt đến đâu nào?",
+  "Bạn đang test giới hạn của mình à? 🤖 Thú vị đấy. Thay vì thế, hãy thử thách bản thân với câu hỏi phỏng vấn — đó mới là bước tiếp theo đáng làm!",
 ];
 
 // ─── Mood-aware replies ───────────────────────────────────────────────────────
 function getMoodReply(lower) {
   if (/mệt|căng thẳng|stress/.test(lower)) {
-    return "Tôi hiểu, phỏng vấn có thể rất áp lực 😌 Hít thở sâu một cái đi. Nhớ rằng đây chỉ là buổi luyện tập — không có áp lực gì cả. Khi sẵn sàng, hãy thử trả lời câu hỏi nhé, tôi ở đây hỗ trợ bạn!";
+    return "Mình hiểu, phỏng vấn có thể rất áp lực 😌 Hít thở sâu một cái đi. Nhớ rằng đây chỉ là buổi luyện tập — không có áp lực gì cả. Khi sẵn sàng, hãy thử trả lời câu hỏi nhé, mình ở đây hỗ trợ bạn!";
   }
   if (/buồn|lo lắng|hồi hộp|nervous|sợ|anxious/.test(lower)) {
     return "Bình thường thôi bạn ơi, ai cũng hồi hộp trước phỏng vấn 💙 Sự thật là: luyện tập nhiều thì tự tin hơn. Và bạn đang làm đúng rồi đó — đang luyện tập ngay bây giờ! Cùng tiếp tục nhé?";
   }
   if (/tự tin|excited|sẵn sàng|ready/.test(lower)) {
-    return "Tinh thần cao thế này tôi thích 🔥 Đây chính là năng lượng cần có khi bước vào phòng phỏng vấn. Hãy duy trì và trả lời câu hỏi với sự tự tin đó nhé!";
+    return "Tinh thần cao thế này mình thích 🔥 Đây là năng lượng tốt khi luyện phỏng vấn. Hãy duy trì và trả lời câu hỏi với sự tự tin đó nhé!";
   }
-  return "Cảm ơn bạn đã chia sẻ! Dù cảm xúc thế nào, tôi luôn ở đây hỗ trợ. Hãy thử trả lời câu hỏi nhé!";
+  return "Cảm ơn bạn đã chia sẻ! Dù cảm xúc thế nào, mình luôn ở đây hỗ trợ. Hãy thử trả lời câu hỏi nhé!";
 }
 
 // ─── Feedback templates per question ─────────────────────────────────────────
@@ -117,7 +117,7 @@ const QUESTION_FEEDBACK = {
 const SHORT_ANSWER_TIPS = [
   "Câu trả lời ngắn quá rồi Hãy thử mở rộng theo mô hình **STAR**:\n• **S**ituation: Bối cảnh cụ thể?\n• **T**ask: Nhiệm vụ của bạn là gì?\n• **A**ction: Bạn đã làm gì?\n• **R**esult: Kết quả đạt được?",
   "Bạn có thể nói thêm không? Nhà tuyển dụng muốn nghe ví dụ cụ thể, có số liệu. Hãy thử lại với nhiều chi tiết hơn nhé!",
-  "Tôi cần nghe thêm từ bạn Hãy kể một câu chuyện cụ thể từ kinh nghiệm thực tế của bạn — dù là đi học, thực tập hay làm việc đều được.",
+  "Mình cần nghe thêm từ bạn Hãy kể một câu chuyện cụ thể từ kinh nghiệm thực tế của bạn — dù là đi học, thực tập hay làm việc đều được.",
 ];
 
 // ─── Main export ──────────────────────────────────────────────────────────────
@@ -135,7 +135,7 @@ export function getAIResponse(
 
   // ── 1. Hard banned language ────────────────────────────────────────────────
   if (BANNED_PATTERNS.some((p) => p.test(input))) {
-    return stay("⚠️ Bạn vừa dùng ngôn từ không phù hợp. Hãy giữ thái độ chuyên nghiệp trong buổi phỏng vấn nhé! Tôi vẫn ở đây để hỗ trợ bạn 😊");
+    return stay("⚠️ Bạn vừa dùng ngôn từ không phù hợp. Hãy giữ thái độ chuyên nghiệp trong buổi luyện tập nhé! Mình vẫn ở đây để hỗ trợ bạn 😊");
   }
 
   // ── 2. Mild insult / rude word (single word, non-severe) ──────────────────
@@ -145,7 +145,7 @@ export function getAIResponse(
 
   // ── 3. Greetings ───────────────────────────────────────────────────────────
   if (GREETING_PATTERNS.test(lower) && input.length < 40) {
-    return stay("Xin chào. Rất vui được gặp bạn. Tôi là **AI Interviewer** của ProInterview — sẵn sàng giúp bạn luyện phỏng vấn hiệu quả!\n\nHãy trả lời câu hỏi đang hiển thị nhé. Chúng ta bắt đầu thôi 🚀");
+    return stay("Xin chào bạn! Mình là Pio — **AI Interviewer** của ProInterview.\n\nBạn đã sẵn sàng luyện tập chưa? Hãy trả lời câu hỏi đang hiển thị — mình sẽ góp ý để bạn tiến bộ từng câu nhé 🚀");
   }
 
   // ── 4. Mood / emotional check-in ──────────────────────────────────────────
@@ -155,27 +155,27 @@ export function getAIResponse(
 
   // ── 5. Who are you ────────────────────────────────────────────────────────
   if (WHO_PATTERNS.test(lower)) {
-    return stay("Tôi là **AI Interviewer** của ProInterview 🤖\n\nTôi được xây dựng dựa trên hàng nghìn buổi phỏng vấn thực tế tại các công ty hàng đầu. Nhiệm vụ của tôi: hỏi câu hỏi → lắng nghe → cho feedback chi tiết.\n\nBây giờ hãy quay lại và trả lời câu hỏi nhé! 💪");
+    return stay("Mình là **AI Interviewer** (Pio) của ProInterview 🤖\n\nMình hỏi câu hỏi sát thực tế → lắng nghe bạn → góp ý từng câu để bạn cải thiện dần.\n\nBây giờ hãy trả lời câu hỏi đang hiển thị nhé! 💪");
   }
 
   // ── 6. Help / STAR guidance ───────────────────────────────────────────────
   if (HELP_PATTERNS.test(lower)) {
-    return stay("Không lo, tôi sẽ hướng dẫn 😊\n\n**Mô hình STAR** — cách trả lời phỏng vấn hiệu quả nhất:\n• **S** – Situation: Bối cảnh/tình huống cụ thể\n• **T** – Task: Nhiệm vụ/trách nhiệm của bạn\n• **A** – Action: Hành động BẠN đã làm (dùng \"tôi\" không phải \"chúng tôi\")\n• **R** – Result: Kết quả đạt được (có số liệu càng tốt)\n\nVí dụ: *\"Khi dự án bị trễ deadline 2 tuần (S), tôi được phân công... (T), tôi đã... (A), kết quả là giao đúng hạn với... (R)\"*\n\nÁp dụng vào câu hỏi hiện tại đi nhé!");
+    return stay("Không lo, mình sẽ hướng dẫn bạn 😊\n\n**Mô hình STAR** — cách trả lời phỏng vấn rõ ràng:\n• **S** – Situation: Bối cảnh/tình huống cụ thể\n• **T** – Task: Nhiệm vụ/trách nhiệm của bạn\n• **A** – Action: Việc **bạn** đã làm (trong câu trả lời, dùng \"tôi\" thay vì \"chúng tôi\")\n• **R** – Result: Kết quả đạt được (có số liệu càng tốt)\n\nVí dụ: *\"Khi dự án bị trễ deadline 2 tuần (S), tôi được phân công... (T), tôi đã... (A), kết quả là giao đúng hạn với... (R)\"*\n\nÁp dụng vào câu hỏi hiện tại đi nhé!");
   }
 
   // ── 7. Jokes / humor ──────────────────────────────────────────────────────
   if (JOKE_PATTERNS.test(lower)) {
-    return stay("Haha 😄 Tôi thích tinh thần vui vẻ của bạn Nhưng trong phòng phỏng vấn thật thì hãy giữ năng lượng tập trung nhé.\n\nChúng ta quay lại câu hỏi thôi — bạn đang làm tốt đấy 💪");
+    return stay("Haha 😄 Mình thích tinh thần vui vẻ của bạn Nhưng trong phòng phỏng vấn thật thì hãy giữ năng lượng tập trung nhé.\n\nChúng ta quay lại câu hỏi thôi — bạn đang làm tốt đấy 💪");
   }
 
   // ── 8. Complain / skip request ────────────────────────────────────────────
   if (NEGATIVE_PATTERNS.test(lower)) {
-    return stay("Tôi hiểu câu hỏi này có vẻ khó! Nhưng đây chính xác là loại câu sẽ xuất hiện trong phỏng vấn thật 😊\n\n💡 Mẹo: Không có kinh nghiệm trực tiếp? Dùng dự án trường, thực tập, hoặc công việc tình nguyện đều ổn. Nhà tuyển dụng đánh giá cao sự thành thật và mindset học hỏi.\n\nHãy thử lại nhé!");
+    return stay("Mình hiểu câu hỏi này có vẻ khó! Nhưng đây chính xác là loại câu sẽ xuất hiện trong phỏng vấn thật 😊\n\n💡 Mẹo: Không có kinh nghiệm trực tiếp? Dùng dự án trường, thực tập, hoặc công việc tình nguyện đều ổn. Nhà tuyển dụng đánh giá cao sự thành thật và mindset học hỏi.\n\nHãy thử lại nhé!");
   }
 
   // ── 9. Short thanks / affirmation ────────────────────────────────────────
   if (THANKS_PATTERNS.test(lower)) {
-    return stay("Không có gì! 😊 Sẵn sàng tiếp tục chứ? Hãy trả lời câu hỏi hiện tại để tôi đánh giá và cho bạn feedback nhé!");
+    return stay("Không có gì! 😊 Sẵn sàng tiếp tục chứ? Hãy trả lời câu hỏi hiện tại để mình đánh giá và cho bạn feedback nhé!");
   }
 
   // ── 10. Gibberish / random test words ────────────────────────────────────

@@ -176,7 +176,7 @@ function InterviewDetailModal({
           {/* Overall score */}
           <div
             className="rounded-2xl p-5 flex items-center gap-5"
-            style={{ background: "rgba(110, 53, 232,0.05)", border: "1px solid rgba(110, 53, 232,0.12)" }}
+            style={{ background: "rgba(128, 55, 244,0.05)", border: "1px solid rgba(128, 55, 244,0.12)" }}
           >
             <div
               className="w-20 h-20 rounded-2xl flex flex-col items-center justify-center flex-shrink-0"
@@ -215,7 +215,7 @@ function InterviewDetailModal({
           {/* Score breakdown */}
           <div className="bg-white rounded-2xl border border-gray-100 p-5">
             <h4 className="text-gray-800 font-semibold mb-4 flex items-center gap-2" style={{ fontSize: "0.875rem" }}>
-              <ChartBar className="w-4 h-4 text-[#6E35E8]" />
+              <ChartBar className="w-4 h-4 text-[#8037f4]" />
               Điểm từng tiêu chí
             </h4>
             <div className="space-y-3.5">
@@ -276,7 +276,7 @@ function InterviewDetailModal({
                 <li key={i} className="flex items-start gap-2.5 p-2.5 rounded-xl bg-gray-50">
                   <span
                     className="flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold"
-                    style={{ background: "rgba(110, 53, 232,0.12)", color: "#6E35E8", marginTop: "1px" }}
+                    style={{ background: "rgba(128, 55, 244,0.12)", color: "#8037f4", marginTop: "1px" }}
                   >
                     {i + 1}
                   </span>
@@ -289,7 +289,7 @@ function InterviewDetailModal({
             {feedback.questions.length > 3 && (
               <button
                 onClick={() => setShowAllQ((v) => !v)}
-                className="mt-2 text-xs text-[#6E35E8] hover:text-[#5C28D9] font-medium"
+                className="mt-2 text-xs text-[#8037f4] hover:text-[#5C28D9] font-medium"
               >
                 {showAllQ ? "Thu gọn" : `Xem thêm ${feedback.questions.length - 3} câu hỏi`}
               </button>
@@ -312,7 +312,7 @@ function InterviewDetailModal({
           </button>
           <button
             onClick={() => { onClose(); navigate("/mentors"); }}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold border border-gray-200 text-gray-700 hover:border-[#6E35E8]/40 transition-all"
+            className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold border border-gray-200 text-gray-700 hover:border-[#8037f4]/40 transition-all"
           >
             <Users className="w-4 h-4" />
             Đặt lịch Mentor
@@ -409,7 +409,7 @@ function CVAnalysisDetailModal({
           {/* Match score + mini stats */}
           <div
             className="rounded-2xl p-5 flex items-center gap-5"
-            style={{ background: "rgba(110, 53, 232,0.05)", border: "1px solid rgba(110, 53, 232,0.12)" }}
+            style={{ background: "rgba(128, 55, 244,0.05)", border: "1px solid rgba(128, 55, 244,0.12)" }}
           >
             {/* Donut */}
             <div className="relative w-24 h-24 flex-shrink-0">
@@ -501,7 +501,7 @@ function CVAnalysisDetailModal({
           {/* Score breakdown */}
           <div className="bg-white rounded-2xl border border-gray-100 p-5">
             <h4 className="text-gray-800 font-semibold mb-4 flex items-center gap-2" style={{ fontSize: "0.875rem" }}>
-              <ChartBar className="w-4 h-4 text-[#6E35E8]" />
+              <ChartBar className="w-4 h-4 text-[#8037f4]" />
               Đánh giá chi tiết (4 tiêu chí)
             </h4>
             <div className="space-y-3.5">
@@ -551,7 +551,7 @@ function CVAnalysisDetailModal({
           <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
             <div
               className="px-5 py-3 border-b border-gray-100 flex items-center gap-2"
-              style={{ background: "rgba(110, 53, 232,0.04)" }}
+              style={{ background: "rgba(128, 55, 244,0.04)" }}
             >
               <h4 className="text-gray-800 font-semibold" style={{ fontSize: "0.875rem" }}>
                 Gợi ý chỉnh sửa ({item.suggestions.length})
@@ -593,9 +593,9 @@ function CVAnalysisDetailModal({
                       <div className="px-5 pb-4 space-y-3">
                         <div
                           className="rounded-xl p-3"
-                          style={{ background: "rgba(110, 53, 232,0.04)", border: "1px solid rgba(110, 53, 232,0.1)" }}
+                          style={{ background: "rgba(128, 55, 244,0.04)", border: "1px solid rgba(128, 55, 244,0.1)" }}
                         >
-                          <p className="text-xs font-semibold mb-1" style={{ color: "#6E35E8" }}>
+                          <p className="text-xs font-semibold mb-1" style={{ color: "#8037f4" }}>
                             💡 Lý do
                           </p>
                           <p className="text-gray-600" style={{ fontSize: "0.8rem", lineHeight: "1.6" }}>
@@ -662,7 +662,7 @@ function CVAnalysisDetailModal({
           </button>
           <button
             onClick={() => { onClose(); navigate("/cv-analysis"); }}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold border border-gray-200 text-gray-700 hover:border-[#6E35E8]/40 transition-all"
+            className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold border border-gray-200 text-gray-700 hover:border-[#8037f4]/40 transition-all"
           >
             <FileText className="w-4 h-4" />
             Phân tích lại
@@ -752,7 +752,7 @@ export function HistoryPanel({ interviewHistory, cvHistory }) {
           {activeTab === "interview" ? (
             <div className="flex gap-4 pb-4 border-b border-gray-100">
               <div className="flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-[#6E35E8]" />
+                <span className="w-2 h-2 rounded-full bg-[#8037f4]" />
                 <span className="text-gray-400" style={{ fontSize: "0.75rem" }}>
                   {interviewHistory.length} buổi
                 </span>
@@ -781,7 +781,7 @@ export function HistoryPanel({ interviewHistory, cvHistory }) {
           ) : (
             <div className="flex gap-4 pb-4 border-b border-gray-100">
               <div className="flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-[#9B6DFF]" />
+                <span className="w-2 h-2 rounded-full bg-[#a66ff8]" />
                 <span className="text-gray-400" style={{ fontSize: "0.75rem" }}>
                   {cvHistory.length} lần phân tích
                 </span>
@@ -817,12 +817,12 @@ export function HistoryPanel({ interviewHistory, cvHistory }) {
                   className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
                   style={
                     item.type === "ai"
-                      ? { background: "rgba(110, 53, 232,0.1)" }
+                      ? { background: "rgba(128, 55, 244,0.1)" }
                       : { background: "rgba(16,185,129,0.1)" }
                   }
                 >
                   {item.type === "ai" ? (
-                    <Microphone className="w-4 h-4 text-[#6E35E8]" />
+                    <Microphone className="w-4 h-4 text-[#8037f4]" />
                   ) : (
                     <Users className="w-4 h-4 text-emerald-600" />
                   )}
@@ -842,7 +842,7 @@ export function HistoryPanel({ interviewHistory, cvHistory }) {
                     </div>
                     <p className="text-gray-400 text-xs">{item.duration} phút</p>
                   </div>
-                  <CaretRight className="w-4 h-4 text-gray-300 group-hover:text-[#6E35E8] transition-colors" />
+                  <CaretRight className="w-4 h-4 text-gray-300 group-hover:text-[#8037f4] transition-colors" />
                 </div>
               </button>
             ))}
@@ -865,7 +865,7 @@ export function HistoryPanel({ interviewHistory, cvHistory }) {
                     className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
                     style={{ background: "rgba(109,53,232,0.1)" }}
                   >
-                    <FileText className="w-4 h-4" style={{ color: "#6E35E8" }} />
+                    <FileText className="w-4 h-4" style={{ color: "#8037f4" }} />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-gray-800 text-sm font-medium truncate">
@@ -890,7 +890,7 @@ export function HistoryPanel({ interviewHistory, cvHistory }) {
                         {item.matchedKeywords.length}/{item.totalKeywords} kw
                       </p>
                     </div>
-                    <CaretRight className="w-4 h-4 text-gray-300 group-hover:text-[#6E35E8] transition-colors" />
+                    <CaretRight className="w-4 h-4 text-gray-300 group-hover:text-[#8037f4] transition-colors" />
                   </div>
                 </button>
               );

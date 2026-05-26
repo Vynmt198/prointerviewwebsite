@@ -7,7 +7,7 @@ import { toastApiError } from "../../utils/apiToast";
 
 const INPUT_CLS =
   "w-full px-4 py-3.5 rounded-xl border border-gray-200 text-base outline-none transition-all " +
-  "focus:border-[#6E35E8] focus:ring-2 focus:ring-[#6E35E8]/15 text-gray-900 placeholder-gray-400 " +
+  "focus:border-[#8037f4] focus:ring-2 focus:ring-[#8037f4]/15 text-gray-900 placeholder-gray-400 " +
   "bg-white hover:bg-gray-50/50";
 
 export function ForgotPassword() {
@@ -38,12 +38,12 @@ export function ForgotPassword() {
     <div className="min-h-screen bg-[#fcfaff] text-gray-900 antialiased">
       <div
         className="relative z-10 flex h-20 flex-shrink-0 items-center justify-between overflow-visible border-b px-10"
-        style={{ borderColor: "rgba(110,53,232,0.1)" }}
+        style={{ borderColor: "rgba(128,55,244,0.1)" }}
       >
         <button onClick={() => navigate("/")} className="flex shrink-0 items-center gap-2.5 group" aria-label="Về trang chủ">
           <BrandLogo size="auth" />
         </button>
-        <Link to="/login" className="text-sm font-semibold" style={{ color: "#6E35E8" }}>
+        <Link to="/login" className="text-sm font-semibold" style={{ color: "#8037f4" }}>
           Đăng nhập
         </Link>
       </div>
@@ -82,7 +82,7 @@ export function ForgotPassword() {
                 </p>
                 <a
                   href={devResetUrl}
-                  className="break-all text-sm font-semibold text-[#6E35E8] hover:underline"
+                  className="break-all text-sm font-semibold text-[#8037f4] hover:underline"
                 >
                   {devResetUrl}
                 </a>
@@ -93,7 +93,7 @@ export function ForgotPassword() {
               <Link
                 to="/login"
                 className="inline-flex items-center justify-center rounded-2xl px-5 py-3 text-sm font-black text-white"
-                style={{ background: "linear-gradient(135deg, #6E35E8, #9B6DFF)" }}
+                style={{ background: "#8037f4" }}
               >
                 Về trang đăng nhập
               </Link>
@@ -122,7 +122,7 @@ export function ForgotPassword() {
               type="submit"
               disabled={loading}
               className="mt-5 w-full rounded-2xl py-3.5 text-sm font-black text-white transition-all active:scale-[0.98] disabled:opacity-60"
-              style={{ background: "linear-gradient(135deg, #6E35E8, #9B6DFF)" }}
+              style={{ background: "#8037f4" }}
             >
               {loading ? "Đang gửi..." : "Gửi link đặt lại"}
             </button>

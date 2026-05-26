@@ -128,7 +128,7 @@ export function RescheduleModal({ meeting, onClose }) {
                 <p className="font-semibold text-sm mb-1" style={{ color: "#1F1F1F" }}>
                   {meeting.mentee.name}
                 </p>
-                <p className="text-xs mb-2" style={{ color: "#6E35E8" }}>
+                <p className="text-xs mb-2" style={{ color: "#8037f4" }}>
                   {meeting.position} @ {meeting.company}
                 </p>
                 <div className="flex items-center gap-3 text-xs" style={{ color: "#9CA3AF" }}>

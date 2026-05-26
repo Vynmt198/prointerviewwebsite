@@ -83,7 +83,7 @@ const MENTOR_SCHEDULE_EXTRA_CSS = `
         }
         .calendar-cell:hover { background: rgba(15, 23, 42, 0.04); }
         .calendar-cell.active {
-           background: #c4ff47;
+           background: #93f72b;
            color: black;
            box-shadow: 0 10px 30px rgba(180, 245, 0, 0.3);
            font-weight: 900;
@@ -95,7 +95,7 @@ const MENTOR_SCHEDULE_EXTRA_CSS = `
            width: 4px;
            height: 4px;
            border-radius: 50%;
-           background: #6E35E8;
+           background: #8037f4;
         }
 `;
 
@@ -503,7 +503,7 @@ export function MentorSchedule() {
                     <div className="w-3 h-3 rounded-full bg-primary-fixed" /> Hôm nay
                  </div>
                  <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-zinc-500">
-                    <div className="w-3 h-3 rounded-full bg-[#6E35E8]" /> Có lịch hẹn
+                    <div className="w-3 h-3 rounded-full bg-[#8037f4]" /> Có lịch hẹn
                  </div>
               </div>
            </div>

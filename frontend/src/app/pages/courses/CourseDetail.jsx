@@ -177,7 +177,7 @@ export function CourseDetail() {
           <button
             type="button"
             onClick={() => navigate("/courses")}
-            className="rounded-sm bg-[#6E35E8] px-6 py-3 font-semibold text-white"
+            className="rounded-sm bg-[#8037f4] px-6 py-3 font-semibold text-white"
           >
             Quay lại danh sách
           </button>
@@ -206,7 +206,7 @@ export function CourseDetail() {
       <div className={`min-h-full font-sans text-slate-900 ${CUSTOMER_SHELL_GUTTER} ${COURSE_DETAIL_SHELL_MAX} py-4 pb-6`}>
         <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_calc(280px+1rem)] lg:items-start lg:gap-5">
           <div className="min-w-0 space-y-4 lg:space-y-5">
-            <header className="rounded-md bg-gradient-to-r from-[#6E35E8] to-[#630ed4] px-7 py-6 text-white sm:px-10 sm:py-7">
+            <header className="rounded-md bg-gradient-to-r from-[#8037f4] to-[#6d2fd6] px-7 py-6 text-white sm:px-10 sm:py-7">
               <h1 className="mb-2 text-3xl font-bold leading-tight sm:text-4xl">
                 {course.title}
               </h1>

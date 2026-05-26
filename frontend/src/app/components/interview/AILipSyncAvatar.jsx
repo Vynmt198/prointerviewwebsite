@@ -175,13 +175,13 @@ export function AILipSyncAvatar({
   /* Colors */
   const rimStroke = isSpeaking
     ? `rgba(139, 77, 255,${(0.50 + ringPulse * 0.42).toFixed(3)})`
-    : "rgba(110, 53, 232,0.28)";
+    : "rgba(128, 55, 244,0.28)";
   const ctaStroke = isSpeaking
     ? `rgba(180,240,0,${(0.48 + ringPulse * 0.44).toFixed(3)})`
     : "rgba(139, 77, 255,0.18)";
   const dotBg = isVideoMode
-    ? (isSpeaking ? "#c4ff47" : "#22c55e")
-    : isConnecting ? "#f59e0b" : "#6E35E8";
+    ? (isSpeaking ? "#93f72b" : "#22c55e")
+    : isConnecting ? "#f59e0b" : "#8037f4";
 
   /* Unique IDs per size instance */
   const uid = `av${size}`;
@@ -241,9 +241,9 @@ export function AILipSyncAvatar({
 
           {/* Ambient aura gradient */}
           <radialGradient id={`${uid}aura`} cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor="#8B4DFF"
+            <stop offset="0%" stopColor="#a66ff8"
               stopOpacity={isSpeaking ? (0.22 + ringPulse * 0.28).toFixed(3) : "0.07"} />
-            <stop offset="100%" stopColor="#6E35E8" stopOpacity="0" />
+            <stop offset="100%" stopColor="#8037f4" stopOpacity="0" />
           </radialGradient>
 
           {/* Lip gradient */}
@@ -267,8 +267,8 @@ export function AILipSyncAvatar({
 
           {/* Clothes gradient */}
           <linearGradient id={`${uid}blazer`} x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%"   stopColor="#6E35E8" />
-            <stop offset="100%" stopColor="#8B4DFF" />
+            <stop offset="0%"   stopColor="#8037f4" />
+            <stop offset="100%" stopColor="#a66ff8" />
           </linearGradient>
 
           {/* Eye iris gradient */}
@@ -553,7 +553,7 @@ export function AILipSyncAvatar({
 
         {/* Ring 3 — slow ambient */}
         <circle cx={cx} cy={cy} r={fR + size * 0.054} fill="none"
-          stroke={`rgba(110, 53, 232,${isSpeaking ? (0.16 + ringPulse * 0.13).toFixed(3) : "0.07"})`}
+          stroke={`rgba(128, 55, 244,${isSpeaking ? (0.16 + ringPulse * 0.13).toFixed(3) : "0.07"})`}
           strokeWidth="1"
         />
 
@@ -584,7 +584,7 @@ export function AILipSyncAvatar({
               cx={cx + Math.cos(rad) * (fR + size * 0.043)}
               cy={cy + Math.sin(rad) * (fR + size * 0.043)}
               r={size * 0.015}
-              fill={isSpeaking ? "#c4ff47" : "#6E35E8"}
+              fill={isSpeaking ? "#93f72b" : "#8037f4"}
               opacity={isSpeaking ? (0.85 + ringPulse * 0.15).toFixed(3) : "0.32"}
               style={{ transition: "fill 0.3s, opacity 0.15s" }}
             />
@@ -593,7 +593,7 @@ export function AILipSyncAvatar({
 
         {/* AI badge */}
         <g transform={`translate(${cx + fR * 0.57}, ${cy - fR * 0.83})`}>
-          <rect x="-19" y="-12" width="38" height="24" rx="8" fill="#6E35E8" opacity="0.95" />
+          <rect x="-19" y="-12" width="38" height="24" rx="8" fill="#8037f4" opacity="0.95" />
           <rect x="-18" y="-11" width="36" height="22" rx="7" fill="none"
             stroke={isSpeaking
               ? `rgba(180,240,0,${(0.50 + ringPulse * 0.42).toFixed(3)})`
@@ -620,7 +620,7 @@ export function AILipSyncAvatar({
                   y={-h / 2}
                   width={size * 0.022} height={h}
                   rx={size * 0.011}
-                  fill={i === 4 ? "#c4ff47" : "#8B4DFF"}
+                  fill={i === 4 ? "#93f72b" : "#a66ff8"}
                   opacity={(0.55 + amp * 0.45).toFixed(3)}
                 />
               );
@@ -657,7 +657,7 @@ export function AILipSyncAvatar({
                     y={-h / 2}
                     width={size * 0.022} height={h}
                     rx={size * 0.011}
-                    fill={i === 4 ? "#c4ff47" : "#8B4DFF"}
+                    fill={i === 4 ? "#93f72b" : "#a66ff8"}
                     opacity="0.85"
                   />
                 );
@@ -679,7 +679,7 @@ export function AILipSyncAvatar({
           <div style={{
             width: size * 0.21, height: size * 0.21, borderRadius: "50%",
             border: `${size * 0.021}px solid rgba(139, 77, 255,0.18)`,
-            borderTopColor: "#8B4DFF",
+            borderTopColor: "#a66ff8",
             animation: "avSpin 0.85s linear infinite",
           }} />
           <span style={{ color: "rgba(180,155,255,0.85)", fontSize: size * 0.076, fontWeight: 600, fontFamily: "monospace" }}>

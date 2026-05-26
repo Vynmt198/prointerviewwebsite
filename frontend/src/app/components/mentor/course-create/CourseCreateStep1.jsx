@@ -179,7 +179,7 @@ export function CourseCreateStep1({
             Giá khóa học
           </label>
           <div className="flex flex-wrap items-center gap-3">
-            <div className="flex max-w-xs flex-1 items-stretch overflow-hidden rounded-[10px] border border-slate-300 bg-white focus-within:border-[#6E35E8] focus-within:ring-1 focus-within:ring-[#6E35E8]/25">
+            <div className="flex max-w-xs flex-1 items-stretch overflow-hidden rounded-[10px] border border-slate-300 bg-white focus-within:border-[#8037f4] focus-within:ring-1 focus-within:ring-[#8037f4]/25">
               <input
                 id="course-price"
                 type="text"

@@ -29,18 +29,18 @@ import { buildLoginPath, buildRegisterPath } from "../../utils/authGate";
 
 const PAGE_TITLES = {
   "/my-bookings": { label: "Lịch hẹn của tôi", sub: "Tất cả buổi mentor đã đặt" },
-  "/cv-analysis": { label: "Phân tích CV", sub: "Chọn phân tích theo JD hoặc ngành nghề" },
-  "/cv-analysis/jd/history": { label: "Lịch sử CV + JD", sub: "Các lần so khớp CV với Job Description" },
+  "/cv-analysis": { label: "Phân tích CV", sub: "Phân tích CV với JD hoặc chuẩn ngành, biết chỗ cần chỉnh" },
+  "/cv-analysis/jd/history": { label: "Lịch sử CV + JD", sub: "Các lần phân tích CV với Job Description" },
   "/cv-analysis/field/history": { label: "Lịch sử theo ngành", sub: "Các lần phân tích CV theo ngành nghề" },
-  "/cv-analysis/jd": { label: "Phân tích CV + JD", sub: "So khớp CV với Job Description" },
+  "/cv-analysis/jd": { label: "Phân tích CV + JD", sub: "Phân tích CV với Job Description" },
   "/cv-analysis/field": { label: "Phân tích theo ngành", sub: "Đánh giá CV theo chuẩn ngành nghề" },
-  "/interview": { label: "Phỏng vấn AI", sub: "Thiết lập & bắt đầu phiên luyện tập" },
-  "/mentors": { label: "Tìm Mentor", sub: "Đặt lịch 1:1 với chuyên gia" },
+  "/interview": { label: "Phỏng vấn AI", sub: "Thiết lập buổi luyện, Pio hỏi, bạn trả lời" },
+  "/mentors": { label: "Tìm Mentor", sub: "Đặt lịch 1:1 với anh/chị mentor" },
   "/profile": { label: "Hồ sơ cá nhân", sub: "Thông tin và thành tích của bạn" },
   "/settings": { label: "Cài đặt", sub: "Tuỳ chỉnh tài khoản" },
-  "/pricing": { label: "Bảng giá", sub: "Nâng cấp để mở khoá đầy đủ tính năng" },
+  "/pricing": { label: "Bảng giá", sub: "Chọn gói phù hợp, luyện và nhận góp ý đầy đủ hơn" },
   "/booking": { label: "Đặt lịch", sub: "Chọn thời gian phù hợp với mentor" },
-  "/courses": { label: "Khóa học", sub: "Video ngắn từ mentor — ôn kỹ năng trước phỏng vấn" },
+  "/courses": { label: "Khóa học", sub: "Video ngắn từ mentor, ôn kỹ năng trước phỏng vấn" },
   "/my-courses": { label: "Khóa học của tôi", sub: "Tiến độ và khóa bạn đã đăng ký" },
   "/mentor/dashboard": { label: "Mentor", sub: "Bảng điều khiển mentor" },
   "/mentor/schedule": { label: "Lịch họp", sub: "Quản lý slot & buổi họp" },
@@ -66,7 +66,7 @@ function ShellNavLinks({ items, pathname, isActive, onNavigate, className = "", 
               to={item.url}
               onClick={onNavigate}
               className="rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-700 transition-colors hover:bg-violet-50 hover:text-violet-700"
-              style={active ? { color: "#6E35E8", fontWeight: 800 } : undefined}
+              style={active ? { color: "#8037f4", fontWeight: 800 } : undefined}
             >
               {item.title}
             </Link>
@@ -79,7 +79,7 @@ function ShellNavLinks({ items, pathname, isActive, onNavigate, className = "", 
             onClick={onNavigate}
             className="relative shrink-0 cursor-pointer whitespace-nowrap py-1 text-sm transition-all duration-300"
             style={{
-              color: active ? "#6E35E8" : "rgb(71, 85, 105)",
+              color: active ? "#8037f4" : "rgb(71, 85, 105)",
               fontWeight: active ? 800 : 600,
             }}
           >
@@ -89,7 +89,7 @@ function ShellNavLinks({ items, pathname, isActive, onNavigate, className = "", 
                 active ? "scale-x-100 opacity-100" : "scale-x-0 opacity-0"
               }`}
               style={{
-                background: "#C4FF47",
+                background: "#93f72b",
                 boxShadow: "0 0 12px rgba(196, 255, 71, 0.8)",
               }}
               aria-hidden
@@ -244,17 +244,17 @@ function CustomerNavbar() {
                       type="button"
                       className="relative inline-flex size-9 items-center justify-center rounded-xl transition-all focus:outline-none"
                       style={{
-                        background: notifOpen ? "rgba(110,53,232,0.1)" : "transparent",
-                        border: notifOpen ? "1px solid rgba(110,53,232,0.25)" : "1px solid transparent",
+                        background: notifOpen ? "rgba(128,55,244,0.1)" : "transparent",
+                        border: notifOpen ? "1px solid rgba(128,55,244,0.25)" : "1px solid transparent",
                       }}
                       aria-label="Thông báo"
                     >
-                      <Bell className="h-5 w-5 text-[#6E35E8]/75" />
+                      <Bell className="h-5 w-5 text-[#8037f4]/75" />
                       {unreadCount > 0 && (
                         <span
                           className="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full font-bold text-[#1d1a26]"
                           style={{
-                            background: "linear-gradient(135deg, #B4F500, #D4FF00)",
+                            background: "#93f72b",
                             fontSize: "0.6rem",
                             boxShadow: "0 2px 8px rgba(180,245,0,0.45)",
                           }}
@@ -274,7 +274,7 @@ function CustomerNavbar() {
                       <button
                         type="button"
                         onClick={handleMarkAllRead}
-                        className="text-[10px] font-semibold text-[#6E35E8] hover:underline"
+                        className="text-[10px] font-semibold text-[#8037f4] hover:underline"
                       >
                         Đọc tất cả
                       </button>
@@ -295,7 +295,7 @@ function CustomerNavbar() {
                         <div
                           className="mt-1.5 h-2 w-2 shrink-0 rounded-full"
                           style={{
-                            background: !n.isRead ? "#6E35E8" : "transparent",
+                            background: !n.isRead ? "#8037f4" : "transparent",
                             border: !n.isRead ? "none" : "1px solid rgba(148, 163, 184, 0.5)",
                           }}
                         />
@@ -323,7 +323,7 @@ function CustomerNavbar() {
                   >
                     <span
                       className="flex size-8 items-center justify-center rounded-full text-xs font-bold text-white"
-                      style={{ background: "linear-gradient(135deg, #6E35E8, #9B6DFF)" }}
+                      style={{ background: "#8037f4" }}
                     >
                       {initials}
                     </span>
@@ -358,7 +358,7 @@ function CustomerNavbar() {
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
                     onClick={handleLogout}
-                    className="font-semibold text-[#6E35E8] focus:text-[#6E35E8]"
+                    className="font-semibold text-[#8037f4] focus:text-[#8037f4]"
                   >
                     <LogOut className="mr-2 size-4" />
                     Đăng xuất
@@ -380,8 +380,8 @@ function CustomerNavbar() {
                 className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-4 py-1.5 text-sm font-semibold transition-all hover:scale-105 active:scale-95 sm:px-5"
                 style={{
                   background: "#fff",
-                  color: "#6E35E8",
-                  border: "1.5px solid #6E35E8",
+                  color: "#8037f4",
+                  border: "1.5px solid #8037f4",
                 }}
               >
                 <UserPlus className="size-3.5 shrink-0" aria-hidden />
@@ -422,8 +422,8 @@ function CustomerNavbar() {
                 className="flex items-center justify-center gap-2 rounded-full py-2.5 text-sm font-semibold transition-all"
                 style={{
                   background: "#fff",
-                  color: "#6E35E8",
-                  border: "1.5px solid #6E35E8",
+                  color: "#8037f4",
+                  border: "1.5px solid #8037f4",
                 }}
                 onClick={() => setMobileOpen(false)}
               >
@@ -517,14 +517,14 @@ function MentorNavbar() {
       style={{
         background: "rgba(255, 255, 255, 0.92)",
         borderColor: "rgba(186, 165, 255, 0.45)",
-        boxShadow: "0 1px 0 rgba(110, 53, 232, 0.08), 0 4px 20px rgba(110, 53, 232, 0.06)",
+        boxShadow: "0 1px 0 rgba(128, 55, 244, 0.08), 0 4px 20px rgba(128, 55, 244, 0.06)",
       }}
     >
-      <SidebarTrigger className="rounded-lg text-[#6E35E8]/75 transition-colors hover:bg-[#6E35E8]/10 hover:text-[#6E35E8]" />
-      <div className="h-6 w-px shrink-0 bg-[#6E35E8]/20" />
+      <SidebarTrigger className="rounded-lg text-[#8037f4]/75 transition-colors hover:bg-[#8037f4]/10 hover:text-[#8037f4]" />
+      <div className="h-6 w-px shrink-0 bg-[#8037f4]/20" />
       <div className="min-w-0 flex flex-col gap-0">
         <h1
-          className="truncate text-[#6E35E8]"
+          className="truncate text-[#8037f4]"
           style={{ fontSize: "0.9375rem", fontWeight: 700, lineHeight: 1.2, letterSpacing: "-0.015em" }}
         >
           {pageInfo.label}
@@ -541,17 +541,17 @@ function MentorNavbar() {
               type="button"
               className="relative inline-flex size-9 items-center justify-center rounded-xl transition-all focus:outline-none"
               style={{
-                background: notifOpen ? "rgba(110,53,232,0.1)" : "transparent",
-                border: notifOpen ? "1px solid rgba(110,53,232,0.25)" : "1px solid transparent",
+                background: notifOpen ? "rgba(128,55,244,0.1)" : "transparent",
+                border: notifOpen ? "1px solid rgba(128,55,244,0.25)" : "1px solid transparent",
               }}
               aria-label="Thông báo"
             >
-              <Bell className="h-5 w-5 text-[#6E35E8]/75" />
+              <Bell className="h-5 w-5 text-[#8037f4]/75" />
               {unreadCount > 0 && (
                 <span
                   className="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full font-bold text-[#1d1a26]"
                   style={{
-                    background: "linear-gradient(135deg, #B4F500, #D4FF00)",
+                    background: "#93f72b",
                     fontSize: "0.6rem",
                     boxShadow: "0 2px 8px rgba(180,245,0,0.45)",
                   }}
@@ -571,7 +571,7 @@ function MentorNavbar() {
                 <button
                   type="button"
                   onClick={handleMarkAllRead}
-                  className="text-[10px] font-semibold text-[#6E35E8] hover:underline"
+                  className="text-[10px] font-semibold text-[#8037f4] hover:underline"
                 >
                   Đọc tất cả
                 </button>
@@ -590,7 +590,7 @@ function MentorNavbar() {
                   <div
                     className="mt-1.5 h-2 w-2 shrink-0 rounded-full"
                     style={{
-                      background: !n.isRead ? "#6E35E8" : "transparent",
+                      background: !n.isRead ? "#8037f4" : "transparent",
                       border: !n.isRead ? "none" : "1px solid rgba(148, 163, 184, 0.5)",
                     }}
                   />

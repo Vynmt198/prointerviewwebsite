@@ -29,10 +29,10 @@ import { CUSTOMER_SHELL_GUTTER } from "../../components/layout/customerShellLayo
 const IS = { strokeWidth: 1.75, strokeLinecap: "round", strokeLinejoin: "round" };
 
 const CTA_LIME =
-  "bg-gradient-to-r from-[#c4ff47] to-[#d4ff00] text-violet-950 shadow-[0_6px_20px_rgba(196,255,71,0.2)] transition-all hover:brightness-105";
+  "bg-gradient-to-r from-[#93f72b] to-[#93f72b] text-violet-950 shadow-[0_6px_20px_rgba(196,255,71,0.2)] transition-all hover:brightness-105";
 
 const CTA_PURPLE =
-  "bg-gradient-to-r from-[#6E35E8] to-[#8B4DFF] text-white shadow-[0_6px_20px_rgba(110,53,232,0.2)] transition-all hover:brightness-105";
+  "bg-gradient-to-r from-[#8037f4] to-[#a66ff8] text-white shadow-[0_6px_20px_rgba(128,55,244,0.2)] transition-all hover:brightness-105";
 
 const FREE_LIMIT = 3;
 
@@ -325,7 +325,7 @@ export function InterviewFeedback() {
               {sessionMeta.duration > 0 ? ` · ${sessionMeta.duration} phút` : ""} ·{" "}
               {isPro ? allQuestions.length : FREE_LIMIT}/{allQuestions.length} câu hỏi
               {!isPro && (
-                <span className="ml-2 inline-flex items-center gap-1 rounded-full border border-violet-200 bg-white px-2 py-0.5 text-xs font-semibold text-[#630ed4]">
+                <span className="ml-2 inline-flex items-center gap-1 rounded-full border border-violet-200 bg-white px-2 py-0.5 text-xs font-semibold text-[#6d2fd6]">
                   <Lock className="h-3 w-3" /> 2 câu bị khóa
                 </span>
               )}
@@ -333,7 +333,7 @@ export function InterviewFeedback() {
           </header>
 
       {/* ── Overall Score Banner ─────────────────────────── */}
-      <div className="rounded-2xl mb-6 overflow-hidden" style={{ background: "linear-gradient(135deg, #6E35E8 0%, #9B6DFF 100%)" }}>
+      <div className="rounded-2xl mb-6 overflow-hidden" style={{ background: "#8037f4" }}>
         {/* Top: big score + STAR */}
         <div className="p-6 text-white">
           <div className="flex flex-col sm:flex-row items-center gap-6">
@@ -482,7 +482,7 @@ export function InterviewFeedback() {
                 className="flex w-full items-center justify-between p-5 text-left transition-colors hover:bg-violet-50/50"
               >
                 <div className="flex min-w-0 flex-1 items-start gap-4">
-                  <div className="mt-0.5 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#6E35E8] to-[#8B4DFF]">
+                  <div className="mt-0.5 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#8037f4] to-[#a66ff8]">
                     <span className="text-xs font-bold text-white">{i + 1}</span>
                   </div>
                   <div className="min-w-0 flex-1">

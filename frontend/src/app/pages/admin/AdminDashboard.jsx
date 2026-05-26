@@ -60,7 +60,7 @@ export function AdminDashboard() {
   return (
     <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
       <div className="glass-card px-8 py-8">
-        <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.22em] text-[#7a23e5]">
+        <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.22em] text-[#8037f4]">
           ProInterview Command Center
         </p>
         <h1 className="font-headline text-5xl font-black tracking-tighter text-slate-900 sm:text-6xl">
@@ -76,7 +76,7 @@ export function AdminDashboard() {
           label="Tổng người dùng"
           value={loading ? "..." : stats?.users || 0}
           icon={Users}
-          color="#6E35E8"
+          color="#8037f4"
         />
         <StatCard
           label="Tổng cố vấn"
@@ -101,7 +101,7 @@ export function AdminDashboard() {
               highlight ? "ring-2 ring-amber-400/50 border-amber-300/60 bg-amber-50/30" : ""
             }`}
           >
-            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 text-violet-700 transition-all group-hover:border-[#c4ff47]/60 group-hover:bg-[#c4ff47]/20 group-hover:text-[#120B2E]">
+            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 text-violet-700 transition-all group-hover:border-[#93f72b]/60 group-hover:bg-[#93f72b]/20 group-hover:text-[#120B2E]">
               <Icon size={24} strokeWidth={2} />
             </div>
             <h2 className="flex items-center gap-2 text-base font-black text-slate-900 group-hover:text-violet-800">

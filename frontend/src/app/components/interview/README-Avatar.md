@@ -197,8 +197,8 @@ fill="#2d1810"
 
 // Màu áo (shoulder gradient)
 <linearGradient id="shoulderGradient">
-  <stop offset="0%" stopColor="#6E35E8" />
-  <stop offset="100%" stopColor="#9B6DFF" />
+  <stop offset="0%" stopColor="#8037f4" />
+  <stop offset="100%" stopColor="#a66ff8" />
 </linearGradient>
 ```
 
@@ -271,7 +271,7 @@ utterance.volume = 1.0; // Âm lượng (0-1)
 
 **Design:**
 - Inspired by modern AI assistants
-- ProInterview brand colors (#6E35E8, #B4F500)
+- ProInterview brand colors (#8037f4, #93f72b)
 - Minimalist & clean aesthetic
 
 ---

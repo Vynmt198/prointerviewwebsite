@@ -233,13 +233,13 @@ export function CVDocumentPreview({
       <div className="mb-3 flex items-center gap-2.5">
         <div
           className="flex h-8 w-8 items-center justify-center rounded-md"
-          style={{ background: "rgba(110,53,232,0.1)" }}
+          style={{ background: "rgba(128,55,244,0.1)" }}
         >
-          <Eye className="h-4 w-4" style={{ color: "#6E35E8" }} />
+          <Eye className="h-4 w-4" style={{ color: "#8037f4" }} />
         </div>
         <div>
           <h3 className="font-semibold text-gray-900" style={{ fontSize: "0.9rem" }}>
-            So sánh CV & JD — Keyword Highlight
+            Phân tích CV & JD, Keyword Highlight
           </h3>
           <p className="text-gray-400" style={{ fontSize: "0.75rem" }}>
             <span className="font-medium text-green-600">{matchedKws.length} khớp</span>

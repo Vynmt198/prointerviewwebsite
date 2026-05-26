@@ -1,12 +1,13 @@
 @import './fonts.css';
 @import './tailwind.css';
 @import './theme.css';
+@import './brand.css';
 
 @theme {
   /* Lime chủ đạo — dùng với nền #120B2E + chữ sáng */
   --color-secondary-fixed-dim: #cfbdff;
   --color-on-primary: #0a0a0c;
-  --color-primary-fixed-dim: #8fbc24;
+  --color-primary-fixed-dim: #7fe015;
   --color-surface-container-lowest: #120b2e;
   --color-secondary: #7000ff;
   --color-on-tertiary-container: #980de8;
@@ -24,7 +25,7 @@
   --color-secondary-container: #7000ff;
   --color-on-surface: #f1eff4;
   --color-inverse-surface: #e6e0ee;
-  --color-surface-tint: #c4ff47;
+  --color-surface-tint: #93f72b;
   --color-tertiary-fixed: #f3daff;
   --color-surface-dim: #0f0828;
   --color-on-primary-container: #506e00;
@@ -43,13 +44,13 @@
   --color-on-secondary-fixed-variant: #ffffff;
   --color-inverse-primary: #4b6700;
   --color-inverse-on-surface: #322f39;
-  --color-primary-fixed: #c4ff47;
+  --color-primary-fixed: #93f72b;
   --color-on-primary-fixed: #0a0a0c;
   --color-tertiary: #ffffff;
   --color-surface-container-low: #160f36;
   --color-primary-container: #d4ff7a;
   --color-background: #120b2e;
-  --color-primary: #c4ff47;
+  --color-primary: #93f72b;
   --color-surface-container-high: #1f1c2b;
 
   --radius-DEFAULT: 1rem;
@@ -64,10 +65,10 @@
 /* Lime hệ — dùng trong style inline / shadow */
 :root,
 .dark {
-  --pi-lime: #c4ff47;
-  --pi-lime-soft: rgba(196, 255, 71, 0.14);
-  --pi-lime-glow: rgba(196, 255, 71, 0.38);
-  --pi-lime-border: rgba(196, 255, 71, 0.28);
+  --pi-lime: #93f72b;
+  --pi-lime-soft: rgba(147, 247, 43, 0.14);
+  --pi-lime-glow: rgba(147, 247, 43, 0.38);
+  --pi-lime-border: rgba(147, 247, 43, 0.28);
 }
 
 /* ── Global modern base ────────────────────────────── */
@@ -108,12 +109,12 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(110, 53, 232, 0.25);
+  background: rgba(128, 55, 244, 0.25);
   border-radius: 999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: color-mix(in srgb, var(--pi-lime) 55%, rgba(110, 53, 232, 0.5));
+  background: color-mix(in srgb, var(--pi-lime) 55%, rgba(128, 55, 244, 0.5));
 }
 
 /* ── Smooth transitions for interactive elements ───── */
@@ -127,7 +128,7 @@ textarea {
 
 /* ── Global focus ring ─────────────────────────────── */
 :focus-visible {
-  outline: 2px solid rgba(110, 53, 232, 0.6);
+  outline: 2px solid rgba(128, 55, 244, 0.6);
   outline-offset: 2px;
 }
 
@@ -188,19 +189,20 @@ textarea {
 
 /* ── Premium Buttons ───────────────────────────────── */
 .btn-gradient {
-  background: linear-gradient(135deg, #6E35E8 0%, #8B4DFF 100%);
+  background: #8037f4;
   color: white;
   border-radius: var(--radius-lg);
   font-weight: 600;
   transition: all 0.3s ease;
   position: relative;
   overflow: hidden;
-  box-shadow: 0 4px 14px 0 rgba(110, 53, 232, 0.25);
+  box-shadow: 0 4px 14px 0 rgba(128, 55, 244, 0.25);
 }
 
 .btn-gradient:hover {
+  background: #6d2fd6;
   transform: translateY(-1px);
-  box-shadow: 0 6px 20px rgba(110, 53, 232, 0.4);
+  box-shadow: 0 6px 20px rgba(128, 55, 244, 0.4);
 }
 
 .btn-gradient:active {
@@ -215,7 +217,7 @@ textarea {
   content: "";
   position: absolute;
   inset: -2px;
-  background: linear-gradient(135deg, #6E35E8, #c4ff47);
+  background: #93f72b;
   filter: blur(12px);
   opacity: 0;
   border-radius: inherit;
@@ -229,17 +231,11 @@ textarea {
 
 /* ── Gradient text ─────────────────────────────────── */
 .gradient-text {
-  background: linear-gradient(135deg, #6E35E8, #9B6DFF);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: #8037f4;
 }
 
 .gradient-text-lime {
-  background: linear-gradient(135deg, #c4ff47, #6E35E8);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: #93f72b;
 }
 
 /* ── Shimmer loading skeleton ──────────────────────── */
@@ -292,5 +288,5 @@ textarea {
 /* ── Section divider gradient ──────────────────────── */
 .divider-gradient {
   height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(110, 53, 232, 0.2), transparent);
+  background: linear-gradient(90deg, transparent, rgba(128, 55, 244, 0.2), transparent);
 }

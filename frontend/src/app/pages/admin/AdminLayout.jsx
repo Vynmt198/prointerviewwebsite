@@ -42,14 +42,14 @@ function AdminTopBar() {
 
   return (
     <header
-      className="sticky top-0 z-30 flex h-16 shrink-0 items-center gap-4 border-b border-[rgba(110,53,232,0.14)] bg-white/95 px-5 antialiased backdrop-blur-xl"
-      style={{ boxShadow: "0 1px 0 rgba(110, 53, 232, 0.08)" }}
+      className="sticky top-0 z-30 flex h-16 shrink-0 items-center gap-4 border-b border-[rgba(128,55,244,0.14)] bg-white/95 px-5 antialiased backdrop-blur-xl"
+      style={{ boxShadow: "0 1px 0 rgba(128, 55, 244, 0.08)" }}
     >
-      <SidebarTrigger className="rounded-lg text-[#6E35E8]/75 transition-colors hover:bg-[#6E35E8]/10 hover:text-[#6E35E8]" />
-      <div className="h-6 w-px shrink-0 bg-[#6E35E8]/20" />
+      <SidebarTrigger className="rounded-lg text-[#8037f4]/75 transition-colors hover:bg-[#8037f4]/10 hover:text-[#8037f4]" />
+      <div className="h-6 w-px shrink-0 bg-[#8037f4]/20" />
       <div className="min-w-0 flex flex-col gap-0">
         <h1
-          className="truncate text-[#6E35E8]"
+          className="truncate text-[#8037f4]"
           style={{ fontSize: "0.9375rem", fontWeight: 700, lineHeight: 1.2, letterSpacing: "-0.015em" }}
         >
           {label}
@@ -61,7 +61,7 @@ function AdminTopBar() {
       <div className="flex-1" />
       <span
         className="shrink-0 rounded-md px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-[#2D1B69] sm:text-[10px]"
-        style={{ background: "linear-gradient(135deg, #B4F500, #93D600)" }}
+        style={{ background: "#93f72b" }}
       >
         Admin
       </span>

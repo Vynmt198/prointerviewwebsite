@@ -67,8 +67,8 @@ export function CourseRecommendations({
         border: "1px solid rgba(255,255,255,0.08)",
       }}
       onMouseEnter={(e) => {
-        (e.currentTarget).style.border = "1px solid rgba(110, 53, 232,0.4)";
-        (e.currentTarget).style.boxShadow = "0 20px 60px rgba(110, 53, 232,0.15)";
+        (e.currentTarget).style.border = "1px solid rgba(128, 55, 244,0.4)";
+        (e.currentTarget).style.boxShadow = "0 20px 60px rgba(128, 55, 244,0.15)";
       }}
       onMouseLeave={(e) => {
         (e.currentTarget).style.border = "1px solid rgba(255,255,255,0.08)";
@@ -86,7 +86,7 @@ export function CourseRecommendations({
         <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
           <div
             className="w-12 h-12 rounded-full flex items-center justify-center"
-            style={{ background: "rgba(110, 53, 232,0.85)" }}
+            style={{ background: "rgba(128, 55, 244,0.85)" }}
           >
             <PlayCircle className="w-6 h-6 text-white" />
           </div>
@@ -94,7 +94,7 @@ export function CourseRecommendations({
         <div className="absolute top-3 left-3">
           <span
             className="text-xs font-bold px-2.5 py-1 rounded-full"
-            style={{ background: "rgba(110, 53, 232,0.85)", color: "#fff" }}
+            style={{ background: "rgba(128, 55, 244,0.85)", color: "#fff" }}
           >
             {course.category}
           </span>
@@ -273,7 +273,7 @@ export function CourseRecommendations({
       <div className="flex items-center justify-between mb-4">
         <div>
           <h3 className="font-bold text-gray-900 flex items-center gap-2">
-            <GraduationCap className="w-5 h-5 text-[#6E35E8]" />
+            <GraduationCap className="w-5 h-5 text-[#8037f4]" />
             {title}
           </h3>
           {subtitle && <p className="text-sm text-gray-500 mt-0.5">{subtitle}</p>}
@@ -281,7 +281,7 @@ export function CourseRecommendations({
         <button
           onClick={() => navigate("/courses")}
           className="text-sm font-semibold flex items-center gap-1 transition-colors"
-          style={{ color: "#6E35E8" }}
+          style={{ color: "#8037f4" }}
         >
           Xem tất cả <ArrowRight className="w-4 h-4" />
         </button>

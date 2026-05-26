@@ -125,7 +125,7 @@ export function MentorReview() {
         <button
           onClick={() => navigate(`/session/${session.backendId || session.sessionId}`)}
           className="px-8 py-3 rounded-2xl text-sm font-black text-white shadow-xl shadow-violet-900/20"
-          style={{ background: "linear-gradient(135deg, #6E35E8, #8B4DFF)" }}
+          style={{ background: "#8037f4" }}
         >
           Xem buổi phỏng vấn
         </button>
@@ -147,7 +147,7 @@ export function MentorReview() {
           <button
             onClick={() => navigate("/login")}
             className="px-8 py-3 rounded-2xl text-sm font-black text-white shadow-xl shadow-violet-900/20"
-            style={{ background: "linear-gradient(135deg, #6E35E8, #8B4DFF)" }}
+            style={{ background: "#8037f4" }}
           >
             Đăng nhập
           </button>
@@ -155,7 +155,7 @@ export function MentorReview() {
           <button
             onClick={() => navigate("/")}
             className="px-8 py-3 rounded-2xl text-sm font-black text-white shadow-xl shadow-violet-900/20"
-            style={{ background: "linear-gradient(135deg, #6E35E8, #8B4DFF)" }}
+            style={{ background: "#8037f4" }}
           >
             Về trang chủ
           </button>
@@ -195,7 +195,7 @@ export function MentorReview() {
           <button
             onClick={() => navigate("/profile")}
             className="w-full py-5 rounded-[2rem] font-black text-lg text-white shadow-2xl shadow-indigo-900/20 transition-all hover:scale-[1.02] active:scale-95"
-            style={{ background: "linear-gradient(135deg, #6E35E8, #8B4DFF)" }}
+            style={{ background: "#8037f4" }}
           >
             Về hồ sơ
           </button>
@@ -310,7 +310,7 @@ export function MentorReview() {
           onClick={handleSubmit}
           disabled={!canSubmit || submitting}
           className="w-full py-6 rounded-[2rem] font-black text-lg text-white shadow-2xl shadow-indigo-900/20 transition-all disabled:opacity-50 disabled:scale-100 hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-3"
-          style={{ background: "linear-gradient(135deg, #6E35E8, #8B4DFF)" }}
+          style={{ background: "#8037f4" }}
         >
           {submitting ? (
             <div className="w-6 h-6 rounded-full border-3 border-white/30 border-t-white animate-spin" />

@@ -165,7 +165,7 @@ export function MeetingRoom() {
             <button
               type="button"
               onClick={() => navigate(isMentor ? "/mentor/dashboard" : `/session/${sessionId}`)}
-              className="px-8 py-3 bg-[#c4ff47] text-slate-900 rounded-2xl text-xs font-black uppercase tracking-widest"
+              className="px-8 py-3 bg-[#93f72b] text-slate-900 rounded-2xl text-xs font-black uppercase tracking-widest"
             >
               Chi tiết buổi hẹn
             </button>
@@ -206,7 +206,7 @@ export function MeetingRoom() {
           >
             <ArrowLeft size={18} />
           </button>
-          <div className="w-10 h-10 rounded-xl bg-[#c4ff47] flex items-center justify-center text-slate-900">
+          <div className="w-10 h-10 rounded-xl bg-[#93f72b] flex items-center justify-center text-slate-900">
             <VideoIcon size={20} />
           </div>
           <div>
@@ -253,7 +253,7 @@ export function MeetingRoom() {
               <button
                 type="button"
                 onClick={handleCompleteSession}
-                className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#c4ff47] text-slate-900 text-[10px] font-black uppercase tracking-widest shadow-lg shadow-[#c4ff47]/20"
+                className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#93f72b] text-slate-900 text-[10px] font-black uppercase tracking-widest shadow-lg shadow-[#93f72b]/20"
               >
                 <ShieldCheck size={16} /> Kết thúc buổi
               </button>
@@ -286,7 +286,7 @@ export function MeetingRoom() {
           />
           <div className="absolute top-4 left-4 pointer-events-none">
             <div className="bg-black/60 backdrop-blur-md border border-white/10 rounded-lg px-3 py-1.5 flex items-center gap-2">
-              <div className="w-1.5 h-1.5 rounded-full bg-[#c4ff47] shadow-[0_0_8px_#c4ff47]" />
+              <div className="w-1.5 h-1.5 rounded-full bg-[#93f72b] shadow-[0_0_8px_#93f72b]" />
               <span className="text-[9px] font-bold text-white uppercase tracking-widest opacity-80">
                 {isMentor ? "Mentor" : "Học viên"}
               </span>

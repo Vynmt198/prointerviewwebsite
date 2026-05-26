@@ -8,25 +8,25 @@ import { Zap as Lightning } from "lucide-react";
  */
 const PI = {
   pageGradient: "#ffffff",
-  purple: "#6E35E8",
-  lilac: "#9B6DFF",
-  lime: "#c4ff47",
-  limeDark: "#8fbc24",
+  purple: "#8037f4",
+  lilac: "#a66ff8",
+  lime: "#93f72b",
+  limeDark: "#7fe015",
   limeSoft: "rgba(196,255,71,0.16)",
   /** Khối form — light glass trên nền trắng */
   glass: {
     background: "rgba(255,255,255,0.85)",
-    border: "1px solid rgba(110,53,232,0.12)",
+    border: "1px solid rgba(128,55,244,0.12)",
     backdropFilter: "blur(20px) saturate(1.08)",
     WebkitBackdropFilter: "blur(20px) saturate(1.08)",
     boxShadow:
-      "0 20px 50px rgba(110,53,232,0.10), 0 0 0 1px rgba(110,53,232,0.06) inset",
+      "0 20px 50px rgba(128,55,244,0.10), 0 0 0 1px rgba(128,55,244,0.06) inset",
   },
 };
 
 /** Ô input dark — cùng vibe form trên Home */
 export const AUTH_INPUT_CLASS =
-  "w-full px-5 py-3.5 rounded-2xl font-medium text-gray-800 placeholder:text-gray-400 outline-none transition-all border border-gray-200 bg-white hover:bg-gray-50 focus:border-[#6E35E8]/50 focus:ring-2 focus:ring-[#6E35E8]/15";
+  "w-full px-5 py-3.5 rounded-2xl font-medium text-gray-800 placeholder:text-gray-400 outline-none transition-all border border-gray-200 bg-white hover:bg-gray-50 focus:border-[#8037f4]/50 focus:ring-2 focus:ring-[#8037f4]/15";
 
 /** Nút chính & Google: cùng full width, cùng bo góc, chiều dọc py-4 (không kéo cao). */
 export const AUTH_CTA_FRAME_CLASS =
@@ -37,7 +37,7 @@ export function AuthShell({ children, aside, footerNote }) {
 
   return (
     <div
-      className="min-h-screen flex flex-col relative overflow-x-hidden font-sans selection:bg-[rgba(110,53,232,0.15)] selection:text-gray-900"
+      className="min-h-screen flex flex-col relative overflow-x-hidden font-sans selection:bg-[rgba(128,55,244,0.15)] selection:text-gray-900"
       style={{
         fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif",
         background: PI.pageGradient,
@@ -58,11 +58,11 @@ export function AuthShell({ children, aside, footerNote }) {
         aria-hidden
       >
         {/* Top-right: vùng loang tím đậm chính */}
-        <div className="absolute top-[-20%] right-[-10%] h-[80vh] w-[80vh] rounded-full blur-[80px]" style={{ background: "radial-gradient(circle, rgba(110,53,232,0.55) 0%, rgba(139,77,255,0.35) 45%, transparent 72%)" }} />
+        <div className="absolute top-[-20%] right-[-10%] h-[80vh] w-[80vh] rounded-full blur-[80px]" style={{ background: "radial-gradient(circle, rgba(128,55,244,0.55) 0%, rgba(139,77,255,0.35) 45%, transparent 72%)" }} />
         {/* Bottom-left: loang tím lan rộng */}
-        <div className="absolute bottom-[-15%] left-[-10%] h-[70vh] w-[70vh] rounded-full blur-[100px]" style={{ background: "radial-gradient(circle, rgba(88,28,200,0.45) 0%, rgba(110,53,232,0.25) 50%, transparent 72%)" }} />
+        <div className="absolute bottom-[-15%] left-[-10%] h-[70vh] w-[70vh] rounded-full blur-[100px]" style={{ background: "radial-gradient(circle, rgba(88,28,200,0.45) 0%, rgba(128,55,244,0.25) 50%, transparent 72%)" }} />
         {/* Center: glow tím nhẹ giữa trang */}
-        <div className="absolute top-[40%] left-[30%] h-[50vh] w-[50vh] rounded-full blur-[90px]" style={{ background: "radial-gradient(circle, rgba(110,53,232,0.22) 0%, transparent 65%)" }} />
+        <div className="absolute top-[40%] left-[30%] h-[50vh] w-[50vh] rounded-full blur-[90px]" style={{ background: "radial-gradient(circle, rgba(128,55,244,0.22) 0%, transparent 65%)" }} />
         {/* Right mid: accent nhỏ hơn */}
         <div className="absolute top-[20%] right-[5%] h-[35vh] w-[35vh] rounded-full blur-[60px]" style={{ background: "radial-gradient(circle, rgba(139,77,255,0.45) 0%, transparent 65%)" }} />
       </div>
@@ -72,7 +72,7 @@ export function AuthShell({ children, aside, footerNote }) {
         className="pointer-events-none fixed inset-0 z-[1] opacity-[0.035]"
         style={{
           backgroundImage:
-            "linear-gradient(rgba(110,53,232,0.8) 1px, transparent 1px), linear-gradient(90deg, rgba(110,53,232,0.8) 1px, transparent 1px)",
+            "linear-gradient(rgba(128,55,244,0.8) 1px, transparent 1px), linear-gradient(90deg, rgba(128,55,244,0.8) 1px, transparent 1px)",
           backgroundSize: "32px 32px",
         }}
         aria-hidden
@@ -85,8 +85,8 @@ export function AuthShell({ children, aside, footerNote }) {
           background: "rgba(255,255,255,0.80)",
           backdropFilter: "blur(16px) saturate(1.1)",
           WebkitBackdropFilter: "blur(16px) saturate(1.1)",
-          borderColor: "rgba(110,53,232,0.12)",
-          boxShadow: "0 1px 0 rgba(110,53,232,0.06), 0 8px 32px -8px rgba(110,53,232,0.08)",
+          borderColor: "rgba(128,55,244,0.12)",
+          boxShadow: "0 1px 0 rgba(128,55,244,0.06), 0 8px 32px -8px rgba(128,55,244,0.08)",
         }}
       >
         <div className="mx-auto flex h-16 w-full max-w-[min(100%,calc(64rem+2.5cm))] items-center justify-between gap-6 px-5">
@@ -98,7 +98,7 @@ export function AuthShell({ children, aside, footerNote }) {
             <div
               className="flex h-8 w-8 items-center justify-center rounded-xl shadow-lg transition-transform group-hover:scale-105"
               style={{
-                background: "linear-gradient(135deg, #6E35E8, #9B6DFF)",
+                background: "#8037f4",
               }}
             >
               <Lightning className="h-4 w-4 text-white" />

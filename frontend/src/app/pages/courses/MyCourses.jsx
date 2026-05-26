@@ -27,7 +27,7 @@ function CourseCard({ item, onDetails }) {
         />
       </div>
       <div className="flex flex-1 flex-col p-3 sm:p-4">
-        <h3 className="line-clamp-2 text-xs font-bold leading-snug text-violet-950 transition-colors group-hover:text-[#6E35E8] sm:text-sm">
+        <h3 className="line-clamp-2 text-xs font-bold leading-snug text-violet-950 transition-colors group-hover:text-[#8037f4] sm:text-sm">
           {course.title}
         </h3>
         <p className="mt-1.5 line-clamp-2 flex-1 text-[11px] leading-relaxed text-slate-500 sm:text-xs">
@@ -37,7 +37,7 @@ function CourseCard({ item, onDetails }) {
           <button
             type="button"
             onClick={onDetails}
-            className="text-xs font-semibold text-[#6E35E8] transition-colors hover:text-[#630ed4] hover:underline sm:text-sm"
+            className="text-xs font-semibold text-[#8037f4] transition-colors hover:text-[#6d2fd6] hover:underline sm:text-sm"
           >
             Chi tiết
           </button>
@@ -52,7 +52,7 @@ function EmptyCourses({ onBrowse }) {
     <div className="flex flex-col items-center justify-center px-4 py-16 text-center sm:py-24">
       <div className="relative mb-8 flex h-40 w-40 items-center justify-center sm:h-48 sm:w-48">
         <div className="absolute inset-0 rounded-full bg-violet-100/80" />
-        <div className="absolute -right-1 top-2 flex size-10 items-center justify-center rounded-full bg-[#6E35E8] text-lg font-bold text-white shadow-md">
+        <div className="absolute -right-1 top-2 flex size-10 items-center justify-center rounded-full bg-[#8037f4] text-lg font-bold text-white shadow-md">
           ?
         </div>
         <div className="relative flex size-24 items-center justify-center rounded-2xl border-2 border-dashed border-violet-200 bg-white shadow-sm">
@@ -66,7 +66,7 @@ function EmptyCourses({ onBrowse }) {
       <button
         type="button"
         onClick={onBrowse}
-        className="mt-8 inline-flex items-center gap-2 rounded-xl bg-[#6E35E8] px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-violet-700"
+        className="mt-8 inline-flex items-center gap-2 rounded-xl bg-[#8037f4] px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-violet-700"
       >
         <PlayCircle className="size-4" />
         Khám phá khóa học
@@ -142,7 +142,7 @@ export function MyCourses() {
             badge="Khóa học của tôi"
             title={
               <>
-                Danh sách khóa <span className="text-[#630ed4]">bạn đã mua</span>
+                Danh sách khóa <span className="text-[#6d2fd6]">bạn đã mua</span>
               </>
             }
             subtitle="Mở khóa để xem nội dung, tiếp tục học hoặc ôn lại bài đã hoàn thành."
@@ -152,7 +152,7 @@ export function MyCourses() {
           <div className="rounded-3xl border border-violet-200/80 bg-gradient-to-b from-violet-50/50 via-white to-white p-4 shadow-sm sm:p-6">
             {loading ? (
               <div className="flex min-h-[280px] items-center justify-center">
-                <div className="size-10 animate-spin rounded-full border-4 border-[#6E35E8] border-t-transparent" />
+                <div className="size-10 animate-spin rounded-full border-4 border-[#8037f4] border-t-transparent" />
               </div>
             ) : enrolledCourses.length === 0 ? (
               <EmptyCourses onBrowse={() => navigate("/courses")} />

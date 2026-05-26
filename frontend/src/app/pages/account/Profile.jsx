@@ -154,12 +154,12 @@ async function persistCvProfileToUser(cv) {
 }
 
 const ACHIEVEMENTS = [
-  { icon: Lightning, label: "5 ngày streak", color: "from-[#B4F500] to-[#93D600]", earned: true },
-  { icon: Microphone, label: "10 buổi phỏng vấn", color: "from-[#6E35E8] to-[#8B4DFF]", earned: true },
-  { icon: Star, label: "Điểm STAR 4.0+", color: "from-[#B4F500] to-[#A3D900]", earned: true },
-  { icon: Users, label: "3 buổi với Mentor", color: "from-[#8B4DFF] to-[#6E35E8]", earned: false },
-  { icon: Medal, label: "Top 10% học viên", color: "from-[#6E35E8] to-[#7a23e5]", earned: false },
-  { icon: TrendUp, label: "Cải thiện 50%", color: "from-[#B4F500] to-[#93D600]", earned: false },
+  { icon: Lightning, label: "5 ngày streak", color: "from-[#93f72b] to-[#7fe015]", earned: true },
+  { icon: Microphone, label: "10 buổi phỏng vấn", color: "from-[#8037f4] to-[#a66ff8]", earned: true },
+  { icon: Star, label: "Điểm STAR 4.0+", color: "from-[#93f72b] to-[#7fe015]", earned: true },
+  { icon: Users, label: "3 buổi với Mentor", color: "from-[#a66ff8] to-[#8037f4]", earned: false },
+  { icon: Medal, label: "Top 10% học viên", color: "from-[#8037f4] to-[#8037f4]", earned: false },
+  { icon: TrendUp, label: "Cải thiện 50%", color: "from-[#93f72b] to-[#7fe015]", earned: false },
 ];
 
 export function Profile() {
@@ -367,27 +367,27 @@ export function Profile() {
       desc: "Không giới hạn · Phân tích hành vi · Mentor 1:1",
       progress: null,
       isPaid: true,
-      accent: "#B4F500"
+      accent: "#93f72b"
     };
     if (plans.starterPro) return {
       name: "Chuyên nghiệp (Pro)",
       nameIcon: Lightning,
-      badge: { bg: "bg-[#B4F500]/20", border: "border-[#B4F500]/40", icon: "text-[#93D600]", text: "text-[#7a23e5]" },
-      cardGrad: "linear-gradient(135deg, #6E35E8 0%, #8B4DFF 100%)",
+      badge: { bg: "bg-[#93f72b]/20", border: "border-[#93f72b]/40", icon: "text-[#7fe015]", text: "text-[#8037f4]" },
+      cardGrad: "#8037f4",
       desc: "Phỏng vấn AI · Nhận diện giọng nói · 10 buổi/tháng",
       progress: { used: 0, max: 10 },
       isPaid: true,
-      accent: "#6E35E8"
+      accent: "#8037f4"
     };
     return {
       name: "Cơ bản (Free)",
       nameIcon: Plant,
-      badge: { bg: "bg-[#6E35E8]/15", border: "border-[#6E35E8]/30", icon: "text-[#7a23e5]", text: "text-[#7a23e5]" },
+      badge: { bg: "bg-[#8037f4]/15", border: "border-[#8037f4]/30", icon: "text-[#8037f4]", text: "text-[#8037f4]" },
       cardGrad: "linear-gradient(145deg, #2D1B69 0%, #3B2A82 100%)",
       desc: "2 buổi AI miễn phí · 3 lần phân tích CV",
       progress: { used: 2, max: 2 },
       isPaid: false,
-      accent: "#B4F500"
+      accent: "#93f72b"
     };
   })();
   React.useEffect(() => {
@@ -446,23 +446,23 @@ export function Profile() {
   return (
     <MentorPageShell
       bottomPad="pb-20"
-      className="text-[#2D1B69] selection:bg-[#B4F500]/35 selection:text-[#2D1B69]"
+      className="text-[#2D1B69] selection:bg-[#93f72b]/35 selection:text-[#2D1B69]"
     >
       <style>{`
         .profile-page {
-          --pf-purple: #6E35E8;
-          --pf-purple-dark: #7a23e5;
+          --pf-purple: #8037f4;
+          --pf-purple-dark: #8037f4;
           --pf-purple-deep: #2D1B69;
           --pf-purple-soft: #f8f5ff;
-          --pf-lime: #B4F500;
-          --pf-lime-dark: #93D600;
+          --pf-lime: #93f72b;
+          --pf-lime-dark: #7fe015;
           --pf-lime-soft: rgba(180, 245, 0, 0.2);
           color: var(--pf-purple-deep);
         }
         .profile-page .profile-muted { color: rgba(45, 27, 105, 0.58); }
-        .profile-page .profile-divider { border-color: rgba(110, 53, 232, 0.14); }
+        .profile-page .profile-divider { border-color: rgba(128, 55, 244, 0.14); }
         .profile-page .profile-banner-info {
-          border: 1px solid rgba(110, 53, 232, 0.22);
+          border: 1px solid rgba(128, 55, 244, 0.22);
           background: var(--pf-purple-soft);
           color: var(--pf-purple-deep);
         }
@@ -478,7 +478,7 @@ export function Profile() {
           color: var(--pf-purple-deep);
         }
         .profile-page .profile-badge-rejected {
-          border: 1px solid rgba(110, 53, 232, 0.35);
+          border: 1px solid rgba(128, 55, 244, 0.35);
           background: var(--pf-purple-soft);
           color: var(--pf-purple-dark);
         }
@@ -486,17 +486,17 @@ export function Profile() {
            background: #ffffff;
            backdrop-filter: none;
            border-radius: 28px;
-           border: 1px solid rgba(110, 53, 232, 0.18);
+           border: 1px solid rgba(128, 55, 244, 0.18);
            transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.35s ease, box-shadow 0.45s ease;
            position: relative;
            overflow: hidden;
-           box-shadow: 0 10px 24px rgba(110, 53, 232, 0.08);
+           box-shadow: 0 10px 24px rgba(128, 55, 244, 0.08);
         }
         .profile-page .glass-card::before { content: none; }
         .profile-page .glass-card:hover {
            border-color: rgba(122, 35, 229, 0.32);
            transform: translateY(-2px);
-           box-shadow: 0 16px 32px rgba(110, 53, 232, 0.12);
+           box-shadow: 0 16px 32px rgba(128, 55, 244, 0.12);
         }
         .profile-page .font-headline {
           letter-spacing: -0.045em;
@@ -518,10 +518,10 @@ export function Profile() {
           flex-direction: column;
         }
         .profile-page .profile-cv-accordion-item {
-          border-bottom: 1px solid rgba(110, 53, 232, 0.1);
+          border-bottom: 1px solid rgba(128, 55, 244, 0.1);
         }
         .profile-page .profile-cv-accordion-item--split {
-          border-bottom: 1px solid rgba(110, 53, 232, 0.22);
+          border-bottom: 1px solid rgba(128, 55, 244, 0.22);
           margin-bottom: 0.15rem;
         }
         .profile-page .profile-cv-accordion-trigger {
@@ -552,7 +552,7 @@ export function Profile() {
         }
         .profile-page .profile-cv-static-section {
           padding: 0 0 1.35rem;
-          border-bottom: 1px solid rgba(110, 53, 232, 0.1);
+          border-bottom: 1px solid rgba(128, 55, 244, 0.1);
         }
         .profile-page .profile-cv-static-body {
           margin-top: 0.85rem;
@@ -565,7 +565,7 @@ export function Profile() {
            position: absolute;
            width: 150%;
            height: 150%;
-           background: radial-gradient(circle, rgba(180,245,0,0.28) 0%, rgba(110,53,232,0.18) 45%, transparent 70%);
+           background: radial-gradient(circle, rgba(180,245,0,0.28) 0%, rgba(128,55,244,0.18) 45%, transparent 70%);
            border-radius: 50%;
            z-index: -1;
            animation: pulse-halo 3.2s ease-in-out infinite;
@@ -576,7 +576,7 @@ export function Profile() {
         }
         .profile-page .input-glass {
            background: #ffffff;
-           border: 1px solid rgba(110, 53, 232, 0.2);
+           border: 1px solid rgba(128, 55, 244, 0.2);
            border-radius: 14px;
            color: var(--pf-purple-deep);
            padding: 12px 16px;
@@ -615,8 +615,8 @@ export function Profile() {
         }
         .profile-page .profile-glass-danger:hover {
           transform: none;
-          border-color: rgba(110, 53, 232, 0.4);
-          box-shadow: 0 16px 40px rgba(110, 53, 232, 0.15);
+          border-color: rgba(128, 55, 244, 0.4);
+          box-shadow: 0 16px 40px rgba(128, 55, 244, 0.15);
         }
       `}</style>
       <div className="profile-page relative z-10 mx-auto max-w-6xl px-6 pb-8 pt-8 sm:px-8 sm:pt-10">
@@ -651,7 +651,7 @@ export function Profile() {
         {/* Status messages */}
         {saveMsg === "avatar" && (
           <div className="profile-toast-purple fixed bottom-10 right-10 z-50 flex items-center gap-4 px-8 py-5 rounded-2xl shadow-2xl border font-black text-xs uppercase tracking-widest animate-in fade-in slide-in-from-bottom-5">
-            <div className="rounded-full bg-[#B4F500] p-1 text-[#2D1B69]">
+            <div className="rounded-full bg-[#93f72b] p-1 text-[#2D1B69]">
               <Check size={14} />
             </div>
             Đã cập nhật ảnh đại diện
@@ -664,7 +664,7 @@ export function Profile() {
         )}
         {saveMsg === "mentor_applied" && (
           <div className="profile-toast-purple fixed bottom-10 right-10 z-50 flex max-w-md items-center gap-4 px-8 py-5 rounded-2xl shadow-2xl border font-black text-xs uppercase tracking-widest animate-in fade-in slide-in-from-bottom-5">
-            <div className="rounded-full bg-[#B4F500] p-1 text-[#2D1B69]"><Check size={14} /></div>
+            <div className="rounded-full bg-[#93f72b] p-1 text-[#2D1B69]"><Check size={14} /></div>
             <div>
               <p>Hồ sơ đã được gửi!</p>
               <p className="mt-1 text-[9px] font-medium lowercase first-letter:uppercase text-white/85">Hệ thống sẽ phản hồi kết quả trong vòng 24-48 giờ làm việc.</p>
@@ -673,7 +673,7 @@ export function Profile() {
         )}
         {saveMsg === "mentor_resubmitted" && (
           <div className="profile-toast-lime fixed bottom-10 right-10 z-50 flex max-w-md items-center gap-4 px-8 py-5 rounded-2xl shadow-2xl border font-black text-xs uppercase tracking-widest animate-in fade-in slide-in-from-bottom-5">
-            <div className="rounded-full bg-[#7a23e5] p-1 text-white"><Check size={14} /></div>
+            <div className="rounded-full bg-[#8037f4] p-1 text-white"><Check size={14} /></div>
             <div>
               <p>Đã gửi duyệt lại hồ sơ mentor!</p>
               <p className="mt-1 text-[9px] font-semibold lowercase first-letter:uppercase opacity-80">Admin sẽ xem xét lại hồ sơ của bạn trong thời gian sớm nhất.</p>
@@ -683,7 +683,7 @@ export function Profile() {
 
         {resubmitConfirmOpen && (
           <div
-            className="glass-card fixed bottom-10 right-10 z-[60] w-[min(100vw-2rem,22rem)] animate-in fade-in slide-in-from-bottom-5 rounded-2xl border border-[rgba(110,53,232,0.22)] p-5 shadow-2xl"
+            className="glass-card fixed bottom-10 right-10 z-[60] w-[min(100vw-2rem,22rem)] animate-in fade-in slide-in-from-bottom-5 rounded-2xl border border-[rgba(128,55,244,0.22)] p-5 shadow-2xl"
             role="dialog"
             aria-labelledby="mentor-resubmit-confirm-title"
             aria-describedby="mentor-resubmit-confirm-desc"
@@ -714,7 +714,7 @@ export function Profile() {
               <button
                 type="button"
                 onClick={() => setResubmitConfirmOpen(false)}
-                className="flex-1 rounded-xl border border-[rgba(110,53,232,0.2)] bg-white/80 py-2.5 text-[10px] font-black uppercase tracking-widest text-[#5c4d7a] transition hover:bg-white"
+                className="flex-1 rounded-xl border border-[rgba(128,55,244,0.2)] bg-white/80 py-2.5 text-[10px] font-black uppercase tracking-widest text-[#5c4d7a] transition hover:bg-white"
               >
                 Huỷ
               </button>
@@ -734,7 +734,7 @@ export function Profile() {
           <div className="lg:col-span-4 space-y-10">
             <div className="glass-card p-10 text-center">
                <div className="glow-halo relative mx-auto mb-8 w-fit">
-                  <div className="w-32 h-32 rounded-[34px] bg-[#f8f5ff] border-[3px] border-[#7a23e5] overflow-hidden flex items-center justify-center text-[2.3rem] font-black text-[#7a23e5] shadow-[0_10px_24px_rgba(122,35,229,0.25)]">
+                  <div className="w-32 h-32 rounded-[34px] bg-[#f8f5ff] border-[3px] border-[#8037f4] overflow-hidden flex items-center justify-center text-[2.3rem] font-black text-[#8037f4] shadow-[0_10px_24px_rgba(122,35,229,0.25)]">
                      {avatarUrl && !avatarBroken ? (
                        <img
                          src={resolveMediaUrl(avatarUrl)}
@@ -750,7 +750,7 @@ export function Profile() {
                     type="button"
                     disabled={avatarUploading}
                     onClick={() => avatarInputRef.current?.click()}
-                    className="absolute -bottom-1 -right-1 flex h-10 w-10 items-center justify-center rounded-full border-2 border-white bg-[#6E35E8] text-white shadow-lg transition hover:scale-105 disabled:opacity-60"
+                    className="absolute -bottom-1 -right-1 flex h-10 w-10 items-center justify-center rounded-full border-2 border-white bg-[#8037f4] text-white shadow-lg transition hover:scale-105 disabled:opacity-60"
                     title="Đổi ảnh đại diện"
                   >
                     <Camera size={18} />

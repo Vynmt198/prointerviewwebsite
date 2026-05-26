@@ -179,7 +179,7 @@ export function AdminCoursePayments() {
         ))}
       </div>
 
-      <div className="glass-card min-w-0 max-w-full overflow-hidden border-slate-200/90 [&:hover]:transform-none [&:hover]:shadow-[0_8px_18px_rgba(110,53,232,0.07)]">
+      <div className="glass-card min-w-0 max-w-full overflow-hidden border-slate-200/90 [&:hover]:transform-none [&:hover]:shadow-[0_8px_18px_rgba(128,55,244,0.07)]">
         <div className="max-w-full overflow-x-auto overscroll-x-contain">
           <table className="w-full min-w-[920px] border-collapse text-left">
             <thead>

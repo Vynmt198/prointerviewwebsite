@@ -32,7 +32,7 @@ export function SuccessPage() {
              <div className="space-y-4">
                 <div className="flex justify-between items-end border-b border-white/[0.05] pb-3">
                    <span className="text-[10px] font-black text-white/30 uppercase tracking-widest">Số tiền</span>
-                   <span className="text-xl font-black text-[#c4ff47]">{details.amount}</span>
+                   <span className="text-xl font-black text-[#93f72b]">{details.amount}</span>
                 </div>
                 <div className="flex justify-between items-center text-[10px]">
                    <span className="text-white/30 font-black uppercase tracking-widest">Mã đơn hàng</span>
@@ -53,7 +53,7 @@ export function SuccessPage() {
         )}
 
         <div className="flex flex-col gap-4">
-           <Link to="/" className="h-16 bg-[#c4ff47] text-black rounded-2xl flex items-center justify-center gap-3 font-black uppercase tracking-widest text-[10px] hover:scale-[1.02] active:scale-[0.98] transition-all shadow-[0_12px_45px_rgba(196,255,71,0.25)]">
+           <Link to="/" className="h-16 bg-[#93f72b] text-black rounded-2xl flex items-center justify-center gap-3 font-black uppercase tracking-widest text-[10px] hover:scale-[1.02] active:scale-[0.98] transition-all shadow-[0_12px_45px_rgba(196,255,71,0.25)]">
               Về trang chủ <ArrowRight size={18} />
            </Link>
            <Link to="/pricing" className="h-16 bg-white/5 text-white/30 rounded-2xl flex items-center justify-center gap-3 font-black uppercase tracking-widest text-[10px] hover:text-white hover:bg-white/10 transition-all">
@@ -63,7 +63,7 @@ export function SuccessPage() {
       </motion.div>
       <style>{`
         .glass-card { background: rgba(255,255,255,0.03); backdrop-filter: blur(40px); border-radius: 40px; border: 1px solid rgba(255,255,255,0.08); }
-        .bg-primary-fixed { background-color: #c4ff47; }
+        .bg-primary-fixed { background-color: #93f72b; }
       `}</style>
     </div>
   );

@@ -10,7 +10,7 @@ export function FilterRadio({ active, onClick, children }) {
     >
       <span
         className={`flex size-4 shrink-0 items-center justify-center rounded-full border-2 transition-colors ${
-          active ? "border-[#6E35E8] bg-[#6E35E8]" : "border-slate-300 bg-white"
+          active ? "border-[#8037f4] bg-[#8037f4]" : "border-slate-300 bg-white"
         }`}
         aria-hidden
       >
@@ -46,7 +46,7 @@ export function ExploreFilterSidebar({ title = "Bộ lọc", onClear, hasFilter,
         type="button"
         onClick={onClear}
         disabled={!hasFilter}
-        className="mt-4 w-full rounded-lg bg-[#6E35E8] py-2.5 text-sm font-bold text-white transition-colors hover:bg-violet-700 disabled:cursor-not-allowed disabled:opacity-40"
+        className="mt-4 w-full rounded-lg bg-[#8037f4] py-2.5 text-sm font-bold text-white transition-colors hover:bg-violet-700 disabled:cursor-not-allowed disabled:opacity-40"
       >
         Xóa bộ lọc
       </button>
