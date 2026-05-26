@@ -21,22 +21,23 @@ import { toastApiError } from "../../utils/apiToast";
 import { GoogleSignInBlock } from "../../components/auth/GoogleSignInBlock";
 import { BrandLogo } from "../../components/brand/BrandLogo";
 import { SparkleGlyph } from "../../components/decor/SparkleGlyph.jsx";
+import { AUTH_COPY } from "../../constants/brandVoice";
 
 const INPUT_CLS =
   "w-full px-4 py-3.5 rounded-xl border border-gray-200 text-base outline-none transition-all " +
-  "focus:border-[#6E35E8] focus:ring-2 focus:ring-[#6E35E8]/15 text-gray-900 placeholder-gray-400 " +
+  "focus:border-[#8037f4] focus:ring-2 focus:ring-[#8037f4]/15 text-gray-900 placeholder-gray-400 " +
   "bg-white hover:bg-gray-50/50";
 
 const TESTIMONIALS = [
   {
     avatar: "PA",
-    gradFrom: "#6E35E8",
-    gradTo: "#9B6DFF",
+    gradFrom: "#8037f4",
+    gradTo: "#a66ff8",
     quote: "Sau 3 buổi mock interview với AI, mình tự tin hơn hẳn và nhận được offer từ Shopee chỉ sau 2 tuần luyện tập.",
     name: "Phạm Anh Tuấn",
     role: "Software Engineer @ Shopee",
     tag: "Đã nhận offer ✨",
-    tagColor: "#6E35E8",
+    tagColor: "#8037f4",
   },
   {
     avatar: "NH",
@@ -96,7 +97,11 @@ export function Login() {
   };
 
   const errorIsGoogleEnvHint = Boolean(
-    error && /VITE_GOOGLE|Google chưa được bật|thiếu.*CLIENT_ID/i.test(error),
+    error && /VITE_GOOGLE|Google chưa được bật|thiếu.*CLIENT_ID|GOOGLE_CLIENT_ID|Authorized JavaScript/i.test(error),
+  );
+  const errorIsAccountLocked = Boolean(error && /bị khóa/i.test(error));
+  const errorIsProxyOrApi = Boolean(
+    error && /Vite proxy|Không gọi được API|Không kết nối được backend/i.test(error),
   );
 
   return (
@@ -129,14 +134,14 @@ export function Login() {
         {/* Top bar */}
         <div
           className="relative z-10 flex h-20 flex-shrink-0 items-center justify-between border-b px-10"
-          style={{ borderColor: "rgba(110,53,232,0.1)" }}
+          style={{ borderColor: "rgba(128,55,244,0.1)" }}
         >
           <button onClick={() => navigate(getBrandClickPath())} className="flex items-center gap-2.5 group">
             <BrandLogo size="auth" />
           </button>
           <p className="text-sm text-gray-500">
             Chưa có tài khoản?{" "}
-            <Link to="/register" className="font-semibold hover:underline" style={{ color: "#6E35E8" }}>
+            <Link to="/register" className="font-semibold hover:underline" style={{ color: "#8037f4" }}>
               Đăng ký
             </Link>
           </p>
@@ -150,30 +155,48 @@ export function Login() {
               style={{ fontSize: "1.875rem", fontWeight: 750, letterSpacing: "-0.025em" }}>
               Đăng nhập
             </h1>
-            <p className="text-gray-500 text-sm mb-4">Chào mừng trở lại! Hãy tiếp tục luyện tập.</p>
+            <p className="text-gray-500 text-sm mb-4">{AUTH_COPY.loginSubtitle}</p>
 
             {/* Success banner */}
             {isRegistered && (
               <div className="flex items-start gap-3 rounded-2xl px-4 py-3 mb-5 border"
-                style={{ background: "rgba(110,53,232,0.06)", borderColor: "rgba(110,53,232,0.2)" }}>
-                <Check className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: "#6E35E8" }} />
+                style={{ background: "rgba(128,55,244,0.06)", borderColor: "rgba(128,55,244,0.2)" }}>
+                <Check className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: "#8037f4" }} />
                 <div>
-                  <p className="text-sm font-semibold" style={{ color: "#6E35E8" }}>Đăng ký thành công! 🎉</p>
-                  <p className="text-xs text-gray-500 mt-0.5">Vui lòng đăng nhập để tiếp tục sử dụng ProInterview.</p>
+                  <p className="text-sm font-semibold" style={{ color: "#8037f4" }}>{AUTH_COPY.loginRegisteredTitle}</p>
+                  <p className="text-xs text-gray-500 mt-0.5">{AUTH_COPY.loginRegisteredBody}</p>
                 </div>
               </div>
             )}
 
             {/* Error banner */}
             {error && (
-              <div className={`mb-5 flex items-start gap-3 rounded-2xl border px-4 py-3 text-sm ${errorIsGoogleEnvHint
+              <div className={`mb-5 flex items-start gap-3 rounded-2xl border px-4 py-3 text-sm ${errorIsGoogleEnvHint || errorIsAccountLocked || errorIsProxyOrApi
                   ? "border-amber-400/25 bg-amber-50 text-amber-800"
                   : "border-red-300/40 bg-red-50 text-red-700"
                 }`}>
-                {errorIsGoogleEnvHint
+                {errorIsGoogleEnvHint || errorIsAccountLocked || errorIsProxyOrApi
                   ? <Info className="mt-0.5 h-4 w-4 flex-shrink-0 text-amber-500" strokeWidth={2} />
                   : <WarningCircle className="mt-0.5 h-4 w-4 flex-shrink-0 text-red-400" />}
-                <p className="font-medium">{error}</p>
+                <div>
+                  <p className="font-medium">{error}</p>
+                  {errorIsAccountLocked && (
+                    <p className="mt-1.5 text-xs leading-relaxed text-amber-900/80">
+                      Bạn thử đăng nhập bằng email/mật khẩu, hoặc liên hệ{" "}
+                      <a href="mailto:prointerview.ai@gmail.com" className="font-semibold underline">
+                        prointerview.ai@gmail.com
+                      </a>
+                      .
+                    </p>
+                  )}
+                  {errorIsProxyOrApi && !errorIsAccountLocked && (
+                    <p className="mt-1.5 text-xs leading-relaxed text-amber-900/80">
+                      Chạy <code className="rounded bg-amber-100 px-1">npm run dev:full</code> trong thư mục{" "}
+                      <code className="rounded bg-amber-100 px-1">frontend</code>. Backend mặc định cổng{" "}
+                      <strong>5001</strong> (macOS thường chiếm 5000).
+                    </p>
+                  )}
+                </div>
               </div>
             )}
 
@@ -193,7 +216,7 @@ export function Login() {
               <div>
                 <div className="flex justify-between items-center mb-1.5">
                   <label htmlFor="login-password" className="text-sm font-semibold text-gray-700">Mật khẩu</label>
-                  <Link to="/forgot-password" className="text-sm font-semibold hover:underline" style={{ color: "#6E35E8" }}>
+                  <Link to="/forgot-password" className="text-sm font-semibold hover:underline" style={{ color: "#8037f4" }}>
                     Quên mật khẩu?
                   </Link>
                 </div>
@@ -216,8 +239,8 @@ export function Login() {
               <button type="submit" disabled={loading}
                 className="w-full py-3.5 rounded-full font-bold text-base text-white transition-all hover:brightness-110 active:scale-[0.98] disabled:opacity-60"
                 style={{
-                  background: "linear-gradient(135deg, #6E35E8, #9B6DFF)",
-                  boxShadow: "0 4px 20px rgba(110,53,232,0.3)",
+                  background: "#8037f4",
+                  boxShadow: "0 4px 20px rgba(128,55,244,0.3)",
                 }}>
                 {loading
                   ? <span className="flex items-center justify-center gap-2">
@@ -239,9 +262,9 @@ export function Login() {
 
             <p className="mt-5 text-center text-xs text-gray-400 leading-relaxed">
               Bằng cách đăng nhập, bạn đồng ý với{" "}
-              <a href="#" className="font-semibold text-[#6E35E8] hover:underline">Điều khoản dịch vụ</a>
+              <a href="#" className="font-semibold text-[#8037f4] hover:underline">Điều khoản dịch vụ</a>
               {" "}và{" "}
-              <a href="#" className="font-semibold text-[#6E35E8] hover:underline">Chính sách bảo mật</a>.
+              <a href="#" className="font-semibold text-[#8037f4] hover:underline">Chính sách bảo mật</a>.
             </p>
           </div>
         </div>
@@ -254,14 +277,14 @@ export function Login() {
       >
         {/* Blobs — chỉ tím, không vàng/cam */}
         <div className="absolute -top-20 -right-20 w-96 h-96 rounded-full opacity-25 blur-3xl pointer-events-none"
-          style={{ background: "radial-gradient(circle, #6E35E8 0%, transparent 70%)" }} />
+          style={{ background: "radial-gradient(circle, #8037f4 0%, transparent 70%)" }} />
         <div className="absolute -bottom-24 -left-16 w-[22rem] h-[22rem] rounded-full opacity-20 blur-3xl pointer-events-none"
-          style={{ background: "radial-gradient(circle, #9B6DFF 0%, transparent 72%)" }} />
+          style={{ background: "radial-gradient(circle, #a66ff8 0%, transparent 72%)" }} />
 
         {/* Rating badge */}
         <div className="absolute top-8 right-8">
           <div className="flex items-center gap-2 bg-white rounded-2xl px-4 py-2.5 shadow-lg"
-            style={{ border: "1px solid rgba(110,53,232,0.1)" }}>
+            style={{ border: "1px solid rgba(128,55,244,0.1)" }}>
             <div className="flex gap-0.5">
               {[1, 2, 3, 4, 5].map((i) => <Star key={i} className="w-3.5 h-3.5 fill-current" style={{ color: "#f59e0b" }} />)}
             </div>
@@ -274,8 +297,8 @@ export function Login() {
           <div className="flex w-full max-w-sm flex-col gap-6">
           {/* Testimonial card */}
           <div className="w-full rounded-3xl bg-white p-8 shadow-2xl"
-            style={{ border: "1px solid rgba(110,53,232,0.08)" }}>
-            <div className="text-4xl leading-none mb-3" style={{ color: "#9B6DFF", fontFamily: "Georgia, serif" }}>"</div>
+            style={{ border: "1px solid rgba(128,55,244,0.08)" }}>
+            <div className="text-4xl leading-none mb-3" style={{ color: "#a66ff8", fontFamily: "Georgia, serif" }}>"</div>
             <p className="text-gray-700 text-sm leading-relaxed font-medium mb-5">{t.quote}</p>
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-black shrink-0"
@@ -299,7 +322,7 @@ export function Login() {
           {/* Stats */}
           <div>
           <p className="text-gray-700 mb-5 font-bold text-center" style={{ fontSize: "1.2rem", letterSpacing: "-0.02em" }}>
-            Tham gia cùng <span style={{ color: "#6E35E8" }}>10,000+</span> ứng viên<br />
+            Tham gia cùng <span style={{ color: "#8037f4" }}>10,000+</span> ứng viên<br />
             đã thành công với ProInterview
           </p>
           <div className="flex gap-8">
@@ -310,8 +333,8 @@ export function Login() {
             ].map(({ Icon, value, label }) => (
               <div key={value} className="text-center">
                 <div className="w-11 h-11 rounded-2xl flex items-center justify-center mx-auto mb-2"
-                  style={{ background: "rgba(110,53,232,0.08)", border: "1px solid rgba(110,53,232,0.12)" }}>
-                  <Icon className="w-5 h-5" style={{ color: "#6E35E8" }} />
+                  style={{ background: "rgba(128,55,244,0.08)", border: "1px solid rgba(128,55,244,0.12)" }}>
+                  <Icon className="w-5 h-5" style={{ color: "#8037f4" }} />
                 </div>
                 <p className="text-sm font-black text-gray-900">{value}</p>
                 <p className="text-xs text-gray-400 leading-tight">{label}</p>

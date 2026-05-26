@@ -121,8 +121,8 @@ export function MentorAnalytics() {
         {/* Global Key Stats */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-16">
            {[
-             { label: "Buổi mentor", value: stats.totalSessions, trend: "+12", icon: ChartLineIcon, color: "#6E35E8" },
-             { label: "Tổng Mentees", value: stats.totalMentees, trend: "Ổn định", icon: Users, color: "#c4ff47" },
+             { label: "Buổi mentor", value: stats.totalSessions, trend: "+12", icon: ChartLineIcon, color: "#8037f4" },
+             { label: "Tổng Mentees", value: stats.totalMentees, trend: "Ổn định", icon: Users, color: "#93f72b" },
              { label: "Đang cải thiện", value: stats.improvingCount, trend: "Live", icon: Target, color: "#f59e0b" },
              { label: "Xếp hạng top", value: Number(stats.topAvgScore || 0).toFixed(1), trend: "/5.0", icon: Star, color: "#secondary" }
            ].map((stat, i) => (
@@ -161,8 +161,8 @@ export function MentorAnalytics() {
                        <AreaChart data={weeklyChartData}>
                           <defs>
                              <linearGradient id="purpleGradient" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="5%" stopColor="#6E35E8" stopOpacity={0.3}/>
-                                <stop offset="95%" stopColor="#6E35E8" stopOpacity={0}/>
+                                <stop offset="5%" stopColor="#8037f4" stopOpacity={0.3}/>
+                                <stop offset="95%" stopColor="#8037f4" stopOpacity={0}/>
                              </linearGradient>
                           </defs>
                           <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.03)" />
@@ -185,7 +185,7 @@ export function MentorAnalytics() {
                           <Area 
                              type="monotone" 
                              dataKey="Số buổi" 
-                             stroke="#6E35E8" 
+                             stroke="#8037f4" 
                              strokeWidth={4}
                              fillOpacity={1} 
                              fill="url(#purpleGradient)" 
@@ -211,7 +211,7 @@ export function MentorAnalytics() {
                         ]}>
                           <PolarGrid stroke="rgba(255,255,255,0.05)" />
                           <PolarAngleAxis dataKey="subject" tick={{ fill: "#666", fontSize: 9, fontWeight: 800 }} />
-                          <Radar name="Skills" dataKey="A" stroke="#c4ff47" fill="#c4ff47" fillOpacity={0.2} strokeWidth={2} />
+                          <Radar name="Skills" dataKey="A" stroke="#93f72b" fill="#93f72b" fillOpacity={0.2} strokeWidth={2} />
                        </RadarChart>
                     </ResponsiveContainer>
                  </div>
@@ -350,8 +350,8 @@ export function MentorAnalytics() {
                                  <XAxis dataKey="date" hide />
                                  <YAxis domain={[0, 5]} hide />
                                  <Tooltip contentStyle={{ background: "#0E0922", borderRadius: "12px", border: "1px solid #333" }} />
-                                 <Line type="monotone" dataKey="situation" stroke="#6E35E8" strokeWidth={3} dot={false} />
-                                 <Line type="monotone" dataKey="task" stroke="#c4ff47" strokeWidth={3} dot={false} />
+                                 <Line type="monotone" dataKey="situation" stroke="#8037f4" strokeWidth={3} dot={false} />
+                                 <Line type="monotone" dataKey="task" stroke="#93f72b" strokeWidth={3} dot={false} />
                                  <Line type="monotone" dataKey="action" stroke="#f59e0b" strokeWidth={3} dot={false} />
                                  <Line type="monotone" dataKey="result" stroke="#FF8C42" strokeWidth={3} dot={false} />
                               </LineChart>

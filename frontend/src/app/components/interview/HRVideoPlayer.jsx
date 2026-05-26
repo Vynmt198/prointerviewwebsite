@@ -49,7 +49,7 @@ export function HRVideoPlayer({
         borderRadius: "1rem",
         overflow: "hidden",
         boxShadow: isSpeaking
-          ? "0 0 40px rgba(110, 53, 232,0.5), 0 0 80px rgba(110, 53, 232,0.3)"
+          ? "0 0 40px rgba(128, 55, 244,0.5), 0 0 80px rgba(128, 55, 244,0.3)"
           : "0 8px 32px rgba(0,0,0,0.4)",
         transition: "box-shadow 0.3s ease",
       };
@@ -91,11 +91,11 @@ export function HRVideoPlayer({
           <div
             className="w-12 h-12 rounded-full flex items-center justify-center"
             style={{
-              background: "rgba(110, 53, 232,0.2)",
-              border: "2px solid rgba(110, 53, 232,0.3)",
+              background: "rgba(128, 55, 244,0.2)",
+              border: "2px solid rgba(128, 55, 244,0.3)",
             }}
           >
-            <User className="w-6 h-6 text-[#9B6DFF]" />
+            <User className="w-6 h-6 text-[#a66ff8]" />
           </div>
           <p className="text-white/40 text-xs text-center px-2">
             {gender === "male" ? "HR Nam" : "HR Nữ"}
@@ -107,11 +107,11 @@ export function HRVideoPlayer({
       {!fullPanel && isSpeaking && videoState === "ready" && (
         <>
           <div
-            className="absolute inset-0 rounded-2xl border-2 border-[#9B6DFF]/60 animate-ping pointer-events-none"
+            className="absolute inset-0 rounded-2xl border-2 border-[#a66ff8]/60 animate-ping pointer-events-none"
             style={{ animationDuration: "1.2s" }}
           />
           <div
-            className="absolute -inset-1 rounded-2xl border border-[#6E35E8]/40 animate-ping pointer-events-none"
+            className="absolute -inset-1 rounded-2xl border border-[#8037f4]/40 animate-ping pointer-events-none"
             style={{ animationDuration: "1.8s", animationDelay: "0.3s" }}
           />
         </>

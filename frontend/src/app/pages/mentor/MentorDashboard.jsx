@@ -77,7 +77,7 @@ function MenteeProgressModal({
   const star = meeting.starScores;
   const overall = meeting.overallScore ?? 0;
 
-  const scoreColor = overall >= 4 ? "#B4F500" : overall >= 3 ? "#6E35E8" : "#FF8C42";
+  const scoreColor = overall >= 4 ? "#93f72b" : overall >= 3 ? "#8037f4" : "#FF8C42";
   const scoreLabel =
     overall >= 4.5
       ? "Xuất sắc 🏆"
@@ -89,9 +89,9 @@ function MenteeProgressModal({
 
   const starComponents = star
     ? [
-        { key: "situation", label: "Situation", value: star.situation, color: "#6E35E8" },
-        { key: "task", label: "Task", color: "#8B4DFF", value: star.task },
-        { key: "action", label: "Action", color: "#B4F500", value: star.action },
+        { key: "situation", label: "Situation", value: star.situation, color: "#8037f4" },
+        { key: "task", label: "Task", color: "#a66ff8", value: star.task },
+        { key: "action", label: "Action", color: "#93f72b", value: star.action },
         { key: "result", label: "Result", color: "#FF8C42", value: star.result },
       ]
     : [];
@@ -128,7 +128,7 @@ function MenteeProgressModal({
                     alt={meeting.mentee.name}
                     className="h-20 w-20 rounded-[28px] object-cover shadow-md ring-2 ring-violet-200"
                   />
-                  <div className="absolute -bottom-2 -right-2 flex h-8 w-8 items-center justify-center rounded-xl bg-[#c4ff47] text-slate-900 shadow-lg">
+                  <div className="absolute -bottom-2 -right-2 flex h-8 w-8 items-center justify-center rounded-xl bg-[#93f72b] text-slate-900 shadow-lg">
                      <SealCheck size={16} />
                   </div>
                </div>
@@ -358,7 +358,7 @@ export function MentorDashboard() {
             </p>
           </div>
           <div className="flex gap-4">
-              <button type="button" onClick={() => navigate("/mentor/schedule")} className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-[#c4ff47] to-[#8fbc24] px-5 py-2.5 text-[10px] font-black uppercase tracking-widest text-[#0a0814] shadow-[0_8px_24px_rgba(196,255,71,0.22)] transition-all hover:brightness-110">
+              <button type="button" onClick={() => navigate("/mentor/schedule")} className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-[#93f72b] to-[#7fe015] px-5 py-2.5 text-[10px] font-black uppercase tracking-widest text-[#0a0814] shadow-[0_8px_24px_rgba(196,255,71,0.22)] transition-all hover:brightness-110">
                  <Plus size={16} /> Tạo lịch mới
               </button>
           </div>
@@ -367,9 +367,9 @@ export function MentorDashboard() {
         {/* Vital Stats Grid */}
         <div className="mb-8 grid grid-cols-1 gap-4 md:mb-10 md:grid-cols-3 md:gap-5">
            {[
-             { label: "Tổng buổi mentor", value: stats.totalSessions, sub: `+${stats.thisMonthSessions} tháng này`, icon: Users, color: "#6E35E8" },
+             { label: "Tổng buổi mentor", value: stats.totalSessions, sub: `+${stats.thisMonthSessions} tháng này`, icon: Users, color: "#8037f4" },
              { label: "Lịch hẹn sắp tới", value: stats.upcomingMeetings, sub: "Trong 7 ngày tới", icon: CalendarBlank, color: "#f59e0b" },
-             { label: "Doanh thu tạm tính", value: `${(stats.totalEarnings / 1000000).toFixed(1)}M`, sub: "Sẵn sàng rút tiền", icon: CurrencyCircleDollar, color: "#B4F500" }
+             { label: "Doanh thu tạm tính", value: `${(stats.totalEarnings / 1000000).toFixed(1)}M`, sub: "Sẵn sàng rút tiền", icon: CurrencyCircleDollar, color: "#93f72b" }
            ].map((stat, i) => (
              <div key={i} className="glass-card group relative overflow-hidden bg-gradient-to-br from-white to-slate-50 p-5 sm:p-6">
                 <div className="absolute right-0 top-0 h-24 w-24 translate-x-1/2 -translate-y-1/2 rounded-full bg-gradient-to-br from-violet-100/80 to-transparent" />
@@ -393,8 +393,8 @@ export function MentorDashboard() {
               {/* Quick Navigation Cards */}
               <div className="grid gap-4 sm:grid-cols-2">
                  {[
-                   { label: "Lịch trình", desc: "Quản lý meetings", icon: CalendarBlank, path: "/mentor/schedule", color: "#6E35E8" },
-                   { label: "Tài chính", desc: "Thu nhập & Rút tiền", icon: CurrencyCircleDollar, path: "/mentor/finance", color: "#B4F500" },
+                   { label: "Lịch trình", desc: "Quản lý meetings", icon: CalendarBlank, path: "/mentor/schedule", color: "#8037f4" },
+                   { label: "Tài chính", desc: "Thu nhập & Rút tiền", icon: CurrencyCircleDollar, path: "/mentor/finance", color: "#93f72b" },
                  ].map((nav, i) => (
                    <button type="button" key={i} onClick={() => navigate(nav.path)} className="glass-card group flex items-center gap-4 bg-white p-4 text-left">
                       <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 transition-transform group-hover:scale-105">

@@ -95,7 +95,7 @@ User có thể chọn:
   - Animated gradient sphere
   - Pulsing effect khi AI đang nói
   - Waveform animation theo giọng nói AI
-  - Color: Deep Purple (#6E35E8)
+  - Color: Deep Purple (#8037f4)
 
 - 💬 **Question Card**
   - Background: White với subtle shadow
@@ -344,7 +344,7 @@ Trong khi user trả lời, AI phân tích:
 ### 3.2. Section A: Điểm Tổng Quan
 
 #### 🎯 **A1. Overall Score Banner**
-- **Background**: Gradient Purple (#6E35E8 → #9B6DFF)
+- **Background**: Gradient Purple (#8037f4 → #a66ff8)
 - **Layout**:
   ```
   ┌─────────────────────────────────────────────┐

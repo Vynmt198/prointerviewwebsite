@@ -97,9 +97,9 @@ export function AvatarDemo() {
               onClick={() => navigate('/interview')}
               className="flex items-center gap-2 px-4 py-2 rounded-xl font-semibold transition-all hover:brightness-95"
               style={{ 
-                background: "rgba(110, 53, 232,0.08)", 
-                color: "#6E35E8",
-                border: "1px solid rgba(110, 53, 232,0.15)"
+                background: "rgba(128, 55, 244,0.08)", 
+                color: "#8037f4",
+                border: "1px solid rgba(128, 55, 244,0.15)"
               }}
             >
               <ArrowLeft className="w-4 h-4" />
@@ -107,11 +107,11 @@ export function AvatarDemo() {
             </button>
             
             <div className="flex items-center gap-3 px-5 py-2.5 rounded-xl" style={{
-              background: "linear-gradient(135deg, rgba(110, 53, 232,0.06), rgba(139, 77, 255,0.03))",
-              border: "1px solid rgba(110, 53, 232,0.12)"
+              background: "linear-gradient(135deg, rgba(128, 55, 244,0.06), rgba(139, 77, 255,0.03))",
+              border: "1px solid rgba(128, 55, 244,0.12)"
             }}>
               <div className="w-2 h-2 rounded-full animate-pulse" style={{ background: "#B4F000" }} />
-              <span className="text-sm font-bold" style={{ color: "#6E35E8" }}>
+              <span className="text-sm font-bold" style={{ color: "#8037f4" }}>
                 Demo Phỏng vấn AI
               </span>
             </div>
@@ -120,9 +120,9 @@ export function AvatarDemo() {
               onClick={() => navigate('/interview')}
               className="px-5 py-2.5 rounded-xl font-bold text-sm transition-all hover:brightness-105"
               style={{ 
-                background: "linear-gradient(135deg, #6E35E8, #8B4DFF)", 
+                background: "#8037f4", 
                 color: "#fff",
-                boxShadow: "0 4px 12px rgba(110, 53, 232,0.25)"
+                boxShadow: "0 4px 12px rgba(128, 55, 244,0.25)"
               }}
             >
               Bắt đầu thực chiến
@@ -139,7 +139,7 @@ export function AvatarDemo() {
             <span className="text-xs font-semibold" style={{ color: "#6B7280" }}>
               Câu hỏi {currentScenarioIndex + 1}/{DEMO_SCENARIOS.length}
             </span>
-            <span className="text-xs font-bold" style={{ color: "#6E35E8" }}>
+            <span className="text-xs font-bold" style={{ color: "#8037f4" }}>
               {Math.round(((currentScenarioIndex + 1) / DEMO_SCENARIOS.length) * 100)}%
             </span>
           </div>
@@ -148,7 +148,7 @@ export function AvatarDemo() {
               className="h-full rounded-full transition-all duration-500"
               style={{ 
                 width: `${((currentScenarioIndex + 1) / DEMO_SCENARIOS.length) * 100}%`,
-                background: "linear-gradient(90deg, #6E35E8, #8B4DFF)"
+                background: "#8037f4"
               }}
             />
           </div>
@@ -180,8 +180,8 @@ export function AvatarDemo() {
                   className="flex items-center gap-2 px-3 py-2 rounded-xl backdrop-blur-xl"
                   style={{ background: "rgba(255,255,255,0.92)", border: "1px solid rgba(0,0,0,0.08)" }}
                 >
-                  <Brain className="w-4 h-4" style={{ color: "#6E35E8" }} />
-                  <span className="text-xs font-bold" style={{ color: "#6E35E8" }}>
+                  <Brain className="w-4 h-4" style={{ color: "#8037f4" }} />
+                  <span className="text-xs font-bold" style={{ color: "#8037f4" }}>
                     {isSpeaking ? "Đang phỏng vấn..." : "Chờ câu trả lời"}
                   </span>
                 </div>
@@ -205,19 +205,19 @@ export function AvatarDemo() {
             <div 
               className="rounded-2xl p-5"
               style={{ 
-                background: "linear-gradient(135deg, rgba(110, 53, 232,0.04), rgba(139, 77, 255,0.02))",
-                border: "1px solid rgba(110, 53, 232,0.12)"
+                background: "linear-gradient(135deg, rgba(128, 55, 244,0.04), rgba(139, 77, 255,0.02))",
+                border: "1px solid rgba(128, 55, 244,0.12)"
               }}
             >
               <div className="flex items-center gap-2 mb-3">
                 <div 
                   className="w-8 h-8 rounded-xl flex items-center justify-center"
-                  style={{ background: "linear-gradient(135deg, #6E35E8, #8B4DFF)" }}
+                  style={{ background: "#8037f4" }}
                 >
                   <Sparkle className="w-4 h-4 text-white" />
                 </div>
                 <div>
-                  <p className="text-xs font-bold" style={{ color: "#6E35E8" }}>
+                  <p className="text-xs font-bold" style={{ color: "#8037f4" }}>
                     {currentScenario.category}
                   </p>
                   <p className="text-xs" style={{ color: "#9CA3AF" }}>Câu hỏi phỏng vấn</p>
@@ -244,9 +244,9 @@ export function AvatarDemo() {
                 disabled={isSpeaking}
                 className="flex items-center justify-center gap-2 px-5 py-4 rounded-2xl font-bold text-sm transition-all hover:brightness-105 disabled:opacity-50 disabled:cursor-not-allowed"
                 style={{
-                  background: isSpeaking ? "#9CA3AF" : "linear-gradient(135deg, #6E35E8, #8B4DFF)",
+                  background: isSpeaking ? "#9CA3AF" : "#8037f4",
                   color: "#fff",
-                  boxShadow: isSpeaking ? "none" : "0 6px 20px rgba(110, 53, 232,0.3)"
+                  boxShadow: isSpeaking ? "none" : "0 6px 20px rgba(128, 55, 244,0.3)"
                 }}
               >
                 {isSpeaking ? (
@@ -308,7 +308,7 @@ export function AvatarDemo() {
               style={{ background: "#FFFFFF", border: "1px solid rgba(0,0,0,0.06)" }}
             >
               <h3 className="font-bold mb-4 flex items-center gap-2" style={{ color: "#1F1F1F" }}>
-                <Sparkle className="w-4 h-4" style={{ color: "#6E35E8" }} />
+                <Sparkle className="w-4 h-4" style={{ color: "#8037f4" }} />
                 Tính năng AI
               </h3>
               <div className="space-y-3">
@@ -317,13 +317,13 @@ export function AvatarDemo() {
                     icon: VideoCamera, 
                     label: "3D Lip Sync", 
                     desc: "Đồng bộ môi realtime",
-                    color: "#6E35E8" 
+                    color: "#8037f4" 
                   },
                   { 
                     icon: Brain, 
                     label: "AI Thông minh", 
                     desc: "Phân tích câu trả lời",
-                    color: "#8B4DFF" 
+                    color: "#a66ff8" 
                   },
                   { 
                     icon: Microphone, 
@@ -341,7 +341,7 @@ export function AvatarDemo() {
                   <div 
                     key={feature.label}
                     className="flex items-center gap-3 p-3 rounded-xl transition-all hover:brightness-95"
-                    style={{ background: "rgba(110, 53, 232,0.03)", border: "1px solid rgba(110, 53, 232,0.08)" }}
+                    style={{ background: "rgba(128, 55, 244,0.03)", border: "1px solid rgba(128, 55, 244,0.08)" }}
                   >
                     <div 
                       className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
@@ -369,7 +369,7 @@ export function AvatarDemo() {
               style={{ background: "#FFFFFF", border: "1px solid rgba(0,0,0,0.06)" }}
             >
               <h3 className="font-bold mb-4 flex items-center gap-2" style={{ color: "#1F1F1F" }}>
-                <Target className="w-4 h-4" style={{ color: "#6E35E8" }} />
+                <Target className="w-4 h-4" style={{ color: "#8037f4" }} />
                 Tiến độ Demo
               </h3>
               <div className="space-y-2">
@@ -379,12 +379,12 @@ export function AvatarDemo() {
                     className="flex items-center gap-3 p-2.5 rounded-xl transition-all cursor-pointer"
                     style={{ 
                       background: idx === currentScenarioIndex 
-                        ? "rgba(110, 53, 232,0.08)" 
+                        ? "rgba(128, 55, 244,0.08)" 
                         : idx < currentScenarioIndex 
                         ? "rgba(180,240,0,0.05)" 
                         : "transparent",
                       border: idx === currentScenarioIndex 
-                        ? "1px solid rgba(110, 53, 232,0.15)" 
+                        ? "1px solid rgba(128, 55, 244,0.15)" 
                         : "1px solid transparent"
                     }}
                     onClick={() => setCurrentScenarioIndex(idx)}
@@ -395,7 +395,7 @@ export function AvatarDemo() {
                         background: idx < currentScenarioIndex 
                           ? "#B4F000" 
                           : idx === currentScenarioIndex 
-                          ? "linear-gradient(135deg, #6E35E8, #8B4DFF)"
+                          ? "#8037f4"
                           : "#E9EAEC",
                         color: idx <= currentScenarioIndex ? "#fff" : "#9CA3AF"
                       }}
@@ -409,7 +409,7 @@ export function AvatarDemo() {
                     <div className="flex-1 min-w-0">
                       <p 
                         className="text-xs font-semibold truncate"
-                        style={{ color: idx === currentScenarioIndex ? "#6E35E8" : "#1F1F1F" }}
+                        style={{ color: idx === currentScenarioIndex ? "#8037f4" : "#1F1F1F" }}
                       >
                         {scenario.category}
                       </p>

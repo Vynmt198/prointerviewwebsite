@@ -7,6 +7,11 @@ import {
   CV_HUB_DEMO_SCORE_ROWS,
   CV_HOME_DEMO_JD_KEYWORDS,
 } from "../cv/CvAnalysisScoreBreakdown";
+import { CV_SHOWCASE_COPY } from "../../constants/brandVoice";
+import {
+  HOME_CV_SHOWCASE_TITLE_CLAMP,
+  homeSectionClasses as ty,
+} from "../../constants/homeTypography";
 
 const DEMO_MATCH = CV_HUB_DEMO_MATCH;
 
@@ -21,12 +26,12 @@ function ScoreCard({
 }) {
   return (
     <div
-      className={`cv-analysis-glass-card rounded-3xl border border-[#ccc3d8] bg-white px-5 py-3.5 shadow-xl transition-all duration-300 hover:scale-[1.02] sm:px-6 sm:py-4 ${className}`}
+      className={`cv-analysis-glass-card rounded-3xl border border-[#ccc3d8] bg-white px-[1.5rem] py-[0.875rem] shadow-xl transition-all duration-300 hover:scale-[1.02] sm:px-[1.75rem] sm:py-[1.15rem] ${className}`}
     >
       <div className={`flex items-center justify-between gap-3 ${children ? "mb-3 sm:mb-3.5" : ""}`}>
-        <h3 className="font-headline text-lg font-bold text-[#1a1b23] md:text-xl">{title}</h3>
+        <h3 className={ty.cardTitle}>{title}</h3>
         <span
-          className={`shrink-0 rounded-2xl border px-4 py-1.5 text-sm font-bold ${scoreBg} ${scoreClass} ${scoreBorder}`}
+          className={`${ty.cardScore} ${scoreBg} ${scoreClass} ${scoreBorder}`}
         >
           {score}
         </span>
@@ -61,7 +66,7 @@ export function CvAnalysisFeatureShowcase({ onCtaClick }) {
   return (
     <section
       id="cv-analysis"
-      className="relative z-10 flex h-screen max-h-screen flex-col justify-center overflow-hidden px-0 py-4 sm:py-6"
+      className="relative z-10 flex h-screen max-h-screen flex-col justify-center overflow-x-hidden overflow-y-visible px-0 py-4 sm:py-6"
     >
       <style>{`
         .cv-analysis-glass-card {
@@ -89,47 +94,44 @@ export function CvAnalysisFeatureShowcase({ onCtaClick }) {
         }
       `}</style>
       <div className={`relative z-10 flex w-full items-center overflow-visible py-2 ${HOME_SECTION_INNER}`}>
-        <div className="grid w-full origin-center scale-[0.92] grid-cols-1 items-center gap-4 overflow-visible sm:scale-[0.96] lg:grid-cols-2 lg:scale-[0.99] lg:gap-8 xl:scale-[1.02] xl:gap-9">
-          <article className="relative z-10 flex flex-col items-start gap-2.5 pl-3 sm:gap-3 sm:pl-5 lg:pl-8 xl:pl-10">
-            <span className="inline-flex items-center gap-2 rounded-full border border-violet-400/30 bg-violet-500/10 px-3.5 py-1 text-[11px] font-semibold text-violet-700 sm:text-xs">
+        <div className="grid w-full origin-center scale-[0.92] grid-cols-1 items-center gap-4 overflow-visible sm:scale-[0.96] lg:grid-cols-[minmax(0,1.14fr)_minmax(0,0.86fr)] lg:scale-100 lg:gap-6 xl:gap-7">
+          <article className="relative z-10 flex min-w-0 flex-col items-start gap-3 sm:gap-3.5">
+            <span className={ty.cvShowcaseBadge}>
               <FileText className="h-3.5 w-3.5 shrink-0" aria-hidden />
-              So CV với JD
+              {CV_SHOWCASE_COPY.badge}
             </span>
-            <h2 className="font-headline font-extrabold leading-[1.1] tracking-tight">
-              <span
-                className="block whitespace-nowrap text-gray-900"
-                style={{ fontSize: "clamp(1.7rem, 2.6vw, 2.3rem)" }}
-              >
-                CV có khớp JD không?
+            <h2 className={`max-w-full ${ty.title}`}>
+              <span className={ty.titleLineDark} style={{ fontSize: HOME_CV_SHOWCASE_TITLE_CLAMP }}>
+                {CV_SHOWCASE_COPY.titleLine1}
               </span>
               <span
-                className="mt-0.5 block whitespace-nowrap font-headline text-[#5F00F0]"
-                style={{ fontSize: "clamp(1.8rem, 2.9vw, 2.5rem)" }}
+                className={`mt-0.5 ${ty.titleLineAccent}`}
+                style={{ fontSize: HOME_CV_SHOWCASE_TITLE_CLAMP }}
               >
-                biết ngay, không đoán mò
+                {CV_SHOWCASE_COPY.titleLine2}
               </span>
             </h2>
-            <p className="max-w-lg text-[0.9375rem] font-medium leading-relaxed text-gray-600 sm:text-base">
-              Tải CV và JD, AI chấm độ khớp, liệt kê từ khóa đủ/thiếu và gợi ý sửa — ứng tuyển đúng việc, không nộp CV lung tung.
+            <p className={`max-w-full lg:max-w-lg ${ty.cvShowcaseBody}`}>
+              {CV_SHOWCASE_COPY.body}
             </p>
             {onCtaClick ? (
               <button
                 type="button"
                 onClick={onCtaClick}
-                className="inline-flex shrink-0 items-center gap-2 rounded-full px-5 py-2.5 text-sm font-bold text-[#0f172a] transition-all hover:brightness-110 sm:text-base"
+                className={`${ty.cta} text-[#0f172a] hover:brightness-110`}
                 style={{
-                  background: "linear-gradient(135deg, #B4F500, #93D600)",
+                  background: "#93f72b",
                   boxShadow: "0 8px 20px rgba(15,23,42,0.08)",
                 }}
               >
-                So CV với JD ngay
+                {CV_SHOWCASE_COPY.cta}
               </button>
             ) : null}
           </article>
 
-          <section className="relative z-10 flex flex-col items-center justify-center overflow-visible lg:justify-self-center">
-            <div className="relative mx-auto w-full max-w-md overflow-visible">
-              <div className="pointer-events-none absolute left-1/2 top-0 z-0 w-[11.2rem] -translate-x-1/2 -translate-y-[1.14rem] sm:w-[13.2rem] sm:-translate-y-[1.39rem] lg:w-[14.7rem] lg:-translate-y-[1.64rem]">
+          <section className="cv-showcase-visual relative z-10 flex min-w-0 flex-col items-center justify-center overflow-visible lg:justify-self-center">
+            <div className="relative mx-auto w-full max-w-[31rem] overflow-visible">
+              <div className="pointer-events-none absolute left-1/2 top-0 z-0 w-[11.7rem] -translate-x-1/2 -translate-y-[1.14rem] sm:w-[13.7rem] sm:-translate-y-[1.39rem] lg:w-[15.2rem] lg:-translate-y-[1.64rem]">
                 <div className="relative">
                   <MascotSparkle className="left-[14%] top-[18%] h-2 w-2 sm:left-[16%]" />
                   <MascotSparkle className="left-[10%] top-[34%] h-1.5 w-1.5 opacity-90 sm:left-[12%]" />
@@ -155,20 +157,18 @@ export function CvAnalysisFeatureShowcase({ onCtaClick }) {
                 </CardReveal>
 
                 <CardReveal delayMs={140} className="relative z-20 lg:-translate-x-4">
-                  <div className="cv-analysis-glass-card -rotate-1 scale-100 transform rounded-3xl border border-[#ccc3d8] bg-white px-5 py-3.5 shadow-xl transition-all duration-300 hover:scale-[1.02] sm:px-6 sm:py-4">
+                  <div className="cv-analysis-glass-card -rotate-1 scale-100 transform rounded-3xl border border-[#ccc3d8] bg-white px-[1.5rem] py-[0.875rem] shadow-xl transition-all duration-300 hover:scale-[1.02] sm:px-[1.75rem] sm:py-[1.15rem]">
                     <div className="mb-3 flex items-center gap-2.5 sm:mb-3.5">
-                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-violet-100 sm:h-9 sm:w-9">
-                        <FileText className="h-4 w-4 text-[#630ed4] sm:h-[1.125rem] sm:w-[1.125rem]" />
+                      <div className="flex h-[1.7rem] w-[1.7rem] shrink-0 items-center justify-center rounded-lg bg-violet-100 sm:h-[1.95rem] sm:w-[1.95rem]">
+                        <FileText className="h-[0.7rem] w-[0.7rem] text-[#6d2fd6] sm:h-[0.825rem] sm:w-[0.825rem]" />
                       </div>
-                      <h3 className="font-headline text-lg font-bold text-[#1a1b23] md:text-xl">
-                        Từ khóa khớp với JD
-                      </h3>
+                      <h3 className={ty.cardTitle}>Từ khóa khớp với JD</h3>
                     </div>
                     <div className="flex flex-wrap gap-2">
                       {CV_HOME_DEMO_JD_KEYWORDS.map((kw) => (
                         <span
                           key={kw}
-                          className="rounded-full border border-lime-400/70 bg-lime-50 px-2.5 py-1 text-sm font-semibold lowercase text-emerald-900"
+                          className="rounded-full border border-lime-400/70 bg-lime-50 px-2.5 py-1 text-sm font-semibold lowercase text-emerald-900 sm:text-base"
                         >
                           {kw} ✓
                         </span>
@@ -177,8 +177,11 @@ export function CvAnalysisFeatureShowcase({ onCtaClick }) {
                   </div>
                 </CardReveal>
 
-                <CardReveal delayMs={280} className="relative z-30">
-                  <div className="cv-analysis-glass-card relative rotate-1 scale-[1.03] transform overflow-hidden rounded-3xl border border-[#ccc3d8] bg-white shadow-xl transition-all duration-300 hover:scale-[1.02]">
+                <CardReveal
+                  delayMs={280}
+                  className="relative z-30 -mx-4 w-[calc(100%+2rem)] sm:-mx-5 sm:w-[calc(100%+2.5rem)] lg:-mx-6 lg:w-[calc(100%+3rem)]"
+                >
+                  <div className="cv-analysis-glass-card relative w-full rotate-1 scale-[1.03] transform overflow-hidden rounded-3xl border border-[#ccc3d8] bg-white shadow-xl transition-all duration-300 hover:scale-[1.02]">
                     <CvAnalysisScoreBreakdown
                       overallScore={DEMO_MATCH.percent}
                       rows={CV_HUB_DEMO_SCORE_ROWS}

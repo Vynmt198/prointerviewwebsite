@@ -26,7 +26,7 @@ import { CUSTOMER_SHELL_GUTTER, CUSTOMER_SHELL_MAX } from "../../components/layo
 import { CustomerPageHeader } from "../../components/layout/CustomerPageHeader";
 
 const CTA_LIME =
-  "bg-gradient-to-r from-[#c4ff47] to-[#d4ff00] text-violet-950 shadow-[0_8px_28px_rgba(196,255,71,0.25)] hover:brightness-110";
+  "bg-gradient-to-r from-[#93f72b] to-[#93f72b] text-violet-950 shadow-[0_8px_28px_rgba(196,255,71,0.25)] hover:brightness-110";
 
 const INTERVIEW_SETUP_DRAFT_KEY = "prointerview_setup_draft";
 
@@ -111,7 +111,7 @@ function UploadCvDetailPanel({ cvUploaded, uploadedFile, onPickFile }) {
       <p className="mb-3 shrink-0 text-xs font-bold uppercase tracking-wide text-violet-500">Tải file CV</p>
       {cvUploaded && uploadedFile ? (
         <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-2 text-center">
-          <Check className="h-10 w-10 text-[#630ed4]" {...IS} strokeWidth={2} />
+          <Check className="h-10 w-10 text-[#6d2fd6]" {...IS} strokeWidth={2} />
           <p className="text-sm font-semibold text-violet-950">{uploadedFile.name}</p>
           <p className="text-xs text-violet-500">
             {(uploadedFile.size / 1024 / 1024).toFixed(2)} MB
@@ -119,7 +119,7 @@ function UploadCvDetailPanel({ cvUploaded, uploadedFile, onPickFile }) {
           <button
             type="button"
             onClick={onPickFile}
-            className="text-sm font-semibold text-[#630ed4] hover:underline"
+            className="text-sm font-semibold text-[#6d2fd6] hover:underline"
           >
             Đổi file khác
           </button>
@@ -191,8 +191,8 @@ function SelectOptionRing({ selected }) {
     <div
       className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full border-2 transition-all ${
         selected
-          ? "border-[#630ed4] bg-[#630ed4] shadow-[0_2px_10px_rgba(99,14,212,0.35)]"
-          : "border-violet-400 bg-white group-hover:border-[#630ed4]/70"
+          ? "border-[#6d2fd6] bg-[#6d2fd6] shadow-[0_2px_10px_rgba(99,14,212,0.35)]"
+          : "border-violet-400 bg-white group-hover:border-[#6d2fd6]/70"
       }`}
       aria-hidden
     >
@@ -431,7 +431,7 @@ export function Interview() {
     "group relative w-full rounded-md border-2 p-4 text-left transition-all duration-200 sm:p-5";
   const optIdle =
     "cursor-pointer border-violet-200 bg-white hover:border-violet-300 hover:bg-violet-50/80";
-  const optOn = "border-[#630ed4] bg-violet-50 ring-2 ring-violet-200/80";
+  const optOn = "border-[#6d2fd6] bg-violet-50 ring-2 ring-violet-200/80";
 
   return (
     <MentorPageShell bottomPad="pb-24">
@@ -462,7 +462,7 @@ export function Interview() {
             badge="Phỏng vấn AI"
             title={
               <>
-                Luyện nói trước, <span className="text-[#630ed4]">tự tin hơn</span>
+                Luyện nói trước, <span className="text-[#6d2fd6]">tự tin hơn</span>
               </>
             }
             subtitle="Đưa CV, chọn HR AI — luyện trả lời sát hồ sơ, góp ý từng câu, biết sửa gì trước khi gặp HR công ty."
@@ -501,7 +501,7 @@ export function Interview() {
                 <SelectOptionRing selected={option === "A"} />
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
-                    <FileStack className="h-5 w-5 shrink-0 text-[#630ed4]" {...IS} />
+                    <FileStack className="h-5 w-5 shrink-0 text-[#6d2fd6]" {...IS} />
                     <p className="font-bold text-violet-950">CV đã phân tích</p>
                   </div>
                   <p className="mt-0.5 text-xs text-violet-600">
@@ -523,7 +523,7 @@ export function Interview() {
                 <SelectOptionRing selected={option === "B"} />
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
-                    <CloudUpload className="h-5 w-5 shrink-0 text-[#630ed4]" {...IS} />
+                    <CloudUpload className="h-5 w-5 shrink-0 text-[#6d2fd6]" {...IS} />
                     <p className="font-bold text-violet-950">Tải CV mới</p>
                   </div>
                   <p className="mt-0.5 text-xs text-violet-600">Chọn thẻ, rồi upload file trong ô bên dưới</p>
@@ -538,7 +538,7 @@ export function Interview() {
               <button
                 type="button"
                 onClick={() => navigate("/cv-analysis")}
-                className="font-semibold text-[#630ed4] hover:underline"
+                className="font-semibold text-[#6d2fd6] hover:underline"
               >
                 Phân tích CV trước
               </button>
@@ -591,7 +591,7 @@ export function Interview() {
                     <SelectOptionRing selected={hrGender === g} />
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2">
-                        <Icon className="h-5 w-5 shrink-0 text-[#630ed4]" {...IS} />
+                        <Icon className="h-5 w-5 shrink-0 text-[#6d2fd6]" {...IS} />
                         <p className="font-bold text-violet-950">{preview.name}</p>
                       </div>
                       <p className="mt-0.5 text-xs text-violet-600">{preview.subtitle}</p>
@@ -637,7 +637,7 @@ export function Interview() {
           <button
             type="button"
             onClick={() => setFlowStep(1)}
-            className="w-full py-2 text-sm font-medium text-violet-600 hover:text-[#630ed4]"
+            className="w-full py-2 text-sm font-medium text-violet-600 hover:text-[#6d2fd6]"
           >
             ← Quay lại bước 1
           </button>

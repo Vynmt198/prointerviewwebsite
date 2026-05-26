@@ -22,6 +22,35 @@ const jsonHeaders = {
   "Content-Type": "application/json",
 };
 
+/** Lấy message lỗi từ response API (kể cả body không chuẩn). */
+function parseApiErrorBody(body) {
+  if (!body || typeof body !== "object") return "";
+  if (typeof body.error === "string" && body.error.trim()) return body.error.trim();
+  if (typeof body.message === "string" && body.message.trim()) return body.message.trim();
+  if (body.message && typeof body.message === "object" && typeof body.message.error === "string") {
+    return body.message.error.trim();
+  }
+  return "";
+}
+
+function mapAuthHttpError(status, context = "auth") {
+  if (status === 403) {
+    return context === "google"
+      ? "Không gọi được API đăng nhập (403). Dev: khởi động backend và kiểm tra Vite proxy trỏ đúng cổng (thường 5001 trên macOS, không phải 5000)."
+      : "Không có quyền truy cập (403).";
+  }
+  if (status === 401) {
+    return context === "google"
+      ? "Không xác thực được Google. Kiểm tra GOOGLE_CLIENT_ID khớp giữa frontend và backend."
+      : "Email hoặc mật khẩu không đúng.";
+  }
+  if (status === 409) return "Email này đã được đăng ký hoặc liên kết tài khoản khác.";
+  if (status === 429) return "Quá nhiều lần thử. Bạn đợi vài phút rồi thử lại nhé.";
+  if (status === 503) return "Dịch vụ tạm chưa sẵn sàng. Kiểm tra backend đang chạy và biến môi trường.";
+  if (status >= 500) return "Lỗi máy chủ. Thử lại sau hoặc đăng nhập bằng email.";
+  return "";
+}
+
 function bearerHeaders() {
   const t = getAccessToken();
   const h = { ...jsonHeaders };
@@ -203,9 +232,13 @@ export async function loginWithGoogleCredential(credential) {
     });
     const body = await res.json().catch(() => ({}));
     if (!res.ok) {
+      const apiError = parseApiErrorBody(body);
       return {
         success: false,
-        error: body.error || `Đăng nhập Google thất bại (${res.status}).`,
+        error:
+          apiError ||
+          mapAuthHttpError(res.status, "google") ||
+          `Đăng nhập Google thất bại (${res.status}).`,
       };
     }
     if (body.success && body.token && body.user) {
@@ -231,16 +264,20 @@ export async function loginUser(email, password) {
     });
     const body = await res.json().catch(() => ({}));
     if (!res.ok) {
+      const apiError = parseApiErrorBody(body);
       return {
         success: false,
-        error: body.error || "Email hoặc mật khẩu không đúng.",
+        error:
+          apiError ||
+          mapAuthHttpError(res.status, "login") ||
+          "Email hoặc mật khẩu không đúng.",
       };
     }
     if (body.success && body.token && body.user) {
       persistLoginPayload(body);
       return { success: true };
     }
-    return { success: false, error: body.error || "Đăng nhập thất bại." };
+    return { success: false, error: parseApiErrorBody(body) || "Đăng nhập thất bại." };
   } catch {
     return {
       success: false,

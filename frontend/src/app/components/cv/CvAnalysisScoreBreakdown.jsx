@@ -17,7 +17,7 @@ function badgeClass(status) {
 
 function barColor(status) {
   if (status === "good") return "#84cc16";
-  if (status === "ok") return "#8B4DFF";
+  if (status === "ok") return "#a66ff8";
   return "#f97316";
 }
 
@@ -29,14 +29,30 @@ export function CvAnalysisScoreBreakdown({
   rows = [],
   compact = false,
   dense = false,
-  /** Home showcase — thu nhỏ cột tiêu chí bên phải, giữ vòng điểm */
+  /** Home showcase — khoảng cách hàng tiêu chí hơi chặt, cỡ chữ giữ như compact */
   homePreview = false,
+  /** /cv-analysis hub — cao hơn compact (+0.5rem padding dưới) */
+  hubPreview = false,
+  /** Trừ kích thước vòng điểm (rem), mặc định 0 — không dùng trên Home */
+  homePreviewShrinkRem = 0,
   showHeader = true,
   className = "",
 }) {
-  const ring = dense ? 72 : compact ? 88 : 112;
+  const shrinkRem = homePreviewShrinkRem > 0 ? homePreviewShrinkRem : 0;
+  const ringBase = dense ? 72 : compact ? (hubPreview ? 108 : homePreview ? 93 : 88) : 112;
+  const ring = Math.max(64, ringBase - shrinkRem * 16);
+  const compactPad =
+    shrinkRem > 0 && compact
+      ? `p-[calc(0.75rem-${shrinkRem}rem)] sm:p-[calc(1rem-${shrinkRem}rem)]`
+      : compact && hubPreview
+        ? "px-3.5 py-6 sm:px-5 sm:py-7"
+        : compact && homePreview
+          ? "p-[1.05rem] sm:p-[1.3rem]"
+          : compact
+            ? "p-3 sm:p-4"
+            : "";
   const dash = overallScore * 2.51;
-  const rowsTight = dense || homePreview;
+  const rowsTight = dense;
 
   return (
     <div
@@ -53,7 +69,7 @@ export function CvAnalysisScoreBreakdown({
               dense ? "h-6 w-6" : "h-7 w-7 sm:h-8 sm:w-8 sm:rounded-xl"
             }`}
           >
-            <BarChart3 className={`text-[#6E35E8] ${dense ? "h-3 w-3" : "h-3.5 w-3.5 sm:h-4 sm:w-4"}`} />
+            <BarChart3 className={`text-[#8037f4] ${dense ? "h-3 w-3" : "h-3.5 w-3.5 sm:h-4 sm:w-4"}`} />
           </div>
           <div>
             <h3 className={`font-semibold text-slate-900 ${dense ? "text-[11px]" : "text-xs sm:text-sm"}`}>
@@ -64,8 +80,12 @@ export function CvAnalysisScoreBreakdown({
         </div>
       )}
 
-      <div className={dense ? "p-2" : compact ? "p-3 sm:p-4" : "p-5 sm:p-6"}>
-        <div className={`flex flex-wrap items-start ${dense ? "gap-2" : compact ? "gap-3" : "gap-6"}`}>
+      <div className={dense ? "p-2" : compact ? compactPad || "p-3 sm:p-4" : "p-5 sm:p-6"}>
+        <div
+          className={`flex flex-wrap items-start ${
+            dense ? "gap-2" : compact ? (homePreview ? "gap-4" : hubPreview ? "gap-4 sm:gap-5" : "gap-3") : "gap-6"
+          }`}
+        >
           <div className="flex shrink-0 flex-col items-center">
             <div className="relative" style={{ width: ring, height: ring }}>
               <svg viewBox="0 0 100 100" className="h-full w-full -rotate-90">
@@ -82,26 +102,36 @@ export function CvAnalysisScoreBreakdown({
                 />
                 <defs>
                   <linearGradient id="cv-hub-sg" x1="0" y1="0" x2="1" y2="0">
-                    <stop offset="0%" stopColor="#6E35E8" />
-                    <stop offset="100%" stopColor="#8B4DFF" />
+                    <stop offset="0%" stopColor="#8037f4" />
+                    <stop offset="100%" stopColor="#a66ff8" />
                   </linearGradient>
                 </defs>
               </svg>
               <div className="absolute inset-0 flex flex-col items-center justify-center">
                 <span
                   className="font-bold text-slate-900"
-                  style={{ fontSize: dense ? "1.1rem" : compact ? "1.25rem" : "1.6rem" }}
+                  style={{
+                    fontSize: dense
+                      ? shrinkRem
+                        ? `calc(1.1rem - ${shrinkRem}rem)`
+                        : "1.1rem"
+                      : compact
+                        ? shrinkRem
+                          ? `calc(1.25rem - ${shrinkRem}rem)`
+                          : "1.25rem"
+                        : "1.6rem",
+                  }}
                 >
                   {overallScore}
                 </span>
-                <span className="text-[10px] text-slate-500 sm:text-xs">/ 100</span>
+                <span className="text-[11px] text-slate-500 sm:text-xs">/ 100</span>
               </div>
             </div>
-            <p className={`mt-0.5 font-medium text-slate-700 ${dense ? "text-[9px]" : "mt-1 text-[10px] sm:text-xs"}`}>
+            <p className={`font-medium text-slate-700 ${dense ? "mt-0.5 text-[9px]" : "mt-1 text-xs sm:text-sm"}`}>
               Điểm AI
             </p>
             {!dense && (
-              <p className="mt-0.5 text-center text-[9px] leading-tight text-slate-500 sm:text-[0.65rem]">
+              <p className="mt-0.5 text-center text-[11px] leading-snug text-slate-500 sm:text-xs">
                 Clarity · Structure
                 <br />
                 Relevance · Credibility
@@ -112,10 +142,12 @@ export function CvAnalysisScoreBreakdown({
           <div
             className={`min-w-0 flex-1 ${
               homePreview
-                ? "space-y-1.5"
-                : dense
-                  ? "space-y-1"
-                  : "space-y-2 sm:space-y-2.5"
+                ? "min-w-[12.5rem] space-y-1.5 sm:min-w-[14rem]"
+                : hubPreview
+                  ? "space-y-3 sm:space-y-3.5"
+                  : dense
+                    ? "space-y-1"
+                    : "space-y-2 sm:space-y-2.5"
             }`}
           >
             {rows.map((row) => {
@@ -130,22 +162,18 @@ export function CvAnalysisScoreBreakdown({
                   >
                     <span
                       className={`font-medium text-slate-800 ${
-                        homePreview
-                          ? "text-[11px] leading-snug"
-                          : rowsTight
-                            ? "text-[10px] leading-tight"
-                            : "text-[11px] sm:text-sm"
+                        rowsTight
+                          ? "text-[10px] leading-tight"
+                          : "text-xs leading-snug sm:text-sm"
                       }`}
                     >
                       {row.criteria}
                     </span>
                     <span
                       className={`shrink-0 rounded-lg font-bold ${
-                        homePreview
-                          ? "px-1.5 py-0.5 text-[10px]"
-                          : rowsTight
-                            ? "px-1 py-0 text-[9px]"
-                            : "px-1.5 py-0.5 text-[10px] sm:px-2 sm:text-xs"
+                        rowsTight
+                          ? "px-1 py-0 text-[9px]"
+                          : "px-1.5 py-0.5 text-[11px] sm:px-2 sm:text-xs"
                       } ${badgeClass(status)}`}
                     >
                       {row.score}/{max}
@@ -153,7 +181,7 @@ export function CvAnalysisScoreBreakdown({
                   </div>
                   <div
                     className={`overflow-hidden rounded-full bg-slate-200 ${
-                      homePreview ? "h-1.5" : rowsTight ? "h-1" : "h-1.5 sm:h-2"
+                      rowsTight ? "h-1" : hubPreview ? "h-2.5 sm:h-3" : "h-1.5 sm:h-2"
                     }`}
                   >
                     <div
@@ -167,11 +195,9 @@ export function CvAnalysisScoreBreakdown({
                   {row.note ? (
                     <p
                       className={`leading-snug text-slate-600 ${
-                        homePreview
-                          ? "mt-0.5 line-clamp-2 text-[10px]"
-                          : rowsTight
-                            ? "mt-0 line-clamp-1 text-[8.5px]"
-                            : "mt-0.5 line-clamp-2 text-[10px] sm:text-[0.72rem]"
+                        rowsTight
+                          ? "mt-0 line-clamp-1 text-[8.5px]"
+                          : "mt-0.5 line-clamp-2 text-xs sm:text-sm"
                       }`}
                     >
                       {row.note}
@@ -194,28 +220,28 @@ export const CV_HUB_DEMO_SCORE_ROWS = [
     score: 8,
     max: 10,
     status: "good",
-    note: "Văn phong trong CV rõ ràng và súc tích, không dùng từ ngữ mơ hồ.",
+    note: "Rõ ràng, súc tích.",
   },
   {
     criteria: "Structure (STAR)",
     score: 7,
     max: 10,
     status: "ok",
-    note: "Cấu trúc CV rõ ràng, nhưng một số bullet point chưa có kết quả đo lường được.",
+    note: "Cấu trúc ổn, vài bullet thiếu số liệu.",
   },
   {
     criteria: "Relevance (Liên quan JD)",
     score: 6.5,
     max: 10,
     status: "ok",
-    note: "CV có một số kỹ năng trùng khớp với yêu cầu công việc, nhưng vẫn thiếu một số kỹ năng quan trọng.",
+    note: "Khớp JD một phần, còn thiếu vài kỹ năng.",
   },
   {
     criteria: "Credibility (Thuyết phục)",
     score: 7.5,
     max: 10,
     status: "ok",
-    note: "Các tuyên bố trong CV cụ thể và kiểm chứng được, nhưng vẫn cần thêm thông tin về kinh nghiệm và thành tựu.",
+    note: "Cần thêm KPI và thành tựu cụ thể.",
   },
 ];
 
@@ -226,7 +252,7 @@ export const CV_HUB_DEMO_MATCH = {
   summary: "Khá tốt — bổ sung từ khóa còn thiếu có thể nâng điểm đáng kể.",
 };
 
-/** Từ khóa minh họa section So CV trên Home (khác preview hub). */
+/** Từ khóa minh họa section Phân tích CV trên Home (khác preview hub). */
 export const CV_HOME_DEMO_JD_KEYWORDS = [
   "ci/cd",
   "css",

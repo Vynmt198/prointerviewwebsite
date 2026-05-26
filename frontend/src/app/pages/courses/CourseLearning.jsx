@@ -117,7 +117,7 @@ function CurriculumPanel({
           </p>
           <div className="mt-2.5 h-1.5 overflow-hidden rounded-full bg-slate-200/70 dark:bg-slate-800">
             <div
-              className={`h-full rounded-full transition-all duration-500 ${progressPct === 100 ? "bg-emerald-500" : "bg-[#6E35E8]"}`}
+              className={`h-full rounded-full transition-all duration-500 ${progressPct === 100 ? "bg-emerald-500" : "bg-[#8037f4]"}`}
               style={{ width: `${progressPct}%` }}
             />
           </div>
@@ -183,7 +183,7 @@ function CurriculumPanel({
                       onClick={() => onSelectLesson(idx)}
                       className={`flex w-full items-start gap-3 border-l-[3px] px-4 py-2.5 text-left transition-colors ${
                         isCurrent
-                          ? "border-[#6E35E8] bg-violet-50/90 dark:bg-violet-950/40 dark:ring-1 dark:ring-violet-500/30"
+                          ? "border-[#8037f4] bg-violet-50/90 dark:bg-violet-950/40 dark:ring-1 dark:ring-violet-500/30"
                           : "border-transparent hover:bg-slate-50 dark:hover:bg-slate-800/60"
                       }`}
                     >
@@ -192,7 +192,7 @@ function CurriculumPanel({
                           isCompleted
                             ? "bg-emerald-100 text-emerald-700"
                             : isCurrent
-                              ? "bg-[#6E35E8] text-white"
+                              ? "bg-[#8037f4] text-white"
                               : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400"
                         }`}
                       >
@@ -237,7 +237,7 @@ function CurriculumPanel({
             <p className="text-xs font-semibold text-slate-900 dark:text-slate-100">Hỏi mentor trực tiếp</p>
             <p className="truncate text-[11px] font-medium text-slate-600 dark:text-slate-300">{mentorName}</p>
           </div>
-          <ArrowSquareOut className="h-4 w-4 shrink-0 text-[#6E35E8] dark:text-violet-400" />
+          <ArrowSquareOut className="h-4 w-4 shrink-0 text-[#8037f4] dark:text-violet-400" />
         </button>
       </div>
     </div>
@@ -288,7 +288,7 @@ function LessonOverviewPanel({ lesson }) {
                   href={r.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-[#6E35E8] hover:bg-violet-50 dark:border-slate-700 dark:bg-slate-800 dark:text-violet-300 dark:hover:bg-slate-700"
+                  className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-[#8037f4] hover:bg-violet-50 dark:border-slate-700 dark:bg-slate-800 dark:text-violet-300 dark:hover:bg-slate-700"
                 >
                   <Download className="h-4 w-4" />
                   {r.name || "Tải tài liệu"}
@@ -500,7 +500,7 @@ function VideoPlayer({ lesson, thumbnail, fullBleed = false }) {
                 e.stopPropagation();
                 togglePlay();
               }}
-              className="pointer-events-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#6E35E8]/95 text-white shadow-2xl ring-4 ring-white/10 transition-transform hover:scale-105 sm:h-20 sm:w-20"
+              className="pointer-events-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#8037f4]/95 text-white shadow-2xl ring-4 ring-white/10 transition-transform hover:scale-105 sm:h-20 sm:w-20"
               aria-label="Phát video"
             >
               <PlayCircle className="h-12 w-12" />
@@ -520,11 +520,11 @@ function VideoPlayer({ lesson, thumbnail, fullBleed = false }) {
             }}
           >
             <div
-              className="absolute left-0 top-0 h-full rounded-full bg-[#9B6DFF]"
+              className="absolute left-0 top-0 h-full rounded-full bg-[#a66ff8]"
               style={{ width: `${progressPct}%` }}
             />
             <div
-              className="absolute top-1/2 h-4 w-4 scale-0 rounded-full bg-[#6E35E8] shadow-lg transition-transform group-hover/progress:scale-100"
+              className="absolute top-1/2 h-4 w-4 scale-0 rounded-full bg-[#8037f4] shadow-lg transition-transform group-hover/progress:scale-100"
               style={{ left: `${progressPct}%`, transform: "translate(-50%, -50%)" }}
             />
           </div>
@@ -578,7 +578,7 @@ function VideoPlayer({ lesson, thumbnail, fullBleed = false }) {
                     }
                     setIsMuted(v === 0);
                   }}
-                  className="h-1 w-0 accent-[#6E35E8] transition-all group-hover/volume:w-20"
+                  className="h-1 w-0 accent-[#8037f4] transition-all group-hover/volume:w-20"
                 />
               </div>
 
@@ -642,7 +642,7 @@ function CertificateModal({
             <div className="absolute left-1/4 top-0 h-40 w-40 rounded-full bg-violet-200/40 blur-3xl" />
             <div className="absolute bottom-0 right-1/4 h-32 w-32 rounded-full bg-violet-100/60 blur-3xl" />
           </div>
-          <Confetti className="relative mx-auto mb-3 h-14 w-14 text-[#6E35E8]" />
+          <Confetti className="relative mx-auto mb-3 h-14 w-14 text-[#8037f4]" />
           <h2 className="relative mb-1 text-2xl font-bold text-slate-900">Chúc mừng</h2>
           <p className="relative text-sm text-slate-600">Bạn đã hoàn thành khóa học</p>
         </div>
@@ -651,7 +651,7 @@ function CertificateModal({
         <div className="p-6">
           {loading ? (
             <div className="py-12 flex flex-col items-center justify-center gap-3">
-              <div className="animate-spin rounded-full h-8 w-8 border-2 border-[#6E35E8] border-t-transparent"></div>
+              <div className="animate-spin rounded-full h-8 w-8 border-2 border-[#8037f4] border-t-transparent"></div>
               <p className="text-gray-400 text-sm">Đang tạo chứng chỉ...</p>
             </div>
           ) : certData ? (
@@ -660,18 +660,18 @@ function CertificateModal({
                 className="rounded-2xl p-6 mb-5 text-center relative overflow-hidden"
                 style={{
                   background: "linear-gradient(135deg, #f9f4ff, #fff8e1)",
-                  border: "2px solid rgba(110, 53, 232,0.15)",
+                  border: "2px solid rgba(128, 55, 244,0.15)",
                 }}
               >
-                <div className="absolute top-3 left-3 w-6 h-6 border-l-2 border-t-2 border-[#6E35E8]/30 rounded-tl-lg" />
-                <div className="absolute top-3 right-3 w-6 h-6 border-r-2 border-t-2 border-[#6E35E8]/30 rounded-tr-lg" />
-                <div className="absolute bottom-3 left-3 w-6 h-6 border-l-2 border-b-2 border-[#6E35E8]/30 rounded-bl-lg" />
-                <div className="absolute bottom-3 right-3 w-6 h-6 border-r-2 border-b-2 border-[#6E35E8]/30 rounded-br-lg" />
+                <div className="absolute top-3 left-3 w-6 h-6 border-l-2 border-t-2 border-[#8037f4]/30 rounded-tl-lg" />
+                <div className="absolute top-3 right-3 w-6 h-6 border-r-2 border-t-2 border-[#8037f4]/30 rounded-tr-lg" />
+                <div className="absolute bottom-3 left-3 w-6 h-6 border-l-2 border-b-2 border-[#8037f4]/30 rounded-bl-lg" />
+                <div className="absolute bottom-3 right-3 w-6 h-6 border-r-2 border-b-2 border-[#8037f4]/30 rounded-br-lg" />
 
                 <Certificate className="w-10 h-10 mx-auto mb-3" style={{ color: "#FFD600" }} />
                 <p className="text-xs text-gray-400 uppercase tracking-widest mb-2">Chứng chỉ hoàn thành</p>
                 <h3 className="font-bold text-gray-900 text-lg mb-1 leading-tight">{certData.courseTitle || courseName}</h3>
-                <p className="text-sm text-gray-500 mb-3">Được chứng nhận cho <span className="font-semibold text-[#6E35E8]">{certData.studentName}</span></p>
+                <p className="text-sm text-gray-500 mb-3">Được chứng nhận cho <span className="font-semibold text-[#8037f4]">{certData.studentName}</span></p>
                 <div className="flex flex-col items-center gap-2">
                   <div className="flex items-center gap-2">
                     <SealCheck className="h-4 w-4 text-emerald-600" />
@@ -686,9 +686,9 @@ function CertificateModal({
               {/* What's next */}
               <div
                 className="rounded-2xl p-4 mb-5"
-                style={{ background: "rgba(110, 53, 232,0.05)", border: "1px solid rgba(110, 53, 232,0.1)" }}
+                style={{ background: "rgba(128, 55, 244,0.05)", border: "1px solid rgba(128, 55, 244,0.1)" }}
               >
-                <p className="text-sm font-bold text-[#6E35E8] mb-2 flex items-center gap-1.5">
+                <p className="text-sm font-bold text-[#8037f4] mb-2 flex items-center gap-1.5">
                   <Lightning className="w-4 h-4" />
                   Bước tiếp theo
                 </p>
@@ -699,7 +699,7 @@ function CertificateModal({
                     "Áp dụng kiến thức vào Mock Interview thực tế",
                   ].map((item) => (
                     <li key={item} className="flex items-start gap-2 text-xs text-gray-600">
-                      <CheckCircle className="w-3.5 h-3.5 text-[#6E35E8] shrink-0 mt-0.5" />
+                      <CheckCircle className="w-3.5 h-3.5 text-[#8037f4] shrink-0 mt-0.5" />
                       {item}
                     </li>
                   ))}
@@ -719,7 +719,7 @@ function CertificateModal({
                 </a>
                 <button
                   className="flex-1 py-3 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 border transition-all hover:bg-gray-50"
-                  style={{ border: "1px solid rgba(110, 53, 232,0.2)", color: "#6E35E8" }}
+                  style={{ border: "1px solid rgba(128, 55, 244,0.2)", color: "#8037f4" }}
                 >
                   <Share className="w-4 h-4" />
                   Chia sẻ
@@ -865,7 +865,7 @@ function QASection({
                 <div className="mt-3 rounded-xl border border-violet-100 bg-violet-50/80 p-3">
                   <div className="mb-1.5 flex items-center gap-2">
                     <img src={avatarSrc(mentorAvatar)} alt={mentorName} className="h-6 w-6 shrink-0 rounded-full object-cover" />
-                    <p className="text-xs font-bold text-[#6E35E8]">{mentorName}</p>
+                    <p className="text-xs font-bold text-[#8037f4]">{mentorName}</p>
                     <span className="text-[10px] uppercase tracking-wide text-slate-400">Mentor</span>
                   </div>
                   <p className="text-sm leading-relaxed text-slate-700">{item.mentorAnswer}</p>
@@ -1246,7 +1246,7 @@ export function CourseLearning() {
           <div className="hidden items-center gap-2 sm:flex">
             <div className="h-2 w-24 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800 md:w-32">
               <div
-                className="h-full rounded-full bg-[#6E35E8] transition-all duration-500"
+                className="h-full rounded-full bg-[#8037f4] transition-all duration-500"
                 style={{ width: `${progressPct}%` }}
               />
             </div>
@@ -1256,7 +1256,7 @@ export function CourseLearning() {
             <button
               type="button"
               onClick={() => setShowCertificate(true)}
-              className="hidden items-center gap-1 rounded-lg border border-violet-200 bg-violet-50 px-2.5 py-1.5 text-xs font-semibold text-[#6E35E8] dark:border-violet-500/40 dark:bg-violet-950/50 dark:text-violet-300 sm:flex"
+              className="hidden items-center gap-1 rounded-lg border border-violet-200 bg-violet-50 px-2.5 py-1.5 text-xs font-semibold text-[#8037f4] dark:border-violet-500/40 dark:bg-violet-950/50 dark:text-violet-300 sm:flex"
             >
               <Certificate className="h-3.5 w-3.5" />
               Chứng chỉ
@@ -1356,7 +1356,7 @@ export function CourseLearning() {
                     onClick={() => setActiveTab(tab.key)}
                     className={`flex items-center gap-2 border-b-2 px-4 py-3 text-sm font-medium transition-colors ${
                       activeTab === tab.key
-                        ? "border-[#6E35E8] text-[#6E35E8]"
+                        ? "border-[#8037f4] text-[#8037f4]"
                         : "border-transparent text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200"
                     }`}
                   >
@@ -1396,7 +1396,7 @@ export function CourseLearning() {
                   </button>
                   <button
                     type="button"
-                    className="rounded-lg border border-violet-200 bg-violet-50 px-4 py-2 text-sm font-semibold text-[#6E35E8] transition-all hover:bg-violet-100"
+                    className="rounded-lg border border-violet-200 bg-violet-50 px-4 py-2 text-sm font-semibold text-[#8037f4] transition-all hover:bg-violet-100"
                   >
                     <Download className="mr-1.5 inline h-3.5 w-3.5" />
                     Xuất PDF
@@ -1476,7 +1476,7 @@ export function CourseLearning() {
           <button
             type="button"
             onClick={() => setCurriculumOpen(true)}
-            className="fixed right-0 top-1/2 z-20 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-l-xl border border-r-0 border-slate-200 bg-white text-[#6E35E8] shadow-md transition-colors hover:bg-violet-50 dark:border-slate-700 dark:bg-slate-800 dark:text-violet-400 dark:hover:bg-slate-700"
+            className="fixed right-0 top-1/2 z-20 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-l-xl border border-r-0 border-slate-200 bg-white text-[#8037f4] shadow-md transition-colors hover:bg-violet-50 dark:border-slate-700 dark:bg-slate-800 dark:text-violet-400 dark:hover:bg-slate-700"
             aria-label="Mở nội dung khóa học"
             title="Mở nội dung khóa học"
           >

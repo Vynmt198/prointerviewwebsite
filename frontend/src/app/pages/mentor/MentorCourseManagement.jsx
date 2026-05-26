@@ -146,8 +146,8 @@ export function MentorCourseManagement() {
             {/* Course Analytics Bar */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-14">
                {[
-                  { label: "Tổng khóa học", value: totalCourses, icon: BookOpen, color: "#6E35E8" },
-                  { label: "Tổng học viên", value: formatCompactNumber(totalStudents), icon: Users, color: "#c4ff47" },
+                  { label: "Tổng khóa học", value: totalCourses, icon: BookOpen, color: "#8037f4" },
+                  { label: "Tổng học viên", value: formatCompactNumber(totalStudents), icon: Users, color: "#93f72b" },
                   { label: "Rating trung bình", value: avgRating, icon: Star, color: "#f59e0b" },
                   { label: "Doanh thu tạm tính", value: formatCompactNumber(totalRevenue), icon: CircleDollarSign, color: "#d946ef" }
                ].map((stat, i) => (

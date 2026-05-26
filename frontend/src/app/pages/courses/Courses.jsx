@@ -143,7 +143,7 @@ function FilterRadio({ active, onClick, children }) {
     >
       <span
         className={`flex size-4 shrink-0 items-center justify-center rounded-full border-2 transition-colors ${
-          active ? "border-[#6E35E8] bg-[#6E35E8]" : "border-slate-300 bg-white"
+          active ? "border-[#8037f4] bg-[#8037f4]" : "border-slate-300 bg-white"
         }`}
         aria-hidden
       >
@@ -231,7 +231,7 @@ function CoursesExploreSidebar({
         type="button"
         onClick={onClear}
         disabled={!hasFilter}
-        className="mt-4 w-full rounded-lg bg-[#6E35E8] py-2.5 text-sm font-bold text-white transition-colors hover:bg-violet-700 disabled:cursor-not-allowed disabled:opacity-40"
+        className="mt-4 w-full rounded-lg bg-[#8037f4] py-2.5 text-sm font-bold text-white transition-colors hover:bg-violet-700 disabled:cursor-not-allowed disabled:opacity-40"
       >
         Xóa bộ lọc
       </button>
@@ -265,7 +265,7 @@ function CourseListRow({ course, formatPrice, onOpen }) {
 
       <div className="flex min-w-0 flex-1 flex-col justify-between py-0.5">
         <div>
-          <h3 className="line-clamp-2 text-base font-bold leading-snug text-slate-900 group-hover:text-[#6E35E8] sm:text-lg">
+          <h3 className="line-clamp-2 text-base font-bold leading-snug text-slate-900 group-hover:text-[#8037f4] sm:text-lg">
             {course.title}
           </h3>
           {course.description ? (
@@ -301,7 +301,7 @@ function CourseListRow({ course, formatPrice, onOpen }) {
             e.stopPropagation();
             onOpen();
           }}
-          className="flex size-10 items-center justify-center rounded-sm border-2 border-[#6E35E8] text-[#6E35E8] transition-colors hover:bg-violet-50"
+          className="flex size-10 items-center justify-center rounded-sm border-2 border-[#8037f4] text-[#8037f4] transition-colors hover:bg-violet-50"
           aria-label="Xem khóa học"
         >
           <ShoppingCart className="size-4" strokeWidth={2} />
@@ -320,9 +320,9 @@ const getLevelBadge = (level) => {
       label: "Cơ bản",
     },
     Intermediate: {
-      bg: "rgba(110, 53, 232,0.92)",
+      bg: "rgba(128, 55, 244,0.92)",
       text: "#ffffff",
-      shadow: "0 2px 8px rgba(110, 53, 232,0.45)",
+      shadow: "0 2px 8px rgba(128, 55, 244,0.45)",
       label: "Trung cấp",
     },
     Advanced: {
@@ -478,7 +478,7 @@ export function Courses() {
             badge="Khóa học từ Mentor"
             title={
               <>
-                Học kỹ năng, <span className="text-[#630ed4]">ứng tuyển chắc hơn</span>
+                Học kỹ năng, <span className="text-[#6d2fd6]">ứng tuyển chắc hơn</span>
               </>
             }
             subtitle="Video ngắn, dễ áp dụng — ôn trước phỏng vấn; cần góp ý sâu thì book mentor 1-1."
@@ -574,7 +574,7 @@ export function Courses() {
                         <button
                           type="button"
                           onClick={clearExploreFilters}
-                          className="rounded-xl bg-[#6E35E8] px-6 py-2.5 text-sm font-bold text-white transition-colors hover:bg-violet-700"
+                          className="rounded-xl bg-[#8037f4] px-6 py-2.5 text-sm font-bold text-white transition-colors hover:bg-violet-700"
                         >
                           Xóa bộ lọc
                         </button>

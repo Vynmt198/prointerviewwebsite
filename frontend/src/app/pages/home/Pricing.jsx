@@ -13,6 +13,7 @@ import { getUser, isLoggedIn } from "../../utils/auth";
 import { fetchCurrentPlan } from "../../utils/plansApi";
 import { CUSTOMER_SHELL_GUTTER, CUSTOMER_SHELL_MAX } from "../../components/layout/customerShellLayout";
 import { CustomerPageHeader } from "../../components/layout/CustomerPageHeader";
+import { PRICING_SUBTITLE } from "../../constants/brandVoice";
 
 const FAQ_DATA = [
   {
@@ -123,7 +124,7 @@ function FeatureLabel({ text }) {
         <React.Fragment key={i}>
           {part}
           {i < parts.length - 1 && (
-            <span className="font-bold text-[#630ed4]">{UNLIMITED_HIGHLIGHT}</span>
+            <span className="font-bold text-[#6d2fd6]">{UNLIMITED_HIGHLIGHT}</span>
           )}
         </React.Fragment>
       ))}
@@ -162,7 +163,7 @@ function BillingToggle({ billing, onChange, savePercent }) {
         }`}
       >
         Hàng năm
-        <span className="rounded-full bg-gradient-to-r from-[#c4ff47] to-[#d4ff00] px-2 py-0.5 text-[10px] font-extrabold text-violet-950">
+        <span className="rounded-full bg-gradient-to-r from-[#93f72b] to-[#93f72b] px-2 py-0.5 text-[10px] font-extrabold text-violet-950">
           Tiết kiệm {savePercent}%
         </span>
       </button>
@@ -214,12 +215,12 @@ export function Pricing() {
             title={
               <>
                 Sẵn sàng hơn cho{" "}
-                <span className="bg-gradient-to-r from-[#5F00F0] to-[#9B6DFF] bg-clip-text text-transparent">
+                <span className="bg-gradient-to-r from-[#6d2fd6] to-[#a66ff8] bg-clip-text text-transparent">
                   mọi buổi phỏng vấn
                 </span>
               </>
             }
-            subtitle="Chọn gói phù hợp — luyện tập, cải thiện và chinh phục nhà tuyển dụng."
+            subtitle={PRICING_SUBTITLE}
             subtitleClassName="mt-3 max-w-2xl text-base font-medium leading-relaxed text-violet-700/90"
           />
 
@@ -240,13 +241,13 @@ export function Pricing() {
                   key={plan.id}
                   className={`glass-card relative flex h-full w-full min-w-0 flex-col !rounded-[20px] p-6 pt-[0.7rem] sm:p-7 sm:pt-[0.95rem] ${
                     isPopular
-                      ? "z-10 !overflow-visible !border-[3px] !border-[#5F00F0] !shadow-none hover:!translate-y-0 hover:!border-[#5F00F0] hover:!shadow-none"
+                      ? "z-10 !overflow-visible !border-[3px] !border-[#6d2fd6] !shadow-none hover:!translate-y-0 hover:!border-[#6d2fd6] hover:!shadow-none"
                       : ""
                   }`}
                 >
                   {isPopular && (
                     <div className="pointer-events-none absolute left-1/2 top-0 -translate-x-1/2 -translate-y-[62%]">
-                      <span className="relative inline-block whitespace-nowrap rounded-full bg-[#630ed4] px-4 py-1 text-xs font-black uppercase tracking-widest text-white shadow-md">
+                      <span className="relative inline-block whitespace-nowrap rounded-full bg-[#6d2fd6] px-4 py-1 text-xs font-black uppercase tracking-widest text-white shadow-md">
                         Phổ biến nhất
                         <SparkleGlyph
                           className="absolute -right-5 -top-4 h-8 w-8"
@@ -300,7 +301,7 @@ export function Pricing() {
                     <p className="text-xs font-semibold text-slate-500">{plan.subtitle}</p>
                     <h3
                       className={`mt-1 font-headline text-xl font-bold ${
-                        variant === "elite" ? "text-[#630ed4]" : "text-slate-900"
+                        variant === "elite" ? "text-[#6d2fd6]" : "text-slate-900"
                       }`}
                     >
                       {plan.title}
@@ -322,7 +323,7 @@ export function Pricing() {
                       {isYearly && !isFree && plan.yearlyTotal != null && (
                         <p className="text-base font-bold leading-snug text-slate-900">
                           Thanh toán một lần:{" "}
-                          <span className="text-[#630ed4]">{fmtVnd(plan.yearlyTotal)}</span>
+                          <span className="text-[#6d2fd6]">{fmtVnd(plan.yearlyTotal)}</span>
                           <span className="font-semibold text-slate-600"> /năm</span>
                         </p>
                       )}
@@ -337,7 +338,7 @@ export function Pricing() {
                         </>
                       )}
                       {isYearly && plan.yearlySave != null && (
-                        <p className="text-sm font-semibold leading-snug text-[#630ed4]">
+                        <p className="text-sm font-semibold leading-snug text-[#6d2fd6]">
                           Tiết kiệm {fmtVnd(plan.yearlySave)}/năm
                         </p>
                       )}
@@ -350,11 +351,11 @@ export function Pricing() {
                     {plan.features.map((f, i) => (
                       <li key={i} className="flex items-start gap-2.5 text-sm text-slate-700">
                         {variant === "elite" ? (
-                          <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-[#630ed4]" />
+                          <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-[#6d2fd6]" />
                         ) : (
                           <CheckCircle2
                             className={`mt-0.5 h-4 w-4 shrink-0 ${
-                              variant === "lime" ? "text-[#630ed4]" : "text-slate-400"
+                              variant === "lime" ? "text-[#6d2fd6]" : "text-slate-400"
                             }`}
                           />
                         )}
@@ -381,7 +382,7 @@ export function Pricing() {
                       isCurrent || variant === "outline"
                         ? undefined
                         : {
-                            background: "linear-gradient(135deg, #B4F500, #93D600)",
+                            background: "#93f72b",
                             color: "#0f172a",
                             boxShadow: "0 8px 20px rgba(15,23,42,0.1)",
                           }
@@ -418,7 +419,7 @@ export function Pricing() {
                   <div className="flex items-center justify-between gap-4">
                     <h4 className="text-sm font-bold text-slate-900 sm:text-base">{item.q}</h4>
                     {openFaq === i ? (
-                      <ChevronUp className="h-5 w-5 shrink-0 text-[#630ed4]" />
+                      <ChevronUp className="h-5 w-5 shrink-0 text-[#6d2fd6]" />
                     ) : (
                       <ChevronDown className="h-5 w-5 shrink-0 text-slate-400" />
                     )}

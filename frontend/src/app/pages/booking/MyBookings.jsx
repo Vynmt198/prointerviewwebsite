@@ -137,7 +137,7 @@ export function MyBookings() {
               onClick={() => setTab(t.id)}
               className={`flex-1 min-w-[100px] rounded-xl px-4 py-2.5 text-xs font-black uppercase tracking-wider transition-all ${
                 tab === t.id
-                  ? "bg-[#6E35E8] text-white shadow-md"
+                  ? "bg-[#8037f4] text-white shadow-md"
                   : "text-slate-500 hover:bg-slate-50 hover:text-slate-800"
               }`}
             >
@@ -167,7 +167,7 @@ export function MyBookings() {
               <button
                 type="button"
                 onClick={() => navigate("/mentors")}
-                className="mt-6 rounded-xl bg-[#6E35E8] px-6 py-3 text-xs font-black uppercase tracking-widest text-white hover:opacity-95"
+                className="mt-6 rounded-xl bg-[#8037f4] px-6 py-3 text-xs font-black uppercase tracking-widest text-white hover:opacity-95"
               >
                 Tìm mentor
               </button>
@@ -201,7 +201,7 @@ export function MyBookings() {
                     </div>
                     <div className="min-w-0 flex-1">
                       <div className="mb-1 flex flex-wrap items-center justify-between gap-2">
-                        <p className="text-[10px] font-black uppercase tracking-wider text-[#6E35E8]">
+                        <p className="text-[10px] font-black uppercase tracking-wider text-[#8037f4]">
                           {s.date} · {s.time} – {s.endTime}
                         </p>
                         <span
@@ -236,7 +236,7 @@ export function MyBookings() {
                       <button
                         type="button"
                         onClick={() => navigate(`/meeting/${id}`)}
-                        className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#6E35E8] px-4 py-2.5 text-[10px] font-black uppercase tracking-widest text-white hover:opacity-95 sm:flex-none"
+                        className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#8037f4] px-4 py-2.5 text-[10px] font-black uppercase tracking-widest text-white hover:opacity-95 sm:flex-none"
                       >
                         <Video className="h-3.5 w-3.5" />
                         Vào phòng

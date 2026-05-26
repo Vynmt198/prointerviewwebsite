@@ -212,9 +212,9 @@ export function AppSidebar() {
                         style={
                           active
                             ? {
-                              background: "linear-gradient(135deg, #6E35E8 0%, #8B4DFF 100%)",
+                              background: "#8037f4",
                               color: "#fff",
-                              boxShadow: "0 4px 12px rgba(110,53,232,0.35)",
+                              boxShadow: "0 4px 12px rgba(128,55,244,0.35)",
                             }
                             : undefined
                         }
@@ -232,7 +232,7 @@ export function AppSidebar() {
                         {active && (
                           <span
                             className="ml-auto size-1.5 rounded-full shrink-0 group-data-[collapsible=icon]:hidden"
-                            style={{ background: "#c4ff47" }}
+                            style={{ background: "#93f72b" }}
                           />
                         )}
                       </SidebarMenuButton>
@@ -279,9 +279,9 @@ export function AppSidebar() {
                       style={
                         active
                           ? {
-                            background: "linear-gradient(135deg, #6E35E8 0%, #8B4DFF 100%)",
+                            background: "#8037f4",
                             color: "#fff",
-                            boxShadow: "0 4px 12px rgba(110,53,232,0.35)",
+                            boxShadow: "0 4px 12px rgba(128,55,244,0.35)",
                           }
                           : undefined
                       }
@@ -323,7 +323,7 @@ export function AppSidebar() {
         {loggedIn && !isMentor && !isElite && (
           <div className="mt-auto pt-3 group-data-[collapsible=icon]:hidden">
             <div
-              className="rounded-2xl border border-[rgba(110,53,232,0.2)] bg-white/75 p-3.5 shadow-sm backdrop-blur-sm"
+              className="rounded-2xl border border-[rgba(128,55,244,0.2)] bg-white/75 p-3.5 shadow-sm backdrop-blur-sm"
             >
               <div className="mb-3 flex items-center gap-2.5">
                 <div
@@ -340,7 +340,7 @@ export function AppSidebar() {
                 onClick={() => navigate("/pricing")}
                 className="w-full rounded-xl py-1.5 text-xs font-bold text-[#0f172a] transition-all hover:scale-[1.02] active:scale-[0.97]"
                 style={{
-                  background: "linear-gradient(135deg, #B4F500, #93D600)",
+                  background: "#93f72b",
                   boxShadow: "0 8px 20px rgba(15,23,42,0.1)",
                 }}
               >
@@ -356,7 +356,7 @@ export function AppSidebar() {
             <button
               onClick={() => navigate("/pricing")}
               title={upgradeTitle}
-              className="flex h-10 w-10 items-center justify-center rounded-xl border border-[rgba(110,53,232,0.22)] bg-[rgba(180,245,0,0.15)] transition-all hover:bg-[rgba(180,245,0,0.28)]"
+              className="flex h-10 w-10 items-center justify-center rounded-xl border border-[rgba(128,55,244,0.22)] bg-[rgba(180,245,0,0.15)] transition-all hover:bg-[rgba(180,245,0,0.28)]"
             >
               <Zap className="h-4 w-4 text-[#5a9e00]" />
             </button>
@@ -410,9 +410,9 @@ export function AppSidebar() {
                   <div
                     className="flex size-7 shrink-0 items-center justify-center rounded-full font-bold text-white"
                     style={{
-                      background: "linear-gradient(135deg, #6E35E8 0%, #8B4DFF 100%)",
+                      background: "#8037f4",
                       fontSize: "0.65rem",
-                      boxShadow: "0 2px 8px rgba(110,53,232,0.4)",
+                      boxShadow: "0 2px 8px rgba(128,55,244,0.4)",
                     }}
                   >
                     {initials}
@@ -472,7 +472,7 @@ export function AppSidebar() {
                       <DropdownMenuItem
                         onClick={() => navigate("/pricing")}
                         className="flex items-center gap-2.5 cursor-pointer"
-                        style={{ color: "#6E35E8", fontWeight: 600 }}
+                        style={{ color: "#8037f4", fontWeight: 600 }}
                       >
                         <Zap className="size-4" />
                         {upgradeTitle} ↗

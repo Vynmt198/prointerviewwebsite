@@ -134,7 +134,7 @@ export function CoursePurchaseCard({
           <button
             type="button"
             onClick={onContinueLearn}
-            className="flex w-full items-center justify-center gap-2 rounded-sm bg-[#6E35E8] py-3 text-sm font-bold text-white transition-all hover:bg-[#5b2bc4]"
+            className="flex w-full items-center justify-center gap-2 rounded-sm bg-[#8037f4] py-3 text-sm font-bold text-white transition-all hover:bg-[#5b2bc4]"
           >
             <PlayCircle className="size-4" />
             Tiếp tục học
@@ -143,7 +143,7 @@ export function CoursePurchaseCard({
           <button
             type="button"
             disabled
-            className="flex w-full cursor-not-allowed items-center justify-center gap-2 rounded-sm bg-[#6E35E8]/50 py-3 text-sm font-bold text-white"
+            className="flex w-full cursor-not-allowed items-center justify-center gap-2 rounded-sm bg-[#8037f4]/50 py-3 text-sm font-bold text-white"
           >
             <Lock className="size-4" />
             Mentor chỉ xem
@@ -152,7 +152,7 @@ export function CoursePurchaseCard({
           <button
             type="button"
             onClick={onContinuePayment}
-            className="flex w-full items-center justify-center gap-2 rounded-sm bg-[#6E35E8] py-3 text-sm font-bold text-white transition-all hover:bg-[#5b2bc4]"
+            className="flex w-full items-center justify-center gap-2 rounded-sm bg-[#8037f4] py-3 text-sm font-bold text-white transition-all hover:bg-[#5b2bc4]"
           >
             <ShoppingCart className="size-4" />
             Tiếp tục thanh toán
@@ -162,7 +162,7 @@ export function CoursePurchaseCard({
             type="button"
             onClick={canTakeStudentActions ? onEnroll : undefined}
             disabled={!canTakeStudentActions}
-            className="flex w-full items-center justify-center gap-2 rounded-sm bg-[#6E35E8] py-3 text-sm font-bold text-white transition-all hover:bg-[#5b2bc4] disabled:cursor-not-allowed disabled:opacity-50"
+            className="flex w-full items-center justify-center gap-2 rounded-sm bg-[#8037f4] py-3 text-sm font-bold text-white transition-all hover:bg-[#5b2bc4] disabled:cursor-not-allowed disabled:opacity-50"
           >
             <ShoppingCart className="size-4" />
             {canTakeStudentActions
@@ -409,7 +409,7 @@ export function CourseReviewsBlock({ course, enrolled, reviews }) {
         <button
           type="button"
           onClick={() => setShowAll((v) => !v)}
-          className="mt-4 w-full text-center text-sm font-semibold text-[#6E35E8] hover:underline"
+          className="mt-4 w-full text-center text-sm font-semibold text-[#8037f4] hover:underline"
         >
           {showAll ? "Thu gọn đánh giá" : "Hiển thị tất cả đánh giá"}
         </button>
@@ -445,14 +445,14 @@ export function CourseReviewsBlock({ course, enrolled, reviews }) {
               value={reviewComment}
               onChange={(e) => setReviewComment(e.target.value)}
               rows={4}
-              className="w-full rounded-sm border border-slate-200 px-3 py-2 text-sm outline-none focus:border-[#6E35E8] focus:ring-2 focus:ring-violet-500/20"
+              className="w-full rounded-sm border border-slate-200 px-3 py-2 text-sm outline-none focus:border-[#8037f4] focus:ring-2 focus:ring-violet-500/20"
               placeholder="Khóa học giúp bạn điều gì?"
             />
             <button
               type="button"
               onClick={handleSubmit}
               disabled={!reviewRating || reviewComment.trim().length < 30 || submitting}
-              className="flex w-full items-center justify-center gap-2 rounded-sm bg-[#6E35E8] py-2.5 text-sm font-bold text-white disabled:opacity-50"
+              className="flex w-full items-center justify-center gap-2 rounded-sm bg-[#8037f4] py-2.5 text-sm font-bold text-white disabled:opacity-50"
             >
               <MessageCircle className="size-4" />
               Gửi đánh giá

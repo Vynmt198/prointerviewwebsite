@@ -116,7 +116,7 @@ function formatTimer(s) {
 /* ── Waveform bars ───────────────────────────────────────── */
 function Waveform({
   active,
-  color = "#9B6DFF",
+  color = "#a66ff8",
 }) {
   const heights = [4, 10, 16, 12, 20, 14, 8, 18, 12, 6, 15, 10, 19, 9, 13];
   return (
@@ -196,9 +196,9 @@ function HRVideoPanel({
             <>
               <div
                 className="w-20 h-20 rounded-full flex items-center justify-center"
-                style={{ background: "rgba(110, 53, 232,0.2)", border: "2px solid rgba(110, 53, 232,0.3)" }}
+                style={{ background: "rgba(128, 55, 244,0.2)", border: "2px solid rgba(128, 55, 244,0.3)" }}
               >
-                <User className="w-10 h-10 text-[#9B6DFF]" />
+                <User className="w-10 h-10 text-[#a66ff8]" />
               </div>
               <p className="text-white/40 text-sm">HR đang chuẩn bị câu hỏi...</p>
             </>
@@ -215,7 +215,7 @@ function HRVideoPanel({
           <div className="absolute right-3 top-3">
             <div
               className="flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-semibold text-white"
-              style={{ background: "rgba(110,53,232,0.92)", backdropFilter: "blur(8px)" }}
+              style={{ background: "rgba(128,55,244,0.92)", backdropFilter: "blur(8px)" }}
             >
               <div className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#b5e636]" />
               Đang ghi âm câu trả lời...
@@ -227,7 +227,7 @@ function HRVideoPanel({
         <div className="absolute top-3 right-3 z-10">
           <div
             className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold"
-            style={{ background: "rgba(110, 53, 232,0.85)", backdropFilter: "blur(8px)" }}
+            style={{ background: "rgba(128, 55, 244,0.85)", backdropFilter: "blur(8px)" }}
           >
             <div className="w-1.5 h-1.5 rounded-full bg-[#b5e636] animate-pulse" />
             <span className="text-white">HR đang hỏi...</span>
@@ -302,9 +302,9 @@ function UserCameraTile({ isRecording }) {
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
           <div
             className="w-14 h-14 rounded-full flex items-center justify-center"
-            style={{ background: "rgba(110, 53, 232,0.2)", border: "2px solid rgba(110, 53, 232,0.3)" }}
+            style={{ background: "rgba(128, 55, 244,0.2)", border: "2px solid rgba(128, 55, 244,0.3)" }}
           >
-            <User className="w-7 h-7 text-[#9B6DFF]" />
+            <User className="w-7 h-7 text-[#a66ff8]" />
           </div>
           <p className="text-white/40 text-xs text-center px-3">
             {camState === "loading" ? "Đang kết nối camera..." : camError}
@@ -336,7 +336,7 @@ function UpgradeModal({
       {/* Glow */}
       <div
         className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 rounded-full pointer-events-none"
-        style={{ background: "radial-gradient(ellipse, rgba(110, 53, 232,0.25) 0%, transparent 70%)" }}
+        style={{ background: "radial-gradient(ellipse, rgba(128, 55, 244,0.25) 0%, transparent 70%)" }}
       />
 
       <div
@@ -344,7 +344,7 @@ function UpgradeModal({
         style={{
           background: "linear-gradient(160deg, #120d2b 0%, #1a1040 100%)",
           border: "1.5px solid rgba(139, 77, 255,0.3)",
-          boxShadow: "0 32px 80px rgba(0,0,0,0.6), 0 0 60px rgba(110, 53, 232,0.2)",
+          boxShadow: "0 32px 80px rgba(0,0,0,0.6), 0 0 60px rgba(128, 55, 244,0.2)",
         }}
       >
         {/* Icon */}
@@ -352,18 +352,18 @@ function UpgradeModal({
           <div
             className="w-20 h-20 rounded-full flex items-center justify-center"
             style={{
-              background: "linear-gradient(135deg, rgba(110, 53, 232,0.2), rgba(139, 77, 255,0.1))",
+              background: "linear-gradient(135deg, rgba(128, 55, 244,0.2), rgba(139, 77, 255,0.1))",
               border: "2px solid rgba(139, 77, 255,0.4)",
             }}
           >
-            <Lock className="w-9 h-9 text-[#8B4DFF]" />
+            <Lock className="w-9 h-9 text-[#a66ff8]" />
           </div>
         </div>
 
         {/* Stars */}
         <div className="flex justify-center gap-1 mb-5">
           {[...Array(completedCount)].map((_, i) => (
-            <Star key={i} className="w-5 h-5 text-[#8B4DFF]" />
+            <Star key={i} className="w-5 h-5 text-[#a66ff8]" />
           ))}
           {[...Array(QUESTIONS.length - completedCount)].map((_, i) => (
             <Star key={i} className="w-5 h-5 text-white/15" />
@@ -376,18 +376,18 @@ function UpgradeModal({
         </h2>
         <p className="text-white/50 text-sm leading-relaxed mb-6">
           Còn{" "}
-          <span className="text-[#8B4DFF] font-semibold">
+          <span className="text-[#a66ff8] font-semibold">
             {QUESTIONS.length - completedCount} câu hỏi
           </span>{" "}
           nữa trong buổi phỏng vấn. Nâng cấp gói{" "}
-          <span className="text-[#8B4DFF] font-semibold">Pro</span> để trả lời
+          <span className="text-[#a66ff8] font-semibold">Pro</span> để trả lời
           đầy đủ và nhận phân tích toàn diện hơn.
         </p>
 
         {/* Benefits */}
         <div
           className="rounded-2xl p-4 mb-6 text-left"
-          style={{ background: "rgba(110, 53, 232,0.1)", border: "1px solid rgba(139, 77, 255,0.2)" }}
+          style={{ background: "rgba(128, 55, 244,0.1)", border: "1px solid rgba(139, 77, 255,0.2)" }}
         >
           <p className="text-white/40 text-xs font-semibold uppercase tracking-wide mb-3">
             Gói Pro bao gồm
@@ -399,7 +399,7 @@ function UpgradeModal({
             "Không giới hạn số buổi phỏng vấn AI",
           ].map((item, i) => (
             <div key={i} className="flex items-center gap-2 mb-2">
-              <div className="w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: "rgba(110,53,232,0.2)" }}>
+              <div className="w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: "rgba(128,55,244,0.2)" }}>
                 <div className="w-1.5 h-1.5 rounded-full bg-[#b5e636]" />
               </div>
               <p className="text-white/70 text-xs">{item}</p>
@@ -412,9 +412,9 @@ function UpgradeModal({
           onClick={onUpgrade}
           className="w-full py-3.5 rounded-2xl font-bold text-sm mb-3 transition-all hover:scale-[1.02] active:scale-[0.98]"
           style={{
-            background: "linear-gradient(135deg, #6E35E8, #8B4DFF)",
+            background: "#8037f4",
             color: "#fff",
-            boxShadow: "0 8px 32px rgba(110, 53, 232,0.45)",
+            boxShadow: "0 8px 32px rgba(128, 55, 244,0.45)",
           }}
         >
           <Lightning className="inline w-4 h-4 mr-2 mb-0.5" />
@@ -748,7 +748,7 @@ export default function InterviewRoom() {
               badge="Phỏng vấn AI"
               title={
                 <>
-                  Luyện nói trước, <span className="text-[#630ed4]">tự tin hơn</span>
+                  Luyện nói trước, <span className="text-[#6d2fd6]">tự tin hơn</span>
                 </>
               }
               subtitle="Đưa CV, chọn HR AI — luyện trả lời sát hồ sơ, góp ý từng câu, biết sửa gì trước khi gặp HR công ty."
@@ -766,7 +766,7 @@ export default function InterviewRoom() {
 
               <div className="grid gap-8 lg:grid-cols-[300px_minmax(0,1fr)] lg:items-start lg:gap-x-10">
                 <div className="relative mx-auto w-[300px] shrink-0 lg:mx-0">
-                  <div className="h-[420px] overflow-hidden rounded-2xl border-2 border-violet-200/80 shadow-[0_12px_32px_rgba(110,53,232,0.12)]">
+                  <div className="h-[420px] overflow-hidden rounded-2xl border-2 border-violet-200/80 shadow-[0_12px_32px_rgba(128,55,244,0.12)]">
                     <video
                       src={hrVideoUrl}
                       autoPlay
@@ -776,7 +776,7 @@ export default function InterviewRoom() {
                       className="h-full w-full object-cover"
                     />
                   </div>
-                  <div className="absolute top-3 left-3 flex items-center gap-1.5 rounded-full bg-[#630ed4]/90 px-2.5 py-1 text-xs font-bold text-white backdrop-blur-sm">
+                  <div className="absolute top-3 left-3 flex items-center gap-1.5 rounded-full bg-[#6d2fd6]/90 px-2.5 py-1 text-xs font-bold text-white backdrop-blur-sm">
                     <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#b5e636]" />
                     LIVE
                   </div>
@@ -793,7 +793,7 @@ export default function InterviewRoom() {
                     </p>
                     <h3 className="mt-1 text-xl font-bold leading-tight text-violet-950 sm:text-2xl">
                       Phỏng vấn với{" "}
-                      <span className="text-[#630ed4]">{hrName}</span>
+                      <span className="text-[#6d2fd6]">{hrName}</span>
                     </h3>
                     <p className="mt-1.5 text-sm leading-relaxed text-violet-600">
                       Buổi phỏng vấn gồm{" "}
@@ -824,7 +824,7 @@ export default function InterviewRoom() {
                             className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
                               isLocked
                                 ? "bg-violet-100 text-violet-300"
-                                : "bg-violet-200/80 text-[#630ed4]"
+                                : "bg-violet-200/80 text-[#6d2fd6]"
                             }`}
                           >
                             {isLocked ? <Lock className="h-3 w-3" /> : i + 1}
@@ -837,7 +837,7 @@ export default function InterviewRoom() {
                             {isLocked ? "Yêu cầu gói Pro" : q}
                           </p>
                           {isLocked && (
-                            <span className="shrink-0 rounded-full border border-violet-200 bg-white px-1.5 py-0.5 text-[10px] font-semibold text-[#630ed4]">
+                            <span className="shrink-0 rounded-full border border-violet-200 bg-white px-1.5 py-0.5 text-[10px] font-semibold text-[#6d2fd6]">
                               Pro
                             </span>
                           )}
@@ -850,14 +850,14 @@ export default function InterviewRoom() {
                     <button
                       type="button"
                       onClick={() => setPhase("question")}
-                      className="w-full rounded-md bg-gradient-to-r from-[#c4ff47] to-[#d4ff00] py-3.5 text-sm font-bold text-violet-950 shadow-[0_8px_24px_rgba(196,255,71,0.22)] transition-all hover:brightness-105 active:scale-[0.99]"
+                      className="w-full rounded-md bg-gradient-to-r from-[#93f72b] to-[#93f72b] py-3.5 text-sm font-bold text-violet-950 shadow-[0_8px_24px_rgba(196,255,71,0.22)] transition-all hover:brightness-105 active:scale-[0.99]"
                     >
                       Bắt đầu phỏng vấn
                     </button>
                     <button
                       type="button"
                       onClick={() => navigate(-1)}
-                      className="text-center text-sm font-medium text-violet-600 hover:text-[#630ed4]"
+                      className="text-center text-sm font-medium text-violet-600 hover:text-[#6d2fd6]"
                     >
                       ← Quay lại
                     </button>
@@ -945,7 +945,7 @@ export default function InterviewRoom() {
       {/* ── Question banner ──────────────────────────────────── */}
       <div className="shrink-0 border-b border-violet-100 bg-white/70 px-4 py-2">
         <div className="flex items-start gap-2.5 rounded-md border border-violet-200/80 bg-violet-50/50 px-3 py-2">
-          <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#6E35E8] to-[#8B4DFF] text-xs font-bold text-white">
+          <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#8037f4] to-[#a66ff8] text-xs font-bold text-white">
             {currentQ + 1}
           </span>
           <div className="min-w-0 flex-1">
@@ -953,9 +953,9 @@ export default function InterviewRoom() {
             {QUESTION_OBJECTS && (() => {
               const layer = QUESTION_OBJECTS[currentQ]?.layer;
               const layerMap = {
-                theory:   { label: "Lý thuyết",      color: "#630ed4", bg: "rgba(110,53,232,0.12)",  border: "rgba(110,53,232,0.28)"  },
-                project:  { label: "Dự án",           color: "#8B4DFF", bg: "rgba(139,77,255,0.12)",  border: "rgba(139,77,255,0.28)"  },
-                behavior: { label: "Hành vi · STAR",  color: "#630ed4", bg: "rgba(110,53,232,0.1)", border: "rgba(110,53,232,0.22)" },
+                theory:   { label: "Lý thuyết",      color: "#6d2fd6", bg: "rgba(128,55,244,0.12)",  border: "rgba(128,55,244,0.28)"  },
+                project:  { label: "Dự án",           color: "#a66ff8", bg: "rgba(139,77,255,0.12)",  border: "rgba(139,77,255,0.28)"  },
+                behavior: { label: "Hành vi · STAR",  color: "#6d2fd6", bg: "rgba(128,55,244,0.1)", border: "rgba(128,55,244,0.22)" },
               };
               const lm = layerMap[layer];
               if (!lm) return null;
@@ -986,7 +986,7 @@ export default function InterviewRoom() {
                 className="flex w-full items-center justify-between px-4 py-2 text-left transition-colors hover:bg-violet-100/50"
               >
                 <div className="flex items-center gap-2">
-                  <Star className="h-3.5 w-3.5 text-[#630ed4]" />
+                  <Star className="h-3.5 w-3.5 text-[#6d2fd6]" />
                   <span className="text-xs font-semibold text-violet-950">Gợi ý STAR</span>
                   <span className="text-xs text-violet-600/70">— nhấn để {showStarHints ? "ẩn" : "xem"}</span>
                 </div>
@@ -997,10 +997,10 @@ export default function InterviewRoom() {
               {showStarHints && (
                 <div className="grid max-h-24 grid-cols-2 gap-2 overflow-y-auto px-4 pb-2 sm:grid-cols-4">
                   {[
-                    { key: "situation", label: "S · Tình huống", color: "#630ed4", border: "border-violet-200" },
-                    { key: "task", label: "T · Nhiệm vụ", color: "#8B4DFF", border: "border-violet-200" },
-                    { key: "action", label: "A · Hành động", color: "#8B4DFF", border: "border-violet-200" },
-                    { key: "result", label: "R · Kết quả", color: "#630ed4", border: "border-violet-300" },
+                    { key: "situation", label: "S · Tình huống", color: "#6d2fd6", border: "border-violet-200" },
+                    { key: "task", label: "T · Nhiệm vụ", color: "#a66ff8", border: "border-violet-200" },
+                    { key: "action", label: "A · Hành động", color: "#a66ff8", border: "border-violet-200" },
+                    { key: "result", label: "R · Kết quả", color: "#6d2fd6", border: "border-violet-300" },
                   ].map(({ key, label, color, border }) => {
                     const hints = sg[key] ?? [];
                     if (!hints.length) return null;
@@ -1024,7 +1024,7 @@ export default function InterviewRoom() {
       <div className="grid min-h-0 flex-1 gap-2 px-3 pb-2 max-lg:grid-rows-[minmax(0,1fr)_minmax(0,1fr)_4.5rem] lg:grid-cols-2 lg:grid-rows-[minmax(0,1fr)_4.5rem]">
         <div
           className={`relative min-h-0 h-full overflow-hidden rounded-xl border-2 bg-[#0a0a18] ${
-            isDIDActive ? "border-violet-300/80 shadow-[0_8px_32px_rgba(110,53,232,0.12)]" : "border-violet-200/70"
+            isDIDActive ? "border-violet-300/80 shadow-[0_8px_32px_rgba(128,55,244,0.12)]" : "border-violet-200/70"
           }`}
         >
           {isDIDActive ? (
@@ -1032,7 +1032,7 @@ export default function InterviewRoom() {
               {/* Ambient glow behind avatar */}
               <div
                 className="absolute inset-0 pointer-events-none"
-                style={{ background: "radial-gradient(ellipse at 50% 48%, rgba(110,53,232,0.22) 0%, transparent 68%)" }}
+                style={{ background: "radial-gradient(ellipse at 50% 48%, rgba(128,55,244,0.22) 0%, transparent 68%)" }}
               />
               {/* Avatar centered */}
               <div className="absolute inset-0 flex items-center justify-center">
@@ -1048,7 +1048,7 @@ export default function InterviewRoom() {
                 <div className="absolute top-3 right-3 z-10">
                   <div
                     className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold"
-                    style={{ background: "rgba(110, 53, 232,0.85)", backdropFilter: "blur(8px)" }}
+                    style={{ background: "rgba(128, 55, 244,0.85)", backdropFilter: "blur(8px)" }}
                   >
                     <div className="w-1.5 h-1.5 rounded-full bg-[#b5e636] animate-pulse" />
                     <span className="text-white">HR đang hỏi...</span>
@@ -1059,7 +1059,7 @@ export default function InterviewRoom() {
                 <div className="absolute top-3 right-3 z-10">
                   <div
                     className="flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-semibold text-white"
-                    style={{ background: "rgba(110,53,232,0.92)", backdropFilter: "blur(8px)" }}
+                    style={{ background: "rgba(128,55,244,0.92)", backdropFilter: "blur(8px)" }}
                   >
                     <div className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#b5e636]" />
                     Đang ghi âm câu trả lời...
@@ -1098,8 +1098,8 @@ export default function InterviewRoom() {
         <div
           className={`relative min-h-0 h-full overflow-hidden rounded-xl border-2 ${
             isListening
-              ? "border-violet-400 shadow-[0_0_20px_rgba(110,53,232,0.15)]"
-              : "border-violet-200/80 shadow-[0_8px_24px_rgba(110,53,232,0.1)]"
+              ? "border-violet-400 shadow-[0_0_20px_rgba(128,55,244,0.15)]"
+              : "border-violet-200/80 shadow-[0_8px_24px_rgba(128,55,244,0.1)]"
           }`}
         >
           <UserCameraTile isRecording={isListening} />
@@ -1123,7 +1123,7 @@ export default function InterviewRoom() {
                   <>
                     <div className="h-2 w-2 animate-pulse rounded-full bg-[#b5e636]" />
                     <span className="text-xs font-semibold text-violet-800">Đang ghi âm...</span>
-                    <Waveform active={true} color="#9B6DFF" />
+                    <Waveform active={true} color="#a66ff8" />
                   </>
                 ) : hasTranscript ? (
                   <>
@@ -1232,8 +1232,8 @@ export default function InterviewRoom() {
             title={isListening ? "Dừng ghi âm" : "Bắt đầu trả lời"}
             className="relative flex h-14 w-14 items-center justify-center rounded-full shadow-lg transition-all disabled:cursor-not-allowed disabled:opacity-40"
             style={{
-              background: "linear-gradient(135deg, #6E35E8, #8B4DFF)",
-              boxShadow: isListening ? "0 0 24px rgba(110,53,232,0.55)" : "0 0 24px rgba(110, 53, 232,0.5)",
+              background: "#8037f4",
+              boxShadow: isListening ? "0 0 24px rgba(128,55,244,0.55)" : "0 0 24px rgba(128, 55, 244,0.5)",
             }}
           >
             {isListening ? (
@@ -1249,7 +1249,7 @@ export default function InterviewRoom() {
           <button
             type="button"
             onClick={handleNextQuestion}
-            className="flex items-center gap-2 rounded-md bg-gradient-to-r from-[#c4ff47] to-[#d4ff00] px-4 py-2 text-sm font-bold text-violet-950 shadow-[0_6px_20px_rgba(196,255,71,0.2)] transition-all hover:brightness-105"
+            className="flex items-center gap-2 rounded-md bg-gradient-to-r from-[#93f72b] to-[#93f72b] px-4 py-2 text-sm font-bold text-violet-950 shadow-[0_6px_20px_rgba(196,255,71,0.2)] transition-all hover:brightness-105"
           >
             {!isPro && currentQ === FREE_LIMIT - 1 ? (
               <>
@@ -1267,7 +1267,7 @@ export default function InterviewRoom() {
           <button
             type="button"
             onClick={handleNextQuestion}
-            className="flex items-center gap-2 rounded-md bg-gradient-to-r from-[#c4ff47] to-[#d4ff00] px-4 py-2 text-sm font-bold text-violet-950 shadow-[0_6px_20px_rgba(196,255,71,0.2)] transition-all hover:brightness-105"
+            className="flex items-center gap-2 rounded-md bg-gradient-to-r from-[#93f72b] to-[#93f72b] px-4 py-2 text-sm font-bold text-violet-950 shadow-[0_6px_20px_rgba(196,255,71,0.2)] transition-all hover:brightness-105"
           >
             Hoàn thành
             <CheckCircle className="h-4 w-4" />

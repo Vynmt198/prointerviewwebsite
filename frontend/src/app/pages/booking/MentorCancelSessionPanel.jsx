@@ -161,7 +161,7 @@ export function MentorCancelSessionPanel({
                     disabled={resolutionBusy || rescheduleSlotOptions.length === 0}
                     onClick={() => onResolve("reschedule")}
                     className="rounded-xl px-5 py-2.5 text-xs font-black uppercase tracking-wider text-white disabled:opacity-50"
-                    style={{ background: "#6E35E8" }}
+                    style={{ background: "#8037f4" }}
                   >
                     {resolutionBusy ? "Đang xử lý…" : "Xác nhận đổi lịch"}
                   </button>
@@ -191,7 +191,7 @@ export function MentorCancelSessionPanel({
             type="button"
             onClick={onGoRebookMentors}
             className="w-full rounded-2xl py-4 text-xs font-black uppercase tracking-wider text-white"
-            style={{ background: "#6E35E8" }}
+            style={{ background: "#8037f4" }}
           >
             Chọn mentor mới →
           </button>
@@ -296,7 +296,7 @@ function RefundForm({
           disabled={busy}
           onClick={onSubmit}
           className="rounded-xl px-5 py-2.5 text-xs font-black uppercase tracking-wider text-white disabled:opacity-50"
-          style={{ background: "#6E35E8" }}
+          style={{ background: "#8037f4" }}
         >
           {busy ? "Đang xử lý…" : submitLabel}
         </button>

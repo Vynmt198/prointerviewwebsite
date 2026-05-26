@@ -15,12 +15,12 @@
   --popover: oklch(1.0000 0 0);
   --popover-foreground: oklch(0.2094 0 0);
 
-  /* ─── Primary: #6E35E8 Deep Purple ───────────────────── */
-  --primary: oklch(0.4790 0.2670 287.0);
+  /* ─── Primary: #8037f4 ───────────────────────────────── */
+  --primary: oklch(0.52 0.245 285.5);
   --primary-foreground: oklch(1.0000 0 0);
 
-  /* ─── Secondary: #B4F000 Lime CTA ───────────────────── */
-  --secondary: oklch(0.93 0.21 124);
+  /* ─── Secondary: #93f72b Lime CTA ─────────────────────── */
+  --secondary: oklch(0.91 0.22 123);
   --secondary-foreground: oklch(0.12 0.02 285);
 
   /* ─── Muted ───────────────────────────────────────────── */
@@ -38,24 +38,24 @@
   /* ─── Border / Input / Ring ──────────────────────────── */
   --border: oklch(0.9100 0.0060 264.5);
   --input: oklch(0.9400 0.0050 264.5);
-  --ring: oklch(0.4790 0.2670 287.0);
+  --ring: oklch(0.52 0.245 285.5);
 
   /* ─── Chart Colors ────────────────────────────────────── */
-  --chart-1: oklch(0.4790 0.2670 287.0);
-  --chart-2: oklch(0.93 0.21 124);
-  --chart-3: oklch(0.93 0.21 124);
+  --chart-1: oklch(0.52 0.245 285.5);
+  --chart-2: oklch(0.91 0.22 123);
+  --chart-3: oklch(0.91 0.22 123);
   --chart-4: oklch(0.55 0.22 287);
   --chart-5: oklch(0.72 0.12 290);
 
   /* ─── Sidebar: Dark Purple Navy ──────────────────────── */
   --sidebar: oklch(0.0920 0.0520 287.0);
   --sidebar-foreground: oklch(1.0000 0 0);
-  --sidebar-primary: oklch(0.4790 0.2670 287.0);
+  --sidebar-primary: oklch(0.52 0.245 285.5);
   --sidebar-primary-foreground: oklch(1.0000 0 0);
   --sidebar-accent: oklch(0.1800 0.0400 287.0);
   --sidebar-accent-foreground: oklch(1.0000 0 0);
   --sidebar-border: oklch(0.2000 0.0300 287.0);
-  --sidebar-ring: oklch(0.4790 0.2670 287.0);
+  --sidebar-ring: oklch(0.52 0.245 285.5);
 
   /* ─── Typography ──────────────────────────────────────── */
   --font-sans: 'Lexend', 'Plus Jakarta Sans', system-ui, sans-serif;
@@ -83,12 +83,12 @@
 body:has(.app-user-shell) {
   --sidebar: oklch(0.985 0.008 290);
   --sidebar-foreground: oklch(0.32 0.045 285);
-  --sidebar-primary: oklch(0.479 0.267 287);
+  --sidebar-primary: oklch(0.52 0.245 285.5);
   --sidebar-primary-foreground: oklch(1 0 0);
   --sidebar-accent: oklch(0.955 0.022 290);
   --sidebar-accent-foreground: oklch(0.34 0.07 285);
   --sidebar-border: oklch(0.9 0.02 290);
-  --sidebar-ring: oklch(0.479 0.267 287);
+  --sidebar-ring: oklch(0.52 0.245 285.5);
 }
 
 /* Nền loang tím (fixed, sau nội dung z-1) */
@@ -104,10 +104,10 @@ body:has(.app-user-shell) {
     radial-gradient(ellipse 40% 34% at 4% 97%, rgba(58, 22, 145, 0.135), transparent 50%),
     radial-gradient(ellipse 38% 32% at 88% 94%, rgba(68, 30, 168, 0.125), transparent 48%),
     radial-gradient(ellipse 82% 68% at 50% 46%, rgba(255, 255, 255, 0.5), transparent 62%),
-    radial-gradient(ellipse 125% 95% at 88% -5%, rgba(110, 53, 232, 0.125), transparent 56%),
-    radial-gradient(ellipse 105% 90% at -8% 100%, rgba(95, 0, 240, 0.095), transparent 54%),
+    radial-gradient(ellipse 125% 95% at 88% -5%, rgba(128, 55, 244, 0.125), transparent 56%),
+    radial-gradient(ellipse 105% 90% at -8% 100%, rgba(128, 55, 244, 0.095), transparent 54%),
     radial-gradient(ellipse 100% 85% at 38% 38%, rgba(155, 109, 255, 0.072), transparent 60%),
-    radial-gradient(ellipse 90% 75% at 85% 95%, rgba(110, 53, 232, 0.058), transparent 55%),
+    radial-gradient(ellipse 90% 75% at 85% 95%, rgba(128, 55, 244, 0.058), transparent 55%),
     linear-gradient(
       180deg,
       rgba(243, 240, 249, 0.92) 0%,
@@ -124,8 +124,8 @@ body:has(.app-user-shell) {
 .app-shell-ambient--home {
   background-color: #dcd2eb;
   background-image:
-    radial-gradient(ellipse 100% 92% at -10% 45%, rgba(110, 53, 232, 0.28), transparent 62%),
-    radial-gradient(ellipse 100% 92% at 110% 55%, rgba(95, 0, 240, 0.24), transparent 62%),
+    radial-gradient(ellipse 100% 92% at -10% 45%, rgba(128, 55, 244, 0.28), transparent 62%),
+    radial-gradient(ellipse 100% 92% at 110% 55%, rgba(128, 55, 244, 0.24), transparent 62%),
     radial-gradient(ellipse 260% 120% at 50% -18%, rgba(139, 92, 246, 0.14), transparent 72%),
     radial-gradient(ellipse 240% 110% at 50% 112%, rgba(99, 14, 212, 0.12), transparent 70%),
     radial-gradient(ellipse 58% 54% at 50% 48%, rgba(255, 255, 255, 0.88), transparent 64%),
@@ -298,15 +298,15 @@ body:has(.app-user-shell) {
   --color-emerald-200: #e2f99a;
   --color-emerald-300: #d4f56b;
   --color-emerald-400: #c8f24f;
-  --color-emerald-500: #b4f000;
-  --color-emerald-600: #93c800;
+  --color-emerald-500: #93f72b;
+  --color-emerald-600: #7fe015;
   --color-emerald-700: #6e9a00;
   --color-emerald-800: #4a6800;
   --color-emerald-900: #2d4000;
   --color-green-50: #f7ffe8;
   --color-green-100: #eefcc8;
-  --color-green-500: #b4f000;
-  --color-green-600: #93c800;
+  --color-green-500: #93f72b;
+  --color-green-600: #7fe015;
   --color-green-700: #6e9a00;
 
   /* Warning → tím nhạt + lime nhạt (không vàng/cam) */
@@ -316,33 +316,33 @@ body:has(.app-user-shell) {
   --color-amber-300: #c4b5fd;
   --color-amber-400: #a78bfa;
   --color-amber-500: #8b6ee8;
-  --color-amber-600: #6e35e8;
-  --color-amber-700: #5c2bc9;
+  --color-amber-600: #8037f4;
+  --color-amber-700: #6d2fd6;
   --color-amber-800: #4a229f;
   --color-amber-900: #3a1a7a;
   --color-yellow-50: #f7ffe8;
   --color-yellow-100: #eefcc8;
-  --color-yellow-500: #c4ff47;
+  --color-yellow-500: #93f72b;
   --color-orange-50: #f5f0ff;
-  --color-orange-500: #6e35e8;
-  --color-orange-600: #5c2bc9;
+  --color-orange-500: #8037f4;
+  --color-orange-600: #6d2fd6;
 
   /* Info / link blues → tím */
   --color-sky-50: #f5f0ff;
   --color-sky-100: #ebe4ff;
-  --color-sky-500: #8b6ee8;
-  --color-sky-600: #6e35e8;
+  --color-sky-500: #a66ff8;
+  --color-sky-600: #8037f4;
   --color-sky-900: #3a1a7a;
   --color-blue-50: #f5f0ff;
   --color-blue-100: #ebe4ff;
-  --color-blue-500: #6e35e8;
-  --color-blue-600: #5c2bc9;
-  --color-blue-700: #4a229f;
+  --color-blue-500: #8037f4;
+  --color-blue-600: #6d2fd6;
+  --color-blue-700: #5c2bc9;
   --color-cyan-50: #f5f0ff;
-  --color-cyan-500: #8b6ee8;
+  --color-cyan-500: #a66ff8;
   --color-indigo-50: #f5f0ff;
-  --color-indigo-500: #6e35e8;
-  --color-indigo-600: #5c2bc9;
+  --color-indigo-500: #8037f4;
+  --color-indigo-600: #6d2fd6;
 
   /* Error → tím đậm (không đỏ) */
   --color-red-50: #f5f0ff;
@@ -352,19 +352,19 @@ body:has(.app-user-shell) {
   --color-red-600: #4a229f;
   --color-red-700: #3a1a7a;
   --color-rose-50: #f5f0ff;
-  --color-rose-500: #6e35e8;
-  --color-rose-600: #5c2bc9;
+  --color-rose-500: #8037f4;
+  --color-rose-600: #6d2fd6;
 
   /* Pink/fuchsia → tím */
   --color-fuchsia-50: #f5f0ff;
   --color-fuchsia-100: #ebe4ff;
-  --color-fuchsia-500: #8b6ee8;
-  --color-fuchsia-600: #6e35e8;
-  --color-fuchsia-700: #5c2bc9;
+  --color-fuchsia-500: #a66ff8;
+  --color-fuchsia-600: #8037f4;
+  --color-fuchsia-700: #6d2fd6;
   --color-pink-50: #f5f0ff;
-  --color-pink-500: #8b6ee8;
+  --color-pink-500: #a66ff8;
 
   /* Teal → lime-violet */
   --color-teal-50: #f7ffe8;
-  --color-teal-500: #93c800;
+  --color-teal-500: #93f72b;
 }

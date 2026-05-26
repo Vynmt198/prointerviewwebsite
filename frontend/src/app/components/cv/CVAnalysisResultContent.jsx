@@ -96,13 +96,13 @@ export function CVAnalysisResultContent({
 
               {/* Free-tier notice */}
               {lockResultForFreePlan && (
-                <div className="flex items-center gap-4 rounded-2xl px-5 py-4 mb-6" style={{ background: "linear-gradient(135deg,rgba(110, 53, 232,0.08),rgba(139, 77, 255,0.05))", border: "1.5px solid rgba(110, 53, 232,0.2)" }}>
-                  <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: "rgba(110, 53, 232,0.15)" }}><Lock className="w-5 h-5 text-[#6E35E8]" /></div>
+                <div className="flex items-center gap-4 rounded-2xl px-5 py-4 mb-6" style={{ background: "linear-gradient(135deg,rgba(128, 55, 244,0.08),rgba(139, 77, 255,0.05))", border: "1.5px solid rgba(128, 55, 244,0.2)" }}>
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: "rgba(128, 55, 244,0.15)" }}><Lock className="w-5 h-5 text-[#8037f4]" /></div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-bold text-slate-900">Đang xem bản xem trước — Gói Free</p>
                     <p className="mt-0.5 text-xs text-slate-600">Phần đánh giá chi tiết & gợi ý bị ẩn. Nâng cấp để xem đầy đủ.</p>
                   </div>
-                  <button onClick={() => navigate("/pricing")} className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-white flex-shrink-0" style={{ background: "linear-gradient(135deg,#6E35E8,#8B4DFF)" }}>
+                  <button onClick={() => navigate("/pricing")} className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-white flex-shrink-0" style={{ background: "#8037f4" }}>
                     <Zap className="w-3.5 h-3.5" /> Mở khoá
                   </button>
                 </div>
@@ -117,7 +117,7 @@ export function CVAnalysisResultContent({
               )}
 
               {/* Match Score Banner */}
-              <div className="rounded-2xl p-6 mb-6 text-white" style={{ background: "linear-gradient(135deg,#6E35E8 0%,#9B6DFF 100%)" }}>
+              <div className="rounded-2xl p-6 mb-6 text-white" style={{ background: "#8037f4" }}>
                 <div className="flex items-start justify-between flex-wrap gap-4">
                   <div>
                     <p className="text-indigo-200 text-sm mb-2">
@@ -173,7 +173,7 @@ export function CVAnalysisResultContent({
                       <div className="px-6 text-center">
                         <Lock className="mx-auto mb-2 h-8 w-8 text-violet-300" />
                         <p className="mb-3 text-sm font-semibold text-white">Chi tiết bị ẩn</p>
-                        <button onClick={() => navigate("/pricing")} className="inline-flex items-center gap-1.5 px-5 py-2 rounded-xl text-xs font-bold text-white" style={{ background: "linear-gradient(135deg,#6E35E8,#8B4DFF)" }}>
+                        <button onClick={() => navigate("/pricing")} className="inline-flex items-center gap-1.5 px-5 py-2 rounded-xl text-xs font-bold text-white" style={{ background: "#8037f4" }}>
                           <Zap className="w-3.5 h-3.5" /> Xem đầy đủ
                         </button>
                       </div>
@@ -187,7 +187,7 @@ export function CVAnalysisResultContent({
                 <div className="mb-6 grid gap-6 md:grid-cols-2">
                   <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5 shadow-sm">
                     <div className="mb-4 flex items-center gap-2">
-                      <FileText className="h-4 w-4 text-[#6E35E8]" />
+                      <FileText className="h-4 w-4 text-[#8037f4]" />
                       <h3 className="text-sm font-semibold text-slate-900">Từ khóa khớp với JD</h3>
                     </div>
                     <div className="flex flex-wrap gap-2">
@@ -206,7 +206,7 @@ export function CVAnalysisResultContent({
                   </div>
                   <div className="relative overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 p-5 shadow-sm">
                     <div className="mb-4 flex items-center gap-2">
-                      <Briefcase className="h-4 w-4 text-[#6E35E8]" />
+                      <Briefcase className="h-4 w-4 text-[#8037f4]" />
                       <h3 className="text-sm font-semibold text-slate-900">Toàn bộ từ khóa JD</h3>
                     </div>
                     <div className="flex flex-wrap gap-2">
@@ -228,7 +228,7 @@ export function CVAnalysisResultContent({
                     </p>
                     {lockResultForFreePlan && (
                       <div className="absolute inset-0 flex items-center justify-center rounded-2xl" style={{ background: "rgba(7,6,14,0.78)", backdropFilter: "blur(8px)" }}>
-                        <div className="px-4 text-center"><Lock className="mx-auto mb-2 h-7 w-7 text-violet-300" /><p className="mb-2 text-xs font-semibold text-white">Từ khóa JD bị ẩn</p><button type="button" onClick={() => navigate("/pricing")} className="rounded-lg px-4 py-1.5 text-xs font-bold text-white" style={{ background: "#6E35E8" }}>Mở khoá</button></div>
+                        <div className="px-4 text-center"><Lock className="mx-auto mb-2 h-7 w-7 text-violet-300" /><p className="mb-2 text-xs font-semibold text-white">Từ khóa JD bị ẩn</p><button type="button" onClick={() => navigate("/pricing")} className="rounded-lg px-4 py-1.5 text-xs font-bold text-white" style={{ background: "#8037f4" }}>Mở khoá</button></div>
                       </div>
                     )}
                   </div>
@@ -239,7 +239,7 @@ export function CVAnalysisResultContent({
               <div className="relative mb-6 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
                 <div className="flex items-center gap-2.5 border-b border-slate-200 bg-violet-50/80 px-6 py-4">
                   <div className="flex h-8 w-8 items-center justify-center rounded-md bg-violet-100">
-                    <BarChart3 className="h-4 w-4 text-[#6E35E8]" />
+                    <BarChart3 className="h-4 w-4 text-[#8037f4]" />
                   </div>
                   <div>
                     <h3 className="text-sm font-semibold text-slate-900">Đánh giá chi tiết</h3>
@@ -247,8 +247,8 @@ export function CVAnalysisResultContent({
                   </div>
                   {lockResultForFreePlan && (
                     <div className="ml-auto flex items-center gap-1.5 rounded-md bg-violet-100 px-3 py-1.5">
-                      <Lock className="h-3.5 w-3.5 text-[#6E35E8]" />
-                      <span className="text-xs font-semibold text-[#6E35E8]">Khoá</span>
+                      <Lock className="h-3.5 w-3.5 text-[#8037f4]" />
+                      <span className="text-xs font-semibold text-[#8037f4]">Khoá</span>
                     </div>
                   )}
                 </div>
@@ -259,7 +259,7 @@ export function CVAnalysisResultContent({
                         <svg viewBox="0 0 100 100" className="h-full w-full -rotate-90">
                           <circle cx="50" cy="50" r="40" fill="none" stroke="#e2e8f0" strokeWidth="10" />
                           <circle cx="50" cy="50" r="40" fill="none" stroke="url(#sg)" strokeWidth="10" strokeDasharray={`${overallScore * 2.51} 251`} strokeLinecap="round" />
-                          <defs><linearGradient id="sg" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stopColor="#6E35E8" /><stop offset="100%" stopColor="#8B4DFF" /></linearGradient></defs>
+                          <defs><linearGradient id="sg" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stopColor="#8037f4" /><stop offset="100%" stopColor="#a66ff8" /></linearGradient></defs>
                         </svg>
                         <div className="absolute inset-0 flex flex-col items-center justify-center">
                           <span className="text-[1.6rem] font-bold text-slate-900">{overallScore}</span>
@@ -293,7 +293,7 @@ export function CVAnalysisResultContent({
                               className="h-full rounded-full transition-all duration-700"
                               style={{
                                 width: `${(row.score / row.max) * 100}%`,
-                                background: row.status === "good" ? "#84cc16" : row.status === "ok" ? "#8B4DFF" : "#f97316",
+                                background: row.status === "good" ? "#84cc16" : row.status === "ok" ? "#a66ff8" : "#f97316",
                               }}
                             />
                           </div>
@@ -335,16 +335,16 @@ export function CVAnalysisResultContent({
                   <div className="absolute inset-0 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm">
                     <div className="rounded-2xl border border-violet-200 bg-white px-8 py-6 text-center shadow-xl">
                       <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-violet-100">
-                        <Lock className="h-6 w-6 text-[#6E35E8]" />
+                        <Lock className="h-6 w-6 text-[#8037f4]" />
                       </div>
                       <p className="mb-1 font-bold text-slate-900">Đánh giá chi tiết bị khoá</p>
                       <p className="mb-4 max-w-[240px] text-xs text-slate-600">
-                        Nâng cấp <strong className="text-[#6E35E8]">Elite Pro</strong> để xem điểm số và nhận xét chi tiết.
+                        Nâng cấp <strong className="text-[#8037f4]">Elite Pro</strong> để xem điểm số và nhận xét chi tiết.
                       </p>
                       <button
                         type="button"
                         onClick={() => navigate("/pricing")}
-                        className="mx-auto flex items-center gap-2 rounded-xl bg-[#6E35E8] px-6 py-2.5 text-sm font-bold text-white hover:bg-[#5C28D9]"
+                        className="mx-auto flex items-center gap-2 rounded-xl bg-[#8037f4] px-6 py-2.5 text-sm font-bold text-white hover:bg-[#5C28D9]"
                       >
                         <Zap className="h-4 w-4" /> Nâng cấp
                       </button>
@@ -358,7 +358,7 @@ export function CVAnalysisResultContent({
                 <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 bg-violet-50/80 px-6 py-4">
                   <div className="flex items-center gap-2.5">
                     <div className="flex h-8 w-8 items-center justify-center rounded-md bg-violet-100">
-                      <Lightbulb className="h-4 w-4 text-[#6E35E8]" />
+                      <Lightbulb className="h-4 w-4 text-[#8037f4]" />
                     </div>
                     <div>
                       <h3 className="text-sm font-semibold text-slate-900">Gợi ý chỉnh sửa cụ thể</h3>
@@ -426,7 +426,7 @@ export function CVAnalysisResultContent({
                           </span>
                         </div>
                         <div className="mb-3 rounded-md border border-violet-600 bg-violet-50/70 p-3.5">
-                          <p className="mb-1 flex items-center gap-1.5 text-xs font-semibold text-[#6E35E8]">
+                          <p className="mb-1 flex items-center gap-1.5 text-xs font-semibold text-[#8037f4]">
                             <Lightbulb className="h-3.5 w-3.5 shrink-0" aria-hidden />
                             Lý do
                           </p>
@@ -528,7 +528,7 @@ export function CVAnalysisResultContent({
                     <button
                       type="button"
                       onClick={() => navigate("/pricing")}
-                      className="flex shrink-0 items-center gap-2 rounded-xl bg-[#6E35E8] px-5 py-2.5 text-sm font-bold text-white hover:bg-[#5C28D9]"
+                      className="flex shrink-0 items-center gap-2 rounded-xl bg-[#8037f4] px-5 py-2.5 text-sm font-bold text-white hover:bg-[#5C28D9]"
                     >
                       <Zap className="h-4 w-4" /> Mở khoá toàn bộ
                     </button>
@@ -541,7 +541,7 @@ export function CVAnalysisResultContent({
                 <button
                   type="button"
                   onClick={() => navigate("/interview")}
-                  className="flex items-center gap-2 rounded-xl bg-[#6E35E8] px-6 py-3 text-sm font-semibold text-white shadow-md transition-colors hover:bg-[#5C28D9]"
+                  className="flex items-center gap-2 rounded-xl bg-[#8037f4] px-6 py-3 text-sm font-semibold text-white shadow-md transition-colors hover:bg-[#5C28D9]"
                 >
                   <Mic className="h-4 w-4 shrink-0" aria-hidden />
                   Phỏng vấn với AI

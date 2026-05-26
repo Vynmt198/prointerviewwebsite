@@ -6,16 +6,16 @@ export const mentorCreateShellClass =
   "border border-slate-200 bg-white p-5 sm:p-8 rounded-[12px] shadow-[0_1px_3px_rgba(15,23,42,0.06)]";
 
 export const mentorSectionCardClass =
-  "relative border border-slate-200 border-l-[3px] border-l-[#6E35E8] bg-slate-50/40 p-4 sm:p-5 rounded-[10px]";
+  "relative border border-slate-200 border-l-[3px] border-l-[#8037f4] bg-slate-50/40 p-4 sm:p-5 rounded-[10px]";
 
 export const mentorInputClass =
-  "w-full rounded-[10px] border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-[#6E35E8] focus:ring-2 focus:ring-[#6E35E8]/12";
+  "w-full rounded-[10px] border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-[#8037f4] focus:ring-2 focus:ring-[#8037f4]/12";
 
 export const mentorLabelClass =
   "mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-600";
 
 export const mentorPrimaryBtnClass =
-  "inline-flex items-center justify-center gap-2 rounded-[10px] bg-[#6E35E8] px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#5F00F0] active:scale-[0.98]";
+  "inline-flex items-center justify-center gap-2 rounded-[10px] bg-[#8037f4] px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#6d2fd6] active:scale-[0.98]";
 
 export const mentorGhostBtnClass =
   "inline-flex items-center justify-center rounded-[10px] border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-600 transition hover:border-slate-400 hover:bg-slate-50";

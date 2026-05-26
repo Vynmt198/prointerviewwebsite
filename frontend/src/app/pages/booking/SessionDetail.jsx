@@ -661,7 +661,7 @@ export function SessionDetail() {
             type="button"
             onClick={() => navigate("/login")}
             className="mt-4 px-4 py-2 rounded-xl text-sm font-medium text-white"
-            style={{ background: "#6E35E8" }}
+            style={{ background: "#8037f4" }}
           >
             Đăng nhập
           </button>
@@ -670,7 +670,7 @@ export function SessionDetail() {
             type="button"
             onClick={() => navigate("/")}
             className="mt-4 px-4 py-2 rounded-xl text-sm font-medium text-white"
-            style={{ background: "#6E35E8" }}
+            style={{ background: "#8037f4" }}
           >
             Về trang chủ
           </button>
@@ -772,9 +772,9 @@ export function SessionDetail() {
 
             {/* ── Countdown ── */}
             <div className="card-premium overflow-hidden">
-              <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between" style={{ background: "rgba(110, 53, 232,0.03)" }}>
+              <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between" style={{ background: "rgba(128, 55, 244,0.03)" }}>
                 <div className="flex items-center gap-2">
-                  <Timer className="w-4 h-4" style={{ color: "#6E35E8" }} />
+                  <Timer className="w-4 h-4" style={{ color: "#8037f4" }} />
                   <span className="font-semibold text-gray-800 text-sm">Đếm ngược đến buổi phỏng vấn</span>
                 </div>
                 <span className="text-xs text-gray-400">{sessionData.date} lúc {sessionData.time}</span>
@@ -809,8 +809,8 @@ export function SessionDetail() {
 
             {/* ── Google Meet link ── */}
             <div className="card-premium overflow-hidden">
-              <div className="px-5 py-4 border-b border-gray-100 flex items-center gap-2" style={{ background: "rgba(110, 53, 232,0.03)" }}>
-                <Video className="w-4 h-4" style={{ color: "#6E35E8" }} />
+              <div className="px-5 py-4 border-b border-gray-100 flex items-center gap-2" style={{ background: "rgba(128, 55, 244,0.03)" }}>
+                <Video className="w-4 h-4" style={{ color: "#8037f4" }} />
                 <span className="font-semibold text-gray-800 text-sm">Link tham gia phòng họp</span>
               </div>
               <div className="p-5">
@@ -865,7 +865,7 @@ export function SessionDetail() {
                 </div>
 
                 <p className="text-xs text-gray-400 mt-3 flex items-center gap-1.5">
-                  <ShieldCheck className="w-3.5 h-3.5" style={{ color: "#6E35E8" }} />
+                  <ShieldCheck className="w-3.5 h-3.5" style={{ color: "#8037f4" }} />
                   Link sẽ chỉ hoạt động đúng giờ phỏng vấn. Email xác nhận đã được gửi.
                 </p>
               </div>
@@ -873,16 +873,16 @@ export function SessionDetail() {
 
             {/* ── Checklist ── */}
             <div className="card-premium overflow-hidden">
-              <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between" style={{ background: "rgba(110, 53, 232,0.03)" }}>
+              <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between" style={{ background: "rgba(128, 55, 244,0.03)" }}>
                 <div className="flex items-center gap-2">
-                  <CheckCircle className="w-4 h-4" style={{ color: "#6E35E8" }} />
+                  <CheckCircle className="w-4 h-4" style={{ color: "#8037f4" }} />
                   <span className="font-semibold text-gray-800 text-sm">Checklist chuẩn bị trước buổi</span>
                 </div>
                 <span
                   className="text-xs font-bold px-3 py-1 rounded-full"
                   style={{
-                    background: checklistDone === checklist.length ? "rgba(180,240,0,0.15)" : "rgba(110, 53, 232,0.08)",
-                    color: checklistDone === checklist.length ? "#4A7A00" : "#6E35E8",
+                    background: checklistDone === checklist.length ? "rgba(180,240,0,0.15)" : "rgba(128, 55, 244,0.08)",
+                    color: checklistDone === checklist.length ? "#4A7A00" : "#8037f4",
                   }}
                 >
                   {checklistDone}/{checklist.length} hoàn thành
@@ -897,7 +897,7 @@ export function SessionDetail() {
                       width: `${(checklistDone / checklist.length) * 100}%`,
                       background: checklistDone === checklist.length
                         ? "linear-gradient(90deg, #B4F000, #8CC700)"
-                        : "linear-gradient(90deg, #6E35E8, #8B4DFF)",
+                        : "#8037f4",
                     }}
                   />
                 </div>
@@ -915,8 +915,8 @@ export function SessionDetail() {
                       <div
                         className="w-5 h-5 rounded-md flex items-center justify-center flex-shrink-0 transition-all"
                         style={{
-                          background: item.done ? "#6E35E8" : "#fff",
-                          border: item.done ? "2px solid #6E35E8" : "2px solid #D1D5DB",
+                          background: item.done ? "#8037f4" : "#fff",
+                          border: item.done ? "2px solid #8037f4" : "2px solid #D1D5DB",
                         }}
                       >
                         {item.done && <Check className="w-3 h-3 text-white" />}
@@ -984,12 +984,12 @@ export function SessionDetail() {
                 <div>
                   <p className="text-gray-900 font-bold">{sessionData.mentorName}</p>
                   <p className="text-gray-500 text-xs">{sessionData.mentorTitle}</p>
-                  <p className="text-xs font-semibold mt-0.5" style={{ color: "#6E35E8" }}>{sessionData.mentorCompany}</p>
+                  <p className="text-xs font-semibold mt-0.5" style={{ color: "#8037f4" }}>{sessionData.mentorCompany}</p>
                 </div>
               </div>
               <button
                 onClick={() => navigate(`/mentors/${sessionData.mentorId}`)}
-                className="w-full py-2.5 rounded-xl text-sm font-medium text-gray-600 transition-all border border-gray-200 hover:border-[#6E35E8]/40 hover:text-[#6E35E8]"
+                className="w-full py-2.5 rounded-xl text-sm font-medium text-gray-600 transition-all border border-gray-200 hover:border-[#8037f4]/40 hover:text-[#8037f4]"
               >
                 Xem hồ sơ mentor
               </button>
@@ -1007,8 +1007,8 @@ export function SessionDetail() {
                   { icon: User, label: "Vị trí", value: sessionData.position },
                 ].map((row) => (
                   <div key={row.label} className="flex items-start gap-3">
-                    <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5" style={{ background: "rgba(110, 53, 232,0.07)" }}>
-                      <row.icon className="w-3.5 h-3.5" style={{ color: "#6E35E8" }} />
+                    <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5" style={{ background: "rgba(128, 55, 244,0.07)" }}>
+                      <row.icon className="w-3.5 h-3.5" style={{ color: "#8037f4" }} />
                     </div>
                     <div>
                       <p className="text-xs text-gray-400">{row.label}</p>
@@ -1025,7 +1025,7 @@ export function SessionDetail() {
               <div className="space-y-2">
                 {sessionData.cvFile && (
                   <div className="flex items-center gap-3 p-3 rounded-xl" style={{ background: "#F9FAFB" }}>
-                    <FileText className="w-4 h-4 flex-shrink-0" style={{ color: "#6E35E8" }} />
+                    <FileText className="w-4 h-4 flex-shrink-0" style={{ color: "#8037f4" }} />
                     <div className="flex-1 min-w-0">
                       <p className="text-xs font-semibold text-gray-700 truncate">{sessionData.cvFile}</p>
                       <p className="text-xs text-gray-400">CV đính kèm</p>
@@ -1058,7 +1058,7 @@ export function SessionDetail() {
               <div className="flex items-start gap-2 pt-3 border-t border-gray-100 mb-4">
                 <ShieldCheck
                   className={`w-4 h-4 flex-shrink-0 mt-0.5 ${paymentMeta.iconClass}`}
-                  style={paymentMeta.iconClass ? undefined : { color: "#6E35E8" }}
+                  style={paymentMeta.iconClass ? undefined : { color: "#8037f4" }}
                 />
                 <p className={`text-xs ${paymentMeta.noteClass}`}>{paymentMeta.note}</p>
               </div>
@@ -1106,7 +1106,7 @@ export function SessionDetail() {
                     disabled={refundDestBusy}
                     onClick={() => void handleSubmitRefundDestination()}
                     className="w-full rounded-xl py-2.5 text-sm font-semibold text-white disabled:opacity-50"
-                    style={{ background: "#6E35E8" }}
+                    style={{ background: "#8037f4" }}
                   >
                     {refundDestBusy ? "Đang lưu…" : "Lưu STK nhận hoàn"}
                   </button>
@@ -1226,8 +1226,8 @@ export function SessionDetail() {
                 onClick={() => navigate(`/meeting/${id}`)}
                 className="w-full flex items-center justify-center gap-3 py-5 rounded-2xl text-white font-bold transition-all hover:opacity-95 active:scale-[0.98]"
                 style={{
-                  background: "#6E35E8",
-                  boxShadow: "0 8px 32px rgba(110, 53, 232, 0.35)",
+                  background: "#8037f4",
+                  boxShadow: "0 8px 32px rgba(128, 55, 244, 0.35)",
                   fontSize: "1.1rem",
                 }}
               >
@@ -1260,8 +1260,8 @@ export function SessionDetail() {
 
             {/* Notes area */}
             <div className="card-premium overflow-hidden">
-              <div className="px-5 py-4 border-b border-gray-100 flex items-center gap-2" style={{ background: "rgba(110, 53, 232,0.03)" }}>
-                <Notebook className="w-4 h-4" style={{ color: "#6E35E8" }} />
+              <div className="px-5 py-4 border-b border-gray-100 flex items-center gap-2" style={{ background: "rgba(128, 55, 244,0.03)" }}>
+                <Notebook className="w-4 h-4" style={{ color: "#8037f4" }} />
                 <span className="font-semibold text-gray-800 text-sm">Ghi chú trong buổi phỏng vấn</span>
               </div>
               <div className="p-5">
@@ -1276,7 +1276,7 @@ export function SessionDetail() {
                   <p className="text-xs text-gray-400">{notes.length} ký tự</p>
                   <button
                     className="text-xs font-medium px-3 py-1.5 rounded-lg transition-all"
-                    style={{ background: "rgba(110, 53, 232,0.08)", color: "#6E35E8" }}
+                    style={{ background: "rgba(128, 55, 244,0.08)", color: "#8037f4" }}
                   >
                     Lưu ghi chú
                   </button>
@@ -1307,7 +1307,7 @@ export function SessionDetail() {
               />
               <p className="text-gray-900 font-bold">{sessionData.mentorName}</p>
               <p className="text-gray-500 text-xs">{sessionData.mentorTitle}</p>
-              <p className="text-xs font-semibold mt-1" style={{ color: "#6E35E8" }}>{sessionData.mentorCompany}</p>
+              <p className="text-xs font-semibold mt-1" style={{ color: "#8037f4" }}>{sessionData.mentorCompany}</p>
               <div
                 className="mt-4 pt-4 border-t border-gray-100 flex items-center gap-2 text-xs"
                 style={{ color: "#4A7A00" }}
@@ -1333,7 +1333,7 @@ export function SessionDetail() {
             <button
               type="button"
               onClick={() => navigate("/")}
-              className="w-full py-3 rounded-xl text-sm font-semibold border border-gray-200 text-gray-600 hover:border-[#6E35E8]/40 hover:text-[#6E35E8] transition-all"
+              className="w-full py-3 rounded-xl text-sm font-semibold border border-gray-200 text-gray-600 hover:border-[#8037f4]/40 hover:text-[#8037f4] transition-all"
             >
               Về trang chủ →
             </button>
@@ -1450,7 +1450,7 @@ export function SessionDetail() {
                   <button
                     onClick={() => navigate(`/review/${sessionData.sessionId}`)}
                     className="w-full py-6 rounded-[2rem] font-black text-lg text-white shadow-2xl shadow-indigo-900/20 transition-all hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-3"
-                    style={{ background: "linear-gradient(135deg, #6E35E8, #8B4DFF)" }}
+                    style={{ background: "#8037f4" }}
                   >
                     Viết đánh giá ngay <CaretRight className="w-5 h-5" />
                   </button>
@@ -1520,7 +1520,7 @@ export function SessionDetail() {
               <p className="font-semibold text-gray-800 text-sm mb-4">Tiếp theo sau buổi phỏng vấn</p>
               <div className="space-y-3">
                 {[
-                  { icon: Sparkles, color: "#6E35E8", bg: "rgba(110, 53, 232,0.08)",
+                  { icon: Sparkles, color: "#8037f4", bg: "rgba(128, 55, 244,0.08)",
                     title: "Luyện tập với AI Interview", desc: "Áp dụng feedback vào mock interview AI",
                     action: () => navigate("/interview"), label: "Bắt đầu →" },
                   { icon: FileText, color: "#FF8C42", bg: "rgba(255,140,66,0.08)",
@@ -1548,7 +1548,7 @@ export function SessionDetail() {
 
             <button onClick={() => navigate("/")}
               className="w-full py-4 rounded-2xl font-bold text-sm text-white flex items-center justify-center gap-2"
-              style={{ background: "linear-gradient(135deg,#6E35E8,#8B4DFF)", boxShadow: "0 6px 20px rgba(110, 53, 232,0.3)" }}>
+              style={{ background: "#8037f4", boxShadow: "0 6px 20px rgba(128, 55, 244,0.3)" }}>
               Về trang chủ <CaretRight className="w-4 h-4" />
             </button>
           </div>
@@ -1599,7 +1599,7 @@ export function SessionDetail() {
                   </div>
                   <button onClick={() => navigate(`/review/${sessionData.sessionId}`)}
                     className="w-full py-2.5 rounded-xl text-sm font-bold transition-all"
-                    style={{ background: "linear-gradient(135deg,#6E35E8,#8B4DFF)", color: "#fff" }}>
+                    style={{ background: "#8037f4", color: "#fff" }}>
                     Đánh giá ngay
                   </button>
                 </div>

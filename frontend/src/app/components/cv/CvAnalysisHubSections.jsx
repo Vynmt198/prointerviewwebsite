@@ -186,26 +186,27 @@ export function CvAnalysisHubHero({ onJd, onField }) {
               </div>
             </div>
 
-            {/* Card đánh giá — gấu ôm mép trái (desktop) */}
+            {/* Card đánh giá — hubPreview; gấu căn đáy card (desktop) */}
             <div className="relative hidden w-full overflow-visible lg:block">
               <div
-                className="pointer-events-none absolute bottom-0 left-0 z-20 -translate-x-[15.95rem] translate-y-[2.24rem] xl:-translate-x-[16.45rem]"
+                className="pointer-events-none absolute bottom-0 left-0 z-20 -translate-x-[16.35rem] translate-y-[1rem] xl:-translate-x-[16.85rem]"
                 aria-hidden
               >
                 <MascotSparkle className="left-[27%] top-[8%] h-2.5 w-2.5" />
                 <MascotSparkle className="right-[17%] top-[4.5%] h-2 w-2 opacity-80" />
                 <img
-                  src="/mascot-cv-hub-knowledge.png?v=8"
+                  src="/mascot-cv-hub-knowledge.png?v=10"
                   alt=""
-                  className="block h-[19rem] w-[19rem] max-w-none object-contain object-bottom drop-shadow-[0_20px_50px_rgba(99,14,212,0.18)] xl:h-[20rem] xl:w-[20rem]"
+                  className="block h-[21rem] w-[21rem] max-w-none object-contain object-bottom drop-shadow-[0_20px_50px_rgba(99,14,212,0.18)] xl:h-[22rem] xl:w-[22rem]"
                 />
               </div>
               <CvAnalysisScoreBreakdown
                 overallScore={percent}
                 rows={CV_HUB_DEMO_SCORE_ROWS}
                 compact
+                hubPreview
                 showHeader={false}
-                className="relative z-10 w-full !rounded-md border-violet-100/60 bg-white/95 shadow-sm backdrop-blur-sm [&>div:last-child]:pl-12 [&>div:last-child]:xl:pl-14"
+                className="relative z-10 w-full !rounded-md border-violet-100/60 bg-white/95 shadow-sm backdrop-blur-sm [&>div:last-child]:pl-[3.25rem] [&>div:last-child]:xl:pl-[3.75rem]"
               />
             </div>
 
@@ -214,6 +215,7 @@ export function CvAnalysisHubHero({ onJd, onField }) {
                 overallScore={percent}
                 rows={CV_HUB_DEMO_SCORE_ROWS}
                 compact
+                hubPreview
                 showHeader={false}
                 className="w-full !rounded-md border-violet-100/60 bg-white/95 shadow-sm backdrop-blur-sm"
               />

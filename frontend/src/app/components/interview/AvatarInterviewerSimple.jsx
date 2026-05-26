@@ -200,8 +200,8 @@ export function AvatarInterviewerSimple({
         {/* Gradients */}
         <defs>
           <linearGradient id="shoulderGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" stopColor="#6E35E8" />
-            <stop offset="100%" stopColor="#9B6DFF" />
+            <stop offset="0%" stopColor="#8037f4" />
+            <stop offset="100%" stopColor="#a66ff8" />
           </linearGradient>
         </defs>
       </svg>

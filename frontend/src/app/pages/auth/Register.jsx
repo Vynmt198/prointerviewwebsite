@@ -16,13 +16,9 @@ import { toastApiError } from "../../utils/apiToast";
 import { GoogleSignInBlock } from "../../components/auth/GoogleSignInBlock";
 import { BrandLogo } from "../../components/brand/BrandLogo";
 import { SparkleGlyph } from "../../components/decor/SparkleGlyph.jsx";
+import { AUTH_COPY } from "../../constants/brandVoice";
 
-const PERKS = [
-  "3 buổi phỏng vấn AI miễn phí ngay sau đăng ký",
-  "Phân tích CV/JD không giới hạn",
-  "Truy cập 500+ câu hỏi phỏng vấn theo ngành",
-  "Theo dõi lịch hẹn mentor và lịch sử luyện tập",
-];
+const PERKS = AUTH_COPY.registerPerks;
 
 function pwStrength(pw) {
   if (!pw) return 0;
@@ -38,7 +34,7 @@ const STRENGTH_LABELS = ["Yếu", "Trung bình", "Mạnh"];
 /** Form đăng ký: ô hơi thấp hơn Login để vừa một màn hình */
 const INPUT_REG_CLS =
   "w-full px-4 py-3 rounded-xl border border-gray-200 text-base outline-none transition-all " +
-  "focus:border-[#6E35E8] focus:ring-2 focus:ring-[#6E35E8]/15 text-gray-900 placeholder-gray-400 " +
+  "focus:border-[#8037f4] focus:ring-2 focus:ring-[#8037f4]/15 text-gray-900 placeholder-gray-400 " +
   "bg-white hover:bg-gray-50/50";
 /** % = tâm sticker; kích thước lệch — nằm trong vùng inset của lớp nền */
 const AUTH_STICKS = [
@@ -103,25 +99,25 @@ export function Register() {
     return (
       <div className="h-screen bg-[#fcfaff] flex flex-col items-center justify-center px-6 text-center">
         <div className="w-full max-w-md bg-white rounded-3xl border border-gray-200 p-8 shadow-sm">
-          <div className="h-20 w-20 bg-[#6E35E8]/10 rounded-full flex items-center justify-center mb-6 mx-auto">
-            <Mail className="h-10 w-10 text-[#6E35E8]" />
+          <div className="h-20 w-20 bg-[#8037f4]/10 rounded-full flex items-center justify-center mb-6 mx-auto">
+            <Mail className="h-10 w-10 text-[#8037f4]" />
           </div>
           <h1 className="text-3xl font-black mb-4 tracking-tight">Kiểm tra email của bạn</h1>
           <p className="text-gray-600 mb-8 leading-relaxed">
-            Chúng tôi đã gửi link xác thực đến <strong className="text-gray-900">{registeredEmail}</strong>.
-            Vui lòng nhấn vào link trong email để kích hoạt tài khoản trước khi đăng nhập.
+            {AUTH_COPY.verifyEmailLead}{" "}
+            <strong className="text-gray-900">{registeredEmail}</strong>
           </p>
           <div className="space-y-4">
             <Link
               to="/login"
               className="w-full inline-flex items-center justify-center rounded-2xl px-6 py-4 text-base font-black text-white transition-all active:scale-[0.98]"
-              style={{ background: "linear-gradient(135deg, #6E35E8, #9B6DFF)" }}
+              style={{ background: "#8037f4" }}
             >
               Về trang đăng nhập
             </Link>
             <button
               onClick={() => setRegisteredEmail("")}
-              className="text-sm font-bold text-gray-500 hover:text-[#6E35E8] transition-colors"
+              className="text-sm font-bold text-gray-500 hover:text-[#8037f4] transition-colors"
             >
               Quay lại đăng ký
             </button>
@@ -161,14 +157,14 @@ export function Register() {
         {/* Top bar */}
         <div
           className="relative z-10 flex h-20 flex-shrink-0 items-center justify-between border-b px-10"
-          style={{ borderColor: "rgba(110,53,232,0.1)" }}
+          style={{ borderColor: "rgba(128,55,244,0.1)" }}
         >
           <button onClick={() => navigate(getBrandClickPath())} className="flex items-center gap-2.5 group">
             <BrandLogo size="auth" />
           </button>
           <p className="text-sm text-gray-500">
             Đã có tài khoản?{" "}
-            <Link to="/login" className="font-semibold hover:underline" style={{ color: "#6E35E8" }}>
+            <Link to="/login" className="font-semibold hover:underline" style={{ color: "#8037f4" }}>
               Đăng nhập
             </Link>
           </p>
@@ -183,7 +179,7 @@ export function Register() {
               Tạo tài khoản
             </h1>
             <p className="text-gray-500 text-xs sm:text-sm mb-2">
-              Miễn phí · 3 buổi AI · Không cần thẻ
+              {AUTH_COPY.registerSubtitle}
             </p>
 
             {/* Error */}
@@ -259,15 +255,15 @@ export function Register() {
                   className="mt-0.5 flex flex-shrink-0 items-center justify-center rounded-md border-2 transition-all"
                   style={{
                     width: "18px", height: "18px",
-                    background: agreed ? "linear-gradient(135deg,#6E35E8,#8B4DFF)" : "transparent",
-                    borderColor: agreed ? "rgba(110,53,232,0.6)" : "#D1D5DB",
+                    background: agreed ? "#8037f4" : "transparent",
+                    borderColor: agreed ? "rgba(128,55,244,0.6)" : "#D1D5DB",
                   }}>
                   {agreed && <Check className="w-3 h-3 text-white" strokeWidth={3} />}
                 </button>
                 <span className="text-xs leading-snug text-gray-500 sm:text-sm">
                   Tôi đồng ý{" "}
-                  <a href="#" className="font-semibold text-[#6E35E8] hover:underline">Điều khoản</a>{" "}và{" "}
-                  <a href="#" className="font-semibold text-[#6E35E8] hover:underline">Bảo mật</a>.
+                  <a href="#" className="font-semibold text-[#8037f4] hover:underline">Điều khoản</a>{" "}và{" "}
+                  <a href="#" className="font-semibold text-[#8037f4] hover:underline">Bảo mật</a>.
                 </span>
               </label>
 
@@ -275,8 +271,8 @@ export function Register() {
               <button type="submit" disabled={loading || !agreed}
                 className="w-full rounded-full py-3 text-sm font-bold text-white transition-all hover:brightness-110 active:scale-[0.98] disabled:opacity-50 sm:text-base"
                 style={{
-                  background: "linear-gradient(135deg, #6E35E8, #9B6DFF)",
-                  boxShadow: agreed ? "0 4px 20px rgba(110,53,232,0.3)" : "none",
+                  background: "#8037f4",
+                  boxShadow: agreed ? "0 4px 20px rgba(128,55,244,0.3)" : "none",
                 }}>
                 {loading
                   ? <span className="flex items-center justify-center gap-2">
@@ -297,7 +293,7 @@ export function Register() {
             <GoogleSignInBlock onError={setError} />
 
             <p className="mt-3 flex items-start justify-center gap-1.5 text-center text-[11px] leading-snug text-gray-500">
-              <ShieldCheck className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-[#6E35E8]" strokeWidth={2} />
+              <ShieldCheck className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-[#8037f4]" strokeWidth={2} />
               <span>
                 Mã hóa an toàn · Không bán dữ liệu.
               </span>
@@ -313,34 +309,34 @@ export function Register() {
         style={{ background: "linear-gradient(165deg, #FAF8FF 0%, #F0E8FF 42%, #E6E0FF 100%)" }}
       >
         <div className="absolute -top-20 -right-20 w-96 h-96 rounded-full opacity-25 blur-3xl pointer-events-none"
-          style={{ background: "radial-gradient(circle, #6E35E8 0%, transparent 70%)" }} />
+          style={{ background: "radial-gradient(circle, #8037f4 0%, transparent 70%)" }} />
         <div className="absolute -bottom-24 -left-16 w-[22rem] h-[22rem] rounded-full opacity-20 blur-3xl pointer-events-none"
-          style={{ background: "radial-gradient(circle, #9B6DFF 0%, transparent 72%)" }} />
+          style={{ background: "radial-gradient(circle, #a66ff8 0%, transparent 72%)" }} />
 
         {/* Badge + card: badge trong luồng flex để không đè lên thẻ khi căn giữa dọc */}
         <div className="relative z-10 flex min-h-0 flex-1 flex-col px-10 pb-6 pt-8">
           <div className="mb-4 shrink-0 self-start">
             <div className="flex items-center gap-2 rounded-2xl bg-white px-4 py-2.5 shadow-lg"
               style={{ border: "1px solid rgba(180,245,0,0.35)" }}>
-              <div className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full" style={{ background: "#B4F500" }}>
+              <div className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full" style={{ background: "#93f72b" }}>
                 <Check className="h-3 w-3 text-gray-900" strokeWidth={3} />
               </div>
-              <span className="text-sm font-semibold text-gray-700">Miễn phí hoàn toàn</span>
+              <span className="text-sm font-semibold text-gray-700">{AUTH_COPY.registerFreeBadge}</span>
             </div>
           </div>
 
           <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-5">
           <div className="bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl"
-            style={{ border: "1px solid rgba(110,53,232,0.08)" }}>
+            style={{ border: "1px solid rgba(128,55,244,0.08)" }}>
             <div className="flex items-center gap-3 mb-5 pb-5"
-              style={{ borderBottom: "1px solid rgba(110,53,232,0.08)" }}>
+              style={{ borderBottom: "1px solid rgba(128,55,244,0.08)" }}>
               <div className="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0"
-                style={{ background: "linear-gradient(135deg, #6E35E8, #9B6DFF)" }}>
+                style={{ background: "#8037f4" }}>
                 <Brain className="w-6 h-6 text-white" />
               </div>
               <div>
                 <p className="text-gray-900 font-bold">ProInterview Free</p>
-                <p className="text-xs font-semibold" style={{ color: "#B4F500" }}>✦ Bắt đầu ngay hôm nay</p>
+                <p className="text-xs font-semibold" style={{ color: "#93f72b" }}>✦ Bước tiếp theo: luyện với Pio</p>
               </div>
             </div>
 
@@ -349,8 +345,8 @@ export function Register() {
               {PERKS.map((item) => (
                 <li key={item} className="flex items-start gap-3">
                   <div className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5"
-                    style={{ background: "rgba(110,53,232,0.1)" }}>
-                    <Check className="w-3 h-3 text-[#6E35E8]" strokeWidth={3} />
+                    style={{ background: "rgba(128,55,244,0.1)" }}>
+                    <Check className="w-3 h-3 text-[#8037f4]" strokeWidth={3} />
                   </div>
                   <span className="text-gray-600 text-sm leading-relaxed">{item}</span>
                 </li>
@@ -361,21 +357,21 @@ export function Register() {
               onClick={() => document.getElementById("reg-name")?.focus()}
               className="flex w-full items-center justify-center gap-1.5 rounded-full py-3 text-sm font-black text-[#0f172a] transition-all hover:scale-105 active:scale-[0.98]"
               style={{
-                background: "linear-gradient(135deg, #B4F500, #93D600)",
+                background: "#93f72b",
                 boxShadow: "0 8px 20px rgba(15,23,42,0.1)",
               }}>
-              Bắt đầu miễn phí →
+              {AUTH_COPY.registerFreeCta} →
             </button>
           </div>
 
           {/* Social proof */}
           <div className="shrink-0 text-center">
             <p className="mb-2 font-bold text-gray-700" style={{ fontSize: "1.15rem", letterSpacing: "-0.02em" }}>
-              <span style={{ color: "#6E35E8" }}>10,000+</span> ứng viên đã tin dùng
+              <span style={{ color: "#8037f4" }}>10,000+</span> {AUTH_COPY.registerSocialProof}
             </p>
             <div className="flex items-center justify-center gap-2">
               <div className="flex -space-x-2">
-                {[["#6E35E8", "N"], ["#ec4899", "T"], ["#3b82f6", "A"], ["#f97316", "M"]].map(([bg, l], i) => (
+                {[["#8037f4", "N"], ["#ec4899", "T"], ["#3b82f6", "A"], ["#f97316", "M"]].map(([bg, l], i) => (
                   <div key={i} className="w-8 h-8 rounded-full border-2 border-white flex items-center justify-center text-white text-xs font-bold"
                     style={{ background: bg }}>{l}</div>
                 ))}

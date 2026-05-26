@@ -265,7 +265,7 @@ export function Mentors() {
             badge="Mentor 1:1"
             title={
               <>
-                Tìm Mentor <span className="text-[#630ed4]">phù hợp</span>
+                Tìm Mentor <span className="text-[#6d2fd6]">phù hợp</span>
               </>
             }
             subtitle="Sau buổi mock 1-1, bạn nhận feedback cụ thể — biết cần sửa gì và tự tin hơn khi vào vòng phỏng vấn thật."
@@ -292,7 +292,7 @@ export function Mentors() {
                   <MagnifyingGlass className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-violet-400" />
                   <input
                     type="search"
-                    className="w-full rounded-2xl border border-violet-200/70 bg-white py-2.5 pl-10 pr-10 text-sm shadow-sm focus:border-violet-300 focus:outline-none focus:ring-2 focus:ring-[#6E35E8]/15"
+                    className="w-full rounded-2xl border border-violet-200/70 bg-white py-2.5 pl-10 pr-10 text-sm shadow-sm focus:border-violet-300 focus:outline-none focus:ring-2 focus:ring-[#8037f4]/15"
                     placeholder="Tìm theo tên, ngành, kỹ năng..."
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
@@ -373,7 +373,7 @@ export function Mentors() {
                           .catch(() => toastApiError("Lỗi kết nối khi tải danh sách mentor."))
                           .finally(() => setLoading(false));
                       }}
-                      className="mt-4 rounded-xl bg-[#6E35E8] px-6 py-2.5 text-sm font-bold text-white hover:bg-violet-700"
+                      className="mt-4 rounded-xl bg-[#8037f4] px-6 py-2.5 text-sm font-bold text-white hover:bg-violet-700"
                     >
                       Thử lại
                     </button>
@@ -386,7 +386,7 @@ export function Mentors() {
                     <button
                       type="button"
                       onClick={clearFilters}
-                      className="rounded-xl bg-[#6E35E8] px-6 py-2.5 text-sm font-bold text-white hover:bg-violet-700"
+                      className="rounded-xl bg-[#8037f4] px-6 py-2.5 text-sm font-bold text-white hover:bg-violet-700"
                     >
                       Xóa bộ lọc
                     </button>
@@ -408,7 +408,7 @@ export function Mentors() {
                           }}
                           className="group cursor-pointer overflow-hidden rounded-2xl border border-violet-200/70 bg-white shadow-sm transition-all hover:-translate-y-0.5 hover:border-violet-300 hover:shadow-md"
                         >
-                          <div className="h-1 w-full bg-gradient-to-r from-[#6E35E8] to-[#9B6DFF]" />
+                          <div className="h-1 w-full bg-gradient-to-r from-[#8037f4] to-[#a66ff8]" />
                           <div className="p-5">
                             <div className="mb-4 flex items-start gap-3">
                               <div className="relative shrink-0">
@@ -425,7 +425,7 @@ export function Mentors() {
                                 ) : null}
                               </div>
                               <div className="min-w-0 flex-1">
-                                <h3 className="truncate text-sm font-bold text-violet-950 group-hover:text-[#6E35E8]">
+                                <h3 className="truncate text-sm font-bold text-violet-950 group-hover:text-[#8037f4]">
                                   {mentor.name}
                                 </h3>
                                 <p className="mt-0.5 truncate text-xs text-slate-500">{mentor.title}</p>
@@ -470,7 +470,7 @@ export function Mentors() {
                                   e.stopPropagation();
                                   navigate(bookingPath(mentor.id));
                                 }}
-                                className="rounded-xl bg-[#6E35E8] px-4 py-2 text-xs font-bold text-white transition-colors hover:bg-violet-700"
+                                className="rounded-xl bg-[#8037f4] px-4 py-2 text-xs font-bold text-white transition-colors hover:bg-violet-700"
                               >
                                 Đặt lịch
                               </button>

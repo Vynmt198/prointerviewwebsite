@@ -308,7 +308,7 @@ export function Booking() {
     : "";
 
   const fieldClass =
-    "w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 placeholder:text-slate-400 transition-colors focus:border-[#6E35E8]/45 focus:outline-none focus:ring-2 focus:ring-[#6E35E8]/15";
+    "w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 placeholder:text-slate-400 transition-colors focus:border-[#8037f4]/45 focus:outline-none focus:ring-2 focus:ring-[#8037f4]/15";
 
   if (mentorLoading) {
     return (
@@ -328,7 +328,7 @@ export function Booking() {
           <button
             type="button"
             onClick={() => navigate("/mentors")}
-            className="rounded-full bg-[#c4ff47] px-6 py-2 text-sm font-bold text-slate-900 shadow-sm transition hover:brightness-95"
+            className="rounded-full bg-[#93f72b] px-6 py-2 text-sm font-bold text-slate-900 shadow-sm transition hover:brightness-95"
           >
             Về danh sách mentor
           </button>
@@ -359,9 +359,9 @@ export function Booking() {
                 <div
                   className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-black transition-all ${
                     step > s.n
-                      ? "bg-[#c4ff47] text-slate-900 shadow-[0_0_16px_rgba(196,255,71,0.45)]"
+                      ? "bg-[#93f72b] text-slate-900 shadow-[0_0_16px_rgba(196,255,71,0.45)]"
                       : step === s.n
-                        ? "bg-gradient-to-br from-[#6E35E8] to-[#8B4DFF] text-white shadow-[0_0_0_3px_rgba(110,53,232,0.2)]"
+                        ? "bg-gradient-to-br from-[#8037f4] to-[#a66ff8] text-white shadow-[0_0_0_3px_rgba(128,55,244,0.2)]"
                         : "border border-slate-200 bg-slate-100 text-slate-500"
                   }`}
                 >
@@ -378,7 +378,7 @@ export function Booking() {
               {i < 1 && (
                 <div
                   className={`mx-3 h-0.5 flex-1 rounded-full transition-colors ${
-                    step > s.n ? "bg-[#c4ff47]" : "bg-slate-200"
+                    step > s.n ? "bg-[#93f72b]" : "bg-slate-200"
                   }`}
                 />
               )}
@@ -413,7 +413,7 @@ export function Booking() {
             <div className="glass-card overflow-hidden">
               <div className="flex items-center gap-3 border-b border-slate-200 bg-slate-50/90 px-5 py-4">
                 <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-violet-100">
-                  <CalendarBlank className="h-4 w-4 text-[#6E35E8]" strokeWidth={2} />
+                  <CalendarBlank className="h-4 w-4 text-[#8037f4]" strokeWidth={2} />
                 </div>
                 <div>
                   <p className="text-sm font-bold text-slate-900">Chọn ngày phỏng vấn</p>
@@ -442,7 +442,7 @@ export function Booking() {
                             }}
                             className={`flex flex-col items-center rounded-xl py-3 transition-all ${
                               isSelected
-                                ? "bg-gradient-to-br from-[#6E35E8] to-[#8B4DFF] text-white shadow-[0_8px_24px_rgba(110,53,232,0.35)]"
+                                ? "bg-gradient-to-br from-[#8037f4] to-[#a66ff8] text-white shadow-[0_8px_24px_rgba(128,55,244,0.35)]"
                                 : canBookDay
                                   ? "border border-slate-200 bg-white text-slate-900 shadow-sm hover:border-violet-300 hover:shadow-md"
                                   : "cursor-not-allowed border border-slate-100 bg-slate-50 opacity-45"
@@ -479,7 +479,7 @@ export function Booking() {
                 ))}
                 <div className="flex flex-wrap items-center gap-4 border-t border-slate-200 pt-3 text-xs text-slate-500">
                   <span className="flex items-center gap-1.5">
-                    <span className="h-2.5 w-2.5 rounded-full bg-gradient-to-br from-[#6E35E8] to-[#8B4DFF]" />
+                    <span className="h-2.5 w-2.5 rounded-full bg-gradient-to-br from-[#8037f4] to-[#a66ff8]" />
                     Đã chọn
                   </span>
                   <span className="flex items-center gap-1.5">
@@ -498,7 +498,7 @@ export function Booking() {
               <div className="glass-card overflow-hidden">
                 <div className="flex items-center gap-3 border-b border-slate-200 bg-slate-50/90 px-5 py-4">
                   <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-violet-100">
-                    <Clock className="h-4 w-4 text-[#6E35E8]" strokeWidth={2} />
+                    <Clock className="h-4 w-4 text-[#8037f4]" strokeWidth={2} />
                   </div>
                   <div className="min-w-0">
                     <p className="text-sm font-bold text-slate-900">Chọn khung giờ</p>
@@ -538,10 +538,10 @@ export function Booking() {
                               onClick={() => setSelectedTime(time)}
                               className={`relative rounded-xl py-3 text-sm font-bold transition-all ${
                                 selected
-                                  ? "bg-gradient-to-br from-[#6E35E8] to-[#8B4DFF] text-white shadow-[0_6px_20px_rgba(110,53,232,0.35)]"
+                                  ? "bg-gradient-to-br from-[#8037f4] to-[#a66ff8] text-white shadow-[0_6px_20px_rgba(128,55,244,0.35)]"
                                   : disabled
                                     ? "cursor-not-allowed border border-slate-100 bg-slate-50 text-slate-400"
-                                    : "border border-slate-200 bg-white text-slate-900 shadow-sm hover:border-violet-300 hover:text-[#6E35E8]"
+                                    : "border border-slate-200 bg-white text-slate-900 shadow-sm hover:border-violet-300 hover:text-[#8037f4]"
                               }`}
                             >
                               {time}
@@ -564,7 +564,7 @@ export function Booking() {
 
                   {selectedTime && (
                     <div className="mt-2 flex items-center gap-3 rounded-xl border border-violet-200 bg-violet-50 p-4">
-                      <Check className="h-5 w-5 flex-shrink-0 text-[#6E35E8]" strokeWidth={2.5} />
+                      <Check className="h-5 w-5 flex-shrink-0 text-[#8037f4]" strokeWidth={2.5} />
                       <div>
                         <p className="text-sm font-bold text-slate-900">
                           Lịch đã chọn: {selectedDayFull} lúc {selectedTime}
@@ -597,7 +597,7 @@ export function Booking() {
               onClick={() => setStep(2)}
               className={`flex w-full items-center justify-center gap-2 rounded-2xl py-4 text-sm font-black uppercase tracking-wide transition-all active:scale-[0.98] ${
                 selectedDay && selectedTime
-                  ? "bg-gradient-to-br from-[#6E35E8] to-[#8B4DFF] text-white shadow-[0_8px_28px_rgba(110,53,232,0.35)] hover:shadow-[0_12px_36px_rgba(110,53,232,0.45)]"
+                  ? "bg-gradient-to-br from-[#8037f4] to-[#a66ff8] text-white shadow-[0_8px_28px_rgba(128,55,244,0.35)] hover:shadow-[0_12px_36px_rgba(128,55,244,0.45)]"
                   : "cursor-not-allowed border border-slate-200 bg-slate-100 text-slate-400"
               }`}
             >
@@ -615,14 +615,14 @@ export function Booking() {
         {step === 2 && (
           <div className="space-y-5">
             <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
-              <CalendarBlank className="h-4 w-4 flex-shrink-0 text-[#6E35E8]" />
+              <CalendarBlank className="h-4 w-4 flex-shrink-0 text-[#8037f4]" />
               <p className="min-w-0 flex-1 truncate text-sm font-bold text-slate-900">
                 {selectedDayFull} · {selectedTime} – {endTime}
               </p>
               <button
                 type="button"
                 onClick={() => setStep(1)}
-                className="flex-shrink-0 rounded-lg px-3 py-1 text-xs font-bold text-[#6E35E8] transition-colors hover:bg-violet-50"
+                className="flex-shrink-0 rounded-lg px-3 py-1 text-xs font-bold text-[#8037f4] transition-colors hover:bg-violet-50"
               >
                 Đổi lịch
               </button>
@@ -642,7 +642,7 @@ export function Booking() {
                     <button
                       type="button"
                       onClick={handleUseSmartFill}
-                      className="rounded-lg bg-gradient-to-br from-[#6E35E8] to-[#8B4DFF] px-4 py-1.5 text-xs font-black text-white shadow-lg"
+                      className="rounded-lg bg-gradient-to-br from-[#8037f4] to-[#a66ff8] px-4 py-1.5 text-xs font-black text-white shadow-lg"
                     >
                       Dùng ngay
                     </button>
@@ -867,7 +867,7 @@ export function Booking() {
                 onClick={handleProceed}
                 className={`ml-auto flex items-center gap-2 rounded-2xl px-8 py-4 text-sm font-black uppercase tracking-wide transition-all active:scale-[0.98] ${
                   form.position && form.cv && selectedCvFile
-                    ? "bg-gradient-to-br from-[#6E35E8] to-[#8B4DFF] text-white shadow-[0_8px_28px_rgba(110,53,232,0.35)] hover:shadow-[0_12px_36px_rgba(110,53,232,0.45)]"
+                    ? "bg-gradient-to-br from-[#8037f4] to-[#a66ff8] text-white shadow-[0_8px_28px_rgba(128,55,244,0.35)] hover:shadow-[0_12px_36px_rgba(128,55,244,0.45)]"
                     : "cursor-not-allowed border border-slate-200 bg-slate-100 text-slate-400"
                 }`}
               >

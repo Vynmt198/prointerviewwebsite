@@ -38,7 +38,7 @@ function ToggleSwitch({
     <button
       type="button"
       onClick={() => onChange(!enabled)}
-      className={`relative w-11 h-6 rounded-full transition-all duration-300 flex-shrink-0 focus:outline-none focus:ring-4 focus:ring-[#7a23e5]/20 ${
+      className={`relative w-11 h-6 rounded-full transition-all duration-300 flex-shrink-0 focus:outline-none focus:ring-4 focus:ring-[#8037f4]/20 ${
         enabled ? colorClass : "bg-slate-300"
       }`}
     >
@@ -61,7 +61,7 @@ function SectionCard({
     <div className={`glass-card p-8 ${className}`}>
       {title && (
          <div className="relative z-10 mb-8 flex items-center gap-3 border-b border-slate-200 pb-4">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-[#7a23e5]">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-[#8037f4]">
                {Icon && <Icon size={18} strokeWidth={2} />}
             </div>
             <div>
@@ -171,7 +171,7 @@ function NotificationsTab() {
                 <p className="mb-0.5 text-sm font-bold text-slate-900">{item.label}</p>
                 <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">{item.description}</p>
               </div>
-              <ToggleSwitch enabled={item.value} onChange={() => toggle(item.id)} colorClass="bg-[#A3D900]" />
+              <ToggleSwitch enabled={item.value} onChange={() => toggle(item.id)} colorClass="bg-[#7fe015]" />
             </div>
           ))}
         </div>
@@ -266,7 +266,7 @@ function SecurityTab({ profileFromServer, onProfileSynced }) {
               <ToggleSwitch
                 enabled={item.value}
                 onChange={() => toggleSecurityPref(item.id)}
-                colorClass="bg-[#A3D900]"
+                colorClass="bg-[#7fe015]"
               />
             </div>
           ))}

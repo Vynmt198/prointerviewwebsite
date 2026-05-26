@@ -45,20 +45,6 @@ export const SECTION_MOTION = {
     visible: { opacity: 1, y: 0, x: 0, rotate: 0, scale: 1 },
     duration: 0.62,
   }),
-  /** Phỏng vấn AI: panel copy — trượt từ trái */
-  interviewLeft: {
-    hidden: { opacity: 0, x: -56, scale: 0.97 },
-    visible: { opacity: 1, x: 0, scale: 1 },
-    duration: 0.62,
-    ease: EASE_OUT,
-  },
-  /** Phỏng vấn AI: mockup — zoom + glow */
-  interviewRight: {
-    hidden: { opacity: 0, scale: 0.86, filter: "blur(8px)" },
-    visible: { opacity: 1, scale: 1, filter: "blur(0px)" },
-    duration: 0.7,
-    ease: EASE_BOUNCE,
-  },
   /** CV — skew nhẹ + trượt lên */
   cv: {
     hidden: { opacity: 0, y: 52, skewY: 4, scale: 0.97 },

@@ -25,9 +25,9 @@ function IconFrame({ size = "md", tone = "neutral", className = "", children }) 
   const tones = {
     neutral:
       "border-violet-200 bg-gradient-to-br from-white to-violet-50 shadow-[0_2px_8px_rgba(15,23,42,0.08)]",
-    lime: "border-[#a9d42d] bg-gradient-to-br from-[#d4ff6a] to-[#c4ff47] shadow-[0_4px_12px_rgba(169,212,45,0.35)]",
+    lime: "border-[#a9d42d] bg-gradient-to-br from-[#d4ff6a] to-[#93f72b] shadow-[0_4px_12px_rgba(169,212,45,0.35)]",
     violet:
-      "border-violet-400/45 bg-gradient-to-br from-violet-200 to-violet-300 shadow-[0_4px_14px_rgba(110,53,232,0.28)]",
+      "border-violet-400/45 bg-gradient-to-br from-violet-200 to-violet-300 shadow-[0_4px_14px_rgba(128,55,244,0.28)]",
     fuchsia:
       "border-fuchsia-400/45 bg-gradient-to-br from-fuchsia-200 to-fuchsia-300 shadow-[0_4px_14px_rgba(217,70,239,0.25)]",
   };
@@ -42,9 +42,9 @@ function IconFrame({ size = "md", tone = "neutral", className = "", children }) 
 }
 
 const P = {
-  purple: "#6E35E8",
-  purpleAlt: "#8B4DFF",
-  lime: "#c4ff47",
+  purple: "#8037f4",
+  purpleAlt: "#a66ff8",
+  lime: "#93f72b",
   gold: "#FFD600",
   orange: "#FF8C42",
   bg: "transparent",
@@ -145,9 +145,9 @@ function StepBar({ current = 1 }) {
             <div
               className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold transition-all ${
                 s.n === current
-                  ? "bg-gradient-to-br from-[#6E35E8] to-[#8B4DFF] text-white shadow-[0_0_0_3px_rgba(110,53,232,0.2)]"
+                  ? "bg-gradient-to-br from-[#8037f4] to-[#a66ff8] text-white shadow-[0_0_0_3px_rgba(128,55,244,0.2)]"
                   : s.n < current
-                    ? "bg-[#c4ff47] text-[#0a0814]"
+                    ? "bg-[#93f72b] text-[#0a0814]"
                     : "border border-violet-200 bg-white text-slate-500"
               }`}
             >
@@ -155,7 +155,7 @@ function StepBar({ current = 1 }) {
             </div>
             <span
               className={`text-sm font-semibold ${
-                s.n === current ? "text-[#6E35E8]" : s.n < current ? "text-[#5f7d00]" : "text-slate-500"
+                s.n === current ? "text-[#8037f4]" : s.n < current ? "text-[#5f7d00]" : "text-slate-500"
               }`}
             >
               {s.label}
@@ -165,7 +165,7 @@ function StepBar({ current = 1 }) {
           {i < steps.length - 1 && (
             <div
               className={`mx-3 h-0.5 min-w-[2rem] flex-1 rounded-full ${
-                s.n < current ? "bg-[#c4ff47]/75" : "bg-violet-200/70"
+                s.n < current ? "bg-[#93f72b]/75" : "bg-violet-200/70"
               }`}
             />
           )}
@@ -241,7 +241,7 @@ export function AIGenderSelection() {
               border: "1px solid rgba(169, 212, 45, 0.45)",
             }}
           >
-            <Sparkle className="h-3.5 w-3.5 text-[#6E35E8]" {...IS} />
+            <Sparkle className="h-3.5 w-3.5 text-[#8037f4]" {...IS} />
             Thiết lập phỏng vấn AI
           </div>
 
@@ -388,7 +388,7 @@ export function AIGenderSelection() {
                   </p>
                 </div>
                 {videoWatched && (
-                  <span className="rounded-full border border-[#c4ff47]/30 bg-[#c4ff47]/12 px-3 py-1.5 text-xs font-bold text-[#c4ff47]">
+                  <span className="rounded-full border border-[#93f72b]/30 bg-[#93f72b]/12 px-3 py-1.5 text-xs font-bold text-[#93f72b]">
                     ✓ Đã xem
                   </span>
                 )}
@@ -406,16 +406,16 @@ export function AIGenderSelection() {
                       style={{
                         background: `linear-gradient(135deg, ${P.purple}, ${P.purpleAlt})`,
                         color: "#fff",
-                        boxShadow: "0 4px 16px rgba(110, 53, 232,0.3)",
+                        boxShadow: "0 4px 16px rgba(128, 55, 244,0.3)",
                         marginTop: "1.25rem",
                       }}
                       onMouseEnter={(e) => {
                         e.currentTarget.style.transform = "translateY(-1px)";
-                        e.currentTarget.style.boxShadow = "0 6px 20px rgba(110, 53, 232,0.4)";
+                        e.currentTarget.style.boxShadow = "0 6px 20px rgba(128, 55, 244,0.4)";
                       }}
                       onMouseLeave={(e) => {
                         e.currentTarget.style.transform = "translateY(0)";
-                        e.currentTarget.style.boxShadow = "0 4px 16px rgba(110, 53, 232,0.3)";
+                        e.currentTarget.style.boxShadow = "0 4px 16px rgba(128, 55, 244,0.3)";
                       }}
                     >
                       <Play className="h-5 w-5" {...IS} />
@@ -429,7 +429,7 @@ export function AIGenderSelection() {
                       onClick={() => setIsPlaying(false)}
                       className="flex w-full items-center justify-center gap-2.5 rounded-xl py-3.5 font-semibold transition-all"
                       style={{
-                        background: "rgba(110, 53, 232,0.1)",
+                        background: "rgba(128, 55, 244,0.1)",
                         border: `2px solid ${P.purple}`,
                         color: P.purple,
                         marginTop: "1.25rem",
@@ -473,7 +473,7 @@ export function AIGenderSelection() {
                 ? {
                     background: `linear-gradient(135deg, ${P.purple} 0%, ${P.purpleAlt} 100%)`,
                     color: "#fff",
-                    boxShadow: "0 6px 24px rgba(110, 53, 232,0.35)",
+                    boxShadow: "0 6px 24px rgba(128, 55, 244,0.35)",
                     fontSize: "1rem",
                   }
                 : {
@@ -487,13 +487,13 @@ export function AIGenderSelection() {
             onMouseEnter={(e) => {
               if (videoWatched) {
                 e.currentTarget.style.transform = "translateY(-2px)";
-                e.currentTarget.style.boxShadow = "0 8px 28px rgba(110, 53, 232,0.4)";
+                e.currentTarget.style.boxShadow = "0 8px 28px rgba(128, 55, 244,0.4)";
               }
             }}
             onMouseLeave={(e) => {
               if (videoWatched) {
                 e.currentTarget.style.transform = "translateY(0)";
-                e.currentTarget.style.boxShadow = "0 6px 24px rgba(110, 53, 232,0.35)";
+                e.currentTarget.style.boxShadow = "0 6px 24px rgba(128, 55, 244,0.35)";
               }
             }}
           >
@@ -524,7 +524,7 @@ export function AIGenderSelection() {
               onMouseEnter={(e) => {
                 e.currentTarget.style.borderColor = P.purple;
                 e.currentTarget.style.color = P.purple;
-                e.currentTarget.style.background = "rgba(110, 53, 232,0.08)";
+                e.currentTarget.style.background = "rgba(128, 55, 244,0.08)";
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.borderColor = "rgba(148,163,184,0.3)";

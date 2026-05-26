@@ -37,16 +37,16 @@ export const HOME_DEMO_MENTORS = [
 ];
 
 const STAR_LESSONS = [
-  { id: "1-1", title: "Giới thiệu STAR Method", duration: 12, order: 1, isPreview: true },
-  { id: "1-2", title: "Situation — Đặt bối cảnh", duration: 18, order: 2, isPreview: true },
-  { id: "1-3", title: "Task — Nhiệm vụ của bạn", duration: 15, order: 3, isPreview: false },
-  { id: "1-4", title: "Action — Hành động cụ thể", duration: 22, order: 4, isPreview: false },
+  { id: "1-1", title: "Giới thiệu STAR Method", duration: 12, order: 1 },
+  { id: "1-2", title: "Situation, đặt bối cảnh", duration: 18, order: 2 },
+  { id: "1-3", title: "Task, nhiệm vụ của bạn", duration: 15, order: 3 },
+  { id: "1-4", title: "Action, hành động cụ thể", duration: 22, order: 4 },
 ];
 
 const CV_LESSONS = [
-  { id: "2-1", title: "Cấu trúc CV chuẩn ATS", duration: 14, order: 1, isPreview: true },
-  { id: "2-2", title: "Bullet có số liệu", duration: 16, order: 2, isPreview: false },
-  { id: "2-3", title: "Từ khóa theo JD", duration: 18, order: 3, isPreview: false },
+  { id: "2-1", title: "Cấu trúc CV chuẩn ATS", duration: 14, order: 1 },
+  { id: "2-2", title: "Bullet có số liệu", duration: 16, order: 2 },
+  { id: "2-3", title: "Từ khóa theo JD", duration: 18, order: 3 },
 ];
 
 export const HOME_DEMO_COURSES = [

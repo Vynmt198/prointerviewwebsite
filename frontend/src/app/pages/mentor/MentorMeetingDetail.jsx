@@ -39,7 +39,7 @@ const MENTOR_MEETING_DETAIL_EXTRA_CSS = `
            content: ''; position: absolute; inset: 0;
            border-radius: inherit;
            padding: 1px;
-           background: linear-gradient(135deg, rgba(180, 245, 0, 0.4), transparent, rgba(110, 53, 232, 0.4));
+           background: linear-gradient(135deg, rgba(180, 245, 0, 0.4), transparent, rgba(128, 55, 244, 0.4));
            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
            mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
            -webkit-mask-composite: xor;
@@ -368,9 +368,9 @@ export function MentorMeetingDetail() {
 
                     <div className="space-y-10">
                        {[
-                         { label: "Situation", key: "situation", color: "#6E35E8", desc: "Xác định hoàn cảnh và bối cảnh cụ thể" },
-                         { label: "Task", key: "task", color: "#8B4DFF", desc: "Nhiệm vụ và mục tiêu cần đạt được" },
-                         { label: "Action", key: "action", color: "#c4ff47", desc: "Hành động thực tế đã triển khai" },
+                         { label: "Situation", key: "situation", color: "#8037f4", desc: "Xác định hoàn cảnh và bối cảnh cụ thể" },
+                         { label: "Task", key: "task", color: "#a66ff8", desc: "Nhiệm vụ và mục tiêu cần đạt được" },
+                         { label: "Action", key: "action", color: "#93f72b", desc: "Hành động thực tế đã triển khai" },
                          { label: "Result", key: "result", color: "#FF8C42", desc: "Kết quả cuối cùng và giá trị đạt được" }
                        ].map((item) => {
                          const score = meeting.starScores?.[item.key] || 0;

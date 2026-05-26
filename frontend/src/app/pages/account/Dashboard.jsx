@@ -14,6 +14,7 @@ import {
   groupMentorIssueAlerts,
 } from "../../utils/bookingMappers";
 import { MentorPageShell } from "../../components/mentor/MentorPageShell";
+import { DASHBOARD_GREETING_SUB } from "../../constants/brandVoice";
 
 /** Google Material Symbols Outlined — same family as mock (index.html loads the font). */
 function MsIcon({ name, className = "", filled = false, size = 24, style }) {
@@ -652,15 +653,15 @@ export function Dashboard() {
           className="flex flex-col gap-4 lg:flex-row lg:items-stretch lg:justify-between"
         >
           <div className="flex min-w-0 items-center gap-4">
-            <div className="dashboard-glass-soft flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border-2 border-[#6E35E8]/20 shadow-md shadow-[#6E35E8]/5 sm:h-16 sm:w-16">
-              <span className="text-lg font-black tracking-tight text-[#6E35E8] sm:text-xl">{initials}</span>
+            <div className="dashboard-glass-soft flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border-2 border-[#8037f4]/20 shadow-md shadow-[#8037f4]/5 sm:h-16 sm:w-16">
+              <span className="text-lg font-black tracking-tight text-[#8037f4] sm:text-xl">{initials}</span>
             </div>
             <div className="min-w-0">
               <h1 className="break-words text-xl font-black leading-tight text-slate-900 sm:text-2xl">
-                Chào, <span className="text-[#6E35E8]">{fullName}!</span>
+                Chào, <span className="text-[#8037f4]">{fullName}!</span>
               </h1>
               <p className="mt-1 text-sm font-medium text-slate-600/90">
-                Sẵn sàng chinh phục mục tiêu phỏng vấn hôm nay?
+                {DASHBOARD_GREETING_SUB}
               </p>
             </div>
           </div>
@@ -685,7 +686,7 @@ export function Dashboard() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.05 }}
           onClick={() => navigate("/interview")}
-          className="group relative flex w-full flex-col items-center gap-4 overflow-hidden rounded-2xl bg-[#6E35E8] p-5 text-left shadow-xl shadow-[#6E35E8]/25 transition-transform hover:scale-[1.005] sm:p-6 md:flex-row md:gap-6"
+          className="group relative flex w-full flex-col items-center gap-4 overflow-hidden rounded-2xl bg-[#8037f4] p-5 text-left shadow-xl shadow-[#8037f4]/25 transition-transform hover:scale-[1.005] sm:p-6 md:flex-row md:gap-6"
         >
           <div className="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full bg-white/10 blur-3xl" />
           <div className="relative z-10 flex-1">
@@ -726,8 +727,8 @@ export function Dashboard() {
             title="Phân tích CV/JD"
             desc="Tối ưu hồ sơ cho mọi vị trí tuyển dụng."
             icon="description"
-            iconWellClass="bg-violet-100 text-[#6E35E8]"
-            hoverBorder="hover:border-[#6E35E8]/50"
+            iconWellClass="bg-violet-100 text-[#8037f4]"
+            hoverBorder="hover:border-[#8037f4]/50"
             onClick={() => navigate("/cv-analysis")}
           />
           <FeatureCard

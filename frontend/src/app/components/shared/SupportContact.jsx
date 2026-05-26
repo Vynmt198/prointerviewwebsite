@@ -6,16 +6,16 @@ export function SupportContact() {
       className="rounded-2xl p-5"
       style={{
         background: "#fff",
-        border: "2px solid rgba(110, 53, 232,0.15)",
-        boxShadow: "0 4px 16px rgba(110, 53, 232,0.08)",
+        border: "2px solid rgba(128, 55, 244,0.15)",
+        boxShadow: "0 4px 16px rgba(128, 55, 244,0.08)",
       }}
     >
       <div className="flex items-center gap-3 mb-4">
         <div
           className="w-10 h-10 rounded-xl flex items-center justify-center"
-          style={{ background: "rgba(110, 53, 232,0.1)" }}
+          style={{ background: "rgba(128, 55, 244,0.1)" }}
         >
-          <ChatCircleDots className="w-5 h-5" style={{ color: "#6E35E8" }} />
+          <ChatCircleDots className="w-5 h-5" style={{ color: "#8037f4" }} />
         </div>
         <div>
           <h3 className="font-semibold text-sm" style={{ color: "#1F1F1F" }}>
@@ -33,7 +33,7 @@ export function SupportContact() {
           className="flex items-center gap-3 p-3 rounded-xl transition-all hover:bg-[#F9FAFB]"
           style={{ border: "1px solid #E5E7EB" }}
         >
-          <EnvelopeSimple className="w-5 h-5" style={{ color: "#6E35E8" }} />
+          <EnvelopeSimple className="w-5 h-5" style={{ color: "#8037f4" }} />
           <div className="flex-1 min-w-0">
             <p className="text-xs font-medium" style={{ color: "#6B7280" }}>
               Email
@@ -49,7 +49,7 @@ export function SupportContact() {
           className="flex items-center gap-3 p-3 rounded-xl transition-all hover:bg-[#F9FAFB]"
           style={{ border: "1px solid #E5E7EB" }}
         >
-          <Phone className="w-5 h-5" style={{ color: "#6E35E8" }} />
+          <Phone className="w-5 h-5" style={{ color: "#8037f4" }} />
           <div className="flex-1 min-w-0">
             <p className="text-xs font-medium" style={{ color: "#6B7280" }}>
               Hotline

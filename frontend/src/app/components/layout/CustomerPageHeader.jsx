@@ -7,7 +7,7 @@ export function CustomerPageBadge({ children, pulse = true, className = "" }) {
       className={`inline-flex items-center gap-1.5 rounded-full border border-violet-200/80 bg-white/90 px-3 py-1 shadow-sm backdrop-blur-sm ${className}`}
     >
       <span
-        className={`h-1.5 w-1.5 shrink-0 rounded-full bg-[#630ed4] ${pulse ? "animate-pulse" : ""}`}
+        className={`h-1.5 w-1.5 shrink-0 rounded-full bg-[#6d2fd6] ${pulse ? "animate-pulse" : ""}`}
         aria-hidden
       />
       <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#5b598c] sm:text-[11px]">
@@ -19,7 +19,7 @@ export function CustomerPageBadge({ children, pulse = true, className = "" }) {
 
 /**
  * Header trang customer: badge trắng + chấm tím, H1 đậm, subtitle tím nhạt.
- * `title` có thể là ReactNode (vd. <>Text <span className="text-[#630ed4]">highlight</span></>).
+ * `title` có thể là ReactNode (vd. <>Text <span className="text-[#6d2fd6]">highlight</span></>).
  */
 export function CustomerPageHeader({
   badge,

@@ -437,7 +437,7 @@ function StudentsTab({ students, summary }) {
                         </td>
                         <td className="px-6 py-4">
                            <div className="flex w-40 items-center gap-3">
-                              <MiniBar value={s.progress} color={s.progress === 100 ? "#10b981" : "#6E35E8"} />
+                              <MiniBar value={s.progress} color={s.progress === 100 ? "#10b981" : "#8037f4"} />
                               <span className="text-xs font-bold text-slate-900">{s.progress}%</span>
                            </div>
                         </td>

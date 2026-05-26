@@ -7,7 +7,7 @@ import { toastApiError } from "../../utils/apiToast";
 
 const INPUT_CLS =
   "w-full px-4 py-3.5 rounded-xl border border-gray-200 text-base outline-none transition-all " +
-  "focus:border-[#6E35E8] focus:ring-2 focus:ring-[#6E35E8]/15 text-gray-900 placeholder-gray-400 " +
+  "focus:border-[#8037f4] focus:ring-2 focus:ring-[#8037f4]/15 text-gray-900 placeholder-gray-400 " +
   "bg-white hover:bg-gray-50/50";
 
 export function ResetPassword() {
@@ -56,12 +56,12 @@ export function ResetPassword() {
       {/* Header */}
       <div
         className="relative z-10 flex h-20 flex-shrink-0 items-center justify-between overflow-visible border-b bg-white px-10"
-        style={{ borderColor: "rgba(110,53,232,0.1)" }}
+        style={{ borderColor: "rgba(128,55,244,0.1)" }}
       >
         <button onClick={() => navigate("/")} className="flex shrink-0 items-center gap-2.5 group">
           <BrandLogo size="auth" />
         </button>
-        <Link to="/login" className="text-sm font-semibold text-[#6E35E8]">
+        <Link to="/login" className="text-sm font-semibold text-[#8037f4]">
           Đăng nhập
         </Link>
       </div>
@@ -99,7 +99,7 @@ export function ResetPassword() {
                 <Link
                   to="/login"
                   className="w-full inline-flex items-center justify-center rounded-2xl px-6 py-4 text-base font-black text-white transition-all active:scale-[0.98]"
-                  style={{ background: "linear-gradient(135deg, #6E35E8, #9B6DFF)" }}
+                  style={{ background: "#8037f4" }}
                 >
                   Đăng nhập ngay
                 </Link>
@@ -140,7 +140,7 @@ export function ResetPassword() {
                   type="submit"
                   disabled={loading}
                   className="w-full rounded-2xl py-4 text-base font-black text-white transition-all active:scale-[0.98] disabled:opacity-60"
-                  style={{ background: "linear-gradient(135deg, #6E35E8, #9B6DFF)" }}
+                  style={{ background: "#8037f4" }}
                 >
                   {loading ? "Đang cập nhật..." : "Cập nhật mật khẩu"}
                 </button>

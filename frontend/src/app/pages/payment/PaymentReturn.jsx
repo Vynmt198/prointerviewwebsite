@@ -96,7 +96,7 @@ export function PaymentReturn() {
     <div className="pi-page-dashboard-bg relative min-h-screen flex items-center justify-center overflow-hidden p-6 font-sans antialiased text-white">
       {/* Background Orbs */}
       <div className="absolute top-[-10%] right-[-10%] h-[60vh] w-[60vh] rounded-full bg-fuchsia-600/20 blur-[120px]" />
-      <div className="absolute bottom-[-10%] left-[-10%] h-[60vh] w-[60vh] rounded-full bg-[#c4ff47]/10 blur-[120px]" />
+      <div className="absolute bottom-[-10%] left-[-10%] h-[60vh] w-[60vh] rounded-full bg-[#93f72b]/10 blur-[120px]" />
 
       <AnimatePresence mode="wait">
         <motion.div 
@@ -112,8 +112,8 @@ export function PaymentReturn() {
              <div className="mb-10">
                 {status === "loading" && (
                    <div className="relative inline-block">
-                      <Loader2 className="w-20 h-20 text-[#c4ff47] animate-spin mb-6" />
-                      <div className="absolute inset-0 bg-[#c4ff47]/20 blur-2xl rounded-full" />
+                      <Loader2 className="w-20 h-20 text-[#93f72b] animate-spin mb-6" />
+                      <div className="absolute inset-0 bg-[#93f72b]/20 blur-2xl rounded-full" />
                    </div>
                 )}
                 
@@ -166,7 +166,7 @@ export function PaymentReturn() {
                       <div className="space-y-4">
                          <div className="flex justify-between items-end border-b border-white/[0.05] pb-3">
                             <span className="text-[10px] font-bold text-white/40 uppercase">Số tiền</span>
-                            <span className="text-xl font-black text-[#c4ff47]">{details.amount}</span>
+                            <span className="text-xl font-black text-[#93f72b]">{details.amount}</span>
                          </div>
                          <div className="flex justify-between items-center text-xs">
                             <span className="text-white/40 font-medium">Mã đơn hàng</span>
@@ -201,7 +201,7 @@ export function PaymentReturn() {
                 {status === "success" ? (
                    <button
                       onClick={() => navigate("/")}
-                      className="group relative flex h-16 items-center justify-center gap-3 overflow-hidden rounded-[24px] bg-[#c4ff47] font-black text-black transition-all hover:scale-[1.02] active:scale-[0.98] shadow-[0_10px_40px_rgba(196,255,71,0.25)]"
+                      className="group relative flex h-16 items-center justify-center gap-3 overflow-hidden rounded-[24px] bg-[#93f72b] font-black text-black transition-all hover:scale-[1.02] active:scale-[0.98] shadow-[0_10px_40px_rgba(196,255,71,0.25)]"
                    >
                       <span className="text-[10px] uppercase tracking-[0.25em]">Về trang chủ</span>
                       <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
@@ -227,7 +227,7 @@ export function PaymentReturn() {
              {/* Footer Footer */}
              <div className="mt-12 flex items-center justify-center gap-6 text-white/20 border-t border-white/5 pt-8">
                 <div className="flex items-center gap-2">
-                   <ShieldCheck size={14} className="text-[#c4ff47]" />
+                   <ShieldCheck size={14} className="text-[#93f72b]" />
                    <span className="text-[8px] font-black uppercase tracking-widest">Bảo mật SSL 256-bit</span>
                 </div>
                 <div className="flex items-center gap-2">
