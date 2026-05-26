@@ -125,7 +125,7 @@ function HeroInterviewVideoCard() {
   const starBars = [78, 92, 65, 88, 72];
 
   return (
-    <div className="relative mx-auto mt-8 w-full max-w-[min(100%,251px)] -translate-y-[2rem] translate-x-[4px] overflow-visible sm:max-w-[311px] lg:mx-0 lg:mt-0 lg:max-w-[411px] lg:-ml-2 lg:justify-self-end xl:max-w-[451px]">
+    <div className="relative mx-auto mt-8 w-full max-w-[min(100%,245.4px)] -translate-y-[2rem] translate-x-[4px] overflow-visible sm:max-w-[305.4px] lg:mx-0 lg:mt-0 lg:max-w-[405.4px] lg:-ml-2 lg:justify-self-end xl:max-w-[445.4px]">
       <div className="hero-video-frame relative rounded-[1.65rem] bg-white p-2 shadow-[0_16px_44px_rgba(99,14,212,0.14)] sm:rounded-[1.85rem] sm:p-2.5">
         <div
           className="relative overflow-hidden rounded-[1.2rem] bg-slate-100 sm:rounded-[1.35rem]"
@@ -346,17 +346,12 @@ export function Home() {
         .hero-title-stack {
           display: flex;
           flex-direction: column;
-          gap: 0;
+          gap: 0.7rem;
           line-height: 0.98;
         }
-        .hero-title-stack > span {
+        .hero-title-line {
           display: block;
           line-height: 0.98;
-        }
-        .hero-title-inline {
-          display: inline-flex !important;
-          align-items: baseline;
-          gap: 0.2em;
           white-space: nowrap;
         }
         .cute-heading {
@@ -387,6 +382,23 @@ export function Home() {
         .hero-title-animated {
           background-size: 200% 200%;
           animation: heroGradientFlow 5s ease-in-out infinite;
+        }
+        @keyframes heroWiggle {
+          0% { transform: translate3d(0,0,0) rotate(0deg) scale(1); }
+          18% { transform: translate3d(0.5px,-0.8px,0) rotate(-1deg) scale(1.01); }
+          36% { transform: translate3d(-0.6px,0.6px,0) rotate(1.2deg) scale(1.02); }
+          54% { transform: translate3d(0.4px,-0.4px,0) rotate(-0.8deg) scale(1.01); }
+          72% { transform: translate3d(-0.4px,0.4px,0) rotate(0.8deg) scale(1.01); }
+          100% { transform: translate3d(0,0,0) rotate(0deg) scale(1); }
+        }
+        .hero-title-highlight {
+          display: inline-block;
+          transform-origin: 40% 70%;
+          animation: heroWiggle 1.25s ease-in-out infinite;
+          will-change: transform;
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .hero-title-highlight { animation: none; }
         }
         .hero-orbit-text {
           display: inline-block;
@@ -597,22 +609,22 @@ export function Home() {
 
               <div className="hero-intro-copy -translate-y-[2rem]">
                 <h1
-                  className="hero-title-stack mb-6 max-w-full font-headline text-slate-900 tracking-tighter cute-heading"
+                  className="hero-title-stack mb-6 max-w-full font-headline text-slate-900 cute-heading"
                   style={{
                     fontSize: HOME_HERO_TITLE_CLAMP,
                   }}
                 >
-                  <span className="hero-title-inline text-slate-900">
-                    <span>{HOME_COPY.titleLine1}</span>
-                    <span style={{ color: "#8037f4" }}>{HOME_COPY.titleHighlight}</span>
+                  <span className="hero-title-line text-slate-900">
+                    {HOME_COPY.titleLine1}{" "}
+                    <span className="hero-title-highlight" style={{ color: "#8037f4" }}>
+                      {HOME_COPY.titleHighlight}
+                    </span>
                   </span>
-                  <span className="hero-title-inline text-slate-900">
-                    <span>{HOME_COPY.titleLine2Suffix}</span>
-                    <span>{HOME_COPY.titleExtraLines?.[0] ?? ""}</span>
+                  <span className="hero-title-line text-slate-900">
+                    {HOME_COPY.titleLine2Suffix} {HOME_COPY.titleExtraLines?.[0] ?? ""}
                   </span>
-                  <span className="hero-title-inline text-slate-900">
-                    <span>{HOME_COPY.titleExtraLines?.[1] ?? ""}</span>
-                    <span>{HOME_COPY.titleExtraLines?.[2] ?? ""}</span>
+                  <span className="hero-title-line text-slate-900">
+                    {HOME_COPY.titleExtraLines?.[1] ?? ""} {HOME_COPY.titleExtraLines?.[2] ?? ""}
                   </span>
                 </h1>
 
@@ -620,14 +632,14 @@ export function Home() {
                   <button
                     type="button"
                     onClick={() => navigate("/interview")}
-                    className="inline-flex items-center justify-center gap-2 rounded-full px-5 py-2.5 text-base font-black transition-all hover:brightness-105 active:scale-[0.98] hover:-translate-y-0.5 sm:text-lg"
+                    className="inline-flex items-center justify-center gap-2 rounded-full px-4 py-2 text-sm font-black transition-all hover:brightness-105 active:scale-[0.98] hover:-translate-y-0.5 sm:text-base"
                     style={{
                       background: "#93f72b",
                       color: "#0f172a",
                       boxShadow: "0 8px 22px rgba(147, 247, 43, 0.35)",
                     }}
                   >
-                    <Lightning className="h-4 w-4" />
+                    <Lightning className="h-3.5 w-3.5" />
                     {HOME_COPY.cta}
                   </button>
                 </div>
