@@ -1350,8 +1350,8 @@ export function SessionDetail() {
           <div className="space-y-5 lg:col-span-2">
 
             {/* Done header */}
-            <div className="flex items-center gap-4 rounded-xl border border-violet-200/80 bg-white p-5 shadow-sm">
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-violet-100">
+            <div className="flex items-center gap-4 rounded-md border border-violet-200/80 bg-white p-5 shadow-sm">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-md bg-violet-100">
                 <Trophy className="h-6 w-6 text-[#6d2fd6]" />
               </div>
               <div className="min-w-0 flex-1">
@@ -1364,24 +1364,24 @@ export function SessionDetail() {
 
             {/* Review CTA */}
             {sessionData?.isReviewed ? (
-              <div className="rounded-xl border border-violet-200/80 bg-white p-8 text-center shadow-sm sm:p-10">
-                <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-lg bg-violet-100">
+              <div className="rounded-md border border-violet-200/80 bg-white p-8 text-center shadow-sm sm:p-10">
+                <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-md bg-violet-100">
                   <CheckCircle className="h-8 w-8 text-[#6d2fd6]" />
                 </div>
                 <h3 className="mb-2 text-xl font-bold text-violet-950">Cảm ơn bạn đã đóng góp</h3>
                 <p className="mx-auto mb-6 max-w-md text-sm leading-relaxed text-violet-600">
                   Đánh giá của bạn đã được gửi thành công. Những chia sẻ này giúp cộng đồng ngày càng phát triển hơn.
                 </p>
-                <div className="mx-auto inline-flex items-center gap-2 rounded-lg border border-violet-200/80 bg-violet-50/60 px-4 py-2.5">
-                  <Star className="h-4 w-4 text-amber-500" fill="currentColor" />
+                <div className="mx-auto inline-flex items-center gap-2 rounded-md border border-violet-200/80 bg-violet-50/60 px-4 py-2.5">
+                  <Star className="h-4 w-4 text-[#93f72b]" fill="currentColor" />
                   <span className="text-xs font-bold uppercase tracking-wide text-violet-700">Đã hoàn thành đánh giá</span>
                 </div>
               </div>
             ) : (
-              <div className="rounded-xl border border-violet-200/80 bg-white p-8 shadow-sm sm:p-10">
+              <div className="rounded-md border border-violet-200/80 bg-white p-8 shadow-sm sm:p-10">
                 <div className="flex flex-col items-center text-center">
-                  <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-lg border border-amber-200/80 bg-amber-50">
-                    <Star className="h-7 w-7 text-amber-500" fill="currentColor" />
+                  <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-md border border-lime-200/80 bg-lime-50/80">
+                    <Star className="h-7 w-7 text-[#93f72b]" fill="currentColor" />
                   </div>
                   <h3 className="mb-2 text-xl font-bold text-violet-950">Bạn thấy buổi phỏng vấn thế nào?</h3>
                   <p className="mb-8 max-w-md text-sm leading-relaxed text-violet-600">
@@ -1397,10 +1397,10 @@ export function SessionDetail() {
                         onClick={() =>
                           navigate(`/review/${sessionData.sessionId}`, { state: { initialRating: i } })
                         }
-                        className="rounded-lg p-1 transition hover:scale-105 active:scale-95"
+                        className="rounded-md p-1 transition hover:scale-105 active:scale-95"
                         aria-label={`Đánh giá ${i} sao`}
                       >
-                        <Star className="h-10 w-10 text-violet-200 transition-colors hover:text-amber-400 sm:h-11 sm:w-11" />
+                        <Star className="h-10 w-10 text-violet-200 transition-colors hover:text-[#93f72b] sm:h-11 sm:w-11" />
                       </button>
                     ))}
                   </div>
@@ -1408,7 +1408,7 @@ export function SessionDetail() {
                   <button
                     type="button"
                     onClick={() => navigate(`/review/${sessionData.sessionId}`)}
-                    className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#6d2fd6] py-3.5 text-sm font-bold text-white shadow-sm transition hover:brightness-110"
+                    className="flex w-full items-center justify-center gap-2 rounded-md bg-[#6d2fd6] py-3.5 text-sm font-bold text-white shadow-sm transition hover:brightness-110"
                   >
                     Viết đánh giá ngay <CaretRight className="h-4 w-4" />
                   </button>
@@ -1418,7 +1418,7 @@ export function SessionDetail() {
             )}
 
             {/* Mentor feedback */}
-            <div className="rounded-xl border border-violet-200/80 bg-white p-6 shadow-sm sm:p-8">
+            <div className="rounded-md border border-violet-200/80 bg-white p-6 shadow-sm sm:p-8">
               <p className="mb-1 text-[10px] font-bold uppercase tracking-wider text-[#6d2fd6]">Kết quả đánh giá</p>
               <h2 className="mb-6 text-lg font-bold text-violet-950">Nhận xét từ chuyên gia</h2>
               <div className="space-y-1">
@@ -1426,7 +1426,7 @@ export function SessionDetail() {
                   const raw = sessionData.mentorNotes || "";
                   if (!raw) {
                     return (
-                      <div className="rounded-lg border border-dashed border-violet-200 bg-violet-50/40 py-8 text-center">
+                      <div className="rounded-md border border-dashed border-violet-200 bg-violet-50/40 py-8 text-center">
                         <p className="text-sm font-medium text-violet-600">
                           Mentor đang hoàn thiện bản đánh giá chuyên sâu cho bạn...
                         </p>
@@ -1473,19 +1473,37 @@ export function SessionDetail() {
             </div>
 
             {/* Next steps */}
-            <div className="rounded-xl border border-violet-200/80 bg-white p-5 shadow-sm">
-              <p className="font-semibold text-gray-800 text-sm mb-4">Tiếp theo sau buổi phỏng vấn</p>
-              <div className="space-y-3">
+            <div className="rounded-md border border-violet-200/80 bg-white p-5 shadow-sm">
+              <p className="mb-4 text-sm font-semibold text-violet-950">Tiếp theo sau buổi phỏng vấn</p>
+              <div className="space-y-2">
                 {[
-                  { icon: Sparkles, color: "#8037f4", bg: "rgba(128, 55, 244,0.08)",
-                    title: "Luyện tập với AI Interview", desc: "Áp dụng feedback vào mock interview AI",
-                    action: () => navigate("/interview"), label: "Bắt đầu →" },
-                  { icon: FileText, color: "#FF8C42", bg: "rgba(255,140,66,0.08)",
-                    title: "Tối ưu lại CV", desc: "Phân tích CV với keyword mentor vừa đề xuất",
-                    action: () => navigate("/cv-analysis"), label: "Phân tích →" },
-                  { icon: Calendar, color: "#B4F000", bg: "rgba(180,240,0,0.10)",
-                    title: "Đặt lịch buổi tiếp theo", desc: "Tiếp tục luyện tập để chinh phục phỏng vấn",
-                    action: () => navigate("/mentors"), label: "Tìm mentor →" },
+                  {
+                    icon: Sparkles,
+                    color: "#6d2fd6",
+                    bg: "rgba(109, 47, 214, 0.08)",
+                    title: "Luyện tập với AI Interview",
+                    desc: "Áp dụng feedback vào mock interview AI",
+                    action: () => navigate("/interview"),
+                    label: "Bắt đầu →",
+                  },
+                  {
+                    icon: FileText,
+                    color: "#6d2fd6",
+                    bg: "rgba(109, 47, 214, 0.06)",
+                    title: "Tối ưu lại CV",
+                    desc: "Phân tích CV với keyword mentor vừa đề xuất",
+                    action: () => navigate("/cv-analysis"),
+                    label: "Phân tích →",
+                  },
+                  {
+                    icon: Calendar,
+                    color: "#4a7a00",
+                    bg: "rgba(180, 240, 0, 0.14)",
+                    title: "Đặt lịch buổi tiếp theo",
+                    desc: "Tiếp tục luyện tập để chinh phục phỏng vấn",
+                    action: () => navigate("/mentors"),
+                    label: "Tìm mentor →",
+                  },
                 ].map((item) => (
                   <div
                     key={item.title}
@@ -1495,10 +1513,10 @@ export function SessionDetail() {
                     onKeyDown={(e) => {
                       if (e.key === "Enter" || e.key === " ") item.action();
                     }}
-                    className="flex cursor-pointer items-center gap-4 rounded-lg border border-violet-100 p-4 transition hover:border-violet-200 hover:bg-violet-50/40"
+                    className="flex cursor-pointer items-center gap-4 rounded-md border border-violet-100 p-4 transition hover:border-violet-200 hover:bg-violet-50/40"
                   >
                     <div
-                      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg"
+                      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md"
                       style={{ background: item.bg }}
                     >
                       <item.icon className="h-5 w-5" style={{ color: item.color }} />
@@ -1514,19 +1532,11 @@ export function SessionDetail() {
                 ))}
               </div>
             </div>
-
-            <button
-              type="button"
-              onClick={() => navigate("/")}
-              className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#6d2fd6] py-3.5 text-sm font-bold text-white shadow-sm transition hover:brightness-110"
-            >
-              Về trang chủ <CaretRight className="h-4 w-4" />
-            </button>
           </div>
 
           {/* Right col */}
           <div className="space-y-4">
-            <div className="rounded-xl border border-violet-200/80 bg-white p-5 shadow-sm">
+            <div className="rounded-md border border-violet-200/80 bg-white p-5 shadow-sm">
               <p className="mb-4 text-xs font-bold uppercase tracking-wider text-violet-500">
                 Tóm tắt buổi phỏng vấn
               </p>
@@ -1534,7 +1544,7 @@ export function SessionDetail() {
                 <img
                   src={sessionData.mentorAvatar}
                   alt={sessionData.mentorName}
-                  className="h-12 w-12 rounded-lg object-cover"
+                  className="h-12 w-12 rounded-md object-cover"
                 />
                 <div>
                   <p className="text-sm font-bold text-violet-950">{sessionData.mentorName}</p>
@@ -1557,26 +1567,26 @@ export function SessionDetail() {
               </div>
             </div>
 
-            <div className="rounded-xl border border-violet-200/80 bg-white p-5 shadow-sm">
+            <div className="rounded-md border border-violet-200/80 bg-white p-5 shadow-sm">
               <p className="mb-3 text-xs font-bold uppercase tracking-wider text-violet-500">Trạng thái đánh giá</p>
               {sessionData.isReviewed ? (
                 <div>
                   <div className="mb-2 flex items-center gap-1.5">
-                    <div className="h-2 w-2 rounded-full bg-lime-500" />
-                    <span className="text-xs font-semibold text-lime-800">Đã đánh giá mentor</span>
+                    <div className="h-2 w-2 rounded-full bg-[#93f72b]" />
+                    <span className="text-xs font-semibold text-[#4a7a00]">Đã đánh giá mentor</span>
                   </div>
                   <p className="text-xs text-violet-600">Cảm ơn bạn đã gửi nhận xét sau buổi phỏng vấn.</p>
                 </div>
               ) : (
                 <div>
                   <div className="mb-3 flex items-center gap-1.5">
-                    <div className="h-2 w-2 rounded-full bg-amber-400" />
-                    <span className="text-xs font-semibold text-amber-700">Chờ đánh giá</span>
+                    <div className="h-2 w-2 rounded-full bg-[#6d2fd6]" />
+                    <span className="text-xs font-semibold text-violet-800">Chờ đánh giá</span>
                   </div>
                   <button
                     type="button"
                     onClick={() => navigate(`/review/${sessionData.sessionId}`)}
-                    className="w-full rounded-lg bg-[#6d2fd6] py-2.5 text-sm font-bold text-white transition hover:brightness-110"
+                    className="w-full rounded-md bg-[#6d2fd6] py-2.5 text-sm font-bold text-white transition hover:brightness-110"
                   >
                     Đánh giá ngay
                   </button>
