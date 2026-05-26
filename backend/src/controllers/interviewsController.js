@@ -399,6 +399,9 @@ export const InterviewsController = {
         isLockedForFree: false,
       };
       session.feedbackGeneratedAt = new Date();
+      if (!session.questions?.length && questionsToUse?.length) {
+        session.questions = questionsToUse;
+      }
       await session.save();
 
       logger.info("evaluate_session_ok", { userId: req.userId, sessionId: id, overallScore: session.feedback.overallScore });

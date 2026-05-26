@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router";
+import React, { useState, useEffect, useCallback } from "react";
+import { useParams, useNavigate, useSearchParams } from "react-router";
 import { BookOpen, Check } from "lucide-react";
 import { fetchCourseById, fetchReviewsForCourse } from "../../utils/courseApi";
 import { enrollmentApi } from "../../utils/enrollmentApi";
@@ -15,6 +15,11 @@ import {
   COURSE_DETAIL_SHELL_MAX,
 } from "../../components/layout/customerShellLayout";
 import {
+  clearAdminCourseReturnPath,
+  getAdminCourseReturnPath,
+  isAdminCoursePreviewMode,
+} from "../../utils/adminCoursePreview.js";
+import {
   CoursePurchaseCard,
   CourseCurriculumAccordion,
   CourseInstructorBlock,
@@ -29,11 +34,11 @@ function mapApiCourse(c) {
     id: mod._id || `mod-${idx}`,
     title: mod.title || `Phần ${idx + 1}`,
     lessons: (mod.lessons || []).map((lesson) => ({
-      id: lesson._id,
-      title: lesson.title,
+            id: lesson._id,
+            title: lesson.title,
       type: lesson.type || "video",
-      duration: lesson.durationMinutes || 0,
-      isPreview: !!lesson.isFree,
+            duration: lesson.durationMinutes || 0,
+            isPreview: !!lesson.isFree,
       videoUrl: lesson.videoUrl || "",
     })),
   }));
@@ -50,27 +55,27 @@ function mapApiCourse(c) {
   }
 
   return {
-    id: c._id,
-    title: c.title,
-    description: c.description,
-    thumbnail: mediaSrc(c.thumbnail, DEFAULT_COURSE_THUMB),
-    category: c.topics?.[0] || "Kỹ năng khác",
-    mentorId: c.mentorId?._id,
-    mentorUserId: c.mentorId?.userId?._id || "",
-    mentorName: c.mentorId?.userId?.name || "Khuất danh",
-    mentorAvatar: avatarSrc(c.mentorId?.userId?.avatar),
-    mentorTitle: c.mentorId?.userId?.desiredPosition || "Chuyên gia",
-    mentorCompany: c.mentorId?.userId?.currentCompany || "ProInterview",
-    rating: stats.rating,
-    reviewsCount: stats.reviewsCount,
-    studentsCount: c.stats?.enrollmentCount || 0,
-    duration: c.totalDurationMinutes || 120,
-    lessonsCount: c.totalLessons || 0,
+          id: c._id,
+          title: c.title,
+          description: c.description,
+          thumbnail: mediaSrc(c.thumbnail, DEFAULT_COURSE_THUMB),
+          category: c.topics?.[0] || "Kỹ năng khác",
+          mentorId: c.mentorId?._id,
+          mentorUserId: c.mentorId?.userId?._id || "",
+          mentorName: c.mentorId?.userId?.name || "Khuất danh",
+          mentorAvatar: avatarSrc(c.mentorId?.userId?.avatar),
+          mentorTitle: c.mentorId?.userId?.desiredPosition || "Chuyên gia",
+          mentorCompany: c.mentorId?.userId?.currentCompany || "ProInterview",
+          rating: stats.rating,
+          reviewsCount: stats.reviewsCount,
+          studentsCount: c.stats?.enrollmentCount || 0,
+          duration: c.totalDurationMinutes || 120,
+          lessonsCount: c.totalLessons || 0,
     modulesCount: modules.length,
-    price: c.price || 0,
+          price: c.price || 0,
     discountPrice: c.discountPrice || 0,
     learningOutcomes: c.whatYoullLearn?.length ? c.whatYoullLearn : [],
-    requirements: c.requirements || [],
+          requirements: c.requirements || [],
     modules,
     previewVideoUrl,
     certificateEnabled: c.settings?.certificateEnabled !== false,
@@ -80,11 +85,19 @@ function mapApiCourse(c) {
 export function CourseDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [course, setCourse] = useState(null);
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
   const [enrollmentRow, setEnrollmentRow] = useState(null);
   const currentUser = getUser();
+
+  const reloadReviews = useCallback(async () => {
+    if (!id) return;
+    const [revRes, courseRes] = await Promise.all([fetchReviewsForCourse(id), fetchCourseById(id)]);
+    if (revRes.success) setReviews(revRes.reviews || []);
+    if (courseRes.success) setCourse(mapApiCourse(courseRes.course));
+  }, [id]);
 
   useEffect(() => {
     if (!id) return;
@@ -114,10 +127,10 @@ export function CourseDetail() {
         if (cancelled) return;
         if (enr.success) {
           const row = enr.enrollments.find(
-            (e) => String(e.courseId?._id || e.courseId || "") === String(id),
-          );
-          setEnrollmentRow(row || null);
-        }
+          (e) => String(e.courseId?._id || e.courseId || "") === String(id),
+        );
+        setEnrollmentRow(row || null);
+      }
       } catch {
         /* optional */
       }
@@ -134,6 +147,8 @@ export function CourseDetail() {
     isMentorViewer && String(currentUser?.id || "") === String(course?.mentorUserId || "");
   const canTakeStudentActions = !isMentorViewer || isOwnerMentor;
   const isReadOnlyMentorView = isMentorViewer && !isOwnerMentor;
+  const isAdminViewer = currentUser?.role === "admin";
+  const adminPreviewMode = isAdminViewer && isAdminCoursePreviewMode(searchParams);
 
   const handleEnroll = async () => {
     if (!id || !course) return;
@@ -142,15 +157,15 @@ export function CourseDetail() {
       return;
     }
     try {
-      const res = await enrollmentApi.enroll(id);
-      if (res.success) {
-        setEnrollmentRow(res.enrollment || enrollmentRow);
+    const res = await enrollmentApi.enroll(id);
+    if (res.success) {
+      setEnrollmentRow(res.enrollment || enrollmentRow);
         toastApiSuccess("Đăng ký khóa học thành công!");
-      } else {
-        if (res.error === "Chưa đăng nhập.") {
-          requireLoginNavigate(navigate, `/courses/${id}`);
-          return;
-        }
+    } else {
+      if (res.error === "Chưa đăng nhập.") {
+        requireLoginNavigate(navigate, `/courses/${id}`);
+        return;
+      }
         toastApiError(res.error, "Không thể đăng ký khóa học.");
       }
     } catch {
@@ -204,6 +219,25 @@ export function CourseDetail() {
   return (
     <MentorPageShell bottomPad="pb-20">
       <div className={`min-h-full font-sans text-slate-900 ${CUSTOMER_SHELL_GUTTER} ${COURSE_DETAIL_SHELL_MAX} py-4 pb-6`}>
+        {adminPreviewMode ? (
+          <div className="mb-4 flex flex-col gap-3 rounded-lg border border-violet-200 bg-violet-50 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-sm text-violet-950">
+              <span className="font-bold">Preview admin</span> — Đây là trang marketplace học viên thấy
+              (chưa ghi danh nên chỉ xem mô tả / danh sách bài, không vào phòng học đầy đủ).
+            </p>
+            <button
+              type="button"
+              onClick={() => {
+                const back = getAdminCourseReturnPath();
+                clearAdminCourseReturnPath();
+                navigate(back);
+              }}
+              className="shrink-0 rounded-lg bg-violet-700 px-4 py-2 text-xs font-bold uppercase tracking-wide text-white hover:bg-violet-800"
+            >
+              ← Quay lại quản trị khóa
+            </button>
+          </div>
+        ) : null}
         <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_calc(280px+1rem)] lg:items-start lg:gap-5">
           <div className="min-w-0 space-y-4 lg:space-y-5">
             <header className="rounded-md bg-gradient-to-r from-[#8037f4] to-[#6d2fd6] px-7 py-6 text-white sm:px-10 sm:py-7">
@@ -220,13 +254,13 @@ export function CourseDetail() {
                     {course.rating != null ? course.rating.toFixed(1) : "—"}
                   </span>
                   <StarRating rating={course.rating} size="lg" />
-                </span>
+                    </span>
                 <span>
                   {course.modulesCount} học phần · {course.lessonsCount} bài ·{" "}
                   {formatCourseDuration(course.duration)}
-                </span>
-              </div>
-            </header>
+                    </span>
+        </div>
+      </header>
 
             <div className="flex justify-center lg:hidden">{purchaseCard}</div>
 
@@ -263,13 +297,14 @@ export function CourseDetail() {
                 course={course}
                 enrolled={hasPaidEnrollment}
                 reviews={reviews}
+                onReviewSubmitted={() => void reloadReviews()}
               />
-            </div>
+      </div>
 
           <aside className="hidden lg:block">
             <div className="sticky top-6">{purchaseCard}</div>
           </aside>
-        </div>
+      </div>
       </div>
     </MentorPageShell>
   );

@@ -3,6 +3,7 @@ import { Enrollment } from "../models/Enrollment.js";
 import { Course } from "../models/Course.js";
 import { enrollmentAccessGranted } from "../helpers/enrollmentAccess.js";
 import { recordTransferPending, recordTransferSubmitted } from "../services/paymentsService.js";
+import { incrementCourseEnrollmentCount } from "../services/courseStatsService.js";
 import { serializeCourseForApi } from "../utils/resolveStoredUploadUrl.js";
 
 function genOrderRef() {
@@ -74,6 +75,7 @@ export const EnrollmentController = {
           paymentMethod: "",
           lastAccessedAt: new Date(),
         });
+        await incrementCourseEnrollmentCount(courseId);
         return res.status(201).json({ success: true, enrollment });
       }
 

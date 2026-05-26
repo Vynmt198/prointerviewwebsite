@@ -14,6 +14,7 @@ import {
 import { AnimatePresence } from "motion/react";
 import { fetchMentor, fetchMentorPublicReviews } from "../../utils/mentorApi";
 import { ReportMentorModal } from "../../components/modals/ReportMentorModal";
+import { ReviewReplyBlock } from "../../components/reviews/ReviewReplyBlock";
 import { MentorPageShell } from "../../components/mentor/MentorPageShell";
 import { toastApiError } from "../../utils/apiToast";
 
@@ -348,6 +349,7 @@ export function MentorProfile() {
                           &ldquo;{review.comment}&rdquo;
                         </p>
                       ) : null}
+                      <ReviewReplyBlock reply={review.reply} />
                       {review.createdAt ? (
                         <p className="mt-3 text-right text-xs text-slate-500">
                           {new Date(review.createdAt).toLocaleDateString("vi-VN")}

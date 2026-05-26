@@ -117,7 +117,7 @@ Kỳ vọng:
 
 - `ok: true`
 - `database: "connected"`
-
+  
 ---
 
 ## 2) Auth

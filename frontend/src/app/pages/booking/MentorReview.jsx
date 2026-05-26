@@ -112,6 +112,27 @@ export function MentorReview() {
     );
   }
 
+  if (session && session.status !== "done") {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] p-8 antialiased">
+        <div className="w-16 h-16 rounded-3xl bg-amber-50 flex items-center justify-center mb-6">
+          <AlertCircle className="w-8 h-8 text-amber-500" />
+        </div>
+        <p className="text-xl font-black text-slate-900 mb-2">Chưa thể đánh giá</p>
+        <p className="text-slate-500 mb-8 text-center max-w-sm text-sm font-medium">
+          Chỉ đánh giá được sau khi buổi phỏng vấn đã hoàn thành.
+        </p>
+        <button
+          onClick={() => navigate(`/session/${session.backendId || session.sessionId}`)}
+          className="px-8 py-3 rounded-2xl text-sm font-black text-white shadow-xl shadow-violet-900/20"
+          style={{ background: "linear-gradient(135deg, #6E35E8, #8B4DFF)" }}
+        >
+          Về chi tiết buổi hẹn
+        </button>
+      </div>
+    );
+  }
+
   if (session?.isReviewed) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] p-8 antialiased">

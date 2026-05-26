@@ -4,6 +4,7 @@ import { Mentor } from "../models/Mentor.js";
 import { Booking } from "../models/Booking.js";
 import { Review } from "../models/Review.js";
 import { Course } from "../models/Course.js";
+import { Notification } from "../models/Notification.js";
 
 const MONGO_ERR = "MongoDB chưa kết nối. Kiểm tra MONGO_URI trong .env.";
 function isMongoReady() {
@@ -85,14 +86,116 @@ export async function createReport(userId, body) {
   return { ok: true, reportId: String(doc._id) };
 }
 
-export async function listReportsForAdmin() {
+async function notifyReporterOnReportClosed(report, status, resolution) {
+  try {
+    const reporterId = report.reportedBy?._id ?? report.reportedBy;
+    if (!reporterId) return;
+    const isResolved = status === "resolved";
+    await Notification.create({
+      userId: reporterId,
+      type: "system",
+      title: isResolved ? "Báo cáo đã được xử lý" : "Cập nhật báo cáo",
+      body: isResolved
+        ? resolution || "Đội ngũ ProInterview đã xem xét và xử lý báo cáo của bạn."
+        : resolution || "Báo cáo của bạn đã được đóng sau khi xem xét.",
+      metadata: { actionUrl: "/settings" },
+    });
+  } catch {
+    /* không chặn luồng admin */
+  }
+}
+
+export async function listReportsForAdmin(query = {}) {
   if (!isMongoReady()) return { ok: false, status: 503, error: MONGO_ERR };
-  const reports = await Report.find()
-    .sort({ createdAt: -1 })
-    .limit(200)
-    .populate("reportedBy", "name email role")
-    .lean();
-  return { ok: true, reports };
+
+  const page = Math.max(Number(query?.page) || 1, 1);
+  const limit = Math.min(Math.max(Number(query?.limit) || 50, 1), 100);
+  const skip = (page - 1) * limit;
+  const filter = {};
+
+  const status = String(query?.status ?? "").trim();
+  const openOnly = ["true", "1", "yes"].includes(String(query?.open ?? "").trim().toLowerCase());
+  const closedOnly = ["true", "1", "yes"].includes(String(query?.closed ?? "").trim().toLowerCase());
+  if (openOnly) {
+    filter.status = { $in: ["pending", "reviewing"] };
+  } else if (closedOnly) {
+    filter.status = { $in: ["resolved", "dismissed"] };
+  } else if (status && ["pending", "reviewing", "resolved", "dismissed"].includes(status)) {
+    filter.status = status;
+  }
+  const targetType = String(query?.targetType ?? "").trim();
+  if (targetType && ["mentor", "booking", "review", "course"].includes(targetType)) {
+    filter.targetType = targetType;
+  }
+
+  const [rows, total, openCount, pendingCount] = await Promise.all([
+    Report.find(filter)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .populate("reportedBy", "name email role")
+      .lean(),
+    Report.countDocuments(filter),
+    Report.countDocuments({ ...filter, status: { $in: ["pending", "reviewing"] } }),
+    Report.countDocuments({ ...filter, status: "pending" }),
+  ]);
+
+  const mentorIds = [
+    ...new Set(rows.filter((r) => r.targetType === "mentor").map((r) => String(r.targetId))),
+  ];
+  const courseIds = [
+    ...new Set(rows.filter((r) => r.targetType === "course").map((r) => String(r.targetId))),
+  ];
+  const bookingIds = [
+    ...new Set(rows.filter((r) => r.targetType === "booking").map((r) => String(r.targetId))),
+  ];
+
+  const [mentors, courses, bookings] = await Promise.all([
+    mentorIds.length
+      ? Mentor.find({ _id: { $in: mentorIds } })
+          .populate({ path: "userId", select: "name" })
+          .select("userId title")
+          .lean()
+      : [],
+    courseIds.length ? Course.find({ _id: { $in: courseIds } }).select("title").lean() : [],
+    bookingIds.length
+      ? Booking.find({ _id: { $in: bookingIds } }).select("scheduledAt status").lean()
+      : [],
+  ]);
+
+  const mentorMap = new Map(
+    mentors.map((m) => [String(m._id), m.userId?.name || m.title || "Cố vấn"]),
+  );
+  const courseMap = new Map(courses.map((c) => [String(c._id), c.title || "Khóa học"]));
+  const bookingMap = new Map(
+    bookings.map((b) => [
+      String(b._id),
+      b.scheduledAt
+        ? `Buổi ${new Date(b.scheduledAt).toLocaleDateString("vi-VN")} (${b.status || "—"})`
+        : `Booking ${String(b._id).slice(-6)}`,
+    ]),
+  );
+
+  const reports = rows.map((r) => ({
+    ...r,
+    targetLabel:
+      r.targetType === "mentor"
+        ? mentorMap.get(String(r.targetId)) || "—"
+        : r.targetType === "course"
+          ? courseMap.get(String(r.targetId)) || "—"
+          : r.targetType === "booking"
+            ? bookingMap.get(String(r.targetId)) || "—"
+            : `Review ${String(r.targetId).slice(-6)}`,
+  }));
+
+  const totalPages = total > 0 ? Math.ceil(total / limit) : 1;
+
+  return {
+    ok: true,
+    reports,
+    counts: { total, open: openCount, pending: pendingCount },
+    pagination: { page, limit, total, totalPages, hasMore: skip + rows.length < total },
+  };
 }
 
 export async function updateReportStatusForAdmin(adminUserId, reportId, body = {}) {
@@ -127,6 +230,10 @@ export async function updateReportStatusForAdmin(adminUserId, reportId, body = {
   const report = await Report.findById(doc._id)
     .populate("reportedBy", "name email role")
     .lean();
+
+  if (status === "resolved" || status === "dismissed") {
+    await notifyReporterOnReportClosed(report, status, doc.resolution);
+  }
 
   return { ok: true, report };
 }

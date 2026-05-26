@@ -29,6 +29,24 @@ function isMongoReady() {
   return mongoose.connection.readyState === 1;
 }
 
+const BOOKING_ACTIVE_STATUSES = new Set(["confirmed", "in_progress", "completed"]);
+
+/** Buổi chỉ được duyệt / diễn ra sau khi thanh toán thành công (trừ đơn 0đ). */
+export function assertBookingPaidBeforeActiveStatus(booking, nextStatus) {
+  const next = String(nextStatus || "").toLowerCase();
+  if (!BOOKING_ACTIVE_STATUSES.has(next)) return { ok: true };
+  const pst = String(booking?.paymentStatus || "").toLowerCase();
+  if (pst === "paid") return { ok: true };
+  const amt = Math.round(Number(booking?.totalAmount ?? booking?.price ?? 0));
+  if (amt <= 0) return { ok: true };
+  return {
+    ok: false,
+    status: 400,
+    error:
+      "Chỉ duyệt buổi hẹn sau khi thanh toán thành công (SePay tự đối soát hoặc admin xác nhận chuyển khoản).",
+  };
+}
+
 function parseRefundDestination(body) {
   const bank =
     typeof body?.refundReceiveBankName === "string" ? body.refundReceiveBankName.trim().slice(0, 80) : "";
@@ -1190,7 +1208,12 @@ export async function confirmBankTransferPaymentByAdmin(bookingId, options = {})
     if (msg === "ERR_ALREADY_PAID") return { ok: false, status: 400, error: "Booking đã được đánh dấu đã thanh toán." };
     if (msg === "ERR_STATUS") return { ok: false, status: 400, error: "Trạng thái thanh toán không cho phép xác nhận." };
     if (msg === "ERR_NO_SUBMIT") {
-      return { ok: false, status: 400, error: "User chưa báo đã chuyển khoản. Bật override để xác nhận ngoại lệ." };
+      return {
+        ok: false,
+        status: 400,
+        error:
+          "Cần gửi force: true khi admin xác nhận thủ công (không bắt học viên bấm «đã chuyển khoản» trong app).",
+      };
     }
     if (msg.startsWith("ERR_LEDGER:")) {
       console.error("[confirmBankTransferPaymentByAdmin]", msg);
@@ -1235,6 +1258,9 @@ export async function confirmMentorBooking(mentorUserId, rawId) {
   if (booking.status !== "pending") {
     return { ok: false, status: 400, error: "Chỉ xác nhận khi booking đang chờ duyệt (pending)." };
   }
+
+  const payGate = assertBookingPaidBeforeActiveStatus(booking, "confirmed");
+  if (!payGate.ok) return payGate;
 
   booking.status = "confirmed";
   await booking.save();

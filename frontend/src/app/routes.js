@@ -54,24 +54,22 @@ import { AdminBookings } from "./pages/admin/AdminBookings.jsx";
 import { AdminCoursePayments } from "./pages/admin/AdminCoursePayments.jsx";
 import { AdminSubscriptionPayments } from "./pages/admin/AdminSubscriptionPayments.jsx";
 import { AdminMentorsPending } from "./pages/admin/AdminMentorsPending.jsx";
-import { AdminInterviewMetrics } from "./pages/admin/AdminInterviewMetrics.jsx";
 import { ProtectedOutlet } from "./components/auth/ProtectedOutlet.jsx";
 import { requireAuthLoader, customerOnlyLoader } from "./utils/requireAuthLoader.js";
 import {
   AdminUserDetail,
-  AdminMentorDetail,
   AdminFinance,
   AdminTransactions,
   AdminPayouts,
-  AdminBookingDetail,
   AdminContentQuestions,
-  AdminContentVideos,
-  AdminAnalytics,
   AdminSystemSettings,
-  AdminReviews,
-  AdminSupport,
 } from "./pages/admin/AdminPlaceholders.jsx";
 import { AdminContentCourses } from "./pages/admin/AdminContentCourses.jsx";
+import { AdminAnalytics } from "./pages/admin/AdminAnalytics.jsx";
+import { AdminReviews } from "./pages/admin/AdminReviews.jsx";
+import { AdminSupport } from "./pages/admin/AdminSupport.jsx";
+import { AdminMentorDetail } from "./pages/admin/AdminMentorDetail.jsx";
+import { AdminBookingDetail } from "./pages/admin/AdminBookingDetail.jsx";
 
 export const router = createHashRouter([
   {
@@ -181,12 +179,15 @@ export const router = createHashRouter([
       { path: "subscription-payments", Component: AdminSubscriptionPayments },
       { path: "bookings/:id", Component: AdminBookingDetail },
       { path: "content/questions", Component: AdminContentQuestions },
-      { path: "content/videos", Component: AdminContentVideos },
+      {
+        path: "content/videos",
+        loader: () => redirect("/admin/content/courses?view=incomplete"),
+      },
       { path: "content/courses", Component: AdminContentCourses },
       { path: "settings", Component: AdminSystemSettings },
       { path: "reviews", Component: AdminReviews },
       { path: "support", Component: AdminSupport },
-      { path: "interview-metrics", Component: AdminInterviewMetrics },
+      { path: "interview-metrics", loader: () => redirect("/admin/content/questions") },
     ],
   },
   { path: "*", loader: () => redirect("/") },

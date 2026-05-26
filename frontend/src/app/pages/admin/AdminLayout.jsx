@@ -6,62 +6,58 @@ import { MentorPageShell } from "../../components/mentor/MentorPageShell";
 
 /** Tiêu đề header — thứ tự từ cụ thể → tổng quan (regex). */
 const ADMIN_HEADER_RULES = [
-  [/^\/admin\/users\/[^/]+$/, "Chi tiết người dùng", "Thông tin tài khoản"],
-  [/^\/admin\/users$/, "Người dùng", "Danh sách & tìm kiếm"],
-  [/^\/admin\/mentors\/pending$/, "Duyệt cố vấn", "Hồ sơ chờ phê duyệt"],
-  [/^\/admin\/mentors\/[^/]+$/, "Chi tiết cố vấn", "Hồ sơ mentor"],
-  [/^\/admin\/mentors$/, "Cố vấn", "Danh sách mentor"],
-  [/^\/admin\/bookings\/[^/]+$/, "Chi tiết lịch hẹn", "Phiên & thanh toán"],
-  [/^\/admin\/bookings$/, "Lịch hẹn & thanh toán", "Lịch hẹn cố vấn — CK được SePay tự đối soát"],
-  [/^\/admin\/course-payments$/, "Học phí khóa học", "Ghi danh khóa học chờ đối soát chuyển khoản"],
-  [/^\/admin\/subscription-payments$/, "Gói cước Pro/Elite", "Nâng cấp tài khoản chờ xác nhận CK"],
-  [/^\/admin\/transactions$/, "Giao dịch", "Lịch sử thanh toán"],
-  [/^\/admin\/payouts$/, "Rút tiền cố vấn", "Yêu cầu chi trả"],
-  [/^\/admin\/finance$/, "Tài chính", "Lịch hẹn, học phí khóa học, rút tiền cố vấn"],
-  [/^\/admin\/content\/questions$/, "Câu hỏi mẫu", "Nội dung AI"],
-  [/^\/admin\/content\/videos$/, "Video HR", "Thư viện media"],
-  [/^\/admin\/content\/courses$/, "Khóa học", "Nội dung khóa"],
-  [/^\/admin\/analytics$/, "Phân tích", "Báo cáo & biểu đồ"],
-  [/^\/admin\/reviews$/, "Đánh giá", "Feedback người dùng"],
-  [/^\/admin\/support$/, "Hỗ trợ", "Ticket & khiếu nại"],
-  [/^\/admin\/settings$/, "Cài đặt hệ thống", "Cấu hình nền tảng"],
-  [/^\/admin$/, "Quản trị", "Bảng điều khiển hệ thống"],
+  [/^\/admin\/users\/[^/]+$/, "Chi tiết người dùng"],
+  [/^\/admin\/users$/, "Người dùng"],
+  [/^\/admin\/mentors\/pending$/, "Duyệt cố vấn"],
+  [/^\/admin\/mentors\/[^/]+$/, "Cố vấn"],
+  [/^\/admin\/mentors$/, "Cố vấn"],
+  [/^\/admin\/bookings\/[^/]+$/, "Lịch hẹn & thanh toán"],
+  [/^\/admin\/bookings$/, "Lịch hẹn & thanh toán"],
+  [/^\/admin\/course-payments$/, "Theo dõi học phí khóa"],
+  [/^\/admin\/subscription-payments$/, "Theo dõi gói Pro/Elite"],
+  [/^\/admin\/transactions$/, "Giao dịch"],
+  [/^\/admin\/payouts$/, "Rút tiền cố vấn"],
+  [/^\/admin\/finance$/, "Tài chính"],
+  [/^\/admin\/content\/questions$/, "Phỏng vấn AI"],
+  [/^\/admin\/content\/courses$/, "Khóa học"],
+  [/^\/admin\/analytics$/, "Phân tích"],
+  [/^\/admin\/reviews$/, "Đánh giá"],
+  [/^\/admin\/support$/, "Hỗ trợ"],
+  [/^\/admin\/settings$/, "Cài đặt hệ thống"],
+  [/^\/admin$/, "Quản trị"],
 ];
 
 function adminPageHeader(pathname) {
   const p = (pathname || "").replace(/\/$/, "") || "/";
-  for (const [re, label, sub] of ADMIN_HEADER_RULES) {
-    if (re.test(p)) return { label, sub };
+  for (const [re, label] of ADMIN_HEADER_RULES) {
+    if (re.test(p)) return { label };
   }
-  return { label: "Quản trị", sub: "ProInterview Admin" };
+  return { label: "Quản trị" };
 }
 
 function AdminTopBar() {
   const location = useLocation();
-  const { label, sub } = adminPageHeader(location.pathname);
+  const { label } = adminPageHeader(location.pathname);
 
   return (
     <header
-      className="sticky top-0 z-30 flex h-16 shrink-0 items-center gap-4 border-b border-[rgba(128,55,244,0.14)] bg-white/95 px-5 antialiased backdrop-blur-xl"
-      style={{ boxShadow: "0 1px 0 rgba(128, 55, 244, 0.08)" }}
+      className="sticky top-0 z-30 flex h-16 shrink-0 items-center gap-4 border-b border-[rgba(110,53,232,0.14)] bg-white/95 px-5 antialiased backdrop-blur-xl"
+      style={{ boxShadow: "0 1px 0 rgba(110, 53, 232, 0.08)" }}
     >
-      <SidebarTrigger className="rounded-lg text-[#8037f4]/75 transition-colors hover:bg-[#8037f4]/10 hover:text-[#8037f4]" />
-      <div className="h-6 w-px shrink-0 bg-[#8037f4]/20" />
-      <div className="min-w-0 flex flex-col gap-0">
+      <SidebarTrigger className="rounded-lg text-[#6E35E8]/75 transition-colors hover:bg-[#6E35E8]/10 hover:text-[#6E35E8]" />
+      <div className="h-6 w-px shrink-0 bg-[#6E35E8]/20" />
+      <div className="min-w-0">
         <h1
-          className="truncate text-[#8037f4]"
+          className="truncate text-[#6E35E8]"
           style={{ fontSize: "0.9375rem", fontWeight: 700, lineHeight: 1.2, letterSpacing: "-0.015em" }}
         >
           {label}
         </h1>
-        {sub ? (
-          <p className="hidden truncate text-xs text-slate-500 sm:block">{sub}</p>
-        ) : null}
       </div>
       <div className="flex-1" />
       <span
         className="shrink-0 rounded-md px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-[#2D1B69] sm:text-[10px]"
-        style={{ background: "#93f72b" }}
+        style={{ background: "linear-gradient(135deg, #B4F500, #93D600)" }}
       >
         Admin
       </span>

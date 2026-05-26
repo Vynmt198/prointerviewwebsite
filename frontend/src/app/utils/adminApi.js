@@ -59,12 +59,16 @@ export const adminApi = {
   getTransactionSupport: () => authedFetch("/api/admin/system/transaction-support"),
   getSystemOverview: () => authedFetch("/api/admin/system/overview"),
   getContentStats: () => authedFetch("/api/admin/content/stats"),
-  getCourseMediaOverview: () => authedFetch("/api/admin/content/course-media"),
+  getRecentInterviewSessions: (limit = 30) =>
+    authedFetch(`/api/admin/content/interview-sessions?limit=${encodeURIComponent(limit)}`),
+  getCourseMediaOverview: (scope = "all") =>
+    authedFetch(`/api/admin/content/course-media?scope=${encodeURIComponent(scope)}`),
   updateBookingStatus: (id, status, reason = "") =>
     authedFetch(`/api/admin/bookings/${id}/status`, {
       method: "PATCH",
       body: JSON.stringify({ status, reason }),
     }),
+  /** Ngoại lệ khi SePay không khớp — mặc định dùng webhook SePay. */
   confirmBookingTransferPayment: (id, body = {}) =>
     authedFetch(`/api/admin/bookings/${id}/confirm-transfer-payment`, {
       method: "PATCH",
@@ -111,19 +115,50 @@ export const adminApi = {
       body: JSON.stringify(body ?? {}),
     }),
   getPendingCourses: () => authedFetch("/api/admin/courses/pending"),
+  getPublishedCourses: (limit = 50) =>
+    authedFetch(`/api/admin/courses/published?limit=${encodeURIComponent(limit)}`),
   approveCourse: (id) =>
     authedFetch(`/api/admin/courses/${id}/approve`, {
       method: "PATCH",
     }),
-  rejectCourse: (id) =>
+  rejectCourse: (id, reason) =>
     authedFetch(`/api/admin/courses/${id}/reject`, {
       method: "PATCH",
+      body: JSON.stringify({ reason }),
     }),
-  getReports: () => authedFetch("/api/admin/reports"),
+  archiveCourse: (id, reason = "") =>
+    authedFetch(`/api/admin/courses/${id}/archive`, {
+      method: "PATCH",
+      body: JSON.stringify({ reason }),
+    }),
+  getReports: (params = {}) => {
+    const q = new URLSearchParams();
+    if (params.status) q.set("status", params.status);
+    if (params.open) q.set("open", "true");
+    if (params.closed) q.set("closed", "true");
+    if (params.targetType) q.set("targetType", params.targetType);
+    if (params.page) q.set("page", String(params.page));
+    if (params.limit) q.set("limit", String(params.limit));
+    const qs = q.toString();
+    return authedFetch(`/api/admin/reports${qs ? `?${qs}` : ""}`);
+  },
   updateReportStatus: (id, body) =>
     authedFetch(`/api/admin/reports/${encodeURIComponent(id)}`, {
       method: "PATCH",
       body: JSON.stringify(body),
     }),
-  getReviews: () => authedFetch("/api/reviews?limit=100"),
+  getReviews: (params = {}) => {
+    const q = new URLSearchParams();
+    if (params.targetType) q.set("targetType", params.targetType);
+    if (params.limit) q.set("limit", String(params.limit));
+    if (params.page) q.set("page", String(params.page));
+    if (params.visible) q.set("visible", params.visible);
+    const qs = q.toString();
+    return authedFetch(`/api/admin/reviews${qs ? `?${qs}` : ""}`);
+  },
+  setReviewVisibility: (id, isVisible) =>
+    authedFetch(`/api/admin/reviews/${encodeURIComponent(id)}/visibility`, {
+      method: "PATCH",
+      body: JSON.stringify({ isVisible }),
+    }),
 };

@@ -527,6 +527,14 @@ export async function getMentorReviews(userId) {
     };
   });
 
-  return { ok: true, items };
+  const stats = mentor.stats || {};
+  return {
+    ok: true,
+    items,
+    summary: {
+      avgRating: Number(stats.rating ?? 0),
+      reviewCount: Number(stats.reviewCount ?? items.length),
+    },
+  };
 }
 

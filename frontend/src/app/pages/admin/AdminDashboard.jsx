@@ -3,13 +3,13 @@ import { Link } from "react-router";
 import {
   Users,
   GraduationCap,
-  Wallet,
   Calendar,
   Crown,
-  FileQuestion,
   LineChart,
-  Settings,
+  Star,
   MessageSquare,
+  UserPlus,
+  Banknote,
   Activity,
   ArrowRight,
   BookOpen,
@@ -17,29 +17,29 @@ import {
 import { adminApi } from "../../utils/adminApi";
 import { toastApiError } from "../../utils/apiToast";
 
+/** Cùng thứ tự ưu tiên với sidebar admin */
 const TILES = [
-  { to: "/admin/users", label: "Người dùng", icon: Users, desc: "Danh sách, filter, chi tiết user" },
-  { to: "/admin/mentors", label: "Cố vấn", icon: GraduationCap, desc: "Cố vấn, duyệt chờ xét" },
-  { to: "/admin/finance", label: "Tài chính", icon: Wallet, desc: "Lịch hẹn, học phí khóa học, rút tiền cố vấn" },
-  { to: "/admin/bookings", label: "Lịch hẹn & thanh toán", icon: Calendar, desc: "Lịch hẹn mentor — thanh toán CK tự xác nhận qua SePay" },
+  { to: "/admin/bookings", label: "Lịch hẹn & thanh toán", icon: Calendar, desc: "Lịch mentor, xác nhận CK SePay" },
+  { to: "/admin/support", label: "Hỗ trợ", icon: MessageSquare, desc: "Khiếu nại, báo cáo mentor" },
+  { to: "/admin/mentors/pending", label: "Duyệt cố vấn", icon: UserPlus, desc: "Hồ sơ chờ phê duyệt" },
   {
     to: "/admin/subscription-payments",
-    label: "Duyệt gói Pro/Elite",
+    label: "Gói Pro/Elite",
     icon: Crown,
-    desc: "Xác nhận CK nâng cấp Starter Pro / Elite Pro",
-    highlight: true,
+    desc: "CK nâng cấp gói — SePay tự kích hoạt",
   },
   {
     to: "/admin/course-payments",
-    label: "Duyệt học phí khóa",
+    label: "Học phí khóa",
     icon: BookOpen,
-    desc: "Đối soát chuyển khoản ghi danh khóa học",
-    highlight: true,
+    desc: "Ghi danh CK — SePay mở khóa",
   },
-  { to: "/admin/content/questions", label: "Nội dung", icon: FileQuestion, desc: "Câu hỏi, video, khóa học" },
+  { to: "/admin/payouts", label: "Rút tiền cố vấn", icon: Banknote, desc: "Duyệt và chi trả mentor" },
+  { to: "/admin/users", label: "Người dùng", icon: Users, desc: "Danh sách và chi tiết user" },
+  { to: "/admin/mentors", label: "Cố vấn", icon: GraduationCap, desc: "Danh sách cố vấn" },
+  { to: "/admin/content/courses", label: "Khóa học", icon: BookOpen, desc: "Duyệt và quản lý khóa" },
+  { to: "/admin/reviews", label: "Đánh giá", icon: Star, desc: "Review mentor & khóa học" },
   { to: "/admin/analytics", label: "Phân tích", icon: LineChart, desc: "Báo cáo và biểu đồ" },
-  { to: "/admin/settings", label: "Cài đặt HT", icon: Settings, desc: "Giá, fee, API, email" },
-  { to: "/admin/support", label: "Hỗ trợ", icon: MessageSquare, desc: "Ticket, khiếu nại, review" },
 ];
 
 export function AdminDashboard() {

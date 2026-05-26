@@ -265,7 +265,7 @@ File trong repo: `API_INDEX.md`. Cập nhật khi thêm route, đổi FE hoặc 
 
 | Method | Path | Mô tả |
 |:-------|:-----|:------|
-| GET | `/api/admin/stats` | Thống kê tổng quan |
+| GET | `/api/admin/stats` | Thống kê tổng quan: users, mentors, bookings, `plans`, `enrollmentsPaid`, `courses`, `reportsOpen`, `bookingsByStatus`, `recentBookings` |
 | GET | `/api/admin/users` | Danh sách user |
 | GET | `/api/admin/users/:id` | Chi tiết user + `stats.bookingsCount`, `stats.enrollmentsCount` |
 | PATCH | `/api/admin/users/:id/status` | Khóa / mở — body `{ isActive: boolean }` |
@@ -274,14 +274,23 @@ File trong repo: `API_INDEX.md`. Cập nhật khi thêm route, đổi FE hoặc 
 | PATCH | `/api/admin/mentors/:id/status` | Bật / tắt mentor |
 | GET | `/api/admin/bookings` | Tất cả booking |
 | GET | `/api/admin/bookings/:id` | Chi tiết booking (populate user/mentor) |
-| GET | `/api/admin/reports` | Danh sách báo cáo |
-| PATCH | `/api/admin/reports/:id` | Cập nhật trạng thái — `{ status, resolution? }` (`reviewing` / `resolved` / `dismissed`) |
+| GET | `/api/admin/reports` | Danh sách báo cáo (`?status`, `?targetType`, `?page`, `?limit`) → `counts`, `pagination` |
+| PATCH | `/api/admin/reports/:id` | Cập nhật trạng thái — `{ status, resolution? }` (`reviewing` / `resolved` / `dismissed`); đóng ticket → thông báo người gửi |
+| GET | `/api/admin/reviews` | Tất cả đánh giá (`?page=1`, `?limit=50` max 100, `?targetType`, `?visible`) → `reviews`, `counts`, `pagination` |
+| PATCH | `/api/admin/reviews/:id/visibility` | Ẩn/hiện — body `{ isVisible: boolean }`, cập nhật lại stats mentor/khóa |
+| GET | `/api/reviews/mine` | `[AUTH]` Đánh giá của user cho `targetType` + `targetId` → `{ hasReview, review? }` |
 | GET | `/api/admin/system/overview` | Auth, gói, dịch vụ, Mongo topology |
 | GET | `/api/admin/system/transaction-support` | Kiểm tra MongoDB transactions |
-| GET | `/api/admin/content/stats` | Thống kê phiên AI, CV, khóa học |
-| GET | `/api/admin/content/course-media` | Danh sách khóa + số bài video |
+| GET | `/api/admin/content/stats` | Thống kê phiên AI, CV, khóa + `interviewOps` (7 ngày, few-shot) |
+| GET | `/api/admin/content/interview-sessions` | Phiên phỏng vấn AI gần đây + câu hỏi đã lưu (`?limit=30`) |
+| GET | `/api/admin/content/course-media` | Danh sách khóa + số bài video (`?scope=all\|published\|pending`) |
+| GET | `/api/admin/courses/pending` | Khóa chờ duyệt (`pending_review`, `pending_update`) + `stats.enrollmentCount` (đếm ghi danh `paid`) |
+| GET | `/api/admin/courses/published` | Khóa đã xuất bản (`?limit=50`, tối đa 100) + `stats` |
+| PATCH | `/api/admin/courses/:id/approve` | Duyệt → `status: published`, xóa `adminReview` |
+| PATCH | `/api/admin/courses/:id/reject` | Từ chối — body `{ reason }` (bắt buộc) → `draft`, lưu `adminReview`, thông báo mentor |
+| PATCH | `/api/admin/courses/:id/archive` | Gỡ marketplace — body `{ reason? }` → `archived`, lưu `adminReview`, thông báo mentor |
 
-**FE:** `frontend/src/app/utils/adminApi.js` — `AdminUsers`, `AdminMentors`, `AdminBookings`, `AdminPlaceholders` (detail + support).
+**FE:** `frontend/src/app/utils/adminApi.js` — `AdminUsers`, `AdminMentors`, `AdminBookings`, `AdminContentCourses`, `AdminPlaceholders` (detail + support).
 
 ---
 | Trường hợp | Response |

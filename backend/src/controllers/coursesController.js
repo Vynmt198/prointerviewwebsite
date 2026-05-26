@@ -3,6 +3,10 @@ import { Enrollment } from "../models/Enrollment.js";
 import { Mentor } from "../models/Mentor.js";
 import { enrollmentAccessGranted } from "../helpers/enrollmentAccess.js";
 import {
+  applyPaidEnrollmentCountsToCourses,
+  countPaidEnrollmentsByCourseIds,
+} from "../services/courseStatsService.js";
+import {
   serializeCourseForApi,
   resolveStoredUploadUrl,
   normalizeUploadPathForStorage,
@@ -105,9 +109,11 @@ export const CoursesController = {
       const mentor = await Mentor.findOne({ userId: req.userId }).select("_id").lean();
       if (!mentor) return res.status(403).json({ success: false, error: "Tài khoản chưa là mentor." });
       const courses = await Course.find({ mentorId: mentor._id }).sort({ updatedAt: -1 });
+      const serialized = courses.map((c) => serializeCourseForApi(c));
+      const countMap = await countPaidEnrollmentsByCourseIds(serialized.map((c) => c._id));
       return res.json({
         success: true,
-        courses: courses.map((c) => serializeCourseForApi(c)),
+        courses: applyPaidEnrollmentCountsToCourses(serialized, countMap),
       });
     } catch (error) {
       return next(error);

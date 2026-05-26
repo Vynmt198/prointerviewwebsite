@@ -269,7 +269,7 @@ export async function fetchMentorReviews() {
     });
     const body = await res.json().catch(() => ({}));
     if (!res.ok) return { success: false, error: normalizeApiError(body, res.status), items: [] };
-    return { success: true, items: body.items || [] };
+    return { success: true, items: body.items || [], summary: body.summary || null };
   } catch {
     return { success: false, error: ERROR_MESSAGES.NETWORK, items: [] };
   }

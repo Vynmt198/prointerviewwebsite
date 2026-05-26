@@ -1,7 +1,40 @@
 import React from "react";
 import { useParams, Link } from "react-router";
 import { AdminPanel } from "./AdminPanel.jsx";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  ArrowRight,
+  Banknote,
+  BookOpen,
+  Calendar,
+  AlertCircle,
+  CheckCircle,
+  Clock,
+  Copy,
+  Crown,
+  ChevronDown,
+  Eye,
+  RefreshCw,
+  Search,
+  User,
+  Wallet,
+  XCircle,
+} from "lucide-react";
+import {
+  AdminBookingStatusStack,
+  PaymentStatusPill,
+  StatusPill,
+} from "../../components/admin/AdminStatusPill.jsx";
+import { AdminFilterSelect, AdminListFilterBar } from "../../components/admin/AdminListFilters.jsx";
+import {
+  AdminPageToolbar,
+  adminGlassTable,
+  adminHeaderRow,
+  adminPageWrap,
+  adminStatGrid4,
+  adminTdCell,
+  adminThCell,
+} from "../../components/admin/AdminPageShell.jsx";
 import { adminApi } from "../../utils/adminApi.js";
 import { toastApiError, toastApiSuccess, tryApi } from "../../utils/apiToast";
 import { AnimatePresence, motion } from "motion/react";
@@ -25,10 +58,10 @@ function copyAdminText(text, successMsg = "Đã sao chép.") {
 function statusLabel(status) {
   const key = String(status || "").toLowerCase();
   if (key === "pending") return "Chờ duyệt";
-  if (key === "course_pending_ck") return "Chờ xác nhận chuyển khoản";
+  if (key === "course_pending_ck") return "Chờ SePay (khóa học)";
   if (key === "confirmed") return "Đã xác nhận";
   if (key === "completed") return "Hoàn thành";
-  if (key === "approved") return "Đã duyệt — chờ CK";
+  if (key === "approved") return "Đã duyệt — chờ chi";
   if (key === "paid") return "Đã chuyển khoản";
   if (key === "cancelled") return "Đã hủy";
   if (key === "rejected") return "Đã từ chối";
@@ -109,72 +142,23 @@ export function AdminUserDetail() {
   );
 }
 
-export function AdminMentorDetail() {
-  const { id } = useParams();
-  const [mentor, setMentor] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+/** @deprecated — dùng `AdminMentorDetail.jsx` */
+export { AdminMentorDetail } from "./AdminMentorDetail.jsx";
 
-  useEffect(() => {
-    let cancelled = false;
-    void (async () => {
-      setLoading(true);
-      const res = await tryApi(() => adminApi.getMentorById(id), {
-        fallback: "Không tải được cố vấn.",
-        silent: true,
-      });
-      if (cancelled) return;
-      if (!res.success) {
-        setError(res.error || "Không tải được cố vấn.");
-      } else {
-        setMentor(res.mentor || null);
-        if (!res.mentor) setError("Không tìm thấy cố vấn.");
-      }
-      if (!cancelled) setLoading(false);
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [id]);
-
-  const toggleActive = async () => {
-    if (!mentor) return;
-    const next = !mentor.isActive;
-    const res = await tryApi(() => adminApi.updateMentorStatus(mentor._id, next), {
-      fallback: "Không cập nhật được trạng thái.",
-      successMessage: next ? "Đã kích hoạt cố vấn" : "Đã khóa cố vấn",
-    });
-    if (res.success) setMentor({ ...mentor, isActive: next, isVerified: next ? true : mentor.isVerified });
-  };
-
-  return (
-    <AdminPanel title="Chi tiết cố vấn" description="Hồ sơ mentor trên hệ thống.">
-      <Link to="/admin/mentors" className="mb-4 inline-block text-sm font-semibold text-violet-700 hover:underline">
-        ← Danh sách cố vấn
-      </Link>
-      {loading && <p className="text-sm text-slate-500">Đang tải…</p>}
-      {error && !loading && <p className="text-sm text-red-600">{error}</p>}
-      {mentor && (
-        <motion.div className="rounded-2xl border border-slate-200 bg-white p-6 space-y-3 text-sm">
-          <p className="text-xl font-black">{mentor.name || mentor.userId?.name}</p>
-          <p className="text-slate-600">{mentor.userId?.email}</p>
-          <p><span className="font-semibold">Chuyên môn:</span> {(mentor.expertise || []).join(", ") || mentor.title || "—"}</p>
-          <p><span className="font-semibold">Giá/giờ:</span> {vnd(mentor.pricePerHour || mentor.hourlyRate)}</p>
-          <p><span className="font-semibold">Rating:</span> {mentor.rating ?? "—"} · Buổi: {mentor.stats?.sessionsCount ?? mentor.totalSessions ?? 0}</p>
-          <p><span className="font-semibold">Duyệt:</span> {mentor.isVerified ? "Đã duyệt" : "Chờ / chưa duyệt"} · {mentor.isActive ? "Đang hoạt động" : "Tạm khóa"}</p>
-          {mentor.bio && <p className="text-slate-600 whitespace-pre-wrap">{mentor.bio}</p>}
-          <button
-            type="button"
-            onClick={toggleActive}
-            className="rounded-xl bg-violet-600 px-4 py-2 text-sm font-bold text-white"
-          >
-            {mentor.isActive ? "Khóa cố vấn" : "Kích hoạt cố vấn"}
-          </button>
-        </motion.div>
-      )}
-    </AdminPanel>
-  );
+function bookingAmount(b) {
+  return Number(b?.totalAmount ?? b?.price ?? 0);
 }
+
+function bookingPaymentStatus(b) {
+  return String(b?.paymentStatus || "").toLowerCase();
+}
+
+const FINANCE_QUICK_LINKS = [
+  { to: "/admin/bookings", label: "Lịch hẹn", icon: Calendar },
+  { to: "/admin/course-payments", label: "Học phí khóa", icon: BookOpen },
+  { to: "/admin/subscription-payments", label: "Gói Pro/Elite", icon: Crown },
+  { to: "/admin/payouts", label: "Rút tiền cố vấn", icon: Banknote },
+];
 
 export function AdminFinance() {
   const [loading, setLoading] = useState(true);
@@ -182,109 +166,366 @@ export function AdminFinance() {
   const [payouts, setPayouts] = useState([]);
   const [courseFinance, setCourseFinance] = useState(null);
 
-  useEffect(() => {
-    const run = async () => {
-      setLoading(true);
-      const [bookingRes, payoutRes, courseRes] = await Promise.all([
-        adminApi.getBookings(),
-        adminApi.getPayouts(),
-        adminApi.getCourseFinanceSummary(),
-      ]);
-      if (bookingRes.success) setBookings(bookingRes.bookings || []);
-      if (payoutRes.success) setPayouts(payoutRes.payouts || []);
-      if (courseRes.success) setCourseFinance(courseRes.courseFinance || null);
-      setLoading(false);
-    };
-    run();
+  const loadAll = useCallback(async () => {
+    setLoading(true);
+    const [bookingRes, payoutRes, courseRes] = await Promise.all([
+      tryApi(() => adminApi.getBookings(), { silent: true }),
+      tryApi(() => adminApi.getPayouts(), { silent: true }),
+      tryApi(() => adminApi.getCourseFinanceSummary(), { silent: true }),
+    ]);
+    if (bookingRes.success) setBookings(bookingRes.bookings || []);
+    if (payoutRes.success) setPayouts(payoutRes.payouts || []);
+    if (courseRes.success) setCourseFinance(courseRes.courseFinance || null);
+    setLoading(false);
   }, []);
 
-  const totalBookingRevenue = bookings.reduce((sum, b) => sum + Number(b.totalAmount ?? b.price ?? 0), 0);
-  const totalPayoutRequested = payouts.reduce((sum, p) => sum + Number(p.amount || 0), 0);
-  const pendingPayout = payouts
-    .filter((p) => p.status === "pending")
-    .reduce((sum, p) => sum + Number(p.amount || 0), 0);
-  const approvedPayout = payouts
-    .filter((p) => p.status === "approved" || p.status === "paid")
-    .reduce((sum, p) => sum + Number(p.amount || 0), 0);
+  useEffect(() => {
+    void loadAll();
+  }, [loadAll]);
+
+  const bookingSummary = useMemo(() => {
+    const transfer = bookings.filter((b) => b.paymentMethod === "transfer");
+    const pending = transfer.filter((b) => bookingPaymentStatus(b) === "pending");
+    const paid = transfer.filter((b) => bookingPaymentStatus(b) === "paid");
+    const refundPending = bookings.filter((b) => bookingPaymentStatus(b) === "refund_pending");
+    return {
+      pendingTransferCount: pending.length,
+      pendingTransferAmount: pending.reduce((s, b) => s + bookingAmount(b), 0),
+      paidCollectedCount: paid.length,
+      paidCollectedAmount: paid.reduce((s, b) => s + bookingAmount(b), 0),
+      refundPendingCount: refundPending.length,
+      refundPendingAmount: refundPending.reduce((s, b) => s + Number(b.cancelRefundAmountVnd || 0), 0),
+    };
+  }, [bookings]);
+
+  const payoutSummary = useMemo(() => {
+    const pending = payouts.filter((p) => p.status === "pending");
+    const approved = payouts.filter((p) => p.status === "approved" || p.status === "paid");
+    const rejected = payouts.filter((p) => p.status === "rejected");
+    return {
+      totalCount: payouts.length,
+      totalAmount: payouts.reduce((s, p) => s + Number(p.amount || 0), 0),
+      pendingCount: pending.length,
+      pendingAmount: pending.reduce((s, p) => s + Number(p.amount || 0), 0),
+      approvedCount: approved.length,
+      approvedAmount: approved.reduce((s, p) => s + Number(p.amount || 0), 0),
+      rejectedCount: rejected.length,
+    };
+  }, [payouts]);
 
   const cf = courseFinance;
 
   return (
-    <AdminPanel
-      title="Tài chính — Tổng quan"
-      description="Doanh thu lịch hẹn cố vấn, học phí khóa học, phí nền tảng và rút tiền cố vấn. Đối soát chuyển khoản khóa học tại mục Học phí khóa học."
-    >
+    <div className="min-w-0 max-w-full space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700 sm:space-y-8">
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex min-w-0 flex-col justify-between gap-4 lg:flex-row lg:items-start lg:gap-6"
+      >
+        <div className="min-w-0 flex-1">
+          <h2 className="font-headline text-3xl font-black uppercase tracking-tighter text-slate-900">
+            <span className="text-violet-700">Tài chính</span> — Tổng quan
+          </h2>
+        </div>
+        <button
+          type="button"
+          onClick={() => void loadAll()}
+          disabled={loading}
+          className="inline-flex shrink-0 items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-[10px] font-black uppercase tracking-wider text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+        >
+          <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
+          Làm mới
+        </button>
+      </motion.div>
+
+      <div className="flex flex-wrap gap-2">
+        {FINANCE_QUICK_LINKS.map(({ to, label, icon: Icon }) => (
+          <Link
+            key={to}
+            to={to}
+            className="inline-flex min-w-[9.25rem] items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-[10px] font-black uppercase tracking-wider text-slate-700 transition hover:border-violet-300 hover:bg-violet-50 hover:text-violet-900"
+          >
+            <Icon className="h-4 w-4 shrink-0" />
+            {label}
+            <ArrowRight className="h-3 w-3 shrink-0 opacity-50" />
+          </Link>
+        ))}
+      </div>
+
       {loading ? (
-        <p className="text-sm text-slate-500">Đang tải dữ liệu tài chính...</p>
+        <p className="text-xs font-medium text-slate-500">Đang tải dữ liệu tài chính…</p>
       ) : (
         <div className="space-y-10">
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
-              <p className="text-xs text-slate-500">Tổng giá trị lịch hẹn (booking)</p>
-              <p className="mt-2 text-2xl font-black text-slate-900">{vnd(totalBookingRevenue)}</p>
-              <p className="mt-2 text-[11px] text-slate-500">Theo tổng tiền phiên (totalAmount / price).</p>
+          <section className="space-y-4">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-500">Lịch hẹn</h3>
+              <Link
+                to="/admin/bookings"
+                className="text-xs font-bold text-violet-700 hover:underline"
+              >
+                Lịch hẹn &amp; thanh toán →
+              </Link>
             </div>
-            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
-              <p className="text-xs text-slate-500">Tổng yêu cầu rút</p>
-              <p className="mt-2 text-2xl font-black text-slate-900">{vnd(totalPayoutRequested)}</p>
+            <div className="grid gap-4 sm:grid-cols-3">
+              <div className="rounded-2xl border border-amber-200 bg-amber-50/80 p-4">
+                <p className="text-[10px] font-black uppercase tracking-widest text-amber-900">Chờ đối soát</p>
+                <p className="mt-1 text-2xl font-black text-amber-950">{bookingSummary.pendingTransferCount}</p>
+                <p className="mt-1 text-sm font-semibold text-amber-900">
+                  {vnd(bookingSummary.pendingTransferAmount)}
+                </p>
+              </div>
+              <div className="rounded-2xl border border-emerald-200 bg-emerald-50/80 p-4">
+                <p className="text-[10px] font-black uppercase tracking-widest text-emerald-900">Đã thu qua SePay</p>
+                <p className="mt-1 text-2xl font-black text-emerald-950">{bookingSummary.paidCollectedCount}</p>
+                <p className="mt-1 text-sm font-semibold text-emerald-900">
+                  {vnd(bookingSummary.paidCollectedAmount)}
+                </p>
+              </div>
+              <div className="rounded-2xl border border-sky-200 bg-sky-50/80 p-4">
+                <p className="text-[10px] font-black uppercase tracking-widest text-sky-900">Chờ hoàn cho học viên</p>
+                <p className="mt-1 text-2xl font-black text-sky-950">{bookingSummary.refundPendingCount}</p>
+                <p className="mt-1 text-sm font-semibold text-sky-900">
+                  {vnd(bookingSummary.refundPendingAmount)}
+                </p>
+              </div>
             </div>
-            <div className="rounded-2xl border border-orange-400/25 bg-orange-500/10 p-5">
-              <p className="text-xs text-orange-900/80">Rút tiền chờ duyệt</p>
-              <p className="mt-2 text-2xl font-black text-orange-900">{vnd(pendingPayout)}</p>
+          </section>
+
+          <section className="space-y-4">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-500">Rút tiền cố vấn</h3>
+              <Link to="/admin/payouts" className="text-xs font-bold text-violet-700 hover:underline">
+                Duyệt yêu cầu rút →
+              </Link>
             </div>
-            <div className="rounded-2xl border border-emerald-400/25 bg-emerald-500/10 p-5">
-              <p className="text-xs text-emerald-800/80">Rút tiền đã duyệt</p>
-              <p className="mt-2 text-2xl font-black text-emerald-800">{vnd(approvedPayout)}</p>
+            <div className="grid gap-4 sm:grid-cols-3">
+              <div className="rounded-2xl border border-slate-200 bg-white p-4">
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">Tổng yêu cầu</p>
+                <p className="mt-1 text-2xl font-black text-slate-900">{payoutSummary.totalCount}</p>
+                <p className="mt-1 text-sm font-semibold text-slate-700">{vnd(payoutSummary.totalAmount)}</p>
+              </div>
+              <div className="rounded-2xl border border-orange-200 bg-orange-50/80 p-4">
+                <p className="text-[10px] font-black uppercase tracking-widest text-orange-900">Chờ duyệt</p>
+                <p className="mt-1 text-2xl font-black text-orange-950">{payoutSummary.pendingCount}</p>
+                <p className="mt-1 text-sm font-semibold text-orange-900">{vnd(payoutSummary.pendingAmount)}</p>
+              </div>
+              <div className="rounded-2xl border border-emerald-200 bg-emerald-50/80 p-4">
+                <p className="text-[10px] font-black uppercase tracking-widest text-emerald-900">Đã duyệt / đã chi</p>
+                <p className="mt-1 text-2xl font-black text-emerald-950">{payoutSummary.approvedCount}</p>
+                <p className="mt-1 text-sm font-semibold text-emerald-900">{vnd(payoutSummary.approvedAmount)}</p>
+              </div>
             </div>
-          </div>
+            {payoutSummary.rejectedCount > 0 && (
+              <p className="text-xs text-slate-500">
+                {payoutSummary.rejectedCount} yêu cầu đã từ chối (không tính vào số tiền chờ chi).
+              </p>
+            )}
+          </section>
 
           {cf && (
-            <div className="space-y-4">
-              <div className="flex flex-wrap items-end justify-between gap-4 border-b border-slate-200 pb-4">
-                <div>
-                  <h3 className="text-lg font-black tracking-tight text-slate-900">Học phí khóa học</h3>
-                  <p className="mt-1 text-sm text-slate-600">
-                    Ghi danh khóa có phí (chuyển khoản). Khoản chờ đối soát là giao dịch chưa được xác nhận trên sao kê; khoản đã thu là giao dịch đã được xác nhận thanh toán.
-                  </p>
+            <section className="space-y-4">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-500">Học phí khóa học</h3>
+                <Link
+                  to="/admin/course-payments"
+                  className="text-xs font-bold text-violet-700 hover:underline"
+                >
+                  Theo dõi học phí khóa →
+                </Link>
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="rounded-2xl border border-emerald-200 bg-emerald-50/80 p-4">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-emerald-900">Đã thu qua SePay</p>
+                  <p className="mt-1 text-2xl font-black text-emerald-950">{cf.paidCollectedCount ?? 0}</p>
+                  <p className="mt-1 text-sm font-semibold text-emerald-900">{vnd(cf.paidCollectedAmount)}</p>
+                  <p className="mt-2 text-xs text-emerald-800/80">Ghi danh có học phí &gt; 0</p>
                 </div>
-                <div className="flex flex-wrap gap-2">
-                  <Link
-                    to="/admin/course-payments"
-                    className="shrink-0 rounded-xl bg-violet-600 px-4 py-2.5 text-xs font-black uppercase tracking-wider text-white shadow-sm transition hover:bg-violet-700"
-                  >
-                    Học phí khóa →
-                  </Link>
-                  <Link
-                    to="/admin/subscription-payments"
-                    className="shrink-0 rounded-xl bg-amber-500 px-4 py-2.5 text-xs font-black uppercase tracking-wider text-slate-900 shadow-sm transition hover:bg-amber-400"
-                  >
-                    Gói Pro/Elite →
-                  </Link>
+                <div className="rounded-2xl border border-amber-200 bg-amber-50/80 p-4">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-amber-900">Chờ đối soát</p>
+                  <p className="mt-1 text-2xl font-black text-amber-950">{cf.pendingTransferCount ?? 0}</p>
+                  <p className="mt-1 text-sm font-semibold text-amber-900">{vnd(cf.pendingTransferAmount)}</p>
+                  <p className="mt-2 text-xs text-amber-800/80">Chưa khớp chuyển khoản trên SePay</p>
                 </div>
               </div>
-              <div className="grid gap-4 md:grid-cols-3">
-                <div className="rounded-2xl border border-violet-400/30 bg-violet-500/10 p-5">
-                  <p className="text-xs font-semibold text-violet-900/90">Đã thu (đã xác nhận thanh toán)</p>
-                  <p className="mt-2 text-2xl font-black text-violet-950">{vnd(cf.paidCollectedAmount)}</p>
-                  <p className="mt-2 text-[11px] text-violet-900/70">{cf.paidCollectedCount} ghi danh có học phí &gt; 0</p>
-                </div>
-                <div className="rounded-2xl border border-amber-400/35 bg-amber-500/10 p-5">
-                  <p className="text-xs font-semibold text-amber-950/90">Chờ đối soát chuyển khoản</p>
-                  <p className="mt-2 text-2xl font-black text-amber-950">{vnd(cf.pendingTransferAmount)}</p>
-                  <p className="mt-2 text-[11px] text-amber-950/75">{cf.pendingTransferCount} ghi danh đang pending</p>
-                </div>
-                <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
-                  <p className="text-xs text-slate-500">Ghi chú</p>
-                  <p className="mt-2 text-sm leading-relaxed text-slate-700">
-                    Khóa miễn phí không vào đây. Chia sẻ doanh thu mentor (nếu có) sẽ bổ sung ở phiên sau — hiện chỉ tổng hợp tiền học viên theo ghi danh.
-                  </p>
-                </div>
+              <p className="text-xs text-slate-500">
+                Khóa miễn phí không hiển thị ở đây. Đối soát thủ công (khi cổng lỗi) tại menu Đối soát SePay.
+              </p>
+            </section>
+          )}
+
+          <section className="glass-card border-slate-200/90 p-5">
+            <div className="flex items-start gap-3">
+              <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-violet-50 text-violet-700">
+                <Wallet className="h-5 w-5" />
+              </div>
+              <div className="min-w-0 text-sm text-slate-600">
+                <p className="font-bold text-slate-900">Đối soát chi tiết</p>
+                <p className="mt-1 leading-relaxed">
+                  Thu chuyển khoản (lịch hẹn, khóa học, gói Pro) được SePay tự khớp theo mã thanh toán và số tiền.
+                  Khi cổng lỗi, admin xác nhận thủ công từ từng màn theo dõi tương ứng.
+                </p>
               </div>
             </div>
-          )}
+          </section>
         </div>
       )}
-    </AdminPanel>
+    </div>
+  );
+}
+
+const TX_TYPE_TABS = [
+  { id: "all", label: "Tất cả" },
+  { id: "booking", label: "Lịch hẹn" },
+  { id: "course_fee", label: "Học phí khóa" },
+  { id: "payout", label: "Rút tiền" },
+];
+
+const TX_STATUS_TABS = [
+  { id: "all", label: "Mọi trạng thái" },
+  { id: "pending", label: "Chờ đối soát" },
+  { id: "paid", label: "Đã thanh toán" },
+  { id: "payout_pending", label: "Rút tiền chờ duyệt" },
+  { id: "closed", label: "Đã hủy / từ chối" },
+];
+
+const TX_TH =
+  "px-4 py-4 text-[10px] font-black uppercase tracking-widest text-slate-500 sm:px-5 sm:py-5 lg:px-6";
+const TX_TD = "px-4 py-4 sm:px-5 sm:py-5 lg:px-6";
+
+function txTypeMeta(type) {
+  if (type === "booking") {
+    return { label: "Lịch hẹn", icon: Calendar, tone: "border-violet-200 bg-violet-50 text-violet-800", to: "/admin/bookings" };
+  }
+  if (type === "course_fee") {
+    return { label: "Học phí khóa", icon: BookOpen, tone: "border-teal-200 bg-teal-50 text-teal-900", to: "/admin/course-payments" };
+  }
+  return { label: "Rút tiền", icon: Banknote, tone: "border-cyan-200 bg-cyan-50 text-cyan-900", to: "/admin/payouts" };
+}
+
+const PAYOUT_STATUS_STYLES = {
+  pending: {
+    Icon: Clock,
+    label: "Chờ duyệt",
+    tone: "border-orange-300 bg-orange-100 text-orange-950",
+  },
+  approved: {
+    Icon: Banknote,
+    label: "Chờ chuyển khoản",
+    tone: "border-sky-300 bg-sky-100 text-sky-950",
+  },
+  paid: {
+    Icon: CheckCircle,
+    label: "Đã chi",
+    tone: "border-emerald-300 bg-emerald-100 text-emerald-950",
+  },
+  rejected: {
+    Icon: XCircle,
+    label: "Đã từ chối",
+    tone: "border-rose-200 bg-rose-50 text-rose-700",
+  },
+  cancelled: {
+    Icon: XCircle,
+    label: "Đã hủy",
+    tone: "border-slate-300 bg-slate-200 text-slate-800",
+  },
+};
+
+function PayoutStatusPill({ status }) {
+  const key = String(status || "pending").toLowerCase();
+  const cfg = PAYOUT_STATUS_STYLES[key] || {
+    Icon: AlertCircle,
+    label: statusLabel(key),
+    tone: "border-slate-300 bg-slate-100 text-slate-700",
+  };
+  return <StatusPill icon={cfg.Icon} label={cfg.label} toneClass={cfg.tone} />;
+}
+
+function matchesTxStatusFilter(row, statusFilter) {
+  if (statusFilter === "all") return true;
+  if (statusFilter === "pending") {
+    if (row.type === "payout") return false;
+    return String(row.paymentStatus || "").toLowerCase() === "pending";
+  }
+  if (statusFilter === "paid") {
+    if (row.type === "payout") {
+      const s = String(row.payoutStatus || "").toLowerCase();
+      return s === "paid" || s === "approved";
+    }
+    return String(row.paymentStatus || "").toLowerCase() === "paid";
+  }
+  if (statusFilter === "payout_pending") {
+    return row.type === "payout" && String(row.payoutStatus || "").toLowerCase() === "pending";
+  }
+  if (statusFilter === "closed") {
+    const closed = new Set(["cancelled", "rejected", "failed", "no_show"]);
+    if (row.type === "payout") return closed.has(String(row.payoutStatus || "").toLowerCase());
+    if (row.type === "booking") {
+      return (
+        closed.has(String(row.bookingStatus || "").toLowerCase()) ||
+        closed.has(String(row.paymentStatus || "").toLowerCase())
+      );
+    }
+    return false;
+  }
+  return true;
+}
+
+function buildTransactionRows(bookingRes, payoutRes, courseRes) {
+  const bookingRows = bookingRes.success
+    ? (bookingRes.bookings || []).map((b) => ({
+        id: b._id,
+        type: "booking",
+        amount: Number(b.totalAmount ?? b.price ?? 0),
+        bookingStatus: b.status || "pending",
+        paymentStatus: b.paymentStatus || "",
+        paymentMethod: b.paymentMethod || "transfer",
+        paymentRef: b.paymentRef || "",
+        date: b.updatedAt || b.createdAt || new Date().toISOString(),
+        label: `${b.userId?.name || "Học viên"} → ${b.mentorId?.name || "Cố vấn"}`,
+        detailTo: "/admin/bookings",
+      }))
+    : [];
+  const payoutRows = payoutRes.success
+    ? (payoutRes.payouts || []).map((p) => ({
+        id: p._id,
+        type: "payout",
+        amount: Number(p.amount || 0),
+        payoutStatus: p.status || "pending",
+        date: p.requestedAt || p.createdAt || new Date().toISOString(),
+        label: p.mentorId?.name || p.mentorId?.userId?.name || "Cố vấn",
+        detailTo: "/admin/payouts",
+      }))
+    : [];
+  const cf = courseRes.success ? courseRes.courseFinance : null;
+  const courseRows = [];
+  if (cf) {
+    (cf.pendingList || []).forEach((e) => {
+      courseRows.push({
+        id: `enr-p-${e._id}`,
+        type: "course_fee",
+        amount: Number(e.pricePaid || 0),
+        paymentStatus: "pending",
+        paymentRef: e.paymentRef || "",
+        date: e.transferSubmittedAt || e.updatedAt || e.createdAt || new Date().toISOString(),
+        label: `${e.userId?.name || "Học viên"} · ${e.courseId?.title || "Khóa học"}`,
+        detailTo: "/admin/course-payments",
+      });
+    });
+    (cf.recentPaidRows || []).forEach((e) => {
+      courseRows.push({
+        id: `enr-paid-${e._id}`,
+        type: "course_fee",
+        amount: Number(e.pricePaid || 0),
+        paymentStatus: "paid",
+        paymentRef: e.paymentRef || "",
+        date: e.paidAt || e.updatedAt || e.createdAt || new Date().toISOString(),
+        label: `${e.userId?.name || "Học viên"} · ${e.courseId?.title || "Khóa học"}`,
+        detailTo: "/admin/course-payments",
+      });
+    });
+  }
+  return [...bookingRows, ...payoutRows, ...courseRows].sort(
+    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
   );
 }
 
@@ -293,206 +534,260 @@ export function AdminTransactions() {
   const [rows, setRows] = useState([]);
   const [typeFilter, setTypeFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [searchTerm, setSearchTerm] = useState("");
 
-  useEffect(() => {
-    const run = async () => {
-      setLoading(true);
-      const [bookingRes, payoutRes, courseRes] = await Promise.all([
-        adminApi.getBookings(),
-        adminApi.getPayouts(),
-        adminApi.getCourseFinanceSummary(),
-      ]);
-      const bookingRows = bookingRes.success
-        ? (bookingRes.bookings || []).map((b) => ({
-            id: b._id,
-            type: "booking",
-            amount: Number(b.totalAmount ?? b.price ?? 0),
-            status: b.status || b.paymentStatus || "unknown",
-            date: b.createdAt || b.updatedAt || new Date().toISOString(),
-            label: `${b.userId?.name || "Người dùng"} → ${b.mentorId?.name || "Cố vấn"}`,
-          }))
-        : [];
-      const payoutRows = payoutRes.success
-        ? (payoutRes.payouts || []).map((p) => ({
-            id: p._id,
-            type: "payout",
-            amount: Number(p.amount || 0),
-            status: p.status || "pending",
-            date: p.requestedAt || p.createdAt || new Date().toISOString(),
-            label: p.mentorId?.name || p.mentorId?.userId?.name || "Cố vấn",
-          }))
-        : [];
-      const cf = courseRes.success ? courseRes.courseFinance : null;
-      const courseRows = [];
-      if (cf) {
-        (cf.pendingList || []).forEach((e) => {
-          courseRows.push({
-            id: `enr-p-${e._id}`,
-            type: "course_fee",
-            amount: Number(e.pricePaid || 0),
-            status: "course_pending_ck",
-            date: e.transferSubmittedAt || e.updatedAt || e.createdAt || new Date().toISOString(),
-            label: `${e.userId?.name || "Học viên"} · ${e.courseId?.title || "Khóa học"} (chờ xác nhận chuyển khoản)`,
-          });
-        });
-        (cf.recentPaidRows || []).forEach((e) => {
-          courseRows.push({
-            id: `enr-paid-${e._id}`,
-            type: "course_fee",
-            amount: Number(e.pricePaid || 0),
-            status: "paid",
-            date: e.paidAt || e.updatedAt || e.createdAt || new Date().toISOString(),
-            label: `${e.userId?.name || "Học viên"} · ${e.courseId?.title || "Khóa học"}`,
-          });
-        });
-      }
-      setRows(
-        [...bookingRows, ...payoutRows, ...courseRows]
-          .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-          .slice(0, 120),
-      );
-      setLoading(false);
-    };
-    run();
+  const loadAll = useCallback(async () => {
+    setLoading(true);
+    const [bookingRes, payoutRes, courseRes] = await Promise.all([
+      tryApi(() => adminApi.getBookings(), { silent: true }),
+      tryApi(() => adminApi.getPayouts(), { silent: true }),
+      tryApi(() => adminApi.getCourseFinanceSummary(), { silent: true }),
+    ]);
+    setRows(buildTransactionRows(bookingRes, payoutRes, courseRes));
+    setLoading(false);
   }, []);
 
-  const filteredRows = rows.filter((r) => {
-    const okType = typeFilter === "all" ? true : r.type === typeFilter;
-    const okStatus = statusFilter === "all" ? true : r.status === statusFilter;
-    return okType && okStatus;
-  });
+  useEffect(() => {
+    void loadAll();
+  }, [loadAll]);
 
-  const totalAmount = filteredRows.reduce((sum, r) => sum + Number(r.amount || 0), 0);
-  const bookingCount = filteredRows.filter((r) => r.type === "booking").length;
-  const payoutCount = filteredRows.filter((r) => r.type === "payout").length;
-  const courseFeeCount = filteredRows.filter((r) => r.type === "course_fee").length;
+  const filteredRows = useMemo(() => {
+    const q = searchTerm.trim().toLowerCase();
+    return rows.filter((r) => {
+      if (typeFilter !== "all" && r.type !== typeFilter) return false;
+      if (!matchesTxStatusFilter(r, statusFilter)) return false;
+      if (!q) return true;
+      const typeLabel = txTypeMeta(r.type).label.toLowerCase();
+      const ref = String(r.paymentRef || "").toLowerCase();
+      const label = String(r.label || "").toLowerCase();
+      return label.includes(q) || ref.includes(q) || typeLabel.includes(q);
+    });
+  }, [rows, typeFilter, statusFilter, searchTerm]);
 
-  const statusBadge = (status) => {
-    if (["completed", "approved", "paid", "confirmed"].includes(status)) {
-      return "bg-emerald-500/10 text-emerald-800 border border-emerald-400/25";
-    }
-    if (status === "pending" || status === "course_pending_ck") {
-      return "bg-orange-500/10 text-orange-900 border border-orange-400/25";
-    }
-    if (["cancelled", "failed", "rejected"].includes(status)) {
-      return "bg-red-500/10 text-red-800 border border-red-400/25";
-    }
-    return "border-slate-200 bg-slate-100/90";
-  };
+  const summary = useMemo(() => {
+    const booking = filteredRows.filter((r) => r.type === "booking");
+    const course = filteredRows.filter((r) => r.type === "course_fee");
+    const payout = filteredRows.filter((r) => r.type === "payout");
+    const pendingPay = filteredRows.filter(
+      (r) => r.type !== "payout" && String(r.paymentStatus || "").toLowerCase() === "pending",
+    );
+    return {
+      totalAmount: filteredRows.reduce((s, r) => s + Number(r.amount || 0), 0),
+      bookingCount: booking.length,
+      courseCount: course.length,
+      payoutCount: payout.length,
+      pendingPayCount: pendingPay.length,
+      pendingPayAmount: pendingPay.reduce((s, r) => s + Number(r.amount || 0), 0),
+    };
+  }, [filteredRows]);
 
   return (
-    <AdminPanel
-      title="Giao dịch"
-      description="Lịch hẹn cố vấn, học phí khóa học và rút tiền cố vấn — lọc theo loại và trạng thái."
-    >
-      {loading ? (
-        <p className="text-sm text-slate-500">Đang tải giao dịch...</p>
-      ) : (
-        <div className="space-y-4">
-          <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
-            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-              <p className="text-xs text-slate-500">Tổng giá trị (đang lọc)</p>
-              <p className="mt-1 text-2xl font-black text-slate-900">{vnd(totalAmount)}</p>
-            </div>
-            <div className="rounded-2xl border border-violet-400/25 bg-violet-500/10 p-4">
-              <p className="text-xs text-violet-800/80">Lịch hẹn</p>
-              <p className="mt-1 text-2xl font-black text-violet-800">{bookingCount}</p>
-            </div>
-            <div className="rounded-2xl border border-teal-400/25 bg-teal-500/10 p-4">
-              <p className="text-xs text-teal-900/85">Học phí khóa</p>
-              <p className="mt-1 text-2xl font-black text-teal-950">{courseFeeCount}</p>
-            </div>
-            <div className="rounded-2xl border border-cyan-400/25 bg-cyan-500/10 p-4">
-              <p className="text-xs text-cyan-800/80">Rút tiền</p>
-              <p className="mt-1 text-2xl font-black text-cyan-800">{payoutCount}</p>
-            </div>
-          </div>
-
-          <div className="flex flex-wrap gap-2">
-            {[
-              { id: "all", label: "Tất cả" },
-              { id: "booking", label: "Lịch hẹn" },
-              { id: "course_fee", label: "Học phí khóa" },
-              { id: "payout", label: "Rút tiền" },
-            ].map((item) => (
-              <button
-                key={item.id}
-                onClick={() => setTypeFilter(item.id)}
-                className={`rounded-xl px-4 py-2 text-xs font-black uppercase tracking-wider transition-all ${
-                  typeFilter === item.id
-                    ? "bg-primary-fixed text-black"
-                    : "border border-slate-200 bg-white/5 text-slate-600 hover:bg-white/10"
-                }`}
-              >
-                {item.label}
-              </button>
-            ))}
-            {[
-              { id: "all", label: "Mọi trạng thái" },
-              { id: "pending", label: "Chờ duyệt" },
-              { id: "course_pending_ck", label: "Chờ xác nhận chuyển khoản khóa" },
-              { id: "confirmed", label: "Đã xác nhận" },
-              { id: "completed", label: "Hoàn thành" },
-              { id: "approved", label: "Đã duyệt" },
-              { id: "cancelled", label: "Đã hủy" },
-              { id: "rejected", label: "Đã từ chối" },
-            ].map((item) => (
-              <button
-                key={item.id}
-                onClick={() => setStatusFilter(item.id)}
-                className={`rounded-xl px-4 py-2 text-xs font-black uppercase tracking-wider transition-all ${
-                  statusFilter === item.id
-                    ? "bg-white text-black"
-                    : "border border-slate-200 bg-white/5 text-slate-600 hover:bg-white/10"
-                }`}
-              >
-                {item.label}
-              </button>
-            ))}
-          </div>
-
-          <div className="overflow-x-auto rounded-2xl border border-slate-200">
-            <table className="w-full text-left text-sm">
-              <thead className="bg-slate-50 text-xs uppercase tracking-wider text-slate-500">
-                <tr>
-                  <th className="px-4 py-3">Loại</th>
-                  <th className="px-4 py-3">Nội dung</th>
-                  <th className="px-4 py-3">Trạng thái</th>
-                  <th className="px-4 py-3">Số tiền</th>
-                  <th className="px-4 py-3">Thời gian</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredRows.map((r) => (
-                  <tr key={`${r.type}-${r.id}`} className="border-t border-slate-100">
-                    <td className="px-4 py-3 text-slate-900 font-semibold">
-                      {r.type === "booking" ? "Lịch hẹn" : r.type === "course_fee" ? "Học phí khóa" : "Rút tiền"}
-                    </td>
-                    <td className="px-4 py-3 text-slate-600">{r.label}</td>
-                    <td className="px-4 py-3">
-                      <span className={`inline-flex px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${statusBadge(r.status)}`}>
-                        {statusLabel(r.status)}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-slate-900 font-bold">{vnd(r.amount)}</td>
-                    <td className="px-4 py-3 text-slate-500">{new Date(r.date).toLocaleString("vi-VN")}</td>
-                  </tr>
-                ))}
-                {!filteredRows.length && (
-                  <tr>
-                    <td colSpan={5} className="px-4 py-10 text-center text-slate-500">
-                      Không có giao dịch phù hợp bộ lọc.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
+    <div className="min-w-0 max-w-full space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700 sm:space-y-8">
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex min-w-0 flex-col justify-between gap-4 lg:flex-row lg:items-start lg:gap-6"
+      >
+        <div className="min-w-0 flex-1">
+          <h2 className="font-headline text-3xl font-black uppercase tracking-tighter text-slate-900">
+            <span className="text-violet-700">Giao dịch</span>
+          </h2>
+        </div>
+        <div className="flex w-full min-w-0 flex-wrap items-center gap-3 sm:w-auto sm:justify-end">
+          <button
+            type="button"
+            onClick={() => void loadAll()}
+            disabled={loading}
+            className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-[10px] font-black uppercase tracking-wider text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+          >
+            <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
+            Làm mới
+          </button>
+          <div className="relative min-w-0 flex-1 sm:flex-none sm:w-72">
+            <Search className="absolute left-4 top-1/2 size-[18px] -translate-y-1/2 text-slate-400" />
+            <input
+              type="text"
+              placeholder="Tìm học viên, cố vấn, mã thanh toán…"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full min-w-0 rounded-2xl border border-slate-200 bg-white py-3 pl-12 pr-6 text-sm text-slate-900 outline-none transition-all focus:border-violet-400"
+            />
           </div>
         </div>
-      )}
-    </AdminPanel>
+      </motion.div>
+
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4"
+      >
+        <div className="rounded-2xl border border-slate-200 bg-white p-4">
+          <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">Tổng (đang lọc)</p>
+          <p className="mt-1 text-2xl font-black text-slate-900">{vnd(summary.totalAmount)}</p>
+        </div>
+        <div className="rounded-2xl border border-amber-200 bg-amber-50/80 p-4">
+          <p className="text-[10px] font-black uppercase tracking-widest text-amber-900">Chờ đối soát</p>
+          <p className="mt-1 text-2xl font-black text-amber-950">{summary.pendingPayCount}</p>
+          <p className="mt-1 text-sm font-semibold text-amber-900">{vnd(summary.pendingPayAmount)}</p>
+        </div>
+        <div className="rounded-2xl border border-violet-200 bg-violet-50/80 p-4">
+          <p className="text-[10px] font-black uppercase tracking-widest text-violet-900">Lịch hẹn · Học phí</p>
+          <p className="mt-1 text-sm font-semibold text-violet-950">
+            {summary.bookingCount} buổi
+            <span className="mx-2 text-violet-300">·</span>
+            {summary.courseCount} ghi danh
+          </p>
+        </div>
+        <div className="rounded-2xl border border-cyan-200 bg-cyan-50/80 p-4">
+          <p className="text-[10px] font-black uppercase tracking-widest text-cyan-900">Rút tiền cố vấn</p>
+          <p className="mt-1 text-2xl font-black text-cyan-950">{summary.payoutCount}</p>
+        </div>
+      </motion.div>
+
+      <AdminListFilterBar
+        countText={loading ? "Đang tải…" : `Hiển thị ${filteredRows.length} / ${rows.length} giao dịch`}
+        showReset={typeFilter !== "all" || statusFilter !== "all"}
+        onReset={() => {
+          setTypeFilter("all");
+          setStatusFilter("all");
+        }}
+      >
+        <AdminFilterSelect
+          id="tx-type-filter"
+          label="Loại giao dịch"
+          value={typeFilter}
+          options={TX_TYPE_TABS}
+          onChange={setTypeFilter}
+        />
+        <AdminFilterSelect
+          id="tx-status-filter"
+          label="Trạng thái"
+          value={statusFilter}
+          options={TX_STATUS_TABS}
+          onChange={setStatusFilter}
+        />
+      </AdminListFilterBar>
+
+      <div className="glass-card min-w-0 max-w-full overflow-hidden border-slate-200/90 [&:hover]:transform-none [&:hover]:shadow-[0_8px_18px_rgba(110,53,232,0.07)]">
+        <div className="max-w-full overflow-x-auto overscroll-x-contain">
+          <table className="w-full min-w-0 table-fixed border-collapse text-left">
+            <colgroup>
+              <col className="w-[12%]" />
+              <col className="w-[26%]" />
+              <col className="w-[22%]" />
+              <col className="w-[11%]" />
+              <col className="w-[14%]" />
+              <col className="w-[8%]" />
+            </colgroup>
+            <thead>
+              <tr className="border-b border-slate-200 bg-slate-50/90">
+                <th className={TX_TH}>Loại</th>
+                <th className={TX_TH}>Nội dung</th>
+                <th className={`${TX_TH} text-center`}>Trạng thái</th>
+                <th className={`${TX_TH} text-right`}>Số tiền</th>
+                <th className={TX_TH}>Thời gian</th>
+                <th className={`${TX_TH} text-right`}>Chi tiết</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100 text-sm">
+              {loading ? (
+                <tr>
+                  <td colSpan={6} className={`${TX_TD} py-20 text-center text-[10px] font-black uppercase italic tracking-widest text-slate-500`}>
+                    Đang tải giao dịch…
+                  </td>
+                </tr>
+              ) : filteredRows.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className={`${TX_TD} py-20 text-center text-[10px] font-black uppercase italic tracking-widest text-slate-500`}>
+                    Không có giao dịch phù hợp bộ lọc
+                  </td>
+                </tr>
+              ) : (
+                filteredRows.map((r) => {
+                  const meta = txTypeMeta(r.type);
+                  const when = new Date(r.date);
+                  return (
+                    <tr key={`${r.type}-${r.id}`} className="group transition-colors hover:bg-violet-50/40">
+                      <td className={TX_TD}>
+                        <StatusPill icon={meta.icon} label={meta.label} toneClass={meta.tone} />
+                      </td>
+                      <td className={`${TX_TD} min-w-0`}>
+                        <p className="truncate font-semibold text-slate-900" title={r.label}>
+                          {r.label}
+                        </p>
+                        {r.paymentRef ? (
+                          <p className="mt-0.5 truncate font-mono text-xs font-semibold text-violet-700" title={r.paymentRef}>
+                            {r.paymentRef}
+                          </p>
+                        ) : null}
+                      </td>
+                      <td className={`${TX_TD} align-top`}>
+                        {r.type === "booking" ? (
+                          <AdminBookingStatusStack
+                            bookingStatus={r.bookingStatus}
+                            paymentStatus={r.paymentStatus}
+                            paymentMethod={r.paymentMethod}
+                          />
+                        ) : r.type === "course_fee" ? (
+                          <div className="mx-auto flex min-w-[10.5rem] flex-col items-center gap-2 py-0.5">
+                            <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Thanh toán</p>
+                            <PaymentStatusPill status={r.paymentStatus || "pending"} />
+                          </div>
+                        ) : (
+                          <div className="mx-auto flex justify-center py-0.5">
+                            <PayoutStatusPill status={r.payoutStatus} />
+                          </div>
+                        )}
+                      </td>
+                      <td className={`${TX_TD} whitespace-nowrap text-right font-black text-violet-700`}>
+                        {Number(r.amount || 0).toLocaleString("vi-VN")}{" "}
+                        <span className="text-[10px] font-medium uppercase tracking-widest text-slate-500">đ</span>
+                      </td>
+                      <td className={`${TX_TD} whitespace-nowrap text-slate-600`}>
+                        <p className="font-mono text-xs">{when.toLocaleTimeString("vi-VN")}</p>
+                        <p className="text-xs text-slate-500">{when.toLocaleDateString("vi-VN")}</p>
+                      </td>
+                      <td className={TX_TD}>
+                        <div className="flex justify-end">
+                          <Link
+                            to={r.detailTo || meta.to}
+                            title={`Mở ${meta.label}`}
+                            className="flex size-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 transition hover:border-violet-300 hover:bg-violet-50 hover:text-violet-800"
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Link>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
   );
 }
+
+const PAYOUT_FILTER_OPTIONS = [
+  { id: "all", label: "Tất cả" },
+  { id: "pending", label: "Chờ duyệt" },
+  { id: "approved", label: "Chờ chuyển khoản" },
+  { id: "paid", label: "Đã chi" },
+  { id: "rejected", label: "Đã từ chối" },
+];
+
+const PAYOUT_TH =
+  "px-4 py-4 text-[10px] font-black uppercase tracking-widest text-slate-500 sm:px-5 sm:py-5 lg:px-6";
+const PAYOUT_TD = "px-4 py-4 sm:px-5 sm:py-5 lg:px-6";
+
+function PayoutActionSlot({ children }) {
+  return <div className="flex size-9 shrink-0 items-center justify-center">{children}</div>;
+}
+
+const copyIconBtn =
+  "inline-flex size-8 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 transition hover:border-violet-300 hover:bg-violet-50 hover:text-violet-800";
 
 export function AdminPayouts() {
   const REJECT_REASON_OPTIONS = [
@@ -507,6 +802,7 @@ export function AdminPayouts() {
   const [busyId, setBusyId] = useState("");
   const [rows, setRows] = useState([]);
   const [filter, setFilter] = useState("all");
+  const [searchTerm, setSearchTerm] = useState("");
   const [rejectModal, setRejectModal] = useState({
     open: false,
     payoutId: "",
@@ -520,24 +816,24 @@ export function AdminPayouts() {
     note: "",
   });
 
-  const loadRows = async () => {
+  const loadRows = useCallback(async () => {
     setLoading(true);
     const res = await tryApi(() => adminApi.getPayouts(), {
-      fallback: "Không tải được danh sách payout.",
+      fallback: "Không tải được danh sách rút tiền.",
     });
     if (res.success) setRows(res.payouts || []);
     setLoading(false);
-  };
+  }, []);
 
   useEffect(() => {
     void loadRows();
-  }, []);
+  }, [loadRows]);
 
   const handleApprove = async (id) => {
     setBusyId(id);
     const res = await tryApi(() => adminApi.approvePayout(id), {
       fallback: "Không duyệt được yêu cầu.",
-      successMessage: "Đã duyệt. Hãy chuyển khoản cho cố vấn rồi bấm “Đã chuyển khoản”.",
+      successMessage: "Đã duyệt. Hãy chuyển khoản cho cố vấn rồi ghi nhận đã chi.",
     });
     setBusyId("");
     if (res.success) await loadRows();
@@ -564,7 +860,7 @@ export function AdminPayouts() {
     await loadRows();
   };
 
-  const handleReject = async (id) => {
+  const handleReject = (id) => {
     setRejectModal({ open: true, payoutId: id, reasonKey: "account_invalid", note: "" });
   };
 
@@ -585,205 +881,310 @@ export function AdminPayouts() {
     await loadRows();
   };
 
-  const filteredRows = rows.filter((r) => (filter === "all" ? true : r.status === filter));
-  const pendingCount = rows.filter((r) => r.status === "pending").length;
-  const approvedAwaitCkCount = rows.filter((r) => r.status === "approved").length;
-  const paidCount = rows.filter((r) => r.status === "paid").length;
-  const rejectedCount = rows.filter((r) => r.status === "rejected").length;
+  const summary = useMemo(() => {
+    const sum = (list) => list.reduce((s, r) => s + Number(r.amount || 0), 0);
+    const pending = rows.filter((r) => r.status === "pending");
+    const approved = rows.filter((r) => r.status === "approved");
+    const paid = rows.filter((r) => r.status === "paid");
+    const rejected = rows.filter((r) => r.status === "rejected");
+    return {
+      pendingCount: pending.length,
+      pendingAmount: sum(pending),
+      approvedCount: approved.length,
+      approvedAmount: sum(approved),
+      paidCount: paid.length,
+      paidAmount: sum(paid),
+      rejectedCount: rejected.length,
+    };
+  }, [rows]);
 
-  const statusBadge = (status) => {
-    if (status === "pending") {
-      return "bg-orange-500/10 text-orange-900 border border-orange-400/25";
-    }
-    if (status === "approved") {
-      return "bg-amber-500/10 text-amber-900 border border-amber-400/25";
-    }
-    if (status === "paid") {
-      return "bg-emerald-500/10 text-emerald-800 border border-emerald-400/25";
-    }
-    if (status === "rejected") {
-      return "bg-red-500/10 text-red-800 border border-red-400/25";
-    }
-    return "border-slate-200 bg-slate-100/90";
-  };
+  const filteredRows = useMemo(() => {
+    const q = searchTerm.trim().toLowerCase();
+    return rows.filter((r) => {
+      if (filter !== "all" && r.status !== filter) return false;
+      if (!q) return true;
+      const mentor = String(r?.mentorId?.name || r?.mentorId?.userId?.name || "").toLowerCase();
+      const bank = String(r.payoutAccount?.bankName || "").toLowerCase();
+      const acct = String(r.payoutAccount?.accountNumber || "").toLowerCase();
+      const ref = String(r.transferRef || "").toLowerCase();
+      return mentor.includes(q) || bank.includes(q) || acct.includes(q) || ref.includes(q);
+    });
+  }, [rows, filter, searchTerm]);
 
   return (
-    <AdminPanel
-      title="Rút tiền cố vấn"
-      description="Duyệt yêu cầu rút tiền → chuyển khoản thủ công cho cố vấn → ghi nhận đã chi (đồng bộ trạng thái với màn Tài chính mentor)."
-    >
-      {loading ? (
-        <p className="text-sm text-slate-500">Đang tải yêu cầu rút tiền...</p>
-      ) : (
-        <div className="space-y-4">
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            <div className="rounded-2xl border border-orange-400/25 bg-orange-500/10 p-4">
-              <p className="text-xs text-orange-900/80">Chờ duyệt</p>
-              <p className="text-2xl font-black text-orange-900 mt-1">{pendingCount}</p>
-            </div>
-            <div className="rounded-2xl border border-amber-400/25 bg-amber-500/10 p-4">
-              <p className="text-xs text-amber-900/80">Đã duyệt — chờ CK</p>
-              <p className="text-2xl font-black text-amber-900 mt-1">{approvedAwaitCkCount}</p>
-            </div>
-            <div className="rounded-2xl border border-emerald-400/25 bg-emerald-500/10 p-4">
-              <p className="text-xs text-emerald-800/80">Đã chuyển khoản</p>
-              <p className="text-2xl font-black text-emerald-800 mt-1">{paidCount}</p>
-            </div>
-            <div className="rounded-2xl border border-red-400/25 bg-red-500/10 p-4">
-              <p className="text-xs text-red-800/80">Từ chối</p>
-              <p className="text-2xl font-black text-red-800 mt-1">{rejectedCount}</p>
-            </div>
-          </div>
-
-          <div className="flex flex-wrap gap-2">
-            {[
-              { id: "all", label: "Tất cả" },
-              { id: "pending", label: "Chờ duyệt" },
-              { id: "approved", label: "Chờ chuyển khoản" },
-              { id: "paid", label: "Đã chi" },
-              { id: "rejected", label: "Đã từ chối" },
-            ].map((item) => (
-              <button
-                key={item.id}
-                onClick={() => setFilter(item.id)}
-                className={`rounded-xl px-4 py-2 text-xs font-black uppercase tracking-wider transition-all ${
-                  filter === item.id
-                    ? "bg-primary-fixed text-black"
-                    : "border border-slate-200 bg-white/5 text-slate-600 hover:bg-white/10"
-                }`}
-              >
-                {item.label}
-              </button>
-            ))}
-          </div>
-
-          {filteredRows.map((row) => {
-            const mentorName = row?.mentorId?.name || row?.mentorId?.userId?.name || "Cố vấn";
-            const isPending = row.status === "pending";
-            const isApproved = row.status === "approved";
-            const busy = busyId === row._id;
-            const acct = String(row.payoutAccount?.accountNumber || "").trim();
-            const bankName = String(row.payoutAccount?.bankName || "").trim();
-            const acctName = String(row.payoutAccount?.accountName || "").trim();
-            const ckLine = [bankName, acct, acctName].filter(Boolean).join(" · ");
-  return (
-              <div key={row._id} className="rounded-2xl border border-slate-200 bg-gradient-to-br from-slate-50 to-white p-5">
-                <div className="flex flex-wrap items-center justify-between gap-4">
-                  <div className="min-w-0 flex-1">
-                    <p className="text-slate-900 font-black">{mentorName}</p>
-                    <p className="mt-2 text-[10px] font-black uppercase tracking-widest text-slate-500">
-                      Tài khoản nhận tiền (để chuyển khoản)
-                    </p>
-                    <p className="text-sm font-semibold text-slate-800">{bankName || "—"}</p>
-                    <p className="mt-1 font-mono text-sm font-black tracking-wide text-slate-900 break-all">
-                      STK: {acct || "—"}
-                    </p>
-                    {acctName ? (
-                      <p className="mt-0.5 text-xs text-slate-600">
-                        Chủ TK: <span className="font-semibold text-slate-800">{acctName}</span>
-                      </p>
-                    ) : null}
-                    {acct ? (
-                      <div className="mt-2 flex flex-wrap gap-2">
-                        <button
-                          type="button"
-                          onClick={() => copyAdminText(acct, "Đã sao chép số tài khoản.")}
-                          className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-[10px] font-black uppercase tracking-wider text-slate-700 hover:bg-slate-50"
-                        >
-                          Sao chép STK
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => copyAdminText(ckLine, "Đã sao chép dòng đối soát.")}
-                          className="rounded-lg border border-violet-200 bg-violet-50 px-3 py-1.5 text-[10px] font-black uppercase tracking-wider text-violet-900 hover:bg-violet-100"
-                        >
-                          Sao chép cả dòng
-                        </button>
-                      </div>
-                    ) : null}
-                    <p className="text-xs text-slate-500 mt-2">
-                      Yêu cầu: {new Date(row.requestedAt || row.createdAt).toLocaleString("vi-VN")}
-                    </p>
-                    {row.status === "paid" && row.paidAt ? (
-                      <p className="text-xs text-emerald-800 mt-1">
-                        Đã chi: {new Date(row.paidAt).toLocaleString("vi-VN")}
-                        {row.transferRef ? ` · ND: ${row.transferRef}` : ""}
-                      </p>
-                    ) : null}
-                  </div>
-                  <div className="text-right">
-                    <p className="text-lg font-black text-slate-900">{vnd(row.amount)}</p>
-                    <span className={`inline-flex mt-1 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${statusBadge(row.status)}`}>
-                      {statusLabel(row.status)}
-                    </span>
-                  </div>
-                </div>
-                {!!row.rejectReason && (
-                  <p className="mt-3 text-xs text-red-800/85 bg-red-500/10 border border-red-400/25 rounded-xl px-3 py-2">
-                    Lý do từ chối: {row.rejectReason}
-                  </p>
-                )}
-                {isPending && (
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    <button
-                      disabled={busy}
-                      onClick={() => handleReject(row._id)}
-                      className="rounded-xl border border-red-400/25 bg-red-500/10 px-4 py-2 text-xs font-black uppercase tracking-wider text-red-800 disabled:opacity-50"
-                    >
-                      {busy ? "..." : "Từ chối"}
-                    </button>
-                    <button
-                      disabled={busy}
-                      onClick={() => handleApprove(row._id)}
-                      className="rounded-xl border border-emerald-400/25 bg-emerald-500/10 px-4 py-2 text-xs font-black uppercase tracking-wider text-emerald-800 disabled:opacity-50"
-                    >
-                      {busy ? "..." : "Duyệt yêu cầu"}
-                    </button>
-                  </div>
-                )}
-                {isApproved && (
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    <button
-                      disabled={busy}
-                      onClick={() =>
-                        setMarkPaidModal({
-                          open: true,
-                          payoutId: String(row._id),
-                          transferRef: "",
-                          note: "",
-                        })
-                      }
-                      className="rounded-xl border border-violet-400/25 bg-violet-500/10 px-4 py-2 text-xs font-black uppercase tracking-wider text-violet-900 disabled:opacity-50"
-                    >
-                      Đã chuyển khoản cho mentor
-                    </button>
-                  </div>
-                )}
-              </div>
-            );
-          })}
-          {!filteredRows.length && <p className="text-sm text-slate-500">Không có yêu cầu phù hợp bộ lọc hiện tại.</p>}
+    <div className="min-w-0 max-w-full space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700 sm:space-y-8">
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex min-w-0 flex-col justify-between gap-4 lg:flex-row lg:items-start lg:gap-6"
+      >
+        <div className="min-w-0 flex-1">
+          <h2 className="font-headline text-3xl font-black uppercase tracking-tighter text-slate-900">
+            <span className="text-violet-700">Rút tiền</span> cố vấn
+          </h2>
         </div>
-      )}
+        <div className="flex w-full min-w-0 flex-wrap items-center gap-3 sm:w-auto sm:justify-end">
+          <button
+            type="button"
+            onClick={() => void loadRows()}
+            disabled={loading}
+            className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-[10px] font-black uppercase tracking-wider text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+          >
+            <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
+            Làm mới
+          </button>
+          <div className="relative min-w-0 flex-1 sm:flex-none sm:w-72">
+            <Search className="absolute left-4 top-1/2 size-[18px] -translate-y-1/2 text-slate-400" />
+            <input
+              type="text"
+              placeholder="Tìm cố vấn, ngân hàng, số tài khoản…"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full min-w-0 rounded-2xl border border-slate-200 bg-white py-3 pl-12 pr-6 text-sm text-slate-900 outline-none transition-all focus:border-violet-400"
+            />
+          </div>
+        </div>
+      </motion.div>
+
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4"
+      >
+        <div className="rounded-2xl border border-orange-200 bg-orange-50/80 p-4">
+          <p className="text-[10px] font-black uppercase tracking-widest text-orange-900">Chờ duyệt</p>
+          <p className="mt-1 text-2xl font-black text-orange-950">{summary.pendingCount}</p>
+          <p className="mt-1 text-sm font-semibold text-orange-900">{vnd(summary.pendingAmount)}</p>
+        </div>
+        <div className="rounded-2xl border border-amber-200 bg-amber-50/80 p-4">
+          <p className="text-[10px] font-black uppercase tracking-widest text-amber-900">Chờ chuyển khoản</p>
+          <p className="mt-1 text-2xl font-black text-amber-950">{summary.approvedCount}</p>
+          <p className="mt-1 text-sm font-semibold text-amber-900">{vnd(summary.approvedAmount)}</p>
+        </div>
+        <div className="rounded-2xl border border-emerald-200 bg-emerald-50/80 p-4">
+          <p className="text-[10px] font-black uppercase tracking-widest text-emerald-900">Đã chi</p>
+          <p className="mt-1 text-2xl font-black text-emerald-950">{summary.paidCount}</p>
+          <p className="mt-1 text-sm font-semibold text-emerald-900">{vnd(summary.paidAmount)}</p>
+        </div>
+        <div className="rounded-2xl border border-rose-200 bg-rose-50/80 p-4">
+          <p className="text-[10px] font-black uppercase tracking-widest text-rose-800">Đã từ chối</p>
+          <p className="mt-1 text-2xl font-black text-rose-700">{summary.rejectedCount}</p>
+        </div>
+      </motion.div>
+
+      <AdminListFilterBar
+        countText={
+          loading ? "Đang tải…" : `Hiển thị ${filteredRows.length} / ${rows.length} yêu cầu`
+        }
+        showReset={filter !== "all"}
+        onReset={() => setFilter("all")}
+      >
+        <AdminFilterSelect
+          id="payout-status-filter"
+          label="Trạng thái yêu cầu"
+          value={filter}
+          options={PAYOUT_FILTER_OPTIONS}
+          onChange={setFilter}
+        />
+      </AdminListFilterBar>
+
+      <div className="glass-card min-w-0 max-w-full overflow-hidden border-slate-200/90 [&:hover]:transform-none [&:hover]:shadow-[0_8px_18px_rgba(110,53,232,0.07)]">
+        <div className="max-w-full overflow-x-auto overscroll-x-contain">
+          <table className="w-full min-w-0 table-fixed border-collapse text-left">
+            <colgroup>
+              <col className="w-[14%]" />
+              <col className="w-[24%]" />
+              <col className="w-[10%]" />
+              <col className="w-[18%]" />
+              <col className="w-[16%]" />
+              <col className="w-[18%]" />
+            </colgroup>
+            <thead>
+              <tr className="border-b border-slate-200 bg-slate-50/90">
+                <th className={PAYOUT_TH}>Cố vấn</th>
+                <th className={PAYOUT_TH}>Tài khoản nhận</th>
+                <th className={`${PAYOUT_TH} text-right`}>Số tiền</th>
+                <th className={`${PAYOUT_TH} text-center`}>Trạng thái</th>
+                <th className={PAYOUT_TH}>Thời gian</th>
+                <th className={`${PAYOUT_TH} text-right`}>Thao tác</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100 text-sm">
+              {loading ? (
+                <tr>
+                  <td
+                    colSpan={6}
+                    className={`${PAYOUT_TD} py-20 text-center text-[10px] font-black uppercase italic tracking-widest text-slate-500`}
+                  >
+                    Đang tải yêu cầu rút tiền…
+                  </td>
+                </tr>
+              ) : filteredRows.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className={`${PAYOUT_TD} py-20 text-center`}>
+                    <Banknote className="mx-auto mb-3 h-10 w-10 text-slate-400" />
+                    <p className="text-[10px] font-black uppercase italic tracking-widest text-slate-500">
+                      Không có yêu cầu phù hợp
+                    </p>
+                  </td>
+                </tr>
+              ) : (
+                filteredRows.map((row) => {
+                  const mentorName = row?.mentorId?.name || row?.mentorId?.userId?.name || "Cố vấn";
+                  const isPending = row.status === "pending";
+                  const isApproved = row.status === "approved";
+                  const busy = busyId === row._id;
+                  const acct = String(row.payoutAccount?.accountNumber || "").trim();
+                  const bankName = String(row.payoutAccount?.bankName || "").trim();
+                  const acctName = String(row.payoutAccount?.accountName || "").trim();
+                  const transferLine = [bankName, acct, acctName].filter(Boolean).join(" · ");
+                  const requestedAt = new Date(row.requestedAt || row.createdAt);
+
+                  return (
+                    <tr key={row._id} className="group transition-colors hover:bg-violet-50/40">
+                      <td className={`${PAYOUT_TD} min-w-0`}>
+                        <p className="truncate font-black text-slate-900" title={mentorName}>
+                          {mentorName}
+                        </p>
+                        {row.rejectReason ? (
+                          <p className="mt-1 line-clamp-2 whitespace-normal text-xs text-red-700" title={row.rejectReason}>
+                            {row.rejectReason}
+                          </p>
+                        ) : null}
+                      </td>
+                      <td className={`${PAYOUT_TD} min-w-0`}>
+                        <p className="font-medium text-slate-800">{bankName || "—"}</p>
+                        <p className="mt-0.5 font-mono text-xs font-semibold text-slate-900 break-all">
+                          {acct || "—"}
+                        </p>
+                        {acctName ? <p className="mt-0.5 text-xs text-slate-500">{acctName}</p> : null}
+                        {acct ? (
+                          <div className="mt-2 flex flex-wrap gap-1">
+                            <button
+                              type="button"
+                              title="Sao chép số tài khoản"
+                              onClick={() => copyAdminText(acct, "Đã sao chép số tài khoản.")}
+                              className={copyIconBtn}
+                            >
+                              <Copy className="h-3.5 w-3.5" />
+                            </button>
+                            <button
+                              type="button"
+                              title="Sao chép cả dòng chuyển khoản"
+                              onClick={() => copyAdminText(transferLine, "Đã sao chép.")}
+                              className={`${copyIconBtn} border-violet-200 text-violet-700 hover:bg-violet-50`}
+                            >
+                              <Copy className="h-3.5 w-3.5" />
+                            </button>
+                          </div>
+                        ) : null}
+                      </td>
+                      <td className={`${PAYOUT_TD} whitespace-nowrap text-right font-black text-violet-700`}>
+                        {Number(row.amount || 0).toLocaleString("vi-VN")}{" "}
+                        <span className="text-[10px] font-medium uppercase tracking-widest text-slate-500">đ</span>
+                      </td>
+                      <td className={`${PAYOUT_TD} align-top`}>
+                        <div className="mx-auto flex justify-center py-0.5">
+                          <PayoutStatusPill status={row.status} />
+                        </div>
+                      </td>
+                      <td className={`${PAYOUT_TD} whitespace-nowrap text-slate-600`}>
+                        <p className="text-xs font-medium">Yêu cầu</p>
+                        <p className="font-mono text-xs">{requestedAt.toLocaleString("vi-VN")}</p>
+                        {row.status === "paid" && row.paidAt ? (
+                          <>
+                            <p className="mt-2 text-xs font-medium text-emerald-800">Đã chi</p>
+                            <p className="font-mono text-xs text-emerald-900">
+                              {new Date(row.paidAt).toLocaleString("vi-VN")}
+                            </p>
+                            {row.transferRef ? (
+                              <p className="mt-0.5 truncate font-mono text-[11px] text-slate-500" title={row.transferRef}>
+                                {row.transferRef}
+                              </p>
+                            ) : null}
+                          </>
+                        ) : null}
+                      </td>
+                      <td className={PAYOUT_TD}>
+                        <div className="relative ml-auto flex w-full max-w-[5.5rem] justify-end gap-1">
+                          {isPending ? (
+                            <>
+                              <PayoutActionSlot>
+                                <button
+                                  type="button"
+                                  title="Duyệt yêu cầu rút tiền"
+                                  disabled={busy}
+                                  onClick={() => void handleApprove(row._id)}
+                                  className="inline-flex size-9 items-center justify-center rounded-xl border border-emerald-200 bg-emerald-50 text-emerald-700 transition hover:bg-emerald-100 disabled:opacity-50"
+                                >
+                                  <CheckCircle size={18} />
+                                </button>
+                              </PayoutActionSlot>
+                              <PayoutActionSlot>
+                                <button
+                                  type="button"
+                                  title="Từ chối yêu cầu"
+                                  disabled={busy}
+                                  onClick={() => handleReject(row._id)}
+                                  className="inline-flex size-9 items-center justify-center rounded-xl border border-rose-200 bg-rose-50 text-rose-700 transition hover:bg-rose-100 disabled:opacity-50"
+                                >
+                                  <XCircle size={18} />
+                                </button>
+                              </PayoutActionSlot>
+                            </>
+                          ) : isApproved ? (
+                            <PayoutActionSlot>
+                              <button
+                                type="button"
+                                title="Ghi nhận đã chuyển khoản cho cố vấn"
+                                disabled={busy}
+                                onClick={() =>
+                                  setMarkPaidModal({
+                                    open: true,
+                                    payoutId: String(row._id),
+                                    transferRef: "",
+                                    note: "",
+                                  })
+                                }
+                                className="inline-flex size-9 items-center justify-center rounded-xl border border-violet-200 bg-violet-50 text-violet-700 transition hover:border-violet-300 hover:bg-violet-100 disabled:opacity-50"
+                              >
+                                <Banknote size={16} />
+                              </button>
+                            </PayoutActionSlot>
+                          ) : (
+                            <PayoutActionSlot />
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
       <AnimatePresence>
         {rejectModal.open && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+            className="fixed inset-0 z-[200] flex items-center justify-center bg-black/45 p-4 backdrop-blur-[2px]"
             onClick={() => setRejectModal({ open: false, payoutId: "", reasonKey: "account_invalid", note: "" })}
           >
             <motion.div
-              initial={{ scale: 0.96, y: 16, opacity: 0 }}
+              initial={{ scale: 0.96, y: 12, opacity: 0 }}
               animate={{ scale: 1, y: 0, opacity: 1 }}
-              exit={{ scale: 0.96, y: 16, opacity: 0 }}
-              className="w-full max-w-lg rounded-3xl border border-slate-200 bg-white p-6"
+              exit={{ scale: 0.96, y: 12, opacity: 0 }}
+              role="dialog"
+              className="w-full max-w-lg rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl"
               onClick={(e) => e.stopPropagation()}
             >
-              <h4 className="text-xl font-black text-slate-900">Từ chối yêu cầu rút tiền</h4>
-              <p className="text-sm text-slate-500 mt-2">
-                Chọn lý do chuẩn hóa và thêm ghi chú tự do (nếu cần) để cố vấn nắm rõ nguyên nhân.
+              <h4 className="text-lg font-bold text-slate-900">Từ chối yêu cầu rút tiền</h4>
+              <p className="mt-2 text-sm text-slate-600">
+                Chọn lý do chuẩn hóa và thêm ghi chú (nếu cần) để cố vấn nắm rõ nguyên nhân.
               </p>
               <label className="mt-4 block text-[10px] font-black uppercase tracking-widest text-slate-500">
                 Lý do từ chối
@@ -791,38 +1192,39 @@ export function AdminPayouts() {
               <select
                 value={rejectModal.reasonKey}
                 onChange={(e) => setRejectModal((prev) => ({ ...prev, reasonKey: e.target.value }))}
-                className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-900 outline-none focus:border-primary-fixed"
+                className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 p-3 text-sm text-slate-900 outline-none focus:border-violet-400"
               >
                 {REJECT_REASON_OPTIONS.map((item) => (
-                  <option key={item.id} value={item.id} className="bg-white">
+                  <option key={item.id} value={item.id}>
                     {item.label}
                   </option>
                 ))}
               </select>
               <label className="mt-4 block text-[10px] font-black uppercase tracking-widest text-slate-500">
-                Ghi chú bổ sung (không bắt buộc)
+                Ghi chú bổ sung (tùy chọn)
               </label>
               <textarea
                 value={rejectModal.note}
                 onChange={(e) => setRejectModal((prev) => ({ ...prev, note: e.target.value }))}
-                className="mt-4 w-full min-h-28 rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-900 outline-none focus:border-primary-fixed"
-                placeholder="Ví dụ: Vui lòng cập nhật lại STK đúng với tài khoản ngân hàng đã xác minh."
+                rows={3}
+                className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 p-3 text-sm text-slate-900 outline-none focus:border-violet-400"
+                placeholder="Ví dụ: Vui lòng cập nhật STK khớp hồ sơ đã xác minh."
               />
               <div className="mt-5 grid grid-cols-2 gap-3">
                 <button
                   type="button"
                   onClick={() => setRejectModal({ open: false, payoutId: "", reasonKey: "account_invalid", note: "" })}
-                  className="rounded-xl border border-slate-200 bg-white/5 py-3 text-xs font-black uppercase tracking-wider text-slate-900"
+                  className="rounded-2xl border border-slate-200 bg-white py-3 text-[10px] font-black uppercase tracking-wider text-slate-700"
                 >
                   Hủy
                 </button>
                 <button
                   type="button"
-                  onClick={confirmReject}
+                  onClick={() => void confirmReject()}
                   disabled={busyId === rejectModal.payoutId}
-                  className="rounded-xl border border-red-400/25 bg-red-500/10 py-3 text-xs font-black uppercase tracking-wider text-red-800 disabled:opacity-50"
+                  className="rounded-2xl border border-red-200 bg-red-50 py-3 text-[10px] font-black uppercase tracking-wider text-red-800 disabled:opacity-50"
                 >
-                  {busyId === rejectModal.payoutId ? "Đang xử lý..." : "Xác nhận từ chối"}
+                  {busyId === rejectModal.payoutId ? "Đang xử lý…" : "Xác nhận từ chối"}
                 </button>
               </div>
             </motion.div>
@@ -835,41 +1237,40 @@ export function AdminPayouts() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+            className="fixed inset-0 z-[200] flex items-center justify-center bg-black/45 p-4 backdrop-blur-[2px]"
             onClick={() => {
               if (busyId === markPaidModal.payoutId) return;
               setMarkPaidModal({ open: false, payoutId: "", transferRef: "", note: "" });
             }}
           >
             <motion.div
-              initial={{ scale: 0.96, y: 16, opacity: 0 }}
+              initial={{ scale: 0.96, y: 12, opacity: 0 }}
               animate={{ scale: 1, y: 0, opacity: 1 }}
-              exit={{ scale: 0.96, y: 16, opacity: 0 }}
-              className="w-full max-w-lg rounded-3xl border border-slate-200 bg-white p-6"
+              exit={{ scale: 0.96, y: 12, opacity: 0 }}
+              role="dialog"
+              className="w-full max-w-lg rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl"
               onClick={(e) => e.stopPropagation()}
             >
-              <h4 className="text-xl font-black text-slate-900">Ghi nhận đã chuyển khoản</h4>
-              <p className="text-sm text-slate-500 mt-2">
-                Sau khi bạn đã CK thủ công cho cố vấn, xác nhận để mentor thấy trạng thái &quot;Đã chuyển khoản&quot; trên
-                màn Tài chính.
-              </p>
+              <h4 className="text-lg font-bold text-slate-900">Ghi nhận đã chuyển khoản</h4>
+              <p className="mt-2 text-sm text-slate-600">Chỉ xác nhận sau khi đã chuyển tiền cho cố vấn.</p>
               <label className="mt-4 block text-[10px] font-black uppercase tracking-widest text-slate-500">
-                Nội dung / mã tham chiếu CK (tuỳ chọn)
+                Mã / nội dung tham chiếu (tùy chọn)
               </label>
               <input
                 type="text"
                 value={markPaidModal.transferRef}
                 onChange={(e) => setMarkPaidModal((prev) => ({ ...prev, transferRef: e.target.value }))}
-                className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-900 outline-none focus:border-violet-400"
+                className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 p-3 text-sm text-slate-900 outline-none focus:border-violet-400"
                 placeholder="Ví dụ: FT… hoặc nội dung sao kê"
               />
               <label className="mt-4 block text-[10px] font-black uppercase tracking-widest text-slate-500">
-                Ghi chú nội bộ (tuỳ chọn)
+                Ghi chú nội bộ (tùy chọn)
               </label>
               <textarea
                 value={markPaidModal.note}
                 onChange={(e) => setMarkPaidModal((prev) => ({ ...prev, note: e.target.value }))}
-                className="mt-2 w-full min-h-20 rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-900 outline-none focus:border-violet-400"
+                rows={2}
+                className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 p-3 text-sm text-slate-900 outline-none focus:border-violet-400"
                 placeholder="Ghi chú cho lịch sử admin…"
               />
               <div className="mt-5 grid grid-cols-2 gap-3">
@@ -877,7 +1278,7 @@ export function AdminPayouts() {
                   type="button"
                   disabled={Boolean(busyId)}
                   onClick={() => setMarkPaidModal({ open: false, payoutId: "", transferRef: "", note: "" })}
-                  className="rounded-xl border border-slate-200 bg-slate-50 py-3 text-xs font-black uppercase tracking-wider text-slate-800 disabled:opacity-50"
+                  className="rounded-2xl border border-slate-200 bg-white py-3 text-[10px] font-black uppercase tracking-wider text-slate-700 disabled:opacity-50"
                 >
                   Hủy
                 </button>
@@ -885,257 +1286,278 @@ export function AdminPayouts() {
                   type="button"
                   onClick={() => void confirmMarkPaid()}
                   disabled={busyId === markPaidModal.payoutId}
-                  className="rounded-xl border border-emerald-300 bg-emerald-50 py-3 text-xs font-black uppercase tracking-wider text-emerald-800 disabled:opacity-50"
+                  className="rounded-2xl border border-emerald-200 bg-emerald-50 py-3 text-[10px] font-black uppercase tracking-wider text-emerald-800 disabled:opacity-50"
                 >
-                  {busyId === markPaidModal.payoutId ? "Đang xử lý..." : "Xác nhận đã chi"}
+                  {busyId === markPaidModal.payoutId ? "Đang xử lý…" : "Xác nhận đã chi"}
                 </button>
               </div>
             </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
-    </AdminPanel>
+    </div>
   );
 }
 
-export function AdminBookingDetail() {
-  const { id } = useParams();
-  const [booking, setBooking] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [busy, setBusy] = useState(false);
+/** @deprecated — dùng `AdminBookingDetail.jsx` */
+export { AdminBookingDetail } from "./AdminBookingDetail.jsx";
 
-  const load = async () => {
-    setLoading(true);
-    const res = await tryApi(() => adminApi.getBookingById(id), {
-      fallback: "Không tải được booking.",
-    });
-    if (res.success) setBooking(res.booking || null);
-    else setBooking(null);
-    setLoading(false);
-  };
+const INTERVIEW_STATUS_VI = {
+  in_progress: "Đang diễn ra",
+  completed: "Hoàn thành",
+  abandoned: "Bỏ dở",
+};
 
-  useEffect(() => {
-    void load();
-  }, [id]);
+const SESSION_STATUS_OPTIONS = [
+  { id: "all", label: "Tất cả" },
+  { id: "completed", label: "Hoàn thành" },
+  { id: "in_progress", label: "Đang diễn ra" },
+  { id: "abandoned", label: "Bỏ dở" },
+];
 
-  const confirmCk = async () => {
-    if (!booking) return;
-    setBusy(true);
-    const res = await tryApi(
-      () => adminApi.confirmBookingTransferPayment(booking._id || booking.id, {}),
-      {
-        fallback: "Không xác nhận được chuyển khoản.",
-        successMessage: "Đã xác nhận chuyển khoản.",
-      },
-    );
-    setBusy(false);
-    if (res.success) await load();
-  };
-
-  return (
-    <AdminPanel title="Chi tiết lịch hẹn" description="Thông tin booking và xác nhận CK.">
-      <Link to="/admin/bookings" className="mb-4 inline-block text-sm font-semibold text-violet-700 hover:underline">
-        ← Danh sách booking
-      </Link>
-      {loading && <p className="text-sm text-slate-500">Đang tải…</p>}
-      {!loading && !booking && <p className="text-sm text-red-600">Không tìm thấy booking.</p>}
-      {booking && (
-        <motion.div className="rounded-2xl border border-slate-200 bg-white p-6 space-y-3 text-sm">
-          <p className="text-lg font-black">{booking.position || booking.sessionType || "Buổi mentor"}</p>
-          <p>Trạng thái: <strong>{statusLabel(booking.status)}</strong> · TT: {statusLabel(booking.paymentStatus)}</p>
-          <p>Học viên: {booking.userId?.name || "—"} ({booking.userId?.email || "—"})</p>
-          <p>Cố vấn: {booking.mentorId?.name || booking.mentorId?.userId?.name || "—"}</p>
-          <p>Ngày: {booking.date} · {booking.timeSlot}</p>
-          <p>Tổng: {vnd(booking.totalAmount || booking.price)}</p>
-          <p>Mã CK: {booking.paymentRef || booking.orderNum || "—"}</p>
-          {booking.notes && <p className="text-slate-600 whitespace-pre-wrap">Ghi chú: {booking.notes}</p>}
-          {booking.paymentMethod === "transfer" && booking.paymentStatus === "pending" && (
-            <button
-              type="button"
-              disabled={busy}
-              onClick={confirmCk}
-              className="rounded-xl bg-emerald-600 px-4 py-2 text-sm font-bold text-white disabled:opacity-50"
-            >
-              Xác nhận đã nhận CK
-            </button>
-          )}
-        </motion.div>
-      )}
-    </AdminPanel>
-  );
+function formatSessionWhen(iso) {
+  if (!iso) return "—";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "—";
+  return d.toLocaleString("vi-VN", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 }
 
 export function AdminContentQuestions() {
   const [stats, setStats] = useState(null);
+  const [sessions, setSessions] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [expandedId, setExpandedId] = useState(null);
 
-  useEffect(() => {
-    void (async () => {
-      setLoading(true);
-      const res = await tryApi(() => adminApi.getContentStats(), {
+  const loadAll = useCallback(async () => {
+    setLoading(true);
+    const [statsRes, sessionsRes] = await Promise.all([
+      tryApi(() => adminApi.getContentStats(), {
         fallback: "Không tải được thống kê nội dung.",
         silent: true,
-      });
-      if (res.success) setStats(res.content || null);
-      setLoading(false);
-    })();
+      }),
+      tryApi(() => adminApi.getRecentInterviewSessions(30), {
+        fallback: "Không tải được danh sách phiên phỏng vấn.",
+      }),
+    ]);
+    if (statsRes.success) setStats(statsRes.content || null);
+    if (sessionsRes.success) setSessions(sessionsRes.sessions || []);
+    setLoading(false);
   }, []);
-
-  return (
-    <AdminPanel
-      title="Nội dung — Câu hỏi phỏng vấn AI"
-      description="Câu hỏi được sinh động theo CV/JD khi học viên bắt đầu phiên."
-    >
-      {loading ? (
-        <p className="text-sm text-slate-500">Đang tải…</p>
-      ) : (
-        <div className="space-y-4">
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {[
-              { label: "Phiên phỏng vấn AI", value: stats?.interviewSessions ?? 0 },
-              { label: "Đã hoàn thành", value: stats?.completedInterviews ?? 0 },
-              { label: "Phân tích CV", value: stats?.cvAnalyses ?? 0 },
-              { label: "Khóa đã xuất bản", value: stats?.publishedCourses ?? 0 },
-            ].map((card) => (
-              <div key={card.label} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-                <p className="text-2xl font-black text-violet-700">{card.value}</p>
-                <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">{card.label}</p>
-              </div>
-            ))}
-          </div>
-          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700 space-y-2">
-            <p>
-              <span className="font-semibold">Nguồn câu hỏi:</span>{" "}
-              {stats?.aiQuestionSource || "POST /api/interviews/generate-questions"}
-            </p>
-            <p>
-              Mỗi phiên tạo bộ câu hỏi riêng qua LLM (OpenAI-compatible). Không dùng ngân hàng câu hỏi tĩnh
-              — phù hợp JD/CV thực tế của từng học viên.
-            </p>
-            <p className="text-xs text-slate-500">
-              CRUD câu hỏi mẫu theo ngành có thể bổ sung sau; hiện ưu tiên chất lượng phỏng vấn cá nhân hoá.
-            </p>
-          </div>
-        </div>
-      )}
-    </AdminPanel>
-  );
-}
-
-export function AdminContentVideos() {
-  const [courses, setCourses] = useState([]);
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    void (async () => {
-      setLoading(true);
-      const res = await tryApi(() => adminApi.getCourseMediaOverview(), {
-        fallback: "Không tải được danh sách video khóa học.",
-      });
-      if (res.success) setCourses(res.courses || []);
-      setLoading(false);
-    })();
-  }, []);
+    void loadAll();
+  }, [loadAll]);
 
-  const totals = courses.reduce(
-    (acc, c) => {
-      acc.lessons += Number(c.lessonCount || 0);
-      acc.videos += Number(c.videoCount || 0);
-      return acc;
-    },
-    { lessons: 0, videos: 0 },
-  );
+  const totalSessions = Number(stats?.interviewSessions ?? 0);
+  const completed = Number(stats?.completedInterviews ?? 0);
+
+  const filteredSessions = useMemo(() => {
+    const q = searchTerm.trim().toLowerCase();
+    return sessions.filter((s) => {
+      const statusKey = String(s.status || "").toLowerCase();
+      if (statusFilter !== "all" && statusKey !== statusFilter) return false;
+      if (!q) return true;
+      const name = String(s.user?.name || "").toLowerCase();
+      const email = String(s.user?.email || "").toLowerCase();
+      const role = String(s.role || "").toLowerCase();
+      return name.includes(q) || email.includes(q) || role.includes(q);
+    });
+  }, [sessions, searchTerm, statusFilter]);
 
   return (
-    <AdminPanel
-      title="Nội dung — Video khóa học"
-      description="Video bài học do mentor upload qua POST /api/upload/course-video."
-    >
-      {loading ? (
-        <p className="text-sm text-slate-500">Đang tải…</p>
-      ) : (
-        <div className="space-y-4">
-          <p className="text-sm text-slate-600">
-            Tổng: <strong>{courses.length}</strong> khóa · <strong>{totals.videos}</strong> bài có video /{" "}
-            <strong>{totals.lessons}</strong> bài học
-          </p>
-          {courses.length === 0 ? (
-            <p className="text-sm text-slate-500">Chưa có khóa học xuất bản với video.</p>
-          ) : (
-            <div className="space-y-3">
-              {courses.map((c) => (
-                <div key={c._id} className="rounded-2xl border border-slate-200 bg-white p-4 text-sm">
-                  <p className="font-bold text-slate-900">{c.title}</p>
-                  <p className="mt-1 text-xs text-slate-500">
-                    Mentor: {c.mentorName} · Trạng thái: {statusLabel(c.status)} · Video: {c.videoCount}/
-                    {c.lessonCount}
-                  </p>
-                  {c.thumbnail ? (
-                    <p className="mt-2 text-xs text-slate-500 truncate">Thumbnail: {c.thumbnail}</p>
-                  ) : null}
-                </div>
-              ))}
-            </div>
-          )}
-          <p className="text-xs text-slate-500">
-            Avatar phỏng vấn AI (D-ID) cấu hình trong mã nguồn phòng phỏng vấn; route demo: /avatar-demo.
-          </p>
+    <div className={adminPageWrap}>
+      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className={adminHeaderRow}>
+        <div className="min-w-0 flex-1">
+          <h2 className="font-headline text-3xl font-black uppercase tracking-tighter text-slate-900">
+            <span className="text-violet-700">Câu hỏi</span> phỏng vấn AI
+          </h2>
         </div>
-      )}
-    </AdminPanel>
+        <AdminPageToolbar
+          loading={loading}
+          onRefresh={() => void loadAll()}
+          searchTerm={searchTerm}
+          onSearchChange={setSearchTerm}
+          searchPlaceholder="Tìm học viên, email…"
+        />
+      </motion.div>
+
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className={adminStatGrid4}>
+        <div className="rounded-2xl border border-violet-200 bg-violet-50/80 p-4">
+          <p className="text-[10px] font-black uppercase tracking-widest text-violet-900">Phiên phỏng vấn AI</p>
+          <p className="mt-1 text-2xl font-black text-violet-950">{totalSessions}</p>
+        </div>
+        <div className="rounded-2xl border border-emerald-200 bg-emerald-50/80 p-4">
+          <p className="text-[10px] font-black uppercase tracking-widest text-emerald-900">Đã hoàn thành</p>
+          <p className="mt-1 text-2xl font-black text-emerald-950">{completed}</p>
+        </div>
+        <div className="rounded-2xl border border-sky-200 bg-sky-50/80 p-4">
+          <p className="text-[10px] font-black uppercase tracking-widest text-sky-900">Phân tích CV</p>
+          <p className="mt-1 text-2xl font-black text-sky-950">{stats?.cvAnalyses ?? 0}</p>
+        </div>
+        <div className="rounded-2xl border border-teal-200 bg-teal-50/80 p-4">
+          <p className="text-[10px] font-black uppercase tracking-widest text-teal-900">Khóa đã xuất bản</p>
+          <p className="mt-1 text-2xl font-black text-teal-950">{stats?.publishedCourses ?? 0}</p>
+        </div>
+      </motion.div>
+
+      <AdminListFilterBar
+        countText={`Hiển thị ${filteredSessions.length} / ${sessions.length} phiên`}
+        showReset={Boolean(searchTerm.trim()) || statusFilter !== "all"}
+        onReset={() => {
+          setSearchTerm("");
+          setStatusFilter("all");
+        }}
+      >
+        <AdminFilterSelect
+          id="interview-session-status"
+          label="Trạng thái phiên"
+          value={statusFilter}
+          options={SESSION_STATUS_OPTIONS}
+          onChange={setStatusFilter}
+        />
+      </AdminListFilterBar>
+
+      <div className={adminGlassTable}>
+        <div className="max-w-full overflow-x-auto overscroll-x-contain">
+          <table className="w-full min-w-0 table-fixed border-collapse text-left">
+            <colgroup>
+              <col className="w-[4%]" />
+              <col className="w-[24%]" />
+              <col className="w-[18%]" />
+              <col className="w-[10%]" />
+              <col className="w-[18%]" />
+              <col className="w-[26%]" />
+            </colgroup>
+            <thead>
+              <tr className="border-b border-slate-200 bg-slate-50/90">
+                <th className={adminThCell} />
+                <th className={adminThCell}>Học viên</th>
+                <th className={adminThCell}>Vai trò / cấp</th>
+                <th className={`${adminThCell} text-center`}>Số câu</th>
+                <th className={adminThCell}>Trạng thái</th>
+                <th className={adminThCell}>Thời gian</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100 text-sm">
+              {loading ? (
+                <tr>
+                  <td
+                    colSpan={6}
+                    className={`${adminTdCell} py-20 text-center text-[10px] font-black uppercase italic tracking-widest text-slate-500`}
+                  >
+                    Đang tải…
+                  </td>
+                </tr>
+              ) : filteredSessions.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className={`${adminTdCell} py-16 text-center text-slate-500`}>
+                    {sessions.length === 0 ? "Chưa có phiên." : "Không có kết quả."}
+                  </td>
+                </tr>
+              ) : (
+                filteredSessions.map((row) => {
+                  const open = expandedId === row.id;
+                  const statusKey = String(row.status || "").toLowerCase();
+                  return (
+                    <React.Fragment key={row.id}>
+                      <tr className="hover:bg-violet-50/30">
+                        <td className={adminTdCell}>
+                            <button
+                              type="button"
+                              onClick={() => setExpandedId(open ? null : row.id)}
+                              className="flex size-8 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-600 hover:bg-violet-50 hover:text-violet-700"
+                              aria-expanded={open}
+                              aria-label="Xem câu hỏi"
+                            >
+                              <ChevronDown
+                                className={`h-4 w-4 transition ${open ? "rotate-180" : ""}`}
+                              />
+                            </button>
+                        </td>
+                        <td className={adminTdCell}>
+                          <div className="flex items-center gap-3">
+                              <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-violet-100 text-violet-700">
+                                <User className="h-4 w-4" />
+                              </div>
+                              <div className="min-w-0">
+                                <p className="truncate font-semibold text-slate-900">
+                                  {row.user?.name || "—"}
+                                </p>
+                                <p className="truncate text-xs text-slate-500">{row.user?.email || ""}</p>
+                              </div>
+                          </div>
+                        </td>
+                        <td className={`${adminTdCell} truncate text-slate-700`}>{row.role}</td>
+                        <td className={`${adminTdCell} text-center`}>
+                            <span className="font-black text-violet-700">{row.questionCount}</span>
+                            {row.questionsAllowed != null ? (
+                              <span className="text-xs text-slate-400"> / {row.questionsAllowed}</span>
+                            ) : null}
+                        </td>
+                        <td className={adminTdCell}>
+                          <StatusPill
+                              label={INTERVIEW_STATUS_VI[statusKey] || row.status || "—"}
+                              toneClass={
+                                statusKey === "completed"
+                                  ? "border-emerald-200 bg-emerald-50 text-emerald-800"
+                                  : statusKey === "in_progress"
+                                    ? "border-sky-200 bg-sky-50 text-sky-800"
+                                    : statusKey === "abandoned"
+                                      ? "border-rose-200 bg-rose-50 text-rose-700"
+                                      : "border-slate-200 bg-slate-50 text-slate-600"
+                              }
+                          />
+                        </td>
+                        <td className={`${adminTdCell} whitespace-nowrap text-slate-600`}>
+                          {formatSessionWhen(row.createdAt)}
+                        </td>
+                      </tr>
+                      {open ? (
+                        <tr className="bg-violet-50/20">
+                          <td colSpan={6} className="px-6 py-4">
+                              {row.questions?.length > 0 ? (
+                                <ol className="space-y-3">
+                                  {row.questions.map((q) => (
+                                    <li
+                                      key={`${row.id}-${q.index}`}
+                                      className="rounded-md border border-violet-100 bg-white px-4 py-3"
+                                    >
+                                      <p className="text-[10px] font-semibold uppercase tracking-wide text-violet-700">
+                                        Câu {q.index}
+                                      </p>
+                                      <p className="mt-1 text-sm leading-relaxed text-slate-800">
+                                        {q.question || "—"}
+                                      </p>
+                                    </li>
+                                  ))}
+                                </ol>
+                              ) : (
+                                <p className="text-sm text-slate-500">Chưa có câu hỏi lưu trên máy chủ.</p>
+                              )}
+                          </td>
+                        </tr>
+                      ) : null}
+                    </React.Fragment>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
   );
 }
 
 export { AdminContentCourses } from "./AdminContentCourses.jsx";
-
-export function AdminAnalytics() {
-  const [stats, setStats] = useState(null);
-  const [users, setUsers] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    (async () => {
-      setLoading(true);
-      const [sRes, uRes] = await Promise.all([adminApi.getStats(), adminApi.getUsers()]);
-      if (sRes.success) setStats(sRes.stats);
-      if (uRes.success) setUsers(uRes.users || []);
-      setLoading(false);
-    })();
-  }, []);
-
-  const planCounts = users.reduce(
-    (acc, u) => {
-      const p = u.plan || "free";
-      acc[p] = (acc[p] || 0) + 1;
-      return acc;
-    },
-    { free: 0, starter_pro: 0, elite_pro: 0 },
-  );
-
-  return (
-    <AdminPanel title="Thống kê & báo cáo" description="Tổng quan nền tảng từ API admin.">
-      {loading ? (
-        <p className="text-sm text-slate-500">Đang tải…</p>
-      ) : (
-        <motion.div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {[
-            { label: "Khách hàng", value: stats?.users ?? 0 },
-            { label: "Cố vấn", value: stats?.mentors ?? 0 },
-            { label: "Lịch hẹn", value: stats?.bookings ?? 0 },
-            { label: "Gói Pro", value: planCounts.starter_pro ?? 0 },
-            { label: "Gói Elite", value: planCounts.elite_pro ?? 0 },
-            { label: "Free", value: planCounts.free ?? 0 },
-          ].map((card) => (
-            <motion.div key={card.label} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-              <p className="text-3xl font-black text-violet-700">{card.value}</p>
-              <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">{card.label}</p>
-            </motion.div>
-          ))}
-        </motion.div>
-      )}
-    </AdminPanel>
-  );
-}
 
 export function AdminSystemSettings() {
   const [overview, setOverview] = useState(null);
@@ -1212,155 +1634,5 @@ export function AdminSystemSettings() {
   );
 }
 
-export function AdminReviews() {
-  const [reviews, setReviews] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    void (async () => {
-      setLoading(true);
-      const res = await tryApi(() => adminApi.getReviews(), {
-        fallback: "Không tải được danh sách đánh giá.",
-      });
-      if (res.success) setReviews(res.reviews || []);
-      setLoading(false);
-    })();
-  }, []);
-
-  return (
-    <AdminPanel title="Đánh giá cố vấn" description="Danh sách review công khai trên hệ thống.">
-      {loading && <p className="text-sm text-slate-500">Đang tải…</p>}
-      {!loading && reviews.length === 0 && (
-        <p className="text-sm text-slate-500">Chưa có đánh giá.</p>
-      )}
-      <div className="space-y-3">
-        {reviews.map((r) => (
-          <motion.div key={r._id} className="rounded-2xl border border-slate-200 bg-white p-4 text-sm">
-            <p className="font-bold text-slate-900">★ {r.rating}/5</p>
-            <p className="mt-1 text-slate-700">{r.comment || "(Không có nội dung)"}</p>
-            <p className="mt-2 text-xs text-slate-500">
-              User: {r.userId?.name || r.userId} · Mentor: {r.mentorId?.name || r.mentorId}
-            </p>
-          </motion.div>
-        ))}
-      </div>
-    </AdminPanel>
-  );
-}
-
-export function AdminSupport() {
-  const [reports, setReports] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [busyId, setBusyId] = useState("");
-
-  const loadReports = async () => {
-    setLoading(true);
-    const res = await tryApi(() => adminApi.getReports(), {
-      fallback: "Không tải được danh sách báo cáo.",
-    });
-    if (res.success) setReports(res.reports || []);
-    setLoading(false);
-  };
-
-  useEffect(() => {
-    void loadReports();
-  }, []);
-
-  const updateStatus = async (reportId, status) => {
-    setBusyId(reportId);
-    const res = await tryApi(
-      () => adminApi.updateReportStatus(reportId, { status }),
-      {
-        fallback: "Không cập nhật được báo cáo.",
-        successMessage: status === "resolved" ? "Đã xử lý báo cáo" : status === "dismissed" ? "Đã bác bỏ báo cáo" : "Đã cập nhật",
-      },
-    );
-    setBusyId("");
-    if (res.success) {
-      setReports((prev) =>
-        prev.map((r) => (String(r._id) === String(reportId) ? { ...r, ...(res.report || {}), status } : r)),
-      );
-    }
-  };
-
-  const reasonLabel = {
-    late: "Trễ hẹn",
-    unprofessional: "Thiếu chuyên nghiệp",
-    inappropriate: "Không phù hợp",
-    no_show: "Không tham gia",
-    fraud: "Gian lận",
-    other: "Khác",
-  };
-
-  const statusBadge = (status) => {
-    if (status === "resolved") return "bg-emerald-500/10 text-emerald-800 border border-emerald-400/25";
-    if (status === "dismissed") return "bg-slate-100 text-slate-600 border border-slate-200";
-    if (status === "reviewing") return "bg-amber-500/10 text-amber-900 border border-amber-400/25";
-    return "bg-orange-500/10 text-orange-900 border border-orange-400/25";
-  };
-
-  return (
-    <AdminPanel title="Hỗ trợ & khiếu nại" description="Báo cáo từ người dùng (mentor, booking, khóa học…).">
-      {loading && <p className="text-sm text-slate-500">Đang tải…</p>}
-      {!loading && reports.length === 0 && (
-        <p className="text-sm text-slate-500">Chưa có báo cáo nào.</p>
-      )}
-      <motion.div className="space-y-3">
-        {reports.map((rep) => {
-          const pending = rep.status === "pending" || rep.status === "reviewing";
-          const busy = busyId === rep._id;
-          return (
-            <motion.div key={rep._id} className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm">
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <p className="font-bold text-slate-900">
-                  {reasonLabel[rep.reason] || rep.reason} · {rep.targetType}
-                </p>
-                <span className={`inline-flex px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${statusBadge(rep.status)}`}>
-                  {rep.status || "pending"}
-                </span>
-              </div>
-              <p className="mt-1 text-slate-600 whitespace-pre-wrap">{rep.description}</p>
-              <p className="mt-2 text-xs text-slate-500">
-                Người gửi: {rep.reportedBy?.name || "—"} ({rep.reportedBy?.email || ""}) ·{" "}
-                {rep.createdAt ? new Date(rep.createdAt).toLocaleString("vi-VN") : ""}
-              </p>
-              {rep.resolution && (
-                <p className="mt-2 text-xs text-emerald-800 bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2">
-                  Xử lý: {rep.resolution}
-                </p>
-              )}
-              {pending && (
-                <div className="mt-3 flex flex-wrap gap-2">
-                  <button
-                    type="button"
-                    disabled={busy}
-                    onClick={() => updateStatus(rep._id, "reviewing")}
-                    className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-1.5 text-[10px] font-black uppercase tracking-wider text-amber-900 disabled:opacity-50"
-                  >
-                    Đang xử lý
-                  </button>
-                  <button
-                    type="button"
-                    disabled={busy}
-                    onClick={() => updateStatus(rep._id, "resolved")}
-                    className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-[10px] font-black uppercase tracking-wider text-emerald-800 disabled:opacity-50"
-                  >
-                    Đã xử lý
-                  </button>
-                  <button
-                    type="button"
-                    disabled={busy}
-                    onClick={() => updateStatus(rep._id, "dismissed")}
-                    className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-[10px] font-black uppercase tracking-wider text-slate-600 disabled:opacity-50"
-                  >
-                    Bác bỏ
-                  </button>
-                </div>
-              )}
-            </motion.div>
-          );
-        })}
-      </motion.div>
-    </AdminPanel>
-  );
-}
+/** @deprecated — dùng `AdminSupport.jsx` */
+export { AdminSupport } from "./AdminSupport.jsx";

@@ -18,6 +18,7 @@ import { getUser } from "../../utils/auth";
 import { MentorPageShell } from "../../components/mentor/MentorPageShell";
 import { ArchiveCourseDialog } from "../../components/courses/ArchiveCourseDialog";
 import { archiveCourse, fetchMyMentorCourses } from "../../utils/courseApi";
+import { mapCourseAdminModerationNote } from "../../utils/courseAdminReview";
 import { mediaSrc, DEFAULT_COURSE_THUMB } from "../../utils/mediaUrl";
 
 function formatCompactNumber(value) {
@@ -41,6 +42,7 @@ function mapCourseRow(c) {
       id: c._id,
       title: c.title,
       status: c.status || "draft",
+      adminModerationNote: mapCourseAdminModerationNote(c),
       students: c.stats?.enrollmentCount || 0,
       rating: c.stats?.rating || 0,
       earnings: c.stats?.totalRevenue || 0,
@@ -225,6 +227,24 @@ export function MentorCourseManagement() {
                            <h4 className="text-xl font-black text-slate-900 tracking-tighter mb-4 group-hover:text-violet-700 transition-colors leading-tight">
                               {course.title}
                            </h4>
+                           {course.adminModerationNote ? (
+                              <div
+                                 className={`mb-4 rounded-xl border px-4 py-3 text-left text-sm ${
+                                    course.adminModerationNote.tone === "amber"
+                                       ? "border-amber-200 bg-amber-50 text-amber-950"
+                                       : "border-red-200 bg-red-50 text-red-900"
+                                 }`}
+                              >
+                                 <p
+                                    className={`text-[9px] font-black uppercase tracking-widest ${
+                                       course.adminModerationNote.tone === "amber" ? "text-amber-900" : "text-red-800"
+                                    }`}
+                                 >
+                                    {course.adminModerationNote.title}
+                                 </p>
+                                 <p className="mt-1 whitespace-pre-wrap leading-relaxed">{course.adminModerationNote.reason}</p>
+                              </div>
+                           ) : null}
                            <div className="grid grid-cols-2 gap-6 mb-10 mt-auto">
                               <div className="flex items-center gap-3">
                                  <Users size={16} className="text-zinc-600" />

@@ -10,11 +10,9 @@ import {
   Banknote,
   Calendar,
   FileQuestion,
-  Video,
   BookOpen,
   Crown,
   LineChart,
-  Settings,
   Star,
   LifeBuoy,
   LogOut,
@@ -43,59 +41,60 @@ import {
 import { getUser, logout, getInitials, getDisplayName } from "../../utils/auth";
 import { SidebarBrandButton } from "./SidebarBrandButton";
 
+/** Thứ tự nhóm & mục: ưu tiên vận hành hàng ngày → tiền → người dùng → nội dung → báo cáo */
 const MAIN_GROUPS = [
   {
     title: "Tổng quan",
     items: [{ to: "/admin", label: "Bảng điều khiển", icon: LayoutDashboard, end: true }],
   },
   {
-    title: "Người dùng",
+    title: "Vận hành",
     items: [
-      { to: "/admin/users", label: "Người dùng", icon: Users },
-      { to: "/admin/mentors", label: "Cố vấn", icon: GraduationCap },
+      { to: "/admin/bookings", label: "Lịch hẹn & thanh toán", icon: Calendar },
+      { to: "/admin/support", label: "Hỗ trợ", icon: LifeBuoy },
       { to: "/admin/mentors/pending", label: "Duyệt cố vấn", icon: UserPlus },
     ],
   },
   {
-    title: "Vận hành",
+    title: "Đối soát SePay",
     items: [
-      { to: "/admin/bookings", label: "Lịch hẹn & thanh toán", icon: Calendar },
-    ],
-  },
-  {
-    title: "Thanh toán CK",
-    items: [
-      { to: "/admin/subscription-payments", label: "Duyệt gói Pro/Elite", icon: Crown },
-      { to: "/admin/course-payments", label: "Duyệt học phí khóa", icon: BookOpen },
+      { to: "/admin/subscription-payments", label: "Theo dõi gói Pro/Elite", icon: Crown },
+      { to: "/admin/course-payments", label: "Theo dõi học phí khóa", icon: BookOpen },
     ],
   },
   {
     title: "Tài chính",
     items: [
+      { to: "/admin/payouts", label: "Rút tiền cố vấn", icon: Banknote },
       { to: "/admin/finance", label: "Tổng quan tài chính", icon: Wallet },
       { to: "/admin/transactions", label: "Giao dịch", icon: ArrowLeftRight },
-      { to: "/admin/payouts", label: "Rút tiền cố vấn", icon: Banknote },
+    ],
+  },
+  {
+    title: "Người dùng",
+    items: [
+      { to: "/admin/users", label: "Người dùng", icon: Users },
+      { to: "/admin/mentors", label: "Cố vấn", icon: GraduationCap },
     ],
   },
   {
     title: "Nội dung",
     items: [
-      { to: "/admin/content/questions", label: "Câu hỏi mẫu", icon: FileQuestion },
-      { to: "/admin/content/videos", label: "Video HR", icon: Video },
       { to: "/admin/content/courses", label: "Khóa học", icon: BookOpen },
+      { to: "/admin/content/questions", label: "Phỏng vấn AI", icon: FileQuestion },
     ],
   },
   {
-    title: "Theo dõi chất lượng",
+    title: "Báo cáo",
     items: [
-      { to: "/admin/analytics", label: "Phân tích", icon: LineChart },
       { to: "/admin/reviews", label: "Đánh giá", icon: Star },
-      { to: "/admin/support", label: "Hỗ trợ", icon: LifeBuoy },
+      { to: "/admin/analytics", label: "Phân tích", icon: LineChart },
     ],
   },
 ];
 
-const SECONDARY_ITEMS = [{ to: "/admin/settings", label: "Cài đặt", icon: Settings }];
+/** Ẩn tạm — cài đặt HT read-only; bật lại khi có PATCH /api/admin/settings */
+const SECONDARY_ITEMS = [];
 
 function pathActive(pathname, to, end) {
   const p = pathname.replace(/\/$/, "") || "/";
@@ -153,7 +152,7 @@ export function AdminSidebar() {
         <div ref={contentRef} className="flex min-h-0 flex-1 flex-col gap-0 overflow-y-auto overflow-x-hidden">
         <SidebarGroup className="p-0">
           <SidebarGroupLabel
-            className="mb-1 px-2 uppercase text-sidebar-foreground/45 group-data-[collapsible=icon]:hidden"
+            className="mb-1 px-2 uppercase text-slate-600 group-data-[collapsible=icon]:hidden"
             style={{ fontSize: "0.6rem", fontWeight: 700, letterSpacing: "0.1em" }}
           >
             Menu chính
@@ -163,7 +162,7 @@ export function AdminSidebar() {
               {MAIN_GROUPS.map((group) => (
                 <SidebarGroup key={group.title} className="p-0">
                   <SidebarGroupLabel
-                    className="mb-1 px-2 uppercase text-sidebar-foreground/45 group-data-[collapsible=icon]:hidden"
+                    className="mb-1 px-2 uppercase text-slate-600 group-data-[collapsible=icon]:hidden"
                     style={{ fontSize: "0.5625rem", fontWeight: 800, letterSpacing: "0.14em" }}
                   >
                     {group.title}
@@ -223,11 +222,13 @@ export function AdminSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
+        {SECONDARY_ITEMS.length > 0 ? (
+          <>
         <div className="mx-1 my-3 h-px bg-sidebar-border group-data-[collapsible=icon]:mx-0" />
 
         <SidebarGroup className="p-0">
           <SidebarGroupLabel
-            className="mb-1 px-2 uppercase text-sidebar-foreground/45 group-data-[collapsible=icon]:hidden"
+            className="mb-1 px-2 uppercase text-slate-600 group-data-[collapsible=icon]:hidden"
             style={{ fontSize: "0.6rem", fontWeight: 700, letterSpacing: "0.1em" }}
           >
             Khác
@@ -276,6 +277,8 @@ export function AdminSidebar() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+          </>
+        ) : null}
         </div>
       </SidebarContent>
 

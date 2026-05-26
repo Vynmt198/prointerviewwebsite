@@ -264,7 +264,7 @@ utils/
 
 ### Admin routes (placeholders — chưa implement đầy đủ)
 
-`/admin/analytics`, `/admin/users/:id`, `/admin/mentors/:id`, `/admin/finance`, `/admin/transactions`, `/admin/payouts`, `/admin/bookings/:id`, `/admin/content/questions`, `/admin/content/videos`, `/admin/content/courses`, `/admin/settings`, `/admin/reviews`, `/admin/support`
+`/admin/analytics`, `/admin/users/:id`, `/admin/mentors/:id`, `/admin/finance`, `/admin/transactions`, `/admin/payouts`, `/admin/bookings/:id`, `/admin/content/questions`, `/admin/content/courses` (video khóa gộp trong trang này), `/admin/settings`, `/admin/reviews`, `/admin/support`
 
 ---
 

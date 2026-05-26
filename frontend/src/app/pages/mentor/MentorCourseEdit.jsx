@@ -59,7 +59,7 @@ import {
    fetchCourseMentorAnalytics,
 } from "../../utils/courseApi";
 import { ArchiveCourseDialog } from "../../components/courses/ArchiveCourseDialog";
-import { fetchMyMentorProfile } from "../../utils/mentorApi";
+import { mapCourseAdminModerationNote } from "../../utils/courseAdminReview";
 import { uploadFile } from "../../utils/uploadApi";
 import { MentorPageShell } from "../../components/mentor/MentorPageShell";
 import { CourseCreateStepper } from "../../components/mentor/course-create/CourseCreateStepper";
@@ -597,7 +597,35 @@ function mapTopicToCategory(topics = []) {
    return "career-development";
 }
 
-function CreateCourseForm({ navigate, mentorRejectReason = "" }) {
+function CourseAdminModerationBanner({ note, className = "mb-8" }) {
+   if (!note) return null;
+   const isAmber = note.tone === "amber";
+   return (
+      <div
+         className={`${className} rounded-2xl border p-5 ${
+            isAmber ? "border-amber-200 bg-amber-50" : "border-orange-400/30 bg-orange-500/10"
+         }`}
+      >
+         <div className="flex items-start gap-3">
+            <WarningCircle size={18} className={`mt-0.5 shrink-0 ${isAmber ? "text-amber-700" : "text-orange-300"}`} />
+            <div>
+               <p
+                  className={`text-[10px] font-black uppercase tracking-widest ${
+                     isAmber ? "text-amber-900" : "text-orange-200"
+                  }`}
+               >
+                  {note.title}
+               </p>
+               <p className={`mt-2 text-sm whitespace-pre-wrap leading-relaxed ${isAmber ? "text-amber-950" : "text-slate-800"}`}>
+                  {note.reason}
+               </p>
+            </div>
+         </div>
+      </div>
+   );
+}
+
+function CreateCourseForm({ navigate }) {
    const [step, setStep] = useState(1);
    const [form, setForm] = useState({
       title: "",
@@ -746,20 +774,6 @@ function CreateCourseForm({ navigate, mentorRejectReason = "" }) {
       <MentorPageShell bottomPad="pb-24" extraStyles={MENTOR_COURSE_EDIT_EXTRA_CSS}>
          <style>{mentorValidationKeyframes}</style>
          <div className="relative z-10 mx-auto max-w-4xl px-4 pb-8 pt-8 sm:px-6 sm:pt-12">
-            {mentorRejectReason ? (
-               <div className="mb-6 rounded-2xl border border-amber-200 bg-amber-50 p-4 sm:p-5">
-                  <div className="flex items-start gap-3">
-                     <WarningCircle size={18} className="mt-0.5 shrink-0 text-amber-600" />
-                     <div>
-                        <p className="text-xs font-bold uppercase tracking-wide text-amber-800">
-                           Góp ý từ lần duyệt trước
-                        </p>
-                        <p className="mt-1.5 text-sm text-amber-900/90">{mentorRejectReason}</p>
-                     </div>
-                  </div>
-               </div>
-            ) : null}
-
             <button
                type="button"
                onClick={() => navigate("/mentor/courses")}
@@ -904,7 +918,7 @@ export function MentorCourseEdit() {
    const [editableLessons, setEditableLessons] = useState([]);
    const [thumbnailUrl, setThumbnailUrl] = useState("");
    const [isUploadingThumbnail, setIsUploadingThumbnail] = useState(false);
-   const [mentorRejectReason, setMentorRejectReason] = useState("");
+   const [courseAdminNote, setCourseAdminNote] = useState(null);
    const [showArchiveDialog, setShowArchiveDialog] = useState(false);
    const [archiving, setArchiving] = useState(false);
    const [tabLoading, setTabLoading] = useState(false);
@@ -970,21 +984,6 @@ export function MentorCourseEdit() {
    }, [activeTab, id, isCreateMode]);
 
    useEffect(() => {
-      void (async () => {
-         try {
-            const res = await fetchMyMentorProfile();
-            if (!res?.success || !res?.mentor) return;
-            const review = res.mentor.adminReview || {};
-            if (review.status === "rejected" && String(review.reason || "").trim()) {
-               setMentorRejectReason(String(review.reason || "").trim());
-            }
-         } catch {
-            /* im lặng — chỉ hiển thị banner từ chối khi có dữ liệu */
-         }
-      })();
-   }, []);
-
-   useEffect(() => {
       if (isCreateMode) return;
       let cancelled = false;
       void (async () => {
@@ -998,6 +997,7 @@ export function MentorCourseEdit() {
             return;
          }
          const c = res.course;
+         setCourseAdminNote(mapCourseAdminModerationNote(c));
          const mappedLessons =
             c.modules?.flatMap((m) =>
                (m.lessons || []).map((lesson, idx) => ({
@@ -1037,7 +1037,7 @@ export function MentorCourseEdit() {
    }, [id, isCreateMode]);
 
    if (isCreateMode) {
-      return <CreateCourseForm navigate={navigate} mentorRejectReason={mentorRejectReason} />;
+      return <CreateCourseForm navigate={navigate} />;
    }
    const lessons = editableLessons.length ? editableLessons : course?.lessons || [];
    const isArchived = course?.status === "archived";
@@ -1096,20 +1096,8 @@ export function MentorCourseEdit() {
    return (
       <MentorPageShell bottomPad="pb-36">
          <div className="relative z-10 mx-auto max-w-6xl px-6 pb-8 sm:px-8">
-            {mentorRejectReason ? (
-               <div className="mb-8 rounded-2xl border border-orange-400/30 bg-orange-500/10 p-5">
-                  <div className="flex items-start gap-3">
-                     <WarningCircle size={18} className="mt-0.5 shrink-0 text-orange-300" />
-                     <div>
-                        <p className="text-[10px] font-black uppercase tracking-widest text-orange-200">
-                           Lý do từ chối gần nhất từ admin
-                        </p>
-                        <p className="mt-2 text-sm text-slate-800">{mentorRejectReason}</p>
-                     </div>
-                  </div>
-               </div>
-            ) : null}
-            {isArchived ? (
+            <CourseAdminModerationBanner note={courseAdminNote} />
+            {isArchived && !courseAdminNote ? (
                <div className="mb-8 rounded-2xl border border-red-200 bg-red-50 p-5 text-sm text-red-800">
                   Khóa học này đã được lưu trữ và không còn hiển thị trên trang Khám phá.
                </div>

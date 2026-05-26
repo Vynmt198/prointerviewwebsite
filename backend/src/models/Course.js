@@ -61,6 +61,13 @@ const courseSchema = new Schema(
     status: { type: String, enum: ["draft", "pending_review", "pending_update", "published", "archived"], default: "draft" },
     /** Bản chỉnh sửa chờ admin duyệt khi khóa đang published. */
     pendingUpdate: { type: Schema.Types.Mixed, default: null },
+    /** Ghi nhận từ chối / gỡ marketplace (admin). */
+    adminReview: {
+      reason: { type: String, default: "" },
+      reviewedAt: { type: Date },
+      reviewedBy: { type: Schema.Types.ObjectId, ref: "User" },
+      lastAction: { type: String, enum: ["reject", "archive", ""], default: "" },
+    },
     publishedAt: { type: Date },
     totalLessons: { type: Number, default: 0 },
     totalDurationMinutes: { type: Number, default: 0 },

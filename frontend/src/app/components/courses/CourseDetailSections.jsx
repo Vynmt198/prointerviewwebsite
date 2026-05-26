@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Star,
   Check,
@@ -26,6 +26,8 @@ import {
   DialogDescription,
 } from "../ui/dialog";
 import { submitReview } from "../../utils/courseApi";
+import { fetchMyReviewForTarget } from "../../utils/reviewsApi";
+import { ReviewReplyBlock } from "../reviews/ReviewReplyBlock";
 import { toastApiError, toastApiSuccess } from "../../utils/apiToast";
 import { avatarSrc } from "../../utils/mediaUrl";
 
@@ -305,7 +307,7 @@ export function CourseInstructorBlock({ course, onViewMentor, canNavigate }) {
   );
 }
 
-export function CourseReviewsBlock({ course, enrolled, reviews }) {
+export function CourseReviewsBlock({ course, enrolled, reviews, onReviewSubmitted }) {
   const [showAll, setShowAll] = useState(false);
   const [showDialog, setShowDialog] = useState(false);
   const [reviewRating, setReviewRating] = useState(0);
@@ -313,6 +315,13 @@ export function CourseReviewsBlock({ course, enrolled, reviews }) {
   const [reviewComment, setReviewComment] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+
+  useEffect(() => {
+    if (!enrolled || !course?.id) return;
+    void fetchMyReviewForTarget("course", course.id).then((res) => {
+      if (res.success && res.hasReview) setSubmitted(true);
+    });
+  }, [enrolled, course?.id]);
 
   const visible = showAll ? reviews : reviews.slice(0, 3);
   const ratingLabel =
@@ -334,6 +343,7 @@ export function CourseReviewsBlock({ course, enrolled, reviews }) {
       setReviewRating(0);
       setReviewComment("");
       toastApiSuccess("Đã gửi đánh giá. Cảm ơn bạn!");
+      onReviewSubmitted?.(res.review);
     } else {
       toastApiError(res.error, "Gửi đánh giá thất bại.");
     }
@@ -359,6 +369,11 @@ export function CourseReviewsBlock({ course, enrolled, reviews }) {
           <Pencil className="size-4" />
           Viết đánh giá
         </button>
+      ) : null}
+      {enrolled && submitted ? (
+        <p className="mb-3 rounded-sm border border-emerald-100 bg-emerald-50 px-4 py-2.5 text-sm text-emerald-900">
+          Bạn đã gửi đánh giá cho khóa học này.
+        </p>
       ) : null}
 
       <p className="mb-3 flex flex-wrap items-center gap-2 text-sm text-slate-700">
@@ -386,6 +401,7 @@ export function CourseReviewsBlock({ course, enrolled, reviews }) {
               </div>
             </div>
             <p className="text-sm leading-relaxed text-slate-700">{r.comment}</p>
+            <ReviewReplyBlock reply={r.reply} />
             {r.createdAt ? (
               <p className="mt-1 text-xs text-slate-400">
                 {new Date(r.createdAt).toLocaleString("vi-VN", {

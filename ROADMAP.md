@@ -113,9 +113,12 @@ Các nhóm endpoint theo phase (bookings, payments, plans, courses, enrollments,
 | ✅ | GET | `/api/mentor/analytics` | `[AUTH][MENTOR]` | *(tuỳ chọn)* Biểu đồ |
 | ✅ | POST | `/api/mentor/payout` | `[AUTH][MENTOR]` | Yêu cầu chi trả (khớp C.12) |
 | ✅ | GET | `/api/reviews` | Public hoặc `[AUTH]` | Query: `?targetType=mentor&targetId=` — list review |
+| ✅ | GET | `/api/reviews/mine` | `[AUTH]` | Đánh giá của user cho `targetType` + `targetId` |
 | ✅ | POST | `/api/reviews` | `[AUTH]` | Tạo review sau session — thay `saveReview` local |
 | ✅ | PATCH | `/api/reviews/:id/reply` | `[AUTH][MENTOR]` | Mentor trả lời |
 | ✅ | DELETE | `/api/reviews/:id` | `[AUTH]` | Xóa review (owner / policy) |
+| ✅ | GET | `/api/admin/reviews` | `[AUTH][ADMIN]` | Moderation — `?targetType`, `?visible`, `?limit` |
+| ✅ | PATCH | `/api/admin/reviews/:id/visibility` | `[AUTH][ADMIN]` | Ẩn/hiện + recalc stats |
 | ✅ | POST | `/api/reports` | `[AUTH]` | Báo cáo mentor — modal report |
 
 ---

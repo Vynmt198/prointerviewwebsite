@@ -7,6 +7,7 @@ import { User } from "../models/User.js";
 import { Enrollment } from "../models/Enrollment.js";
 import { runInTransaction } from "../helpers/dbHelper.js";
 import { planKeyFromSubscriptionMeta } from "../utils/planKeys.js";
+import { incrementCourseEnrollmentCount } from "./courseStatsService.js";
 
 const MONGO_ERR = "MongoDB chưa kết nối. Kiểm tra MONGO_URI trong .env.";
 
@@ -496,6 +497,12 @@ export async function listPendingSubscriptionTransfers() {
     .sort({ createdAt: -1 })
     .limit(200)
     .lean();
+  const paidAgg = await Payment.aggregate([
+    { $match: { type: "subscription", provider: "transfer", status: "success" } },
+    { $group: { _id: null, count: { $sum: 1 }, totalAmount: { $sum: "$amount" } } },
+  ]);
+  const paidStats = paidAgg[0] || { count: 0, totalAmount: 0 };
+
   return {
     ok: true,
     payments: rows.map((p) => {
@@ -521,6 +528,10 @@ export async function listPendingSubscriptionTransfers() {
           : null,
       };
     }),
+    stats: {
+      paidCount: paidStats.count || 0,
+      paidTotalAmount: paidStats.totalAmount || 0,
+    },
   };
 }
 
@@ -581,6 +592,7 @@ export async function confirmEnrollmentTransferByAdmin(enrollmentId, options = {
     return { ok: false, status: 400, error: "Xác nhận ngoại lệ cần lý do (ít nhất 3 ký tự)." };
   }
 
+  let courseIdForStats = null;
   try {
     await runInTransaction(async (session) => {
       const row = await Enrollment.findById(enrollmentId).session(session);
@@ -588,6 +600,8 @@ export async function confirmEnrollmentTransferByAdmin(enrollmentId, options = {
       if (row.paymentMethod !== "transfer") throw new Error("ERR_METHOD");
       if (row.paymentStatus !== "pending") throw new Error("ERR_STATUS");
       if (!force && !row.transferSubmittedAt) throw new Error("ERR_NO_SUBMIT");
+
+      courseIdForStats = row.courseId;
 
       const courseAmt = Math.round(Number(row.pricePaid ?? 0));
       if (courseAmt > 0) {
@@ -631,13 +645,17 @@ export async function confirmEnrollmentTransferByAdmin(enrollmentId, options = {
       return {
         ok: false,
         status: 400,
-        error: "User chưa báo đã chuyển khoản. Bật override để xác nhận ngoại lệ.",
+        error: "Admin xác nhận thủ công cần force: true (không bắt học viên bấm trong app).",
       };
     }
     if (msg.startsWith("ERR_LEDGER:")) {
       return { ok: false, status: 500, error: "Không thể ghi nhận giao dịch thanh toán." };
     }
     return { ok: false, status: 500, error: error?.message || "Không thể xác nhận thanh toán." };
+  }
+
+  if (courseIdForStats) {
+    await incrementCourseEnrollmentCount(courseIdForStats);
   }
 
   const enrollment = await Enrollment.findById(enrollmentId).lean();

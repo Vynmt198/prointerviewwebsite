@@ -1,20 +1,12 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router";
-import { 
-  Star, 
-  Trophy, 
-  Calendar, 
-  Quote, 
-  Search,
-  ArrowRight,
-  MessageCircle,
-  TrendingUp,
-  Award
-} from "lucide-react";
+import { Star, Calendar, Quote, Search, MessageCircle, TrendingUp } from "lucide-react";
 import { getUser } from "../../utils/auth";
 import { MentorPageShell } from "../../components/mentor/MentorPageShell";
 import { fetchMentorReviews } from "../../utils/mentorApi";
-import { toastApiError } from "../../utils/apiToast";
+import { replyToReview } from "../../utils/reviewsApi";
+import { toastApiError, tryApi } from "../../utils/apiToast";
+import { avatarSrc } from "../../utils/mediaUrl";
 
 export function MentorReviews() {
   const navigate = useNavigate();
@@ -22,15 +14,16 @@ export function MentorReviews() {
   const [filter, setFilter] = useState("all");
   const [search, setSearch] = useState("");
   const [reviewedMeetings, setReviewedMeetings] = useState([]);
+  const [summary, setSummary] = useState({ avgRating: 0, reviewCount: 0 });
+  const [replyId, setReplyId] = useState("");
+  const [replyText, setReplyText] = useState("");
+  const [replyBusy, setReplyBusy] = useState(false);
 
-  useEffect(() => {
-    if (!userAuth || userAuth.role !== "mentor") {
-      navigate("/");
-      return;
-    }
+  const loadReviews = useCallback(() => {
     fetchMentorReviews().then((res) => {
       if (!res.success || !Array.isArray(res.items)) {
         setReviewedMeetings([]);
+        setSummary({ avgRating: 0, reviewCount: 0 });
         if (!res.success) toastApiError(res.error, "Không tải được đánh giá.");
         return;
       }
@@ -38,7 +31,7 @@ export function MentorReviews() {
         id: r.id,
         mentee: {
           name: r.mentee?.name || "Học viên",
-          avatar: r.mentee?.avatar || "https://i.pravatar.cc/120?img=12",
+          avatar: avatarSrc(r.mentee?.avatar),
         },
         position: r.position || "Mentee",
         company: r.company || "ProInterview",
@@ -51,102 +44,146 @@ export function MentorReviews() {
         },
       }));
       setReviewedMeetings(mapped);
+      const s = res.summary || {};
+      setSummary({
+        avgRating: Number(s.avgRating ?? 0),
+        reviewCount: Number(s.reviewCount ?? mapped.length),
+      });
     });
-  }, [navigate, userAuth?.role]);
+  }, []);
+
+  useEffect(() => {
+    if (!userAuth || userAuth.role !== "mentor") {
+      navigate("/");
+      return;
+    }
+    loadReviews();
+  }, [navigate, userAuth?.role, loadReviews]);
+
+  const submitReply = async (reviewId) => {
+    const content = replyText.trim();
+    if (!content || content.length < 3) {
+      toastApiError("Phản hồi cần ít nhất 3 ký tự.");
+      return;
+    }
+    setReplyBusy(true);
+    const res = await tryApi(() => replyToReview(reviewId, content), {
+      fallback: "Không gửi được phản hồi.",
+      successMessage: "Đã gửi phản hồi.",
+    });
+    setReplyBusy(false);
+    if (!res.success) return;
+    setReplyId("");
+    setReplyText("");
+    loadReviews();
+  };
 
   if (!userAuth || userAuth.role !== "mentor") return null;
 
-  // Filter by rating
   const filtered = reviewedMeetings.filter((m) => {
     if (filter === "all") return true;
-    return m.menteeReview.rating === parseInt(filter);
+    return m.menteeReview.rating === parseInt(filter, 10);
   });
 
-  // Filter by search
-  const searched = filtered.filter((m) =>
-    m.mentee.name.toLowerCase().includes(search.toLowerCase()) ||
-    m.menteeReview.comment.toLowerCase().includes(search.toLowerCase())
+  const searched = filtered.filter(
+    (m) =>
+      m.mentee.name.toLowerCase().includes(search.toLowerCase()) ||
+      m.menteeReview.comment.toLowerCase().includes(search.toLowerCase()),
   );
 
-  const avgRating = reviewedMeetings.length > 0
-    ? reviewedMeetings.reduce((sum, m) => sum + m.menteeReview.rating, 0) / reviewedMeetings.length
-    : 0;
+  const avgRating =
+    summary.reviewCount > 0 ? summary.avgRating : reviewedMeetings.length > 0
+      ? reviewedMeetings.reduce((sum, m) => sum + m.menteeReview.rating, 0) / reviewedMeetings.length
+      : 0;
 
   const recommendCount = reviewedMeetings.filter((m) => m.menteeReview.wouldRecommend).length;
 
   return (
     <MentorPageShell bottomPad="pb-32">
       <div className="relative z-10 mx-auto max-w-7xl px-8 pb-8">
-        {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
+        <div className="mb-12 flex flex-col justify-between gap-6 md:flex-row md:items-end">
           <div>
             <h1 className="mb-3 font-headline text-2xl font-black uppercase tracking-tight text-slate-900 sm:text-3xl">
-               Đánh giá <span className="text-violet-700">từ Mentees</span>
+              Đánh giá <span className="text-violet-700">từ học viên</span>
             </h1>
-            <p className="text-slate-600 text-sm font-medium">Lắng nghe ý kiến và xây dựng uy tín Mentor của bạn</p>
           </div>
         </div>
 
-        {/* Aggregate Feedback Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-          <div className="glass-card p-7 sm:p-8 relative overflow-hidden group">
-            <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover:opacity-10 transition-opacity">
-               <Star size={120} className="text-violet-700" />
-            </div>
-            <p className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.3em] mb-4">Điểm trung bình</p>
-            <div className="flex items-end gap-3 mb-6">
-              <h3 className="text-2xl font-black tracking-tight text-slate-900 sm:text-3xl">{avgRating.toFixed(1)}</h3>
-              <p className="text-xl font-bold text-zinc-600 mb-2">/5.0</p>
+        <div className="mb-12 grid grid-cols-1 gap-6 md:grid-cols-3">
+          <div className="glass-card group relative overflow-hidden p-7 sm:p-8">
+            <p className="mb-4 text-[10px] font-black uppercase tracking-[0.3em] text-zinc-500">
+              Điểm trung bình
+            </p>
+            <div className="mb-6 flex items-end gap-3">
+              <h3 className="text-2xl font-black tracking-tight text-slate-900 sm:text-3xl">
+                {avgRating.toFixed(1)}
+              </h3>
+              <p className="mb-2 text-xl font-bold text-zinc-600">/5</p>
             </div>
             <div className="flex gap-1.5">
               {[1, 2, 3, 4, 5].map((i) => (
-                <Star key={i} size={20} className={i <= Math.round(avgRating) ? "text-[#FFD600] fill-[#FFD600]" : "text-slate-200"} />
+                <Star
+                  key={i}
+                  size={20}
+                  className={i <= Math.round(avgRating) ? "text-[#FFD600] fill-[#FFD600]" : "text-slate-200"}
+                />
               ))}
             </div>
           </div>
 
-          <div className="glass-card p-7 sm:p-8 relative overflow-hidden group">
-            <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover:opacity-10 transition-opacity">
-               <MessageCircle size={120} className="text-secondary" />
-            </div>
-            <p className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.3em] mb-4">Tổng số nhận xét</p>
-            <h3 className="mb-3 text-2xl font-black tracking-tight text-slate-900 sm:text-3xl">{reviewedMeetings.length}</h3>
-            <p className="text-xs font-bold uppercase tracking-widest text-violet-700 flex items-center gap-2">
-               <TrendingUp size={14} className="text-violet-600" /> +2 tuần qua
+          <div className="glass-card group relative overflow-hidden p-7 sm:p-8">
+            <p className="mb-4 text-[10px] font-black uppercase tracking-[0.3em] text-zinc-500">
+              Tổng nhận xét
+            </p>
+            <h3 className="mb-3 text-2xl font-black tracking-tight text-slate-900 sm:text-3xl">
+              {summary.reviewCount || reviewedMeetings.length}
+            </h3>
+            <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-violet-700">
+              <TrendingUp size={14} className="text-violet-600" />
+              Trên hồ sơ mentor
             </p>
           </div>
 
           <div className="glass-card group relative overflow-hidden border-violet-200/80 p-7 sm:p-8">
-            <div className="absolute top-0 right-0 p-8 opacity-[0.03] transition-opacity group-hover:opacity-10">
-               <Award size={120} className="text-violet-400" />
-            </div>
-            <p className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.3em] mb-4">Tỷ lệ hài lòng</p>
+            <p className="mb-4 text-[10px] font-black uppercase tracking-[0.3em] text-zinc-500">
+              Tỷ lệ hài lòng
+            </p>
             <h3 className="mb-3 text-2xl font-black tracking-tight text-violet-800 sm:text-3xl">
-              {reviewedMeetings.length > 0 ? Math.round((recommendCount / reviewedMeetings.length) * 100) : 0}%
+              {reviewedMeetings.length > 0
+                ? Math.round((recommendCount / reviewedMeetings.length) * 100)
+                : 0}
+              %
             </h3>
-            <p className="text-xs font-bold text-zinc-600 uppercase tracking-widest">Dựa trên recommend của mentee</p>
+            <p className="text-xs font-bold uppercase tracking-widest text-zinc-600">
+              Đánh giá từ 4 sao trở lên
+            </p>
           </div>
         </div>
 
-        {/* Dynamic Controls */}
-        <div className="flex flex-col md:flex-row items-center gap-5 mb-9">
-          <div className="relative flex-1 group w-full">
-            <Search className="absolute left-5 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-500 transition-colors group-focus-within:text-violet-600" size={20} />
-            <input 
-              type="text" 
-              placeholder="Tìm kiếm theo tên mentee hoặc nội dung review..." 
+        <div className="mb-9 flex flex-col items-center gap-5 md:flex-row">
+          <div className="group relative w-full flex-1">
+            <Search
+              className="absolute left-5 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-500 group-focus-within:text-violet-600"
+              size={20}
+            />
+            <input
+              type="text"
+              placeholder="Tìm theo tên hoặc nội dung…"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="w-full rounded-[20px] border border-slate-200 bg-white py-3.5 pl-16 pr-5 text-sm font-medium text-slate-900 shadow-sm outline-none transition placeholder:text-slate-500 focus:border-violet-400 focus:ring-2 focus:ring-violet-200/80"
             />
           </div>
-          <div className="flex gap-2 p-2 bg-slate-50 border border-slate-200 rounded-[24px]">
+          <div className="flex gap-2 rounded-[24px] border border-slate-200 bg-slate-50 p-2">
             {["all", "5", "4", "3"].map((v) => (
               <button
                 key={v}
+                type="button"
                 onClick={() => setFilter(v)}
-                className={`px-8 py-3 rounded-[18px] text-[10px] font-black uppercase tracking-widest transition-all ${
-                  filter === v ? "bg-violet-600 text-white shadow-md" : "text-slate-600 hover:bg-white hover:text-slate-900"
+                className={`rounded-[18px] px-8 py-3 text-[10px] font-black uppercase tracking-widest transition-all ${
+                  filter === v
+                    ? "bg-violet-600 text-white shadow-md"
+                    : "text-slate-600 hover:bg-white hover:text-slate-900"
                 }`}
               >
                 {v === "all" ? "Tất cả" : `${v}★`}
@@ -155,78 +192,118 @@ export function MentorReviews() {
           </div>
         </div>
 
-        {/* Feed of Review Cards */}
         <div className="space-y-5">
           {searched.length === 0 ? (
             <div className="glass-card p-14 text-center">
               <MessageCircle size={60} className="mx-auto mb-6 text-zinc-700 opacity-20" />
-              <p className="text-lg font-bold text-zinc-500">Chúng tôi không tìm thấy nhận xét phù hợp</p>
+              <p className="text-lg font-bold text-zinc-500">Chưa có nhận xét phù hợp</p>
             </div>
           ) : (
             searched.map((meeting) => (
-              <div
-                key={meeting.id}
-                className="glass-card p-10 group overflow-hidden"
-              >
-                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-10">
+              <div key={meeting.id} className="glass-card group overflow-hidden p-10">
+                <div className="flex flex-col justify-between gap-10 lg:flex-row lg:items-center">
                   <div className="flex items-center gap-8">
-                    <div className="relative">
-                       <img
-                         src={meeting.mentee.avatar}
-                         alt={meeting.mentee.name}
-                         className="w-20 h-20 rounded-[30px] object-cover ring-4 ring-slate-200 transition-transform group-hover:scale-105"
-                       />
-                       <div className="absolute -bottom-2 -right-2 w-8 h-8 rounded-xl bg-primary-fixed text-black flex items-center justify-center shadow-lg">
-                          <Trophy size={14} />
-                       </div>
-                    </div>
+                    <img
+                      src={meeting.mentee.avatar}
+                      alt={meeting.mentee.name}
+                      className="h-20 w-20 rounded-[30px] object-cover ring-4 ring-slate-200"
+                    />
                     <div>
-                      <h3 className="text-2xl font-black text-slate-900 tracking-tighter mb-1 group-hover:text-violet-700 transition-colors">
+                      <h3 className="mb-1 text-2xl font-black tracking-tighter text-slate-900">
                         {meeting.mentee.name}
                       </h3>
-                      <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-4">
+                      <p className="mb-4 text-[10px] font-black uppercase tracking-widest text-zinc-500">
                         {meeting.position} · {meeting.company}
                       </p>
                       <div className="flex items-center gap-3">
-                         <div className="flex gap-1">
-                           {[1, 2, 3, 4, 5].map((i) => (
-                             <Star key={i} size={14} className={i <= meeting.menteeReview.rating ? "text-[#FFD600] fill-[#FFD600]" : "text-slate-200"} />
-                           ))}
-                         </div>
-                         <span className="text-xs font-black text-slate-900">{meeting.menteeReview.rating}.0 Score</span>
+                        <div className="flex gap-1">
+                          {[1, 2, 3, 4, 5].map((i) => (
+                            <Star
+                              key={i}
+                              size={14}
+                              className={
+                                i <= meeting.menteeReview.rating
+                                  ? "text-[#FFD600] fill-[#FFD600]"
+                                  : "text-slate-200"
+                              }
+                            />
+                          ))}
+                        </div>
+                        <span className="text-xs font-black text-slate-900">
+                          {meeting.menteeReview.rating}/5
+                        </span>
                       </div>
                     </div>
                   </div>
-
-                  <div className="flex flex-col items-end gap-3 text-right">
-                     <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest flex items-center gap-2">
-                        <Calendar size={14} /> {new Date(meeting.menteeReview.reviewDate).toLocaleDateString("vi-VN")}
-                     </p>
-                     <div className="flex gap-2">
-                        {meeting.menteeReview.wouldRecommend && (
-                           <span className="px-4 py-1.5 rounded-lg bg-primary-fixed/10 text-violet-700 text-[10px] font-black uppercase tracking-widest border border-primary-fixed/20">Recommend</span>
-                        )}
-                         <span className="px-4 py-1.5 rounded-lg bg-slate-50 text-zinc-500 text-[10px] font-black uppercase tracking-widest border border-slate-200">Public</span>
-                     </div>
-                  </div>
+                  <p className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-zinc-500">
+                    <Calendar size={14} />
+                    {new Date(meeting.menteeReview.reviewDate).toLocaleDateString("vi-VN")}
+                  </p>
                 </div>
 
-                <div className="mt-8 relative p-7 rounded-[32px] bg-slate-50 border border-slate-200">
-                  <Quote size={80} className="absolute -top-4 -left-4 text-violet-700 opacity-[0.08] -rotate-12" />
-                  <p className="text-xl font-medium text-slate-700 leading-relaxed italic z-10 relative">
+                <div className="relative mt-8 rounded-[32px] border border-slate-200 bg-slate-50 p-7">
+                  <Quote
+                    size={80}
+                    className="absolute -left-4 -top-4 -rotate-12 text-violet-700 opacity-[0.08]"
+                  />
+                  <p className="relative z-10 text-xl font-medium italic leading-relaxed text-slate-700">
                     "{meeting.menteeReview.comment}"
                   </p>
-                  <div className="absolute bottom-6 right-8">
-                     {meeting.menteeReview.reply ? (
-                        <p className="text-[10px] font-black text-violet-700 uppercase tracking-widest">
-                          Đã phản hồi
-                        </p>
-                     ) : (
-                        <button className="flex items-center gap-2 text-[10px] font-black text-zinc-600 uppercase tracking-widest hover:text-violet-700 transition-colors">
-                           Phản hồi nhận xét <ArrowRight size={14} />
+
+                  {meeting.menteeReview.reply?.content ? (
+                    <div className="relative z-10 mt-6 rounded-2xl border border-violet-100 bg-violet-50/80 px-5 py-4">
+                      <p className="text-[10px] font-black uppercase tracking-widest text-violet-800">
+                        Phản hồi của bạn
+                      </p>
+                      <p className="mt-2 text-sm leading-relaxed text-slate-800">
+                        {meeting.menteeReview.reply.content}
+                      </p>
+                    </div>
+                  ) : replyId === meeting.id ? (
+                    <div className="relative z-10 mt-6 space-y-3">
+                      <textarea
+                        value={replyText}
+                        onChange={(e) => setReplyText(e.target.value)}
+                        rows={3}
+                        placeholder="Viết phản hồi cho học viên…"
+                        className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none focus:border-violet-400"
+                      />
+                      <div className="flex flex-wrap gap-2">
+                        <button
+                          type="button"
+                          disabled={replyBusy}
+                          onClick={() => void submitReply(meeting.id)}
+                          className="rounded-xl bg-violet-600 px-5 py-2.5 text-[10px] font-black uppercase tracking-widest text-white disabled:opacity-50"
+                        >
+                          {replyBusy ? "Đang gửi…" : "Gửi phản hồi"}
                         </button>
-                     )}
-                  </div>
+                        <button
+                          type="button"
+                          disabled={replyBusy}
+                          onClick={() => {
+                            setReplyId("");
+                            setReplyText("");
+                          }}
+                          className="rounded-xl border border-slate-200 px-5 py-2.5 text-[10px] font-black uppercase tracking-widest text-slate-600"
+                        >
+                          Hủy
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="relative z-10 mt-6 text-right">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setReplyId(meeting.id);
+                          setReplyText("");
+                        }}
+                        className="text-[10px] font-black uppercase tracking-widest text-violet-700 hover:text-violet-900"
+                      >
+                        Phản hồi nhận xét
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
             ))

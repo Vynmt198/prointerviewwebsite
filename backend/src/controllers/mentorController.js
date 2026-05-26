@@ -89,7 +89,7 @@ export class MentorController {
     try {
       const result = await mentorDashboardService.getMentorReviews(req.userId);
       if (!result.ok) return res.status(result.status).json({ success: false, error: result.error });
-      res.json({ success: true, items: result.items });
+      res.json({ success: true, items: result.items, summary: result.summary || null });
     } catch (e) {
       next(e);
     }

@@ -11,6 +11,16 @@ export class ReviewsController {
     }
   }
 
+  static async mine(req, res, next) {
+    try {
+      const result = await reviewsService.getMyReviewForTarget(req.userId, req.query ?? {});
+      if (!result.ok) return res.status(result.status).json({ success: false, error: result.error });
+      res.json({ success: true, hasReview: result.hasReview, review: result.review });
+    } catch (e) {
+      next(e);
+    }
+  }
+
   static async create(req, res, next) {
     try {
       const result = await reviewsService.createReview(req.userId, req.body ?? {});

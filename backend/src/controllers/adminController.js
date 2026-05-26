@@ -10,10 +10,77 @@ import { Enrollment } from "../models/Enrollment.js";
 import { InterviewSession } from "../models/InterviewSession.js";
 import { Notification } from "../models/index.js";
 import { serializeCourseForApi, resolveStoredUploadUrl } from "../utils/resolveStoredUploadUrl.js";
+import {
+  applyPaidEnrollmentCountsToAdminCourses,
+  countPaidEnrollmentsByCourseIds,
+} from "../services/courseStatsService.js";
 const User = mongoose.model("User");
 const Mentor = mongoose.model("Mentor");
 const Booking = mongoose.model("Booking");
 const Course = mongoose.model("Course");
+const Report = mongoose.model("Report");
+
+function planCountsFromAgg(rows = []) {
+  const out = { free: 0, starter_pro: 0, elite_pro: 0 };
+  for (const row of rows) {
+    const key = String(row._id || "free");
+    if (Object.prototype.hasOwnProperty.call(out, key)) out[key] += Number(row.count) || 0;
+    else out.free += Number(row.count) || 0;
+  }
+  return out;
+}
+
+function statusCountsFromAgg(rows = []) {
+  const out = {};
+  for (const row of rows) {
+    out[String(row._id || "unknown")] = Number(row.count) || 0;
+  }
+  return out;
+}
+
+function serializeRecentBookingForAdmin(booking) {
+  const mentorUser = booking?.mentorId?.userId;
+  return {
+    _id: booking._id,
+    date: booking.date,
+    timeSlot: booking.timeSlot,
+    status: booking.status,
+    paymentStatus: booking.paymentStatus,
+    totalAmount: booking.totalAmount,
+    createdAt: booking.createdAt,
+    studentName: booking.userId?.name || booking.userId?.email || "—",
+    mentorName:
+      (typeof mentorUser === "object" && mentorUser?.name) ||
+      booking.mentorId?.title ||
+      "—",
+  };
+}
+
+/** Câu hỏi từ mảng LLM hoặc fallback questionText trong answers (phiên cũ). */
+function resolveAdminSessionQuestions(session) {
+  const fromBank = (session.questions || []).filter((q) => String(q?.question || "").trim());
+  if (fromBank.length) {
+    return fromBank.map((q, i) => ({
+      index: i + 1,
+      layer: q.layer || "",
+      question: q.question,
+      competencyName: q.competencyName || "",
+      source: "llm",
+    }));
+  }
+  const answers = Array.isArray(session.answers) ? session.answers : [];
+  return [...answers]
+    .sort((a, b) => (a.questionIndex ?? 0) - (b.questionIndex ?? 0))
+    .filter((a) => String(a?.questionText || "").trim())
+    .map((a, i) => ({
+      index: (a.questionIndex ?? i) + 1,
+      layer: "",
+      question: a.questionText,
+      competencyName: "",
+      source: "answer",
+      transcriptPreview: String(a.transcript || "").trim().slice(0, 160) || null,
+    }));
+}
 
 export const AdminController = {
   // Lấy danh sách mentor (có cả ứng viên chờ duyệt role customer) — admin UI lọc theo ngữ cảnh.
@@ -295,6 +362,11 @@ export const AdminController = {
       const booking = await Booking.findById(id);
       if (!booking) return res.status(404).json({ success: false, error: "Không tìm thấy lịch hẹn." });
 
+      const payGate = bookingsService.assertBookingPaidBeforeActiveStatus(booking, nextStatus);
+      if (!payGate.ok) {
+        return res.status(payGate.status).json({ success: false, error: payGate.error });
+      }
+
       booking.status = nextStatus;
 
       if (nextStatus === "completed") {
@@ -476,7 +548,11 @@ export const AdminController = {
       if (!result.ok) {
         return res.status(result.status || 500).json({ success: false, error: result.error });
       }
-      res.json({ success: true, payments: result.payments });
+      res.json({
+        success: true,
+        payments: result.payments,
+        stats: result.stats || { paidCount: 0, paidTotalAmount: 0 },
+      });
     } catch (error) {
       next(error);
     }
@@ -532,14 +608,40 @@ export const AdminController = {
 
   getContentStats: async (_req, res, next) => {
     try {
-      const InterviewSession = mongoose.model("InterviewSession");
       const CVAnalysis = mongoose.model("CVAnalysis");
-      const [interviews, cvAnalyses, publishedCourses, completedInterviews] = await Promise.all([
+      const since7d = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+      const [
+        interviews,
+        cvAnalyses,
+        publishedCourses,
+        completedInterviews,
+        sessions7d,
+        completed7d,
+        scoreAgg7d,
+        fewShotReadyCount,
+      ] = await Promise.all([
         InterviewSession.countDocuments(),
         CVAnalysis.countDocuments(),
         Course.countDocuments({ status: "published" }),
         InterviewSession.countDocuments({ status: "completed" }),
+        InterviewSession.countDocuments({ createdAt: { $gte: since7d } }),
+        InterviewSession.countDocuments({ status: "completed", createdAt: { $gte: since7d } }),
+        InterviewSession.aggregate([
+          {
+            $match: {
+              status: "completed",
+              "feedback.overallScore": { $exists: true, $gt: 0 },
+              createdAt: { $gte: since7d },
+            },
+          },
+          { $group: { _id: null, avgScore: { $avg: "$feedback.overallScore" }, count: { $sum: 1 } } },
+        ]),
+        InterviewSession.countDocuments({
+          status: "completed",
+          "feedback.overallScore": { $gte: 80 },
+        }),
       ]);
+      const scoreRow = scoreAgg7d[0] ?? null;
       res.json({
         success: true,
         content: {
@@ -547,7 +649,14 @@ export const AdminController = {
           completedInterviews,
           cvAnalyses,
           publishedCourses,
-          aiQuestionSource: "POST /api/interviews/generate-questions (LLM động theo CV/JD)",
+          interviewOps: {
+            periodDays: 7,
+            sessions7d,
+            completed7d,
+            avgScore7d: scoreRow?.avgScore != null ? Math.round(scoreRow.avgScore * 10) / 10 : null,
+            scoredSessions7d: scoreRow?.count ?? 0,
+            fewShotReadyCount,
+          },
         },
       });
     } catch (error) {
@@ -555,10 +664,61 @@ export const AdminController = {
     }
   },
 
-  getCourseMediaOverview: async (_req, res, next) => {
+  /** GET /api/admin/content/interview-sessions — phiên gần đây + câu hỏi LLM đã lưu */
+  getRecentInterviewSessions: async (req, res, next) => {
     try {
-      const courses = await Course.find({ status: { $in: ["published", "pending_update"] } })
-        .select("title status modules thumbnail updatedAt")
+      const limit = Math.min(Math.max(Number(req.query.limit) || 30, 1), 100);
+      const sessions = await InterviewSession.find()
+        .sort({ createdAt: -1 })
+        .limit(limit)
+        .populate("userId", "name email")
+        .select(
+          "userId status inferredRole inferredSeniority competencyProfile questions answers questionsAllowed createdAt completedAt",
+        )
+        .lean();
+
+      res.json({
+        success: true,
+        sessions: sessions.map((s) => {
+          const questions = resolveAdminSessionQuestions(s);
+          const roleParts = [
+            s.inferredRole,
+            s.inferredSeniority,
+            s.competencyProfile?.roleCategory,
+          ].filter(Boolean);
+          return {
+            id: String(s._id),
+            user: s.userId
+              ? { name: s.userId.name || "", email: s.userId.email || "" }
+              : null,
+            status: s.status,
+            role: roleParts.length ? roleParts.join(" · ") : "—",
+            questionCount: questions.length,
+            questionsAllowed: s.questionsAllowed ?? null,
+            questions,
+            answerCount: Array.isArray(s.answers) ? s.answers.length : 0,
+            createdAt: s.createdAt,
+            completedAt: s.completedAt || null,
+          };
+        }),
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  getCourseMediaOverview: async (req, res, next) => {
+    try {
+      const scope = String(req.query.scope || "all").toLowerCase();
+      const statusFilter =
+        scope === "published"
+          ? { status: "published" }
+          : scope === "pending"
+            ? { status: { $in: ["pending_review", "pending_update"] } }
+            : { status: { $in: ["published", "pending_update", "pending_review", "draft"] } };
+
+      const courses = await Course.find(statusFilter)
+        .select("title status modules thumbnail updatedAt publishedAt")
         .populate({
           path: "mentorId",
           select: "userId",
@@ -582,10 +742,11 @@ export const AdminController = {
           videoCount,
           thumbnail: c.thumbnail || "",
           updatedAt: c.updatedAt,
+          publishedAt: c.publishedAt || null,
         };
       });
 
-      res.json({ success: true, courses: items });
+      res.json({ success: true, scope, courses: items });
     } catch (error) {
       next(error);
     }
@@ -650,12 +811,38 @@ export const AdminController = {
         .sort({ updatedAt: -1 });
 
       const items = courses.map((c) => serializePendingCourseForAdmin(c));
+      const countMap = await countPaidEnrollmentsByCourseIds(items.map((i) => i._id));
+      const enriched = applyPaidEnrollmentCountsToAdminCourses(items, countMap);
       const counts = {
-        total: items.length,
-        pendingReview: items.filter((x) => x.status === "pending_review").length,
-        pendingUpdate: items.filter((x) => x.status === "pending_update").length,
+        total: enriched.length,
+        pendingReview: enriched.filter((x) => x.status === "pending_review").length,
+        pendingUpdate: enriched.filter((x) => x.status === "pending_update").length,
       };
-      res.json({ success: true, courses: items, counts });
+      res.json({ success: true, courses: enriched, counts });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  /** GET /api/admin/courses/published — khóa đã duyệt / đang public */
+  getPublishedCourses: async (req, res, next) => {
+    try {
+      const limit = Math.min(Math.max(Number(req.query.limit) || 50, 1), 100);
+      const courses = await Course.find({ status: "published" })
+        .populate({
+          path: "mentorId",
+          select: "userId title company",
+          populate: { path: "userId", select: "name email avatar" },
+        })
+        .sort({ publishedAt: -1, updatedAt: -1 })
+        .limit(limit);
+
+      const items = courses.map((c) => serializePendingCourseForAdmin(c));
+      const countMap = await countPaidEnrollmentsByCourseIds(items.map((i) => i._id));
+      res.json({
+        success: true,
+        courses: applyPaidEnrollmentCountsToAdminCourses(items, countMap),
+      });
     } catch (error) {
       next(error);
     }
@@ -683,8 +870,9 @@ export const AdminController = {
       course.pendingUpdate = null;
       course.status = "published";
       course.publishedAt = new Date();
+      course.adminReview = { reason: "", reviewedAt: null, reviewedBy: null, lastAction: "" };
       await course.save();
-      res.json({ success: true, course });
+      res.json({ success: true, course: serializePendingCourseForAdmin(course) });
     } catch (error) {
       next(error);
     }
@@ -694,29 +882,164 @@ export const AdminController = {
   rejectCourse: async (req, res, next) => {
     try {
       const { id } = req.params;
-      const course = await Course.findById(id);
+      const reason = String(req.body?.reason || "").trim();
+      if (!reason) {
+        return res.status(400).json({ success: false, error: "Vui lòng nhập lý do từ chối." });
+      }
+
+      const course = await Course.findById(id).populate({
+        path: "mentorId",
+        select: "userId",
+        populate: { path: "userId", select: "name email" },
+      });
       if (!course) return res.status(404).json({ success: false, error: "Không tìm thấy khóa học" });
-      if (course.status === "pending_update") {
-        // Giữ khóa hiện tại vẫn public, chỉ bỏ bản cập nhật đang chờ.
+
+      const wasUpdate = course.status === "pending_update";
+      if (wasUpdate) {
         course.pendingUpdate = null;
         course.status = "published";
-      } else {
-        // pending_review (khóa mới) -> trả lại nháp.
+      } else if (course.status === "pending_review") {
         course.status = "draft";
+      } else {
+        return res.status(400).json({
+          success: false,
+          error: "Chỉ từ chối được khóa đang chờ duyệt hoặc bản cập nhật chờ duyệt.",
+        });
       }
+
+      course.adminReview = {
+        reason,
+        reviewedAt: new Date(),
+        reviewedBy: req.userId || null,
+        lastAction: "reject",
+      };
       await course.save();
-      res.json({ success: true, course });
+
+      const mentorUserId = course.mentorId?.userId?._id || course.mentorId?.userId;
+      if (mentorUserId) {
+        try {
+          const title = wasUpdate ? "Bản cập nhật khóa học bị từ chối" : "Khóa học bị từ chối";
+          const reasonShort = reason.length > 200 ? `${reason.slice(0, 197)}…` : reason;
+          const body = wasUpdate
+            ? `Admin không duyệt bản cập nhật "${course.title}". Lý do: ${reasonShort}`
+            : `Admin từ chối khóa "${course.title}". Lý do: ${reasonShort}. Vui lòng chỉnh sửa và gửi duyệt lại.`;
+          await Notification.create({
+            userId: mentorUserId,
+            type: "feedback",
+            title,
+            body,
+            metadata: {
+              courseId: course._id,
+              actionUrl: "/mentor/courses",
+            },
+          });
+        } catch (notifErr) {
+          console.error("[Admin] rejectCourse notification:", notifErr);
+        }
+      }
+
+      res.json({ success: true, course: serializePendingCourseForAdmin(course) });
     } catch (error) {
       next(error);
     }
   },
 
-  getReports: async (_req, res) => {
+  /** Gỡ khóa khỏi marketplace (archived). */
+  archiveCourse: async (req, res, next) => {
+    try {
+      const { id } = req.params;
+      const reason =
+        String(req.body?.reason || "").trim() ||
+        "Khóa học đã được gỡ khỏi marketplace bởi quản trị viên.";
+
+      const course = await Course.findById(id).populate({
+        path: "mentorId",
+        select: "userId",
+        populate: { path: "userId", select: "name email" },
+      });
+      if (!course) return res.status(404).json({ success: false, error: "Không tìm thấy khóa học" });
+
+      if (!["published", "pending_update"].includes(course.status)) {
+        return res.status(400).json({
+          success: false,
+          error: "Chỉ gỡ được khóa đang hiển thị trên marketplace.",
+        });
+      }
+
+      course.pendingUpdate = null;
+      course.status = "archived";
+      course.adminReview = {
+        reason,
+        reviewedAt: new Date(),
+        reviewedBy: req.userId || null,
+        lastAction: "archive",
+      };
+      await course.save();
+
+      const mentorUserId = course.mentorId?.userId?._id || course.mentorId?.userId;
+      if (mentorUserId) {
+        try {
+          const reasonShort = reason.length > 200 ? `${reason.slice(0, 197)}…` : reason;
+          await Notification.create({
+            userId: mentorUserId,
+            type: "system",
+            title: "Khóa học đã bị gỡ khỏi marketplace",
+            body: `Khóa "${course.title}" không còn hiển thị cho học viên. Lý do: ${reasonShort}`,
+            metadata: {
+              courseId: course._id,
+              actionUrl: "/mentor/courses",
+            },
+          });
+        } catch (notifErr) {
+          console.error("[Admin] archiveCourse notification:", notifErr);
+        }
+      }
+
+      res.json({ success: true, course: serializePendingCourseForAdmin(course) });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  getReports: async (req, res, next) => {
     try {
       const { listReportsForAdmin } = await import("../services/reportsService.js");
-      const result = await listReportsForAdmin();
+      const result = await listReportsForAdmin(req.query ?? {});
       if (!result.ok) return res.status(result.status || 500).json({ success: false, error: result.error });
-      res.json({ success: true, reports: result.reports });
+      res.json({
+        success: true,
+        reports: result.reports,
+        counts: result.counts,
+        pagination: result.pagination,
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  getReviews: async (req, res, next) => {
+    try {
+      const { listReviewsForAdmin } = await import("../services/reviewsService.js");
+      const result = await listReviewsForAdmin(req.query ?? {});
+      if (!result.ok) return res.status(result.status).json({ success: false, error: result.error });
+      res.json({
+        success: true,
+        reviews: result.reviews,
+        counts: result.counts,
+        pagination: result.pagination,
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  setReviewVisibility: async (req, res, next) => {
+    try {
+      const { setReviewVisibilityForAdmin } = await import("../services/reviewsService.js");
+      const isVisible = req.body?.isVisible !== false;
+      const result = await setReviewVisibilityForAdmin(req.params.id, isVisible);
+      if (!result.ok) return res.status(result.status).json({ success: false, error: result.error });
+      res.json({ success: true, review: result.review });
     } catch (error) {
       next(error);
     }
@@ -733,14 +1056,41 @@ export const AdminController = {
     }
   },
 
-  // Thống kê nhanh cho Dashboard
+  // Thống kê nhanh cho Dashboard & Phân tích admin
   getStats: async (req, res, next) => {
     try {
-      const [userCount, mentorCount, bookingCount, recentBookings] = await Promise.all([
+      const [
+        userCount,
+        mentorCount,
+        bookingCount,
+        recentBookingsRaw,
+        planAgg,
+        enrollmentsPaid,
+        publishedCourses,
+        pendingCourses,
+        reportsOpen,
+        bookingStatusAgg,
+      ] = await Promise.all([
         User.countDocuments({ role: "customer" }),
         Mentor.countDocuments(),
         Booking.countDocuments(),
-        Booking.find().sort({ createdAt: -1 }).limit(5).populate("mentorId userId")
+        Booking.find()
+          .sort({ createdAt: -1 })
+          .limit(8)
+          .populate({ path: "userId", select: "name email" })
+          .populate({
+            path: "mentorId",
+            select: "title",
+            populate: { path: "userId", select: "name" },
+          })
+          .select("date timeSlot status paymentStatus totalAmount createdAt userId mentorId")
+          .lean(),
+        User.aggregate([{ $group: { _id: { $ifNull: ["$plan", "free"] }, count: { $sum: 1 } } }]),
+        Enrollment.countDocuments({ paymentStatus: "paid" }),
+        Course.countDocuments({ status: "published" }),
+        Course.countDocuments({ status: { $in: ["pending_review", "pending_update"] } }),
+        Report.countDocuments({ status: { $in: ["pending", "reviewing"] } }),
+        Booking.aggregate([{ $group: { _id: "$status", count: { $sum: 1 } } }]),
       ]);
 
       res.json({
@@ -749,8 +1099,13 @@ export const AdminController = {
           users: userCount,
           mentors: mentorCount,
           bookings: bookingCount,
-          recentBookings
-        }
+          recentBookings: recentBookingsRaw.map(serializeRecentBookingForAdmin),
+          plans: planCountsFromAgg(planAgg),
+          enrollmentsPaid,
+          courses: { published: publishedCourses, pendingReview: pendingCourses },
+          reportsOpen,
+          bookingsByStatus: statusCountsFromAgg(bookingStatusAgg),
+        },
       });
     } catch (error) {
       next(error);
@@ -972,7 +1327,7 @@ function summarizeModules(modules = []) {
   const chapters = (Array.isArray(modules) ? modules : []).map((mod, idx) => {
     const lessons = (mod.lessons || []).map((lesson) => {
       lessonCount += 1;
-      const videoUrl = String(lesson.videoUrl || "").trim();
+      const videoUrl = String(lesson.videoUrl || lesson.contentUrl || "").trim();
       const hasVideo = Boolean(videoUrl);
       if (hasVideo) videoCount += 1;
       if (lesson.isFree) previewCount += 1;
@@ -1087,5 +1442,17 @@ export function serializePendingCourseForAdmin(course) {
           )
         : [],
     publishedSnapshot: isUpdate ? pickReviewFields(doc) : null,
+    stats: {
+      enrollmentCount: Number(doc.stats?.enrollmentCount || 0),
+      rating: Number(doc.stats?.rating || 0),
+      reviewCount: Number(doc.stats?.reviewCount || 0),
+    },
+    adminReview: doc.adminReview?.reason
+      ? {
+          reason: doc.adminReview.reason,
+          reviewedAt: doc.adminReview.reviewedAt,
+          lastAction: doc.adminReview.lastAction || "",
+        }
+      : null,
   };
 }

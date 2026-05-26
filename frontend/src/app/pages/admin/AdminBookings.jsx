@@ -1,9 +1,22 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { Link } from "react-router";
-import { Search, Clock, User, CheckCircle, XCircle, AlertCircle, RefreshCw, Eye } from "lucide-react";
+import {
+  Search,
+  Clock,
+  User,
+  CheckCircle,
+  XCircle,
+  RefreshCw,
+  Eye,
+  MoreHorizontal,
+  Banknote,
+} from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { adminApi } from "../../utils/adminApi";
 import { toastApiError, toastApiSuccess, tryApi } from "../../utils/apiToast";
+import { AdminSepayOverrideAction } from "../../components/admin/AdminSepayOverrideAction.jsx";
+import { AdminBookingStatusStack } from "../../components/admin/AdminStatusPill.jsx";
+import { AdminFilterSelect, AdminListFilterBar } from "../../components/admin/AdminListFilters.jsx";
 
 function vnd(n) {
   return `${Number(n || 0).toLocaleString("vi-VN")} đ`;
@@ -15,6 +28,39 @@ function paymentStatusOf(b) {
 
 function bookingAmount(b) {
   return Number(b?.totalAmount ?? b?.price ?? 0);
+}
+
+const BOOKING_STATUS_MENU = [
+  { value: "confirmed", label: "Đã xác nhận", requiresPaid: true },
+  { value: "in_progress", label: "Đang diễn ra", requiresPaid: true },
+  { value: "completed", label: "Hoàn thành", requiresPaid: true },
+  { value: "no_show", label: "Không tham gia" },
+  { value: "cancelled", label: "Hủy đơn" },
+];
+
+function canApproveBooking(booking, paymentStatus) {
+  const st = String(booking?.status || "pending").toLowerCase();
+  if (st !== "pending") return false;
+  const pst = String(paymentStatus || "").toLowerCase();
+  if (pst === "paid") return true;
+  const amt = Number(booking?.totalAmount ?? booking?.price ?? 0);
+  return amt <= 0;
+}
+
+const FILTER_TABS = [
+  { id: "all", label: "Tất cả" },
+  { id: "pending", label: "Chờ đối soát" },
+  { id: "paid", label: "Đã thanh toán" },
+  { id: "refund_pending", label: "Chờ hoàn tiền" },
+];
+
+/** Giữ ô thao tác cố định 4 nút — bảng không co khi đổi tab lọc. */
+function ActionSlot({ children, className = "" }) {
+  return (
+    <div className={`flex size-9 shrink-0 items-center justify-center ${className}`}>
+      {children}
+    </div>
+  );
 }
 
 export function AdminBookings() {
@@ -31,6 +77,7 @@ export function AdminBookings() {
     previousStatus: "pending",
     reason: "",
   });
+  const [statusMenuId, setStatusMenuId] = useState("");
 
   const loadBookings = useCallback(async () => {
     setLoading(true);
@@ -41,13 +88,32 @@ export function AdminBookings() {
     setLoading(false);
   }, []);
 
+  const confirmBookingTransferOverride = async (booking, confirmBody) => {
+    const bookingId = booking?._id;
+    if (!bookingId) return;
+    setBusyId(bookingId);
+    const res = await tryApi(
+      () => adminApi.confirmBookingTransferPayment(String(bookingId), confirmBody || { force: true }),
+      {
+      fallback: "Không xác nhận được chuyển khoản.",
+      successMessage: "Đã xác nhận thanh toán và duyệt buổi hẹn.",
+      },
+    );
+    setBusyId("");
+    if (!res.success) return;
+    setBookings((prev) =>
+      prev.map((b) => (String(b._id) === String(bookingId) ? { ...b, ...(res.booking || {}), paymentStatus: "paid" } : b)),
+    );
+    await loadBookings();
+  };
+
   const confirmBookingRefund = async (booking) => {
     const bookingId = booking?._id;
     if (!bookingId) return;
     const amt = Number(booking.cancelRefundAmountVnd || 0);
     if (
       !window.confirm(
-        `Xác nhận đã chuyển khoản hoàn ${amt.toLocaleString("vi-VN")}₫ cho học viên?\n\nChỉ bấm sau khi đã CK thật vào STK trên đơn.`,
+        `Xác nhận đã chuyển khoản hoàn ${amt.toLocaleString("vi-VN")} đ cho học viên?\n\nChỉ bấm sau khi đã chuyển tiền thật vào số tài khoản trên đơn.`,
       )
     ) {
       return;
@@ -75,6 +141,13 @@ export function AdminBookings() {
   useEffect(() => {
     void loadBookings();
   }, [loadBookings]);
+
+  useEffect(() => {
+    if (!statusMenuId) return;
+    const close = () => setStatusMenuId("");
+    window.addEventListener("click", close);
+    return () => window.removeEventListener("click", close);
+  }, [statusMenuId]);
 
   const summary = useMemo(() => {
     const ck = bookings.filter((b) => b.paymentMethod === "transfer");
@@ -155,97 +228,6 @@ export function AdminBookings() {
     setCancelModal({ open: false, bookingId: "", previousStatus: "pending", reason: "" });
   };
 
-  const getStatusBadge = (status) => {
-    switch (status) {
-      case "paid":
-      case "confirmed":
-        return (
-          <span className="flex items-center gap-1.5 rounded-full border border-cyan-200 bg-cyan-50 px-3 py-1 text-[9px] font-black uppercase tracking-widest text-cyan-800">
-            <CheckCircle size={10} /> Đã xác nhận
-          </span>
-        );
-      case "pending":
-        return (
-          <span className="flex items-center gap-1.5 rounded-full border border-orange-200 bg-orange-50 px-3 py-1 text-[9px] font-black uppercase tracking-widest text-orange-800">
-            <Clock size={10} /> Chờ duyệt
-          </span>
-        );
-      case "cancelled":
-        return (
-          <span className="flex items-center gap-1.5 rounded-full border border-red-200 bg-red-50 px-3 py-1 text-[9px] font-black uppercase tracking-widest text-red-700">
-            <XCircle size={10} /> Đã hủy
-          </span>
-        );
-      case "in_progress":
-        return (
-          <span className="flex items-center gap-1.5 rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-[9px] font-black uppercase tracking-widest text-sky-800">
-            <AlertCircle size={10} /> Đang diễn ra
-          </span>
-        );
-      case "completed":
-        return (
-          <span className="flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-[9px] font-black uppercase tracking-widest text-emerald-800">
-            <CheckCircle size={10} /> Hoàn thành
-          </span>
-        );
-      case "no_show":
-        return (
-          <span className="flex items-center gap-1.5 rounded-full border border-rose-200 bg-rose-50 px-3 py-1 text-[9px] font-black uppercase tracking-widest text-rose-800">
-            <XCircle size={10} /> Không tham gia
-          </span>
-        );
-      default:
-        return (
-          <span className="flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-100 px-3 py-1 text-[9px] font-black uppercase tracking-widest text-slate-600">
-            {status}
-          </span>
-        );
-    }
-  };
-
-  const getPaymentStatusBadge = (pst) => {
-    if (pst === "paid") {
-      return (
-        <span className="flex items-center gap-1.5 rounded-full border border-cyan-200 bg-cyan-50 px-3 py-1 text-[9px] font-black uppercase tracking-widest text-cyan-800">
-          <CheckCircle size={10} /> Đã thanh toán
-        </span>
-      );
-    }
-    if (pst === "refund_pending") {
-      return (
-        <span className="flex items-center gap-1.5 rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-[9px] font-black uppercase tracking-widest text-amber-900">
-          <Clock size={10} /> Chờ hoàn CK
-        </span>
-      );
-    }
-    if (pst === "refunded") {
-      return (
-        <span className="flex items-center gap-1.5 rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-[9px] font-black uppercase tracking-widest text-sky-800">
-          <CheckCircle size={10} /> Đã hoàn tiền
-        </span>
-      );
-    }
-    if (pst === "partial_refund") {
-      return (
-        <span className="flex items-center gap-1.5 rounded-full border border-indigo-200 bg-indigo-50 px-3 py-1 text-[9px] font-black uppercase tracking-widest text-indigo-800">
-          <AlertCircle size={10} /> Hoàn một phần
-        </span>
-      );
-    }
-    if (pst === "pending") {
-      return (
-        <span className="flex items-center gap-1.5 rounded-full border border-orange-200 bg-orange-50 px-3 py-1 text-[9px] font-black uppercase tracking-widest text-orange-800">
-          <Clock size={10} /> Chờ xác nhận
-        </span>
-      );
-    }
-    return (
-      <span className="rounded-full border border-slate-200 bg-slate-100 px-3 py-1 text-[9px] font-black uppercase tracking-widest text-slate-600">
-        {pst || "—"}
-      </span>
-    );
-  };
-
   const thCell =
     "px-4 py-4 text-[10px] font-black uppercase tracking-widest text-slate-500 sm:px-5 sm:py-5 lg:px-6";
   const tdCell = "px-4 py-4 sm:px-5 sm:py-5 lg:px-6";
@@ -258,13 +240,9 @@ export function AdminBookings() {
         className="flex min-w-0 flex-col justify-between gap-4 lg:flex-row lg:items-start lg:gap-6"
       >
         <div className="min-w-0 flex-1">
-          <h2 className="font-headline mb-2 text-3xl font-black uppercase tracking-tighter text-slate-900">
+          <h2 className="font-headline text-3xl font-black uppercase tracking-tighter text-slate-900">
             <span className="text-violet-700">Lịch hẹn</span> &amp; thanh toán
           </h2>
-          <p className="max-w-2xl text-sm font-medium text-slate-600">
-            Lịch hẹn cố vấn và đối soát chuyển khoản từng phiên — cùng kiểu bảng như học phí khóa học. Học phí khóa học
-            nằm ở menu riêng.
-          </p>
         </div>
         <div className="flex w-full min-w-0 flex-wrap items-center gap-3 sm:w-auto sm:justify-end">
           <button
@@ -283,13 +261,13 @@ export function AdminBookings() {
             className="shrink-0 rounded-2xl border border-violet-200 bg-violet-50 px-3 py-2.5 text-[10px] font-black uppercase tracking-wider text-violet-800 hover:bg-violet-100 disabled:opacity-50 sm:px-4 sm:py-3"
             title="Dọn dữ liệu mã chuyển khoản cũ bị nối dài"
           >
-            {normalizeBusy ? "Đang chuẩn hóa..." : "Chuẩn hóa mã CK"}
+            {normalizeBusy ? "Đang chuẩn hóa..." : "Chuẩn hóa mã thanh toán"}
           </button>
           <div className="relative min-w-0 flex-1 sm:flex-none sm:w-72">
             <Search className="absolute left-4 top-1/2 size-[18px] -translate-y-1/2 text-slate-400" />
             <input
               type="text"
-              placeholder="Tìm học viên, cố vấn, mã CK..."
+              placeholder="Tìm học viên, cố vấn, mã thanh toán…"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full min-w-0 rounded-2xl border border-slate-200 bg-white py-3 pl-12 pr-6 text-sm text-slate-900 outline-none transition-all focus:border-violet-400"
@@ -301,15 +279,15 @@ export function AdminBookings() {
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5"
+        className="grid gap-4 sm:grid-cols-3"
       >
         <div className="rounded-2xl border border-amber-200 bg-amber-50/80 p-4">
-          <p className="text-[10px] font-black uppercase tracking-widest text-amber-900">Chờ xác nhận CK</p>
+          <p className="text-[10px] font-black uppercase tracking-widest text-amber-900">Chờ đối soát</p>
           <p className="mt-1 text-2xl font-black text-amber-950">{summary.pendingTransferCount}</p>
           <p className="mt-1 text-sm font-semibold text-amber-900">{vnd(summary.pendingTransferAmount)}</p>
         </div>
         <div className="rounded-2xl border border-emerald-200 bg-emerald-50/80 p-4">
-          <p className="text-[10px] font-black uppercase tracking-widest text-emerald-900">Đã thu (đã xác nhận)</p>
+          <p className="text-[10px] font-black uppercase tracking-widest text-emerald-900">Đã thu qua SePay</p>
           <p className="mt-1 text-2xl font-black text-emerald-950">{summary.paidCollectedCount}</p>
           <p className="mt-1 text-sm font-semibold text-emerald-900">{vnd(summary.paidCollectedAmount)}</p>
         </div>
@@ -318,46 +296,38 @@ export function AdminBookings() {
           animate={{ opacity: 1, y: 0 }}
           className="rounded-2xl border border-sky-200 bg-sky-50/80 p-4"
         >
-          <p className="text-[10px] font-black uppercase tracking-widest text-sky-900">Chờ CK hoàn HV</p>
+          <p className="text-[10px] font-black uppercase tracking-widest text-sky-900">Chờ hoàn cho học viên</p>
           <p className="mt-1 text-2xl font-black text-sky-950">{summary.refundPendingCount}</p>
           <p className="mt-1 text-sm font-semibold text-sky-900">{vnd(summary.refundPendingAmount)}</p>
         </motion.div>
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="rounded-2xl border border-violet-200 bg-violet-50/80 p-4"
-        >
-          <p className="text-[10px] font-black uppercase tracking-widest text-violet-900">Tổng trên bảng</p>
-          <p className="mt-1 text-2xl font-black text-violet-950">{bookings.length} lịch hẹn</p>
-          <p className="mt-1 text-xs text-violet-900">Lọc: {filtered.length} dòng</p>
-        </motion.div>
       </motion.div>
 
-      <div className="flex flex-wrap gap-2">
-        {[
-          { id: "all", label: "Tất cả" },
-          { id: "pending", label: "Chờ xác nhận" },
-          { id: "paid", label: "Đã thanh toán" },
-          { id: "refund_pending", label: "Chờ hoàn CK" },
-        ].map((t) => (
-          <button
-            key={t.id}
-            type="button"
-            onClick={() => setFilter(t.id)}
-            className={`rounded-xl px-4 py-2 text-[10px] font-black uppercase tracking-wider transition ${
-              filter === t.id
-                ? "bg-violet-600 text-white shadow-sm"
-                : "border border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
-            }`}
-          >
-            {t.label}
-          </button>
-        ))}
-      </div>
+      <AdminListFilterBar
+        countText={`Hiển thị ${filtered.length} / ${bookings.length} lịch hẹn`}
+        showReset={filter !== "all"}
+        onReset={() => setFilter("all")}
+      >
+        <AdminFilterSelect
+          id="booking-status-filter"
+          label="Trạng thái thanh toán"
+          value={filter}
+          options={FILTER_TABS}
+          onChange={setFilter}
+        />
+      </AdminListFilterBar>
 
       <div className="glass-card min-w-0 max-w-full overflow-hidden border-slate-200/90 [&:hover]:transform-none [&:hover]:shadow-[0_8px_18px_rgba(128,55,244,0.07)]">
         <div className="max-w-full overflow-x-auto overscroll-x-contain">
-          <table className="w-full min-w-[980px] border-collapse text-left">
+          <table className="w-full min-w-0 table-fixed border-collapse text-left">
+            <colgroup>
+              <col className="w-[16%]" />
+              <col className="w-[10%]" />
+              <col className="w-[14%]" />
+              <col className="w-[20%]" />
+              <col className="w-[9%]" />
+              <col className="w-[11%]" />
+              <col className="w-[20%]" />
+            </colgroup>
             <thead>
               <tr className="border-b border-slate-200 bg-slate-50/90">
                 <th className={thCell}>Học viên</th>
@@ -365,7 +335,7 @@ export function AdminBookings() {
                 <th className={thCell}>Thời gian</th>
                 <th className={`${thCell} text-center`}>Trạng thái</th>
                 <th className={`${thCell} text-right`}>Chi phí</th>
-                <th className={`${thCell} text-center`}>Thanh toán</th>
+                <th className={`${thCell}`}>Thanh toán</th>
                 <th className={`${thCell} text-right`}>Thao tác</th>
               </tr>
             </thead>
@@ -409,136 +379,169 @@ export function AdminBookings() {
                         {b.mentorId?.name || "Cố vấn chưa xác định"}
                       </p>
                     </td>
-                    <td className={`${tdCell} whitespace-nowrap`}>
+                    <td className={`${tdCell} min-w-0 align-top overflow-hidden`}>
                       <p className="font-black text-slate-900">{b.date}</p>
-                      <p className="flex items-center gap-1 text-[10px] uppercase tracking-widest text-slate-500">
-                        <Clock size={10} /> {b.timeSlot || b.time}
+                      <p className="mt-0.5 flex items-center gap-1 text-[10px] text-slate-500">
+                        <Clock size={10} className="shrink-0" /> {b.timeSlot || b.time}
                       </p>
                       {b.transferSubmittedAt ? (
-                        <p className="mt-1 max-w-[12rem] text-[9px] font-semibold leading-snug text-emerald-700">
-                          HV báo CK: {new Date(b.transferSubmittedAt).toLocaleString("vi-VN")}
+                        <p
+                          className="mt-1.5 break-words text-[10px] leading-relaxed text-emerald-700"
+                          title={`Học viên đã báo chuyển khoản · ${new Date(b.transferSubmittedAt).toLocaleString("vi-VN")}`}
+                        >
+                          <span className="block font-medium">Học viên đã báo chuyển khoản</span>
+                          <span className="mt-0.5 block text-emerald-600">
+                            {new Date(b.transferSubmittedAt).toLocaleString("vi-VN")}
+                          </span>
                         </p>
                       ) : null}
                     </td>
-                    <td className={tdCell}>
-                      <div className="flex flex-col items-center gap-2">
-                        {getStatusBadge(b.status)}
-                        {b.paymentMethod === "transfer" ? getPaymentStatusBadge(pst) : null}
-                      </div>
+                    <td className={`${tdCell} align-top`}>
+                      <AdminBookingStatusStack
+                        bookingStatus={b.status}
+                        paymentStatus={pst}
+                        paymentMethod={b.paymentMethod}
+                        mentorCancelResolution={b.mentorCancelResolution}
+                      />
                     </td>
                     <td className={`${tdCell} whitespace-nowrap text-right font-black text-violet-700`}>
                       {(b.totalAmount ?? b.price ?? 0).toLocaleString("vi-VN")}{" "}
                       <span className="text-[10px] font-medium uppercase tracking-widest text-slate-500">đ</span>
                     </td>
-                    <td className={`${tdCell} max-w-[11rem] text-center align-top`}>
-                      <div className="mx-auto flex max-w-[11rem] flex-col items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-slate-600">
-                        <span>{b.paymentMethod === "transfer" ? "Chuyển khoản" : b.paymentMethod || "—"}</span>
-                        <span
-                          className={
-                            pst === "paid"
-                              ? "text-emerald-700"
-                              : pst === "pending"
-                                ? "text-amber-700"
-                                : "text-slate-500"
-                          }
-                        >
-                          {b.paymentStatus || "—"}
-                        </span>
-                        {String(b.mentorCancelResolution || "") === "awaiting_user" ? (
-                          <span className="rounded-full border border-violet-200 bg-violet-50 px-2 py-0.5 text-[9px] font-black uppercase tracking-wider text-violet-800">
-                            Chờ HV chọn
-                          </span>
-                        ) : null}
-                        {String(b.mentorCancelResolution || "") === "late_cancel_refund" ? (
-                          <span className="rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[9px] font-black uppercase tracking-wider text-amber-900">
-                            Hủy gấp → hoàn 100%
-                          </span>
-                        ) : null}
-                        {String(b.mentorCancelResolution || "") === "no_show_refund" ? (
-                          <span className="rounded-full border border-rose-200 bg-rose-50 px-2 py-0.5 text-[9px] font-black uppercase tracking-wider text-rose-800">
-                            No-show → hoàn 100%
-                          </span>
-                        ) : null}
-                        {b.paymentRef ? (
-                          <span className="max-w-[160px] truncate font-mono text-[9px] font-semibold normal-case text-slate-500" title={b.paymentRef}>
-                            {b.paymentRef}
-                          </span>
-                        ) : null}
-                        {b.transferConfirmedAt ? (
-                          <span className="max-w-full break-words text-center text-[9px] font-semibold leading-snug normal-case text-slate-500">
-                            Admin xác nhận: {new Date(b.transferConfirmedAt).toLocaleString("vi-VN")}
-                          </span>
-                        ) : b.paidAt ? (
-                          <span className="max-w-full break-words text-center text-[9px] font-semibold leading-snug normal-case text-slate-500">
-                            Đã thanh toán: {new Date(b.paidAt).toLocaleString("vi-VN")}
-                          </span>
-                        ) : null}
-                        {b.transferForceConfirm ? (
-                          <span
-                            className="rounded-full border border-rose-200 bg-rose-50 px-2 py-0.5 text-[9px] font-black uppercase tracking-wider text-rose-800"
-                            title={String(b.transferForceNote || "Xác nhận ngoại lệ")}
+                    <td className={`${tdCell} whitespace-nowrap`}>
+                      {b.paymentMethod === "transfer" ? (
+                        <div>
+                          <p className="text-sm font-medium text-slate-800">Chuyển khoản</p>
+                          <p
+                            className="mt-0.5 font-mono text-xs font-semibold text-violet-700"
+                            title={b.paymentRef || ""}
                           >
-                            Override
-                          </span>
-                        ) : null}
-                        {b.paymentMethod === "transfer" && b.paymentStatus === "pending" ? (
-                          <span className="mt-1 rounded-lg border border-violet-200 bg-violet-50 px-2 py-1.5 text-[9px] font-black uppercase tracking-wider text-violet-800">
-                            Chờ SePay tự động
-                          </span>
-                        ) : null}
-                        {pst === "refund_pending" && Number(b.cancelRefundAmountVnd) > 0 ? (
-                          <div className="mt-2 w-full max-w-[220px] rounded-xl border border-sky-200 bg-sky-50 p-2.5 text-left">
-                            <p className="text-[9px] font-black uppercase tracking-wider text-sky-900">Cần CK hoàn</p>
-                            <p className="mt-1 text-[11px] font-bold text-sky-950">{vnd(b.cancelRefundAmountVnd)}</p>
-                            {b.refundReceiveBankName ? (
-                              <div className="mt-2 space-y-0.5 text-[10px] font-semibold leading-snug text-sky-950 normal-case">
-                                <p>NH: {b.refundReceiveBankName}</p>
-                                <p className="font-mono">STK: {b.refundReceiveAccountNumber}</p>
-                                <p>Chủ TK: {b.refundReceiveAccountHolder}</p>
-                              </div>
-                            ) : (
-                              <p className="mt-1 text-[10px] text-amber-800">Chưa có TK nhận hoàn.</p>
-                            )}
-                            <button
-                              type="button"
-                              disabled={busyId === b._id}
-                              onClick={() => void confirmBookingRefund(b)}
-                              className="mt-2 w-full rounded-lg border border-sky-400 bg-sky-100 px-2 py-1.5 text-[9px] font-black uppercase tracking-wider text-sky-950 hover:bg-sky-200 disabled:opacity-50"
-                            >
-                              Xác nhận đã hoàn tiền
-                            </button>
-                          </div>
-                        ) : null}
-                        {pst === "refunded" && b.refundCompletedAt ? (
-                          <span className="mt-1 max-w-full text-center text-[9px] font-semibold leading-snug normal-case text-sky-700">
-                            Hoàn xong: {new Date(b.refundCompletedAt).toLocaleString("vi-VN")}
-                          </span>
-                        ) : null}
-                      </div>
+                            {b.paymentRef || "—"}
+                          </p>
+                        </div>
+                      ) : (
+                        <span className="text-sm text-slate-500">Khác</span>
+                      )}
                     </td>
                     <td className={tdCell}>
-                      <div className="flex items-center justify-end gap-2">
-                        <Link
-                          to={`/admin/bookings/${b._id}`}
-                          title="Chi tiết"
-                          className="inline-flex shrink-0 rounded-xl border border-slate-200 bg-slate-50 p-2 text-slate-500 transition-all hover:bg-slate-100 hover:text-slate-900"
-                        >
-                          <Eye size={16} />
-                        </Link>
-                        <select
-                          value={b.status || "pending"}
-                          disabled={busyId === b._id}
-                          onChange={(e) => handleStatusChange(b._id, e.target.value, b.status || "pending")}
-                          className="max-w-[9.5rem] rounded-xl border border-slate-200 bg-white px-2 py-2 text-[10px] font-black uppercase tracking-widest text-slate-800 outline-none transition hover:border-violet-300 focus:border-violet-400 disabled:opacity-50 sm:max-w-none sm:px-3"
-                        >
-                          <option value="pending">Chờ duyệt</option>
-                          <option value="confirmed">Đã xác nhận</option>
-                          <option value="in_progress">Đang diễn ra</option>
-                          <option value="completed">Hoàn thành</option>
-                          <option value="cancelled">Đã hủy</option>
-                          <option value="no_show">Không tham gia</option>
-                        </select>
-                      </div>
+                      {(() => {
+                        const bookingPending = (b.status || "pending") === "pending";
+                        const canApprove = canApproveBooking(b, pst);
+                        const showShield = b.paymentMethod === "transfer" && pst === "pending";
+                        const showRefund =
+                          pst === "refund_pending" && Number(b.cancelRefundAmountVnd) > 0;
+                        const showMore = !bookingPending;
+                        const slot4 = showShield ? (
+                          <div className="relative">
+                            <AdminSepayOverrideAction
+                              iconOnly
+                              busy={busyId === b._id}
+                              onConfirm={(body) => confirmBookingTransferOverride(b, body)}
+                            />
+                          </div>
+                        ) : showRefund ? (
+                          <button
+                            type="button"
+                            title={`Đã hoàn ${vnd(b.cancelRefundAmountVnd)} cho học viên`}
+                            disabled={busyId === b._id}
+                            onClick={() => void confirmBookingRefund(b)}
+                            className="inline-flex size-9 items-center justify-center rounded-xl border border-sky-200 bg-sky-50 text-sky-700 transition hover:bg-sky-100 disabled:opacity-50"
+                          >
+                            <Banknote size={16} />
+                          </button>
+                        ) : showMore ? (
+                          <div className="relative">
+                            <button
+                              type="button"
+                              title="Đổi trạng thái"
+                              disabled={busyId === b._id}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setStatusMenuId((cur) => (cur === b._id ? "" : String(b._id)));
+                              }}
+                              className="inline-flex size-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 transition hover:bg-slate-50 disabled:opacity-50"
+                            >
+                              <MoreHorizontal size={16} />
+                            </button>
+                            {statusMenuId === b._id ? (
+                              <div
+                                className="absolute right-0 top-full z-30 mt-1 min-w-[10.5rem] rounded-xl border border-slate-200 bg-white py-1 shadow-lg"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                {BOOKING_STATUS_MENU.filter(
+                                  (o) =>
+                                    o.value !== b.status &&
+                                    (!o.requiresPaid || pst === "paid" || bookingAmount(b) <= 0),
+                                ).map((o) => (
+                                  <button
+                                    key={o.value}
+                                    type="button"
+                                    className="block w-full px-3 py-2 text-left text-xs font-medium text-slate-700 hover:bg-violet-50"
+                                    onClick={() => {
+                                      setStatusMenuId("");
+                                      void handleStatusChange(b._id, o.value, b.status || "pending");
+                                    }}
+                                  >
+                                    {o.label}
+                                  </button>
+                                ))}
+                              </div>
+                            ) : null}
+                          </div>
+                        ) : null;
+
+                        return (
+                          <div className="relative ml-auto flex w-full max-w-[11.5rem] justify-end gap-1">
+                            <ActionSlot>
+                              <Link
+                                to={`/admin/bookings/${b._id}`}
+                                title="Xem chi tiết"
+                                className="inline-flex size-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 transition hover:border-slate-300 hover:text-slate-900"
+                              >
+                                <Eye size={16} />
+                              </Link>
+                            </ActionSlot>
+                            <ActionSlot>
+                              {bookingPending && canApprove ? (
+                                <button
+                                  type="button"
+                                  title="Duyệt buổi (đã thanh toán)"
+                                  disabled={busyId === b._id}
+                                  onClick={() =>
+                                    void handleStatusChange(b._id, "confirmed", b.status || "pending")
+                                  }
+                                  className="inline-flex size-9 items-center justify-center rounded-xl border border-emerald-200 bg-emerald-50 text-emerald-700 transition hover:bg-emerald-100 disabled:opacity-50"
+                                >
+                                  <CheckCircle size={18} />
+                                </button>
+                              ) : bookingPending && pst === "pending" ? (
+                                <span
+                                  className="inline-flex size-9 items-center justify-center rounded-xl border border-dashed border-slate-200 bg-slate-50 text-slate-300"
+                                  title="Chờ thanh toán (SePay) trước khi duyệt buổi"
+                                >
+                                  <CheckCircle size={18} />
+                                </span>
+                              ) : null}
+                            </ActionSlot>
+                            <ActionSlot>
+                              {bookingPending ? (
+                                <button
+                                  type="button"
+                                  title="Hủy đơn"
+                                  disabled={busyId === b._id}
+                                  onClick={() =>
+                                    void handleStatusChange(b._id, "cancelled", b.status || "pending")
+                                  }
+                                  className="inline-flex size-9 items-center justify-center rounded-xl border border-rose-200 bg-rose-50 text-rose-700 transition hover:bg-rose-100 disabled:opacity-50"
+                                >
+                                  <XCircle size={18} />
+                                </button>
+                              ) : null}
+                            </ActionSlot>
+                            <ActionSlot>{slot4}</ActionSlot>
+                          </div>
+                        );
+                      })()}
                     </td>
                   </tr>
                   );
