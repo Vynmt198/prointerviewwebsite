@@ -22,6 +22,9 @@ import { getLatestCVAnalysisAsync, getUploadedCV, saveUploadedCV } from "../../u
 import { hasAuthCredentials, isLoggedIn } from "../../utils/auth";
 import { buildLoginPath } from "../../utils/authGate";
 import { generateInterviewQuestions, extractCvTextFromFile, createInterviewSession } from "../../utils/interviewsApi";
+import { InterviewHistoryPanel } from "../../components/interview/InterviewHistoryPanel";
+import { InterviewPageTabs } from "../../components/interview/InterviewPageTabs";
+import { CV_JD_CARD_CLASS } from "../../components/cv/CvJdAnalysisFrame";
 import { CUSTOMER_SHELL_GUTTER, CUSTOMER_SHELL_MAX } from "../../components/layout/customerShellLayout";
 import { CustomerPageHeader } from "../../components/layout/CustomerPageHeader";
 
@@ -226,6 +229,7 @@ export function Interview() {
   const [uploadedFile, setUploadedFile] = useState(null);
   const [hrGender, setHrGender] = useState(null);
   const [flowStep, setFlowStep] = useState(1);
+  const [setupSubTab, setSetupSubTab] = useState("analysis"); // "analysis" | "history"
   const [loadingStep, setLoadingStep] = useState(null); // null | "extracting_cv" | "generating_questions" | "creating_session"
   const [extractWarning, setExtractWarning] = useState("");
   const [showBrowserWarning, setShowBrowserWarning] = useState(false);
@@ -468,8 +472,16 @@ export function Interview() {
             subtitle="Đưa CV, chọn HR AI — luyện trả lời sát hồ sơ, góp ý từng câu, biết sửa gì trước khi gặp HR công ty."
           />
 
-        <div className="w-full rounded-md border border-violet-200/80 bg-white px-4 py-5 shadow-sm sm:px-6 sm:py-6">
-        <InterviewStepBar current={flowStep} />
+        <div className={CV_JD_CARD_CLASS}>
+          <InterviewPageTabs activeTab={setupSubTab} onTabChange={setSetupSubTab} />
+
+          {setupSubTab === "history" ? (
+            <div className="px-6 py-5 sm:px-8 sm:py-6">
+              <InterviewHistoryPanel />
+            </div>
+          ) : (
+            <div className="px-4 py-5 sm:px-6 sm:py-6">
+              <InterviewStepBar current={flowStep} />
 
         {flowStep === 1 && (
         <section className="space-y-5">
@@ -489,82 +501,80 @@ export function Interview() {
             </p>
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-2">
-            <button
-              type="button"
-              aria-pressed={option === "A"}
-              onClick={handleSelectAnalyzedCv}
-              disabled={!latestCV}
-              className={`${optBase} ${option === "A" ? optOn : optIdle} ${!latestCV ? "cursor-not-allowed opacity-55" : ""}`}
-            >
-              <div className="flex items-start gap-3">
-                <SelectOptionRing selected={option === "A"} />
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2">
-                    <FileStack className="h-5 w-5 shrink-0 text-[#6d2fd6]" {...IS} />
-                    <p className="font-bold text-violet-950">CV đã phân tích</p>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <button
+                  type="button"
+                  aria-pressed={option === "A"}
+                  onClick={handleSelectAnalyzedCv}
+                  disabled={!latestCV}
+                  className={`${optBase} ${option === "A" ? optOn : optIdle} ${!latestCV ? "cursor-not-allowed opacity-55" : ""}`}
+                >
+                  <div className="flex items-start gap-3">
+                    <SelectOptionRing selected={option === "A"} />
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <FileStack className="h-5 w-5 shrink-0 text-[#6d2fd6]" {...IS} />
+                        <p className="font-bold text-violet-950">CV đã phân tích</p>
+                      </div>
+                      <p className="mt-0.5 text-xs text-violet-600">
+                        {latestCV ? "Kết quả CV + JD đã lưu trên hệ thống" : "Cần phân tích CV trước"}
+                      </p>
+                    </div>
                   </div>
-                  <p className="mt-0.5 text-xs text-violet-600">
-                    {latestCV
-                      ? "Kết quả CV + JD đã lưu trên hệ thống"
-                      : "Cần phân tích CV trước"}
-                  </p>
-                </div>
-              </div>
-            </button>
+                </button>
 
-            <button
-              type="button"
-              aria-pressed={option === "B"}
-              onClick={handleSelectUploadCv}
-              className={`${optBase} ${option === "B" ? optOn : optIdle}`}
-            >
-              <div className="flex items-start gap-3">
-                <SelectOptionRing selected={option === "B"} />
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2">
-                    <CloudUpload className="h-5 w-5 shrink-0 text-[#6d2fd6]" {...IS} />
-                    <p className="font-bold text-violet-950">Tải CV mới</p>
+                <button
+                  type="button"
+                  aria-pressed={option === "B"}
+                  onClick={handleSelectUploadCv}
+                  className={`${optBase} ${option === "B" ? optOn : optIdle}`}
+                >
+                  <div className="flex items-start gap-3">
+                    <SelectOptionRing selected={option === "B"} />
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <CloudUpload className="h-5 w-5 shrink-0 text-[#6d2fd6]" {...IS} />
+                        <p className="font-bold text-violet-950">Tải CV mới</p>
+                      </div>
+                      <p className="mt-0.5 text-xs text-violet-600">Chọn thẻ, rồi upload file trong ô bên dưới</p>
+                    </div>
                   </div>
-                  <p className="mt-0.5 text-xs text-violet-600">Chọn thẻ, rồi upload file trong ô bên dưới</p>
-                </div>
+                </button>
               </div>
-            </button>
-          </div>
 
-          {!latestCV && (
-            <p className="text-xs text-violet-600">
-              Chưa có phân tích CV.{" "}
+              {!latestCV && (
+                <p className="text-xs text-violet-600">
+                  Chưa có phân tích CV.{" "}
+                  <button
+                    type="button"
+                    onClick={() => navigate("/cv-analysis")}
+                    className="font-semibold text-[#6d2fd6] hover:underline"
+                  >
+                    Phân tích CV trước
+                  </button>
+                  {" "}hoặc chọn Tải CV mới.
+                </p>
+              )}
+
+              <SourceDetailPanel
+                option={option}
+                latestCV={latestCV}
+                cvUploaded={cvUploaded}
+                uploadedFile={uploadedFile}
+                onPickFile={openCvFilePicker}
+              />
+
               <button
                 type="button"
-                onClick={() => navigate("/cv-analysis")}
-                className="font-semibold text-[#6d2fd6] hover:underline"
+                onClick={handleContinueToHr}
+                disabled={!canProceedSetup}
+                className={`flex w-full items-center justify-center gap-2 rounded-md py-3.5 text-sm font-bold transition-all ${
+                  canProceedSetup ? CTA_LIME : "cursor-not-allowed bg-violet-100 text-violet-400"
+                }`}
               >
-                Phân tích CV trước
+                Tiếp tục — Chọn HR
+                <ArrowRight className="h-4 w-4" {...IS} />
               </button>
-              {" "}hoặc chọn Tải CV mới.
-            </p>
-          )}
-
-          <SourceDetailPanel
-            option={option}
-            latestCV={latestCV}
-            cvUploaded={cvUploaded}
-            uploadedFile={uploadedFile}
-            onPickFile={openCvFilePicker}
-          />
-
-          <button
-            type="button"
-            onClick={handleContinueToHr}
-            disabled={!canProceedSetup}
-            className={`flex w-full items-center justify-center gap-2 rounded-md py-3.5 text-sm font-bold transition-all ${
-              canProceedSetup ? CTA_LIME : "cursor-not-allowed bg-violet-100 text-violet-400"
-            }`}
-          >
-            Tiếp tục — Chọn HR
-            <ArrowRight className="h-4 w-4" {...IS} />
-          </button>
         </section>
         )}
 
@@ -643,6 +653,8 @@ export function Interview() {
           </button>
         </section>
         )}
+            </div>
+          )}
         </div>
         </div>
       </div>

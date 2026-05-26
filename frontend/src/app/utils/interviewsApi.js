@@ -153,6 +153,29 @@ export async function getInterviewSession(sessionId) {
   }
 }
 
+/**
+ * GET /api/interviews/sessions — Lịch sử phỏng vấn
+ * @returns {{success: boolean, list?: any[], error?: string}}
+ */
+export async function fetchInterviewSessions() {
+  if (!hasAuthCredentials()) {
+    return { success: false, error: "Chưa đăng nhập." };
+  }
+  try {
+    const res = await authFetch("/api/interviews/sessions", {
+      method: "GET",
+      headers: { Accept: "application/json" },
+    });
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok || !body.success) {
+      return { success: false, error: body.error || `Lỗi ${res.status}` };
+    }
+    return { success: true, list: body.list || [] };
+  } catch {
+    return { success: false, error: "Không kết nối được backend." };
+  }
+}
+
 export async function completeInterviewSession(sessionId) {
   if (!hasAuthCredentials() || !sessionId) return { success: false, error: "Thiếu phiên." };
   try {
