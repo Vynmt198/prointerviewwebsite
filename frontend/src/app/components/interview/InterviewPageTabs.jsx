@@ -1,12 +1,12 @@
 import { Search, RotateCcw as History } from "lucide-react";
 
 const TABS = [
-  { id: "analysis", label: "Phân tích", icon: Search },
+  { id: "analysis", label: "Phỏng vấn", icon: Search },
   { id: "history", label: "Lịch sử", icon: History },
 ];
 
 /**
- * Tab Phân tích / Lịch sử — cùng style với CvJdAnalysisTabs (đầu card trắng).
+ * Tab Phỏng vấn / Lịch sử — cùng style với CvJdAnalysisTabs (đầu card trắng).
  * @param {"analysis"|"history"} activeTab
  */
 export function InterviewPageTabs({ activeTab, onTabChange }) {
