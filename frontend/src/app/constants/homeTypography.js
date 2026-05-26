@@ -2,7 +2,8 @@
  * Cỡ chữ thống nhất — các section Home (showcase, how-it-works, testimonials).
  * Hero headline riêng (lớn hơn section).
  */
-export const HOME_HERO_TITLE_CLAMP = "clamp(2.85rem, 7.6vw, 5.35rem)";
+// Hero headline — tăng lại 1 bậc so với bản trước
+export const HOME_HERO_TITLE_CLAMP = "clamp(2.2rem, 6.1vw, 4.45rem)";
 export const HOME_SECTION_TITLE_CLAMP = "clamp(2.25rem, 3.5vw, 3.25rem)";
 /** CV showcase — lớn hơn section chuẩn 0.1rem */
 export const HOME_CV_SHOWCASE_TITLE_CLAMP =

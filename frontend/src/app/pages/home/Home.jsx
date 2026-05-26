@@ -125,7 +125,7 @@ function HeroInterviewVideoCard() {
   const starBars = [78, 92, 65, 88, 72];
 
   return (
-    <div className="relative mx-auto mt-8 w-full max-w-[min(100%,320px)] -translate-y-[2rem] overflow-visible sm:max-w-[380px] lg:mx-0 lg:mt-0 lg:max-w-[480px] lg:-ml-2 lg:justify-self-end xl:max-w-[520px]">
+    <div className="relative mx-auto mt-8 w-full max-w-[min(100%,251px)] -translate-y-[2rem] translate-x-[4px] overflow-visible sm:max-w-[311px] lg:mx-0 lg:mt-0 lg:max-w-[411px] lg:-ml-2 lg:justify-self-end xl:max-w-[451px]">
       <div className="hero-video-frame relative rounded-[1.65rem] bg-white p-2 shadow-[0_16px_44px_rgba(99,14,212,0.14)] sm:rounded-[1.85rem] sm:p-2.5">
         <div
           className="relative overflow-hidden rounded-[1.2rem] bg-slate-100 sm:rounded-[1.35rem]"
@@ -353,6 +353,12 @@ export function Home() {
           display: block;
           line-height: 0.98;
         }
+        .hero-title-inline {
+          display: inline-flex !important;
+          align-items: baseline;
+          gap: 0.2em;
+          white-space: nowrap;
+        }
         .cute-heading {
           letter-spacing: -0.04em;
           font-weight: 850;
@@ -576,7 +582,7 @@ export function Home() {
         <div className={`relative z-10 ${HOME_SHELL_MAX}`}>
           <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(300px,520px)] lg:items-center lg:gap-x-12 xl:gap-x-16">
             <div className="order-1 min-w-0 text-left lg:py-2">
-              <div className="hero-intro-badge mb-5 -translate-y-[2.5rem]">
+              <div className="hero-intro-badge mb-5 -translate-y-[4.5rem]">
                 <div
                   className="inline-flex items-center gap-2 rounded-full border-2 bg-white px-3 py-1.5 text-xs font-bold sm:text-sm"
                   style={{
@@ -596,30 +602,32 @@ export function Home() {
                     fontSize: HOME_HERO_TITLE_CLAMP,
                   }}
                 >
-                  <span className="text-slate-900">{HOME_COPY.titleLine1}</span>
-                  <span className="text-slate-900">
+                  <span className="hero-title-inline text-slate-900">
+                    <span>{HOME_COPY.titleLine1}</span>
                     <span style={{ color: "#8037f4" }}>{HOME_COPY.titleHighlight}</span>
-                    <span> {HOME_COPY.titleLine2Suffix}</span>
                   </span>
-                  {HOME_COPY.titleExtraLines.map((line) => (
-                    <span key={line} className="text-slate-900">
-                      {line}
-                    </span>
-                  ))}
+                  <span className="hero-title-inline text-slate-900">
+                    <span>{HOME_COPY.titleLine2Suffix}</span>
+                    <span>{HOME_COPY.titleExtraLines?.[0] ?? ""}</span>
+                  </span>
+                  <span className="hero-title-inline text-slate-900">
+                    <span>{HOME_COPY.titleExtraLines?.[1] ?? ""}</span>
+                    <span>{HOME_COPY.titleExtraLines?.[2] ?? ""}</span>
+                  </span>
                 </h1>
 
-                <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:justify-start">
+                <div className="mb-5 flex flex-col gap-3 translate-y-[2rem] sm:flex-row sm:justify-start">
                   <button
                     type="button"
                     onClick={() => navigate("/interview")}
-                    className="inline-flex items-center justify-center gap-2 rounded-full px-6 py-3 text-lg font-black transition-all hover:brightness-105 active:scale-[0.98] hover:-translate-y-0.5 sm:text-xl"
+                    className="inline-flex items-center justify-center gap-2 rounded-full px-5 py-2.5 text-base font-black transition-all hover:brightness-105 active:scale-[0.98] hover:-translate-y-0.5 sm:text-lg"
                     style={{
                       background: "#93f72b",
                       color: "#0f172a",
                       boxShadow: "0 8px 22px rgba(147, 247, 43, 0.35)",
                     }}
                   >
-                    <Lightning className="w-5 h-5" />
+                    <Lightning className="h-4 w-4" />
                     {HOME_COPY.cta}
                   </button>
                 </div>
