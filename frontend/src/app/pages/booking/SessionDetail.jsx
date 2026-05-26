@@ -681,15 +681,16 @@ export function SessionDetail() {
 
   return (
     <div className="mx-auto max-w-5xl p-6 pb-12 antialiased">
-      {/* ── Back ── */}
-      <button
-        type="button"
-        onClick={() => navigate(-1)}
-        className="group -ml-3 mb-6 flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-900"
-      >
-        <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
-        Quay lại
-      </button>
+      {state !== "done" ? (
+        <button
+          type="button"
+          onClick={() => navigate(-1)}
+          className="group -ml-3 mb-6 flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-900"
+        >
+          <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
+          Quay lại
+        </button>
+      ) : null}
 
       {canReportNoShow && !mentorActionMode ? (
         <div className="mb-6 rounded-2xl border border-red-200 bg-red-50/90 p-4">
@@ -1345,178 +1346,134 @@ export function SessionDetail() {
       {/*               STATE: DONE                     */}
       {/* ══════════════════════════════════════════════ */}
       {state === "done" && (
-        <div className="grid lg:grid-cols-3 gap-5">
-          <div className="lg:col-span-2 space-y-5">
+        <div className="grid gap-5 lg:grid-cols-3">
+          <div className="space-y-5 lg:col-span-2">
 
             {/* Done header */}
-            <div
-              className="rounded-2xl p-5 flex items-center gap-4"
-              style={{ background: "linear-gradient(135deg, #0E0922 0%, #1a0d35 100%)", border: "1px solid rgba(180,240,0,0.2)" }}
-            >
-              <div className="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0"
-                style={{ background: "rgba(180,240,0,0.12)" }}>
-                <Trophy className="w-6 h-6 text-[#B4F000]" />
+            <div className="flex items-center gap-4 rounded-xl border border-violet-200/80 bg-white p-5 shadow-sm">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-violet-100">
+                <Trophy className="h-6 w-6 text-[#6d2fd6]" />
               </div>
-              <div className="flex-1">
-                <p className="text-white font-bold" style={{ fontSize: "1.05rem" }}>Buổi phỏng vấn đã hoàn thành 🎉</p>
-                <p className="text-white/50 text-sm">{sessionData.date} · {sessionData.time} – {sessionData.endTime} · với {sessionData.mentorName}</p>
+              <div className="min-w-0 flex-1">
+                <p className="text-base font-bold text-violet-950">Buổi phỏng vấn đã hoàn thành</p>
+                <p className="mt-0.5 text-sm text-violet-600">
+                  {sessionData.date} · {sessionData.time} – {sessionData.endTime} · với {sessionData.mentorName}
+                </p>
               </div>
             </div>
 
             {/* Review CTA */}
             {sessionData?.isReviewed ? (
-              <motion.div 
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-                className="bg-white rounded-[2.5rem] p-12 shadow-[0_30px_70px_rgba(0,0,0,0.03)] border border-slate-100 text-center relative overflow-hidden group"
-              >
-                <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-indigo-50/40 to-violet-50/20 blur-[100px] -z-10 group-hover:scale-125 transition-transform duration-1000" />
-                
-                <div className="w-24 h-24 rounded-[2rem] bg-indigo-50/50 flex items-center justify-center mx-auto mb-8 shadow-inner">
-                  <motion.div
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    transition={{ delay: 0.4, type: "spring", stiffness: 200 }}
-                  >
-                    <CheckCircle className="w-12 h-12 text-indigo-500" />
-                  </motion.div>
+              <div className="rounded-xl border border-violet-200/80 bg-white p-8 text-center shadow-sm sm:p-10">
+                <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-lg bg-violet-100">
+                  <CheckCircle className="h-8 w-8 text-[#6d2fd6]" />
                 </div>
-                
-                <h3 className="text-2xl font-black text-slate-900 mb-4 tracking-tight">Cảm ơn bạn đã đóng góp! ✨</h3>
-                <p className="text-slate-500 text-base font-medium mb-10 leading-relaxed max-w-md mx-auto">
+                <h3 className="mb-2 text-xl font-bold text-violet-950">Cảm ơn bạn đã đóng góp</h3>
+                <p className="mx-auto mb-6 max-w-md text-sm leading-relaxed text-violet-600">
                   Đánh giá của bạn đã được gửi thành công. Những chia sẻ này giúp cộng đồng ngày càng phát triển hơn.
                 </p>
-                
-                <div className="flex items-center justify-center gap-2 px-8 py-4 bg-slate-50/80 rounded-[1.5rem] w-fit mx-auto border border-slate-100 transition-colors hover:bg-slate-100">
-                  <Star className="w-4 h-4 text-amber-400" fill="currentColor" />
-                  <span className="text-[11px] font-black text-slate-500 uppercase tracking-[0.2em]">Đã hoàn thành đánh giá</span>
+                <div className="mx-auto inline-flex items-center gap-2 rounded-lg border border-violet-200/80 bg-violet-50/60 px-4 py-2.5">
+                  <Star className="h-4 w-4 text-amber-500" fill="currentColor" />
+                  <span className="text-xs font-bold uppercase tracking-wide text-violet-700">Đã hoàn thành đánh giá</span>
                 </div>
-              </motion.div>
+              </div>
             ) : (
-              <div className="bg-white rounded-[2.5rem] p-12 shadow-[0_30px_70px_rgba(0,0,0,0.03)] border border-slate-100 relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-indigo-50/40 to-violet-50/20 blur-[100px] -z-10" />
-                
+              <div className="rounded-xl border border-violet-200/80 bg-white p-8 shadow-sm sm:p-10">
                 <div className="flex flex-col items-center text-center">
-                  <div className="w-20 h-20 rounded-[1.8rem] flex items-center justify-center mb-8 shadow-lg shadow-amber-900/5 bg-white border border-amber-50"
-                    style={{ background: "linear-gradient(135deg,rgba(255,214,0,0.08),rgba(255,214,0,0.02))" }}>
-                    <Star className="w-10 h-10" style={{ color: "#FFD600" }} fill="#FFD600" />
+                  <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-lg border border-amber-200/80 bg-amber-50">
+                    <Star className="h-7 w-7 text-amber-500" fill="currentColor" />
                   </div>
-                  
-                  <div className="mb-10">
-                    <h3 className="text-2xl font-black text-slate-900 mb-3 tracking-tight">
-                      Bạn thấy buổi phỏng vấn thế nào?
-                    </h3>
-                    <p className="text-slate-500 text-base font-medium leading-relaxed max-w-md">
-                      Chia sẻ trải nghiệm giúp <span className="text-indigo-600 font-bold">{sessionData.mentorName}</span> và cộng đồng.
-                    </p>
-                  </div>
+                  <h3 className="mb-2 text-xl font-bold text-violet-950">Bạn thấy buổi phỏng vấn thế nào?</h3>
+                  <p className="mb-8 max-w-md text-sm leading-relaxed text-violet-600">
+                    Chia sẻ trải nghiệm giúp{" "}
+                    <span className="font-bold text-[#6d2fd6]">{sessionData.mentorName}</span> và cộng đồng.
+                  </p>
 
-                  {/* Interactive Star Picker */}
-                  <div className="flex gap-4 mb-12">
-                    {[1,2,3,4,5].map(i => (
+                  <div className="mb-8 flex gap-2 sm:gap-3">
+                    {[1, 2, 3, 4, 5].map((i) => (
                       <button
                         key={i}
-                        onClick={() => navigate(`/review/${sessionData.sessionId}`, { state: { initialRating: i } })}
-                        className="transition-all hover:scale-125 active:scale-90 group"
+                        type="button"
+                        onClick={() =>
+                          navigate(`/review/${sessionData.sessionId}`, { state: { initialRating: i } })
+                        }
+                        className="rounded-lg p-1 transition hover:scale-105 active:scale-95"
+                        aria-label={`Đánh giá ${i} sao`}
                       >
-                        <Star 
-                          className="w-14 h-14 transition-all duration-300" 
-                          fill="none" 
-                          style={{ color: "#F1F5F9" }} 
-                          onMouseEnter={(e) => {
-                            const siblings = e.currentTarget.parentElement.parentElement.querySelectorAll('svg');
-                            siblings.forEach((s, idx) => {
-                              if (idx < i) {
-                                s.style.color = "#FFD600";
-                                s.setAttribute('fill', '#FFD600');
-                                s.style.filter = "drop-shadow(0 0 8px rgba(255,214,0,0.4))";
-                              }
-                            });
-                          }}
-                          onMouseLeave={(e) => {
-                            const siblings = e.currentTarget.parentElement.parentElement.querySelectorAll('svg');
-                            siblings.forEach((s) => {
-                              s.style.color = "#F1F5F9";
-                              s.setAttribute('fill', 'none');
-                              s.style.filter = "none";
-                            });
-                          }}
-                        />
+                        <Star className="h-10 w-10 text-violet-200 transition-colors hover:text-amber-400 sm:h-11 sm:w-11" />
                       </button>
                     ))}
                   </div>
 
                   <button
+                    type="button"
                     onClick={() => navigate(`/review/${sessionData.sessionId}`)}
-                    className="w-full py-6 rounded-[2rem] font-black text-lg text-white shadow-2xl shadow-indigo-900/20 transition-all hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-3"
-                    style={{ background: "#8037f4" }}
+                    className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#6d2fd6] py-3.5 text-sm font-bold text-white shadow-sm transition hover:brightness-110"
                   >
-                    Viết đánh giá ngay <CaretRight className="w-5 h-5" />
+                    Viết đánh giá ngay <CaretRight className="h-4 w-4" />
                   </button>
-                  
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mt-8">
-                    Chỉ mất 1 phút · Đánh giá của bạn rất quan trọng
-                  </p>
+                  <p className="mt-4 text-xs font-medium text-violet-500">Chỉ mất 1 phút · Đánh giá của bạn rất quan trọng</p>
                 </div>
               </div>
             )}
 
-            {/* Luxury Minimalist Mentor Feedback */}
-            <div className="space-y-10">
-              <div className="relative overflow-hidden bg-white rounded-[2.5rem] p-10 shadow-[0_20px_50px_rgba(0,0,0,0.04)] border border-slate-100">
-                <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-indigo-50/50 to-violet-50/30 blur-3xl -z-10" />
-                
-                <div className="mb-10">
-                  <h5 className="text-[10px] font-black text-indigo-500 uppercase tracking-[0.3em] mb-3">KẾT QUẢ ĐÁNH GIÁ</h5>
-                  <h2 className="text-2xl font-black text-slate-900 tracking-tight">Nhận xét từ chuyên gia</h2>
-                </div>
-                
-                <div className="space-y-1">
-                  {(() => {
-                    const raw = sessionData.mentorNotes || "";
-                    if (!raw) return (
-                      <div className="py-10 text-center bg-slate-50/50 rounded-3xl border border-dashed border-slate-200">
-                        <p className="text-sm text-slate-400 font-semibold tracking-tight">Mentor đang hoàn thiện bản đánh giá chuyên sâu cho bạn...</p>
+            {/* Mentor feedback */}
+            <div className="rounded-xl border border-violet-200/80 bg-white p-6 shadow-sm sm:p-8">
+              <p className="mb-1 text-[10px] font-bold uppercase tracking-wider text-[#6d2fd6]">Kết quả đánh giá</p>
+              <h2 className="mb-6 text-lg font-bold text-violet-950">Nhận xét từ chuyên gia</h2>
+              <div className="space-y-1">
+                {(() => {
+                  const raw = sessionData.mentorNotes || "";
+                  if (!raw) {
+                    return (
+                      <div className="rounded-lg border border-dashed border-violet-200 bg-violet-50/40 py-8 text-center">
+                        <p className="text-sm font-medium text-violet-600">
+                          Mentor đang hoàn thiện bản đánh giá chuyên sâu cho bạn...
+                        </p>
                       </div>
                     );
-                    
-                    const sections = raw.split(/\n/);
-                    return sections.map((line, idx) => {
-                      const trimmed = line.trim();
-                      if (!trimmed) return null;
-                      
-                      const cleanLine = trimmed.replace(/^[🎯💪🚀💡📝]\s*/, "");
-                      
-                      if (cleanLine.includes(":")) {
-                         const [title, ...contentParts] = cleanLine.split(":");
-                         const content = contentParts.join(":").trim();
-                         return (
-                           <div key={idx} className="group py-6 first:pt-0 last:pb-0 border-b border-slate-50 last:border-0">
-                             <div className="flex items-baseline gap-5">
-                                <div className="w-1.5 h-1.5 rounded-full bg-indigo-400 group-hover:scale-150 transition-transform" />
-                                <div className="flex-1">
-                                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">{title}</p>
-                                  <p className="text-base font-bold text-slate-800 leading-relaxed tracking-tight">{content}</p>
-                                </div>
-                             </div>
-                           </div>
-                         );
-                      }
+                  }
 
+                  const sections = raw.split(/\n/);
+                  return sections.map((line, idx) => {
+                    const trimmed = line.trim();
+                    if (!trimmed) return null;
+
+                    const cleanLine = trimmed.replace(/^[🎯💪🚀💡📝]\s*/, "");
+
+                    if (cleanLine.includes(":")) {
+                      const [title, ...contentParts] = cleanLine.split(":");
+                      const content = contentParts.join(":").trim();
                       return (
-                        <div key={idx} className="py-4 first:pt-0 last:pb-0">
-                          <p className="text-sm font-semibold text-slate-600 leading-relaxed">{cleanLine}</p>
+                        <div
+                          key={idx}
+                          className="border-b border-violet-100 py-4 first:pt-0 last:border-0 last:pb-0"
+                        >
+                          <div className="flex items-baseline gap-3">
+                            <div className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-[#6d2fd6]" />
+                            <div className="min-w-0 flex-1">
+                              <p className="mb-1 text-[10px] font-bold uppercase tracking-wide text-violet-500">
+                                {title}
+                              </p>
+                              <p className="text-sm font-semibold leading-relaxed text-violet-900">{content}</p>
+                            </div>
+                          </div>
                         </div>
                       );
-                    });
-                  })()}
-                </div>
+                    }
+
+                    return (
+                      <div key={idx} className="py-3 first:pt-0 last:pb-0">
+                        <p className="text-sm leading-relaxed text-violet-800">{cleanLine}</p>
+                      </div>
+                    );
+                  });
+                })()}
               </div>
             </div>
 
             {/* Next steps */}
-            <div className="card-premium p-5">
+            <div className="rounded-xl border border-violet-200/80 bg-white p-5 shadow-sm">
               <p className="font-semibold text-gray-800 text-sm mb-4">Tiếp theo sau buổi phỏng vấn</p>
               <div className="space-y-3">
                 {[
@@ -1529,77 +1486,98 @@ export function SessionDetail() {
                   { icon: Calendar, color: "#B4F000", bg: "rgba(180,240,0,0.10)",
                     title: "Đặt lịch buổi tiếp theo", desc: "Tiếp tục luyện tập để chinh phục phỏng vấn",
                     action: () => navigate("/mentors"), label: "Tìm mentor →" },
-                ].map(item => (
-                  <div key={item.title} onClick={item.action}
-                    className="flex items-center gap-4 p-4 rounded-2xl cursor-pointer transition-all hover:shadow-sm"
-                    style={{ border: "1.5px solid #F3F4F6" }}>
-                    <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: item.bg }}>
-                      <item.icon className="w-5 h-5" style={{ color: item.color }} />
+                ].map((item) => (
+                  <div
+                    key={item.title}
+                    role="button"
+                    tabIndex={0}
+                    onClick={item.action}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") item.action();
+                    }}
+                    className="flex cursor-pointer items-center gap-4 rounded-lg border border-violet-100 p-4 transition hover:border-violet-200 hover:bg-violet-50/40"
+                  >
+                    <div
+                      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg"
+                      style={{ background: item.bg }}
+                    >
+                      <item.icon className="h-5 w-5" style={{ color: item.color }} />
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-gray-900 font-semibold text-sm">{item.title}</p>
-                      <p className="text-gray-400 text-xs">{item.desc}</p>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-semibold text-violet-950">{item.title}</p>
+                      <p className="text-xs text-violet-600">{item.desc}</p>
                     </div>
-                    <span className="text-xs font-bold flex-shrink-0" style={{ color: item.color }}>{item.label}</span>
+                    <span className="shrink-0 text-xs font-bold" style={{ color: item.color }}>
+                      {item.label}
+                    </span>
                   </div>
                 ))}
               </div>
             </div>
 
-            <button onClick={() => navigate("/")}
-              className="w-full py-4 rounded-2xl font-bold text-sm text-white flex items-center justify-center gap-2"
-              style={{ background: "#8037f4", boxShadow: "0 6px 20px rgba(128, 55, 244,0.3)" }}>
-              Về trang chủ <CaretRight className="w-4 h-4" />
+            <button
+              type="button"
+              onClick={() => navigate("/")}
+              className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#6d2fd6] py-3.5 text-sm font-bold text-white shadow-sm transition hover:brightness-110"
+            >
+              Về trang chủ <CaretRight className="h-4 w-4" />
             </button>
           </div>
 
           {/* Right col */}
           <div className="space-y-4">
-            <div className="card-premium p-5">
-              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4">Tóm tắt buổi phỏng vấn</p>
-              <div className="flex items-center gap-3 mb-4">
-                <img src={sessionData.mentorAvatar} alt={sessionData.mentorName}
-                  className="w-12 h-12 rounded-2xl object-cover" />
+            <div className="rounded-xl border border-violet-200/80 bg-white p-5 shadow-sm">
+              <p className="mb-4 text-xs font-bold uppercase tracking-wider text-violet-500">
+                Tóm tắt buổi phỏng vấn
+              </p>
+              <div className="mb-4 flex items-center gap-3">
+                <img
+                  src={sessionData.mentorAvatar}
+                  alt={sessionData.mentorName}
+                  className="h-12 w-12 rounded-lg object-cover"
+                />
                 <div>
-                  <p className="text-gray-900 font-bold text-sm">{sessionData.mentorName}</p>
-                  <p className="text-gray-500 text-xs">{sessionData.mentorTitle}</p>
+                  <p className="text-sm font-bold text-violet-950">{sessionData.mentorName}</p>
+                  <p className="text-xs text-violet-600">{sessionData.mentorTitle}</p>
                 </div>
               </div>
-              <div className="space-y-2.5 pt-3 border-t border-gray-100">
+              <div className="space-y-2.5 border-t border-violet-100 pt-3">
                 {[
-                  { label: "Ngày",       value: sessionData.date },
-                  { label: "Giờ",        value: `${sessionData.time} – ${sessionData.endTime}` },
+                  { label: "Ngày", value: sessionData.date },
+                  { label: "Giờ", value: `${sessionData.time} – ${sessionData.endTime}` },
                   { label: "Thời lượng", value: "60 phút" },
-                  { label: "Vị trí",     value: sessionData.position },
-                  { label: "Phí",        value: `${sessionData.price.toLocaleString("vi")}đ` },
-                ].map(r => (
-                  <div key={r.label} className="flex justify-between text-sm">
-                    <span className="text-gray-400">{r.label}</span>
-                    <span className="text-gray-700 font-medium text-right max-w-[140px]">{r.value}</span>
+                  { label: "Vị trí", value: sessionData.position },
+                  { label: "Phí", value: `${sessionData.price.toLocaleString("vi")}đ` },
+                ].map((r) => (
+                  <div key={r.label} className="flex justify-between gap-3 text-sm">
+                    <span className="text-violet-500">{r.label}</span>
+                    <span className="max-w-[140px] text-right font-medium text-violet-900">{r.value}</span>
                   </div>
                 ))}
               </div>
             </div>
 
-            <div className="card-premium p-5">
-              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Trạng thái đánh giá</p>
+            <div className="rounded-xl border border-violet-200/80 bg-white p-5 shadow-sm">
+              <p className="mb-3 text-xs font-bold uppercase tracking-wider text-violet-500">Trạng thái đánh giá</p>
               {sessionData.isReviewed ? (
                 <div>
-                  <div className="flex items-center gap-1.5 mb-2">
-                    <div className="w-2 h-2 rounded-full" style={{ background: "#B4F000" }} />
-                    <span className="text-xs font-semibold" style={{ color: "#4a7a00" }}>Đã đánh giá mentor</span>
+                  <div className="mb-2 flex items-center gap-1.5">
+                    <div className="h-2 w-2 rounded-full bg-lime-500" />
+                    <span className="text-xs font-semibold text-lime-800">Đã đánh giá mentor</span>
                   </div>
-                  <p className="text-xs text-gray-500">Cảm ơn bạn đã gửi nhận xét sau buổi phỏng vấn.</p>
+                  <p className="text-xs text-violet-600">Cảm ơn bạn đã gửi nhận xét sau buổi phỏng vấn.</p>
                 </div>
               ) : (
                 <div>
-                  <div className="flex items-center gap-1.5 mb-3">
-                    <div className="w-2 h-2 rounded-full bg-amber-400" />
-                    <span className="text-xs font-semibold text-amber-600">Chờ đánh giá</span>
+                  <div className="mb-3 flex items-center gap-1.5">
+                    <div className="h-2 w-2 rounded-full bg-amber-400" />
+                    <span className="text-xs font-semibold text-amber-700">Chờ đánh giá</span>
                   </div>
-                  <button onClick={() => navigate(`/review/${sessionData.sessionId}`)}
-                    className="w-full py-2.5 rounded-xl text-sm font-bold transition-all"
-                    style={{ background: "#8037f4", color: "#fff" }}>
+                  <button
+                    type="button"
+                    onClick={() => navigate(`/review/${sessionData.sessionId}`)}
+                    className="w-full rounded-lg bg-[#6d2fd6] py-2.5 text-sm font-bold text-white transition hover:brightness-110"
+                  >
                     Đánh giá ngay
                   </button>
                 </div>
