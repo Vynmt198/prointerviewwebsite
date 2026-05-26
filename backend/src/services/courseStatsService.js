@@ -1,7 +1,6 @@
 import mongoose from "mongoose";
-
-const Course = mongoose.model("Course");
-const Enrollment = mongoose.model("Enrollment");
+import { Course } from "../models/Course.js";
+import { Enrollment } from "../models/Enrollment.js";
 
 /** Tăng số ghi danh đã thanh toán trên khóa (gọi khi enrollment chuyển sang paid). */
 export async function incrementCourseEnrollmentCount(courseId, session) {

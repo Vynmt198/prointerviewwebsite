@@ -1,7 +1,7 @@
 /**
  * Integration: reviewsService (pagination admin, visibility, mine).
  */
-import { describe, it, before, after } from "node:test";
+import { describe, it, before, after, beforeEach } from "node:test";
 import assert from "node:assert/strict";
 import mongoose from "mongoose";
 import { applyTestEnv, startMongoHarness, stopMongoHarness } from "../test_helpers/mongoTestHarness.js";
@@ -24,6 +24,15 @@ before(async () => {
 
 after(async () => {
   if (harness) await stopMongoHarness(harness);
+});
+
+beforeEach(async () => {
+  await Promise.all([
+    Review?.deleteMany?.({}),
+    Enrollment?.deleteMany?.({}),
+    Course?.deleteMany?.({}),
+    User?.deleteMany?.({}),
+  ]);
 });
 
 async function createCustomer() {
@@ -55,12 +64,11 @@ async function createPublishedCourse(mentorId = fakeMentorId()) {
 describe("listReviewsForAdmin", () => {
   it("paginates with page and limit", async () => {
     const user = await createCustomer();
-    const courseId = new mongoose.Types.ObjectId();
     for (let i = 0; i < 5; i += 1) {
       await Review.create({
         userId: user._id,
         targetType: "course",
-        targetId: courseId,
+        targetId: new mongoose.Types.ObjectId(),
         rating: 4,
         comment: `Review ${i}`,
       });
