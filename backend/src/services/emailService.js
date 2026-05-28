@@ -5,6 +5,16 @@ dotenv.config();
 
 import dns from "node:dns";
 
+// Render/PaaS thường không route IPv6 tới smtp.gmail.com → ENETUNREACH nếu DNS trả AAAA trước.
+if (typeof dns.setDefaultResultOrder === "function") {
+  dns.setDefaultResultOrder("ipv4first");
+}
+
+/** Chỉ resolve IPv4 cho SMTP (tránh connect tới 2404:6800:...::6d:587 trên Render). */
+function smtpLookup(hostname, _options, callback) {
+  dns.lookup(hostname, { family: 4, all: false }, callback);
+}
+
 export function isMailConfigured() {
   const user = (process.env.MAIL_USER || process.env.EMAIL_USER || "").trim();
   const pass = (process.env.MAIL_PASS || process.env.EMAIL_PASS || "").trim();
@@ -25,7 +35,7 @@ const getTransporter = () => {
     host: process.env.MAIL_HOST || "smtp.gmail.com",
     port: Number(process.env.MAIL_PORT) || 587,
     secure: false,
-    family: 4,
+    lookup: smtpLookup,
     connectionTimeout: 10000,
     greetingTimeout: 10000,
     socketTimeout: 10000,
@@ -190,9 +200,16 @@ export async function sendMentorFeedbackEmail(to, studentName, mentorName, sessi
     await initTransporter.verify();
     console.log("✔️ Server đã sẵn sàng gửi mail (SMTP OK)!");
   } catch (error) {
-    console.error("❌ LỖI CẤU HÌNH MAIL TRÊN SERVER:", error.message || error);
-    console.error(
-      "   Gợi ý: Gmail → bật 2FA → tạo App Password → dán vào MAIL_PASS (có thể bọc ngoặc kép nếu có dấu cách).",
-    );
+    const msg = String(error?.message || error);
+    console.error("❌ LỖI CẤU HÌNH MAIL TRÊN SERVER:", msg);
+    if (/ENETUNREACH|ECONNREFUSED|EHOSTUNREACH/i.test(msg) && /:587/.test(msg)) {
+      console.error(
+        "   Gợi ý: host PaaS không ra IPv6 tới Gmail — dùng MAIL_HOST=smtp.gmail.com và deploy bản code ép IPv4 (smtpLookup).",
+      );
+    } else {
+      console.error(
+        "   Gợi ý: Gmail → bật 2FA → tạo App Password → dán vào MAIL_PASS (có thể bọc ngoặc kép nếu có dấu cách).",
+      );
+    }
   }
 })();
