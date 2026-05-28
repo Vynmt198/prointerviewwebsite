@@ -20,8 +20,13 @@ import {
   GraduationCap,
   Lock,
   Zap as Lightning,
+  Activity,
+  Smile,
+  Focus,
+  Wind,
 } from "lucide-react";
 import { CourseRecommendations } from "../../components/courses/CourseRecommendations";
+import { BehavioralRadarChart, behaviorScoreColor, emotionLabel } from "../../components/interview/BehavioralRadarChart";
 import { getPlans } from "../../utils/auth";
 import { evaluateInterviewSession } from "../../utils/interviewsApi";
 import { CUSTOMER_SHELL_GUTTER } from "../../components/layout/customerShellLayout";
@@ -157,12 +162,15 @@ export function InterviewFeedback() {
   });
 
   // Real AI evaluation state
-  const [evaluating,   setEvaluating]   = useState(false);
-  const [realFeedback, setRealFeedback]  = useState(null);   // null = not loaded
-  const [sessionMeta,  setSessionMeta]   = useState({ position: "", duration: 0, overallComment: "" });
+  const [evaluating,           setEvaluating]           = useState(false);
+  const [realFeedback,         setRealFeedback]         = useState(null);
+  const [sessionMeta,          setSessionMeta]          = useState({ position: "", duration: 0, overallComment: "" });
+  const [behavioralSummary,    setBehavioralSummary]    = useState(null);
+  const [behavioralPerQuestion, setBehavioralPerQuestion] = useState([]);
 
   useEffect(() => {
-    const sessionId = location.state?.sessionId;
+    const sessionId = location.state?.sessionId
+      ?? sessionStorage.getItem("prointerview_sessionId");
     if (!sessionId) return;
 
     setEvaluating(true);
@@ -210,6 +218,8 @@ export function InterviewFeedback() {
                             : 0,
           overallComment: res.generalComment || "",
         });
+        if (res.behavioralSummary) setBehavioralSummary(res.behavioralSummary);
+        if (res.behavioralPerQuestion?.length) setBehavioralPerQuestion(res.behavioralPerQuestion);
       })
       .catch(() => {})
       .finally(() => setEvaluating(false));
@@ -469,6 +479,155 @@ export function InterviewFeedback() {
         </div>
       )}
 
+      {/* ── Behavioral Analysis Section ──────────────────────── */}
+      {behavioralSummary && (
+        <div className="mb-6 overflow-hidden rounded-2xl border border-violet-200/80 bg-white shadow-sm">
+          {/* Header */}
+          <div className="border-b border-violet-100 bg-violet-50/60 px-5 py-3.5">
+            <div className="flex items-center gap-2">
+              <Activity className="h-4 w-4 text-[#6E35E8]" />
+              <h2 className="text-sm font-bold text-violet-950">Phân tích hành vi &amp; Ngôn ngữ cơ thể</h2>
+              <span className="ml-auto rounded-full bg-violet-100 px-2.5 py-0.5 text-xs font-semibold text-[#630ed4]">
+                Tin cậy tổng hợp: {behavioralSummary.overallConfidenceScore?.toFixed(1) ?? "—"}/5
+              </span>
+            </div>
+          </div>
+
+          <div className="grid gap-6 p-5 sm:grid-cols-2">
+            {/* Left: Radar chart */}
+            <div>
+              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-violet-500">
+                Biểu đồ 6 chiều hành vi
+              </p>
+              <BehavioralRadarChart summary={behavioralSummary} />
+            </div>
+
+            {/* Right: Metric cards */}
+            <div className="flex flex-col gap-3">
+              {/* 6 dimension cards */}
+              {[
+                {
+                  icon: <Eye className="h-3.5 w-3.5" />,
+                  label: "Giao tiếp mắt",
+                  value: behavioralSummary.avgEyeContactScore,
+                  display: `${((behavioralSummary.avgEyeContactScore ?? 0) * 100).toFixed(0)}%`,
+                  tip: "Tỷ lệ thời gian nhìn vào camera (MediaPipe FaceMesh)",
+                },
+                {
+                  icon: <Focus className="h-3.5 w-3.5" />,
+                  label: "Tư thế đầu",
+                  value: behavioralSummary.avgHeadStabilityScore,
+                  display: `${((behavioralSummary.avgHeadStabilityScore ?? 0) * 100).toFixed(0)}%`,
+                  tip: "Mức độ ổn định vị trí đầu trong suốt buổi",
+                },
+                {
+                  icon: <SpeakerHigh className="h-3.5 w-3.5" />,
+                  label: "Sự lưu loát",
+                  value: (behavioralSummary.avgSilenceRatio ?? 0) < 0.10 ? 0.9
+                       : (behavioralSummary.avgSilenceRatio ?? 0) < 0.25 ? 0.65 : 0.3,
+                  display: `${((1 - (behavioralSummary.avgSilenceRatio ?? 0)) * 100).toFixed(0)}%`,
+                  tip: `Trung bình ${((behavioralSummary.avgSilenceRatio ?? 0) * 100).toFixed(0)}% thời gian im lặng`,
+                },
+                {
+                  icon: <Microphone className="h-3.5 w-3.5" />,
+                  label: "Tự tin giọng nói",
+                  value: (behavioralSummary.avgAmplitudeVariance ?? 0) > 0.07 ? 0.9
+                       : (behavioralSummary.avgAmplitudeVariance ?? 0) > 0.03 ? 0.65 : 0.3,
+                  display: (behavioralSummary.avgAmplitudeVariance ?? 0) > 0.07 ? "Biểu cảm"
+                         : (behavioralSummary.avgAmplitudeVariance ?? 0) > 0.03 ? "Bình thường" : "Đơn điệu",
+                  tip: "Độ biến thiên âm lượng — cao = giọng biểu cảm",
+                },
+                {
+                  icon: <Wind className="h-3.5 w-3.5" />,
+                  label: "Phản xạ trả lời",
+                  value: (behavioralSummary.avgResponseLatencyMs ?? 0) < 3000 ? 0.9
+                       : (behavioralSummary.avgResponseLatencyMs ?? 0) < 7000 ? 0.6 : 0.25,
+                  display: behavioralSummary.avgResponseLatencyMs
+                    ? `${(behavioralSummary.avgResponseLatencyMs / 1000).toFixed(1)}s`
+                    : "—",
+                  tip: "Thời gian bắt đầu trả lời sau khi HR hỏi xong",
+                },
+                {
+                  icon: <ChatTeardropDots className="h-3.5 w-3.5" />,
+                  label: "Từ dè dặt (hedge)",
+                  value: (behavioralSummary.totalHedgeWords ?? 0) === 0 ? 0.9
+                       : (behavioralSummary.totalHedgeWords ?? 0) < 5 ? 0.65 : 0.3,
+                  display: `${behavioralSummary.totalHedgeWords ?? 0} lần`,
+                  tip: "Số lần dùng \"có lẽ\", \"hình như\", \"chưa chắc\"…",
+                },
+              ].map(({ icon, label, value, display, tip }) => {
+                const c = behaviorScoreColor(value * 5);
+                return (
+                  <div key={label} className="flex items-center gap-3 rounded-lg border border-violet-100 bg-violet-50/30 px-3 py-2">
+                    <div className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full ring-1 ${c.bg} ${c.ring} ${c.text}`}>
+                      {icon}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs font-semibold text-violet-900">{label}</p>
+                      <p className="truncate text-[10px] text-violet-500">{tip}</p>
+                    </div>
+                    <div className="flex flex-col items-end gap-0.5">
+                      <span className="text-sm font-bold text-violet-950">{display}</span>
+                      <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-semibold ring-1 ${c.bg} ${c.ring} ${c.text}`}>
+                        {c.label}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+
+              {/* Dominant emotion (Google Vision) */}
+              {behavioralSummary.dominantEmotion && behavioralSummary.dominantEmotion !== "neutral" && (
+                <div className="mt-1 flex items-center gap-2 rounded-lg border border-violet-100 bg-violet-50/30 px-3 py-2">
+                  <Smile className="h-4 w-4 shrink-0 text-violet-500" />
+                  <div className="flex-1">
+                    <p className="text-xs font-semibold text-violet-900">Cảm xúc chủ đạo</p>
+                    <p className="text-[10px] text-violet-500">Phân tích từ Google Cloud Vision</p>
+                  </div>
+                  <span className={`rounded-full px-2 py-1 text-xs font-bold ring-1 ${
+                    behavioralSummary.dominantEmotion === "joy"
+                      ? "bg-lime-50 text-violet-900 ring-lime-200"
+                      : behavioralSummary.dominantEmotion === "surprise"
+                        ? "bg-amber-50 text-amber-800 ring-amber-200"
+                        : "bg-orange-50 text-orange-800 ring-orange-200"
+                  }`}>
+                    {behavioralSummary.dominantEmotion === "joy" ? "Tự tin"
+                     : behavioralSummary.dominantEmotion === "surprise" ? "Ngạc nhiên"
+                     : behavioralSummary.dominantEmotion === "sorrow" ? "Lo lắng"
+                     : "Căng thẳng"}
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Vocabulary diversity */}
+          {(behavioralSummary.avgVocabularyDiversity ?? 0) > 0 && (
+            <div className="border-t border-violet-100 bg-violet-50/30 px-5 py-3">
+              <div className="flex items-center gap-4">
+                <p className="text-xs font-semibold text-violet-700">Sự đa dạng từ vựng (TTR)</p>
+                <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-violet-100">
+                  <div
+                    className="h-full rounded-full bg-gradient-to-r from-[#6E35E8] to-[#8B4DFF] transition-all"
+                    style={{ width: `${(behavioralSummary.avgVocabularyDiversity ?? 0) * 100}%` }}
+                  />
+                </div>
+                <span className="text-xs font-bold tabular-nums text-violet-900">
+                  {((behavioralSummary.avgVocabularyDiversity ?? 0) * 100).toFixed(0)}%
+                </span>
+                <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ring-1 ${
+                  behaviorScoreColor((behavioralSummary.avgVocabularyDiversity ?? 0) * 5).bg
+                } ${behaviorScoreColor((behavioralSummary.avgVocabularyDiversity ?? 0) * 5).ring} ${
+                  behaviorScoreColor((behavioralSummary.avgVocabularyDiversity ?? 0) * 5).text
+                }`}>
+                  {behaviorScoreColor((behavioralSummary.avgVocabularyDiversity ?? 0) * 5).label}
+                </span>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Per-question feedback */}
       <div className="mb-6">
         <h2 className="mb-4 text-base font-bold text-violet-950">B. Phân tích từng câu hỏi</h2>
@@ -535,6 +694,39 @@ export function InterviewFeedback() {
                       </p>
                     </div>
                   )}
+
+                  {/* Behavioral data per question (if available) */}
+                  {(() => {
+                    const bq = behavioralPerQuestion.find((b) => b?.questionIndex === i);
+                    const bd = bq?.behavioralData;
+                    if (!bd) return null;
+                    const emotion = bd.emotion ? emotionLabel(bd.emotion) : null;
+                    return (
+                      <div className="mb-4 mt-3 grid grid-cols-2 gap-2 rounded-lg border border-violet-100 bg-violet-50/30 p-3 sm:grid-cols-4">
+                        {[
+                          { label: "Phản xạ", value: bd.responseLatencyMs ? `${(bd.responseLatencyMs / 1000).toFixed(1)}s` : "—" },
+                          { label: "Im lặng", value: `${((bd.silenceRatio ?? 0) * 100).toFixed(0)}%` },
+                          { label: "Từ dè dặt", value: `${bd.hedgeWordCount ?? 0} lần` },
+                          { label: "Eye contact", value: bd.eyeContactScore ? `${(bd.eyeContactScore * 100).toFixed(0)}%` : "—" },
+                        ].map(({ label, value }) => (
+                          <div key={label} className="flex flex-col gap-0.5">
+                            <p className="text-[10px] font-semibold uppercase tracking-wide text-violet-500">{label}</p>
+                            <p className="text-sm font-bold text-violet-900">{value}</p>
+                          </div>
+                        ))}
+                        {emotion && (
+                          <div className="col-span-2 flex items-center gap-2 sm:col-span-4">
+                            <Smile className="h-3.5 w-3.5 text-violet-400" />
+                            <span className="text-[10px] text-violet-500">Cảm xúc (Vision AI):</span>
+                            <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${emotion.cls}`}>{emotion.text}</span>
+                            {!bd.emotion?.lightingOk && (
+                              <span className="text-[10px] text-orange-600">· Ánh sáng kém</span>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()}
 
                   <div className="grid grid-cols-2 gap-3 py-4 sm:grid-cols-4">
                     {STAR_LABELS.map((key) => (

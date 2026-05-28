@@ -157,6 +157,226 @@ Mật khẩu: **`Dev123456`**
 
 ---
 
+## Core Flow: AI Interview Room Virtual
+
+Đây là tính năng trung tâm của sản phẩm. Luồng đầy đủ từ khi user nhấn "Bắt đầu phỏng vấn" đến khi nhận kết quả phân tích chi tiết.
+
+### Sơ đồ tổng quan
+
+```
+/interview          /interview/room              /interview/feedback
+[Setup]     ──────► [Phòng phỏng vấn]   ──────► [Kết quả & Phân tích]
+   │                       │                              │
+   ▼                       ▼                              ▼
+Chọn CV            HR AI đặt câu hỏi            SHRM/DDI scores
+Chọn HR AI         User trả lời (giọng nói)     Behavioral radar chart
+Sinh câu hỏi       Phân tích hành vi realtime   Emotion timeline
+Tạo session        Lưu transcript + metrics      Gợi ý cải thiện LLM
+```
+
+---
+
+### Giai đoạn 1 — Thiết lập phỏng vấn (`/interview`)
+
+```
+User truy cập /interview  →  Interview.jsx
+        │
+        ├─► BƯỚC 1: Chọn nguồn CV
+        │     • Upload PDF mới  →  extractCvTextFromFile()  →  POST /api/interviews/extract-cv-text
+        │     • Dùng CV đã phân tích gần nhất  →  đọc từ LocalStorage
+        │     • Nhập thủ công: vị trí + công ty + cấp bậc
+        │
+        ├─► BƯỚC 2: Chọn HR AI  →  Sarah (Nữ) / David (Nam)
+        │     Video idle từ Cloudinary; giọng TTS tiếng Việt qua D-ID
+        │
+        └─► BƯỚC 3: Sinh câu hỏi  →  POST /api/interviews/generate-questions
+              │
+              │  LLM Pipeline 3 lớp:
+              │  ┌─────────────────────────────────────────────────────────┐
+              │  │ Layer 1: resolveTopCompetencies()  (không tốn LLM)     │
+              │  │   Keyword matching → Top 4 SHRM competency IDs         │
+              │  │   → roleCategory (frontend, backend, product, ...)     │
+              │  ├─────────────────────────────────────────────────────────┤
+              │  │ Layer 2: getFewShotExamples()  (tự cải thiện theo data)│
+              │  │   Query MongoDB: sessions cùng role + competencies      │
+              │  │   → Behavior questions chất lượng cao từ quá khứ       │
+              │  │   → Inject vào prompt (ban đầu rỗng, giàu dần)         │
+              │  ├─────────────────────────────────────────────────────────┤
+              │  │ Layer 3: callLLM()  (SHRM/DDI grounded generation)     │
+              │  │   System prompt: SHRM definitions + DDI Key Actions     │
+              │  │   Output: 5 câu hỏi (1 theory + 2 project + 2 behavior)│
+              │  │   Mỗi câu có: layer, competencyId, starGuidance{S,T,A,R}│
+              │  └─────────────────────────────────────────────────────────┘
+              │
+              └─► POST /api/interviews/sessions  →  Tạo InterviewSession (MongoDB)
+                    Lưu: userId, hrGender, questions[], competencyProfile
+                    Trả về: sessionId  →  Navigate /interview/room
+```
+
+---
+
+### Giai đoạn 2 — Phòng phỏng vấn thực tế (`/interview/room`)
+
+```
+Mount InterviewRoom  →  3 hệ thống khởi tạo song song
+  │
+  ├─► [A] D-ID WebRTC  (nếu có VITE_DID_API_KEY)
+  │       useDIDStream → connect → ICE/SDP → lip-sync tiếng Việt
+  │       Fallback: pre-recorded Cloudinary HR videos (Q1–Q5)
+  │
+  ├─► [B] Web Audio API  (phân tích giọng nói)
+  │       getUserMedia({ audio }) → AudioContext + AnalyserNode
+  │       Sampling 100ms khi mic bật  →  RMS amplitude 0–1
+  │
+  └─► [C] MediaPipe FaceMesh  (phân tích khuôn mặt, CDN lazy-load)
+          cdn.jsdelivr.net/npm/@mediapipe/face_mesh  (~3MB WASM)
+          useFaceAnalysis hook  →  sampling 500ms khi đang trả lời
+
+
+VÒng LẶP MỖI CÂU HỎI (Q1 → Q5)
+══════════════════════════════════════════════════════
+
+  [①] HR đặt câu hỏi
+      D-ID: speakWithText(question)  →  avatar nói + lip-sync
+      Video: play HR_QUESTION_URLS[gender][qIndex]
+      ─── latencyStartRef = Date.now() ───────────────────────────► BẮT ĐẦU ĐO
+
+  [②] User trả lời  (isListening = true)
+      │
+      ├─ STT (Web Speech API, vi-VN, continuous):
+      │    onresult → accumulate transcript
+      │    First result → responseLatencyMs = now − latencyStart  ◄─ ĐO XONG
+      │
+      ├─ Web Audio (100ms):
+      │    getFloatTimeDomainData → RMS amplitude
+      │    Tích lũy: avgAmplitude, amplitudeVariance
+      │              silenceRatio (<10% = silent), silenceEvents (>2s)
+      │
+      └─ MediaPipe FaceMesh (500ms):
+           drawImage(cameraVideo) → canvas → mesh.send()
+           468 landmarks → tính:
+             eyeContactScore    (mũi cân giữa 2 mắt = nhìn camera)
+             headStabilityScore (variance vị trí trung tâm khuôn mặt)
+             facePresenceRatio  (% frames detect được mặt)
+             distractionEvents  (số lần eye contact < 0.35)
+
+  [③] User nhấn "Câu tiếp theo"
+      │
+      ├─ buildBehavioralData(qIndex):
+      │    Tổng hợp tất cả metrics đã thu thập → object behavioralData
+      │
+      ├─ PATCH /api/interviews/sessions/:id
+      │    { transcript, durationSeconds, behavioralData }   [fire & forget]
+      │
+      └─ captureAndAnalyzeFace(qIndex):                       [fire & forget]
+           canvas.toDataURL(JPEG 0.75) → base64
+           POST /api/interviews/sessions/:id/analyze-face
+           Backend → Google Cloud Vision API:
+             joyLikelihood, sorrowLikelihood, angerLikelihood, surpriseLikelihood
+             panAngle, tiltAngle, underExposedLikelihood
+           → Lưu emotion (1–5 scale) vào session.answers[i].behavioralData
+
+
+KẾT THÚC PHỎNG VẤN  →  goToFeedback()
+══════════════════════════════════════════════════════
+
+  computeBehavioralSummary(perQuestionData):
+    avgResponseLatencyMs, avgSilenceRatio, avgEyeContactScore
+    avgHeadStabilityScore, totalHedgeWords, avgVocabularyDiversity
+    avgAmplitudeVariance
+    overallConfidenceScore (0–5):
+      eyeContact×0.20 + headStability×0.15 + fluency×0.15
+      + expression×0.15 + hedgeScore×0.15 + vocabulary×0.10 + latency×0.10
+    dominantEmotion  (joy / sorrow / anger / surprise / neutral)
+
+  POST /api/interviews/sessions/:id/complete
+    { answers[], totalDurationSeconds, behavioralSummary }
+    → MongoDB: status = "completed", lưu behavioralSummary
+    → Navigate /interview/feedback
+```
+
+---
+
+### Giai đoạn 3 — Đánh giá LLM (`POST /api/interviews/sessions/:id/evaluate`)
+
+Được gọi tự động khi Feedback page load. Idempotent — kết quả cache trong DB sau lần đầu.
+
+```
+evaluateTranscripts({ questions, answers })
+  │
+  ├─ LLM System Prompt bao gồm:
+  │    SHRM competency definitions  +  DDI Key Actions
+  │    shrmRubricExcellent (tiêu chí xuất sắc từng competency)
+  │    Yêu cầu output JSON cấu trúc chặt
+  │
+  └─ Output per question:
+       scores:  { clarity, structure, relevance, credibility }  (0–5)
+       overall: float 0–5
+       shrmLevel: "excellent" | "proficient" | "developing"
+       strengths[]:    điểm mạnh cụ thể
+       improvements[]: điểm cần cải thiện
+       suggestion:     câu trả lời mẫu tốt hơn từ LLM
+
+Response trả về Frontend:
+  evaluation.perQuestion[], overallScore, generalComment, inferredRole
+  behavioralSummary        ← đọc từ MongoDB (lưu lúc complete)
+  behavioralPerQuestion[]  ← emotion + metrics từng câu từ MongoDB
+```
+
+---
+
+### Giai đoạn 4 — Trang kết quả Feedback (`/interview/feedback`)
+
+```
+┌──────────────────────────────────────────────────────────────────┐
+│ A. Overall Score Banner                                          │
+│    Điểm tổng (0–5 sao)  +  4 thanh STAR                        │
+│    SHRM Distribution: Xuất sắc / Đạt yêu cầu / Cần cải thiện  │
+│    Speaking metrics (WPM, filler words, độ dài TB)             │
+├──────────────────────────────────────────────────────────────────┤
+│ B. Nhận xét tổng quan từ AI  (generalComment)                   │
+├──────────────────────────────────────────────────────────────────┤
+│ C. Phân tích hành vi & Ngôn ngữ cơ thể  [khi có data]         │
+│                                                                  │
+│  ┌─────────────────────┐    ┌────────────────────────────────┐  │
+│  │  Radar Chart 6 chiều│    │  6 Metric Cards                │  │
+│  │  (Recharts)         │    │  Giao tiếp mắt  XX%   [Tốt]   │  │
+│  │   Giao tiếp mắt     │    │  Tư thế đầu     XX%   [Tốt]   │  │
+│  │ Phản xạ  Tư thế đầu │    │  Sự lưu loát    XX%   [Khá]   │  │
+│  │  Vốn từ Tự tin giọng│    │  Tự tin giọng   Biểu cảm      │  │
+│  │     Sự lưu loát     │    │  Phản xạ        X.Xs  [Tốt]   │  │
+│  └─────────────────────┘    │  Từ dè dặt      X lần [Khá]   │  │
+│                              │  Cảm xúc:   [Tự tin/Lo lắng] │  │
+│                              └────────────────────────────────┘  │
+│  Vocabulary Diversity: ████████░░  XX%  [Tốt]                  │
+├──────────────────────────────────────────────────────────────────┤
+│ D. Phân tích từng câu (accordion — mỗi câu mở ra gồm):        │
+│    • Transcript giọng nói                                       │
+│    • Behavioral mini-card: Phản xạ | Im lặng | Từ dè dặt      │
+│                             Eye contact | Cảm xúc Vision AI    │
+│    • SHRM scores (Clarity / Structure / Relevance / Credibility)│
+│    • Điểm mạnh  +  Cần cải thiện  +  Gợi ý câu trả lời LLM   │
+├──────────────────────────────────────────────────────────────────┤
+│ E. Nút hành động + Gợi ý khóa học (dựa trên điểm yếu thực)    │
+└──────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+### Behavioral Analysis — Chi tiết kỹ thuật
+
+| Nguồn | Metrics | Tần suất | Xử lý |
+|:------|:--------|:---------|:------|
+| Web Audio API | avgAmplitude, amplitudeVariance, silenceRatio, silenceEvents | 100ms | In-browser |
+| Web Speech API | responseLatencyMs, hedgeWordCount (12 patterns VN), vocabularyDiversity (TTR) | Mỗi câu | In-browser |
+| MediaPipe FaceMesh | eyeContactScore, headStabilityScore, facePresenceRatio, distractionEvents | 500ms | In-browser WASM |
+| Google Cloud Vision | joy/sorrow/anger/surprise (1–5), headPanAngle, lightingOk | 1x/câu hỏi | API call qua backend |
+
+**Chi phí Google Vision:** ~$0.0075/session · Free tier: 1,000 ảnh/tháng ≈ 200 sessions.  
+**Privacy:** Không lưu video. Chỉ lưu analytics metrics vào MongoDB.
+
+---
+
 ## API
 
 Base URL: `/api` · Auth: `Authorization: Bearer <jwt>`

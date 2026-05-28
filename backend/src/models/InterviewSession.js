@@ -56,8 +56,48 @@ const interviewSessionSchema = new Schema(
         wordCount: { type: Number, default: 0 },
         durationSeconds: { type: Number, default: 0 },
         recordedAt: { type: Date },
+        behavioralData: {
+          // Audio (Web Audio API)
+          responseLatencyMs:   { type: Number, default: 0 },
+          silenceRatio:        { type: Number, default: 0 },
+          silenceEvents:       { type: Number, default: 0 },
+          avgAmplitude:        { type: Number, default: 0 },
+          amplitudeVariance:   { type: Number, default: 0 },
+          // Text analysis
+          hedgeWordCount:      { type: Number, default: 0 },
+          hedgeWords:          [{ type: String }],
+          vocabularyDiversity: { type: Number, default: 0 },
+          // Face — MediaPipe FaceMesh (realtime, in-browser)
+          eyeContactScore:     { type: Number, default: 0 },
+          headStabilityScore:  { type: Number, default: 0 },
+          facePresenceRatio:   { type: Number, default: 0 },
+          distractionEvents:   { type: Number, default: 0 },
+          // Emotion — Google Cloud Vision (1 snapshot/question)
+          emotion: {
+            joy:           { type: Number, default: 0 }, // 1=VERY_UNLIKELY … 5=VERY_LIKELY
+            sorrow:        { type: Number, default: 0 },
+            anger:         { type: Number, default: 0 },
+            surprise:      { type: Number, default: 0 },
+            headPanAngle:  { type: Number, default: 0 },
+            headTiltAngle: { type: Number, default: 0 },
+            lightingOk:    { type: Boolean, default: true },
+          },
+        },
       },
     ],
+
+    // Session-level behavioral summary (computed on client, saved on complete)
+    behavioralSummary: {
+      avgResponseLatencyMs:   { type: Number, default: 0 },
+      avgSilenceRatio:        { type: Number, default: 0 },
+      avgEyeContactScore:     { type: Number, default: 0 },
+      avgHeadStabilityScore:  { type: Number, default: 0 },
+      totalHedgeWords:        { type: Number, default: 0 },
+      avgVocabularyDiversity: { type: Number, default: 0 },
+      avgAmplitudeVariance:   { type: Number, default: 0 },
+      overallConfidenceScore: { type: Number, default: 0 }, // 0–5 composite
+      dominantEmotion:        { type: String, default: "" },
+    },
 
     feedback: {
       overallScore: { type: Number, min: 0, max: 100 },

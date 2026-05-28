@@ -16,6 +16,7 @@ interviewsRouter.post("/sessions/:id/complete", authJwt, asyncHandler(Interviews
 interviewsRouter.post("/sessions/:id/evaluate", authJwt, asyncHandler(InterviewsController.evaluateSession));
 interviewsRouter.get("/sessions", authJwt, asyncHandler(InterviewsController.list));
 interviewsRouter.get("/sessions/:id", authJwt, asyncHandler(InterviewsController.getById));
+interviewsRouter.post("/sessions/:id/analyze-face", authJwt, asyncHandler(InterviewsController.analyzeFace));
 
 // AI question generation — injectionRateLimit blocks users with ≥3 injection attempts/hour
 interviewsRouter.post(

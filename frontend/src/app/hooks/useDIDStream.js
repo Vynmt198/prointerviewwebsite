@@ -172,8 +172,8 @@ export function useDIDStream({ apiKey, sourceImageUrl } = {}) {
     clearTimeout(endTimerRef.current);
     setStatus("speaking");
 
-    // Ước tính thời lượng từ độ dài text (tiếng Việt ~120ms/ký tự)
-    const estimatedMs = Math.max(3000, text.length * 130 + 1500);
+    // Azure TTS vi-VN HoaiMy ≈ 80ms/ký tự; +2000ms overhead D-ID
+    const estimatedMs = Math.max(4000, text.length * 80 + 2000);
 
     try {
       await fetch(`${DID_API}/talks/streams/${streamIdRef.current}`, {
@@ -221,7 +221,7 @@ export function useDIDStream({ apiKey, sourceImageUrl } = {}) {
     clearTimeout(endTimerRef.current);
     setStatus("speaking");
 
-    const estimatedMs = Math.max(3000, text.length * 130 + 1500);
+    const estimatedMs = Math.max(4000, text.length * 80 + 2000);
 
     try {
       await fetch(`${DID_API}/talks/streams/${streamIdRef.current}`, {

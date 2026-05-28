@@ -3,8 +3,7 @@ import path from 'path'
 import tailwindcss from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react'
 
-/** macOS AirPlay thường chiếm :5000 — backend dev mặc định :5001 (xem backend/.env PORT). */
-const DEFAULT_DEV_BACKEND = 'http://localhost:5001'
+const DEFAULT_DEV_BACKEND = 'http://localhost:5000'
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')

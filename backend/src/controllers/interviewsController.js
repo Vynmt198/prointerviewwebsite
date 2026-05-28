@@ -103,11 +103,11 @@ export const InterviewsController = {
     }
   },
 
-  /** POST /api/interviews/sessions/:id/answers — Cập nhật câu trả lời */
+  /** PATCH /api/interviews/sessions/:id — Cập nhật câu trả lời + behavioral data */
   updateAnswer: async (req, res) => {
     try {
       const { id } = req.params;
-      const { questionIndex, questionText, transcript, durationSeconds } = req.body;
+      const { questionIndex, questionText, transcript, durationSeconds, behavioralData } = req.body;
 
       const session = await InterviewSession.findOne({ _id: id, userId: req.userId });
       if (!session) return res.status(404).json({ success: false, error: "Phiên phỏng vấn không tồn tại" });
@@ -115,7 +115,12 @@ export const InterviewsController = {
         return res.status(400).json({ success: false, error: "Phiên phỏng vấn này đã kết thúc" });
       }
 
-      session.answers.push({ questionIndex, questionText, transcript, durationSeconds, recordedAt: new Date() });
+      const entry = {
+        questionIndex, questionText, transcript, durationSeconds,
+        recordedAt: new Date(),
+        ...(behavioralData && { behavioralData }),
+      };
+      session.answers.push(entry);
       await session.save();
       res.json({ success: true, session });
     } catch (error) {
@@ -128,7 +133,7 @@ export const InterviewsController = {
     try {
       const { id } = req.params;
       const userId = req.userId;
-      const { answers, totalDurationSeconds } = req.body;
+      const { answers, totalDurationSeconds, behavioralSummary } = req.body;
 
       const session = await InterviewSession.findOne({ _id: id, userId });
       if (!session) {
@@ -153,17 +158,25 @@ export const InterviewsController = {
           if (idx < 0) continue;
           const existing = session.answers.find((a) => a.questionIndex === idx);
           if (!existing || !existing.transcript) {
-            // Chỉ ghi khi chưa có hoặc transcript rỗng
             session.answers = session.answers.filter((a) => a.questionIndex !== idx);
             session.answers.push({
-              questionIndex:  idx,
-              questionText:   backupAnswer.questionText ?? "",
-              transcript:     backupAnswer.transcript ?? "",
+              questionIndex:   idx,
+              questionText:    backupAnswer.questionText ?? "",
+              transcript:      backupAnswer.transcript ?? "",
               durationSeconds: backupAnswer.durationSeconds ?? 0,
-              recordedAt:     new Date(),
+              recordedAt:      new Date(),
+              ...(backupAnswer.behavioralData && { behavioralData: backupAnswer.behavioralData }),
             });
+          } else if (existing && backupAnswer.behavioralData && !existing.behavioralData?.eyeContactScore) {
+            // Patch behavioral data nếu PATCH fire-and-forget không mang theo
+            existing.behavioralData = backupAnswer.behavioralData;
           }
         }
+      }
+
+      // Lưu behavioral summary session-level
+      if (behavioralSummary && typeof behavioralSummary === "object") {
+        session.behavioralSummary = behavioralSummary;
       }
 
       // Tính tổng thời gian: ưu tiên giá trị từ FE (timer chạy thực tế)
@@ -326,6 +339,10 @@ export const InterviewsController = {
 
       // Idempotent: return cached feedback if already evaluated (skip LLM call)
       if (session.feedbackGeneratedAt && session.feedback?.perQuestion?.length > 0) {
+        const cachedBehavioralPerQuestion = session.answers.map((a) => ({
+          questionIndex: a.questionIndex,
+          behavioralData: a.behavioralData ?? null,
+        }));
         return res.json({
           success:        true,
           evaluation: {
@@ -344,6 +361,8 @@ export const InterviewsController = {
           generalComment: session.feedback.generalComment,
           inferredRole:   session.inferredRole,
           totalDurationSeconds: session.totalDurationSeconds,
+          behavioralSummary:      session.behavioralSummary ?? null,
+          behavioralPerQuestion:  cachedBehavioralPerQuestion,
         });
       }
 
@@ -406,6 +425,12 @@ export const InterviewsController = {
 
       logger.info("evaluate_session_ok", { userId: req.userId, sessionId: id, overallScore: session.feedback.overallScore });
 
+      // Build per-question behavioral lookup
+      const behavioralPerQuestion = session.answers.map((a) => ({
+        questionIndex: a.questionIndex,
+        behavioralData: a.behavioralData ?? null,
+      }));
+
       res.json({
         success:        true,
         evaluation:     evalResult,
@@ -413,10 +438,80 @@ export const InterviewsController = {
         generalComment: evalResult.overallComment,
         inferredRole:   session.inferredRole,
         totalDurationSeconds: session.totalDurationSeconds,
+        behavioralSummary:      session.behavioralSummary ?? null,
+        behavioralPerQuestion,
       });
     } catch (error) {
       logger.error("evaluate_session_failed", { userId: req.userId, sessionId: req.params.id, error: error.message });
       res.status(500).json({ success: false, error: error.message });
+    }
+  },
+
+  /**
+   * POST /api/interviews/sessions/:id/analyze-face
+   * Body: { imageBase64: string, questionIndex: number }
+   * Proxy sang Google Cloud Vision Face Detection API.
+   * Trả { success, emotion } — emotion null nếu không có API key hoặc không detect được mặt.
+   */
+  analyzeFace: async (req, res) => {
+    const { id } = req.params;
+    const { imageBase64, questionIndex } = req.body;
+
+    const VISION_KEY = process.env.GOOGLE_VISION_API_KEY;
+    if (!VISION_KEY) {
+      return res.json({ success: true, emotion: null, reason: "vision_api_not_configured" });
+    }
+    if (!imageBase64) {
+      return res.status(400).json({ success: false, error: "imageBase64 required" });
+    }
+
+    try {
+      const visionRes = await fetch(
+        `https://vision.googleapis.com/v1/images:annotate?key=${VISION_KEY}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            requests: [{
+              image:    { content: imageBase64 },
+              features: [{ type: "FACE_DETECTION", maxResults: 1 }],
+            }],
+          }),
+        }
+      );
+      const data = await visionRes.json();
+      const face = data.responses?.[0]?.faceAnnotations?.[0];
+
+      if (!face) return res.json({ success: true, emotion: null });
+
+      const L = { VERY_UNLIKELY: 1, UNLIKELY: 2, POSSIBLE: 3, LIKELY: 4, VERY_LIKELY: 5 };
+      const emotion = {
+        joy:           L[face.joyLikelihood]      ?? 1,
+        sorrow:        L[face.sorrowLikelihood]   ?? 1,
+        anger:         L[face.angerLikelihood]    ?? 1,
+        surprise:      L[face.surpriseLikelihood] ?? 1,
+        headPanAngle:  face.panAngle   ?? 0,
+        headTiltAngle: face.tiltAngle  ?? 0,
+        lightingOk:    !["LIKELY", "VERY_LIKELY"].includes(face.underExposedLikelihood),
+      };
+
+      // Persist emotion into session answer (best-effort)
+      if (typeof questionIndex === "number" && questionIndex >= 0) {
+        const session = await InterviewSession.findOne({ _id: id, userId: req.userId });
+        if (session) {
+          const answer = session.answers.find((a) => a.questionIndex === questionIndex);
+          if (answer) {
+            answer.behavioralData = { ...(answer.behavioralData?.toObject?.() ?? answer.behavioralData ?? {}), emotion };
+            await session.save();
+          }
+        }
+      }
+
+      logger.info("analyze_face_ok", { userId: req.userId, sessionId: id, questionIndex, joy: emotion.joy });
+      res.json({ success: true, emotion });
+    } catch (err) {
+      logger.warn("analyze_face_failed", { sessionId: id, error: err.message });
+      res.json({ success: true, emotion: null });
     }
   },
 };

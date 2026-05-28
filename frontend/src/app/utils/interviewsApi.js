@@ -86,7 +86,7 @@ export async function extractCvTextFromFile(file) {
  * @param {string} sessionId
  * @param {{ questionIndex: number, transcript: string, questionText?: string }[]} answers
  * @param {{ question: string, layer?: string, competencyName?: string }[]} [questions] - fallback khi session không có questions
- * @returns {{ success, evaluation, overallScore, generalComment, inferredRole, totalDurationSeconds }}
+ * @returns {{ success, evaluation, overallScore, generalComment, inferredRole, totalDurationSeconds, behavioralSummary, behavioralPerQuestion }}
  */
 export async function evaluateInterviewSession(sessionId, answers = [], questions = []) {
   if (!hasAuthCredentials() || !sessionId) return { success: false, error: "Thiếu phiên." };
@@ -101,12 +101,14 @@ export async function evaluateInterviewSession(sessionId, answers = [], question
       return { success: false, error: body.error || `Lỗi ${res.status}` };
     }
     return {
-      success:        true,
-      evaluation:     body.evaluation,
-      overallScore:   body.overallScore,
-      generalComment: body.generalComment,
-      inferredRole:   body.inferredRole,
-      totalDurationSeconds: body.totalDurationSeconds,
+      success:               true,
+      evaluation:            body.evaluation,
+      overallScore:          body.overallScore,
+      generalComment:        body.generalComment,
+      inferredRole:          body.inferredRole,
+      totalDurationSeconds:  body.totalDurationSeconds,
+      behavioralSummary:     body.behavioralSummary     ?? null,
+      behavioralPerQuestion: body.behavioralPerQuestion ?? [],
     };
   } catch {
     return { success: false, error: "Không kết nối được backend." };
@@ -114,17 +116,18 @@ export async function evaluateInterviewSession(sessionId, answers = [], question
 }
 
 /**
- * Lưu câu trả lời cho 1 câu hỏi vào session đang diễn ra.
- * Gọi sau mỗi lần user chuyển câu. Fire-and-forget từ client.
+ * Lưu câu trả lời + behavioral data cho 1 câu hỏi. Fire-and-forget từ client.
  * Route: PATCH /api/interviews/sessions/:id
+ * @param {string} sessionId
+ * @param {{ questionIndex, questionText, transcript, durationSeconds, behavioralData? }} params
  */
-export async function saveAnswer(sessionId, { questionIndex, questionText, transcript, durationSeconds }) {
+export async function saveAnswer(sessionId, { questionIndex, questionText, transcript, durationSeconds, behavioralData }) {
   if (!hasAuthCredentials() || !sessionId) return { success: false };
   try {
     const res = await authFetch(`/api/interviews/sessions/${encodeURIComponent(sessionId)}`, {
       method: "PATCH",
       headers: { ...jsonHeaders },
-      body: JSON.stringify({ questionIndex, questionText, transcript, durationSeconds }),
+      body: JSON.stringify({ questionIndex, questionText, transcript, durationSeconds, behavioralData }),
     });
     const body = await res.json().catch(() => ({}));
     return res.ok && body.success ? { success: true } : { success: false };
@@ -176,12 +179,18 @@ export async function fetchInterviewSessions() {
   }
 }
 
-export async function completeInterviewSession(sessionId) {
+/**
+ * Đánh dấu hoàn thành phiên + gửi kèm backup answers và behavioral summary.
+ * @param {string} sessionId
+ * @param {{ answers?, totalDurationSeconds?, behavioralSummary? }} [payload]
+ */
+export async function completeInterviewSession(sessionId, payload = {}) {
   if (!hasAuthCredentials() || !sessionId) return { success: false, error: "Thiếu phiên." };
   try {
     const res = await authFetch(`/api/interviews/sessions/${encodeURIComponent(sessionId)}/complete`, {
       method: "POST",
-      headers: { Accept: "application/json" },
+      headers: { ...jsonHeaders },
+      body: JSON.stringify(payload),
     });
     const body = await res.json().catch(() => ({}));
     if (!res.ok || !body.success) {
@@ -190,5 +199,27 @@ export async function completeInterviewSession(sessionId) {
     return { success: true };
   } catch {
     return { success: false, error: "Không kết nối được backend." };
+  }
+}
+
+/**
+ * Gửi 1 frame ảnh (base64 JPEG) lên backend để phân tích cảm xúc qua Google Vision API.
+ * Fire-and-forget an toàn — không bao giờ throw, trả { success: false } nếu lỗi.
+ * @param {string} sessionId
+ * @param {string} imageBase64 — base64 JPEG không có prefix data:
+ * @param {number} questionIndex
+ */
+export async function analyzeFaceSnapshot(sessionId, imageBase64, questionIndex) {
+  if (!hasAuthCredentials() || !sessionId || !imageBase64) return { success: false };
+  try {
+    const res = await authFetch(`/api/interviews/sessions/${encodeURIComponent(sessionId)}/analyze-face`, {
+      method: "POST",
+      headers: { ...jsonHeaders },
+      body: JSON.stringify({ imageBase64, questionIndex }),
+    });
+    const body = await res.json().catch(() => ({}));
+    return res.ok ? body : { success: false };
+  } catch {
+    return { success: false };
   }
 }
