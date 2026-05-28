@@ -4,15 +4,12 @@ import dotenv from "dotenv";
 dotenv.config();
 
 import dns from "node:dns";
+import net from "node:net";
 
-// Render/PaaS thường không route IPv6 tới smtp.gmail.com → ENETUNREACH nếu DNS trả AAAA trước.
+const DEFAULT_SMTP_HOST = "smtp.gmail.com";
+
 if (typeof dns.setDefaultResultOrder === "function") {
   dns.setDefaultResultOrder("ipv4first");
-}
-
-/** Chỉ resolve IPv4 cho SMTP (tránh connect tới 2404:6800:...::6d:587 trên Render). */
-function smtpLookup(hostname, _options, callback) {
-  dns.lookup(hostname, { family: 4, all: false }, callback);
 }
 
 export function isMailConfigured() {
@@ -21,7 +18,34 @@ export function isMailConfigured() {
   return Boolean(user && pass);
 }
 
-const getTransporter = () => {
+function smtpHostname() {
+  const h = (process.env.MAIL_HOST || DEFAULT_SMTP_HOST).trim();
+  return h || DEFAULT_SMTP_HOST;
+}
+
+/** Render không route IPv6 tới Gmail — resolve A record rồi connect bằng IPv4. */
+async function resolveSmtpConnectHost(hostname) {
+  if (net.isIPv4(hostname)) return hostname;
+  if (net.isIPv6(hostname)) {
+    throw new Error(
+      `MAIL_HOST là IPv6 (${hostname}); đặt MAIL_HOST=${DEFAULT_SMTP_HOST} trên Render.`,
+    );
+  }
+  const addrs = await dns.promises.resolve4(hostname);
+  const ip = addrs?.[0];
+  if (!ip) throw new Error(`Không resolve IPv4 cho SMTP host: ${hostname}`);
+  return ip;
+}
+
+function tlsServername(hostname) {
+  return net.isIP(hostname) ? DEFAULT_SMTP_HOST : hostname;
+}
+
+let transporterCache = null;
+
+async function getTransporter() {
+  if (transporterCache) return transporterCache;
+
   const user = (process.env.MAIL_USER || process.env.EMAIL_USER || "").trim();
   const pass = (process.env.MAIL_PASS || process.env.EMAIL_PASS || "").trim();
 
@@ -31,17 +55,27 @@ const getTransporter = () => {
     );
   }
 
-  return nodemailer.createTransport({
-    host: process.env.MAIL_HOST || "smtp.gmail.com",
+  const hostname = smtpHostname();
+  const connectHost = await resolveSmtpConnectHost(hostname);
+  const servername = tlsServername(hostname);
+
+  transporterCache = nodemailer.createTransport({
+    host: connectHost,
     port: Number(process.env.MAIL_PORT) || 587,
     secure: false,
-    lookup: smtpLookup,
+    tls: { servername },
     connectionTimeout: 10000,
     greetingTimeout: 10000,
     socketTimeout: 10000,
     auth: { user, pass },
   });
-};
+
+  if (connectHost !== hostname) {
+    console.log(`[emailService] SMTP → ${connectHost}:587 (TLS servername: ${servername})`);
+  }
+
+  return transporterCache;
+}
 
 /**
  * Gửi email xác nhận tài khoản
@@ -67,22 +101,14 @@ export async function sendVerificationEmail(to, name, verifyUrl) {
     `,
   };
 
-  return new Promise((resolve) => {
-    try {
-      const transporter = getTransporter();
-      transporter.sendMail(mailOptions, (error, info) => {
-        if (error) {
-          console.error("[emailService] sendVerificationEmail error:", error);
-          resolve({ ok: false, error: error.message });
-        } else {
-          resolve({ ok: true, info });
-        }
-      });
-    } catch (error) {
-      console.error("[emailService] sendVerificationEmail exception:", error);
-      resolve({ ok: false, error: error.message });
-    }
-  });
+  try {
+    const transporter = await getTransporter();
+    const info = await transporter.sendMail(mailOptions);
+    return { ok: true, info };
+  } catch (error) {
+    console.error("[emailService] sendVerificationEmail error:", error);
+    return { ok: false, error: error.message };
+  }
 }
 
 /**
@@ -109,22 +135,14 @@ export async function sendResetPasswordEmail(to, name, resetUrl) {
     `,
   };
 
-  return new Promise((resolve) => {
-    try {
-      const transporter = getTransporter();
-      transporter.sendMail(mailOptions, (error, info) => {
-        if (error) {
-          console.error("[emailService] sendResetPasswordEmail error:", error);
-          resolve({ ok: false, error: error.message });
-        } else {
-          resolve({ ok: true, info });
-        }
-      });
-    } catch (error) {
-      console.error("[emailService] sendResetPasswordEmail exception:", error);
-      resolve({ ok: false, error: error.message });
-    }
-  });
+  try {
+    const transporter = await getTransporter();
+    const info = await transporter.sendMail(mailOptions);
+    return { ok: true, info };
+  } catch (error) {
+    console.error("[emailService] sendResetPasswordEmail error:", error);
+    return { ok: false, error: error.message };
+  }
 }
 
 /**
@@ -168,23 +186,15 @@ export async function sendMentorFeedbackEmail(to, studentName, mentorName, sessi
     `,
   };
 
-  return new Promise((resolve) => {
-    try {
-      const transporter = getTransporter();
-      transporter.sendMail(mailOptions, (error, info) => {
-        if (error) {
-          console.error("[EmailService] Error sending feedback email:", error);
-          resolve({ ok: false, error: error.message });
-        } else {
-          console.log("[EmailService] Feedback email sent successfully:", info.messageId);
-          resolve({ ok: true, info });
-        }
-      });
-    } catch (error) {
-      console.error("[EmailService] Exception sending feedback email:", error);
-      resolve({ ok: false, error: error.message });
-    }
-  });
+  try {
+    const transporter = await getTransporter();
+    const info = await transporter.sendMail(mailOptions);
+    console.log("[EmailService] Feedback email sent successfully:", info.messageId);
+    return { ok: true, info };
+  } catch (error) {
+    console.error("[EmailService] Error sending feedback email:", error);
+    return { ok: false, error: error.message };
+  }
 }
 
 // Kiểm tra SMTP khi khởi động — bỏ qua nếu chưa cấu hình (dev vẫn chạy API/DB)
@@ -196,7 +206,7 @@ export async function sendMentorFeedbackEmail(to, studentName, mentorName, sessi
     return;
   }
   try {
-    const initTransporter = getTransporter();
+    const initTransporter = await getTransporter();
     await initTransporter.verify();
     console.log("✔️ Server đã sẵn sàng gửi mail (SMTP OK)!");
   } catch (error) {
