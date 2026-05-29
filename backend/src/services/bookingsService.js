@@ -13,7 +13,10 @@ import { runInTransaction } from "../helpers/dbHelper.js";
 import { resolveStoredUploadUrl } from "../utils/resolveStoredUploadUrl.js";
 import { isBookingInLiveWindow } from "../utils/bookingSchedule.js";
 
-/** Chính sách hủy (User): ≥24h trước buổi → hoàn 100%; 12–<24h → hoàn 50%; <12h → không hoàn. */
+/**
+ * Chính sách hủy (User) — đồng bộ `frontend/src/app/constants/bookingPolicy.js`:
+ * ≥24h → hoàn 100%; 12–<24h → hoàn 50%; <12h / không tham gia → không hoàn.
+ */
 function userCancellationFeePercent(hoursUntilStart) {
   if (!Number.isFinite(hoursUntilStart)) return 100;
   if (hoursUntilStart < 0) return 100;
@@ -23,8 +26,31 @@ function userCancellationFeePercent(hoursUntilStart) {
 }
 
 const MONGO_ERR = "MongoDB chưa kết nối. Kiểm tra MONGO_URI trong .env.";
-/** Mentor chỉ được hủy khi còn ≥ 24h trước buổi (điều khoản sản phẩm). */
+/**
+ * Ngưỡng mentor hủy (phân nhánh ≥24h vs <24h) — đồng bộ bookingPolicy MENTOR_CANCEL_POLICY_ROWS.
+ * Mentor vẫn có thể hủy &lt;24h; HV được hoàn 100% ưu tiên (không chọn đổi lịch/đổi mentor).
+ */
 const MENTOR_CANCEL_MIN_HOURS = 24;
+/** HV / mentor dời lịch: phải còn ≥ 24h trước giờ họp hiện tại của buổi. */
+const RESCHEDULE_MIN_HOURS = 24;
+
+function hoursUntilBookingStart(booking) {
+  const sessionAt = parseBookingDateTime(booking?.date, booking?.timeSlot);
+  if (!sessionAt || Number.isNaN(sessionAt.getTime())) return null;
+  return (sessionAt.getTime() - Date.now()) / 3_600_000;
+}
+
+function assertRescheduleWindow(booking) {
+  const hours = hoursUntilBookingStart(booking);
+  if (hours != null && hours < RESCHEDULE_MIN_HOURS) {
+    return {
+      ok: false,
+      status: 400,
+      error: `Chỉ được đổi lịch khi còn ít nhất ${RESCHEDULE_MIN_HOURS} giờ trước giờ họp.`,
+    };
+  }
+  return { ok: true };
+}
 function isMongoReady() {
   return mongoose.connection.readyState === 1;
 }
@@ -1573,86 +1599,15 @@ export async function cancelMyBooking(userId, rawId, body) {
   };
 }
 
-export async function rescheduleMyBooking(userId, rawId, body) {
+/** HV: không đổi lịch trực tiếp — dùng cancelMyBooking + đặt mới; hoặc resolveMentorCancelBooking khi mentor hủy ≥24h. */
+export async function rescheduleMyBooking(_userId, _rawId, _body) {
   if (!isMongoReady()) return { ok: false, status: 503, error: MONGO_ERR };
-  const uid = String(userId).trim();
-  const q = bookingQueryForUser(rawId);
-  if (!q) return { ok: false, status: 400, error: "Thiếu id booking." };
-
-  const newDateRaw = typeof body?.newDate === "string" ? body.newDate.trim() : "";
-  const newTime = String(body?.newTimeSlot ?? body?.newTime ?? "").trim();
-  const reason = typeof body?.reason === "string" ? body.reason.trim().slice(0, 2000) : "";
-  const changedBy = body?.changedBy === "mentor" ? "mentor" : "user";
-
-  if (!newDateRaw || !newTime || !/^\d{1,2}:\d{2}$/.test(newTime)) {
-    return { ok: false, status: 400, error: "Thiếu newDate hoặc newTimeSlot (HH:mm)." };
-  }
-
-  const booking = await Booking.findOne({ userId: uid, ...q });
-  if (!booking) return { ok: false, status: 404, error: "Không tìm thấy booking." };
-  if (Array.isArray(booking.rescheduleHistory) && booking.rescheduleHistory.length >= 1) {
-    return { ok: false, status: 400, error: "Mỗi lịch hẹn chỉ được dời 1 lần." };
-  }
-
-  if (["cancelled", "completed", "no_show"].includes(booking.status)) {
-    return { ok: false, status: 400, error: "Không thể đổi lịch booking ở trạng thái này." };
-  }
-
-  const newDateNorm = normalizeBookingDate(newDateRaw);
-  const [th, tm] = newTime.split(":").map(Number);
-  const newSlot = `${String(th).padStart(2, "0")}:${String(tm || 0).padStart(2, "0")}`;
-  const mentorDoc = await Mentor.findById(booking.mentorId).select("availableSlots recurringSchedule blockedDates").lean();
-  const allowedSlots = getMentorSlotsForDate(mentorDoc, newDateNorm);
-  if (Array.isArray(allowedSlots)) {
-    if (allowedSlots.length === 0) {
-      return { ok: false, status: 400, error: "Mentor không mở lịch cho ngày này." };
-    }
-    if (!allowedSlots.includes(newSlot)) {
-      return { ok: false, status: 400, error: "Khung giờ mới không nằm trong lịch mentor mở." };
-    }
-  }
-  const rescheduleAt = parseBookingDateTime(newDateNorm, newSlot);
-  if (!rescheduleAt || Number.isNaN(rescheduleAt.getTime())) {
-    return { ok: false, status: 400, error: "Ngày/giờ đổi lịch không hợp lệ." };
-  }
-  if (rescheduleAt.getTime() <= Date.now()) {
-    return { ok: false, status: 400, error: "Không thể đổi lịch sang thời điểm trong quá khứ." };
-  }
-
-  const dup = await Booking.findOne({
-    mentorId: booking.mentorId,
-    date: newDateNorm,
-    timeSlot: newSlot,
-    status: { $in: ["pending", "confirmed", "in_progress"] },
-    _id: { $ne: booking._id },
-  })
-    .select("_id")
-    .lean();
-  if (dup) {
-    return { ok: false, status: 409, error: "Khung giờ mới đã có người đặt." };
-  }
-
-  const entry = {
-    oldDate: booking.date,
-    oldTimeSlot: booking.timeSlot,
-    newDate: newDateNorm,
-    newTimeSlot: newSlot,
-    reason,
-    changedBy,
-    changedAt: new Date(),
+  return {
+    ok: false,
+    status: 400,
+    error:
+      "Theo chính sách, bạn hủy buổi (hoàn theo thời điểm hủy) rồi đặt lịch mới. Đổi lịch trên cùng buổi chỉ khi mentor đã hủy từ 24 giờ trở lên — chọn phương án trên trang buổi hẹn.",
   };
-  booking.rescheduleHistory = [...(booking.rescheduleHistory || []), entry];
-  booking.date = newDateNorm;
-  booking.timeSlot = newSlot;
-  if (booking.status !== "pending") booking.status = "confirmed";
-  await booking.save();
-
-  await booking.populate([
-    { path: "userId", select: "name email avatar" },
-    { path: "mentorId", select: "name title company avatar publicId userId", populate: { path: "userId", select: "email" } }
-  ]);
-  return { ok: true, booking: toPublicBooking(booking) };
-
 }
 
 export async function cancelMentorBooking(mentorUserId, rawId, body) {
@@ -2102,6 +2057,8 @@ export async function rescheduleMentorBooking(mentorUserId, rawId, body) {
   if (["cancelled", "completed", "no_show"].includes(booking.status)) {
     return { ok: false, status: 400, error: "Không thể đổi lịch booking ở trạng thái này." };
   }
+  const windowCheck = assertRescheduleWindow(booking);
+  if (!windowCheck.ok) return windowCheck;
 
   const newDateNorm = normalizeBookingDate(newDateRaw);
   const [th, tm] = newTime.split(":").map(Number);

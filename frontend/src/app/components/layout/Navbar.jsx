@@ -28,7 +28,10 @@ import { BrandLogo } from "../brand/BrandLogo";
 import { buildLoginPath, buildRegisterPath } from "../../utils/authGate";
 
 const PAGE_TITLES = {
-  "/my-bookings": { label: "Lịch hẹn của tôi", sub: "Tất cả buổi mentor đã đặt" },
+  "/my-bookings": {
+    label: "Lịch hẹn của bạn",
+    sub: "Buổi Mentor đã đặt, lịch sắp tới và trạng thái",
+  },
   "/cv-analysis": { label: "Phân tích CV", sub: "Phân tích CV với JD hoặc chuẩn ngành, biết chỗ cần chỉnh" },
   "/cv-analysis/jd/history": { label: "Lịch sử CV + JD", sub: "Các lần phân tích CV với Job Description" },
   "/cv-analysis/field/history": { label: "Lịch sử theo ngành", sub: "Các lần phân tích CV theo ngành nghề" },
@@ -49,6 +52,7 @@ const PAGE_TITLES = {
   "/mentor/analytics": { label: "Phân tích", sub: "Số liệu & hiệu suất" },
   "/mentor/reviews": { label: "Đánh giá", sub: "Phản hồi từ học viên" },
   "/mentor/peer-review": { label: "Đánh giá chéo", sub: "Peer review mentor" },
+  "/checkout": { label: "Thanh toán", sub: "Chuyển khoản & xác nhận đơn" },
   "/session": { label: "Chi tiết buổi", sub: "Lịch hẹn & trạng thái" },
   "/mentor/meeting-detail": { label: "Chi tiết buổi mentor", sub: "Thông tin phiên họp" },
   "/mentor/meeting": { label: "Phòng họp", sub: "Buổi mentor trực tuyến" },

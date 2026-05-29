@@ -13,26 +13,29 @@ import { getUser, isLoggedIn } from "../../utils/auth";
 import { fetchCurrentPlan } from "../../utils/plansApi";
 import { CUSTOMER_SHELL_GUTTER, CUSTOMER_SHELL_MAX } from "../../components/layout/customerShellLayout";
 import { CustomerPageHeader } from "../../components/layout/CustomerPageHeader";
-import { PRICING_SUBTITLE } from "../../constants/brandVoice";
+import { PRICING_SUBTITLE, PRICING_FAQ } from "../../constants/brandVoice";
 
-const FAQ_DATA = [
-  {
-    q: "Gói Pro và Elite khác nhau như thế nào?",
-    a: "Gói Pro gồm 10 buổi phỏng vấn AI mỗi tháng và 20 lượt phân tích CV/JD. Gói Elite mở không giới hạn phỏng vấn AI, quota phân tích cao hơn và ưu tiên hỗ trợ.",
-  },
-  {
-    q: "Tôi có thể hủy gói đăng ký bất cứ lúc nào không?",
-    a: "Có. Vào Cài đặt để hủy gia hạn. Bạn vẫn dùng được quyền lợi gói đến hết chu kỳ đã thanh toán.",
-  },
-  {
-    q: "Thanh toán qua kênh nào?",
-    a: "Hiện hỗ trợ chuyển khoản ngân hàng (VietQR). Sau khi CK đúng mã và số tiền, SePay tự xác nhận và gói được kích hoạt trong vài phút.",
-  },
-  {
-    q: "Chính sách hoàn tiền?",
-    a: "Hoàn 100% trong 7 ngày nếu chưa hài lòng và chưa dùng quá 2 buổi phỏng vấn AI.",
-  },
-];
+function PricingFaqAnswer({ item }) {
+  return (
+    <div className="mt-3 space-y-3 border-t border-violet-100 pt-3 text-sm leading-relaxed text-slate-600">
+      {item.paragraphs?.map((p, idx) => (
+        <p key={idx}>{p}</p>
+      ))}
+      {item.bullets?.length ? (
+        <ul className="list-disc space-y-2 pl-5 marker:text-[#6d2fd6]">
+          {item.bullets.map((b, idx) => (
+            <li key={idx}>{b}</li>
+          ))}
+        </ul>
+      ) : null}
+      {item.note ? (
+        <p className="rounded-xl bg-violet-50/80 px-3 py-2 text-[13px] font-medium text-violet-900/90">
+          {item.note}
+        </p>
+      ) : null}
+    </div>
+  );
+}
 
 const PLANS = [
   {
@@ -211,7 +214,6 @@ export function Pricing() {
           <CustomerPageHeader
             centered
             className="mb-8 sm:mb-10"
-            badge="Bảng giá"
             title={
               <>
                 Sẵn sàng hơn cho{" "}
@@ -401,36 +403,44 @@ export function Pricing() {
               <h2 className="font-headline text-xl font-extrabold text-violet-950 sm:text-2xl">
                 Câu hỏi thường gặp
               </h2>
-              <p className="mt-2 text-sm text-violet-700/90">Mọi thứ bạn cần biết về gói và quyền lợi.</p>
+              <p className="mt-2 text-sm text-violet-700/90 sm:text-base">
+                Hướng dẫn chi tiết về gói dịch vụ, thanh toán, quota và quyền lợi của bạn.
+              </p>
             </div>
 
             <div className="space-y-3">
-              {FAQ_DATA.map((item, i) => (
-                <button
-                  key={i}
-                  type="button"
-                  className={`w-full rounded-2xl border bg-white p-5 text-left shadow-sm transition-all ${
-                    openFaq === i
-                      ? "border-violet-300 ring-2 ring-violet-100"
-                      : "border-slate-200/90 hover:border-violet-200"
-                  }`}
-                  onClick={() => toggleFaq(i)}
-                >
-                  <div className="flex items-center justify-between gap-4">
-                    <h4 className="text-sm font-bold text-slate-900 sm:text-base">{item.q}</h4>
-                    {openFaq === i ? (
-                      <ChevronUp className="h-5 w-5 shrink-0 text-[#6d2fd6]" />
-                    ) : (
-                      <ChevronDown className="h-5 w-5 shrink-0 text-slate-400" />
-                    )}
+              {PRICING_FAQ.map((item, i) => {
+                const isOpen = openFaq === i;
+                return (
+                  <div
+                    key={item.q}
+                    className={`overflow-hidden rounded-2xl border bg-white shadow-sm transition-all ${
+                      isOpen
+                        ? "border-violet-300 ring-2 ring-violet-100"
+                        : "border-slate-200/90 hover:border-violet-200"
+                    }`}
+                  >
+                    <button
+                      type="button"
+                      className="flex w-full items-center justify-between gap-4 p-5 text-left"
+                      aria-expanded={isOpen}
+                      onClick={() => toggleFaq(i)}
+                    >
+                      <h4 className="text-sm font-bold text-slate-900 sm:text-base">{item.q}</h4>
+                      {isOpen ? (
+                        <ChevronUp className="h-5 w-5 shrink-0 text-[#6d2fd6]" />
+                      ) : (
+                        <ChevronDown className="h-5 w-5 shrink-0 text-slate-400" />
+                      )}
+                    </button>
+                    {isOpen ? (
+                      <div className="px-5 pb-5">
+                        <PricingFaqAnswer item={item} />
+                      </div>
+                    ) : null}
                   </div>
-                  {openFaq === i && (
-                    <p className="mt-3 border-t border-violet-100 pt-3 text-sm leading-relaxed text-slate-600">
-                      {item.a}
-                    </p>
-                  )}
-                </button>
-              ))}
+                );
+              })}
             </div>
           </section>
         </div>

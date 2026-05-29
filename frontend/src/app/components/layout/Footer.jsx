@@ -1,11 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router";
-import {
-  ArrowRight,
-  Heart,
-  Mail,
-  ShieldCheck,
-} from "lucide-react";
+import { Heart, Mail, ShieldCheck } from "lucide-react";
 import { BrandLogo } from "../brand/BrandLogo";
 import { FOOTER_TAGLINE } from "../../constants/brandVoice";
 
@@ -38,22 +33,24 @@ function LinkedinIcon({ className, style }) {
     </svg>
   );
 }
+function InstagramIcon({ className, style }) {
+  return (
+    <svg className={className} style={style} viewBox="0 0 24 24" fill="currentColor">
+      <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 1 0 0 12.324 6.162 6.162 0 0 0 0-12.324zM12 16a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm6.406-11.845a1.44 1.44 0 1 0 0 2.881 1.44 1.44 0 0 0 0-2.881z"/>
+    </svg>
+  );
+}
 
 /* ── Data ── */
 const NAV_LINKS = {
-  "Sản phẩm": [
-    { label: "Phỏng vấn AI", path: "/interview" },
-    { label: "Phân tích CV/JD", path: "/cv-analysis" },
-    { label: "Mentor 1:1", path: "/mentors" },
-    { label: "Khóa học", path: "/courses" },
-  ],
-  "Dịch vụ": [
-    { label: "Bảng giá", path: "/pricing" },
-    { label: "Đặt lịch Mentor", path: "/mentors" },
-    { label: "Phỏng vấn thử", path: "/interview" },
-    { label: "Hồ sơ của tôi", path: "/profile" },
+  "Giải pháp": [
+    { label: "Luyện phỏng vấn với AI", path: "/interview" },
+    { label: "Tối ưu CV theo vị trí ứng tuyển", path: "/cv-analysis" },
+    { label: "Kết nối Mentor 1:1", path: "/mentors" },
+    { label: "Khóa học từ Mentor", path: "/courses" },
   ],
   "Hỗ trợ": [
+    { label: "Hồ sơ của tôi", path: "/profile" },
     { label: "Trung tâm trợ giúp", path: "#" },
     { label: "Hướng dẫn sử dụng", path: "#" },
     { label: "Điều khoản dịch vụ", path: "#" },
@@ -61,12 +58,46 @@ const NAV_LINKS = {
   ],
 };
 
+const FOOTER_MAIN_GRID =
+  "grid w-full grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-[minmax(0,2.25fr)_minmax(0,1fr)_minmax(0,1fr)] lg:items-start lg:gap-x-10 xl:gap-x-14";
+
 const CONTACT_EMAIL = "prointerview.ai@gmail.com";
+
+function FooterNavColumn({ section, links, navigate, variant = "light" }) {
+  const headingClass =
+    variant === "dark"
+      ? "mb-4 text-left text-[0.9375rem] font-bold tracking-tight text-white/90"
+      : "mb-4 text-left text-[0.9375rem] font-bold tracking-tight text-slate-900";
+  const linkClass =
+    variant === "dark"
+      ? "text-left text-sm text-white/55 transition-colors hover:text-white"
+      : "text-left text-sm text-slate-600 transition-colors hover:text-[#8037f4]";
+
+  return (
+    <nav className="text-left" aria-label={section}>
+      <h4 className={headingClass}>{section}</h4>
+      <ul className="space-y-2.5">
+        {links.map((link) => (
+          <li key={link.label}>
+            <button
+              type="button"
+              onClick={() => link.path !== "#" && navigate(link.path)}
+              className={linkClass}
+            >
+              {link.label}
+            </button>
+          </li>
+        ))}
+      </ul>
+    </nav>
+  );
+}
 
 const SOCIAL_LINKS = [
   { name: "Facebook",  href: "https://www.facebook.com/ProInterviewAI",         icon: FacebookIcon,  color: "#1877F2", bgLight: "rgba(24,119,242,0.08)",  bgDark: "rgba(24,119,242,0.1)"  },
   { name: "TikTok",   href: "https://www.tiktok.com/@prointerview",             icon: TiktokIcon,    color: "#010101", bgLight: "rgba(0,0,0,0.06)",       bgDark: "rgba(0,0,0,0.07)"      },
   { name: "LinkedIn", href: "https://www.linkedin.com/company/prointerviewai/", icon: LinkedinIcon,  color: "#0A66C2", bgLight: "rgba(10,102,194,0.08)",  bgDark: "rgba(10,102,194,0.1)"  },
+  { name: "Instagram", href: "https://www.instagram.com/prointerviewvn/",       icon: InstagramIcon, color: "#E4405F", bgLight: "rgba(228,64,95,0.08)",   bgDark: "rgba(228,64,95,0.1)"   },
 ];
 
 /* ══════════════════════════════════════════════════════════════
@@ -95,9 +126,9 @@ function FooterDark() {
 
       {/* Main body */}
       <div className="relative z-[1] max-w-7xl mx-auto px-6 py-16">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-12 lg:gap-10">
+        <div className={FOOTER_MAIN_GRID}>
           {/* Brand */}
-          <div className="lg:col-span-2">
+          <div className="sm:col-span-2 lg:col-span-1">
             <div className="mb-1 flex items-center gap-3">
               <BrandLogo size="footer" />
             </div>
@@ -160,34 +191,14 @@ function FooterDark() {
             </div>
           </div>
 
-          {/* Nav columns */}
           {Object.entries(NAV_LINKS).map(([section, links]) => (
-            <div key={section}>
-              <h4
-                className="mb-5 font-bold text-white/90"
-                style={{ fontSize: "0.9375rem", letterSpacing: "-0.01em" }}
-              >
-                {section}
-              </h4>
-              <ul className="space-y-3">
-                {links.map((link) => (
-                  <li key={link.label}>
-                    <button 
-                      onClick={() => link.path !== "#" && navigate(link.path)}
-                      className="text-white/55 hover:text-white text-sm transition-all duration-200 text-left group flex items-center gap-2"
-                    >
-                      <ArrowRight
-                        className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition-all -translate-x-2 group-hover:translate-x-0"
-                        style={{ color: "#93f72b" }}
-                      />
-                      <span className="group-hover:translate-x-1 transition-transform duration-200">
-                        {link.label}
-                      </span>
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </div>
+            <FooterNavColumn
+              key={section}
+              section={section}
+              links={links}
+              navigate={navigate}
+              variant="dark"
+            />
           ))}
         </div>
       </div>
@@ -236,8 +247,8 @@ function FooterLight() {
       />
 
       <div className="relative z-[1] mx-auto max-w-7xl px-6 py-16">
-        <div className="grid grid-cols-1 gap-12 md:grid-cols-2 lg:grid-cols-5 lg:gap-10">
-          <div className="lg:col-span-2">
+        <div className={FOOTER_MAIN_GRID}>
+          <div className="sm:col-span-2 lg:col-span-1">
             <div className="-mt-1 mb-1 flex items-center gap-3">
               <BrandLogo size="footer" />
             </div>
@@ -301,33 +312,13 @@ function FooterLight() {
           </div>
 
           {Object.entries(NAV_LINKS).map(([section, links]) => (
-            <div key={section}>
-              <h4
-                className="mb-5 font-bold text-slate-900"
-                style={{ fontSize: "0.9375rem", letterSpacing: "-0.01em" }}
-              >
-                {section}
-              </h4>
-              <ul className="space-y-3">
-                {links.map((link) => (
-                  <li key={link.label}>
-                    <button
-                      type="button"
-                      onClick={() => link.path !== "#" && navigate(link.path)}
-                      className="group flex items-center gap-2 text-left text-sm text-slate-600 transition-all duration-200 hover:text-[#8037f4]"
-                    >
-                      <ArrowRight
-                        className="h-3.5 w-3.5 -translate-x-2 opacity-0 transition-all group-hover:translate-x-0 group-hover:opacity-100"
-                        style={{ color: "#93f72b" }}
-                      />
-                      <span className="transition-transform duration-200 group-hover:translate-x-1">
-                        {link.label}
-                      </span>
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </div>
+            <FooterNavColumn
+              key={section}
+              section={section}
+              links={links}
+              navigate={navigate}
+              variant="light"
+            />
           ))}
         </div>
       </div>

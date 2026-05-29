@@ -34,6 +34,7 @@ import { AILipSyncAvatar } from "../../components/interview/AILipSyncAvatar";
 import { MentorPageShell } from "../../components/mentor/MentorPageShell";
 import { InterviewStepBar } from "../../components/interview/InterviewStepBar";
 import { CUSTOMER_SHELL_GUTTER, CUSTOMER_SHELL_MAX } from "../../components/layout/customerShellLayout";
+import { CustomerPageHeader } from "../../components/layout/CustomerPageHeader";
 
 /* ── Session storage keys ────────────────────────────────── */
 const TRANSCRIPT_KEY = "prointerview_transcripts";
@@ -967,14 +968,17 @@ export default function InterviewRoom() {
       <MentorPageShell bottomPad="pb-16">
         <div className={`relative z-10 pb-8 pt-8 sm:pt-10 ${CUSTOMER_SHELL_GUTTER}`}>
           <div className={`${CUSTOMER_SHELL_MAX} mx-auto w-full max-w-3xl`}>
-            <header className="mb-5">
-              <h1 className="font-headline text-2xl font-extrabold tracking-tight text-violet-950 sm:text-3xl">
-                Phỏng vấn AI
-              </h1>
-              <p className="mt-1.5 text-sm leading-relaxed text-violet-600">
-                Chọn nguồn CV → chọn HR AI → vào phòng phỏng vấn (~30 phút, có phân tích hành vi & feedback từng câu).
-              </p>
-            </header>
+            <CustomerPageHeader
+              className="mb-5 w-full"
+              title={
+                <>
+                  <span className="font-extrabold text-[#6d2fd6]">Luyện phỏng vấn với AI</span>{" "}
+                  <span className="font-extrabold text-[#1a1b23]">Từ CV của bạn</span>
+                </>
+              }
+              subtitle="Từ CV của bạn, ProInterview tạo buổi phỏng vấn thử với HR AI (~30 phút), phân tích hành vi và góp ý sau từng câu trả lời để bạn tự tin hơn trước buổi thật."
+              subtitleClassName="mt-3 max-w-2xl text-base font-medium leading-relaxed text-violet-700/90"
+            />
 
             <div className="w-full rounded-md border border-violet-200/80 bg-white px-4 py-5 shadow-sm sm:px-6 sm:py-6">
               <InterviewStepBar current={3} />

@@ -15,6 +15,10 @@ import {
 } from "../../utils/bookingMappers";
 import { MentorPageShell } from "../../components/mentor/MentorPageShell";
 import { DASHBOARD_GREETING_SUB } from "../../constants/brandVoice";
+import {
+  getUserCancelPolicyFromDateTime,
+  userCancelWarningMessage,
+} from "../../constants/bookingPolicy";
 
 /** Google Material Symbols Outlined — same family as mock (index.html loads the font). */
 function MsIcon({ name, className = "", filled = false, size = 24, style }) {
@@ -37,19 +41,6 @@ function MsIcon({ name, className = "", filled = false, size = 24, style }) {
       {name}
     </span>
   );
-}
-
-function getCancellationPolicy(dateStr, timeStr) {
-  const [d, m, y] = String(dateStr || "").split("/").map(Number);
-  const [hh, mm] = String(timeStr || "").split(":").map(Number);
-  const startAt = new Date(y, (m || 1) - 1, d || 1, hh || 0, mm || 0, 0, 0);
-  if (!Number.isFinite(startAt.getTime())) {
-    return { feePercent: 100, refundPercent: 0 };
-  }
-  const hoursUntil = (startAt.getTime() - Date.now()) / 3_600_000;
-  if (hoursUntil < 12) return { feePercent: 100, refundPercent: 0 };
-  if (hoursUntil < 24) return { feePercent: 50, refundPercent: 50 };
-  return { feePercent: 0, refundPercent: 100 };
 }
 
 function getTimeUntilSessionLabel(dateStr, timeStr) {
@@ -85,7 +76,9 @@ function CancellationModal({ booking, onClose, onConfirm }) {
     "Khác",
   ];
 
-  const policy = booking ? getCancellationPolicy(booking.date, booking.time) : { feePercent: 100, refundPercent: 0 };
+  const policy = booking
+    ? getUserCancelPolicyFromDateTime(booking.date, booking.time)
+    : { feePercent: 100, refundPercent: 0 };
   const needsRefundBank = Boolean(
     booking &&
       policy.refundPercent > 0 &&
@@ -137,11 +130,7 @@ function CancellationModal({ booking, onClose, onConfirm }) {
             <div className="mb-4 rounded-2xl border border-red-300 bg-red-50 px-4 py-3">
               <p className="text-[11px] font-black uppercase tracking-[0.14em] text-red-600">Cảnh báo</p>
               <p className="mt-1 text-sm font-semibold text-red-700">
-                {policy.feePercent === 100
-                  ? "Hủy trong vòng dưới 12 giờ trước buổi hẹn: không hoàn tiền (100% phí giữ lại)."
-                  : policy.feePercent === 50
-                    ? "Hủy từ 12 giờ đến dưới 24 giờ trước buổi: hoàn 50% phí đã thanh toán."
-                    : "Hủy từ 24 giờ trở lên trước buổi: hoàn 100% phí đã thanh toán."}
+                {userCancelWarningMessage(policy)}
               </p>
             </div>
 

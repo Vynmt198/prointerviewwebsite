@@ -463,13 +463,14 @@ export function Interview() {
         <div className={`${CUSTOMER_SHELL_MAX} mx-auto flex w-full max-w-3xl flex-col`}>
           <CustomerPageHeader
             className="mb-5 w-full"
-            badge="Phỏng vấn AI"
             title={
               <>
-                Luyện nói trước, <span className="text-[#6d2fd6]">tự tin hơn</span>
+                <span className="font-extrabold text-[#6d2fd6]">Luyện phỏng vấn với AI</span>{" "}
+                <span className="font-extrabold text-[#1a1b23]">Từ CV của bạn</span>
               </>
             }
-            subtitle="Đưa CV, chọn HR AI — luyện trả lời sát hồ sơ, góp ý từng câu, biết sửa gì trước khi gặp HR công ty."
+            subtitle="Từ CV của bạn, ProInterview tạo buổi phỏng vấn thử với HR AI và góp ý sau từng câu trả lời để bạn tự tin hơn trước buổi thật."
+            subtitleClassName="mt-3 max-w-2xl text-base font-medium leading-relaxed text-violet-700/90"
           />
 
         <div className={CV_JD_CARD_CLASS}>

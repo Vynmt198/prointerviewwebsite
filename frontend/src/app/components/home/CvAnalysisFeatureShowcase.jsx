@@ -101,14 +101,18 @@ export function CvAnalysisFeatureShowcase({ onCtaClick }) {
               {CV_SHOWCASE_COPY.badge}
             </span>
             <h2 className={`max-w-full ${ty.title}`}>
-              <span className={ty.titleLineDark} style={{ fontSize: HOME_CV_SHOWCASE_TITLE_CLAMP }}>
-                {CV_SHOWCASE_COPY.titleLine1}
-              </span>
               <span
-                className={`mt-0.5 ${ty.titleLineAccent}`}
+                className={`block ${ty.titleLineAccent}`}
                 style={{ fontSize: HOME_CV_SHOWCASE_TITLE_CLAMP }}
               >
-                {CV_SHOWCASE_COPY.titleLine2}
+                {CV_SHOWCASE_COPY.titleAccent}
+              </span>
+              <span
+                className={`mt-0.5 block ${ty.titleLineDark}`}
+                style={{ fontSize: HOME_CV_SHOWCASE_TITLE_CLAMP }}
+              >
+                trong mắt{" "}
+                <span className="whitespace-nowrap">nhà tuyển dụng?</span>
               </span>
             </h2>
             <p className={`max-w-full lg:max-w-lg ${ty.cvShowcaseBody}`}>

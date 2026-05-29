@@ -16,7 +16,6 @@ import {
   BadgeCheck as SealCheck,
   GraduationCap
 } from "lucide-react";
-import { Footer } from "../../components/layout/Footer";
 import { RecommendedJourney } from "../../components/home/RecommendedJourney";
 import { CvAnalysisFeatureShowcase } from "../../components/home/CvAnalysisFeatureShowcase";
 import {
@@ -801,9 +800,6 @@ export function Home() {
           </div>
         </div>
       </section>
-
-      {/* ═══ FOOTER ══════════════════════════════════════════ */}
-      <Footer variant="light" />
     </div>
   );
 }

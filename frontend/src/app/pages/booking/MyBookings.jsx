@@ -3,6 +3,8 @@ import { useNavigate } from "react-router";
 import { motion } from "motion/react";
 import { Calendar, Video, Star, FileText } from "lucide-react";
 import { MentorPageShell } from "../../components/mentor/MentorPageShell";
+import { CustomerPageHeader } from "../../components/layout/CustomerPageHeader";
+import { CUSTOMER_SHELL_GUTTER, CUSTOMER_SHELL_MAX } from "../../components/layout/customerShellLayout";
 import { listBookings } from "../../utils/bookingsApi";
 import { apiBookingToLocal } from "../../utils/bookingMappers";
 import { parseDateMs } from "../../utils/bookings";
@@ -113,16 +115,22 @@ export function MyBookings() {
   }, [rows]);
 
   return (
-    <MentorPageShell bottomPad="pb-16">
+    <MentorPageShell bottomPad="pb-20">
       <motion.div
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
-        className="mx-auto max-w-3xl space-y-8"
+        className={`relative z-10 flex flex-col pb-10 pt-8 sm:pt-10 ${CUSTOMER_SHELL_GUTTER}`}
       >
-        <div>
-          <h1 className="text-2xl font-black tracking-tight text-slate-900 sm:text-3xl">Lịch hẹn của tôi</h1>
-          <p className="mt-2 text-sm text-slate-500">Tất cả buổi mentor bạn đã đặt trên ProInterview</p>
-        </div>
+        <div className={`${CUSTOMER_SHELL_MAX} w-full space-y-6`}>
+          <CustomerPageHeader
+            title={
+              <>
+                Lịch hẹn <span className="text-[#6d2fd6]">của bạn</span>
+              </>
+            }
+            subtitle="Xem thông tin các buổi Mentor đã đặt, lịch sắp tới và trạng thái buổi hẹn."
+            className="mb-2"
+          />
 
         <motion.div
           className="flex flex-wrap gap-2 rounded-2xl border border-slate-200 bg-white p-1.5 shadow-sm"
@@ -176,7 +184,7 @@ export function MyBookings() {
         )}
 
         {!loading && !error && filtered.length > 0 && (
-          <div className="space-y-4">
+          <div className="grid grid-cols-1 gap-4 min-[900px]:grid-cols-2">
             {filtered.map((s) => {
               const id = s.sessionId || s.backendId;
               const badge = getPaymentBadge(s.paymentStatus, s.status);
@@ -258,6 +266,7 @@ export function MyBookings() {
             })}
           </div>
         )}
+        </div>
       </motion.div>
     </MentorPageShell>
   );

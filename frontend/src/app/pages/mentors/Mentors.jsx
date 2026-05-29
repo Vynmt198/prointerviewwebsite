@@ -4,15 +4,18 @@ import { useNavigate, useSearchParams } from "react-router";
 import {
   Search as MagnifyingGlass,
   Star,
-  Clock,
   X,
   Loader2 as CircleNotch,
   AlertCircle,
 } from "lucide-react";
+import { MentorListCard } from "../../components/mentor/MentorListCard";
 import { fetchMentors } from "../../utils/mentorApi";
 import { fetchRebookCredit } from "../../utils/bookingsApi";
 import { toastApiError } from "../../utils/apiToast";
-import { MENTOR_FILTER_FIELDS } from "../../constants/mentorFilterFields";
+import {
+  MENTOR_FILTER_FIELDS,
+  mentorMatchesFilterField,
+} from "../../constants/mentorFilterFields";
 import { CustomerPageHeader } from "../../components/layout/CustomerPageHeader";
 import { CUSTOMER_SHELL_GUTTER, CUSTOMER_SHELL_MAX } from "../../components/layout/customerShellLayout";
 import {
@@ -40,7 +43,7 @@ const RATING_OPTIONS = [
   { label: "3.5+", min: 3.5 },
 ];
 
-const MENTORS_PAGE_SIZE = 12;
+const MENTORS_PAGE_SIZE = 8;
 
 function MentorsSidebar({
   selectedField,
@@ -193,10 +196,11 @@ export function Mentors() {
         search === "" ||
         m.name.toLowerCase().includes(q) ||
         m.title.toLowerCase().includes(q) ||
+        (m.bio || "").toLowerCase().includes(q) ||
         m.field.toLowerCase().includes(q) ||
         m.tags.some((t) => t.toLowerCase().includes(q));
 
-      const matchField = !selectedField || m.field === selectedField;
+      const matchField = mentorMatchesFilterField(m, selectedField);
 
       const matchExp =
         !selectedExp ||
@@ -262,13 +266,14 @@ export function Mentors() {
           ) : null}
 
           <CustomerPageHeader
-            badge="Mentor 1:1"
             title={
               <>
-                Tìm Mentor <span className="text-[#6d2fd6]">phù hợp</span>
+                <span className="font-extrabold text-[#6d2fd6]">Kết nối Mentor</span>{" "}
+                <span className="font-extrabold text-[#1a1b23]">phù hợp</span>
               </>
             }
-            subtitle="Sau buổi mock 1-1, bạn nhận feedback cụ thể — biết cần sửa gì và tự tin hơn khi vào vòng phỏng vấn thật."
+            subtitle="Kết nối với Mentor để có thêm góc nhìn thực tế từ ngành, hiểu kỳ vọng của nhà tuyển dụng và chuẩn bị tự tin hơn cho buổi phỏng vấn thật."
+            subtitleClassName="mt-3 max-w-2xl text-base font-medium leading-relaxed text-violet-700/90"
             className="mb-6"
           />
 
@@ -343,12 +348,16 @@ export function Mentors() {
                 </div>
 
                 {loading ? (
-                  <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
-                    {[...Array(6)].map((_, i) => (
-                      <div
-                        key={i}
-                        className="h-52 animate-pulse rounded-2xl border border-violet-100 bg-violet-50/50"
-                      />
+                  <div className="divide-y divide-slate-200/90">
+                    {[...Array(4)].map((_, i) => (
+                      <div key={i} className="flex gap-4 py-7">
+                        <div className="size-20 shrink-0 animate-pulse rounded-full bg-violet-100" />
+                        <div className="flex-1 space-y-3">
+                          <div className="h-5 w-48 animate-pulse rounded bg-violet-100" />
+                          <div className="h-4 w-full max-w-md animate-pulse rounded bg-violet-50" />
+                          <div className="h-4 w-3/4 animate-pulse rounded bg-violet-50" />
+                        </div>
+                      </div>
                     ))}
                   </div>
                 ) : error ? (
@@ -393,90 +402,14 @@ export function Mentors() {
                   </div>
                 ) : (
                   <>
-                    <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+                    <div className="rounded-2xl border border-slate-200/80 bg-white px-3 sm:px-5">
                       {paginatedMentors.map((mentor) => (
-                        <article
+                        <MentorListCard
                           key={mentor.id}
-                          role="button"
-                          tabIndex={0}
-                          onClick={() => navigate(`/mentors/${mentor.id}`)}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter" || e.key === " ") {
-                              e.preventDefault();
-                              navigate(`/mentors/${mentor.id}`);
-                            }
-                          }}
-                          className="group cursor-pointer overflow-hidden rounded-2xl border border-violet-200/70 bg-white shadow-sm transition-all hover:-translate-y-0.5 hover:border-violet-300 hover:shadow-md"
-                        >
-                          <div className="h-1 w-full bg-gradient-to-r from-[#8037f4] to-[#a66ff8]" />
-                          <div className="p-5">
-                            <div className="mb-4 flex items-start gap-3">
-                              <div className="relative shrink-0">
-                                <img
-                                  src={mentor.avatar}
-                                  alt=""
-                                  className="size-14 rounded-2xl border-2 border-violet-100 object-cover"
-                                />
-                                {mentor.available ? (
-                                  <span
-                                    className="absolute -bottom-0.5 -right-0.5 size-4 rounded-full border-2 border-white bg-emerald-500"
-                                    title="Có lịch trống"
-                                  />
-                                ) : null}
-                              </div>
-                              <div className="min-w-0 flex-1">
-                                <h3 className="truncate text-sm font-bold text-violet-950 group-hover:text-[#8037f4]">
-                                  {mentor.name}
-                                </h3>
-                                <p className="mt-0.5 truncate text-xs text-slate-500">{mentor.title}</p>
-                                <p className="mt-0.5 truncate text-xs font-medium text-violet-600">
-                                  {mentor.company}
-                                </p>
-                              </div>
-                            </div>
-
-                            <div className="mb-3 flex items-center justify-between text-xs text-slate-500">
-                              <span className="inline-flex items-center gap-1 font-semibold text-slate-800">
-                                <Star className="size-3.5 fill-amber-400 text-amber-400" />
-                                {mentor.rating} ({mentor.reviews})
-                              </span>
-                              <span className="inline-flex items-center gap-1">
-                                <Clock className="size-3.5" />
-                                {mentor.responseTime}
-                              </span>
-                            </div>
-
-                            <div className="mb-4 flex flex-wrap gap-1.5">
-                              {mentor.tags.slice(0, 3).map((tag) => (
-                                <span
-                                  key={tag}
-                                  className="rounded-full bg-violet-50 px-2 py-0.5 text-[10px] font-medium text-violet-700"
-                                >
-                                  {tag}
-                                </span>
-                              ))}
-                            </div>
-
-                            <div className="flex items-center justify-between border-t border-violet-100 pt-3">
-                              <div>
-                                <span className="text-sm font-black text-violet-950">
-                                  {mentor.price.toLocaleString("vi-VN")}đ
-                                </span>
-                                <span className="text-xs text-slate-500"> / giờ</span>
-                              </div>
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  navigate(bookingPath(mentor.id));
-                                }}
-                                className="rounded-xl bg-[#8037f4] px-4 py-2 text-xs font-bold text-white transition-colors hover:bg-violet-700"
-                              >
-                                Đặt lịch
-                              </button>
-                            </div>
-                          </div>
-                        </article>
+                          mentor={mentor}
+                          onOpenProfile={() => navigate(`/mentors/${mentor.id}`)}
+                          onBook={() => navigate(bookingPath(mentor.id))}
+                        />
                       ))}
                     </div>
                     <ListPagination

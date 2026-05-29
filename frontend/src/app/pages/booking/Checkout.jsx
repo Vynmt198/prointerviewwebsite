@@ -2,22 +2,22 @@ import React, { useState, useEffect, useMemo, useRef } from "react";
 import { useSearchParams, useNavigate } from "react-router";
 import {
   ArrowLeft,
-  Sparkles as Sparkle,
   Check,
   CheckCircle2,
   Lock,
   AlertCircle,
   Tag,
-  Phone,
   Copy,
   Calendar,
   Clock,
   Video,
-  Landmark,
   X,
 } from "lucide-react";
+import { Navbar } from "../../components/layout/Navbar";
+import { CUSTOMER_SHELL_GUTTER, CUSTOMER_SHELL_MAX } from "../../components/layout/customerShellLayout";
 import { getUser, isLoggedIn, setLoggedIn } from "../../utils/auth";
 import { fetchCurrentPlan } from "../../utils/plansApi";
+import { BRAND_LIME, BRAND_PURPLE } from "../../constants/brandColors";
 import { landingPrimaryButtonClass } from "../../constants/landingTheme";
 import { fetchMentor } from "../../utils/mentorApi";
 import { createBooking, fetchRebookCredit } from "../../utils/bookingsApi";
@@ -53,11 +53,38 @@ function fmt(n) {
   return new Intl.NumberFormat("vi-VN").format(n) + "đ";
 }
 
+function formatAmountParts(amount) {
+  const value = new Intl.NumberFormat("vi-VN").format(Number(amount) || 0);
+  return { value, suffix: "đ" };
+}
+
+/** Số tiền gom một khối — căn giữa, số và đ cùng kiểu chữ */
+function PaymentAmountBlock({ payAmount, className = "" }) {
+  const { value, suffix } = formatAmountParts(payAmount);
+  const amountClass =
+    "mt-1.5 text-[2rem] font-extrabold leading-none tabular-nums tracking-tight text-slate-900 sm:text-[2.25rem]";
+  return (
+    <div
+      className={`rounded-2xl border border-slate-200 bg-slate-50/90 px-4 py-3 text-left ${className}`}
+    >
+      <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+        Số tiền cần thanh toán
+      </p>
+      <p className={amountClass}>
+        {value}
+        {suffix}
+      </p>
+    </div>
+  );
+}
+
 const checkoutCard =
   "rounded-2xl border border-slate-200 bg-white shadow-sm";
 const labelMuted = "text-xs font-medium text-slate-500";
 const textMuted = "text-sm text-slate-600";
-const pageShell = "min-h-screen bg-[#faf9fc] text-slate-900 antialiased";
+const pageShell =
+  "relative min-h-svh w-full overflow-x-hidden bg-[#f3f0f9] text-slate-900 antialiased selection:bg-violet-100 selection:text-violet-900";
+const mainTopPad = "pt-[3.75rem] sm:pt-[4.25rem] md:pt-[4.75rem]";
 
 function mentorIdsMatch(a, b) {
   const na = String(a || "").trim().toLowerCase();
@@ -74,6 +101,34 @@ const BANK_TRANSFER = {
   accountNumber: import.meta.env.VITE_BANK_TRANSFER_ACCOUNT || "",
   accountOwner: import.meta.env.VITE_BANK_TRANSFER_OWNER || "",
 };
+
+/** Tên ngân hàng đầy đủ — ưu tiên `VITE_BANK_TRANSFER_DISPLAY_NAME`, không viết tắt trên UI. */
+function displayBankName(raw) {
+  const explicit = String(import.meta.env.VITE_BANK_TRANSFER_DISPLAY_NAME || "").trim();
+  if (explicit) return explicit;
+  return String(raw || "")
+    .replace(/\bTMCP\b/gi, "Thương mại Cổ phần")
+    .replace(/\s*\(?\s*TPBank\s*\)?\s*/gi, " ")
+    .replace(/\s{2,}/g, " ")
+    .trim();
+}
+
+function TransferDetailRow({ label, children, large, labelClass, valueWrapClass, rowClass = "" }) {
+  if (large) {
+    return (
+      <div className={`space-y-0.5 ${rowClass}`}>
+        <p className={labelClass}>{label}</p>
+        <div className={valueWrapClass}>{children}</div>
+      </div>
+    );
+  }
+  return (
+    <div className="flex justify-between gap-3">
+      <span className={labelClass}>{label}</span>
+      <div className="text-right">{children}</div>
+    </div>
+  );
+}
 
 /** Mã ngân hàng cho VietQR (img.vietqr.io). VD: TPB = TPBank, VCB = Vietcombank. */
 function inferVietQrBankId() {
@@ -108,25 +163,206 @@ function extractOrderPart(value) {
 }
 
 /* ─── CopyBtn ────────────────────────────────────────────── */
-function CopyBtn({ text }) {
+function CopyBtn({ text, variant = "default" }) {
   const [copied, setCopied] = useState(false);
+  const copy = () => {
+    navigator.clipboard.writeText(text).catch(() => {});
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  if (variant === "pane") {
+    return (
+      <button
+        type="button"
+        onClick={copy}
+        className={`flex w-[4.25rem] shrink-0 flex-col items-center justify-center gap-1 border-l border-[#8037f4]/15 text-[10px] font-semibold transition-colors sm:w-[4.75rem] ${
+          copied
+            ? "bg-[#93f72b]/20 text-[#8037f4]"
+            : "bg-[#8037f4]/5 text-[#8037f4]/70 hover:bg-[#8037f4]/10 hover:text-[#8037f4]"
+        }`}
+      >
+        {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+        {copied ? "Đã copy" : "Sao chép"}
+      </button>
+    );
+  }
+
+  if (variant === "ghost-light") {
+    return (
+      <button
+        type="button"
+        onClick={copy}
+        className={`flex shrink-0 items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-semibold transition-colors ${
+          copied ? "bg-white/25 text-white" : "bg-white/15 text-white hover:bg-white/25"
+        }`}
+      >
+        {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+        {copied ? "Đã copy" : "Sao chép"}
+      </button>
+    );
+  }
+
   return (
     <button
       type="button"
-      onClick={() => {
-        navigator.clipboard.writeText(text).catch(() => {});
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
-      }}
+      onClick={copy}
       className={`flex items-center gap-1 rounded-lg border px-2.5 py-1 text-xs font-semibold transition-all ${
         copied
-          ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-400"
-          : "border-slate-200 bg-slate-50 text-slate-600 hover:border-violet-300 hover:bg-violet-50 hover:text-violet-800"
+          ? "border-[#93f72b]/50 bg-[#93f72b]/15 text-[#8037f4]"
+          : "border-[#8037f4]/25 bg-white text-[#8037f4]/80 shadow-sm hover:border-[#8037f4]/40 hover:bg-[#8037f4]/5 hover:text-[#8037f4]"
       }`}
     >
       {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
       {copied ? "Đã sao chép" : "Sao chép"}
     </button>
+  );
+}
+
+function BankTransferPaymentDetails({ payAmount, transferOrderNum }) {
+  const bankName = displayBankName(BANK_TRANSFER.bankName);
+
+  return (
+    <div className="flex flex-col gap-3 sm:gap-3.5">
+      <PaymentAmountBlock payAmount={payAmount} />
+
+      <div className="rounded-2xl bg-[#8037f4] px-4 py-3 text-white shadow-[0_8px_24px_rgba(128,55,244,0.28)]">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-[#93f72b]">
+              Nội dung chuyển khoản
+            </p>
+            <p className="mt-1 break-all font-mono text-lg font-bold sm:text-xl">{transferOrderNum}</p>
+          </div>
+          <CopyBtn text={transferOrderNum} variant="ghost-light" />
+        </div>
+      </div>
+
+      <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3.5">
+        <ul className="space-y-2.5 border-l-[3px] border-[#93f72b] pl-4 text-sm">
+          <li>
+            <span className="block text-xs font-medium text-slate-500">Ngân hàng</span>
+            <span className="mt-0.5 block font-medium leading-snug text-slate-800">{bankName}</span>
+          </li>
+          <li>
+            <div className="flex items-start justify-between gap-2">
+              <div>
+                <span className="block text-xs font-medium text-slate-500">Số tài khoản</span>
+                <span className="mt-0.5 block font-mono text-base font-bold text-[#8037f4] sm:text-lg">
+                  {BANK_TRANSFER.accountNumber}
+                </span>
+              </div>
+              {BANK_TRANSFER.accountNumber ? <CopyBtn text={BANK_TRANSFER.accountNumber} /> : null}
+            </div>
+          </li>
+          {BANK_TRANSFER.accountOwner ? (
+            <li>
+              <span className="block text-xs font-medium text-slate-500">Chủ tài khoản</span>
+              <span className="mt-0.5 block font-semibold text-slate-900">{BANK_TRANSFER.accountOwner}</span>
+            </li>
+          ) : null}
+        </ul>
+      </div>
+    </div>
+  );
+}
+
+/** QR phóng tối đa tới sát thanh trạng thái (mobile) */
+function BankTransferQrFocus({ vietQrUrl, vietQrLoadFailed, onQrError, onOpenQrModal }) {
+  return (
+    <div className="flex min-h-0 flex-1 flex-col items-center">
+      {vietQrUrl && !vietQrLoadFailed ? (
+        <button
+          type="button"
+          onClick={onOpenQrModal}
+          className="group flex min-h-0 w-full max-w-[17rem] flex-1 flex-col lg:flex-none"
+        >
+          <div className="flex min-h-0 flex-1 flex-col rounded-2xl border border-slate-200 bg-white p-2.5 shadow-sm ring-1 ring-[#8037f4]/10 transition-shadow group-hover:shadow-md group-hover:ring-[#8037f4]/25 sm:p-3 lg:flex-none lg:max-h-[min(32vh,13.5rem)]">
+            <img
+              src={vietQrUrl}
+              alt="Mã QR VietQR"
+              className="min-h-0 w-full flex-1 rounded-xl object-contain"
+              loading="lazy"
+              onError={onQrError}
+            />
+          </div>
+          <span className="mt-1 shrink-0 pb-0.5 text-center text-xs font-medium text-slate-600 group-hover:text-[#8037f4] group-hover:underline lg:mt-2 lg:pb-0">
+            Chạm để phóng to QR
+          </span>
+        </button>
+      ) : vietQrUrl && vietQrLoadFailed ? (
+        <p className="m-auto max-w-xs text-center text-sm text-slate-600">
+          Không tải được QR — xem STK bên dưới.
+        </p>
+      ) : (
+        <p className="m-auto max-w-xs text-center text-sm text-slate-600">
+          Thêm <span className="font-mono text-xs">VITE_VIETQR_BANK_ID</span> để hiện mã QR.
+        </p>
+      )}
+    </div>
+  );
+}
+
+/** Màn CK booking/khóa — mobile: QR full + STK dưới thanh chờ; desktop: 2 cột */
+function BankTransferFocusLayout({
+  payAmount,
+  transferOrderNum,
+  vietQrUrl,
+  vietQrLoadFailed,
+  onQrError,
+  onOpenQrModal,
+}) {
+  const paymentDetails = (
+    <BankTransferPaymentDetails payAmount={payAmount} transferOrderNum={transferOrderNum} />
+  );
+
+  return (
+    <div className="flex h-full min-h-0 flex-1 flex-col lg:grid lg:grid-cols-2 lg:items-center lg:gap-6">
+      <BankTransferQrFocus
+        vietQrUrl={vietQrUrl}
+        vietQrLoadFailed={vietQrLoadFailed}
+        onQrError={onQrError}
+        onOpenQrModal={onOpenQrModal}
+      />
+      <div className="hidden w-full min-h-0 overflow-y-auto lg:block">{paymentDetails}</div>
+    </div>
+  );
+}
+
+/** Mã CK + số tiền — layout checkout thường (plan / sidebar) */
+function TransferMemoCard({ transferOrderNum, payAmount, fmt, large }) {
+  const codeClass = large
+    ? "font-mono text-lg font-bold tracking-wide text-slate-900 sm:text-xl"
+    : "font-mono text-sm font-bold tracking-wide text-slate-900";
+
+  return (
+    <div
+      className={`overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_2px_14px_rgba(15,23,42,0.07)] ${
+        large ? "w-full max-w-md" : ""
+      }`}
+    >
+      <div className="flex min-h-[4.25rem]">
+        <div className="relative flex min-w-0 flex-1 flex-col justify-center px-4 py-3 pl-5">
+          <span
+            className="absolute left-0 top-3 bottom-3 w-1 rounded-r-full bg-[#8037f4]"
+            aria-hidden
+          />
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+            Nội dung chuyển khoản
+          </p>
+          <p className={`mt-1 break-all ${codeClass}`}>{transferOrderNum}</p>
+        </div>
+        <CopyBtn text={transferOrderNum} variant="pane" />
+      </div>
+      <div className="flex items-center justify-between gap-3 border-t border-slate-100 bg-slate-50/90 px-4 py-2.5">
+        <span className="text-xs font-medium text-slate-600">Số tiền cần chuyển</span>
+        <span
+          className={`tabular-nums font-bold text-slate-900 ${large ? "text-base sm:text-lg" : "text-sm"}`}
+        >
+          {fmt(payAmount)}
+        </span>
+      </div>
+    </div>
   );
 }
 
@@ -343,6 +579,15 @@ function OrderLineItem({ isBooking, isCourse, bookingMentor, courseInfo, plan, b
   );
 }
 
+function VietQrModalDetailRow({ label, children, valueClassName = "" }) {
+  return (
+    <div>
+      <p className="text-xs font-medium text-slate-500">{label}</p>
+      <p className={`mt-0.5 text-sm text-slate-900 ${valueClassName}`}>{children}</p>
+    </div>
+  );
+}
+
 /** Modal VietQR giữa màn hình — nền tối mờ + thẻ trắng (giống FES) */
 function VietQrModal({
   open,
@@ -371,7 +616,12 @@ function VietQrModal({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 sm:p-6" role="dialog" aria-modal="true" aria-labelledby="vietqr-modal-title">
+    <div
+      className="fixed inset-0 z-[200] flex items-center justify-center p-4 sm:p-6"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="vietqr-modal-title"
+    >
       <button
         type="button"
         className="absolute inset-0 bg-black/75 backdrop-blur-[2px]"
@@ -388,8 +638,11 @@ function VietQrModal({
           <X className="h-5 w-5" />
         </button>
 
-        <div className="px-6 pb-6 pt-8 text-center">
-          <p id="vietqr-modal-title" className="mb-4 text-lg font-bold tracking-tight text-slate-800">
+        <div className="px-6 pb-6 pt-8">
+          <p
+            id="vietqr-modal-title"
+            className="mb-4 text-center text-lg font-bold tracking-tight text-slate-800"
+          >
             VietQR
           </p>
 
@@ -404,49 +657,61 @@ function VietQrModal({
               />
             </div>
           ) : (
-            <p className="rounded-lg bg-slate-50 px-4 py-8 text-sm text-slate-600">
+            <p className="rounded-lg bg-slate-50 px-4 py-8 text-center text-sm text-slate-600">
               {vietQrLoadFailed
                 ? "Không tải được mã QR. Vui lòng chuyển khoản thủ công theo thông tin bên dưới."
                 : "Chưa có mã QR. Kiểm tra cấu hình VITE_VIETQR_BANK_ID và STK ngân hàng."}
             </p>
           )}
 
-          <div className="mt-5 space-y-2 border-t border-slate-100 pt-5 text-center text-sm text-slate-600">
-            <p className="font-mono text-lg font-bold tracking-wide text-blue-600">
-              {BANK_TRANSFER.accountNumber || "—"}
-            </p>
-            <p>
-              <span className="text-slate-500">Số tiền: </span>
-              <span className="font-semibold text-slate-900">{fmt(payAmount)}</span>
-            </p>
-            <p>
-              <span className="text-slate-500">Tên chủ TK: </span>
-              <span className="font-semibold text-slate-800">
-                {BANK_TRANSFER.accountOwner || "—"}
-              </span>
-            </p>
-            <p className="px-2">
-              <span className="text-slate-500">Nội dung CK: </span>
-              <span className="break-all font-mono text-xs font-bold text-slate-900 sm:text-sm">
-                {transferOrderNum}
-              </span>
-            </p>
+          <div className="mt-5 space-y-3 border-t border-slate-100 pt-5 text-left">
             {BANK_TRANSFER.bankName ? (
-              <p className="text-xs leading-snug text-slate-500">{BANK_TRANSFER.bankName}</p>
+              <VietQrModalDetailRow label="Ngân hàng" valueClassName="font-medium leading-snug">
+                {displayBankName(BANK_TRANSFER.bankName)}
+              </VietQrModalDetailRow>
             ) : null}
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0 flex-1">
+                <VietQrModalDetailRow
+                  label="Số tài khoản"
+                  valueClassName="font-mono text-base font-bold text-[#8037f4]"
+                >
+                  {BANK_TRANSFER.accountNumber || "—"}
+                </VietQrModalDetailRow>
+              </div>
+              {BANK_TRANSFER.accountNumber ? (
+                <CopyBtn text={BANK_TRANSFER.accountNumber} />
+              ) : null}
+            </div>
+            <VietQrModalDetailRow label="Số tiền" valueClassName="text-base font-extrabold tabular-nums">
+              {fmt(payAmount)}
+            </VietQrModalDetailRow>
+            {BANK_TRANSFER.accountOwner ? (
+              <VietQrModalDetailRow label="Chủ tài khoản" valueClassName="font-semibold">
+                {BANK_TRANSFER.accountOwner}
+              </VietQrModalDetailRow>
+            ) : null}
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0 flex-1">
+                <VietQrModalDetailRow
+                  label="Nội dung chuyển khoản"
+                  valueClassName="break-all font-mono text-sm font-bold"
+                >
+                  {transferOrderNum}
+                </VietQrModalDetailRow>
+              </div>
+              <CopyBtn text={transferOrderNum} />
+            </div>
           </div>
 
-          <div className="mt-4 flex justify-center">
-            <CopyBtn text={transferOrderNum} />
-          </div>
-          <p className="mt-3 text-xs text-slate-500">Vui lòng quét QR để thanh toán</p>
+          <p className="mt-4 text-center text-xs text-slate-500">Quét mã QR trong app ngân hàng để thanh toán</p>
         </div>
       </div>
     </div>
   );
 }
 
-/** CK + QR — cột trái, trong khung «Thanh toán chuyển khoản» */
+/** CK + QR — `variant="large"` màn booking/khóa chỉ hiện chuyển khoản */
 function BankTransferBlock({
   hasBank,
   payAmount,
@@ -456,68 +721,80 @@ function BankTransferBlock({
   vietQrLoadFailed,
   onQrError,
   onOpenQrModal,
+  variant = "default",
 }) {
+  const large = variant === "large";
+  const labelClass = large ? "text-xs font-medium text-slate-500" : labelMuted;
+  const valueClass = large ? "text-sm font-medium text-slate-800" : "text-right font-medium text-slate-800";
+  const accountClass = large
+    ? "font-mono text-base font-bold text-[#8037f4]"
+    : "font-mono font-bold text-blue-600";
+
   if (!hasBank) {
     return (
-      <p className="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 text-xs leading-relaxed text-amber-800">
+      <p
+        className={`rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 leading-relaxed text-amber-800 ${
+          large ? "text-sm" : "mt-4 text-xs"
+        }`}
+      >
         Chưa cấu hình STK ngân hàng (<span className="font-mono">VITE_BANK_TRANSFER_*</span>).
       </p>
     );
   }
 
+  if (large) {
+    return (
+      <BankTransferFocusLayout
+        payAmount={payAmount}
+        transferOrderNum={transferOrderNum}
+        vietQrUrl={vietQrUrl}
+        vietQrLoadFailed={vietQrLoadFailed}
+        onQrError={onQrError}
+        onOpenQrModal={onOpenQrModal}
+      />
+    );
+  }
+
   return (
     <div className="mt-4 grid gap-4 md:grid-cols-2">
-        <div className="space-y-3 text-sm">
-          <div className="flex justify-between gap-2">
-            <span className={labelMuted}>Ngân hàng</span>
-            <span className="text-right font-medium text-slate-800">{BANK_TRANSFER.bankName}</span>
-          </div>
-          <div className="flex justify-between gap-2">
-            <span className={labelMuted}>Số TK</span>
-            <span className="font-mono font-bold text-blue-600">{BANK_TRANSFER.accountNumber}</span>
-          </div>
-          {BANK_TRANSFER.accountOwner ? (
-            <div className="flex justify-between gap-2">
-              <span className={labelMuted}>Chủ TK</span>
-              <span className="text-right font-medium text-slate-800">{BANK_TRANSFER.accountOwner}</span>
-            </div>
-          ) : null}
-          <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5">
-            <div className="flex items-start justify-between gap-2">
-              <div className="min-w-0">
-                <p className={labelMuted}>Nội dung chuyển khoản</p>
-                <p className="mt-0.5 break-all font-mono text-sm font-semibold text-slate-900">{transferOrderNum}</p>
-              </div>
-              <CopyBtn text={transferOrderNum} />
-            </div>
-            <p className="mt-1.5 text-xs font-semibold text-[#8037f4]">Số tiền: {fmt(payAmount)}</p>
-          </div>
-        </div>
+      <div className="space-y-3 text-sm">
+        <TransferDetailRow label="Ngân hàng" large={false} labelClass={labelClass} valueWrapClass={valueClass}>
+          <p className="leading-snug text-slate-800">{displayBankName(BANK_TRANSFER.bankName)}</p>
+        </TransferDetailRow>
+        <TransferDetailRow label="Số tài khoản" large={false} labelClass={labelClass} valueWrapClass="">
+          <span className={accountClass}>{BANK_TRANSFER.accountNumber}</span>
+        </TransferDetailRow>
+        {BANK_TRANSFER.accountOwner ? (
+          <TransferDetailRow label="Chủ tài khoản" large={false} labelClass={labelClass} valueWrapClass={valueClass}>
+            <span className={valueClass}>{BANK_TRANSFER.accountOwner}</span>
+          </TransferDetailRow>
+        ) : null}
+        <TransferMemoCard
+          transferOrderNum={transferOrderNum}
+          payAmount={payAmount}
+          fmt={fmt}
+          large={false}
+        />
+      </div>
 
-        <div className="flex flex-col items-center justify-center">
-          {vietQrUrl && !vietQrLoadFailed ? (
-            <button
-              type="button"
-              onClick={onOpenQrModal}
-              className="w-full max-w-[200px] rounded-xl border border-slate-200 bg-white p-3 text-center shadow-sm transition-colors hover:border-violet-300 hover:shadow-md"
-            >
-              <img
-                src={vietQrUrl}
-                alt="Mã QR VietQR"
-                className="w-full"
-                loading="lazy"
-                onError={onQrError}
-              />
-              <p className="mt-2 text-xs font-medium text-slate-500">Phóng to QR</p>
-            </button>
-          ) : vietQrUrl && vietQrLoadFailed ? (
-            <p className={`text-center text-xs ${labelMuted}`}>Không tải QR — chuyển thủ công theo STK.</p>
-          ) : (
-            <p className={`text-center text-xs ${labelMuted}`}>
-              Thêm <span className="font-mono">VITE_VIETQR_BANK_ID</span> để hiện QR.
-            </p>
-          )}
-        </div>
+      <div className="flex flex-col items-center justify-center">
+        {vietQrUrl && !vietQrLoadFailed ? (
+          <button
+            type="button"
+            onClick={onOpenQrModal}
+            className="w-full max-w-[200px] rounded-xl border border-slate-200 bg-white p-3 text-center shadow-sm transition-colors hover:border-violet-300 hover:shadow-md"
+          >
+            <img src={vietQrUrl} alt="Mã QR VietQR" className="w-full" loading="lazy" onError={onQrError} />
+            <p className="mt-1 text-xs font-medium text-slate-500">Phóng to QR</p>
+          </button>
+        ) : vietQrUrl && vietQrLoadFailed ? (
+          <p className={`text-center text-xs ${labelMuted}`}>Không tải QR — chuyển thủ công theo STK.</p>
+        ) : (
+          <p className={`text-center text-xs ${labelMuted}`}>
+            Thêm <span className="font-mono">VITE_VIETQR_BANK_ID</span> để hiện QR.
+          </p>
+        )}
+      </div>
     </div>
   );
 }
@@ -874,6 +1151,8 @@ export function Checkout() {
 
   const hasBank = Boolean(BANK_TRANSFER.bankName && BANK_TRANSFER.accountNumber);
   const showBankQr = payMode === PAY_MODE.BANK && payAmount > 0;
+  /** Booking / khóa học: màn chỉ còn khối chuyển khoản (không mentor, tổng, stepper). */
+  const transferFocus = showBankQr && (isBooking || isCourse);
   const orderCreated = appStep === "awaiting_transfer";
   const paymentConfirmed = appStep === "paid";
   const stepCurrent = paymentConfirmed || orderCreated ? 2 : 1;
@@ -1019,100 +1298,154 @@ export function Checkout() {
 
   /* ── Checkout UI ── */
   return (
-    <div className={`relative overflow-x-hidden ${pageShell}`}>
+    <div className={`${pageShell} flex min-h-svh flex-col`}>
       <style>{`
         @keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
         .fade-in { animation: fadeIn 0.35s ease-out both; }
       `}</style>
 
-      <header className="sticky top-0 z-50 border-b border-slate-200 bg-white/90 backdrop-blur-md">
-        <nav className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4 sm:px-6">
-          <button
-            type="button"
-            onClick={() => navigate("/")}
-            className="flex items-center gap-2.5"
-          >
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-[#8037f4] to-[#a66ff8] shadow-md">
-              <Sparkle className="h-4 w-4 text-white" />
-            </div>
-            <span className="text-base font-bold text-slate-900">ProInterview</span>
-          </button>
-          <div className="flex items-center gap-4">
-            <div className={`hidden items-center gap-1.5 sm:flex ${labelMuted}`}>
-              <Phone className="h-3.5 w-3.5 text-[#8037f4]" />
-              <span>Hỗ trợ: 1800 1234</span>
-            </div>
-            <button
-              type="button"
-              onClick={() => navigate(-1)}
-              className="flex items-center gap-1.5 text-sm font-medium text-slate-600 hover:text-slate-900"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Quay lại
-            </button>
-          </div>
-        </nav>
-      </header>
+      <div className="app-shell-ambient" aria-hidden />
+      <Navbar variant="customer" />
 
-      <main className="fade-in relative z-10 mx-auto max-w-6xl px-4 py-8 sm:px-6">
-        <div className="flex flex-wrap items-end justify-between gap-3">
-          <div>
-            <h1 className="text-2xl font-bold text-slate-900 sm:text-3xl">Thanh toán</h1>
-            {orderCreated ? (
-              <p className={`mt-1 ${textMuted}`}>
-                Mã CK: <span className="font-mono font-semibold text-slate-800">{transferOrderNum}</span>
-              </p>
-            ) : null}
-          </div>
-          {showStepBar ? <StepBar current={stepCurrent} steps={stepLabels} /> : null}
-        </div>
-
-        <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(280px,340px)] lg:items-start">
-          {/* Cột trái ~70%: sản phẩm + CK + QR */}
-          <div className="min-w-0 space-y-4">
-            {!compactRebook && (
-              <OrderLineItem
-                isBooking={isBooking}
-                isCourse={isCourse}
-                bookingMentor={bookingMentor}
-                courseInfo={courseInfo}
-                plan={plan}
-                billing={billing}
-                bookingDate={bookingDate}
-                bookingTime={bookingTime}
-                baseTotal={baseTotal}
-                fmt={fmt}
-              />
-            )}
-
-            <div className={`${checkoutCard} p-5 sm:p-6`}>
-              <CheckoutPayPanel
-                mode={payMode}
-                fmt={fmt}
-                rebookCreditVnd={rebookCreditVnd}
-                bookingTotalEstimate={bookingTotalEstimate}
-                bookingMentor={bookingMentor}
-                rebookFrom={rebookFrom}
-                navigate={navigate}
-              />
-
-              {showBankQr && (
-                <>
-                  <h2 className="mb-4 text-base font-semibold text-slate-900">Chuyển khoản</h2>
+      <main
+        className={`fade-in relative z-[1] w-full ${mainTopPad} ${CUSTOMER_SHELL_GUTTER} ${
+          transferFocus
+            ? `${CUSTOMER_SHELL_MAX} flex max-h-[calc(100svh-4.5rem)] flex-col overflow-hidden pb-3`
+            : "mx-auto max-w-6xl flex-1 flex-col pb-10"
+        }`}
+      >
+        <button
+          type="button"
+          onClick={() => navigate(-1)}
+          className={`group -ml-1 flex shrink-0 items-center gap-1.5 rounded-lg px-2 py-1.5 text-sm font-semibold text-slate-600 transition-colors hover:bg-white hover:text-slate-900 ${
+            transferFocus ? "mb-2" : "mb-6"
+          }`}
+        >
+          <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
+          Quay lại
+        </button>
+        {transferFocus ? (
+          <div className="flex min-h-0 flex-1 flex-col">
+            {!orderCreated ? (
+              <div
+                className={`${checkoutCard} flex flex-1 flex-col items-center justify-center gap-2 p-6 text-center`}
+              >
+                <span className="inline-block h-7 w-7 animate-spin rounded-full border-2 border-violet-200 border-t-[#8037f4]" />
+                <p className="text-sm font-medium text-slate-600">Đang tạo đơn chờ chuyển khoản…</p>
+              </div>
+            ) : (
+              <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-3xl bg-white p-4 shadow-[0_16px_48px_rgba(128,55,244,0.12)] ring-1 ring-[#8037f4]/15 sm:p-5 lg:p-6">
+                <header className="mb-2 shrink-0">
+                  <h1 className="text-xl font-bold text-slate-900 sm:text-2xl">Quét QR hoặc chuyển khoản</h1>
+                  <p className="mt-1 text-sm text-slate-600">Đơn được xác nhận tự động sau khi chuyển khoản.</p>
+                </header>
+                <div className="relative z-0 min-h-0 flex-1 overflow-hidden">
                   <BankTransferBlock
-                  hasBank={hasBank}
-                  payAmount={payAmount}
-                  transferOrderNum={transferOrderNum}
-                  fmt={fmt}
-                  vietQrUrl={vietQrUrl}
-                  vietQrLoadFailed={vietQrLoadFailed}
-                  onQrError={() => setVietQrLoadFailed(true)}
-                  onOpenQrModal={() => setQrModalOpen(true)}
-                />
-                </>
-              )}
+                    variant="large"
+                    hasBank={hasBank}
+                    payAmount={payAmount}
+                    transferOrderNum={transferOrderNum}
+                    fmt={fmt}
+                    vietQrUrl={vietQrUrl}
+                    vietQrLoadFailed={vietQrLoadFailed}
+                    onQrError={() => setVietQrLoadFailed(true)}
+                    onOpenQrModal={() => setQrModalOpen(true)}
+                  />
+                </div>
+                {awaitingAutoConfirm && !paymentConfirmed ? (
+                  <div className="relative z-10 mt-auto shrink-0 border-t border-[#8037f4]/10 bg-white pt-3">
+                    <div
+                      className="flex items-center justify-center gap-2.5 rounded-xl px-4 py-2.5 text-sm font-semibold text-white"
+                      style={{ background: BRAND_PURPLE }}
+                    >
+                      <span className="relative flex h-2 w-2 shrink-0" aria-hidden>
+                        <span
+                          className="absolute inline-flex h-full w-full animate-ping rounded-full opacity-70"
+                          style={{ background: BRAND_LIME }}
+                        />
+                        <span
+                          className="relative inline-flex h-2 w-2 rounded-full"
+                          style={{ background: BRAND_LIME }}
+                        />
+                      </span>
+                      Đang chờ xác nhận thanh toán…
+                    </div>
+                  </div>
+                ) : null}
+                <div className="max-h-[36vh] shrink-0 overflow-y-auto border-t border-[#8037f4]/10 pt-3 lg:hidden">
+                  <BankTransferPaymentDetails
+                    payAmount={payAmount}
+                    transferOrderNum={transferOrderNum}
+                  />
+                </div>
+                {cardError ? (
+                  <div className="mt-4 flex shrink-0 items-start gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-xs text-red-700">
+                    <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+                    <span>{cardError}</span>
+                  </div>
+                ) : null}
+              </div>
+            )}
+          </div>
+        ) : (
+          <>
+            <div className="flex flex-wrap items-end justify-between gap-3">
+              <div>
+                <h1 className="text-2xl font-bold text-slate-900 sm:text-3xl">Thanh toán</h1>
+                {orderCreated ? (
+                  <p className={`mt-1 ${textMuted}`}>
+                    Mã CK: <span className="font-mono font-semibold text-slate-800">{transferOrderNum}</span>
+                  </p>
+                ) : null}
+              </div>
+              {showStepBar ? <StepBar current={stepCurrent} steps={stepLabels} /> : null}
+            </div>
 
-              {isPlanCheckout && !isCourse && !isBooking && (
+            <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(280px,340px)] lg:items-start">
+              <div className="min-w-0 space-y-4">
+                {!compactRebook && (
+                  <OrderLineItem
+                    isBooking={isBooking}
+                    isCourse={isCourse}
+                    bookingMentor={bookingMentor}
+                    courseInfo={courseInfo}
+                    plan={plan}
+                    billing={billing}
+                    bookingDate={bookingDate}
+                    bookingTime={bookingTime}
+                    baseTotal={baseTotal}
+                    fmt={fmt}
+                  />
+                )}
+
+                <div className={`${checkoutCard} p-5 sm:p-6`}>
+                  <CheckoutPayPanel
+                    mode={payMode}
+                    fmt={fmt}
+                    rebookCreditVnd={rebookCreditVnd}
+                    bookingTotalEstimate={bookingTotalEstimate}
+                    bookingMentor={bookingMentor}
+                    rebookFrom={rebookFrom}
+                    navigate={navigate}
+                  />
+
+                  {showBankQr && (
+                    <>
+                      <h2 className="mb-4 text-base font-semibold text-slate-900">Chuyển khoản</h2>
+                      <BankTransferBlock
+                        hasBank={hasBank}
+                        payAmount={payAmount}
+                        transferOrderNum={transferOrderNum}
+                        fmt={fmt}
+                        vietQrUrl={vietQrUrl}
+                        vietQrLoadFailed={vietQrLoadFailed}
+                        onQrError={() => setVietQrLoadFailed(true)}
+                        onOpenQrModal={() => setQrModalOpen(true)}
+                      />
+                    </>
+                  )}
+
+                  {isPlanCheckout && !isCourse && !isBooking && (
                 <div className="mt-5 border-t border-slate-200 pt-5">
                   <p className={`mb-2 ${labelMuted}`}>Mã khuyến mãi</p>
                   {couponApplied ? (
@@ -1213,7 +1546,9 @@ export function Checkout() {
               </div>
             </div>
           </aside>
-        </div>
+            </div>
+          </>
+        )}
       </main>
 
       {paymentSuccessOverlay ? (

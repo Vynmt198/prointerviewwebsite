@@ -475,13 +475,16 @@ export function Courses() {
       <div className={`relative z-10 flex flex-col pb-8 pt-8 sm:pt-10 ${CUSTOMER_SHELL_GUTTER}`}>
         <div className={`${CUSTOMER_SHELL_MAX} w-full`}>
           <CustomerPageHeader
-            badge="Khóa học từ Mentor"
             title={
               <>
-                Học kỹ năng, <span className="text-[#6d2fd6]">ứng tuyển chắc hơn</span>
+                Học kỹ năng,{" "}
+                <span className="bg-gradient-to-r from-[#6d2fd6] to-[#a66ff8] bg-clip-text text-transparent">
+                  tự tin hơn khi ứng tuyển
+                </span>
               </>
             }
-            subtitle="Video ngắn, dễ áp dụng — ôn trước phỏng vấn; cần góp ý sâu thì book mentor 1-1."
+            subtitle="Các khóa học do Mentor xây dựng, giúp bạn bổ sung kỹ năng cần thiết cho hành trình ứng tuyển."
+            subtitleClassName="mt-3 max-w-2xl text-base font-medium leading-relaxed text-violet-700/90"
           />
 
           <div className="w-full rounded-3xl border border-violet-200/80 bg-white px-5 py-5 shadow-sm sm:px-7 sm:py-6">

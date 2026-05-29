@@ -7,7 +7,6 @@ import {
   LogOut,
   CheckCircle,
   ShieldCheck,
-  UserCircle,
   ChevronRight,
 } from "lucide-react";
 import { toastApiError, toastApiSuccess } from "../../utils/apiToast";
@@ -16,6 +15,12 @@ import { LoginSessionsSection } from "../../components/account/LoginSessionsSect
 import { AccountDangerZone } from "../../components/account/AccountDangerZone";
 
 const NOTIF_PREFS_KEY = "prointerview_notif_prefs";
+
+/** Tiêu đề / nhãn — in hoa qua CSS */
+const SETTINGS_TITLE_CLS =
+  "text-xs font-bold uppercase tracking-wide text-slate-800";
+/** Mô tả — viết thường, câu bình thường */
+const ITEM_DESC_CLS = "text-sm text-slate-500 leading-relaxed tracking-normal";
 
 function loadNotifPrefs() {
   try {
@@ -65,7 +70,7 @@ function SectionCard({
                {Icon && <Icon size={18} strokeWidth={2} />}
             </div>
             <div>
-               <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-700">{title}</h3>
+               <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-800">{title}</h3>
             </div>
          </div>
       )}
@@ -123,9 +128,24 @@ function SaveBar({
 
 /* ─── TAB: Notifications ────────────────────────────────── */
 const DEFAULT_NOTIFS = [
-  { id: "interview_reminder", label: "Nhắc nhở buổi phỏng vấn", description: "Thông báo trước 1 giờ khi có lịch", value: true },
-  { id: "mentor_feedback", label: "Phản hồi từ Mentor", description: "Khi mentor gửi đánh giá luyện tập", value: true },
-  { id: "streak_reminder", label: "Nhắc nhở duy trì streak", description: "Giữ ngọn lửa phỏng vấn của bạn", value: true },
+  {
+    id: "interview_reminder",
+    label: "Nhắc lịch phỏng vấn",
+    description: "Thông báo trước buổi hẹn 01 giờ.",
+    value: true,
+  },
+  {
+    id: "mentor_feedback",
+    label: "Phản hồi từ Mentor",
+    description: "Nhận thông báo khi Mentor gửi góp ý cho bạn.",
+    value: true,
+  },
+  {
+    id: "streak_reminder",
+    label: "Nhắc luyện tập đều đặn",
+    description: "Duy trì thói quen luyện phỏng vấn mỗi ngày.",
+    value: true,
+  },
 ];
 
 function NotificationsTab() {
@@ -168,8 +188,8 @@ function NotificationsTab() {
           {push.map((item) => (
             <div key={item.id} className="group flex items-center justify-between gap-6 rounded-2xl border border-slate-200 bg-white p-5">
               <div>
-                <p className="mb-0.5 text-sm font-bold text-slate-900">{item.label}</p>
-                <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">{item.description}</p>
+                <p className={`mb-0.5 ${SETTINGS_TITLE_CLS}`}>{item.label}</p>
+                <p className={ITEM_DESC_CLS}>{item.description}</p>
               </div>
               <ToggleSwitch enabled={item.value} onChange={() => toggle(item.id)} colorClass="bg-[#7fe015]" />
             </div>
@@ -184,8 +204,18 @@ function NotificationsTab() {
 /* ─── TAB: Security ─────────────────────────────────────── */
 const MIN_PASS = 6;
 const DEFAULT_SECURITY_PREFS = [
-  { id: "two_factor", label: "Xác thực 2 bước", description: "Trình quản lý hệ thống", value: false },
-  { id: "login_alert", label: "Thông báo đăng nhập mới", description: "Trình quản lý hệ thống", value: true },
+  {
+    id: "two_factor",
+    label: "Xác thực 2 bước",
+    description: "Tăng cường bảo vệ tài khoản khi đăng nhập.",
+    value: false,
+  },
+  {
+    id: "login_alert",
+    label: "Thông báo đăng nhập mới",
+    description: "Nhận thông báo khi tài khoản được đăng nhập từ thiết bị lạ.",
+    value: true,
+  },
 ];
 
 function SecurityTab({ profileFromServer, onProfileSynced }) {
@@ -260,8 +290,8 @@ function SecurityTab({ profileFromServer, onProfileSynced }) {
           {securityPrefs.map((item) => (
             <div key={item.id} className="group flex items-center justify-between gap-6 rounded-2xl border border-slate-200 bg-white p-5">
               <div>
-                <p className="mb-0.5 text-sm font-bold text-slate-900">{item.label}</p>
-                <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">{item.description}</p>
+                <p className={`mb-0.5 ${SETTINGS_TITLE_CLS}`}>{item.label}</p>
+                <p className={ITEM_DESC_CLS}>{item.description}</p>
               </div>
               <ToggleSwitch
                 enabled={item.value}
@@ -273,17 +303,15 @@ function SecurityTab({ profileFromServer, onProfileSynced }) {
         </div>
       </SectionCard>
 
-      <SectionCard title="Cấu hình Bảo mật" icon={ShieldCheck}>
+      <SectionCard title="Đổi mật khẩu" icon={ShieldCheck}>
          <div className="grid md:grid-cols-2 gap-8 mb-6">
-            <div className="space-y-3 md:col-span-2">
-               <label className="text-[10px] font-black uppercase tracking-widest text-slate-500">
-                 Mật khẩu hiện tại
-                 {needsCurrentPassword ? (
-                   <span className="text-amber-400/90"> — bắt buộc</span>
-                 ) : (
-                  <span className="text-slate-400"> — không bắt buộc (đã liên kết Google)</span>
-                 )}
-               </label>
+            <div className="space-y-2 md:col-span-2">
+               <label className={SETTINGS_TITLE_CLS}>Mật khẩu hiện tại</label>
+               {!needsCurrentPassword && (
+                 <p className={ITEM_DESC_CLS}>
+                   Không bắt buộc nếu bạn đang đăng nhập bằng Google.
+                 </p>
+               )}
                <input
                  type="password"
                  autoComplete="current-password"
@@ -297,8 +325,8 @@ function SecurityTab({ profileFromServer, onProfileSynced }) {
                  onChange={(e) => setCurrentPassword(e.target.value)}
                />
             </div>
-            <div className="space-y-3">
-               <label className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500">Mật khẩu mới</label>
+            <div className="space-y-2">
+               <label className={SETTINGS_TITLE_CLS}>Mật khẩu mới</label>
                <input
                  type="password"
                  autoComplete="new-password"
@@ -308,8 +336,8 @@ function SecurityTab({ profileFromServer, onProfileSynced }) {
                  onChange={(e) => setNewPassword(e.target.value)}
                />
             </div>
-            <div className="space-y-3">
-               <label className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500">Xác nhận mật khẩu mới</label>
+            <div className="space-y-2">
+               <label className={SETTINGS_TITLE_CLS}>Xác nhận mật khẩu mới</label>
                <input
                  type="password"
                  autoComplete="new-password"
@@ -324,27 +352,23 @@ function SecurityTab({ profileFromServer, onProfileSynced }) {
            type="button"
            disabled={saving}
            onClick={handleUpdatePassword}
-           className="px-8 py-4 rounded-xl bg-slate-100 border border-slate-300 text-slate-700 text-[10px] font-black uppercase tracking-widest hover:bg-slate-200 transition-all disabled:opacity-50"
+           className={`px-8 py-4 rounded-xl bg-slate-100 border border-slate-300 text-slate-700 hover:bg-slate-200 transition-all disabled:opacity-50 ${SETTINGS_TITLE_CLS}`}
          >
             {saving ? "Đang lưu…" : "Cập nhật mật khẩu"}
          </button>
       </SectionCard>
 
       <LoginSessionsSection SectionCard={SectionCard} />
+
+      <AccountDangerZone SectionCard={SectionCard} />
     </div>
   );
-}
-
-/* ─── TAB: Account ──────────────────────────────────────── */
-function AccountTab({ onLogout }) {
-  return <AccountDangerZone SectionCard={SectionCard} onLogout={onLogout} />;
 }
 
 /* ─── Main Settings Page ────────────────────────────────── */
 const TABS = [
   { id: "notifications", label: "Thông báo", icon: Bell },
   { id: "security", label: "Bảo mật", icon: ShieldCheck },
-  { id: "account", label: "Tài khoản", icon: UserCircle },
 ];
 
 export function Settings() {
@@ -437,10 +461,10 @@ export function Settings() {
         />
         <div className="relative z-10 mx-auto max-w-6xl px-6 sm:px-8">
           <h1 className="font-headline app-page-title mb-2">
-            Hệ thống Cài đặt
+            Cài đặt tài khoản
           </h1>
-          <p className="app-page-subtitle">
-            Quản trị cấu hình bảo mật và cá nhân hóa trải nghiệm ProInterview Web.
+          <p className="app-page-subtitle tracking-normal">
+            Tùy chỉnh thông báo, bảo mật và trải nghiệm của bạn trên ProInterview.
           </p>
         </div>
       </header>
@@ -463,7 +487,7 @@ export function Settings() {
                         >
                            <div className="flex items-center gap-3">
                               <tab.icon size={18} strokeWidth={2} className={`shrink-0 transition-transform duration-300 ${isActive ? "scale-105 text-black" : "group-hover:translate-x-0.5"}`} />
-                              <span className="text-[10px] font-bold uppercase tracking-[0.18em]">{tab.label}</span>
+                              <span className="text-sm font-semibold tracking-normal">{tab.label}</span>
                            </div>
                            {isActive && <ChevronRight size={14} className="shrink-0 text-black/35" strokeWidth={2} />}
                         </button>
@@ -472,7 +496,7 @@ export function Settings() {
                   <div className="mt-2 border-t border-slate-200 pt-2">
                      <button type="button" onClick={handleLogout} className="flex w-full items-center gap-3 rounded-[20px] px-5 py-4 text-left text-red-400 transition-colors hover:bg-red-500/10 hover:text-red-300">
                         <LogOut size={18} strokeWidth={2} />
-                        <span className="text-[10px] font-bold uppercase tracking-[0.18em]">Đăng xuất</span>
+                        <span className="text-sm font-semibold tracking-normal">Đăng xuất</span>
                      </button>
                   </div>
                </div>
@@ -487,9 +511,6 @@ export function Settings() {
                       profileFromServer={profileFromServer}
                       onProfileSynced={(u) => setProfileFromServer(u)}
                     />
-                  )}
-                  {activeTab === "account" && (
-                    <AccountTab onLogout={handleLogout} />
                   )}
                </div>
             </main>
