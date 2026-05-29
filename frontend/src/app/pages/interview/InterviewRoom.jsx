@@ -2,6 +2,7 @@ import React, {
   useState,
   useEffect,
   useRef,
+  useCallback,
   forwardRef,
 } from "react";
 import { useNavigate, useLocation } from "react-router";
@@ -110,7 +111,11 @@ function computeVocabularyDiversity(text) {
 
 /** Tính behavioral summary toàn session từ mảng per-question data */
 function computeBehavioralSummary(perQ) {
-  const valid = perQ.filter((d) => d && typeof d.responseLatencyMs === "number");
+  // Chỉ tính với câu có ít nhất 1 giá trị thực (user thực sự trả lời)
+  const valid = perQ.filter(
+    (d) => d && typeof d.responseLatencyMs === "number" &&
+    (d.responseLatencyMs > 0 || d.wordCount > 0 || d.silenceEvents > 0)
+  );
   if (!valid.length) return null;
   const avg = (key) => valid.reduce((s, d) => s + (d[key] ?? 0), 0) / valid.length;
 
@@ -122,26 +127,42 @@ function computeBehavioralSummary(perQ) {
   const avgVocabularyDiversity = Math.round(avg("vocabularyDiversity") * 100) / 100;
   const avgAmplitudeVariance   = Math.round(avg("amplitudeVariance") * 100) / 100;
 
+  // hedgeRatio: hedge words / tổng số từ thực tế (không phải ước lượng)
+  const totalWords = valid.reduce((s, d) => s + (d.wordCount ?? 0), 0);
+  const hedgeRatio = totalWords > 0 ? totalHedgeWords / totalWords : 0;
+
   // Composite confidence (0–5)
+  // Nếu thiết bị không hỗ trợ face analysis → bỏ qua dimension eye/head (redistribute weight)
+  const hasEyeData  = avgEyeContactScore > 0;
+  const hasHeadData = avgHeadStabilityScore > 0;
   const latencyScore = avgResponseLatencyMs < 3000 ? 1 : avgResponseLatencyMs < 7000 ? 0.6 : 0.2;
   const fluencyScore = avgSilenceRatio < 0.10 ? 1 : avgSilenceRatio < 0.25 ? 0.6 : 0.2;
   const exprScore    = avgAmplitudeVariance > 0.07 ? 1 : avgAmplitudeVariance > 0.03 ? 0.6 : 0.2;
-  const hedgeTotalWords = valid.reduce((s, d) => {
-    const wc = (d.vocabularyDiversity > 0 ? 1 : 0);
-    return s + wc;
-  }, 0);
-  const hedgeRatio   = hedgeTotalWords > 0 ? totalHedgeWords / (hedgeTotalWords * 80) : 0;
   const hedgeScore   = hedgeRatio < 0.02 ? 1 : hedgeRatio < 0.05 ? 0.7 : 0.3;
 
-  const composite = (
-    avgEyeContactScore    * 0.20 +
-    avgHeadStabilityScore * 0.15 +
-    fluencyScore          * 0.15 +
-    exprScore             * 0.15 +
-    hedgeScore            * 0.15 +
-    avgVocabularyDiversity * 0.10 +
-    latencyScore          * 0.10
-  );
+  // Trọng số điều chỉnh theo data có sẵn
+  const w = {
+    eye:       hasEyeData  ? 0.20 : 0,
+    head:      hasHeadData ? 0.15 : 0,
+    fluency:   0.15,
+    expr:      0.15,
+    hedge:     0.15,
+    vocab:     0.10,
+    latency:   0.10,
+  };
+  const missingWeight = (hasEyeData ? 0 : 0.20) + (hasHeadData ? 0 : 0.15);
+  // Redistribute missing weight proportionally to remaining dimensions
+  const totalW = 1 - missingWeight;
+  const composite = totalW > 0 ? (
+    (hasEyeData  ? avgEyeContactScore    * w.eye   : 0) +
+    (hasHeadData ? avgHeadStabilityScore * w.head  : 0) +
+    fluencyScore             * w.fluency +
+    exprScore                * w.expr +
+    hedgeScore               * w.hedge +
+    avgVocabularyDiversity   * w.vocab +
+    latencyScore             * w.latency
+  ) / totalW : 0;
+
   const overallConfidenceScore = Math.round(composite * 50) / 10;
 
   // Dominant emotion từ Google Vision snapshots
@@ -303,8 +324,12 @@ function HRVideoPanel({ questionVideoUrl, hrPhase, onAskingDone, isListening }) 
   );
 }
 
-/* ── User camera tile (forwardRef để InterviewRoom lấy videoElement cho FaceMesh) */
-const UserCameraTile = forwardRef(function UserCameraTile({ isRecording }, faceVideoRef) {
+/* ── User camera tile ─────────────────────────────────────────────────────────
+   forwardRef: exposes video element to InterviewRoom for FaceMesh sampling.
+   onAudioTrack: passes audio MediaStreamTrack so InterviewRoom can build its
+   AudioContext without a second getUserMedia call (avoids double permission).
+ */
+const UserCameraTile = forwardRef(function UserCameraTile({ isRecording, onAudioTrack }, faceVideoRef) {
   const videoRef  = useRef(null);
   const streamRef = useRef(null);
   const [camState, setCamState] = useState("loading");
@@ -313,30 +338,46 @@ const UserCameraTile = forwardRef(function UserCameraTile({ isRecording }, faceV
   useEffect(() => {
     let cancelled = false;
     (async () => {
+      let stream = null;
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({
+        // Request camera + audio together — single permission dialog
+        stream = await navigator.mediaDevices.getUserMedia({
           video: { width: { ideal: 640 }, height: { ideal: 480 }, facingMode: "user" },
-          audio: false,
+          audio: true,
         });
-        if (cancelled) { stream.getTracks().forEach((t) => t.stop()); return; }
-        streamRef.current = stream;
-        setCamState("active");
-      } catch (err) {
-        if (cancelled) return;
-        const msg =
-          err?.name === "NotAllowedError" ? "Bạn chưa cấp quyền camera"
-          : err?.name === "NotFoundError" ? "Không tìm thấy camera"
-          : "Camera không khả dụng";
-        setCamError(msg);
-        setCamState("error");
+      } catch (_) {
+        // Fallback: video-only (some devices lack mic or user denied audio)
+        try {
+          stream = await navigator.mediaDevices.getUserMedia({
+            video: { width: { ideal: 640 }, height: { ideal: 480 }, facingMode: "user" },
+            audio: false,
+          });
+        } catch (err) {
+          if (cancelled) return;
+          const msg =
+            err?.name === "NotAllowedError" ? "Bạn chưa cấp quyền camera"
+            : err?.name === "NotFoundError" ? "Không tìm thấy camera"
+            : "Camera không khả dụng";
+          setCamError(msg);
+          setCamState("error");
+          return;
+        }
       }
+      if (cancelled) { stream.getTracks().forEach((t) => t.stop()); return; }
+      streamRef.current = stream;
+
+      // Pass audio track to parent for Web Audio analysis (no second getUserMedia needed)
+      const audioTrack = stream.getAudioTracks()[0];
+      if (audioTrack && onAudioTrack) onAudioTrack(audioTrack);
+
+      setCamState("active");
     })();
     return () => {
       cancelled = true;
       streamRef.current?.getTracks().forEach((t) => t.stop());
       streamRef.current = null;
     };
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (camState !== "active") return;
@@ -502,12 +543,15 @@ export default function InterviewRoom() {
   /* ── Web Audio refs ───────────────────────────────────── */
   const audioCtxRef        = useRef(null);
   const analyserRef        = useRef(null);
-  const audioStreamRef     = useRef(null);
+  // audioStreamRef removed — audio track is now managed by UserCameraTile
   const audioSampleRef     = useRef([]);   // amplitude samples (0–1) current question
   const silenceStartRef    = useRef(null); // timestamp when silence started
   const silenceEventsRef   = useRef(0);    // count of >2 s silences
   const lastSilentRef      = useRef(false);
   const audioIntervalRef   = useRef(null);
+  // Auto-calibration: session-level threshold derived from env noise floor
+  const calibSamplesRef    = useRef([]);   // first 30 samples → set threshold
+  const silenceThreshRef   = useRef(0.10); // updated after calibration
 
   /* ── Response latency refs ────────────────────────────── */
   const latencyStartRef    = useRef(null); // set when HR finishes asking
@@ -539,27 +583,17 @@ export default function InterviewRoom() {
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  /* ── Web Audio setup (once on mount) ──────────────────── */
-  useEffect(() => {
-    let cancelled = false;
-    navigator.mediaDevices.getUserMedia({ audio: true, video: false })
-      .then((stream) => {
-        if (cancelled) { stream.getTracks().forEach((t) => t.stop()); return; }
-        const ctx      = new (window.AudioContext || window.webkitAudioContext)();
-        const source   = ctx.createMediaStreamSource(stream);
-        const analyser = ctx.createAnalyser();
-        analyser.fftSize = 512;
-        source.connect(analyser);
-        audioCtxRef.current    = ctx;
-        analyserRef.current    = analyser;
-        audioStreamRef.current = stream;
-      })
-      .catch(() => { /* mic not granted — skip audio analysis */ });
-    return () => {
-      cancelled = true;
-      audioStreamRef.current?.getTracks().forEach((t) => t.stop());
-      audioCtxRef.current?.close().catch(() => {});
-    };
+  /* ── Web Audio setup — nhận audio track từ UserCameraTile (không mở getUserMedia riêng) */
+  const handleAudioTrack = useCallback((track) => {
+    try {
+      const ctx      = new (window.AudioContext || window.webkitAudioContext)();
+      const source   = ctx.createMediaStreamSource(new MediaStream([track]));
+      const analyser = ctx.createAnalyser();
+      analyser.fftSize = 512;
+      source.connect(analyser);
+      audioCtxRef.current  = ctx;
+      analyserRef.current  = analyser;
+    } catch (_) { /* browser không hỗ trợ Web Audio — bỏ qua, không crash */ }
   }, []);
 
   /* ── Audio sampling interval (100 ms, while isListening) ─ */
@@ -571,12 +605,22 @@ export default function InterviewRoom() {
       const analyser = analyserRef.current;
       if (!analyser) return;
       analyser.getFloatTimeDomainData(data);
-      const rms        = Math.sqrt(data.reduce((s, v) => s + v * v, 0) / data.length);
-      const amplitude  = Math.min(1, rms * 4); // normalise to 0–1
+      const rms       = Math.sqrt(data.reduce((s, v) => s + v * v, 0) / data.length);
+      const amplitude = Math.min(1, rms * 4);
       audioSampleRef.current.push(amplitude);
 
-      // Silence detection (threshold 10%)
-      const isSilent = amplitude < 0.10;
+      // Auto-calibrate silence threshold from first 30 samples (~3 s of actual recording)
+      // Runs once per session — calibSamplesRef is NOT reset between questions
+      if (calibSamplesRef.current.length < 30) {
+        calibSamplesRef.current.push(amplitude);
+        if (calibSamplesRef.current.length === 30) {
+          const avgNoise = calibSamplesRef.current.reduce((s, v) => s + v, 0) / 30;
+          // threshold = 3× noise floor, bounded [0.05, 0.30]
+          silenceThreshRef.current = Math.max(0.05, Math.min(0.30, avgNoise * 3));
+        }
+      }
+
+      const isSilent = amplitude < silenceThreshRef.current;
       if (isSilent && !lastSilentRef.current) {
         silenceStartRef.current = Date.now();
       } else if (!isSilent && lastSilentRef.current && silenceStartRef.current) {
@@ -624,6 +668,8 @@ export default function InterviewRoom() {
       recognitionRef.current?.abort();
       clearInterval(timerRef.current);
       clearInterval(audioIntervalRef.current);
+      // Close AudioContext (audio track itself managed by UserCameraTile)
+      audioCtxRef.current?.close().catch(() => {});
       didDisconnect();
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -729,13 +775,14 @@ export default function InterviewRoom() {
   const buildBehavioralData = (qIndex) => {
     // Audio
     const samples = audioSampleRef.current;
+    const thresh  = silenceThreshRef.current;
     let avgAmplitude = 0, amplitudeVariance = 0, silenceRatio = 0;
     if (samples.length > 0) {
       avgAmplitude = samples.reduce((s, v) => s + v, 0) / samples.length;
       amplitudeVariance = Math.sqrt(
         samples.reduce((s, v) => s + (v - avgAmplitude) ** 2, 0) / samples.length
       );
-      const silentCount = samples.filter((v) => v < 0.10).length;
+      const silentCount = samples.filter((v) => v < thresh).length;
       silenceRatio = silentCount / samples.length;
     }
     // Text
@@ -743,6 +790,7 @@ export default function InterviewRoom() {
       transcriptRef.current +
       (interimTranscript ? " " + interimTranscript : "")
     ).trim();
+    const wordCount = text ? text.split(/\s+/).filter(Boolean).length : 0;
     const { hedgeWordCount, hedgeWords } = detectHedgeWords(text);
     const vocabularyDiversity = computeVocabularyDiversity(text);
     // Face (MediaPipe)
@@ -756,6 +804,7 @@ export default function InterviewRoom() {
       silenceEvents:       silenceEventsRef.current,
       avgAmplitude:        Math.round(avgAmplitude * 1000) / 1000,
       amplitudeVariance:   Math.round(amplitudeVariance * 1000) / 1000,
+      wordCount,
       hedgeWordCount,
       hedgeWords,
       vocabularyDiversity,
@@ -1199,7 +1248,7 @@ export default function InterviewRoom() {
           <div className={`relative min-h-0 h-full overflow-hidden rounded-xl border-2 ${
             isListening ? "border-violet-400 shadow-[0_0_20px_rgba(110,53,232,0.15)]" : "border-violet-200/80 shadow-[0_8px_24px_rgba(110,53,232,0.1)]"
           }`}>
-            <UserCameraTile ref={cameraVideoRef} isRecording={isListening} />
+            <UserCameraTile ref={cameraVideoRef} isRecording={isListening} onAudioTrack={handleAudioTrack} />
             {isListening && (
               <div className="pointer-events-none absolute inset-0 rounded-xl ring-2 ring-inset ring-violet-400/50" />
             )}

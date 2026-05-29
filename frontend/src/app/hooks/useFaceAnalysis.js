@@ -182,8 +182,16 @@ export function useFaceAnalysis({ videoRef, isActive }) {
     return () => clearInterval(intervalRef.current);
   }, [isActive, videoRef]);
 
-  // Cleanup on unmount
-  useEffect(() => () => clearInterval(intervalRef.current), []);
+  // Cleanup on unmount — close WASM instance to prevent memory leak
+  useEffect(() => {
+    return () => {
+      clearInterval(intervalRef.current);
+      try { meshRef.current?.close(); } catch (_) {}
+      meshRef.current   = null;
+      loadedRef.current = false;
+      _loadPromise      = null; // allow re-init on next mount
+    };
+  }, []);
 
   return { resetMetrics, getMetrics };
 }
