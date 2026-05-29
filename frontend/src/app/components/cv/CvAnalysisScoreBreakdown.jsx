@@ -39,13 +39,13 @@ export function CvAnalysisScoreBreakdown({
   className = "",
 }) {
   const shrinkRem = homePreviewShrinkRem > 0 ? homePreviewShrinkRem : 0;
-  const ringBase = dense ? 72 : compact ? (hubPreview ? 108 : homePreview ? 93 : 88) : 112;
+  const ringBase = dense ? 72 : compact ? (hubPreview ? 118 : homePreview ? 93 : 88) : 112;
   const ring = Math.max(64, ringBase - shrinkRem * 16);
   const compactPad =
     shrinkRem > 0 && compact
       ? `p-[calc(0.75rem-${shrinkRem}rem)] sm:p-[calc(1rem-${shrinkRem}rem)]`
       : compact && hubPreview
-        ? "px-3.5 py-6 sm:px-5 sm:py-7"
+        ? "px-4 py-6 sm:px-5 sm:py-7.5"
         : compact && homePreview
           ? "p-[1.05rem] sm:p-[1.3rem]"
           : compact
@@ -144,7 +144,7 @@ export function CvAnalysisScoreBreakdown({
               homePreview
                 ? "min-w-[12.5rem] space-y-1.5 sm:min-w-[14rem]"
                 : hubPreview
-                  ? "space-y-3 sm:space-y-3.5"
+                  ? "space-y-3.5 sm:space-y-4"
                   : dense
                     ? "space-y-1"
                     : "space-y-2 sm:space-y-2.5"
@@ -181,7 +181,7 @@ export function CvAnalysisScoreBreakdown({
                   </div>
                   <div
                     className={`overflow-hidden rounded-full bg-slate-200 ${
-                      rowsTight ? "h-1" : hubPreview ? "h-2.5 sm:h-3" : "h-1.5 sm:h-2"
+                      rowsTight ? "h-1" : hubPreview ? "h-3 sm:h-3.5" : "h-1.5 sm:h-2"
                     }`}
                   >
                     <div

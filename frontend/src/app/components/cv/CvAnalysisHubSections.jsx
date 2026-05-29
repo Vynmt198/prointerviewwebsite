@@ -42,32 +42,44 @@ function MascotSparkle({ className }) {
   );
 }
 
-export function CvAnalysisHubHero({ onJd, onField }) {
+export function CvAnalysisHubHero({ onJd, onField, navShellAligned = false }) {
   const { percent, matched, missing, summary } = CV_HUB_DEMO_MATCH;
+
+  const outerClass = navShellAligned
+    ? "relative flex min-h-0 flex-col bg-transparent pb-2 pt-2 sm:pb-3 lg:pb-1 lg:pt-0"
+    : `relative flex min-h-0 flex-col bg-transparent pb-4 pt-12 sm:pb-5 ${CUSTOMER_SHELL_GUTTER}`;
+
+  const innerClass = navShellAligned
+    ? "cv-hub-enter flex w-full flex-col overflow-visible lg:flex-row lg:items-stretch lg:gap-3 xl:gap-4"
+    : `cv-hub-enter ${CUSTOMER_SHELL_MAX} flex flex-col overflow-visible lg:flex-row lg:items-stretch lg:gap-3 xl:gap-4`;
 
   return (
     <div className="cv-hub-page relative min-h-0 bg-transparent">
       <style>{HUB_STYLES}</style>
 
-      <div
-        className={`relative flex min-h-0 flex-col bg-transparent pb-4 pt-12 sm:pb-5 ${CUSTOMER_SHELL_GUTTER}`}
-      >
-        <div
-          className={`cv-hub-enter ${CUSTOMER_SHELL_MAX} flex flex-col overflow-visible lg:flex-row lg:items-stretch lg:gap-3 xl:gap-4`}
-        >
+      <div className={outerClass}>
+        <div className={innerClass}>
           {/* Trái — hero + linh vật */}
-          <div className="relative flex shrink-0 flex-col justify-center py-3 sm:py-4 lg:min-w-[25rem] lg:max-w-[33rem] lg:flex-[0.92] lg:py-2 xl:max-w-[34rem]">
+          <div
+            className={`relative flex shrink-0 flex-col justify-center py-3 sm:py-4 lg:min-w-[28rem] lg:max-w-[36rem] lg:flex-[0.92] xl:max-w-[37rem] ${
+              navShellAligned ? "lg:translate-x-[1rem] lg:py-[7rem]" : "lg:py-2"
+            }`}
+          >
             <div className="relative z-10 flex flex-col gap-2.5 pr-16 sm:gap-3 sm:pr-20 lg:-translate-y-24 lg:pr-0">
-              <h1 className="max-w-[min(100%,32rem)] font-headline tracking-tight">
-                <span className="block text-[clamp(1.8rem,4.35vw,2.65rem)] font-extrabold leading-[1.15]">
-                  <span className="block text-[#630ed4]">{CV_HUB_HERO_COPY.titleAccent}</span>
-                  <span className="mt-0.5 block text-[#1a1b23]">
-                    trong mắt{" "}
-                    <span className="whitespace-nowrap">nhà tuyển dụng?</span>
+              <h1 className="max-w-[min(100%,32rem)] font-headline tracking-tight lg:max-w-[36rem]">
+                <span className="block text-[clamp(2.1rem,4.8vw,3rem)] font-extrabold leading-[1.12]">
+                  <span className="block text-[#630ed4] max-lg:text-pretty lg:whitespace-nowrap">
+                    {CV_HUB_HERO_COPY.titleAccent}
+                  </span>
+                  <span className="mt-0.5 block text-[#1a1b23] max-lg:text-pretty lg:whitespace-nowrap">
+                    {CV_HUB_HERO_COPY.titleRest}
                   </span>
                 </span>
-                <p className="mt-2 max-w-[min(100%,30rem)] text-[clamp(0.9375rem,2vw,1.0625rem)] font-medium leading-relaxed text-slate-600">
-                  {CV_HUB_HERO_COPY.body}
+                <p className="mt-2 max-w-[min(100%,30rem)] text-[clamp(0.9375rem,2vw,1.0625rem)] font-medium leading-snug text-slate-600 lg:max-w-[36rem]">
+                  <span className="block max-lg:text-pretty">{CV_HUB_HERO_COPY.bodyLine1}</span>
+                  <span className="mt-0.5 block max-lg:text-pretty lg:whitespace-nowrap">
+                    {CV_HUB_HERO_COPY.bodyLine2}
+                  </span>
                 </p>
               </h1>
 
@@ -99,36 +111,42 @@ export function CvAnalysisHubHero({ onJd, onField }) {
           </div>
 
           {/* Phải — demo: banner + 2 ô + card cùng full width */}
-          <div className="flex min-w-0 w-full flex-1 flex-col gap-2.5 sm:gap-3 lg:ml-auto lg:min-w-0 lg:max-w-[32rem] lg:flex-[1.08] xl:max-w-[33rem]">
+          <div
+            className={`flex min-w-0 w-full flex-1 flex-col gap-2.5 sm:gap-3 lg:ml-auto lg:min-w-0 lg:max-w-[32rem] lg:flex-[1.08] xl:max-w-[33rem] ${
+              navShellAligned ? "lg:-translate-x-[2.1rem]" : ""
+            }`}
+          >
             <div className="flex items-center justify-between gap-2 px-0.5">
               <span className="inline-flex items-center gap-1.5 text-[10px] font-semibold text-violet-800 sm:text-xs">
                 Kết quả phân tích
               </span>
             </div>
 
+            {/* Demo KQ: banner tím + 2 ô + bảng — scale chung, origin-top (không đè nhau) */}
+            <div className="cv-hub-demo-stack flex w-full flex-col gap-2.5 sm:gap-3 lg:origin-top lg:scale-[1.06] lg:gap-3">
             <div
-              className="w-full overflow-hidden rounded-xl sm:rounded-2xl"
+              className="w-full shrink-0 overflow-hidden rounded-xl sm:rounded-2xl"
               style={{ background: "linear-gradient(135deg,#6E35E8 0%,#9B6DFF 55%,#B794FF 100%)" }}
             >
-              <div className="relative px-4 py-3 text-white sm:px-5 sm:py-3.5">
+              <div className="relative px-4 py-3.5 text-white sm:px-5 sm:py-4">
                 <div
                   className="pointer-events-none absolute -right-6 -top-6 h-24 w-24 rounded-full bg-white/10 blur-2xl"
                   aria-hidden
                 />
-                <p className="relative mb-1 text-[10px] font-medium text-indigo-100/90 sm:text-xs">
+                <p className="relative mb-1.5 text-[11px] font-medium text-indigo-100/90 sm:text-xs">
                   Mức độ phù hợp CV
                 </p>
-                <div className="relative flex flex-wrap items-end gap-2">
-                  <span className="font-headline text-3xl font-extrabold leading-none tracking-tight sm:text-[2.35rem]">
+                <div className="relative flex flex-wrap items-end gap-2.5">
+                  <span className="font-headline text-[2rem] font-extrabold leading-none tracking-tight sm:text-[2.5rem]">
                     {percent}%
                   </span>
                   <div className="mb-1 flex flex-col gap-1">
-                    <span className="text-[10px] text-indigo-200/90 sm:text-xs">keyword match</span>
+                    <span className="text-[11px] text-indigo-200/90 sm:text-xs">keyword match</span>
                     <div className="flex gap-0.5">
                       {Array.from({ length: 10 }).map((_, i) => (
                         <div
                           key={i}
-                          className="h-1 w-3 rounded-full sm:w-3.5"
+                          className="h-1.5 w-3.5 rounded-full sm:w-4"
                           style={{
                             background:
                               i < Math.round(percent / 10)
@@ -140,43 +158,43 @@ export function CvAnalysisHubHero({ onJd, onField }) {
                     </div>
                   </div>
                 </div>
-                <p className="relative mt-1.5 line-clamp-2 text-[10px] leading-snug text-indigo-50/95 sm:text-xs">
+                <p className="relative mt-2 line-clamp-2 text-[11px] leading-snug text-indigo-50/95 sm:text-xs">
                   {summary}
                 </p>
               </div>
             </div>
 
-            <div className="grid w-full grid-cols-10 gap-2">
-              <div className="col-span-6 rounded-md border border-emerald-100/90 bg-white/95 p-2.5 shadow-sm backdrop-blur-sm sm:p-3">
+            <div className="relative z-10 grid w-full shrink-0 grid-cols-10 gap-2">
+              <div className="col-span-6 rounded-md border border-emerald-100/90 bg-white/95 p-3 shadow-sm backdrop-blur-sm sm:p-3.5">
                 <div className="mb-1.5 flex items-center gap-1.5">
-                  <div className="flex h-6 w-6 items-center justify-center rounded-md bg-emerald-100">
-                    <FileText className="h-3.5 w-3.5 text-emerald-700" />
+                  <div className="flex h-7 w-7 items-center justify-center rounded-md bg-emerald-100">
+                    <FileText className="h-4 w-4 text-emerald-700" />
                   </div>
-                  <h3 className="text-[10px] font-semibold text-slate-900 sm:text-xs">Từ khóa khớp</h3>
+                  <h3 className="text-[11px] font-semibold text-slate-900 sm:text-xs">Từ khóa khớp</h3>
                 </div>
-                <div className="flex flex-wrap gap-1">
+                <div className="flex flex-wrap gap-1.5">
                   {matched.map((kw) => (
                     <span
                       key={kw}
-                      className="rounded-md border border-emerald-400/60 bg-emerald-50 px-1.5 py-0.5 text-[9px] font-semibold text-emerald-800 sm:text-[10px]"
+                      className="rounded-md border border-emerald-400/60 bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-800 sm:text-[11px]"
                     >
                       {kw} ✓
                     </span>
                   ))}
                 </div>
               </div>
-              <div className="col-span-4 rounded-md border border-orange-100/90 bg-white/95 p-2.5 shadow-sm backdrop-blur-sm sm:p-3">
+              <div className="col-span-4 rounded-md border border-orange-100/90 bg-white/95 p-3 shadow-sm backdrop-blur-sm sm:p-3.5">
                 <div className="mb-1.5 flex items-center gap-1.5">
-                  <div className="flex h-6 w-6 items-center justify-center rounded-md bg-orange-100">
-                    <Briefcase className="h-3.5 w-3.5 text-orange-700" />
+                  <div className="flex h-7 w-7 items-center justify-center rounded-md bg-orange-100">
+                    <Briefcase className="h-4 w-4 text-orange-700" />
                   </div>
-                  <h3 className="text-[10px] font-semibold text-slate-900 sm:text-xs">Cần bổ sung</h3>
+                  <h3 className="text-[11px] font-semibold text-slate-900 sm:text-xs">Cần bổ sung</h3>
                 </div>
-                <div className="flex flex-wrap gap-1">
+                <div className="flex flex-wrap gap-1.5">
                   {missing.map((kw) => (
                     <span
                       key={kw}
-                      className="rounded-md border border-orange-300/70 bg-orange-50 px-1.5 py-0.5 text-[9px] font-semibold text-orange-900 sm:text-[10px]"
+                      className="rounded-md border border-orange-300/70 bg-orange-50 px-2 py-0.5 text-[10px] font-semibold text-orange-900 sm:text-[11px]"
                     >
                       {kw}
                     </span>
@@ -186,9 +204,9 @@ export function CvAnalysisHubHero({ onJd, onField }) {
             </div>
 
             {/* Card đánh giá — hubPreview; gấu căn đáy card (desktop) */}
-            <div className="relative hidden w-full overflow-visible lg:block">
+            <div className="relative hidden w-full shrink-0 overflow-visible lg:block">
               <div
-                className="pointer-events-none absolute bottom-0 left-0 z-20 -translate-x-[17.65rem] translate-y-[2.5rem] xl:-translate-x-[18.15rem]"
+                className="pointer-events-none absolute bottom-0 left-0 z-20 -translate-x-[19rem] translate-y-[2.35rem] xl:-translate-x-[19.75rem] xl:translate-y-[2.25rem]"
                 aria-hidden
               >
                 <MascotSparkle className="left-[27%] top-[8%] h-2.5 w-2.5" />
@@ -196,7 +214,7 @@ export function CvAnalysisHubHero({ onJd, onField }) {
                 <img
                   src="/mascot-cv-hub-knowledge.png?v=10"
                   alt=""
-                  className="block h-[21rem] w-[21rem] max-w-none object-contain object-bottom drop-shadow-[0_20px_50px_rgba(99,14,212,0.18)] xl:h-[22rem] xl:w-[22rem]"
+                  className="block h-[23rem] w-[23rem] max-w-none object-contain object-bottom drop-shadow-[0_20px_50px_rgba(99,14,212,0.18)] xl:h-[24rem] xl:w-[24rem]"
                 />
               </div>
               <CvAnalysisScoreBreakdown
@@ -205,11 +223,11 @@ export function CvAnalysisHubHero({ onJd, onField }) {
                 compact
                 hubPreview
                 showHeader={false}
-                className="relative z-10 w-full !rounded-md border-violet-100/60 bg-white/95 shadow-sm backdrop-blur-sm [&>div:last-child]:pl-[3.25rem] [&>div:last-child]:xl:pl-[3.75rem]"
+                className="relative z-10 w-full !rounded-md border-violet-100/60 bg-white/95 shadow-sm backdrop-blur-sm [&>div:last-child]:pl-[3.65rem] [&>div:last-child]:xl:pl-[4.15rem]"
               />
             </div>
 
-            <div className="w-full lg:hidden">
+            <div className="w-full shrink-0 lg:hidden">
               <CvAnalysisScoreBreakdown
                 overallScore={percent}
                 rows={CV_HUB_DEMO_SCORE_ROWS}
@@ -218,6 +236,7 @@ export function CvAnalysisHubHero({ onJd, onField }) {
                 showHeader={false}
                 className="w-full !rounded-md border-violet-100/60 bg-white/95 shadow-sm backdrop-blur-sm"
               />
+            </div>
             </div>
           </div>
         </div>
