@@ -3,6 +3,7 @@ import { Outlet, useLocation } from "react-router";
 import { SidebarProvider, SidebarInset } from "../ui/sidebar";
 import { AppSidebar } from "./Sidebar";
 import { Navbar } from "./Navbar";
+import { Footer } from "./Footer";
 import { resolveDocumentTitle } from "../../utils/documentTitle";
 import { getUser } from "../../utils/auth";
 import { MENTOR_MAIN_TOP_PAD } from "./customerShellLayout";
@@ -14,6 +15,8 @@ export function AppLayout() {
   const isHome = location.pathname === "/" || location.pathname === "";
   const pathNorm = location.pathname.replace(/^\/+/, "");
   const hideNavbar = pathNorm === "interview/room";
+  const hideFooter = hideNavbar;
+  const showSiteFooter = !isMentor && !hideFooter;
   const ambientModifier = isHome ? " app-shell-ambient--home" : "";
 
   useEffect(() => {
@@ -72,6 +75,7 @@ export function AppLayout() {
         >
           <Outlet />
         </main>
+        {showSiteFooter ? <Footer variant="light" /> : null}
       </div>
     </div>
   );

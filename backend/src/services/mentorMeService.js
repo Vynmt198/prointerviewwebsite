@@ -150,18 +150,35 @@ export async function applyForMentor(userId, body) {
   if (!bio) {
     return { ok: false, status: 400, error: "Vui lòng điền Giới thiệu bản thân." };
   }
-  const hasWork =
+  if (!specialties.length) {
+    return { ok: false, status: 400, error: "Vui lòng điền Kỹ năng & chứng chỉ." };
+  }
+  const workRaw = String(
+    body?.workExperience ?? body?.profileWorkExperience ?? user.profileWorkExperience ?? "",
+  ).trim();
+  let hasWork =
     companies.length > 0 ||
     title.length > 0 ||
-    String(body?.company || "").trim().length > 0 ||
-    (Number.isFinite(experienceYears) && experienceYears > 0);
-  const hasExtracurricular = String(user.profileExtracurricular ?? "").trim().length > 0;
-  if (!hasWork && !hasExtracurricular) {
-    return {
-      ok: false,
-      status: 400,
-      error: "Vui lòng điền Kinh nghiệm làm việc hoặc Hoạt động ngoại khóa.",
-    };
+    String(body?.company || "").trim().length > 0;
+  if (!hasWork && workRaw.startsWith("{")) {
+    try {
+      const data = JSON.parse(workRaw);
+      if (data?.version === 1 && Array.isArray(data.entries)) {
+        hasWork = data.entries.some(
+          (e) =>
+            String(e?.role ?? "").trim() ||
+            String(e?.company ?? "").trim() ||
+            String(e?.note ?? "").trim(),
+        );
+      }
+    } catch {
+      /* ignore */
+    }
+  } else if (!hasWork && workRaw && !workRaw.startsWith("{")) {
+    hasWork = true;
+  }
+  if (!hasWork) {
+    return { ok: false, status: 400, error: "Vui lòng điền Kinh nghiệm làm việc." };
   }
   if (!Number.isFinite(targetRate) || targetRate <= 0) {
     return { ok: false, status: 400, error: "Vui lòng nhập mức phí mong muốn (VNĐ/60 phút)." };

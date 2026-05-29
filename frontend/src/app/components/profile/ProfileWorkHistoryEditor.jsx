@@ -54,10 +54,8 @@ export function ProfileWorkHistoryEditor({ entries, onChange, disabled = false }
 
   return (
     <div className="space-y-4">
-      <p className="text-sm leading-relaxed text-slate-600">
-        Thêm từng công việc (quá khứ hoặc hiện tại). Điền <strong>chức danh</strong> và{" "}
-        <strong>công ty</strong>, chọn tháng bắt đầu / kết thúc. Nếu vẫn đang làm, tick &quot;Đang làm việc
-        tại đây&quot;.
+      <p className="profile-muted text-sm leading-relaxed">
+        Thêm các công việc, thực tập hoặc dự án bạn từng tham gia.
       </p>
 
       {list.map((entry, index) => (

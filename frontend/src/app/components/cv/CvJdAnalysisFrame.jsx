@@ -38,10 +38,10 @@ export function cvAnalysisPageHeader(mode) {
     };
   }
   return {
-    badge: "Phân tích CV + JD",
+    badge: "Tối ưu CV theo vị trí ứng tuyển",
     title: (
       <>
-        Phân tích CV <span className="text-[#6d2fd6]">với JD</span>
+        Tối ưu CV theo vị trí <span className="text-[#6d2fd6]">ứng tuyển</span>
       </>
     ),
     subtitle: JD_SUBTITLE,
@@ -59,10 +59,10 @@ export function CvJdAnalysisPage({
   tabAnalysisPath,
   tabHistoryPath,
   children,
-  badge = "Phân tích CV + JD",
+  badge = "Tối ưu CV theo vị trí ứng tuyển",
   title = (
     <>
-      Phân tích CV <span className="text-[#6d2fd6]">với JD</span>
+      Tối ưu CV theo vị trí <span className="text-[#6d2fd6]">ứng tuyển</span>
     </>
   ),
   subtitle = JD_SUBTITLE,

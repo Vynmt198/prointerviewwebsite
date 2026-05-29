@@ -5,8 +5,8 @@ import {
   CV_HUB_DEMO_SCORE_ROWS,
   CV_HUB_DEMO_MATCH,
 } from "./CvAnalysisScoreBreakdown";
+import { CV_HUB_HERO_COPY } from "../../constants/brandVoice";
 import { CUSTOMER_SHELL_GUTTER, CUSTOMER_SHELL_MAX } from "../layout/customerShellLayout";
-import { CustomerPageBadge } from "../layout/CustomerPageHeader";
 
 const HUB_STYLES = `
   .cv-hub-enter {
@@ -58,18 +58,17 @@ export function CvAnalysisHubHero({ onJd, onField }) {
           {/* Trái — hero + linh vật */}
           <div className="relative flex shrink-0 flex-col justify-center py-3 sm:py-4 lg:min-w-[25rem] lg:max-w-[33rem] lg:flex-[0.92] lg:py-2 xl:max-w-[34rem]">
             <div className="relative z-10 flex flex-col gap-2.5 pr-16 sm:gap-3 sm:pr-20 lg:-translate-y-24 lg:pr-0">
-              <CustomerPageBadge className="w-fit">
-                Phân tích CV
-              </CustomerPageBadge>
-
               <h1 className="max-w-[min(100%,32rem)] font-headline tracking-tight">
-                <span className="block text-[clamp(1.8rem,4.35vw,2.65rem)] font-extrabold leading-[1.15] text-[#1a1b23]">
-                  <span className="block whitespace-nowrap">Làm sao để CV ấn tượng</span>
-                  <span className="block whitespace-nowrap">trong mắt nhà tuyển dụng?</span>
+                <span className="block text-[clamp(1.8rem,4.35vw,2.65rem)] font-extrabold leading-[1.15]">
+                  <span className="block text-[#630ed4]">{CV_HUB_HERO_COPY.titleAccent}</span>
+                  <span className="mt-0.5 block text-[#1a1b23]">
+                    trong mắt{" "}
+                    <span className="whitespace-nowrap">nhà tuyển dụng?</span>
+                  </span>
                 </span>
-                <span className="mt-1 block text-[clamp(1.72rem,4.2vw,2.5rem)] font-extrabold leading-[1.15] text-[#630ed4]">
-                  Để ProInterview gợi ý tin và chỉnh CV nè.
-                </span>
+                <p className="mt-2 max-w-[min(100%,30rem)] text-[clamp(0.9375rem,2vw,1.0625rem)] font-medium leading-relaxed text-slate-600">
+                  {CV_HUB_HERO_COPY.body}
+                </p>
               </h1>
 
               <div className="flex flex-wrap items-center gap-2.5 pt-0.5">
@@ -78,14 +77,14 @@ export function CvAnalysisHubHero({ onJd, onField }) {
                   onClick={onJd}
                   className="cv-hub-cta inline-flex items-center justify-center rounded-2xl bg-gradient-to-br from-[#630ed4] to-[#7c3aed] px-5 py-2.5 text-xs font-bold text-white shadow-lg shadow-violet-500/25 hover:brightness-105 hover:shadow-xl hover:shadow-violet-500/30 sm:text-sm"
                 >
-                  Phân tích CV + JD có sẵn
+                  {CV_HUB_HERO_COPY.ctaJd}
                 </button>
                 <button
                   type="button"
                   onClick={onField}
                   className="cv-hub-cta inline-flex items-center gap-2 rounded-2xl border-2 border-violet-200/80 bg-white/90 px-5 py-2.5 text-xs font-bold text-[#630ed4] shadow-sm backdrop-blur-sm hover:border-violet-300 hover:bg-white hover:shadow-md sm:text-sm"
                 >
-                  Phân tích CV theo ngành nghề
+                  {CV_HUB_HERO_COPY.ctaField}
                 </button>
               </div>
             </div>
