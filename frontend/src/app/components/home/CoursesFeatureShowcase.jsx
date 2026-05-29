@@ -222,7 +222,7 @@ export function CoursesFeatureShowcase({ onCtaClick }) {
   return (
     <section
       id="courses"
-      className="relative z-10 flex h-screen max-h-screen flex-col justify-center overflow-hidden px-0 py-4 sm:py-6"
+      className="relative z-10 flex h-screen max-h-screen flex-col justify-center overflow-hidden px-0 py-4 sm:py-6 max-lg:h-auto max-lg:max-h-none max-lg:min-h-0 max-lg:py-10"
     >
       <style>{`
         .courses-mock-panel {
@@ -254,7 +254,7 @@ export function CoursesFeatureShowcase({ onCtaClick }) {
           border-bottom: 1px solid rgba(124, 58, 237, 0.1);
         }
       `}</style>
-      <div className={`relative z-10 flex w-full items-center overflow-visible py-2 ${HOME_SECTION_INNER}`}>
+      <div className={`home-mobile-gutter relative z-10 flex w-full items-center overflow-visible py-2 ${HOME_SECTION_INNER}`}>
         <div className="mx-auto grid w-full max-w-6xl origin-center scale-x-[1] scale-y-[1.08] grid-cols-1 items-center gap-[1.45rem] overflow-visible sm:scale-x-[1.02] sm:scale-y-[1.1] lg:grid-cols-[1.12fr_0.88fr] lg:scale-x-[1.05] lg:scale-y-[1.12] lg:items-center lg:gap-[1.45rem] xl:max-w-[68rem] xl:scale-x-[1.07] xl:scale-y-[1.14]">
           <div className="relative z-10 flex w-full min-w-0 justify-center px-1 sm:px-2">
             <CoursesLearningMockup />

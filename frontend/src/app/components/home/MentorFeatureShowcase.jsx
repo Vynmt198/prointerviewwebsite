@@ -309,7 +309,7 @@ export function MentorFeatureShowcase({ onCtaClick }) {
   return (
     <section
       id="find-mentor"
-      className="relative z-10 flex h-screen max-h-screen flex-col justify-center overflow-x-hidden overflow-y-visible px-0 py-4 sm:py-6"
+      className="relative z-10 flex h-screen max-h-screen flex-col justify-center overflow-x-hidden overflow-y-visible px-0 py-4 sm:py-6 max-lg:h-auto max-lg:max-h-none max-lg:min-h-0 max-lg:py-10"
     >
       <style>{`
         .mentor-upzi-panel {
@@ -357,7 +357,7 @@ export function MentorFeatureShowcase({ onCtaClick }) {
         }
       `}</style>
 
-      <div className={`relative z-10 w-full overflow-visible py-2 ${HOME_SECTION_INNER}`}>
+      <div className={`home-mobile-gutter relative z-10 w-full overflow-visible py-2 ${HOME_SECTION_INNER}`}>
         <div className="mentor-showcase-uniform flex w-full flex-col gap-[1.2rem] sm:gap-[1.45rem]">
           <article className="flex flex-col items-start gap-[0.7rem] sm:gap-[0.825rem]">
             <span className={ty.badge}>

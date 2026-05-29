@@ -66,11 +66,20 @@ export function HeroInterviewVideoCard() {
             animation: none !important;
           }
         }
+        @media (max-width: 1023px) {
+          .hero-video-glass {
+            border-radius: 6px;
+            box-shadow: 0 4px 12px rgba(99, 14, 212, 0.1);
+          }
+          .hero-video-hud-compact .hero-hud-side-scores {
+            display: none;
+          }
+        }
       `}</style>
-      <div className="relative mx-auto mt-6 w-full max-w-full translate-x-4 -translate-y-8 overflow-visible sm:mt-8 lg:mt-0 lg:ml-auto lg:max-w-[28rem]">
-        <div className="@container relative overflow-visible rounded-[1.65rem] bg-white p-2 shadow-[0_16px_44px_rgba(99,14,212,0.14)] sm:rounded-[1.85rem] sm:p-2.5">
-          <div className="relative w-full min-h-[calc(100cqw*3.51/4+1.5rem)]">
-            <div className="absolute inset-0 overflow-hidden rounded-[1.2rem] bg-slate-100 sm:rounded-[1.35rem]">
+      <div className="hero-video-hud-compact relative mx-auto mt-6 w-full max-w-full translate-x-4 -translate-y-8 overflow-visible sm:mt-8 lg:mt-0 lg:ml-auto lg:max-w-[28rem] max-lg:mt-1 max-lg:w-[min(88vw,14rem)] max-lg:max-w-[14rem] max-lg:translate-x-0 max-lg:translate-y-0">
+        <div className="@container relative overflow-visible rounded-[1.65rem] bg-white p-2 shadow-[0_16px_44px_rgba(99,14,212,0.14)] sm:rounded-[1.85rem] sm:p-2.5 max-lg:rounded-md max-lg:border max-lg:border-violet-100/80 max-lg:p-1 max-lg:shadow-sm">
+          <div className="relative w-full min-h-[calc(100cqw*3.51/4+1.5rem)] max-lg:aspect-[3/4] max-lg:min-h-0">
+            <div className="absolute inset-0 overflow-hidden rounded-[1.2rem] bg-slate-100 sm:rounded-[1.35rem] max-lg:rounded-sm">
               <video autoPlay loop muted playsInline className="h-full w-full object-cover object-[center_18%]">
                 <source src={HOME_AI_DEMO_VIDEO} type="video/mp4" />
               </video>
@@ -82,19 +91,19 @@ export function HeroInterviewVideoCard() {
 
             <div className="pointer-events-none absolute inset-0 z-10">
               {/* Tổng điểm — giống banner feedback */}
-              <div className="hero-video-glass absolute left-2 top-2 rounded-xl px-2.5 py-2 sm:left-3 sm:top-3 sm:rounded-2xl sm:px-3 sm:py-2">
-                <p className="text-[8px] font-semibold text-slate-500 sm:text-[9px]">Tổng điểm</p>
+              <div className="hero-video-glass absolute left-2 top-2 rounded-xl px-2.5 py-2 sm:left-3 sm:top-3 sm:rounded-2xl sm:px-3 sm:py-2 max-lg:left-1.5 max-lg:top-1.5 max-lg:px-2 max-lg:py-1.5">
+                <p className="text-[8px] font-semibold text-slate-500 sm:text-[9px] max-lg:text-[7px]">Tổng điểm</p>
                 <div className="flex items-baseline gap-0.5">
-                  <span className="text-lg font-extrabold leading-none text-slate-900 sm:text-xl">
+                  <span className="text-lg font-extrabold leading-none text-slate-900 sm:text-xl max-lg:text-base">
                     {overall.toFixed(1)}
                   </span>
-                  <span className="text-[9px] font-bold text-slate-500 sm:text-[10px]">/{INTERVIEW_SCORE_MAX} sao</span>
+                  <span className="text-[9px] font-bold text-slate-500 sm:text-[10px] max-lg:text-[8px]">/{INTERVIEW_SCORE_MAX} sao</span>
                 </div>
-                <div className="mt-1 flex gap-px">
+                <div className="mt-1 flex gap-px max-lg:mt-0.5">
                   {[...Array(INTERVIEW_SCORE_MAX)].map((_, i) => (
                     <Star
                       key={i}
-                      className={`h-2.5 w-2.5 sm:h-3 sm:w-3 ${
+                      className={`h-2.5 w-2.5 sm:h-3 sm:w-3 max-lg:h-2 max-lg:w-2 ${
                         i < filledStars ? "fill-[#b5e636] text-[#b5e636]" : "fill-violet-100 text-violet-200"
                       }`}
                       strokeWidth={1.5}
@@ -104,7 +113,7 @@ export function HeroInterviewVideoCard() {
               </div>
 
               {/* Đang nghe — waveform */}
-              <div className="hero-video-glass absolute left-1/2 top-[40%] flex h-9 w-[min(88%,12rem)] -translate-x-1/2 items-end justify-center gap-[2px] rounded-xl px-2 py-1.5 sm:h-10 sm:rounded-2xl sm:px-2.5 sm:py-2">
+              <div className="hero-video-glass absolute left-1/2 top-[40%] flex h-9 w-[min(88%,12rem)] -translate-x-1/2 items-end justify-center gap-[2px] rounded-xl px-2 py-1.5 sm:h-10 sm:rounded-2xl sm:px-2.5 sm:py-2 max-lg:h-7 max-lg:w-[min(78%,9rem)] max-lg:px-1.5 max-lg:py-1">
                 {WAVEFORM.map((h, i) => (
                   <span
                     key={i}
@@ -115,7 +124,7 @@ export function HeroInterviewVideoCard() {
               </div>
 
               {/* 4 tiêu chí STAR — thanh như feedback */}
-              <div className="hero-video-glass absolute bottom-3 left-2 flex w-[7.25rem] flex-col gap-1 rounded-xl px-2 py-2 sm:bottom-4 sm:left-3 sm:w-[7.75rem] sm:rounded-2xl sm:px-2.5 sm:py-2.5">
+              <div className="hero-video-glass absolute bottom-3 left-2 flex w-[7.25rem] flex-col gap-1 rounded-xl px-2 py-2 sm:bottom-4 sm:left-3 sm:w-[7.75rem] sm:rounded-2xl sm:px-2.5 sm:py-2.5 max-lg:bottom-2 max-lg:left-1.5 max-lg:w-[6.1rem] max-lg:gap-0.5 max-lg:px-1.5 max-lg:py-1.5">
                 <p className="mb-0.5 text-[7px] font-bold uppercase tracking-wide text-[#6d2fd6] sm:text-[8px]">
                   Chấm STAR
                 </p>
@@ -126,7 +135,7 @@ export function HeroInterviewVideoCard() {
               </div>
 
               {/* 3 tiêu chí nổi bật — /5 sao */}
-              <div className="hero-video-glass absolute bottom-3 right-2 min-w-[6.75rem] space-y-1 rounded-xl px-2 py-2 text-[9px] font-semibold text-slate-700 sm:bottom-4 sm:right-3 sm:min-w-[7.25rem] sm:rounded-2xl sm:px-2.5 sm:py-2.5 sm:text-[10px]">
+              <div className="hero-hud-side-scores hero-video-glass absolute bottom-3 right-2 min-w-[6.75rem] space-y-1 rounded-xl px-2 py-2 text-[9px] font-semibold text-slate-700 sm:bottom-4 sm:right-3 sm:min-w-[7.25rem] sm:rounded-2xl sm:px-2.5 sm:py-2.5 sm:text-[10px]">
                 {[relevance, clarity, credibility].map((d) => (
                   <div key={d.key} className="flex items-center justify-between gap-2">
                     <span className="truncate">{d.label}</span>

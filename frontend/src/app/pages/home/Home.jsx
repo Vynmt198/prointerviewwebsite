@@ -236,6 +236,34 @@ export function Home() {
           line-height: 0.98;
           white-space: nowrap;
         }
+        /* Chỉ phone/tablet nhỏ — desktop (lg+) không đổi */
+        @media (max-width: 1023px) {
+          .hero-title-line {
+            white-space: normal;
+            overflow-wrap: break-word;
+          }
+          .home-hero-title {
+            font-size: clamp(1.25rem, 3.6vw, 1.55rem) !important;
+            line-height: 1.12 !important;
+          }
+          .home-how-title {
+            font-size: clamp(1.15rem, 3.2vw, 1.45rem) !important;
+          }
+          .home-hero-section .hero-title-stack {
+            gap: 0.4rem;
+          }
+          .home-mobile-gutter {
+            padding-left: 0.875rem;
+            padding-right: 0.875rem;
+          }
+          .glass-card {
+            border-radius: 14px;
+            border-width: 1px;
+          }
+          .home-mobile-tight .cv-analysis-glass-card {
+            border-radius: 12px;
+          }
+        }
         .cute-heading {
           letter-spacing: -0.04em;
           font-weight: 850;
@@ -446,7 +474,7 @@ export function Home() {
       `}</style>
 
       {/* ═══ HERO ═══════════════════════════════════════════ */}
-      <section className="relative z-10 flex h-screen max-h-screen flex-col justify-start overflow-x-hidden px-10 sm:px-16 lg:px-24 pt-6 sm:pt-8 md:pt-10 lg:justify-center lg:pt-0 lg:pb-10">
+      <section className="home-hero-section relative z-10 flex h-screen max-h-screen flex-col justify-start overflow-x-hidden px-10 sm:px-16 lg:px-24 pt-6 sm:pt-8 md:pt-10 lg:justify-center lg:pt-0 lg:pb-10 max-lg:h-auto max-lg:max-h-none max-lg:px-4 max-lg:pb-10 max-lg:pt-[4.5rem]">
         {renderSectionSticks([
           { x: 5, y: 11, size: 38, opacity: 0.48 },
           { x: 93, y: 13, size: 44, opacity: 0.55 },
@@ -455,11 +483,11 @@ export function Home() {
         ])}
 
         <div className={`relative z-10 ${HOME_SHELL_MAX}`}>
-          <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(300px,520px)] lg:items-center lg:gap-x-12 xl:gap-x-16">
-            <div className="order-1 min-w-0 translate-x-4 -translate-y-4 text-left lg:py-2">
-              <div className="hero-intro-badge mb-5 -translate-y-[4.5rem]">
+          <div className="grid grid-cols-1 gap-8 max-lg:gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(300px,520px)] lg:items-center lg:gap-x-12 xl:gap-x-16">
+            <div className="order-1 min-w-0 translate-x-4 -translate-y-4 text-left lg:py-2 max-lg:translate-x-0 max-lg:translate-y-0">
+              <div className="hero-intro-badge mb-5 -translate-y-[4.5rem] max-lg:mb-4 max-lg:translate-y-0">
                 <div
-                  className="inline-flex items-center gap-2 rounded-full border-2 bg-white px-3 py-1.5 text-sm font-bold sm:text-base"
+                  className="inline-flex items-center gap-2 rounded-full border-2 bg-white px-3 py-1.5 text-sm font-bold sm:text-base max-lg:rounded-lg max-lg:border max-lg:px-2.5 max-lg:py-1 max-lg:text-xs"
                   style={{
                     borderColor: "rgba(128, 55, 244, 0.42)",
                     color: "#8037f4",
@@ -470,9 +498,9 @@ export function Home() {
                 </div>
               </div>
 
-              <div className="hero-intro-copy -translate-y-[2rem]">
+              <div className="hero-intro-copy -translate-y-[2rem] max-lg:translate-y-0">
                 <h1
-                  className="hero-title-stack mb-6 max-w-full font-headline text-slate-900 cute-heading"
+                  className="home-hero-title hero-title-stack mb-6 max-w-full font-headline text-slate-900 cute-heading"
                   style={{
                     fontSize: HOME_HERO_TITLE_CLAMP,
                   }}
@@ -491,11 +519,11 @@ export function Home() {
                   </span>
                 </h1>
 
-                <div className="mb-5 flex flex-col gap-3 translate-y-[2rem] sm:flex-row sm:justify-start">
+                <div className="mb-5 flex flex-col gap-3 translate-y-[2rem] sm:flex-row sm:justify-start max-lg:translate-y-0">
                   <button
                     type="button"
                     onClick={() => navigate("/interview")}
-                    className="inline-flex items-center justify-center gap-2 rounded-full px-4 py-2 text-base font-black transition-all hover:brightness-105 active:scale-[0.98] hover:-translate-y-0.5 sm:text-lg"
+                    className="inline-flex items-center justify-center gap-2 rounded-full px-4 py-2 text-base font-black transition-all hover:brightness-105 active:scale-[0.98] hover:-translate-y-0.5 sm:text-lg max-lg:rounded-lg max-lg:px-3.5 max-lg:py-1.5 max-lg:text-sm"
                     style={{
                       background: "#93f72b",
                       color: "#0f172a",
@@ -510,7 +538,7 @@ export function Home() {
             </div>
 
 
-            <div className="order-2 flex w-full min-w-0 overflow-visible lg:justify-end lg:self-center">
+            <div className="order-2 flex w-full min-w-0 overflow-visible lg:justify-end lg:self-center max-lg:justify-center">
               <HeroInterviewVideoCard />
             </div>
           </div>
@@ -521,33 +549,33 @@ export function Home() {
       {/* ═══ HOW IT WORKS ════════════════════════════════════ */}
       <section
         id="features"
-        className="landing-section-flow relative z-10 h-screen max-h-screen flex flex-col justify-center overflow-hidden pt-6 md:pt-8 lg:pt-10"
+        className="landing-section-flow relative z-10 flex h-screen max-h-screen flex-col justify-center overflow-hidden pt-6 md:pt-8 lg:pt-10 max-lg:h-auto max-lg:max-h-none max-lg:min-h-0 max-lg:overflow-visible max-lg:py-10"
       >
         {renderSectionSticks([
           { x: 10, y: 16, size: 34, opacity: 0.45 },
           { x: 88, y: 20, size: 40, opacity: 0.55 },
           { x: 82, y: 78, size: 32, opacity: 0.44 },
         ])}
-        <div className={`${HOME_SECTION_INNER} relative z-10 py-2`}>
-          <LandingReveal className="mb-8 pt-5" y={24}>
+        <div className={`${HOME_SECTION_INNER} home-mobile-gutter relative z-10 py-2`}>
+          <LandingReveal className="mb-8 pt-5 max-lg:pt-2" y={24}>
             <div className="mx-auto mb-5 flex max-w-4xl flex-col items-center">
-              <div className="flex items-center justify-center">
+              <div className="flex items-center justify-center max-lg:w-full max-lg:flex-col max-lg:gap-3">
                 <img
                   src="/mascot-features.png?v=8"
                   alt=""
                   aria-hidden
-                  className="relative z-10 h-auto w-[11rem] shrink-0 -translate-x-[1.9rem] -translate-y-[0.85rem] rotate-[3deg] object-contain sm:w-[12.5rem] sm:-translate-y-[1.05rem] md:w-[14rem] lg:w-[15rem]"
+                  className="relative z-10 h-auto w-[11rem] shrink-0 -translate-x-[1.9rem] -translate-y-[0.85rem] rotate-[3deg] object-contain sm:w-[12.5rem] sm:-translate-y-[1.05rem] md:w-[14rem] lg:w-[15rem] max-lg:w-[6.75rem] max-lg:translate-x-0 max-lg:translate-y-0"
                 />
-                <div className="relative z-0 -ml-[3.5rem] -translate-x-[0.1rem] text-left sm:-ml-[4rem] md:-ml-[4.35rem] lg:-ml-[4.75rem]">
-                  <span className="mb-3 block h-1.5 w-12 rounded-full bg-[#8037f4]/40" />
+                <div className="relative z-0 -ml-[3.5rem] -translate-x-[0.1rem] text-left sm:-ml-[4rem] md:-ml-[4.35rem] lg:-ml-[4.75rem] max-lg:ml-0 max-lg:w-full max-lg:translate-x-0 max-lg:text-center">
+                  <span className="mb-3 block h-1.5 w-12 rounded-full bg-[#8037f4]/40 max-lg:mx-auto" />
                   <h2
-                    className={`${homeTy.howItWorksTitle} leading-[1.08]`}
+                    className={`home-how-title ${homeTy.howItWorksTitle} leading-[1.08]`}
                     style={{ fontSize: HOME_HOW_IT_WORKS_TITLE_CLAMP }}
                   >
-                    <span className="block whitespace-nowrap text-slate-900">
+                    <span className="block whitespace-nowrap text-slate-900 max-lg:whitespace-normal max-lg:text-balance">
                       {HOME_SECTION_COPY.howItWorks.titleLine1}
                     </span>
-                    <span className="mt-0.5 block whitespace-nowrap text-[#7c3aed]">
+                    <span className="mt-0.5 block whitespace-nowrap text-[#7c3aed] max-lg:whitespace-normal max-lg:text-balance">
                       {HOME_SECTION_COPY.howItWorks.titleLine2}
                     </span>
                   </h2>
@@ -560,7 +588,7 @@ export function Home() {
             {STEPS.map((s, i) => (
               <LandingItem key={i}>
               <div
-                className={`glass-card group relative flex h-full min-h-[15.5rem] flex-col overflow-hidden p-5 selection:bg-[rgba(147,247,43,0.42)] selection:text-slate-900 transition-[border-color,box-shadow] duration-300 sm:min-h-[16rem] sm:p-6 lg:min-h-[17.5rem] ${i === 1
+                className={`glass-card group relative flex h-full min-h-[15.5rem] flex-col overflow-hidden p-5 selection:bg-[rgba(147,247,43,0.42)] selection:text-slate-900 transition-[border-color,box-shadow] duration-300 sm:min-h-[16rem] sm:p-6 lg:min-h-[17.5rem] max-lg:min-h-[10.5rem] max-lg:p-4 ${i === 1
                   ? "home-step-featured-dots"
                   : i === 2
                     ? "border-violet-400/35 shadow-[0_0_0_1px_rgba(167,139,250,0.15)_inset]"
@@ -602,7 +630,7 @@ export function Home() {
                   </div>
 
                   <div
-                    className={`relative mb-4 flex h-12 w-12 items-center justify-center rounded-xl shadow-lg transition-all duration-500 sm:h-[3.25rem] sm:w-[3.25rem] ${
+                    className={`relative mb-4 flex h-12 w-12 items-center justify-center rounded-xl shadow-lg transition-all duration-500 sm:h-[3.25rem] sm:w-[3.25rem] max-lg:mb-3 max-lg:h-10 max-lg:w-10 max-lg:rounded-lg ${
                       i === 0
                         ? "bg-[#8037f4] text-[#ffffff] shadow-[0_0_24px_rgba(167,139,250,0.12)]"
                         : i === 1
@@ -647,14 +675,14 @@ export function Home() {
       {/* ═══ TESTIMONIALS ═══════════════════════════════════ */}
       <section
         id="mentors"
-        className="landing-section-flow relative z-10 -mt-[5rem] h-[calc(100vh+3rem)] max-h-[calc(100vh+3rem)] min-h-[calc(100vh+3rem)] overflow-x-hidden"
+        className="landing-section-flow relative z-10 -mt-[5rem] h-[calc(100vh+3rem)] max-h-[calc(100vh+3rem)] min-h-[calc(100vh+3rem)] overflow-x-hidden max-lg:mt-0 max-lg:h-auto max-lg:max-h-none max-lg:min-h-0 max-lg:py-10"
       >
         {renderSectionSticks([
           { x: 78, y: 12, size: 34, opacity: 0.46 },
           { x: 92, y: 52, size: 36, opacity: 0.5 },
           { x: 10, y: 86, size: 30, opacity: 0.38 },
         ])}
-        <div className={`${HOME_SECTION_INNER} relative z-10 flex h-full w-full flex-col justify-center py-4 sm:py-6`}>
+        <div className={`${HOME_SECTION_INNER} home-mobile-gutter relative z-10 flex h-full w-full flex-col justify-center py-4 sm:py-6 max-lg:h-auto max-lg:py-0`}>
           <div className="flex min-w-0 w-full flex-col items-start gap-8 overflow-visible lg:flex-row lg:items-center lg:gap-4">
             <div className="relative z-20 w-full shrink-0 lg:w-fit lg:max-w-[min(100%,40rem)]">
               <h2
@@ -724,7 +752,7 @@ export function Home() {
                       {[...TESTIMONIALS, ...TESTIMONIALS].map((t, i) => (
                         <div
                           key={`marq1-${i}-${t.name}`}
-                          className="shrink-0 w-[min(100%,17.5rem)] sm:w-[17.5rem] lg:w-[18.5rem] bg-white border border-slate-200 rounded-2xl p-5 shadow-sm sm:p-6"
+                          className="shrink-0 w-[min(100%,17.5rem)] sm:w-[17.5rem] lg:w-[18.5rem] bg-white border border-slate-200 rounded-2xl p-5 shadow-sm sm:p-6 max-lg:rounded-lg max-lg:p-4"
                         >
                           <div className="flex items-center gap-2.5 mb-3">
                             <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-violet-100 bg-violet-50">
@@ -752,7 +780,7 @@ export function Home() {
                       {[...TESTIMONIALS, ...TESTIMONIALS].map((t, i) => (
                         <div
                           key={`marq2-${i}-${t.name}`}
-                          className="shrink-0 w-[min(100%,17.5rem)] sm:w-[17.5rem] lg:w-[18.5rem] bg-white border border-slate-200 rounded-2xl p-5 shadow-sm sm:p-6"
+                          className="shrink-0 w-[min(100%,17.5rem)] sm:w-[17.5rem] lg:w-[18.5rem] bg-white border border-slate-200 rounded-2xl p-5 shadow-sm sm:p-6 max-lg:rounded-lg max-lg:p-4"
                         >
                           <div className="flex gap-1 mb-3">
                             {[...Array(t.stars)].map((_, j) => (

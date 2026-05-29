@@ -26,7 +26,7 @@ function ScoreCard({
 }) {
   return (
     <div
-      className={`cv-analysis-glass-card rounded-3xl border border-[#ccc3d8] bg-white px-[1.5rem] py-[0.875rem] shadow-xl transition-all duration-300 hover:scale-[1.02] sm:px-[1.75rem] sm:py-[1.15rem] ${className}`}
+      className={`cv-analysis-glass-card rounded-3xl border border-[#ccc3d8] bg-white px-[1.5rem] py-[0.875rem] shadow-xl transition-all duration-300 hover:scale-[1.02] sm:px-[1.75rem] sm:py-[1.15rem] max-lg:rounded-xl max-lg:px-4 max-lg:py-3 max-lg:shadow-md ${className}`}
     >
       <div className={`flex items-center justify-between gap-3 ${children ? "mb-3 sm:mb-3.5" : ""}`}>
         <h3 className={ty.cardTitle}>{title}</h3>
@@ -66,7 +66,7 @@ export function CvAnalysisFeatureShowcase({ onCtaClick }) {
   return (
     <section
       id="cv-analysis"
-      className="relative z-10 flex h-screen max-h-screen flex-col justify-center overflow-x-hidden overflow-y-visible px-0 py-4 sm:py-6"
+      className="home-mobile-tight relative z-10 flex h-screen max-h-screen flex-col justify-center overflow-x-hidden overflow-y-visible px-0 py-4 sm:py-6 max-lg:h-auto max-lg:max-h-none max-lg:min-h-0 max-lg:py-10"
     >
       <style>{`
         .cv-analysis-glass-card {
@@ -93,8 +93,8 @@ export function CvAnalysisFeatureShowcase({ onCtaClick }) {
           }
         }
       `}</style>
-      <div className={`relative z-10 flex w-full items-center overflow-visible py-2 ${HOME_SECTION_INNER}`}>
-        <div className="grid w-full origin-center scale-[0.92] grid-cols-1 items-center gap-4 overflow-visible sm:scale-[0.96] lg:grid-cols-[minmax(0,1.14fr)_minmax(0,0.86fr)] lg:scale-100 lg:gap-6 xl:gap-7">
+      <div className={`home-mobile-gutter relative z-10 flex w-full items-center overflow-visible py-2 ${HOME_SECTION_INNER}`}>
+        <div className="grid w-full origin-center scale-[0.92] grid-cols-1 items-center gap-4 overflow-visible max-lg:scale-[0.9] max-lg:gap-3 sm:scale-[0.96] lg:grid-cols-[minmax(0,1.14fr)_minmax(0,0.86fr)] lg:scale-100 lg:gap-6 xl:gap-7">
           <article className="relative z-10 flex min-w-0 flex-col items-start gap-3 sm:gap-3.5">
             <span className={ty.cvShowcaseBadge}>
               <FileText className="h-3.5 w-3.5 shrink-0" aria-hidden />
