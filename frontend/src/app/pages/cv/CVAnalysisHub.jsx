@@ -19,7 +19,7 @@ const HUB_VIEWPORT_STYLES = `
     .cv-hub-fit {
       width: calc(100% / var(--cv-hub-scale));
       max-width: none;
-      transform: scale(var(--cv-hub-scale)) translateY(-2rem);
+      transform: scale(var(--cv-hub-scale)) translateY(-2rem) translateX(-3.3rem);
       transform-origin: center center;
     }
   }
