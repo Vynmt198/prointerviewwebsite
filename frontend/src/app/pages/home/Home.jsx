@@ -11,7 +11,6 @@ import {
   Award as Medal,
   ArrowRight,
   Zap as Lightning,
-  CircleCheck,
   Upload as UploadSimple,
   Video as VideoCamera,
   BadgeCheck as SealCheck,
@@ -25,6 +24,7 @@ import {
   HOME_MENTOR_MASCOTS,
 } from "../../components/home/MentorFeatureShowcase";
 import { CoursesFeatureShowcase } from "../../components/home/CoursesFeatureShowcase";
+import { HeroInterviewVideoCard } from "../../components/home/HeroInterviewVideoCard";
 import { SparkleGlyph } from "../../components/decor/SparkleGlyph.jsx";
 import {
   SectionReveal,
@@ -40,6 +40,7 @@ import { HOME_COPY, HOME_SECTION_COPY } from "../../constants/brandVoice";
 import {
   HOME_HERO_TITLE_CLAMP,
   HOME_SECTION_TITLE_CLAMP,
+  HOME_HOW_IT_WORKS_TITLE_CLAMP,
   homeSectionClasses as homeTy,
 } from "../../constants/homeTypography";
 /* ─── Data ──────────────────────────────────────────────── */
@@ -115,125 +116,6 @@ const TESTIMONIALS = HOME_SECTION_COPY.testimonials.items.map((t, i) => ({
   stars: 5,
 }));
 
-/** Clip demo phỏng vấn AI — hero (cột phải). */
-const HOME_AI_DEMO_VIDEO =
-  "https://res.cloudinary.com/dee4bvivu/video/upload/v1774336640/Female_delxmy.mp4";
-
-/** Hero: video + overlay glass HUD (điểm AI, STAR, waveform, metrics). */
-function HeroInterviewVideoCard() {
-  const waveformHeights = [42, 68, 52, 82, 58, 90, 48, 76, 55, 88, 50, 72, 46, 80];
-  const starBars = [78, 92, 65, 88, 72];
-
-  return (
-    <div className="relative mx-auto mt-8 w-full max-w-[min(100%,245.4px)] -translate-y-[2rem] translate-x-[4px] overflow-visible sm:max-w-[305.4px] lg:mx-0 lg:mt-0 lg:max-w-[405.4px] lg:-ml-2 lg:justify-self-end xl:max-w-[445.4px]">
-      <div className="hero-video-frame relative rounded-[1.65rem] bg-white p-2 shadow-[0_16px_44px_rgba(99,14,212,0.14)] sm:rounded-[1.85rem] sm:p-2.5">
-        <div
-          className="relative overflow-hidden rounded-[1.2rem] bg-slate-100 sm:rounded-[1.35rem]"
-          style={{ aspectRatio: "4 / 3.51" }}
-        >
-          <video
-            autoPlay
-            loop
-            muted
-            playsInline
-            className="h-full w-full object-cover object-center"
-          >
-            <source src={HOME_AI_DEMO_VIDEO} type="video/mp4" />
-          </video>
-          <div
-            className="pointer-events-none absolute inset-0 bg-gradient-to-b from-white/10 via-transparent to-violet-900/10"
-            aria-hidden
-          />
-
-          {/* 92/100 — góc trên trái */}
-          <div className="hero-video-glass absolute left-2 top-2 z-10 flex items-center gap-2 rounded-xl px-2.5 py-2 sm:left-3 sm:top-3 sm:rounded-2xl sm:px-3 sm:py-2.5">
-            <div className="relative h-10 w-10 shrink-0 sm:h-11 sm:w-11">
-              <svg className="h-full w-full -rotate-90" viewBox="0 0 36 36" aria-hidden>
-                <circle cx="18" cy="18" r="15.2" fill="none" stroke="#e8e0f5" strokeWidth="3" />
-                <circle
-                  cx="18"
-                  cy="18"
-                  r="15.2"
-                  fill="none"
-                  stroke="url(#heroHudScore)"
-                  strokeWidth="3"
-                  strokeLinecap="round"
-                  strokeDasharray="86 96"
-                />
-                <defs>
-                  <linearGradient id="heroHudScore" x1="0%" y1="0%" x2="100%" y2="0%">
-                    <stop offset="0%" stopColor="#8037f4" />
-                    <stop offset="100%" stopColor="#a66ff8" />
-                  </linearGradient>
-                </defs>
-              </svg>
-              <span className="absolute inset-0 flex items-center justify-center text-[9px] font-extrabold text-[#6d2fd6] sm:text-[10px]">
-                92
-              </span>
-            </div>
-            <p className="text-xs font-extrabold leading-tight text-slate-900 sm:text-sm">
-              92<span className="text-[10px] font-bold text-slate-500 sm:text-[11px]">/100</span>
-            </p>
-          </div>
-
-          {/* Waveform — giữa / trên laptop */}
-          <div className="hero-video-glass absolute left-1/2 top-[42%] z-10 flex h-9 w-[min(88%,13rem)] -translate-x-1/2 items-end justify-center gap-[2px] rounded-xl px-2 py-1.5 sm:h-10 sm:gap-[3px] sm:rounded-2xl sm:px-2.5 sm:py-2">
-            {waveformHeights.map((h, i) => (
-              <span
-                key={i}
-                className="hero-video-wave w-[2.5px] rounded-full bg-gradient-to-t from-[#8037f4] to-[#b794f6] sm:w-[3px]"
-                style={{ height: `${h}%` }}
-              />
-            ))}
-          </div>
-
-          {/* Thanh STAR — dưới trái */}
-          <div className="hero-video-glass absolute bottom-3 left-2 z-10 rounded-xl px-2.5 py-2 sm:bottom-4 sm:left-3 sm:rounded-2xl sm:px-3 sm:py-2.5">
-            <div className="mb-1.5 flex items-center gap-0.5">
-              {[1, 2, 3, 4, 5].map((n) => (
-                <Star
-                  key={n}
-                  className="h-3 w-3 fill-amber-400 text-amber-400 sm:h-3.5 sm:w-3.5"
-                  strokeWidth={1.5}
-                />
-              ))}
-            </div>
-            <div className="flex flex-col gap-1">
-              {starBars.map((w, i) => (
-                <div key={i} className="h-1.5 w-16 overflow-hidden rounded-full bg-violet-100 sm:w-[4.5rem]">
-                  <div
-                    className="h-full rounded-full bg-gradient-to-r from-[#8037f4] to-[#a66ff8]"
-                    style={{ width: `${w}%` }}
-                  />
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Metrics — phải */}
-          <div className="hero-video-glass absolute bottom-3 right-2 z-10 space-y-1 rounded-xl px-2.5 py-2 text-[9px] font-semibold text-slate-700 sm:bottom-4 sm:right-3 sm:rounded-2xl sm:px-3 sm:py-2.5 sm:text-[10px]">
-            <div className="flex items-center justify-between gap-3">
-              <span>Clarity</span>
-              <span className="tracking-tight text-[#8037f4]">★★★★★</span>
-            </div>
-            <div className="flex items-center justify-between gap-3">
-              <span>Confidence</span>
-              <span className="font-extrabold text-[#6d2fd6]">95%</span>
-            </div>
-            <div className="flex items-center justify-between gap-2">
-              <span>Structure</span>
-              <span className="inline-flex items-center gap-0.5 font-bold text-emerald-600">
-                Excellent
-                <CircleCheck className="h-3 w-3 shrink-0" strokeWidth={2.5} />
-              </span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 export function Home() {
   const navigate = useNavigate();
 
@@ -275,7 +157,7 @@ export function Home() {
 
   return (
     <div
-      className="min-h-screen selection:bg-violet-100 selection:text-violet-900 font-sans overflow-x-hidden relative bg-transparent text-slate-900"
+      className="min-h-screen selection:bg-[rgba(147,247,43,0.42)] selection:text-slate-900 font-sans overflow-x-hidden relative bg-transparent text-slate-900"
     >
       <style>{`
         .cute-glass {
@@ -468,25 +350,6 @@ export function Home() {
           letter-spacing: -0.045em;
           text-shadow: none;
         }
-        .hero-video-glass {
-          border: 1px solid rgba(255, 255, 255, 0.82);
-          background: rgba(255, 255, 255, 0.8);
-          backdrop-filter: blur(14px);
-          -webkit-backdrop-filter: blur(14px);
-          box-shadow: 0 8px 26px rgba(99, 14, 212, 0.14);
-        }
-        .hero-video-wave {
-          animation: heroVideoWave 1.35s ease-in-out infinite;
-        }
-        .hero-video-wave:nth-child(odd) { animation-delay: 0.12s; }
-        .hero-video-wave:nth-child(4n) { animation-delay: 0.28s; }
-        @keyframes heroVideoWave {
-          0%, 100% { transform: scaleY(0.7); opacity: 0.8; }
-          50% { transform: scaleY(1); opacity: 1; }
-        }
-        @media (prefers-reduced-motion: reduce) {
-          .hero-video-wave { animation: none !important; }
-        }
         .glass-card {
           background: #ffffff;
           backdrop-filter: none;
@@ -593,10 +456,10 @@ export function Home() {
 
         <div className={`relative z-10 ${HOME_SHELL_MAX}`}>
           <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(300px,520px)] lg:items-center lg:gap-x-12 xl:gap-x-16">
-            <div className="order-1 min-w-0 text-left lg:py-2">
+            <div className="order-1 min-w-0 translate-x-4 -translate-y-4 text-left lg:py-2">
               <div className="hero-intro-badge mb-5 -translate-y-[4.5rem]">
                 <div
-                  className="inline-flex items-center gap-2 rounded-full border-2 bg-white px-3 py-1.5 text-xs font-bold sm:text-sm"
+                  className="inline-flex items-center gap-2 rounded-full border-2 bg-white px-3 py-1.5 text-sm font-bold sm:text-base"
                   style={{
                     borderColor: "rgba(128, 55, 244, 0.42)",
                     color: "#8037f4",
@@ -632,7 +495,7 @@ export function Home() {
                   <button
                     type="button"
                     onClick={() => navigate("/interview")}
-                    className="inline-flex items-center justify-center gap-2 rounded-full px-4 py-2 text-sm font-black transition-all hover:brightness-105 active:scale-[0.98] hover:-translate-y-0.5 sm:text-base"
+                    className="inline-flex items-center justify-center gap-2 rounded-full px-4 py-2 text-base font-black transition-all hover:brightness-105 active:scale-[0.98] hover:-translate-y-0.5 sm:text-lg"
                     style={{
                       background: "#93f72b",
                       color: "#0f172a",
@@ -647,7 +510,7 @@ export function Home() {
             </div>
 
 
-            <div className="order-2 flex w-full justify-start lg:flex lg:justify-end lg:self-center">
+            <div className="order-2 flex w-full min-w-0 overflow-visible lg:justify-end lg:self-center">
               <HeroInterviewVideoCard />
             </div>
           </div>
@@ -670,31 +533,34 @@ export function Home() {
             <div className="mx-auto mb-5 flex max-w-4xl flex-col items-center">
               <div className="flex items-center justify-center">
                 <img
-                  src="/mascot-features.png?v=7"
+                  src="/mascot-features.png?v=8"
                   alt=""
                   aria-hidden
-                  className="relative z-10 h-auto w-[11rem] shrink-0 -translate-x-[1.9rem] -translate-y-[0.35rem] rotate-[3deg] object-contain sm:w-[12.5rem] sm:-translate-y-[0.55rem] md:w-[14rem] lg:w-[15rem]"
+                  className="relative z-10 h-auto w-[11rem] shrink-0 -translate-x-[1.9rem] -translate-y-[0.85rem] rotate-[3deg] object-contain sm:w-[12.5rem] sm:-translate-y-[1.05rem] md:w-[14rem] lg:w-[15rem]"
                 />
                 <div className="relative z-0 -ml-[3.5rem] -translate-x-[0.1rem] text-left sm:-ml-[4rem] md:-ml-[4.35rem] lg:-ml-[4.75rem]">
                   <span className="mb-3 block h-1.5 w-12 rounded-full bg-[#8037f4]/40" />
                   <h2
-                    className={homeTy.howItWorksTitle}
-                    style={{ fontSize: HOME_SECTION_TITLE_CLAMP }}
+                    className={`${homeTy.howItWorksTitle} leading-[1.08]`}
+                    style={{ fontSize: HOME_HOW_IT_WORKS_TITLE_CLAMP }}
                   >
-                    {HOME_SECTION_COPY.howItWorks.titleLine1}
-                    <br />
-                    <span className="text-[#7c3aed]">{HOME_SECTION_COPY.howItWorks.titleLine2}</span>
+                    <span className="block whitespace-nowrap text-slate-900">
+                      {HOME_SECTION_COPY.howItWorks.titleLine1}
+                    </span>
+                    <span className="mt-0.5 block whitespace-nowrap text-[#7c3aed]">
+                      {HOME_SECTION_COPY.howItWorks.titleLine2}
+                    </span>
                   </h2>
                 </div>
               </div>
             </div>
           </LandingReveal>
 
-          <LandingStagger className="grid grid-cols-1 md:grid-cols-4 gap-5" stagger={0.1}>
+          <LandingStagger className="grid grid-cols-1 gap-5 md:grid-cols-2 md:gap-4 lg:grid-cols-4 lg:gap-5" stagger={0.1}>
             {STEPS.map((s, i) => (
               <LandingItem key={i}>
               <div
-                className={`glass-card group min-h-[12.5rem] p-6 sm:min-h-[13.25rem] sm:p-7 relative overflow-hidden h-full transition-[border-color,box-shadow] duration-300 ${i === 1
+                className={`glass-card group relative flex h-full min-h-[15.5rem] flex-col overflow-hidden p-5 selection:bg-[rgba(147,247,43,0.42)] selection:text-slate-900 transition-[border-color,box-shadow] duration-300 sm:min-h-[16rem] sm:p-6 lg:min-h-[17.5rem] ${i === 1
                   ? "home-step-featured-dots"
                   : i === 2
                     ? "border-violet-400/35 shadow-[0_0_0_1px_rgba(167,139,250,0.15)_inset]"
@@ -705,12 +571,12 @@ export function Home() {
                   boxShadow: "0 12px 26px rgba(15,23,42,0.09), 0 2px 10px rgba(95,0,240,0.08)",
                 }}
               >
-                <div className="relative z-[1]">
+                <div className="relative z-[1] min-w-0 flex flex-1 flex-col">
                   {/* Hàng nhãn cố định — tránh absolute đè lên icon */}
                   <div className="mb-3.5 min-h-[32px] flex items-center justify-start">
                     {(i === 1 || i === 2) && (
                     <span
-                        className={`inline-flex px-2 py-1 text-[10px] sm:text-[11px] font-bold tracking-wide rounded-md border ${i === 1
+                        className={`${homeTy.howItWorksStepBadge} ${i === 1
                           ? "border-[#8037f4]/50 bg-white/90 text-[#6d2fd6]"
                           : "border-violet-200 bg-violet-100 text-violet-800 shadow-sm"
                           }`}
@@ -748,7 +614,7 @@ export function Home() {
                   </div>
 
                   <h3 className={homeTy.howItWorksStepTitle}>{s.title}</h3>
-                  <p className={homeTy.howItWorksStepBody}>{s.desc}</p>
+                  <p className={`${homeTy.howItWorksStepBody} mt-auto`}>{s.desc}</p>
                 </div>
               </div>
               </LandingItem>

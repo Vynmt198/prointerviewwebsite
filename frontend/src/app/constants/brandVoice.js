@@ -23,29 +23,53 @@ export const HOME_COPY = {
 /** Home: mọi section trừ hero (tiêu đề + badge + CTA hero giữ trong JSX). */
 export const HOME_SECTION_COPY = {
   howItWorks: {
-    titleLine1: "Chuẩn bị phỏng vấn",
-    titleLine2: "tự tin hơn từng buổi",
+    titleLine1: "Luyện phỏng vấn hôm nay,",
+    titleLine2: "tự tin chinh phục job ngày\u00a0mai",
   },
-  steps: [
+  /** Bản gốc sếp — tham chiếu, không xóa. */
+  stepsBossOriginal: [
     {
       step: "01",
-      title: "Phân tích CV với JD",
-      desc: "ProInterview chỉ rõ chỗ khớp, chỗ thiếu. Bạn biết sửa đâu trước khi nộp hồ sơ.",
+      title: "Tối ưu CV theo vị trí ứng tuyển",
+      desc: "ProInterview giúp bạn đối chiếu CV với vị trí ứng tuyển, chỉ ra điểm khớp, điểm thiếu và những phần nên cải thiện trước khi nộp hồ sơ.",
     },
     {
       step: "02",
-      title: "Phỏng vấn thử AI",
-      desc: "Luyện trả lời, nhận góp ý STAR ngay. Gần cảm giác phòng phỏng vấn thật.",
+      title: "Luyện phỏng vấn với AI",
+      desc: "Phỏng vấn với AI theo vị trí ứng tuyển, nhận góp ý sau từng câu trả lời và biết mình cần sửa gì để trả lời rõ ràng hơn.",
     },
     {
       step: "03",
-      title: "Mentor 1:1",
-      desc: "Gặp HR/Manager thật. Góp ý cụ thể, biết bước tiếp theo nên luyện gì.",
+      title: "Kết nối Mentor 1:1",
+      desc: "Kết nối với Mentor để được góp ý cụ thể và có chiến lược chuẩn bị phù hợp.",
     },
     {
       step: "04",
-      title: "Khóa học",
-      desc: "Video và bài tập mentor duyệt. Học xong biết áp dụng vào CV và buổi phỏng vấn.",
+      title: "Khóa học từ Mentor",
+      desc: "Video từ Mentor giúp bạn bổ sung kiến thức, luyện kỹ năng và chuẩn bị bài bản hơn cho hành trình ứng tuyển.",
+    },
+  ],
+  /** Cùng ý bản gốc — 2 câu/card, độ dài cân bằng để hiển thị đều. */
+  steps: [
+    {
+      step: "01",
+      title: "Tối ưu CV theo vị trí ứng tuyển",
+      desc: "ProInterview giúp bạn đối chiếu CV với vị trí ứng tuyển, chỉ rõ điểm khớp và điểm thiếu. Bạn biết phần nào nên cải thiện trước khi nộp hồ\u00a0sơ.",
+    },
+    {
+      step: "02",
+      title: "Luyện phỏng vấn với AI",
+      desc: "Phỏng vấn với AI theo đúng vị trí ứng tuyển, nhận góp ý sau từng câu trả lời. Bạn biết mình cần sửa gì để trả lời rõ ràng hơn.",
+    },
+    {
+      step: "03",
+      title: "Kết nối Mentor 1:1",
+      desc: "Kết nối với Mentor để nhận góp ý cụ thể qua từng buổi mock. Bạn có chiến lược chuẩn bị phù hợp với mục tiêu ứng tuyển.",
+    },
+    {
+      step: "04",
+      title: "Khóa học từ Mentor",
+      desc: "Video từ Mentor giúp bạn bổ sung kiến thức và luyện kỹ năng thực tế. Bạn chuẩn bị bài bản hơn cho hành trình ứng tuyển sắp tới.",
     },
   ],
   features: [

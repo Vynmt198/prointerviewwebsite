@@ -94,8 +94,8 @@ body {
 }
 
 ::selection {
-  background: var(--pi-lime-soft);
-  color: #fff;
+  background: rgba(147, 247, 43, 0.42);
+  color: #0f172a;
 }
 
 /* ── Custom scrollbar ──────────────────────────────── */

@@ -3,8 +3,10 @@
  * Hero headline riêng (lớn hơn section).
  */
 // Hero headline — tăng lại 1 bậc so với bản trước
-export const HOME_HERO_TITLE_CLAMP = "clamp(2.2rem, 6.1vw, 4.45rem)";
+export const HOME_HERO_TITLE_CLAMP = "clamp(2.45rem, 6.5vw, 4.85rem)";
 export const HOME_SECTION_TITLE_CLAMP = "clamp(2.25rem, 3.5vw, 3.25rem)";
+/** Lộ trình — 2 dòng cố định */
+export const HOME_HOW_IT_WORKS_TITLE_CLAMP = "clamp(2.25rem, 3.5vw, 3.25rem)";
 /** CV showcase — lớn hơn section chuẩn 0.1rem */
 export const HOME_CV_SHOWCASE_TITLE_CLAMP =
   "clamp(2.35rem, calc(3.5vw + 0.1rem), 3.35rem)";
@@ -29,9 +31,11 @@ export const homeSectionClasses = {
     "font-headline text-lg font-extrabold leading-snug text-[#1a1b23] sm:text-xl",
   stepCardBody: "text-pretty text-base font-medium leading-relaxed text-slate-600 sm:text-lg",
   howItWorksTitle:
-    "cute-heading font-headline font-black leading-[1.06] tracking-tighter text-slate-900",
+    "cute-heading text-pretty font-headline font-black leading-[1.06] tracking-tighter text-slate-900",
   howItWorksStepTitle:
-    "mb-2 font-headline text-lg font-extrabold tracking-tight text-slate-900 sm:text-xl",
+    "mb-2 font-headline text-sm font-extrabold leading-snug tracking-tight text-slate-900 sm:text-base lg:text-[0.9375rem] xl:text-base",
   howItWorksStepBody:
-    "text-base font-medium leading-relaxed text-slate-600 sm:text-lg whitespace-pre-line",
+    "flex-1 text-pretty text-sm font-medium leading-[1.55] text-slate-600 sm:text-[0.9375rem] lg:min-h-[5.1rem] lg:text-sm lg:leading-[1.5] xl:text-base",
+  howItWorksStepBadge:
+    "inline-flex px-2 py-1 text-[10px] font-bold tracking-wide rounded-md border sm:text-[11px]",
 };

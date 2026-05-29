@@ -921,17 +921,34 @@ export function Checkout() {
         ? `Gói ${plan.name} đã được kích hoạt.`
         : "Thanh toán đã được xác nhận.";
     toastApiSuccess(toastMsg);
-    setPaymentSuccessOverlay({
-      title: "Thanh toán thành công",
-      subtitle: isCourse
-        ? "Đang mở trang học…"
+    const successSubtitle = isPlanCheckout
+      ? `Gói ${plan.name} đã được kích hoạt sau chuyển khoản.`
+      : isCourse
+        ? "Khóa học đã sẵn sàng — bạn có thể vào học ngay."
         : isBooking
-          ? "Đang mở buổi hẹn…"
-          : isPlanCheckout
-            ? `Gói ${plan.name} đã kích hoạt.`
-            : "Đang chuyển hướng…",
+          ? "Buổi mentor đã được xác nhận sau chuyển khoản."
+          : "Chuyển khoản đã được xác nhận thành công.";
+    const primaryCta = isCourse
+      ? "Vào học ngay"
+      : isBooking
+        ? "Xem buổi hẹn"
+        : isPlanCheckout
+          ? "Về Dashboard"
+          : "Tiếp tục";
+    navigate("/payment-success", {
+      replace: true,
+      state: {
+        flow: "transfer",
+        nextPath: target,
+        subtitle: successSubtitle,
+        primaryCta,
+        details: {
+          amount: fmt(payAmount),
+          orderId: transferOrderNum,
+          date: new Date().toLocaleString("vi-VN"),
+        },
+      },
     });
-    window.setTimeout(() => navigate(target), 1500);
   };
 
   useEffect(() => {
