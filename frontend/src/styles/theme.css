@@ -439,7 +439,7 @@ html.app-route-home body {
   }
 }
 
-/* Home — nền liền mép trên → hero */
+/* Home — giống mock: giữa sáng loang, mép lavender nhẹ */
 .app-shell-ambient--home {
   background-color: #dcd2eb;
   background-image:

@@ -791,8 +791,8 @@ export function Home() {
                     </div>
                   </div>
                 </div>
-                <div className="pointer-events-none absolute inset-y-0 left-0 z-[2] w-12 bg-gradient-to-r from-[#f3f0f9] via-[#f3f0f9]/80 to-transparent sm:w-14" />
-                <div className="pointer-events-none absolute inset-y-0 right-0 z-[2] w-12 bg-gradient-to-l from-[#f3f0f9] via-[#f3f0f9]/80 to-transparent sm:w-14" />
+                <div className="pointer-events-none absolute inset-y-0 left-0 z-[2] w-12 bg-gradient-to-r from-[#ebe4f6] via-[#ebe4f6]/80 to-transparent sm:w-14" />
+                <div className="pointer-events-none absolute inset-y-0 right-0 z-[2] w-12 bg-gradient-to-l from-[#ebe4f6] via-[#ebe4f6]/80 to-transparent sm:w-14" />
               </div>
             </div>
           </div>
