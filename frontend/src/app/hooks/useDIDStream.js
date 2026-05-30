@@ -62,19 +62,20 @@ export function useDIDStream({ apiKey, sourceImageUrl } = {}) {
     setError("");
 
     try {
-      // Dọn stream cũ còn sót từ session trước (page refresh / unexpected unmount)
-      // Fetch với keepalive để không bị cancel khi unload — nhưng ở đây ta đang connect
-      // nên dùng fire-and-forget bình thường
+      // Dọn stream cũ còn sót từ session trước (page refresh / unexpected unmount).
+      // Phải AWAIT DELETE trước khi tạo stream mới — không fire-and-forget,
+      // vì nếu DELETE và POST chạy song song D-ID đếm 2 sessions → "Max user sessions".
       const prevId  = sessionStorage.getItem("did_stream_id");
       const prevSid = sessionStorage.getItem("did_session_id");
       if (prevId && prevSid) {
-        fetch(`${DID_API}/talks/streams/${prevId}`, {
+        // Xóa storage trước — dù DELETE có timeout hay fail vẫn không retry lần sau
+        sessionStorage.removeItem("did_stream_id");
+        sessionStorage.removeItem("did_session_id");
+        await fetch(`${DID_API}/talks/streams/${prevId}`, {
           method:  "DELETE",
           headers: getHeaders(),
           body:    JSON.stringify({ session_id: prevSid }),
-        }).catch(() => {});
-        sessionStorage.removeItem("did_stream_id");
-        sessionStorage.removeItem("did_session_id");
+        }).catch(() => {}); // ignore: stream có thể đã hết hạn
       }
 
       // 1. Tạo D-ID stream
@@ -280,23 +281,27 @@ export function useDIDStream({ apiKey, sourceImageUrl } = {}) {
     clearTimeout(endTimerRef.current);
     clearTimeout(connectTimerRef.current);
 
-    if (streamIdRef.current && sessionIdRef.current) {
+    const streamId  = streamIdRef.current;
+    const sessionId = sessionIdRef.current;
+
+    // Xóa sessionStorage TRƯỚC await — đảm bảo remove chạy ngay cả khi page unload
+    // trước khi DELETE hoàn thành (keepalive chỉ giữ request sống, không giữ JS)
+    sessionStorage.removeItem("did_stream_id");
+    sessionStorage.removeItem("did_session_id");
+
+    if (streamId && sessionId) {
       try {
-        // keepalive: true → request hoàn thành ngay cả khi trang đang unload
-        await fetch(`${DID_API}/talks/streams/${streamIdRef.current}`, {
+        // keepalive: true → request survive ngay cả khi trang đang unload
+        await fetch(`${DID_API}/talks/streams/${streamId}`, {
           method:    "DELETE",
           headers:   getHeaders(),
-          body:      JSON.stringify({ session_id: sessionIdRef.current }),
+          body:      JSON.stringify({ session_id: sessionId }),
           keepalive: true,
         });
       } catch {
         // ignore
       }
     }
-
-    // Xóa sessionStorage — stream đã được dọn sạch
-    sessionStorage.removeItem("did_stream_id");
-    sessionStorage.removeItem("did_session_id");
 
     pcRef.current?.close();
     pcRef.current        = null;
