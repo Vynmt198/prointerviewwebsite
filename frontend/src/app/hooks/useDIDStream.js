@@ -62,6 +62,21 @@ export function useDIDStream({ apiKey, sourceImageUrl } = {}) {
     setError("");
 
     try {
+      // Dọn stream cũ còn sót từ session trước (page refresh / unexpected unmount)
+      // Fetch với keepalive để không bị cancel khi unload — nhưng ở đây ta đang connect
+      // nên dùng fire-and-forget bình thường
+      const prevId  = sessionStorage.getItem("did_stream_id");
+      const prevSid = sessionStorage.getItem("did_session_id");
+      if (prevId && prevSid) {
+        fetch(`${DID_API}/talks/streams/${prevId}`, {
+          method:  "DELETE",
+          headers: getHeaders(),
+          body:    JSON.stringify({ session_id: prevSid }),
+        }).catch(() => {});
+        sessionStorage.removeItem("did_stream_id");
+        sessionStorage.removeItem("did_session_id");
+      }
+
       // 1. Tạo D-ID stream
       const res = await fetch(`${DID_API}/talks/streams`, {
         method: "POST",
@@ -77,6 +92,10 @@ export function useDIDStream({ apiKey, sourceImageUrl } = {}) {
       const { id, session_id, offer, ice_servers } = await res.json();
       streamIdRef.current  = id;
       sessionIdRef.current = session_id;
+
+      // Lưu vào sessionStorage để cleanup khi trang unload bất ngờ
+      sessionStorage.setItem("did_stream_id",  id);
+      sessionStorage.setItem("did_session_id", session_id);
 
       // 2. RTCPeerConnection
       const pc = new RTCPeerConnection({ iceServers: ice_servers });
@@ -263,18 +282,24 @@ export function useDIDStream({ apiKey, sourceImageUrl } = {}) {
 
     if (streamIdRef.current && sessionIdRef.current) {
       try {
+        // keepalive: true → request hoàn thành ngay cả khi trang đang unload
         await fetch(`${DID_API}/talks/streams/${streamIdRef.current}`, {
-          method: "DELETE",
-          headers: getHeaders(),
-          body: JSON.stringify({ session_id: sessionIdRef.current }),
+          method:    "DELETE",
+          headers:   getHeaders(),
+          body:      JSON.stringify({ session_id: sessionIdRef.current }),
+          keepalive: true,
         });
       } catch {
         // ignore
       }
     }
 
+    // Xóa sessionStorage — stream đã được dọn sạch
+    sessionStorage.removeItem("did_stream_id");
+    sessionStorage.removeItem("did_session_id");
+
     pcRef.current?.close();
-    pcRef.current     = null;
+    pcRef.current        = null;
     streamIdRef.current  = "";
     sessionIdRef.current = "";
     setStatus("idle");
