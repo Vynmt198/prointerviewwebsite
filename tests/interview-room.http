@@ -1,0 +1,584 @@
+# =============================================================
+#  ProInterview — AI Interview Room Test Suite
+#  Extension: REST Client (humao.rest-client)
+#  Cài: Ctrl+Shift+X → tìm "REST Client" → Install
+#
+#  Cách dùng:
+#    1. Mở file này trong VS Code
+#    2. Click "Send Request" phía trên mỗi request
+#    3. Chạy theo thứ tự R01 → R02 → ... → R18
+#
+#  Sau R01 login: copy accessToken vào biến @token bên dưới
+#  Sau R04 create session: copy session._id vào @sessionId
+# =============================================================
+
+# ── BIẾN TOÀN CỤC ─────────────────────────────────────────
+@baseUrl   = http://localhost:5000
+@email     = customer@dev.local
+@password  = Dev123456
+
+# Điền sau khi chạy R01 (copy từ response):
+@token     = PASTE_JWT_TOKEN_HERE
+
+# Điền sau khi chạy R04 (copy từ response):
+@sessionId = PASTE_SESSION_ID_HERE
+
+
+###############################################################
+# FOLDER 00 — AUTH
+###############################################################
+
+# R01 — Login (copy accessToken → paste vào @token ở trên)
+# @name login
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "{{email}}",
+  "password": "{{password}}"
+}
+
+# ✅ Expected:
+# {
+#   "success": true,
+#   "accessToken": "eyJ...",
+#   "user": { "email": "customer@dev.local", "role": "customer" }
+# }
+
+###
+
+# R02 — Health check (không cần auth)
+GET {{baseUrl}}/api/health
+
+# ✅ Expected: { "status": "ok" }
+
+###############################################################
+# FOLDER 01 — GENERATE QUESTIONS (LLM Pipeline ~15-30s)
+###############################################################
+
+# R03 — Sinh câu hỏi từ CV+JD
+# Kiểm tra: 5 câu, có đủ layer theory + project + behavior
+# Timeout mặc định REST Client: 30s — tăng lên nếu cần (xem settings bên dưới)
+# @name generateQuestions
+POST {{baseUrl}}/api/interviews/generate-questions
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "position": "Frontend Developer",
+  "field": "technology",
+  "level": "junior",
+  "cvText": "Nguyễn Văn A, 22 tuổi, sinh viên năm 4 ĐH Bách Khoa. Kỹ năng: React 18, TypeScript, Redux Toolkit, REST API, Git. Dự án: E-commerce với React+Node (2 tháng), Dashboard admin dùng Ant Design. GPA 3.2. Tiếng Anh B2.",
+  "jdText": "Tuyển Frontend Developer Junior. Yêu cầu: React, TypeScript, 0-1 năm kinh nghiệm. Ưu tiên: biết Redux, đã làm dự án thực tế. Trách nhiệm: phát triển UI, tích hợp API, viết unit test. Môi trường Agile/Scrum."
+}
+
+# ✅ Expected:
+# {
+#   "success": true,
+#   "questions": [ ...5 items... ],
+#   "inferredRole": "frontend-developer",
+#   "competencyProfile": { "competencyIds": [...] }
+# }
+# Kiểm tra questions[].layer — phải có: "theory", "project", "behavior"
+# Kiểm tra questions[].ddiKeyActionTargeted — không được rỗng
+
+###############################################################
+# FOLDER 02 — SESSION LIFECYCLE
+###############################################################
+
+# R04 — Tạo interview session
+# ⚠️ Sau khi chạy: copy session._id → paste vào @sessionId ở đầu file
+# @name createSession
+POST {{baseUrl}}/api/interviews/sessions
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "hrGender": "female",
+  "inferredRole": "Frontend Developer",
+  "inferredSeniority": "junior",
+  "questions": [
+    {
+      "id": "q1",
+      "layer": "theory",
+      "question": "Virtual DOM trong React hoạt động như thế nào và tại sao nó giúp tối ưu performance?",
+      "competencyId": "technical-knowledge",
+      "competencyName": "Technical Knowledge",
+      "ddiKeyActionTargeted": "Demonstrates technical depth",
+      "shrmRubricExcellent": "Giải thích rõ reconciliation algorithm, so sánh với real DOM",
+      "starGuidance": { "situation": [], "task": [], "action": [], "result": [] }
+    },
+    {
+      "id": "q2",
+      "layer": "project",
+      "question": "Trong dự án React bạn đã làm, bạn xử lý state management như thế nào? Tại sao chọn approach đó?",
+      "competencyId": "problem-solving",
+      "competencyName": "Problem Solving",
+      "ddiKeyActionTargeted": "Analyzes alternatives before deciding",
+      "shrmRubricExcellent": "Nêu được trade-off giữa các giải pháp state management",
+      "starGuidance": { "situation": [], "task": [], "action": [], "result": [] }
+    },
+    {
+      "id": "q3",
+      "layer": "behavior",
+      "question": "Kể về một lần bạn phải debug một bug phức tạp trong frontend. Bạn đã làm gì?",
+      "competencyId": "analytical-thinking",
+      "competencyName": "Analytical Thinking",
+      "ddiKeyActionTargeted": "Breaks down problems systematically",
+      "shrmRubricExcellent": "Dùng STAR rõ ràng, kết quả đo lường được",
+      "starGuidance": {
+        "situation": ["Mô tả bug xảy ra ở đâu, ảnh hưởng gì"],
+        "task": ["Nhiệm vụ của bạn là gì"],
+        "action": ["Bạn dùng tools nào, approach nào"],
+        "result": ["Bug được fix, impact ra sao"]
+      }
+    }
+  ],
+  "competencyProfile": {
+    "roleCategory": "frontend-developer",
+    "competencyIds": ["technical-knowledge", "problem-solving", "analytical-thinking"],
+    "competencyCoverage": ["Technical Knowledge", "Problem Solving", "Analytical Thinking"]
+  }
+}
+
+# ✅ Expected:
+# { "success": true, "session": { "_id": "...", "status": "in_progress" } }
+# ⚠️ Copy session._id → paste vào @sessionId ở đầu file
+
+###
+
+# R05 — Lưu câu trả lời Q1: trả lời TỐT (không có hedge words, eye contact cao)
+PATCH {{baseUrl}}/api/interviews/sessions/{{sessionId}}
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "questionIndex": 0,
+  "questionText": "Virtual DOM trong React hoạt động như thế nào?",
+  "transcript": "Virtual DOM là một bản copy nhẹ của real DOM được React duy trì trong memory. Khi state thay đổi, React tạo một Virtual DOM mới, so sánh với Virtual DOM cũ thông qua thuật toán diffing, sau đó chỉ cập nhật những phần thực sự thay đổi lên real DOM. Điều này giúp tránh việc re-render toàn bộ DOM, tăng performance đáng kể.",
+  "durationSeconds": 48,
+  "behavioralData": {
+    "responseLatencyMs": 2100,
+    "silenceRatio": 0.07,
+    "silenceEvents": 0,
+    "avgAmplitude": 0.43,
+    "amplitudeVariance": 0.09,
+    "wordCount": 62,
+    "hedgeWordCount": 0,
+    "hedgeWords": [],
+    "vocabularyDiversity": 0.74,
+    "eyeContactScore": 0.82,
+    "headStabilityScore": 0.91,
+    "facePresenceRatio": 0.98,
+    "distractionEvents": 0
+  }
+}
+
+# ✅ Expected: { "success": true }
+# Kiểm tra response: session.answers[0].behavioralData.eyeContactScore = 0.82
+# Kiểm tra: wordCount = 62 (Fix #4 — không còn dùng ước lượng)
+
+###
+
+# R06 — Lưu câu trả lời Q2: NHIỀU HEDGE WORDS + latency cao + silence nhiều
+PATCH {{baseUrl}}/api/interviews/sessions/{{sessionId}}
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "questionIndex": 1,
+  "questionText": "Trong dự án React, bạn xử lý state management như thế nào?",
+  "transcript": "Tôi nghĩ là trong dự án đó, có lẽ chúng tôi dùng Redux Toolkit. Hình như lúc đầu chúng tôi thử Context API nhưng nó không đủ tốt cho dự án lớn. Thật ra là tôi cũng không chắc lắm về việc tại sao team chọn Redux thay vì Zustand, nhưng có lẽ vì team đã quen với Redux rồi.",
+  "durationSeconds": 52,
+  "behavioralData": {
+    "responseLatencyMs": 4800,
+    "silenceRatio": 0.19,
+    "silenceEvents": 2,
+    "avgAmplitude": 0.31,
+    "amplitudeVariance": 0.04,
+    "wordCount": 61,
+    "hedgeWordCount": 5,
+    "hedgeWords": ["tôi nghĩ là", "có lẽ", "hình như", "thật ra là", "không chắc lắm"],
+    "vocabularyDiversity": 0.59,
+    "eyeContactScore": 0.61,
+    "headStabilityScore": 0.78,
+    "facePresenceRatio": 0.94,
+    "distractionEvents": 1
+  }
+}
+
+# ✅ Expected: { "success": true }
+# Kiểm tra: hedgeWordCount = 5 (sẽ kéo hedgeScore xuống trong summary)
+
+###
+
+# R07 — Lưu câu trả lời Q3: STAR behavior + có emotion từ Vision
+PATCH {{baseUrl}}/api/interviews/sessions/{{sessionId}}
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "questionIndex": 2,
+  "questionText": "Kể về một lần bạn phải debug một bug phức tạp trong frontend.",
+  "transcript": "Trong dự án e-commerce tại trường, chúng tôi gặp vấn đề là giỏ hàng bị reset khi user navigate giữa các trang. Nhiệm vụ của tôi là tìm và fix bug trong vòng 2 ngày để không block sprint. Tôi dùng React DevTools để trace component re-render, phát hiện cart state bị đặt trong local component state thay vì Redux store. Sau khi migrate cart sang Redux và persist với localStorage, bug hoàn toàn được fix. Sprint không bị delay và user không còn mất cart.",
+  "durationSeconds": 67,
+  "behavioralData": {
+    "responseLatencyMs": 1900,
+    "silenceRatio": 0.06,
+    "silenceEvents": 0,
+    "avgAmplitude": 0.48,
+    "amplitudeVariance": 0.11,
+    "wordCount": 89,
+    "hedgeWordCount": 0,
+    "hedgeWords": [],
+    "vocabularyDiversity": 0.78,
+    "eyeContactScore": 0.85,
+    "headStabilityScore": 0.89,
+    "facePresenceRatio": 0.99,
+    "distractionEvents": 0,
+    "emotion": {
+      "joy": 3,
+      "sorrow": 1,
+      "anger": 1,
+      "surprise": 2,
+      "headPanAngle": -1.2,
+      "headTiltAngle": 0.8,
+      "lightingOk": true
+    }
+  }
+}
+
+# ✅ Expected: { "success": true }
+# Kiểm tra: answers[2].behavioralData.emotion.joy = 3
+
+###############################################################
+# FOLDER 03 — GOOGLE VISION SNAPSHOT
+###############################################################
+
+# R08 — Analyze face: ảnh 1×1 pixel (KHÔNG có mặt người)
+POST {{baseUrl}}/api/interviews/sessions/{{sessionId}}/analyze-face
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "imageBase64": "/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/wAALCAABAAEBAREA/8QAFAABAAAAAAAAAAAAAAAAAAAACf/EABQQAQAAAAAAAAAAAAAAAAAAAAD/2gAIAQEAAT8AKf/Z",
+  "questionIndex": 0
+}
+
+# ✅ Nếu API key ĐÃ SET:   { "success": true, "emotion": null }
+# ✅ Nếu API key CHƯA SET: { "success": true, "emotion": null, "reason": "vision_api_not_configured" }
+# ❌ KHÔNG được: status 4xx/5xx (luôn phải graceful)
+
+###
+
+# R09 — Analyze face: ảnh thật (có mặt người)
+# ⚠️ LẤY BASE64 ẢNH THẬT:
+#    1. Mở browser, vào bất kỳ trang web nào
+#    2. Mở DevTools Console (F12)
+#    3. Paste đoạn JS sau để chụp ảnh từ webcam:
+#
+#       navigator.mediaDevices.getUserMedia({video:true}).then(stream => {
+#         const video = document.createElement('video');
+#         video.srcObject = stream;
+#         video.play();
+#         setTimeout(() => {
+#           const canvas = document.createElement('canvas');
+#           canvas.width = 320; canvas.height = 240;
+#           canvas.getContext('2d').drawImage(video, 0, 0);
+#           const b64 = canvas.toDataURL('image/jpeg', 0.8).split(',')[1];
+#           console.log('BASE64:', b64.slice(0, 50) + '...');
+#           copy(b64); // copy thẳng vào clipboard
+#           stream.getTracks().forEach(t => t.stop());
+#         }, 2000);
+#       });
+#
+#    4. Chờ 2 giây → chuỗi base64 đã được copy vào clipboard
+#    5. Paste thay PASTE_REAL_FACE_BASE64_HERE bên dưới
+POST {{baseUrl}}/api/interviews/sessions/{{sessionId}}/analyze-face
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "imageBase64": "PASTE_REAL_FACE_BASE64_HERE",
+  "questionIndex": 1
+}
+
+# ✅ Expected (nếu có API key + ảnh có mặt):
+# {
+#   "success": true,
+#   "emotion": {
+#     "joy": 2,        ← 1=VERY_UNLIKELY, 5=VERY_LIKELY
+#     "sorrow": 1,
+#     "anger": 1,
+#     "surprise": 1,
+#     "headPanAngle": -2.5,
+#     "headTiltAngle": 1.2,
+#     "lightingOk": true
+#   }
+# }
+
+###############################################################
+# FOLDER 04 — COMPLETE + EVALUATE
+###############################################################
+
+# R10 — Complete session + gửi behavioralSummary
+POST {{baseUrl}}/api/interviews/sessions/{{sessionId}}/complete
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "totalDurationSeconds": 167,
+  "answers": [
+    {
+      "questionIndex": 0,
+      "questionText": "Virtual DOM trong React hoạt động như thế nào?",
+      "transcript": "Virtual DOM là một bản copy nhẹ của real DOM được React duy trì trong memory. Khi state thay đổi, React tạo một Virtual DOM mới, so sánh với Virtual DOM cũ thông qua thuật toán diffing.",
+      "durationSeconds": 48,
+      "behavioralData": {
+        "responseLatencyMs": 2100, "silenceRatio": 0.07, "silenceEvents": 0,
+        "avgAmplitude": 0.43, "amplitudeVariance": 0.09, "wordCount": 62,
+        "hedgeWordCount": 0, "hedgeWords": [], "vocabularyDiversity": 0.74,
+        "eyeContactScore": 0.82, "headStabilityScore": 0.91, "facePresenceRatio": 0.98, "distractionEvents": 0
+      }
+    },
+    {
+      "questionIndex": 1,
+      "questionText": "Trong dự án React, bạn xử lý state management như thế nào?",
+      "transcript": "Tôi nghĩ là trong dự án đó, có lẽ chúng tôi dùng Redux Toolkit. Hình như lúc đầu chúng tôi thử Context API nhưng không đủ tốt.",
+      "durationSeconds": 52,
+      "behavioralData": {
+        "responseLatencyMs": 4800, "silenceRatio": 0.19, "silenceEvents": 2,
+        "avgAmplitude": 0.31, "amplitudeVariance": 0.04, "wordCount": 61,
+        "hedgeWordCount": 5, "hedgeWords": ["tôi nghĩ là", "có lẽ", "hình như"],
+        "vocabularyDiversity": 0.59, "eyeContactScore": 0.61, "headStabilityScore": 0.78,
+        "facePresenceRatio": 0.94, "distractionEvents": 1
+      }
+    },
+    {
+      "questionIndex": 2,
+      "questionText": "Kể về một lần bạn phải debug một bug phức tạp trong frontend.",
+      "transcript": "Trong dự án e-commerce tại trường, chúng tôi gặp vấn đề là giỏ hàng bị reset khi user navigate giữa các trang. Tôi dùng React DevTools trace và fix bằng Redux store.",
+      "durationSeconds": 67,
+      "behavioralData": {
+        "responseLatencyMs": 1900, "silenceRatio": 0.06, "silenceEvents": 0,
+        "avgAmplitude": 0.48, "amplitudeVariance": 0.11, "wordCount": 89,
+        "hedgeWordCount": 0, "hedgeWords": [], "vocabularyDiversity": 0.78,
+        "eyeContactScore": 0.85, "headStabilityScore": 0.89, "facePresenceRatio": 0.99,
+        "distractionEvents": 0,
+        "emotion": { "joy": 3, "sorrow": 1, "anger": 1, "surprise": 2, "headPanAngle": -1.2, "headTiltAngle": 0.8, "lightingOk": true }
+      }
+    }
+  ],
+  "behavioralSummary": {
+    "avgResponseLatencyMs": 2933,
+    "avgSilenceRatio": 0.11,
+    "avgEyeContactScore": 0.76,
+    "avgHeadStabilityScore": 0.86,
+    "totalHedgeWords": 5,
+    "avgVocabularyDiversity": 0.70,
+    "avgAmplitudeVariance": 0.08,
+    "overallConfidenceScore": 3.6,
+    "dominantEmotion": "joy"
+  }
+}
+
+# ✅ Expected: { "success": true, "status": "completed" }
+# Chạy lại R10: phải trả về message: "already_completed" (idempotent)
+
+###
+
+# R11 — Evaluate session (LLM SHRM/DDI — có thể mất 15-60 giây)
+# ⚠️ Nếu timeout: tăng lên trong VS Code settings:
+#    "rest-client.timeoutinmilliseconds": 90000
+POST {{baseUrl}}/api/interviews/sessions/{{sessionId}}/evaluate
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "answers": [
+    {
+      "questionIndex": 0,
+      "transcript": "Virtual DOM là một bản copy nhẹ của real DOM được React duy trì trong memory. Khi state thay đổi, React tạo một Virtual DOM mới, so sánh với Virtual DOM cũ thông qua thuật toán diffing, sau đó chỉ cập nhật những phần thực sự thay đổi lên real DOM. Điều này giúp tránh việc re-render toàn bộ DOM, tăng performance đáng kể.",
+      "questionText": "Virtual DOM trong React hoạt động như thế nào?"
+    },
+    {
+      "questionIndex": 1,
+      "transcript": "Tôi nghĩ là trong dự án đó, có lẽ chúng tôi dùng Redux Toolkit. Hình như lúc đầu chúng tôi thử Context API nhưng nó không đủ tốt cho dự án lớn. Thật ra là tôi cũng không chắc lắm về việc tại sao team chọn Redux thay vì Zustand, nhưng có lẽ vì team đã quen với Redux rồi.",
+      "questionText": "Trong dự án React, bạn xử lý state management như thế nào?"
+    },
+    {
+      "questionIndex": 2,
+      "transcript": "Trong dự án e-commerce tại trường, chúng tôi gặp vấn đề là giỏ hàng bị reset khi user navigate giữa các trang. Nhiệm vụ của tôi là tìm và fix bug trong vòng 2 ngày để không block sprint. Tôi dùng React DevTools để trace component re-render, phát hiện cart state bị đặt trong local component state thay vì Redux store. Sau khi migrate cart sang Redux và persist với localStorage, bug hoàn toàn được fix.",
+      "questionText": "Kể về một lần bạn phải debug một bug phức tạp trong frontend."
+    }
+  ],
+  "questions": [
+    {
+      "question": "Virtual DOM trong React hoạt động như thế nào?",
+      "layer": "theory",
+      "competencyName": "Technical Knowledge",
+      "ddiKeyActionTargeted": "Demonstrates technical depth",
+      "shrmRubricExcellent": "Giải thích rõ reconciliation algorithm"
+    },
+    {
+      "question": "Trong dự án React, bạn xử lý state management như thế nào?",
+      "layer": "project",
+      "competencyName": "Problem Solving",
+      "ddiKeyActionTargeted": "Analyzes alternatives before deciding",
+      "shrmRubricExcellent": "Nêu được trade-off giữa các giải pháp"
+    },
+    {
+      "question": "Kể về một lần bạn phải debug một bug phức tạp trong frontend.",
+      "layer": "behavior",
+      "competencyName": "Analytical Thinking",
+      "ddiKeyActionTargeted": "Breaks down problems systematically",
+      "shrmRubricExcellent": "Dùng STAR rõ ràng, kết quả đo lường được"
+    }
+  ]
+}
+
+# ✅ Expected:
+# {
+#   "success": true,
+#   "evaluation": {
+#     "perQuestion": [
+#       { "questionIndex": 0, "scores": { "clarity": X, "structure": X, ... }, "overall": X, "shrmLevel": "..." },
+#       ...
+#     ]
+#   },
+#   "overallScore": <number>,
+#   "behavioralSummary": {
+#     "overallConfidenceScore": 3.6,
+#     "avgEyeContactScore": 0.76,
+#     "totalHedgeWords": 5,
+#     "dominantEmotion": "joy"
+#   },
+#   "behavioralPerQuestion": [
+#     { "questionIndex": 0, "behavioralData": { "wordCount": 62, ... } },
+#     ...
+#   ]
+# }
+
+###
+
+# R12 — Evaluate lần 2: PHẢI return cache (<500ms, không gọi LLM lại)
+POST {{baseUrl}}/api/interviews/sessions/{{sessionId}}/evaluate
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "answers": [],
+  "questions": []
+}
+
+# ✅ Expected: cùng kết quả R11, response time < 500ms
+# ❌ FAIL nếu: response time > 5s (LLM đang bị gọi lại — idempotent bị hỏng)
+
+###
+
+# R13 — GET session: xác nhận toàn bộ data đã lưu vào MongoDB
+GET {{baseUrl}}/api/interviews/sessions/{{sessionId}}
+Authorization: Bearer {{token}}
+
+# ✅ Expected:
+# {
+#   "success": true,
+#   "session": {
+#     "status": "completed",
+#     "behavioralSummary": {
+#       "overallConfidenceScore": 3.6,
+#       "dominantEmotion": "joy",
+#       "totalHedgeWords": 5
+#     },
+#     "answers": [
+#       {
+#         "questionIndex": 0,
+#         "behavioralData": { "eyeContactScore": 0.82, "wordCount": 62, ... }
+#       },
+#       ...
+#     ],
+#     "feedback": {
+#       "overallScore": <number>,
+#       "perQuestion": [ ... ]
+#     }
+#   }
+# }
+
+###############################################################
+# FOLDER 05 — SECURITY & EDGE CASES
+###############################################################
+
+# R14 — Image quá lớn (>1.4MB) → phải trả 413
+# Lấy chuỗi test: mở browser Console → chạy: copy('A'.repeat(1500001))
+# Paste thay LARGE_BASE64_HERE
+POST {{baseUrl}}/api/interviews/sessions/{{sessionId}}/analyze-face
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "imageBase64": "LARGE_BASE64_HERE",
+  "questionIndex": 0
+}
+
+# ✅ Expected: HTTP 413, { "success": true, "emotion": null, "reason": "image_too_large" }
+
+###
+
+# R15 — Không có Authorization header → 401
+POST {{baseUrl}}/api/interviews/sessions/{{sessionId}}/analyze-face
+Content-Type: application/json
+
+{
+  "imageBase64": "/9j/4AAQSkZJRgABAQEASABIAAD",
+  "questionIndex": 0
+}
+
+# ✅ Expected: HTTP 401, { "success": false }
+
+###
+
+# R16 — Session ID không tồn tại → graceful fail (không được 500)
+POST {{baseUrl}}/api/interviews/sessions/000000000000000000000000/analyze-face
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "imageBase64": "/9j/4AAQSkZJRgABAQEASABIAAD",
+  "questionIndex": 0
+}
+
+# ✅ Expected: HTTP 200, { "success": true, "emotion": null }
+# Lý do: Vision call thành công nhưng không tìm được session để save — không crash
+
+###
+
+# R17 — Rate limit: Nhấn "Send Request" 11 lần liên tiếp trong 1 phút
+# (R17 dùng cùng payload R08 — copy và paste nhanh)
+POST {{baseUrl}}/api/interviews/sessions/{{sessionId}}/analyze-face
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "imageBase64": "/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/wAALCAABAAEBAREA/8QAFAABAAAAAAAAAAAAAAAAAAAACf/EABQQAQAAAAAAAAAAAAAAAAAAAAD/2gAIAQEAAT8AKf/Z",
+  "questionIndex": 0
+}
+
+# Nhấn "Send Request" phía trên 11 lần liên tiếp
+# Lần 1-10: { "success": true, "emotion": null }
+# Lần 11:   { "success": true, "emotion": null, "reason": "rate_limited" }
+
+###
+
+# R18 — PATCH với session đã completed → phải từ chối (400)
+PATCH {{baseUrl}}/api/interviews/sessions/{{sessionId}}
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "questionIndex": 0,
+  "questionText": "Test câu hỏi sau khi completed",
+  "transcript": "Transcript test",
+  "durationSeconds": 10
+}
+
+# ✅ Expected: HTTP 400, { "success": false, "error": "Phiên phỏng vấn này đã kết thúc" }

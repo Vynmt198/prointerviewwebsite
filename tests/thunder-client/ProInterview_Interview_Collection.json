@@ -1,0 +1,594 @@
+{
+  "clientName": "Thunder Client",
+  "collectionName": "ProInterview — AI Interview Room",
+  "collectionId": "pi-interview-col-2026",
+  "dateExported": "2026-05-29T00:00:00.000Z",
+  "version": "1.1",
+  "folders": [
+    {
+      "_id": "f-00-auth",
+      "name": "00. Auth",
+      "containerId": "",
+      "created": "2026-05-29T00:00:00.000Z",
+      "sortNum": 0
+    },
+    {
+      "_id": "f-01-generate",
+      "name": "01. Generate Questions (LLM Pipeline)",
+      "containerId": "",
+      "created": "2026-05-29T00:00:00.000Z",
+      "sortNum": 1
+    },
+    {
+      "_id": "f-02-session",
+      "name": "02. Session Lifecycle",
+      "containerId": "",
+      "created": "2026-05-29T00:00:00.000Z",
+      "sortNum": 2
+    },
+    {
+      "_id": "f-03-vision",
+      "name": "03. Google Vision Snapshot",
+      "containerId": "",
+      "created": "2026-05-29T00:00:00.000Z",
+      "sortNum": 3
+    },
+    {
+      "_id": "f-04-evaluate",
+      "name": "04. Complete + Evaluate",
+      "containerId": "",
+      "created": "2026-05-29T00:00:00.000Z",
+      "sortNum": 4
+    },
+    {
+      "_id": "f-05-security",
+      "name": "05. Security & Edge Cases",
+      "containerId": "",
+      "created": "2026-05-29T00:00:00.000Z",
+      "sortNum": 5
+    }
+  ],
+  "requests": [
+    {
+      "_id": "r-01-login",
+      "colId": "pi-interview-col-2026",
+      "containerId": "f-00-auth",
+      "name": "R01 — Login lấy JWT token",
+      "url": "{{base_url}}/api/auth/login",
+      "method": "POST",
+      "sortNum": 10,
+      "created": "2026-05-29T00:00:00.000Z",
+      "modified": "2026-05-29T00:00:00.000Z",
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" }
+      ],
+      "params": [],
+      "body": {
+        "type": "json",
+        "raw": "{\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\"\n}",
+        "form": []
+      },
+      "tests": [
+        { "type": "res-status", "custom": "", "action": "equal", "value": "200" },
+        { "type": "res-json", "custom": "success", "action": "equal", "value": "true" },
+        { "type": "res-json", "custom": "accessToken", "action": "isValue", "value": "" }
+      ],
+      "scripts": {
+        "before": "",
+        "after": "var json = tc.response.json;\nif (json.accessToken) {\n  tc.setEnvVar('token', json.accessToken);\n  tc.log('Token saved: ' + json.accessToken.slice(0, 20) + '...');\n} else {\n  tc.log('ERROR: No accessToken in response');\n}"
+      },
+      "settings": { "follow": false, "encode": false, "timeout": 10000 }
+    },
+
+    {
+      "_id": "r-02-health",
+      "colId": "pi-interview-col-2026",
+      "containerId": "f-00-auth",
+      "name": "R02 — Health check",
+      "url": "{{base_url}}/api/health",
+      "method": "GET",
+      "sortNum": 20,
+      "created": "2026-05-29T00:00:00.000Z",
+      "modified": "2026-05-29T00:00:00.000Z",
+      "headers": [],
+      "params": [],
+      "body": { "type": "none", "raw": "", "form": [] },
+      "tests": [
+        { "type": "res-status", "custom": "", "action": "equal", "value": "200" }
+      ],
+      "scripts": { "before": "", "after": "" },
+      "settings": { "follow": false, "encode": false, "timeout": 5000 }
+    },
+
+    {
+      "_id": "r-03-generate-questions",
+      "colId": "pi-interview-col-2026",
+      "containerId": "f-01-generate",
+      "name": "R03 — Sinh câu hỏi từ CV+JD (LLM Pipeline)",
+      "url": "{{base_url}}/api/interviews/generate-questions",
+      "method": "POST",
+      "sortNum": 30,
+      "created": "2026-05-29T00:00:00.000Z",
+      "modified": "2026-05-29T00:00:00.000Z",
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" },
+        { "name": "Authorization", "value": "Bearer {{token}}" }
+      ],
+      "params": [],
+      "body": {
+        "type": "json",
+        "raw": "{\n  \"position\": \"Frontend Developer\",\n  \"field\": \"technology\",\n  \"level\": \"junior\",\n  \"cvText\": \"Nguyễn Văn A, 22 tuổi, sinh viên năm 4 ĐH Bách Khoa. Kỹ năng: React 18, TypeScript, Redux Toolkit, REST API, Git. Dự án: E-commerce với React+Node (2 tháng), Dashboard admin dùng Ant Design. GPA 3.2. Tiếng Anh B2.\",\n  \"jdText\": \"Tuyển Frontend Developer Junior. Yêu cầu: React, TypeScript, 0-1 năm kinh nghiệm. Ưu tiên: biết Redux, đã làm dự án thực tế. Trách nhiệm: phát triển UI, tích hợp API, viết unit test. Môi trường Agile/Scrum.\"\n}",
+        "form": []
+      },
+      "tests": [
+        { "type": "res-status", "custom": "", "action": "equal", "value": "200" },
+        { "type": "res-json", "custom": "success", "action": "equal", "value": "true" },
+        { "type": "res-json", "custom": "questions", "action": "isValue", "value": "" }
+      ],
+      "scripts": {
+        "before": "",
+        "after": "var json = tc.response.json;\nif (json.questions) {\n  tc.log('Questions count: ' + json.questions.length);\n  tc.log('Inferred role: ' + json.inferredRole);\n  var layers = json.questions.map(function(q){ return q.layer; });\n  tc.log('Layers: ' + layers.join(', '));\n  var hasTheory   = layers.includes('theory');\n  var hasBehavior = layers.includes('behavior');\n  var hasProject  = layers.includes('project');\n  tc.log('Has theory: '   + hasTheory);\n  tc.log('Has behavior: ' + hasBehavior);\n  tc.log('Has project: '  + hasProject);\n}"
+      },
+      "settings": { "follow": false, "encode": false, "timeout": 60000 }
+    },
+
+    {
+      "_id": "r-04-create-session",
+      "colId": "pi-interview-col-2026",
+      "containerId": "f-02-session",
+      "name": "R04 — Tạo interview session",
+      "url": "{{base_url}}/api/interviews/sessions",
+      "method": "POST",
+      "sortNum": 40,
+      "created": "2026-05-29T00:00:00.000Z",
+      "modified": "2026-05-29T00:00:00.000Z",
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" },
+        { "name": "Authorization", "value": "Bearer {{token}}" }
+      ],
+      "params": [],
+      "body": {
+        "type": "json",
+        "raw": "{\n  \"hrGender\": \"female\",\n  \"inferredRole\": \"Frontend Developer\",\n  \"inferredSeniority\": \"junior\",\n  \"questions\": [\n    {\n      \"id\": \"q1\",\n      \"layer\": \"theory\",\n      \"question\": \"Virtual DOM trong React hoạt động như thế nào và tại sao nó giúp tối ưu performance?\",\n      \"competencyId\": \"technical-knowledge\",\n      \"competencyName\": \"Technical Knowledge\",\n      \"ddiKeyActionTargeted\": \"Demonstrates technical depth\",\n      \"shrmRubricExcellent\": \"Giải thích rõ reconciliation algorithm, so sánh với real DOM\",\n      \"starGuidance\": { \"situation\": [], \"task\": [], \"action\": [], \"result\": [] }\n    },\n    {\n      \"id\": \"q2\",\n      \"layer\": \"project\",\n      \"question\": \"Trong dự án React bạn đã làm, bạn xử lý state management như thế nào? Tại sao chọn approach đó?\",\n      \"competencyId\": \"problem-solving\",\n      \"competencyName\": \"Problem Solving\",\n      \"ddiKeyActionTargeted\": \"Analyzes alternatives before deciding\",\n      \"shrmRubricExcellent\": \"Nêu được trade-off giữa các giải pháp state management\",\n      \"starGuidance\": { \"situation\": [], \"task\": [], \"action\": [], \"result\": [] }\n    },\n    {\n      \"id\": \"q3\",\n      \"layer\": \"behavior\",\n      \"question\": \"Kể về một lần bạn phải debug một bug phức tạp trong frontend. Bạn đã làm gì?\",\n      \"competencyId\": \"analytical-thinking\",\n      \"competencyName\": \"Analytical Thinking\",\n      \"ddiKeyActionTargeted\": \"Breaks down problems systematically\",\n      \"shrmRubricExcellent\": \"Dùng STAR rõ ràng, kết quả đo lường được\",\n      \"starGuidance\": {\n        \"situation\": [\"Mô tả bug xảy ra ở đâu, ảnh hưởng gì\"],\n        \"task\": [\"Nhiệm vụ của bạn là gì\"],\n        \"action\": [\"Bạn dùng tools nào, approach nào\"],\n        \"result\": [\"Bug được fix, impact ra sao\"]\n      }\n    }\n  ],\n  \"competencyProfile\": {\n    \"roleCategory\": \"frontend-developer\",\n    \"competencyIds\": [\"technical-knowledge\", \"problem-solving\", \"analytical-thinking\"],\n    \"competencyCoverage\": [\"Technical Knowledge\", \"Problem Solving\", \"Analytical Thinking\"]\n  }\n}",
+        "form": []
+      },
+      "tests": [
+        { "type": "res-status", "custom": "", "action": "equal", "value": "201" },
+        { "type": "res-json", "custom": "success", "action": "equal", "value": "true" },
+        { "type": "res-json", "custom": "session.status", "action": "equal", "value": "in_progress" }
+      ],
+      "scripts": {
+        "before": "",
+        "after": "var json = tc.response.json;\nif (json.session && json.session._id) {\n  tc.setEnvVar('session_id', json.session._id);\n  tc.log('Session ID saved: ' + json.session._id);\n  tc.log('Status: ' + json.session.status);\n} else {\n  tc.log('ERROR: session._id not found');\n}"
+      },
+      "settings": { "follow": false, "encode": false, "timeout": 10000 }
+    },
+
+    {
+      "_id": "r-05-answer-q1",
+      "colId": "pi-interview-col-2026",
+      "containerId": "f-02-session",
+      "name": "R05 — Lưu câu trả lời Q1 (tốt, có behavioral data)",
+      "url": "{{base_url}}/api/interviews/sessions/{{session_id}}",
+      "method": "PATCH",
+      "sortNum": 50,
+      "created": "2026-05-29T00:00:00.000Z",
+      "modified": "2026-05-29T00:00:00.000Z",
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" },
+        { "name": "Authorization", "value": "Bearer {{token}}" }
+      ],
+      "params": [],
+      "body": {
+        "type": "json",
+        "raw": "{\n  \"questionIndex\": 0,\n  \"questionText\": \"Virtual DOM trong React hoạt động như thế nào?\",\n  \"transcript\": \"Virtual DOM là một bản copy nhẹ của real DOM được React duy trì trong memory. Khi state thay đổi, React tạo một Virtual DOM mới, so sánh với Virtual DOM cũ thông qua thuật toán diffing, sau đó chỉ cập nhật những phần thực sự thay đổi lên real DOM. Điều này giúp tránh việc re-render toàn bộ DOM, tăng performance đáng kể.\",\n  \"durationSeconds\": 48,\n  \"behavioralData\": {\n    \"responseLatencyMs\": 2100,\n    \"silenceRatio\": 0.07,\n    \"silenceEvents\": 0,\n    \"avgAmplitude\": 0.43,\n    \"amplitudeVariance\": 0.09,\n    \"wordCount\": 62,\n    \"hedgeWordCount\": 0,\n    \"hedgeWords\": [],\n    \"vocabularyDiversity\": 0.74,\n    \"eyeContactScore\": 0.82,\n    \"headStabilityScore\": 0.91,\n    \"facePresenceRatio\": 0.98,\n    \"distractionEvents\": 0\n  }\n}",
+        "form": []
+      },
+      "tests": [
+        { "type": "res-status", "custom": "", "action": "equal", "value": "200" },
+        { "type": "res-json", "custom": "success", "action": "equal", "value": "true" }
+      ],
+      "scripts": {
+        "before": "",
+        "after": "var json = tc.response.json;\nvar answers = json.session && json.session.answers;\nif (answers) {\n  tc.log('Answers count: ' + answers.length);\n  var last = answers[answers.length - 1];\n  tc.log('Behavioral data saved: ' + (last.behavioralData ? 'YES' : 'NO'));\n  if (last.behavioralData) {\n    tc.log('eyeContactScore: ' + last.behavioralData.eyeContactScore);\n    tc.log('wordCount: ' + last.behavioralData.wordCount);\n  }\n}"
+      },
+      "settings": { "follow": false, "encode": false, "timeout": 10000 }
+    },
+
+    {
+      "_id": "r-06-answer-q2",
+      "colId": "pi-interview-col-2026",
+      "containerId": "f-02-session",
+      "name": "R06 — Lưu câu trả lời Q2 (có hedge words)",
+      "url": "{{base_url}}/api/interviews/sessions/{{session_id}}",
+      "method": "PATCH",
+      "sortNum": 60,
+      "created": "2026-05-29T00:00:00.000Z",
+      "modified": "2026-05-29T00:00:00.000Z",
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" },
+        { "name": "Authorization", "value": "Bearer {{token}}" }
+      ],
+      "params": [],
+      "body": {
+        "type": "json",
+        "raw": "{\n  \"questionIndex\": 1,\n  \"questionText\": \"Trong dự án React, bạn xử lý state management như thế nào?\",\n  \"transcript\": \"Tôi nghĩ là trong dự án đó, có lẽ chúng tôi dùng Redux Toolkit. Hình như lúc đầu chúng tôi thử Context API nhưng nó không đủ tốt cho dự án lớn. Thật ra là tôi cũng không chắc lắm về việc tại sao team chọn Redux thay vì Zustand, nhưng có lẽ vì team đã quen với Redux rồi.\",\n  \"durationSeconds\": 52,\n  \"behavioralData\": {\n    \"responseLatencyMs\": 4800,\n    \"silenceRatio\": 0.19,\n    \"silenceEvents\": 2,\n    \"avgAmplitude\": 0.31,\n    \"amplitudeVariance\": 0.04,\n    \"wordCount\": 61,\n    \"hedgeWordCount\": 5,\n    \"hedgeWords\": [\"tôi nghĩ là\", \"có lẽ\", \"hình như\", \"thật ra là\", \"không chắc lắm\"],\n    \"vocabularyDiversity\": 0.59,\n    \"eyeContactScore\": 0.61,\n    \"headStabilityScore\": 0.78,\n    \"facePresenceRatio\": 0.94,\n    \"distractionEvents\": 1\n  }\n}",
+        "form": []
+      },
+      "tests": [
+        { "type": "res-status", "custom": "", "action": "equal", "value": "200" },
+        { "type": "res-json", "custom": "success", "action": "equal", "value": "true" }
+      ],
+      "scripts": {
+        "before": "",
+        "after": "var json = tc.response.json;\nvar answers = json.session && json.session.answers;\nif (answers) {\n  var q2 = answers.find(function(a){ return a.questionIndex === 1; });\n  if (q2 && q2.behavioralData) {\n    tc.log('Q2 hedgeWordCount: ' + q2.behavioralData.hedgeWordCount);\n    tc.log('Q2 silenceRatio: ' + q2.behavioralData.silenceRatio);\n    tc.log('Q2 responseLatencyMs: ' + q2.behavioralData.responseLatencyMs);\n  }\n}"
+      },
+      "settings": { "follow": false, "encode": false, "timeout": 10000 }
+    },
+
+    {
+      "_id": "r-07-answer-q3",
+      "colId": "pi-interview-col-2026",
+      "containerId": "f-02-session",
+      "name": "R07 — Lưu câu trả lời Q3 (câu trả lời tốt, STAR)",
+      "url": "{{base_url}}/api/interviews/sessions/{{session_id}}",
+      "method": "PATCH",
+      "sortNum": 70,
+      "created": "2026-05-29T00:00:00.000Z",
+      "modified": "2026-05-29T00:00:00.000Z",
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" },
+        { "name": "Authorization", "value": "Bearer {{token}}" }
+      ],
+      "params": [],
+      "body": {
+        "type": "json",
+        "raw": "{\n  \"questionIndex\": 2,\n  \"questionText\": \"Kể về một lần bạn phải debug một bug phức tạp trong frontend.\",\n  \"transcript\": \"Trong dự án e-commerce tại trường, chúng tôi gặp vấn đề là giỏ hàng bị reset khi user navigate giữa các trang. Nhiệm vụ của tôi là tìm và fix bug trong vòng 2 ngày để không block sprint. Tôi dùng React DevTools để trace component re-render, phát hiện cart state bị đặt trong local component state thay vì Redux store. Sau khi migrate cart sang Redux và persist với localStorage, bug hoàn toàn được fix. Sprint không bị delay và user không còn mất cart.\",\n  \"durationSeconds\": 67,\n  \"behavioralData\": {\n    \"responseLatencyMs\": 1900,\n    \"silenceRatio\": 0.06,\n    \"silenceEvents\": 0,\n    \"avgAmplitude\": 0.48,\n    \"amplitudeVariance\": 0.11,\n    \"wordCount\": 89,\n    \"hedgeWordCount\": 0,\n    \"hedgeWords\": [],\n    \"vocabularyDiversity\": 0.78,\n    \"eyeContactScore\": 0.85,\n    \"headStabilityScore\": 0.89,\n    \"facePresenceRatio\": 0.99,\n    \"distractionEvents\": 0,\n    \"emotion\": {\n      \"joy\": 3,\n      \"sorrow\": 1,\n      \"anger\": 1,\n      \"surprise\": 2,\n      \"headPanAngle\": -1.2,\n      \"headTiltAngle\": 0.8,\n      \"lightingOk\": true\n    }\n  }\n}",
+        "form": []
+      },
+      "tests": [
+        { "type": "res-status", "custom": "", "action": "equal", "value": "200" },
+        { "type": "res-json", "custom": "success", "action": "equal", "value": "true" }
+      ],
+      "scripts": {
+        "before": "",
+        "after": "var json = tc.response.json;\nvar answers = json.session && json.session.answers;\nif (answers) {\n  var q3 = answers.find(function(a){ return a.questionIndex === 2; });\n  if (q3 && q3.behavioralData) {\n    tc.log('Q3 emotion saved: ' + (q3.behavioralData.emotion ? 'YES' : 'NO'));\n    if (q3.behavioralData.emotion) {\n      tc.log('joy: ' + q3.behavioralData.emotion.joy);\n    }\n  }\n}"
+      },
+      "settings": { "follow": false, "encode": false, "timeout": 10000 }
+    },
+
+    {
+      "_id": "r-08-vision-no-face",
+      "colId": "pi-interview-col-2026",
+      "containerId": "f-03-vision",
+      "name": "R08 — Analyze face: ảnh 1×1 pixel (không có mặt)",
+      "url": "{{base_url}}/api/interviews/sessions/{{session_id}}/analyze-face",
+      "method": "POST",
+      "sortNum": 80,
+      "created": "2026-05-29T00:00:00.000Z",
+      "modified": "2026-05-29T00:00:00.000Z",
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" },
+        { "name": "Authorization", "value": "Bearer {{token}}" }
+      ],
+      "params": [],
+      "body": {
+        "type": "json",
+        "raw": "{\n  \"imageBase64\": \"/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/wAALCAABAAEBAREA/8QAFAABAAAAAAAAAAAAAAAAAAAACf/EABQQAQAAAAAAAAAAAAAAAAAAAAD/2gAIAQEAAT8AKf/Z\",\n  \"questionIndex\": 0\n}",
+        "form": []
+      },
+      "tests": [
+        { "type": "res-status", "custom": "", "action": "equal", "value": "200" },
+        { "type": "res-json", "custom": "success", "action": "equal", "value": "true" }
+      ],
+      "scripts": {
+        "before": "",
+        "after": "var json = tc.response.json;\ntc.log('success: ' + json.success);\ntc.log('emotion: ' + JSON.stringify(json.emotion));\ntc.log('reason: ' + json.reason);\n// emotion phải là null (ảnh 1x1 không có mặt người)\n// hoặc reason: vision_api_not_configured nếu chưa set API key\nif (json.emotion === null) {\n  tc.log('PASS: emotion null — không detect được mặt hoặc API key chưa set');\n} else {\n  tc.log('WARN: emotion có giá trị — ' + JSON.stringify(json.emotion));\n}"
+      },
+      "settings": { "follow": false, "encode": false, "timeout": 15000 }
+    },
+
+    {
+      "_id": "r-09-vision-with-face",
+      "colId": "pi-interview-col-2026",
+      "containerId": "f-03-vision",
+      "name": "R09 — Analyze face: ảnh thật (thay base64 bằng ảnh selfie)",
+      "url": "{{base_url}}/api/interviews/sessions/{{session_id}}/analyze-face",
+      "method": "POST",
+      "sortNum": 90,
+      "created": "2026-05-29T00:00:00.000Z",
+      "modified": "2026-05-29T00:00:00.000Z",
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" },
+        { "name": "Authorization", "value": "Bearer {{token}}" }
+      ],
+      "params": [],
+      "body": {
+        "type": "json",
+        "raw": "{\n  \"imageBase64\": \"REPLACE_WITH_REAL_FACE_BASE64_JPEG\",\n  \"questionIndex\": 1\n}\n\n// HƯỚNG DẪN: Để lấy base64 ảnh selfie:\n// 1. Mở DevTools Console trong Chrome\n// 2. Chụp ảnh qua camera:\n//    navigator.mediaDevices.getUserMedia({video:true}).then(s=>{\n//      const v=document.createElement('video');\n//      v.srcObject=s; v.play();\n//      setTimeout(()=>{\n//        const c=document.createElement('canvas');\n//        c.width=320;c.height=240;\n//        c.getContext('2d').drawImage(v,0,0);\n//        console.log(c.toDataURL('image/jpeg',0.8).split(',')[1]);\n//      },2000);\n//    })\n// 3. Copy chuỗi base64 vào đây",
+        "form": []
+      },
+      "tests": [
+        { "type": "res-status", "custom": "", "action": "equal", "value": "200" },
+        { "type": "res-json", "custom": "success", "action": "equal", "value": "true" }
+      ],
+      "scripts": {
+        "before": "",
+        "after": "var json = tc.response.json;\ntc.log('success: ' + json.success);\nif (json.emotion) {\n  tc.log('PASS: emotion detected');\n  tc.log('  joy: '      + json.emotion.joy);\n  tc.log('  sorrow: '   + json.emotion.sorrow);\n  tc.log('  anger: '    + json.emotion.anger);\n  tc.log('  surprise: ' + json.emotion.surprise);\n  tc.log('  panAngle: ' + json.emotion.headPanAngle);\n  tc.log('  lighting: ' + json.emotion.lightingOk);\n} else {\n  tc.log('emotion null — reason: ' + (json.reason || 'face not detected'));\n}"
+      },
+      "settings": { "follow": false, "encode": false, "timeout": 15000 }
+    },
+
+    {
+      "_id": "r-10-vision-no-key",
+      "colId": "pi-interview-col-2026",
+      "containerId": "f-03-vision",
+      "name": "R10 — Analyze face: không có API key (graceful fail)",
+      "url": "{{base_url}}/api/interviews/sessions/{{session_id}}/analyze-face",
+      "method": "POST",
+      "sortNum": 100,
+      "created": "2026-05-29T00:00:00.000Z",
+      "modified": "2026-05-29T00:00:00.000Z",
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" },
+        { "name": "Authorization", "value": "Bearer {{token}}" }
+      ],
+      "params": [],
+      "body": {
+        "type": "json",
+        "raw": "{\n  \"imageBase64\": \"/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/wAALCAABAAEBAREA/8QAFAABAAAAAAAAAAAAAAAAAAAACf/EABQQAQAAAAAAAAAAAAAAAAAAAAD/2gAIAQEAAT8AKf/Z\",\n  \"questionIndex\": 0\n}\n// Để test này: comment out GOOGLE_VISION_API_KEY trong .env và restart backend\n// Expected response: { success: true, emotion: null, reason: 'vision_api_not_configured' }",
+        "form": []
+      },
+      "tests": [
+        { "type": "res-status", "custom": "", "action": "equal", "value": "200" },
+        { "type": "res-json", "custom": "success", "action": "equal", "value": "true" },
+        { "type": "res-json", "custom": "emotion", "action": "equal", "value": "null" }
+      ],
+      "scripts": {
+        "before": "",
+        "after": "var json = tc.response.json;\ntc.log('reason: ' + json.reason);\nif (json.reason === 'vision_api_not_configured') {\n  tc.log('PASS: API key not set — graceful null return');\n} else {\n  tc.log('NOTE: API key is set, emotion: ' + JSON.stringify(json.emotion));\n}"
+      },
+      "settings": { "follow": false, "encode": false, "timeout": 10000 }
+    },
+
+    {
+      "_id": "r-11-complete-session",
+      "colId": "pi-interview-col-2026",
+      "containerId": "f-04-evaluate",
+      "name": "R11 — Complete session với behavioralSummary",
+      "url": "{{base_url}}/api/interviews/sessions/{{session_id}}/complete",
+      "method": "POST",
+      "sortNum": 110,
+      "created": "2026-05-29T00:00:00.000Z",
+      "modified": "2026-05-29T00:00:00.000Z",
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" },
+        { "name": "Authorization", "value": "Bearer {{token}}" }
+      ],
+      "params": [],
+      "body": {
+        "type": "json",
+        "raw": "{\n  \"totalDurationSeconds\": 167,\n  \"answers\": [\n    {\n      \"questionIndex\": 0,\n      \"questionText\": \"Virtual DOM trong React hoạt động như thế nào?\",\n      \"transcript\": \"Virtual DOM là một bản copy nhẹ của real DOM được React duy trì trong memory...\",\n      \"durationSeconds\": 48,\n      \"behavioralData\": {\n        \"responseLatencyMs\": 2100, \"silenceRatio\": 0.07, \"silenceEvents\": 0,\n        \"avgAmplitude\": 0.43, \"amplitudeVariance\": 0.09, \"wordCount\": 62,\n        \"hedgeWordCount\": 0, \"hedgeWords\": [], \"vocabularyDiversity\": 0.74,\n        \"eyeContactScore\": 0.82, \"headStabilityScore\": 0.91, \"facePresenceRatio\": 0.98, \"distractionEvents\": 0\n      }\n    },\n    {\n      \"questionIndex\": 1,\n      \"questionText\": \"Trong dự án React, bạn xử lý state management như thế nào?\",\n      \"transcript\": \"Tôi nghĩ là trong dự án đó, có lẽ chúng tôi dùng Redux Toolkit...\",\n      \"durationSeconds\": 52,\n      \"behavioralData\": {\n        \"responseLatencyMs\": 4800, \"silenceRatio\": 0.19, \"silenceEvents\": 2,\n        \"avgAmplitude\": 0.31, \"amplitudeVariance\": 0.04, \"wordCount\": 61,\n        \"hedgeWordCount\": 5, \"hedgeWords\": [\"tôi nghĩ là\", \"có lẽ\", \"hình như\"],\n        \"vocabularyDiversity\": 0.59, \"eyeContactScore\": 0.61, \"headStabilityScore\": 0.78,\n        \"facePresenceRatio\": 0.94, \"distractionEvents\": 1\n      }\n    },\n    {\n      \"questionIndex\": 2,\n      \"questionText\": \"Kể về một lần bạn phải debug một bug phức tạp trong frontend.\",\n      \"transcript\": \"Trong dự án e-commerce tại trường, chúng tôi gặp vấn đề là giỏ hàng bị reset...\",\n      \"durationSeconds\": 67,\n      \"behavioralData\": {\n        \"responseLatencyMs\": 1900, \"silenceRatio\": 0.06, \"silenceEvents\": 0,\n        \"avgAmplitude\": 0.48, \"amplitudeVariance\": 0.11, \"wordCount\": 89,\n        \"hedgeWordCount\": 0, \"hedgeWords\": [], \"vocabularyDiversity\": 0.78,\n        \"eyeContactScore\": 0.85, \"headStabilityScore\": 0.89, \"facePresenceRatio\": 0.99,\n        \"distractionEvents\": 0,\n        \"emotion\": { \"joy\": 3, \"sorrow\": 1, \"anger\": 1, \"surprise\": 2, \"headPanAngle\": -1.2, \"headTiltAngle\": 0.8, \"lightingOk\": true }\n      }\n    }\n  ],\n  \"behavioralSummary\": {\n    \"avgResponseLatencyMs\": 2933,\n    \"avgSilenceRatio\": 0.11,\n    \"avgEyeContactScore\": 0.76,\n    \"avgHeadStabilityScore\": 0.86,\n    \"totalHedgeWords\": 5,\n    \"avgVocabularyDiversity\": 0.70,\n    \"avgAmplitudeVariance\": 0.08,\n    \"overallConfidenceScore\": 3.6,\n    \"dominantEmotion\": \"joy\"\n  }\n}",
+        "form": []
+      },
+      "tests": [
+        { "type": "res-status", "custom": "", "action": "equal", "value": "200" },
+        { "type": "res-json", "custom": "success", "action": "equal", "value": "true" },
+        { "type": "res-json", "custom": "status", "action": "equal", "value": "completed" }
+      ],
+      "scripts": {
+        "before": "",
+        "after": "var json = tc.response.json;\ntc.log('status: ' + json.status);\nif (json.status === 'completed') {\n  tc.log('PASS: Session completed successfully');\n} else if (json.message === 'already_completed') {\n  tc.log('INFO: Session was already completed (idempotent OK)');\n}"
+      },
+      "settings": { "follow": false, "encode": false, "timeout": 10000 }
+    },
+
+    {
+      "_id": "r-12-evaluate",
+      "colId": "pi-interview-col-2026",
+      "containerId": "f-04-evaluate",
+      "name": "R12 — Evaluate session (LLM SHRM/DDI + behavioral data)",
+      "url": "{{base_url}}/api/interviews/sessions/{{session_id}}/evaluate",
+      "method": "POST",
+      "sortNum": 120,
+      "created": "2026-05-29T00:00:00.000Z",
+      "modified": "2026-05-29T00:00:00.000Z",
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" },
+        { "name": "Authorization", "value": "Bearer {{token}}" }
+      ],
+      "params": [],
+      "body": {
+        "type": "json",
+        "raw": "{\n  \"answers\": [\n    {\n      \"questionIndex\": 0,\n      \"transcript\": \"Virtual DOM là một bản copy nhẹ của real DOM được React duy trì trong memory. Khi state thay đổi, React tạo một Virtual DOM mới, so sánh với Virtual DOM cũ thông qua thuật toán diffing, sau đó chỉ cập nhật những phần thực sự thay đổi lên real DOM.\",\n      \"questionText\": \"Virtual DOM trong React hoạt động như thế nào?\"\n    },\n    {\n      \"questionIndex\": 1,\n      \"transcript\": \"Tôi nghĩ là trong dự án đó, có lẽ chúng tôi dùng Redux Toolkit. Hình như lúc đầu chúng tôi thử Context API nhưng nó không đủ tốt cho dự án lớn.\",\n      \"questionText\": \"Trong dự án React, bạn xử lý state management như thế nào?\"\n    },\n    {\n      \"questionIndex\": 2,\n      \"transcript\": \"Trong dự án e-commerce tại trường, chúng tôi gặp vấn đề là giỏ hàng bị reset khi user navigate giữa các trang. Nhiệm vụ của tôi là tìm và fix bug trong vòng 2 ngày. Tôi dùng React DevTools để trace component re-render, phát hiện cart state bị đặt trong local component state thay vì Redux store. Sau khi migrate cart sang Redux và persist với localStorage, bug hoàn toàn được fix.\",\n      \"questionText\": \"Kể về một lần bạn phải debug một bug phức tạp trong frontend.\"\n    }\n  ],\n  \"questions\": [\n    {\n      \"question\": \"Virtual DOM trong React hoạt động như thế nào?\",\n      \"layer\": \"theory\",\n      \"competencyName\": \"Technical Knowledge\",\n      \"ddiKeyActionTargeted\": \"Demonstrates technical depth\",\n      \"shrmRubricExcellent\": \"Giải thích rõ reconciliation algorithm\"\n    },\n    {\n      \"question\": \"Trong dự án React, bạn xử lý state management như thế nào?\",\n      \"layer\": \"project\",\n      \"competencyName\": \"Problem Solving\",\n      \"ddiKeyActionTargeted\": \"Analyzes alternatives before deciding\",\n      \"shrmRubricExcellent\": \"Nêu được trade-off giữa các giải pháp\"\n    },\n    {\n      \"question\": \"Kể về một lần bạn phải debug một bug phức tạp trong frontend.\",\n      \"layer\": \"behavior\",\n      \"competencyName\": \"Analytical Thinking\",\n      \"ddiKeyActionTargeted\": \"Breaks down problems systematically\",\n      \"shrmRubricExcellent\": \"Dùng STAR rõ ràng, kết quả đo lường được\"\n    }\n  ]\n}",
+        "form": []
+      },
+      "tests": [
+        { "type": "res-status", "custom": "", "action": "equal", "value": "200" },
+        { "type": "res-json", "custom": "success", "action": "equal", "value": "true" },
+        { "type": "res-json", "custom": "evaluation", "action": "isValue", "value": "" },
+        { "type": "res-json", "custom": "behavioralSummary", "action": "isValue", "value": "" },
+        { "type": "res-json", "custom": "behavioralPerQuestion", "action": "isValue", "value": "" }
+      ],
+      "scripts": {
+        "before": "",
+        "after": "var json = tc.response.json;\ntc.log('=== SHRM/DDI Evaluation ===');\ntc.log('overallScore: ' + json.overallScore);\ntc.log('generalComment: ' + (json.generalComment || '').slice(0,80) + '...');\nif (json.evaluation && json.evaluation.perQuestion) {\n  json.evaluation.perQuestion.forEach(function(q, i) {\n    tc.log('Q' + (i+1) + ': overall=' + q.overall + ' shrmLevel=' + q.shrmLevel);\n    tc.log('  scores: clarity=' + q.scores.clarity + ' structure=' + q.scores.structure);\n  });\n}\ntc.log('\\n=== Behavioral Summary ===');\nif (json.behavioralSummary) {\n  tc.log('overallConfidenceScore: ' + json.behavioralSummary.overallConfidenceScore);\n  tc.log('avgEyeContactScore: '    + json.behavioralSummary.avgEyeContactScore);\n  tc.log('totalHedgeWords: '       + json.behavioralSummary.totalHedgeWords);\n  tc.log('dominantEmotion: '       + json.behavioralSummary.dominantEmotion);\n} else {\n  tc.log('WARN: behavioralSummary is null');\n}\ntc.log('\\n=== Per-Question Behavioral ===');\nif (json.behavioralPerQuestion) {\n  json.behavioralPerQuestion.forEach(function(bq) {\n    if (bq.behavioralData) {\n      tc.log('Q' + bq.questionIndex + ': eye=' + bq.behavioralData.eyeContactScore + ' hedge=' + bq.behavioralData.hedgeWordCount);\n    }\n  });\n}"
+      },
+      "settings": { "follow": false, "encode": false, "timeout": 90000 }
+    },
+
+    {
+      "_id": "r-13-evaluate-idempotent",
+      "colId": "pi-interview-col-2026",
+      "containerId": "f-04-evaluate",
+      "name": "R13 — Evaluate lần 2 (idempotent — phải return cached, không gọi LLM lại)",
+      "url": "{{base_url}}/api/interviews/sessions/{{session_id}}/evaluate",
+      "method": "POST",
+      "sortNum": 130,
+      "created": "2026-05-29T00:00:00.000Z",
+      "modified": "2026-05-29T00:00:00.000Z",
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" },
+        { "name": "Authorization", "value": "Bearer {{token}}" }
+      ],
+      "params": [],
+      "body": {
+        "type": "json",
+        "raw": "{ \"answers\": [], \"questions\": [] }",
+        "form": []
+      },
+      "tests": [
+        { "type": "res-status", "custom": "", "action": "equal", "value": "200" },
+        { "type": "res-json", "custom": "success", "action": "equal", "value": "true" }
+      ],
+      "scripts": {
+        "before": "",
+        "after": "var json = tc.response.json;\ntc.log('overallScore (cached): ' + json.overallScore);\nif (json.evaluation && json.evaluation.perQuestion && json.evaluation.perQuestion.length > 0) {\n  tc.log('PASS: Cached evaluation returned (' + json.evaluation.perQuestion.length + ' questions)');\n  tc.log('behavioralSummary present: ' + (json.behavioralSummary ? 'YES' : 'NO'));\n} else {\n  tc.log('FAIL: Expected cached result but got empty');\n}"
+      },
+      "settings": { "follow": false, "encode": false, "timeout": 15000 }
+    },
+
+    {
+      "_id": "r-14-get-session-verify",
+      "colId": "pi-interview-col-2026",
+      "containerId": "f-04-evaluate",
+      "name": "R14 — GET session: verify toàn bộ data đã lưu",
+      "url": "{{base_url}}/api/interviews/sessions/{{session_id}}",
+      "method": "GET",
+      "sortNum": 140,
+      "created": "2026-05-29T00:00:00.000Z",
+      "modified": "2026-05-29T00:00:00.000Z",
+      "headers": [
+        { "name": "Authorization", "value": "Bearer {{token}}" }
+      ],
+      "params": [],
+      "body": { "type": "none", "raw": "", "form": [] },
+      "tests": [
+        { "type": "res-status", "custom": "", "action": "equal", "value": "200" },
+        { "type": "res-json", "custom": "session.status", "action": "equal", "value": "completed" }
+      ],
+      "scripts": {
+        "before": "",
+        "after": "var s = tc.response.json.session;\nif (!s) { tc.log('ERROR: No session in response'); return; }\ntc.log('=== Session Verify ===');\ntc.log('status: '    + s.status);\ntc.log('answers: '   + (s.answers ? s.answers.length : 0) + ' saved');\ntc.log('feedback: '  + (s.feedback ? 'YES' : 'NO'));\ntc.log('behavioralSummary: ' + (s.behavioralSummary ? 'YES' : 'NO'));\nif (s.behavioralSummary) {\n  tc.log('  confidence: '     + s.behavioralSummary.overallConfidenceScore);\n  tc.log('  dominantEmotion: ' + s.behavioralSummary.dominantEmotion);\n  tc.log('  totalHedgeWords: ' + s.behavioralSummary.totalHedgeWords);\n}\nvar answersWithBehavioral = (s.answers || []).filter(function(a) {\n  return a.behavioralData && Object.keys(a.behavioralData).length > 0;\n});\ntc.log('answers with behavioral: ' + answersWithBehavioral.length + '/' + (s.answers || []).length);"
+      },
+      "settings": { "follow": false, "encode": false, "timeout": 10000 }
+    },
+
+    {
+      "_id": "r-15-image-too-large",
+      "colId": "pi-interview-col-2026",
+      "containerId": "f-05-security",
+      "name": "R15 — Security: Image quá lớn (>1.4MB) → 413",
+      "url": "{{base_url}}/api/interviews/sessions/{{session_id}}/analyze-face",
+      "method": "POST",
+      "sortNum": 150,
+      "created": "2026-05-29T00:00:00.000Z",
+      "modified": "2026-05-29T00:00:00.000Z",
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" },
+        { "name": "Authorization", "value": "Bearer {{token}}" }
+      ],
+      "params": [],
+      "body": {
+        "type": "json",
+        "raw": "{\n  \"imageBase64\": \"PASTE_1500000_CHARS_HERE\",\n  \"questionIndex\": 0\n}\n\n// HƯỚNG DẪN tạo chuỗi test:\n// Mở browser Console → chạy:\n//   'A'.repeat(1500000)\n// Copy chuỗi đó thay thế PASTE_1500000_CHARS_HERE\n// Kết quả mong đợi: HTTP 413, reason: image_too_large",
+        "form": []
+      },
+      "tests": [
+        { "type": "res-status", "custom": "", "action": "equal", "value": "413" }
+      ],
+      "scripts": {
+        "before": "",
+        "after": "var json = tc.response.json;\nif (json.reason === 'image_too_large') {\n  tc.log('PASS: Large image rejected with reason: ' + json.reason);\n} else {\n  tc.log('Status: ' + tc.response.status + ' | body: ' + JSON.stringify(json));\n}"
+      },
+      "settings": { "follow": false, "encode": false, "timeout": 10000 }
+    },
+
+    {
+      "_id": "r-16-no-auth",
+      "colId": "pi-interview-col-2026",
+      "containerId": "f-05-security",
+      "name": "R16 — Security: Không có JWT token → 401",
+      "url": "{{base_url}}/api/interviews/sessions/{{session_id}}/analyze-face",
+      "method": "POST",
+      "sortNum": 160,
+      "created": "2026-05-29T00:00:00.000Z",
+      "modified": "2026-05-29T00:00:00.000Z",
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" }
+      ],
+      "params": [],
+      "body": {
+        "type": "json",
+        "raw": "{\n  \"imageBase64\": \"/9j/4AAQSkZJRgABAQEASABIAAD\",\n  \"questionIndex\": 0\n}",
+        "form": []
+      },
+      "tests": [
+        { "type": "res-status", "custom": "", "action": "equal", "value": "401" }
+      ],
+      "scripts": {
+        "before": "",
+        "after": "if (tc.response.status === 401) {\n  tc.log('PASS: Unauthenticated request rejected');\n} else {\n  tc.log('FAIL: Expected 401 but got ' + tc.response.status);\n}"
+      },
+      "settings": { "follow": false, "encode": false, "timeout": 5000 }
+    },
+
+    {
+      "_id": "r-17-rate-limit",
+      "colId": "pi-interview-col-2026",
+      "containerId": "f-05-security",
+      "name": "R17 — Security: Rate limit (chạy 11 lần liên tiếp → lần 11 bị chặn)",
+      "url": "{{base_url}}/api/interviews/sessions/{{session_id}}/analyze-face",
+      "method": "POST",
+      "sortNum": 170,
+      "created": "2026-05-29T00:00:00.000Z",
+      "modified": "2026-05-29T00:00:00.000Z",
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" },
+        { "name": "Authorization", "value": "Bearer {{token}}" }
+      ],
+      "params": [],
+      "body": {
+        "type": "json",
+        "raw": "{\n  \"imageBase64\": \"/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/wAALCAABAAEBAREA/8QAFAABAAAAAAAAAAAAAAAAAAAACf/EABQQAQAAAAAAAAAAAAAAAAAAAAD/2gAIAQEAAT8AKf/Z\",\n  \"questionIndex\": 0\n}\n// HƯỚNG DẪN: Nhấn Send 11 lần liên tiếp trong vòng 1 phút.\n// Lần 1-10: { success: true, emotion: null }\n// Lần 11:   { success: true, emotion: null, reason: 'rate_limited' }\n// Hoặc dùng Thunder Client's 'Run Collection' để chạy lặp",
+        "form": []
+      },
+      "tests": [
+        { "type": "res-status", "custom": "", "action": "equal", "value": "200" }
+      ],
+      "scripts": {
+        "before": "",
+        "after": "var json = tc.response.json;\ntc.log('reason: ' + json.reason);\nif (json.reason === 'rate_limited') {\n  tc.log('PASS: Rate limited after 10 requests');\n} else {\n  tc.log('Request OK — send more times to trigger rate limit');\n}"
+      },
+      "settings": { "follow": false, "encode": false, "timeout": 10000 }
+    },
+
+    {
+      "_id": "r-18-wrong-session",
+      "colId": "pi-interview-col-2026",
+      "containerId": "f-05-security",
+      "name": "R18 — Security: Truy cập session của user khác → 404",
+      "url": "{{base_url}}/api/interviews/sessions/000000000000000000000000/analyze-face",
+      "method": "POST",
+      "sortNum": 180,
+      "created": "2026-05-29T00:00:00.000Z",
+      "modified": "2026-05-29T00:00:00.000Z",
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" },
+        { "name": "Authorization", "value": "Bearer {{token}}" }
+      ],
+      "params": [],
+      "body": {
+        "type": "json",
+        "raw": "{ \"imageBase64\": \"/9j/FAKE\", \"questionIndex\": 0 }",
+        "form": []
+      },
+      "tests": [],
+      "scripts": {
+        "before": "",
+        "after": "tc.log('Status: ' + tc.response.status);\ntc.log('Response: ' + JSON.stringify(tc.response.json));\n// Phải trả về success: true, emotion: null (vì session không tìm thấy → bỏ qua DB save)\n// Không được leak thông tin về session của user khác"
+      },
+      "settings": { "follow": false, "encode": false, "timeout": 5000 }
+    }
+  ]
+}
