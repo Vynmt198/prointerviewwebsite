@@ -17,6 +17,8 @@ import {
   CloudUpload,
   FileStack,
   AlertCircle,
+  ChevronDown,
+  FileText,
 } from "lucide-react";
 import { getLatestCVAnalysisAsync, getUploadedCV, saveUploadedCV } from "../../utils/history";
 import { hasAuthCredentials, isLoggedIn } from "../../utils/auth";
@@ -237,6 +239,12 @@ export function Interview() {
 
   const [latestCV, setLatestCV] = useState(null);
 
+  // JD optional input
+  const [jdExpanded, setJdExpanded]   = useState(false);
+  const [jdInputText, setJdInputText] = useState("");
+  const [jdFile, setJdFile]           = useState(null);
+  const jdFileInputRef = useRef(null);
+
   useEffect(() => {
     if (!checkSTTSupport()) setShowBrowserWarning(true);
   }, []);
@@ -276,6 +284,14 @@ export function Interview() {
 
   const openCvFilePicker = () => {
     cvFileInputRef.current?.click();
+  };
+
+  const handleJdFileUpload = (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    setJdFile(file);
+    setJdInputText("");
   };
 
   const handleSelectAnalyzedCv = () => {
@@ -343,7 +359,8 @@ export function Interview() {
     let result = null;
     try {
       let cvText = "";
-      let jdText = "";
+      // JD text: ưu tiên file PDF > textarea paste
+      let jdText = jdInputText.trim();
 
       if (option === "A" && latestCV) {
         // Xây context có cấu trúc từ kết quả phân tích CV — chất lượng tốt hơn JSON dump
@@ -360,6 +377,15 @@ export function Interview() {
             && `Cần cải thiện:\n${latestCV.weaknesses.slice(0, 2).map(w => `- ${w}`).join("\n")}`,
         ];
         cvText = parts.filter(Boolean).join("\n\n");
+
+        // Extract JD từ file nếu user upload (option A cũng hỗ trợ JD)
+        if (jdFile && !jdText) {
+          setLoadingStep("extracting_jd");
+          const jdExtracted = await extractCvTextFromFile(jdFile);
+          if (jdExtracted.success && jdExtracted.text) {
+            jdText = jdExtracted.text;
+          }
+        }
       } else if (option === "B" && uploadedFile) {
         setLoadingStep("extracting_cv");
         const extracted = await extractCvTextFromFile(uploadedFile);
@@ -371,6 +397,14 @@ export function Interview() {
               "Không thể đọc CV. AI sẽ tạo câu hỏi dựa trên tên file — chất lượng cá nhân hóa thấp hơn.",
           );
           cvText = `Tên file CV: ${uploadedFile.name}`;
+        }
+
+        // Extract JD từ file nếu user upload
+        if (jdFile && !jdText) {
+          const jdExtracted = await extractCvTextFromFile(jdFile);
+          if (jdExtracted.success && jdExtracted.text) {
+            jdText = jdExtracted.text;
+          }
         }
       }
 
@@ -495,6 +529,15 @@ export function Interview() {
             tabIndex={-1}
             onChange={handleFileUpload}
           />
+          <input
+            ref={jdFileInputRef}
+            type="file"
+            accept=".pdf"
+            className="hidden"
+            aria-hidden
+            tabIndex={-1}
+            onChange={handleJdFileUpload}
+          />
           <div>
             <h2 className="text-base font-bold text-violet-950">Bước 1 — Chọn nguồn CV</h2>
             <p className="mt-0.5 text-sm text-violet-600">
@@ -565,6 +608,68 @@ export function Interview() {
                 onPickFile={openCvFilePicker}
               />
 
+              {/* JD optional — giúp câu hỏi sát yêu cầu công ty hơn */}
+              <div className="rounded-md border border-violet-100 bg-violet-50/40">
+                <button
+                  type="button"
+                  onClick={() => setJdExpanded(v => !v)}
+                  className="flex w-full items-center gap-2.5 px-4 py-3 text-left"
+                >
+                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded border border-violet-300 bg-white text-[10px] font-bold text-violet-600">
+                    JD
+                  </span>
+                  <span className="flex-1 text-sm font-medium text-violet-700">
+                    Thêm mô tả công việc
+                    {(jdFile || jdInputText.trim()) ? (
+                      <span className="ml-1.5 text-xs font-normal text-emerald-600">
+                        ✓ {jdFile ? jdFile.name : `${jdInputText.trim().slice(0, 30)}…`}
+                      </span>
+                    ) : (
+                      <span className="ml-1 text-xs font-normal text-violet-400">(tùy chọn)</span>
+                    )}
+                  </span>
+                  <ChevronDown
+                    className={`h-4 w-4 shrink-0 text-violet-400 transition-transform ${jdExpanded ? "rotate-180" : ""}`}
+                    strokeWidth={1.75}
+                  />
+                </button>
+
+                {jdExpanded && (
+                  <div className="space-y-2.5 border-t border-violet-100 px-4 pb-4 pt-3">
+                    <p className="text-xs text-violet-500">
+                      Dán nội dung JD hoặc upload file — AI sẽ bám sát yêu cầu tuyển dụng thực tế khi tạo câu hỏi.
+                    </p>
+                    <textarea
+                      value={jdInputText}
+                      onChange={e => { setJdInputText(e.target.value); if (e.target.value.trim()) setJdFile(null); }}
+                      placeholder="Dán mô tả công việc (Job Description) vào đây..."
+                      rows={5}
+                      className="w-full resize-none rounded border border-violet-200 bg-white px-3 py-2 text-sm text-violet-900 placeholder:text-violet-300 focus:outline-none focus:ring-1 focus:ring-violet-300"
+                    />
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-violet-400">hoặc</span>
+                      <button
+                        type="button"
+                        onClick={() => jdFileInputRef.current?.click()}
+                        className="flex items-center gap-1.5 rounded border border-violet-200 bg-white px-3 py-1.5 text-xs font-medium text-violet-700 transition-colors hover:bg-violet-50"
+                      >
+                        <FileText className="h-3.5 w-3.5" strokeWidth={1.75} />
+                        {jdFile ? jdFile.name : "Upload file JD (PDF)"}
+                      </button>
+                      {jdFile && (
+                        <button
+                          type="button"
+                          onClick={() => setJdFile(null)}
+                          className="text-xs text-violet-400 hover:text-violet-700"
+                        >
+                          ✕ Xoá
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+
               <button
                 type="button"
                 onClick={handleContinueToHr}
@@ -634,6 +739,7 @@ export function Interview() {
               <>
                 <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
                 {loadingStep === "extracting_cv" && "Đang đọc CV..."}
+                {loadingStep === "extracting_jd" && "Đang đọc JD..."}
                 {loadingStep === "generating_questions" && "AI đang tạo câu hỏi..."}
                 {loadingStep === "creating_session" && "Đang chuẩn bị..."}
               </>

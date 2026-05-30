@@ -12,6 +12,7 @@ const STEPS = [
 // when transitioning from extracting_cv → generating_questions.
 const STEP_INDEX = {
   extracting_cv:        0,
+  extracting_jd:        0,
   generating_questions: 2,
   creating_session:     3,
 };

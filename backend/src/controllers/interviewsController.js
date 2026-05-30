@@ -1,4 +1,5 @@
 import { InterviewSession } from "../models/InterviewSession.js";
+import { MentorKnowledge } from "../models/MentorKnowledge.js";
 import { User } from "../models/User.js";
 import {
   generateQuestionsFromText,
@@ -16,6 +17,7 @@ import { logger } from "../config/logger.js";
  */
 async function getFewShotExamples(roleCategory, competencyIds, limit = 3) {
   try {
+    // ── Nguồn 1: AI sessions đã hoàn thành (behavior questions chất lượng cao) ──
     const sessions = await InterviewSession.find({
       "competencyProfile.roleCategory": roleCategory,
       "competencyProfile.competencyIds": { $in: competencyIds },
@@ -26,9 +28,6 @@ async function getFewShotExamples(roleCategory, competencyIds, limit = 3) {
       .select("questions competencyProfile")
       .lean();
 
-    if (!sessions.length) return [];
-
-    // Lấy behavior questions từ completed sessions — đây là câu hỏi đã được dùng thực tế
     const candidates = sessions
       .flatMap(s => s.questions ?? [])
       .filter(q =>
@@ -37,27 +36,53 @@ async function getFewShotExamples(roleCategory, competencyIds, limit = 3) {
         competencyIds.includes(q.competencyId)
       );
 
-    // Deduplicate và shuffle nhẹ để tránh lặp lại
     const seen = new Set();
-    const unique = candidates.filter(q => {
-      const key = q.question.slice(0, 40);
-      if (seen.has(key)) return false;
-      seen.add(key);
-      return true;
-    });
-
-    const examples = unique
+    const aiExamples = candidates
+      .filter(q => {
+        const key = q.question.slice(0, 40);
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      })
       .slice(0, limit)
       .map(q =>
         `[${q.competencyName || q.competencyId}] ${q.question}` +
         (q.ddiKeyActionTargeted ? ` (DDI: ${q.ddiKeyActionTargeted})` : "")
       );
 
+    // ── Nguồn 2: Mentor knowledge (chuyên gia thật — trọng số cao hơn) ──────────
+    // Guard: bỏ qua khi roleCategory rỗng — $regex:"" sẽ match toàn bộ collection
+    const roleKey = roleCategory.trim().slice(0, 20);
+    let mentorDocs = [];
+    if (roleKey) {
+      mentorDocs = await MentorKnowledge.find({
+        $or: [
+          { menteeRole: { $regex: roleKey, $options: "i" } },
+          { field:      { $regex: roleKey, $options: "i" } },
+        ],
+        "questionsAsked.0": { $exists: true }, // chỉ lấy docs có ít nhất 1 câu hỏi
+      })
+        .sort({ createdAt: -1 })
+        .limit(10)
+        .lean();
+    }
+
+    const mentorExamples = mentorDocs
+      .flatMap(mk => [
+        ...mk.questionsAsked.slice(0, 2).map(q => `[MENTOR_INSIGHT: ${mk.menteeRole || mk.field}] ${q}`),
+        ...mk.keyInsights.slice(0, 1).map(i => `[MENTOR_ADVICE] ${i}`),
+      ])
+      .slice(0, limit);
+
+    // Mentor examples ưu tiên đầu danh sách — inject trước AI examples
+    const examples = [...mentorExamples, ...aiExamples].slice(0, limit * 2);
+
     logger.info("few_shot_examples_fetched", {
       roleCategory,
       competencyIds,
-      candidateCount: candidates.length,
-      examplesFound:  examples.length,
+      aiCount:     aiExamples.length,
+      mentorCount: mentorExamples.length,
+      total:       examples.length,
     });
 
     return examples;

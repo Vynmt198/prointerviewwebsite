@@ -172,3 +172,13 @@ export async function updateMentorNotes(id, body) {
   if (!id) return { success: false, error: "Thiếu id." };
   return authedSend("PATCH", `/api/bookings/${encodeURIComponent(id)}/notes`, body);
 }
+
+/**
+ * Mentor chia sẻ insights sau buổi coaching (POST /api/bookings/:id/mentor-knowledge).
+ * @param {string} bookingId
+ * @param {{ menteeRole?, field?, questionsAsked?, commonMistakes?, keyInsights?, fullAdvice? }} payload
+ */
+export async function saveMentorKnowledge(bookingId, payload) {
+  if (!bookingId) return { success: false, error: "Thiếu bookingId." };
+  return authedSend("POST", `/api/bookings/${encodeURIComponent(bookingId)}/mentor-knowledge`, payload);
+}
