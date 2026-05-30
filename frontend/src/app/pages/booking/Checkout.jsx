@@ -36,7 +36,12 @@ const PLANS = {
     yearlyPrice: 63000,
     badge: "PHỔ BIẾN",
     accentColor: "#8037f4",
-    features: ["10 buổi AI phỏng vấn/tháng", "AI nhận dạng giọng nói", "20 lần phân tích CV/JD/tháng", "Phản hồi chi tiết từng câu", "Xuất kết quả PDF"],
+    features: [
+      "10 buổi AI Interview / tháng",
+      "Nhận diện giọng nói tiếng Việt",
+      "20 lượt phân tích CV/JD / tháng",
+      "Phản hồi & đánh giá chi tiết",
+    ],
   },
   elitePro: {
     name: "Elite",
@@ -45,7 +50,12 @@ const PLANS = {
     yearlyPrice: 79000,
     badge: "TỐT NHẤT",
     accentColor: "#93f72b",
-    features: ["AI phỏng vấn không giới hạn", "AI nhận dạng giọng nói — Turbo 2×", "CV/JD phân tích không giới hạn", "Phân tích hành vi: Giao tiếp mắt, Tư thế", "Phân tích giọng nói: Tốc độ, Từ đệm", "Mentor 1:1 ưu tiên"],
+    features: [
+      "AI Interview KHÔNG GIỚI HẠN",
+      "CV/JD phân tích KHÔNG GIỚI HẠN",
+      "Nhận diện giọng nói tiếng Việt",
+      "Hỗ trợ ưu tiên 24/7",
+    ],
   },
 };
 
@@ -166,7 +176,7 @@ function extractOrderPart(value) {
 function CopyBtn({ text, variant = "default" }) {
   const [copied, setCopied] = useState(false);
   const copy = () => {
-    navigator.clipboard.writeText(text).catch(() => {});
+    navigator.clipboard.writeText(text).catch(() => { });
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -176,11 +186,10 @@ function CopyBtn({ text, variant = "default" }) {
       <button
         type="button"
         onClick={copy}
-        className={`flex w-[4.25rem] shrink-0 flex-col items-center justify-center gap-1 border-l border-[#8037f4]/15 text-[10px] font-semibold transition-colors sm:w-[4.75rem] ${
-          copied
+        className={`flex w-[4.25rem] shrink-0 flex-col items-center justify-center gap-1 border-l border-[#8037f4]/15 text-[10px] font-semibold transition-colors sm:w-[4.75rem] ${copied
             ? "bg-[#93f72b]/20 text-[#8037f4]"
             : "bg-[#8037f4]/5 text-[#8037f4]/70 hover:bg-[#8037f4]/10 hover:text-[#8037f4]"
-        }`}
+          }`}
       >
         {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
         {copied ? "Đã copy" : "Sao chép"}
@@ -193,9 +202,8 @@ function CopyBtn({ text, variant = "default" }) {
       <button
         type="button"
         onClick={copy}
-        className={`flex shrink-0 items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-semibold transition-colors ${
-          copied ? "bg-white/25 text-white" : "bg-white/15 text-white hover:bg-white/25"
-        }`}
+        className={`flex shrink-0 items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-semibold transition-colors ${copied ? "bg-white/25 text-white" : "bg-white/15 text-white hover:bg-white/25"
+          }`}
       >
         {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
         {copied ? "Đã copy" : "Sao chép"}
@@ -207,11 +215,10 @@ function CopyBtn({ text, variant = "default" }) {
     <button
       type="button"
       onClick={copy}
-      className={`flex items-center gap-1 rounded-lg border px-2.5 py-1 text-xs font-semibold transition-all ${
-        copied
+      className={`flex items-center gap-1 rounded-lg border px-2.5 py-1 text-xs font-semibold transition-all ${copied
           ? "border-[#93f72b]/50 bg-[#93f72b]/15 text-[#8037f4]"
           : "border-[#8037f4]/25 bg-white text-[#8037f4]/80 shadow-sm hover:border-[#8037f4]/40 hover:bg-[#8037f4]/5 hover:text-[#8037f4]"
-      }`}
+        }`}
     >
       {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
       {copied ? "Đã sao chép" : "Sao chép"}
@@ -337,9 +344,8 @@ function TransferMemoCard({ transferOrderNum, payAmount, fmt, large }) {
 
   return (
     <div
-      className={`overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_2px_14px_rgba(15,23,42,0.07)] ${
-        large ? "w-full max-w-md" : ""
-      }`}
+      className={`overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_2px_14px_rgba(15,23,42,0.07)] ${large ? "w-full max-w-md" : ""
+        }`}
     >
       <div className="flex min-h-[4.25rem]">
         <div className="relative flex min-w-0 flex-1 flex-col justify-center px-4 py-3 pl-5">
@@ -380,27 +386,24 @@ function StepBar({ current, steps = STEPS_BOOKING }) {
           <div key={i} className="flex items-center">
             <div className="flex flex-col items-center gap-2">
               <div
-                className={`flex h-9 w-9 items-center justify-center rounded-full text-sm font-bold transition-all ${
-                  done || active
+                className={`flex h-9 w-9 items-center justify-center rounded-full text-sm font-bold transition-all ${done || active
                     ? "bg-[#8037f4] text-white shadow-md shadow-violet-500/25"
                     : "border border-slate-200 bg-white text-slate-400"
-                }`}
+                  }`}
               >
                 {done ? <Check className="h-4 w-4" /> : i + 1}
               </div>
               <span
-                className={`text-[11px] font-semibold uppercase tracking-wide ${
-                  done || active ? "text-[#8037f4]" : "text-slate-400"
-                }`}
+                className={`text-[11px] font-semibold uppercase tracking-wide ${done || active ? "text-[#8037f4]" : "text-slate-400"
+                  }`}
               >
                 {label}
               </span>
             </div>
             {i < steps.length - 1 && (
               <div
-                className={`mx-4 mb-6 h-0.5 w-10 rounded-full md:w-16 ${
-                  i < current ? "bg-[#8037f4]" : "bg-slate-200"
-                }`}
+                className={`mx-4 mb-6 h-0.5 w-10 rounded-full md:w-16 ${i < current ? "bg-[#8037f4]" : "bg-slate-200"
+                  }`}
               />
             )}
           </div>
@@ -733,9 +736,8 @@ function BankTransferBlock({
   if (!hasBank) {
     return (
       <p
-        className={`rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 leading-relaxed text-amber-800 ${
-          large ? "text-sm" : "mt-4 text-xs"
-        }`}
+        className={`rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 leading-relaxed text-amber-800 ${large ? "text-sm" : "mt-4 text-xs"
+          }`}
       >
         Chưa cấu hình STK ngân hàng (<span className="font-mono">VITE_BANK_TRANSFER_*</span>).
       </p>
@@ -924,22 +926,22 @@ export function Checkout() {
   const rebookCreditVnd = Number(rebookCredit?.creditVnd || 0);
   const rebookSameMentor = Boolean(
     rebookCredit?.available &&
-      mentorId &&
-      (mentorIdsMatch(rebookCredit.excludeMentorId, mentorId) ||
-        mentorIdsMatch(rebookCredit.excludeMentorId, bookingMentor?.id)),
+    mentorId &&
+    (mentorIdsMatch(rebookCredit.excludeMentorId, mentorId) ||
+      mentorIdsMatch(rebookCredit.excludeMentorId, bookingMentor?.id)),
   );
   const canUseRebookCredit = Boolean(
     rebookCredit?.available &&
-      !rebookSameMentor &&
-      bookingTotalEstimate > 0 &&
-      bookingTotalEstimate <= rebookCreditVnd &&
-      mentorId,
+    !rebookSameMentor &&
+    bookingTotalEstimate > 0 &&
+    bookingTotalEstimate <= rebookCreditVnd &&
+    mentorId,
   );
   const rebookCreditTooLow = Boolean(
     rebookFrom &&
-      rebookCredit?.available &&
-      !rebookSameMentor &&
-      bookingTotalEstimate > rebookCreditVnd,
+    rebookCredit?.available &&
+    !rebookSameMentor &&
+    bookingTotalEstimate > rebookCreditVnd,
   );
   const payMode = useMemo(
     () =>
@@ -1263,7 +1265,7 @@ export function Checkout() {
       pollErrorShownRef.current = true;
       toastApiError(
         r.error ||
-          "Không kiểm tra được trạng thanh toán. Kiểm tra đăng nhập và kết nối API (VITE_API_URL / CORS).",
+        "Không kiểm tra được trạng thanh toán. Kiểm tra đăng nhập và kết nối API (VITE_API_URL / CORS).",
       );
     }
   };
@@ -1308,18 +1310,16 @@ export function Checkout() {
       <Navbar variant="customer" />
 
       <main
-        className={`fade-in relative z-[1] w-full ${mainTopPad} ${CUSTOMER_SHELL_GUTTER} ${
-          transferFocus
+        className={`fade-in relative z-[1] w-full ${mainTopPad} ${CUSTOMER_SHELL_GUTTER} ${transferFocus
             ? `${CUSTOMER_SHELL_MAX} flex max-h-[calc(100svh-4.5rem)] flex-col overflow-hidden pb-3`
             : "mx-auto max-w-6xl flex-1 flex-col pb-10"
-        }`}
+          }`}
       >
         <button
           type="button"
           onClick={() => navigate(-1)}
-          className={`group -ml-1 flex shrink-0 items-center gap-1.5 rounded-lg px-2 py-1.5 text-sm font-semibold text-slate-600 transition-colors hover:bg-white hover:text-slate-900 ${
-            transferFocus ? "mb-2" : "mb-6"
-          }`}
+          className={`group -ml-1 flex shrink-0 items-center gap-1.5 rounded-lg px-2 py-1.5 text-sm font-semibold text-slate-600 transition-colors hover:bg-white hover:text-slate-900 ${transferFocus ? "mb-2" : "mb-6"
+            }`}
         >
           <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
           Quay lại
@@ -1446,106 +1446,106 @@ export function Checkout() {
                   )}
 
                   {isPlanCheckout && !isCourse && !isBooking && (
-                <div className="mt-5 border-t border-slate-200 pt-5">
-                  <p className={`mb-2 ${labelMuted}`}>Mã khuyến mãi</p>
-                  {couponApplied ? (
-                    <div className="flex items-center justify-between rounded-lg border border-violet-200 bg-violet-50 px-3 py-2">
-                      <div className="flex items-center gap-2">
-                        <Tag className="h-4 w-4 text-[#8037f4]" />
-                        <span className="text-sm font-semibold text-slate-900">{coupon.toUpperCase()}</span>
-                      </div>
-                      <span className="rounded-md bg-violet-100 px-2 py-0.5 text-[10px] font-semibold uppercase text-violet-700">
-                        Đã áp dụng
-                      </span>
+                    <div className="mt-5 border-t border-slate-200 pt-5">
+                      <p className={`mb-2 ${labelMuted}`}>Mã khuyến mãi</p>
+                      {couponApplied ? (
+                        <div className="flex items-center justify-between rounded-lg border border-violet-200 bg-violet-50 px-3 py-2">
+                          <div className="flex items-center gap-2">
+                            <Tag className="h-4 w-4 text-[#8037f4]" />
+                            <span className="text-sm font-semibold text-slate-900">{coupon.toUpperCase()}</span>
+                          </div>
+                          <span className="rounded-md bg-violet-100 px-2 py-0.5 text-[10px] font-semibold uppercase text-violet-700">
+                            Đã áp dụng
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="flex gap-2">
+                          <input
+                            className="min-w-0 flex-1 rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-[#8037f4] focus:outline-none focus:ring-1 focus:ring-violet-200"
+                            placeholder="Nhập mã khuyến mãi"
+                            value={coupon}
+                            onChange={(e) => setCoupon(e.target.value)}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (coupon.trim()) setCouponApplied(true);
+                            }}
+                            className="shrink-0 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:border-violet-300 hover:bg-violet-50"
+                          >
+                            Áp dụng
+                          </button>
+                        </div>
+                      )}
+                      <ul className="mt-4 space-y-2">
+                        {plan.features.slice(0, 3).map((f, i) => (
+                          <li key={i} className={`flex items-start gap-2 text-xs ${textMuted}`}>
+                            <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#8037f4]" />
+                            {f}
+                          </li>
+                        ))}
+                      </ul>
                     </div>
-                  ) : (
-                    <div className="flex gap-2">
-                      <input
-                        className="min-w-0 flex-1 rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-[#8037f4] focus:outline-none focus:ring-1 focus:ring-violet-200"
-                        placeholder="Nhập mã khuyến mãi"
-                        value={coupon}
-                        onChange={(e) => setCoupon(e.target.value)}
-                      />
+                  )}
+
+                  {cardError && (
+                    <div className="flex items-start gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-xs text-red-700">
+                      <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+                      <span>{cardError}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Cột phải ~30%: tóm tắt + xác nhận CK */}
+              <aside className="min-w-0">
+                <div className={`${checkoutCard} sticky top-20 overflow-hidden`}>
+                  <div className="border-b border-slate-200 px-5 py-5 sm:px-6">
+                    <p className={labelMuted}>Tổng cộng</p>
+                    <p className="mt-1 text-3xl font-bold tabular-nums text-slate-900">{fmt(grandTotal)}</p>
+                  </div>
+
+                  {showPriceBreakdown ? (
+                    <div className="space-y-2 px-5 py-4 sm:px-6">
+                      {billing === "yearly" && !isCourse && !isBooking && baseTotal > total && (
+                        <div className="flex justify-between text-sm">
+                          <span className={labelMuted}>Giảm gói năm</span>
+                          <span className="font-medium text-emerald-600">−{fmt(baseTotal - total)}</span>
+                        </div>
+                      )}
+                      {couponApplied && !isCourse && (
+                        <div className="flex justify-between text-sm">
+                          <span className={labelMuted}>Mã giảm (10%)</span>
+                          <span className="font-medium text-emerald-600">−{fmt(discount)}</span>
+                        </div>
+                      )}
+                    </div>
+                  ) : null}
+
+                  <div className="border-t border-slate-200 p-5 sm:p-6">
+                    {!payBlocked && !orderCreated && !showBankQr ? (
                       <button
                         type="button"
-                        onClick={() => {
-                          if (coupon.trim()) setCouponApplied(true);
-                        }}
-                        className="shrink-0 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:border-violet-300 hover:bg-violet-50"
+                        onClick={handlePay}
+                        disabled={!isPaidCheckout || payMode === PAY_MODE.REBOOK_LOADING}
+                        className={`${landingPrimaryButtonClass} h-12 w-full gap-2 rounded-xl text-base font-semibold disabled:pointer-events-none disabled:opacity-40`}
                       >
-                        Áp dụng
+                        <Lock className="h-4 w-4" />
+                        {payMode === PAY_MODE.REBOOK_READY ? "Xác nhận đặt lại" : "Tiếp tục"}
                       </button>
-                    </div>
-                  )}
-                  <ul className="mt-4 space-y-2">
-                    {plan.features.slice(0, 3).map((f, i) => (
-                      <li key={i} className={`flex items-start gap-2 text-xs ${textMuted}`}>
-                        <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#8037f4]" />
-                        {f}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-
-              {cardError && (
-                <div className="flex items-start gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-xs text-red-700">
-                  <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
-                  <span>{cardError}</span>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Cột phải ~30%: tóm tắt + xác nhận CK */}
-          <aside className="min-w-0">
-            <div className={`${checkoutCard} sticky top-20 overflow-hidden`}>
-              <div className="border-b border-slate-200 px-5 py-5 sm:px-6">
-                <p className={labelMuted}>Tổng cộng</p>
-                <p className="mt-1 text-3xl font-bold tabular-nums text-slate-900">{fmt(grandTotal)}</p>
-              </div>
-
-              {showPriceBreakdown ? (
-                <div className="space-y-2 px-5 py-4 sm:px-6">
-                  {billing === "yearly" && !isCourse && !isBooking && baseTotal > total && (
-                    <div className="flex justify-between text-sm">
-                      <span className={labelMuted}>Giảm gói năm</span>
-                      <span className="font-medium text-emerald-600">−{fmt(baseTotal - total)}</span>
-                    </div>
-                  )}
-                  {couponApplied && !isCourse && (
-                    <div className="flex justify-between text-sm">
-                      <span className={labelMuted}>Mã giảm (10%)</span>
-                      <span className="font-medium text-emerald-600">−{fmt(discount)}</span>
-                    </div>
-                  )}
-                </div>
-              ) : null}
-
-              <div className="border-t border-slate-200 p-5 sm:p-6">
-                {!payBlocked && !orderCreated && !showBankQr ? (
-                  <button
-                    type="button"
-                    onClick={handlePay}
-                    disabled={!isPaidCheckout || payMode === PAY_MODE.REBOOK_LOADING}
-                    className={`${landingPrimaryButtonClass} h-12 w-full gap-2 rounded-xl text-base font-semibold disabled:pointer-events-none disabled:opacity-40`}
-                  >
-                    <Lock className="h-4 w-4" />
-                    {payMode === PAY_MODE.REBOOK_READY ? "Xác nhận đặt lại" : "Tiếp tục"}
-                  </button>
-                ) : null}
-                {showBankQr && orderCreated && !paymentConfirmed && awaitingAutoConfirm ? (
-                  <div className="flex items-center justify-center gap-2 text-center text-sm text-violet-800">
-                    <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-violet-200 border-t-[#8037f4]" />
-                    Đang chờ xác nhận thanh toán…
+                    ) : null}
+                    {showBankQr && orderCreated && !paymentConfirmed && awaitingAutoConfirm ? (
+                      <div className="flex items-center justify-center gap-2 text-center text-sm text-violet-800">
+                        <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-violet-200 border-t-[#8037f4]" />
+                        Đang chờ xác nhận thanh toán…
+                      </div>
+                    ) : null}
+                    {showBankQr && !orderCreated && !payBlocked ? (
+                      <p className={`text-center text-xs ${labelMuted}`}>Đang tạo đơn…</p>
+                    ) : null}
                   </div>
-                ) : null}
-                {showBankQr && !orderCreated && !payBlocked ? (
-                  <p className={`text-center text-xs ${labelMuted}`}>Đang tạo đơn…</p>
-                ) : null}
-              </div>
-            </div>
-          </aside>
+                </div>
+              </aside>
             </div>
           </>
         )}

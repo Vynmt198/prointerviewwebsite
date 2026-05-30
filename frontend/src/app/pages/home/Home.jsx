@@ -24,6 +24,7 @@ import {
 } from "../../components/home/MentorFeatureShowcase";
 import { CoursesFeatureShowcase } from "../../components/home/CoursesFeatureShowcase";
 import { HeroInterviewVideoCard } from "../../components/home/HeroInterviewVideoCard";
+import { HeroScaledCanvas } from "../../components/home/HeroScaledCanvas";
 import { SparkleGlyph } from "../../components/decor/SparkleGlyph.jsx";
 import {
   SectionReveal,
@@ -37,7 +38,6 @@ import {
 } from "../../components/layout/customerShellLayout";
 import { HOME_COPY, HOME_SECTION_COPY } from "../../constants/brandVoice";
 import {
-  HOME_HERO_TITLE_CLAMP,
   HOME_SECTION_TITLE_CLAMP,
   HOME_HOW_IT_WORKS_TITLE_CLAMP,
   homeSectionClasses as homeTy,
@@ -118,11 +118,12 @@ const TESTIMONIALS = HOME_SECTION_COPY.testimonials.items.map((t, i) => ({
 export function Home() {
   const navigate = useNavigate();
 
-  const renderSectionSticks = (sticks) => (
+  const renderSectionSticks = (sticks, sparkleTone = "brand") => (
     <div className="pointer-events-none absolute inset-0 z-[1] hidden md:block" aria-hidden>
       {sticks.map((s, idx) => (
         <SparkleGlyph
           key={`section-stick-${idx}`}
+          tone={sparkleTone}
           className="absolute"
           style={{
             left: `${s.x}%`,
@@ -235,14 +236,13 @@ export function Home() {
           line-height: 0.98;
           white-space: nowrap;
         }
-        /* Chỉ phone/tablet nhỏ — desktop (lg+) không đổi */
         @media (max-width: 1023px) {
           .hero-title-line {
             white-space: normal;
             overflow-wrap: break-word;
           }
           .home-hero-title {
-            font-size: clamp(1.25rem, 3.6vw, 1.55rem) !important;
+            font-size: 1.45rem !important;
             line-height: 1.12 !important;
           }
           .home-how-title {
@@ -473,18 +473,21 @@ export function Home() {
       `}</style>
 
       {/* ═══ HERO ═══════════════════════════════════════════ */}
-      <section className="home-hero-section relative z-10 flex h-screen max-h-screen flex-col justify-start overflow-x-hidden px-10 sm:px-16 lg:px-24 pt-6 sm:pt-8 md:pt-10 lg:justify-center lg:pt-0 lg:pb-10 max-lg:h-auto max-lg:max-h-none max-lg:px-4 max-lg:pb-10 max-lg:pt-[4.5rem]">
-        {renderSectionSticks([
-          { x: 5, y: 11, size: 38, opacity: 0.48 },
-          { x: 93, y: 13, size: 44, opacity: 0.55 },
-          { x: 3, y: 50, size: 32, opacity: 0.4 },
-          { x: 92, y: 80, size: 36, opacity: 0.46 },
-        ])}
+      <section className="home-hero-section relative z-10 flex min-h-[100svh] flex-col justify-start overflow-x-hidden px-10 sm:px-16 lg:px-24 pt-6 sm:pt-8 md:pt-10 lg:justify-center lg:overflow-x-auto lg:py-10 max-lg:min-h-0 max-lg:px-4 max-lg:pb-10 max-lg:pt-[4.5rem]">
+        {renderSectionSticks(
+          [
+            { x: 5, y: 11, size: 38, opacity: 0.48 },
+            { x: 93, y: 13, size: 44, opacity: 0.55 },
+            { x: 3, y: 50, size: 32, opacity: 0.4 },
+            { x: 92, y: 80, size: 36, opacity: 0.46 },
+          ],
+          "violet"
+        )}
 
-        <div className={`relative z-10 ${HOME_SHELL_MAX}`}>
-          <div className="grid grid-cols-1 gap-8 max-lg:gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(300px,520px)] lg:items-center lg:gap-x-12 xl:gap-x-16">
-            <div className="order-1 min-w-0 translate-x-4 -translate-y-4 text-left lg:py-2 max-lg:translate-x-0 max-lg:translate-y-0">
-              <div className="hero-intro-badge mb-5 -translate-y-[4.5rem] max-lg:mb-4 max-lg:translate-y-0">
+        <div className={`relative z-10 w-full ${HOME_SHELL_MAX}`}>
+          <HeroScaledCanvas>
+            <div className="hero-scale-canvas__copy order-1 text-left lg:py-2">
+              <div className="hero-intro-badge mb-7 max-lg:mb-5">
                 <div
                   className="inline-flex items-center gap-2 rounded-full border-2 bg-white px-3 py-1.5 text-sm font-bold sm:text-base max-lg:rounded-lg max-lg:border max-lg:px-2.5 max-lg:py-1 max-lg:text-xs"
                   style={{
@@ -492,18 +495,13 @@ export function Home() {
                     color: "#8037f4",
                   }}
                 >
-                  <SparkleGlyph className="h-3.5 w-3.5 shrink-0" />
+                  <SparkleGlyph className="h-3.5 w-3.5 shrink-0" tone="violet" />
                   {HOME_COPY.badge}
                 </div>
               </div>
 
-              <div className="hero-intro-copy -translate-y-[2rem] max-lg:translate-y-0">
-                <h1
-                  className="home-hero-title hero-title-stack mb-6 max-w-full font-headline text-slate-900 cute-heading"
-                  style={{
-                    fontSize: HOME_HERO_TITLE_CLAMP,
-                  }}
-                >
+              <div className="hero-intro-copy">
+                <h1 className="home-hero-title hero-title-stack mb-8 max-w-full font-headline text-slate-900 cute-heading max-lg:mb-6">
                   <span className="hero-title-line text-slate-900">
                     {HOME_COPY.titleLine1}{" "}
                     <span className="hero-title-highlight" style={{ color: "#8037f4" }}>
@@ -518,7 +516,7 @@ export function Home() {
                   </span>
                 </h1>
 
-                <div className="mb-5 flex flex-col gap-3 translate-y-[2rem] sm:flex-row sm:justify-start max-lg:translate-y-0">
+                <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:justify-start">
                   <button
                     type="button"
                     onClick={() => navigate("/interview")}
@@ -537,10 +535,10 @@ export function Home() {
             </div>
 
 
-            <div className="order-2 flex w-full min-w-0 overflow-visible lg:justify-end lg:self-center max-lg:justify-center">
+            <div className="hero-scale-canvas__media order-2 flex justify-center overflow-visible max-lg:w-full">
               <HeroInterviewVideoCard />
             </div>
-          </div>
+          </HeroScaledCanvas>
         </div>
 
       </section>

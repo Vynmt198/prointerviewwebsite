@@ -47,7 +47,7 @@ const PLANS = [
     yearlyTotal: null,
     yearlySave: null,
     features: [
-      "3/5 câu hỏi phỏng vấn cùng AI",
+      "Phỏng vấn thử AI (giới hạn câu hỏi)",
       "1 lần phân tích CV/JD",
       "Bộ câu hỏi phỏng vấn theo ngành nghề",
     ],
@@ -66,10 +66,10 @@ const PLANS = [
     yearlyTotal: 756000,
     yearlySave: 192000,
     features: [
-      "10 buổi AI Interview/tháng",
-      "Nhận diện giọng nói AI",
-      "20 lần phân tích CV/JD",
-      "Phản hồi chi tiết từng câu",
+      "10 buổi AI Interview / tháng",
+      "Nhận diện giọng nói tiếng Việt",
+      "20 lượt phân tích CV/JD / tháng",
+      "Phản hồi & đánh giá chi tiết",
     ],
     cta: "Nâng cấp Pro",
     checkoutMonthly: "/checkout?plan=starterPro&billing=monthly&planPrice=79000",
@@ -88,7 +88,7 @@ const PLANS = [
     features: [
       "AI Interview KHÔNG GIỚI HẠN",
       "CV/JD phân tích KHÔNG GIỚI HẠN",
-      "Nhận diện giọng nói Turbo",
+      "Nhận diện giọng nói tiếng Việt",
       "Hỗ trợ ưu tiên 24/7",
     ],
     cta: "Nâng cấp Elite",

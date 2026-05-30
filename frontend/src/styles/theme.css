@@ -120,29 +120,6 @@ body:has(.app-user-shell) {
   background-size: auto;
 }
 
-/* Home — nền ngoài loang rõ: tím nhạt hai bên, giữa sáng hơn (canvas rộng hơn cột nội dung) */
-.app-shell-ambient--home {
-  background-color: #dcd2eb;
-  background-image:
-    radial-gradient(ellipse 100% 92% at -10% 45%, rgba(128, 55, 244, 0.28), transparent 62%),
-    radial-gradient(ellipse 100% 92% at 110% 55%, rgba(128, 55, 244, 0.24), transparent 62%),
-    radial-gradient(ellipse 260% 120% at 50% -18%, rgba(139, 92, 246, 0.14), transparent 72%),
-    radial-gradient(ellipse 240% 110% at 50% 112%, rgba(99, 14, 212, 0.12), transparent 70%),
-    radial-gradient(ellipse 58% 54% at 50% 48%, rgba(255, 255, 255, 0.88), transparent 64%),
-    linear-gradient(
-      90deg,
-      #d4c8e8 0%,
-      #ddd2ef 10%,
-      #ebe4f6 22%,
-      #f6f4fc 42%,
-      #faf9fe 50%,
-      #f6f4fc 58%,
-      #ebe4f6 78%,
-      #ddd2ef 90%,
-      #d4c8e8 100%
-    );
-}
-
 .dark {
   --background: oklch(0.12 0.045 292);
   --foreground: oklch(1.0000 0 0);
@@ -367,4 +344,133 @@ body:has(.app-user-shell) {
   /* Teal → lime-violet */
   --color-teal-50: #f7ffe8;
   --color-teal-500: #93f72b;
+}
+
+html.app-route-home,
+html.app-route-home body {
+  background-color: #dcd2eb;
+}
+
+.app-user-shell--home {
+  overflow-x: auto;
+  overflow-y: visible;
+}
+
+@media (min-width: 1024px) {
+  .home-layout-fixed {
+    width: max(100%, 90rem);
+    min-width: 90rem;
+  }
+
+  html.app-route-home .top-nav-pill {
+    flex-wrap: nowrap;
+    min-width: 64rem;
+  }
+
+  html.app-route-home .top-nav-pill > * {
+    flex-shrink: 0;
+  }
+
+  .home-hero-section {
+    overflow-x: auto;
+    overflow-y: visible;
+  }
+
+  .hero-scale-wrapper {
+    display: flex;
+    justify-content: flex-start;
+    width: max-content;
+    max-width: none;
+    min-width: 100%;
+    margin-inline: auto;
+    margin-top: -5rem;
+    padding-inline: max(0px, calc((100% - 90rem) / 2));
+    box-sizing: border-box;
+    overflow: visible;
+  }
+
+  /* Grid: cột chữ rộng theo nội dung, cột video cố định — không đè khi zoom */
+  .hero-scale-canvas {
+    display: grid;
+    grid-template-columns: max-content 28rem;
+    column-gap: 3.4rem;
+    align-items: center;
+    width: max-content;
+    min-width: 79.5rem;
+  }
+
+  .hero-scale-canvas__copy {
+    grid-column: 1;
+    width: max-content;
+    max-width: none;
+    justify-self: start;
+    position: relative;
+    z-index: 2;
+  }
+
+  .hero-scale-canvas__media {
+    grid-column: 2;
+    width: 28rem;
+    justify-self: end;
+    position: relative;
+    z-index: 1;
+  }
+
+  .home-hero-section .home-hero-title {
+    font-size: 4.85rem !important;
+    line-height: 0.98 !important;
+  }
+
+  .home-hero-section .hero-title-line {
+    white-space: nowrap;
+    line-height: 0.98;
+  }
+
+  .home-hero-section .hero-title-stack {
+    gap: 0.7rem;
+  }
+
+  .home-hero-section .hero-intro-badge {
+    margin-top: -3rem;
+  }
+
+  .home-hero-section .hero-title-highlight {
+    animation: none;
+  }
+}
+
+/* Home — nền liền mép trên → hero */
+.app-shell-ambient--home {
+  background-color: #dcd2eb;
+  background-image:
+    linear-gradient(
+      180deg,
+      #d4c8e8 0%,
+      #ddd2ef 6%,
+      #ebe4f6 14%,
+      #f0ebf8 24%,
+      #f6f4fc 38%,
+      #faf9fe 50%,
+      #f6f4fc 62%,
+      #f0ebf8 76%,
+      #ebe4f6 88%,
+      #d4c8e8 100%
+    ),
+    linear-gradient(
+      90deg,
+      #d4c8e8 0%,
+      #ddd2ef 10%,
+      #ebe4f6 22%,
+      #f6f4fc 42%,
+      #faf9fe 50%,
+      #f6f4fc 58%,
+      #ebe4f6 78%,
+      #ddd2ef 90%,
+      #d4c8e8 100%
+    ),
+    radial-gradient(ellipse 100% 92% at -10% 45%, rgba(128, 55, 244, 0.22), transparent 62%),
+    radial-gradient(ellipse 100% 92% at 110% 55%, rgba(128, 55, 244, 0.2), transparent 62%),
+    radial-gradient(ellipse 200% 80% at 50% 0%, rgba(235, 228, 246, 0.95), transparent 55%),
+    radial-gradient(ellipse 240% 110% at 50% 112%, rgba(99, 14, 212, 0.1), transparent 70%),
+    radial-gradient(ellipse 58% 54% at 50% 52%, rgba(255, 255, 255, 0.55), transparent 68%);
 }

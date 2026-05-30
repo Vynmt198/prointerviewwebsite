@@ -118,6 +118,7 @@ function CustomerNavbar() {
   const initials = getInitials(displayName);
   const loginHref = buildLoginPath(`${location.pathname}${location.search}`);
   const registerHref = buildRegisterPath(`${location.pathname}${location.search}`);
+  const isHome = location.pathname === "/" || location.pathname === "";
 
   React.useEffect(() => {
     setMobileOpen(false);
@@ -203,7 +204,7 @@ function CustomerNavbar() {
 
   return (
     <>
-      <TopNavShell variant="light">
+      <TopNavShell variant="light" alignTop={isHome}>
         <Link
           to="/"
           className="flex shrink-0 items-center leading-none"
@@ -226,7 +227,9 @@ function CustomerNavbar() {
           items={CUSTOMER_NAV_ITEMS}
           pathname={location.pathname}
           isActive={(p, item) => isCustomerNavActive(p, item.url)}
-          className="hidden min-w-0 flex-1 items-center justify-center gap-3 px-1 md:flex md:gap-4 lg:gap-5"
+          className={`hidden items-center justify-center gap-3 px-1 md:flex md:gap-4 lg:gap-5 ${
+            isHome ? "shrink-0" : "min-w-0 flex-1"
+          }`}
         />
 
         <div className="flex shrink-0 items-center gap-2 sm:gap-3">
