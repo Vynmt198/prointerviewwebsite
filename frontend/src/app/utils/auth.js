@@ -163,6 +163,12 @@ function isCustomerHubRedirect(path) {
   return r === "/" || r === "/dashboard" || r.startsWith("/dashboard/");
 }
 
+/** Mentor sau login chỉ giữ redirect thuộc khu mentor hoặc phòng họp. */
+function isMentorPostLoginRedirect(path) {
+  const r = typeof path === "string" ? path.trim() : "";
+  return r.startsWith("/mentor") || r.startsWith("/meeting/");
+}
+
 /** Đường dẫn sau đăng nhập: admin → /admin, mentor → /mentor/dashboard, customer → ?redirect hoặc /. */
 export function getPostLoginPath(user, redirectParam) {
   const r = typeof redirectParam === "string" ? redirectParam.trim() : "";
@@ -173,7 +179,7 @@ export function getPostLoginPath(user, redirectParam) {
     return "/admin";
   }
   if (role === "mentor") {
-    if (r && isSafeAppRedirect(r, user) && !isCustomerHubRedirect(r)) return r;
+    if (r && isSafeAppRedirect(r, user) && isMentorPostLoginRedirect(r)) return r;
     return "/mentor/dashboard";
   }
 

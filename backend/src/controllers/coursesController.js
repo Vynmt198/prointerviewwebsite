@@ -12,6 +12,7 @@ import {
   normalizeUploadPathForStorage,
 } from "../utils/resolveStoredUploadUrl.js";
 import * as courseMentorInsights from "../services/courseMentorInsightsService.js";
+import * as reviewsService from "../services/reviewsService.js";
 
 function normalizeCoursePayload(body = {}) {
   const chapters = Array.isArray(body.chapters) ? body.chapters : [];
@@ -393,6 +394,17 @@ export const CoursesController = {
       const result = await courseMentorInsights.getCourseReviewsForMentor(req.userId, req.params.id);
       if (!result.ok) return res.status(result.status).json({ success: false, error: result.error });
       return res.json({ success: true, reviews: result.reviews, summary: result.summary });
+    } catch (error) {
+      return next(error);
+    }
+  },
+
+  /** Đánh giá chéo mentor — public trên trang chi tiết khóa học. */
+  peerReviewsPublic: async (req, res, next) => {
+    try {
+      const result = await reviewsService.listCoursePeerReviewsPublic(req.params.id);
+      if (!result.ok) return res.status(result.status).json({ success: false, error: result.error });
+      return res.json({ success: true, reviews: result.reviews });
     } catch (error) {
       return next(error);
     }

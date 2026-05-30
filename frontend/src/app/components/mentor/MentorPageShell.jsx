@@ -40,6 +40,12 @@ const MENTOR_LIGHT_STYLES = `
           letter-spacing: -0.045em;
           text-shadow: none;
         }
+        /* Nhãn uppercase tiếng Việt — tracking utility mặc định thường quá rộng */
+        .mentor-surface .tracking-widest,
+        .mentor-surface .tracking-wider,
+        .mentor-surface [class*="tracking-[0"] {
+          letter-spacing: 0.02em;
+        }
         /* primary-fixed = lime CTA (#93f72b); giữ màu token Tailwind */
 `;
 

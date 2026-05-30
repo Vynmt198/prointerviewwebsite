@@ -13,14 +13,14 @@ const HUB_VIEWPORT_STYLES = `
       overflow: hidden;
       display: flex;
       align-items: center;
-      justify-content: center;
+      justify-content: flex-start;
     }
-    /* Scale theo chiều cao; bù width để mép trái/phải trùng shell navbar */
+    /* Scale theo chiều cao; căn trái theo shell navbar (không dịch ngang toàn khối) */
     .cv-hub-fit {
       width: calc(100% / var(--cv-hub-scale));
       max-width: none;
-      transform: scale(var(--cv-hub-scale)) translateY(-2rem) translateX(-3.3rem);
-      transform-origin: center center;
+      transform: scale(var(--cv-hub-scale));
+      transform-origin: left center;
     }
   }
 `;

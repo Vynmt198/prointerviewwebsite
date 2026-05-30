@@ -1,6 +1,5 @@
 import React from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router";
-import { ArrowLeft } from "lucide-react";
 import { AnimatePresence } from "motion/react";
 import { fetchMentor, fetchMentorPublicReviews } from "../../utils/mentorApi";
 import { ReportMentorModal } from "../../components/modals/ReportMentorModal";
@@ -142,18 +141,6 @@ export function MentorProfile() {
 
   const goBook = () => navigate(bookingHref);
 
-  const goBack = () => {
-    if (rebookFrom) {
-      navigate(`/mentors?rebookFrom=${encodeURIComponent(rebookFrom)}`);
-      return;
-    }
-    if (typeof window !== "undefined" && window.history.length > 1) {
-      navigate(-1);
-      return;
-    }
-    navigate("/mentors");
-  };
-
   const introFull = (
     <div className="space-y-0">
       <MentorIntroSection
@@ -179,18 +166,6 @@ export function MentorProfile() {
     <MentorPageShell bottomPad="pb-24">
       <div className={`relative z-10 pb-8 pt-6 sm:pt-8 ${CUSTOMER_SHELL_GUTTER}`}>
         <div className={`${CUSTOMER_SHELL_MAX} w-full`}>
-          <button
-            type="button"
-            onClick={goBack}
-            className="group -ml-1 mb-5 flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm font-medium text-slate-600 transition-colors hover:bg-violet-50 hover:text-violet-900"
-          >
-            <ArrowLeft
-              className="size-4 transition-transform group-hover:-translate-x-0.5"
-              aria-hidden
-            />
-            Quay lại
-          </button>
-
           <div className="grid items-start gap-6 lg:grid-cols-[1fr_300px] xl:grid-cols-[1fr_320px]">
             <div className="min-w-0 space-y-5">
               <MentorProfileHeader

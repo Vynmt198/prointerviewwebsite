@@ -143,7 +143,7 @@ export const CV_HUB_HERO_COPY = {
 export const MENTOR_SHOWCASE_COPY = {
   badge: "Kết nối Mentor 1:1",
   titleLine1: "Từ luyện tập với AI",
-  titleLine2: "đến trao đổi thực tế cùng Mentor",
+  titleLine2: "đến trao đổi thực tế cùng\u00a0Mentor",
   steps: [
     {
       title: "Chọn Mentor phù hợp",

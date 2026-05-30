@@ -71,12 +71,20 @@ import { AdminSupport } from "./pages/admin/AdminSupport.jsx";
 import { AdminMentorDetail } from "./pages/admin/AdminMentorDetail.jsx";
 import { AdminBookingDetail } from "./pages/admin/AdminBookingDetail.jsx";
 
+/** Đã đăng nhập mentor/admin → hub riêng, không xem landing customer. */
+function roleHomeLoader() {
+  const user = getUser();
+  if (user?.role === "mentor") throw redirect("/mentor/dashboard");
+  if (user?.role === "admin") throw redirect("/admin");
+  return null;
+}
+
 export const router = createHashRouter([
   {
     path: "/",
     Component: AppLayout,
     children: [
-      { index: true, Component: Home },
+      { index: true, loader: roleHomeLoader, Component: Home },
       { path: "mentors", Component: Mentors },
       { path: "mentors/:id", Component: MentorProfile },
       { path: "courses", Component: Courses },

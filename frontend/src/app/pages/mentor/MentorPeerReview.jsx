@@ -3,7 +3,6 @@ import { useNavigate } from "react-router";
 import {
    Users,
    Star,
-   ArrowLeft,
    Search,
    CheckCircle2,
    Clock,
@@ -113,18 +112,13 @@ export function MentorPeerReview() {
       <MentorPageShell bottomPad="pb-32">
          <div className="relative z-10 mx-auto max-w-7xl px-8 pb-8">
             {/* Header Section */}
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
-               <div className="max-w-3xl">
-                  <h1 className="mb-4 font-headline text-2xl font-black uppercase tracking-tight text-slate-900 sm:text-3xl">
-                     Đánh giá <span className="text-secondary tracking-tighter">Chéo Khóa học</span>
-                  </h1>
-                  <p className="text-slate-600 text-sm font-medium leading-relaxed">
-                     Với tư cách mentor trong hệ thống ProInterview, bạn có hành quyền đánh giá chuyên môn các khóa học của đồng nghiệp để đảm bảo chất lượng nội dung toàn hệ thống.
-                  </p>
-               </div>
-               <button onClick={() => navigate("/mentor/dashboard")} className="px-8 py-4 rounded-3xl bg-slate-50 border border-slate-200 text-xs font-black uppercase tracking-widest hover:bg-slate-100 transition-all flex items-center gap-2">
-                  <ArrowLeft size={14} /> Về dashboard
-               </button>
+            <div className="mb-12 max-w-3xl">
+               <h1 className="mb-4 font-headline text-2xl font-black uppercase tracking-tight text-slate-900 sm:text-3xl">
+                  Đánh giá <span className="text-secondary tracking-tighter">Chéo Khóa học</span>
+               </h1>
+               <p className="text-slate-600 text-sm font-medium leading-relaxed">
+                  Với tư cách mentor trong hệ thống ProInterview, bạn có hành quyền đánh giá chuyên môn các khóa học của đồng nghiệp để đảm bảo chất lượng nội dung toàn hệ thống.
+               </p>
             </div>
 
             {/* Global Stats Bar */}

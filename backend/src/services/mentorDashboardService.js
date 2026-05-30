@@ -6,6 +6,7 @@ import { Review } from "../models/Review.js";
 import { Course } from "../models/Course.js";
 import { MentorPeerReview } from "../models/MentorPeerReview.js";
 import { User } from "../models/User.js";
+import { recalcCourseReviewStats } from "./reviewsService.js";
 
 const MONGO_ERR = "MongoDB chưa kết nối. Kiểm tra MONGO_URI trong .env.";
 function isMongoReady() {
@@ -472,6 +473,8 @@ export async function submitMentorPeerReview(userId, courseId, body) {
     },
     { upsert: true, new: true, setDefaultsOnInsert: true },
   ).lean();
+
+  await recalcCourseReviewStats(course._id);
 
   const avg = (contentRating + qualityRating + priceValueRating) / 3;
   return {

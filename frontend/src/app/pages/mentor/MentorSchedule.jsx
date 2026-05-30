@@ -72,12 +72,13 @@ function parseBookingDate(bookingDate) {
 const MENTOR_SCHEDULE_EXTRA_CSS = `
         .calendar-cell {
            aspect-ratio: 1;
+           min-height: 0;
            display: flex;
            flex-direction: column;
            align-items: center;
            justify-content: center;
-           border-radius: 18px;
-           transition: all 0.3s;
+           border-radius: 12px;
+           transition: all 0.2s;
            cursor: pointer;
            position: relative;
         }
@@ -85,13 +86,13 @@ const MENTOR_SCHEDULE_EXTRA_CSS = `
         .calendar-cell.active {
            background: #93f72b;
            color: black;
-           box-shadow: 0 10px 30px rgba(180, 245, 0, 0.3);
+           box-shadow: 0 6px 18px rgba(180, 245, 0, 0.28);
            font-weight: 900;
         }
         .calendar-cell.dot::after {
            content: '';
            position: absolute;
-           bottom: 6px;
+           bottom: 4px;
            width: 4px;
            height: 4px;
            border-radius: 50%;
@@ -440,47 +441,54 @@ export function MentorSchedule() {
   const selectedDayMeetings = sourceMeetings.filter((m) => bookingOnDate(m.date, selectedDate) || bookingOnDate(m.scheduledDate, selectedDate));
 
   return (
-    <MentorPageShell bottomPad="pb-32" extraStyles={MENTOR_SCHEDULE_EXTRA_CSS}>
-      <div className="relative z-10 mx-auto max-w-7xl px-10 pb-10">
-        {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-10 mb-16">
+    <MentorPageShell
+      bottomPad="pb-4"
+      fillHeight
+      className="!min-h-0 !overflow-hidden !pb-4"
+      extraStyles={MENTOR_SCHEDULE_EXTRA_CSS}
+    >
+      <div className="relative z-10 mx-auto flex h-[calc(100svh-6rem)] max-h-[calc(100svh-6rem)] min-h-0 max-w-7xl flex-col px-6 lg:px-8">
+        {/* Header — compact */}
+        <div className="mb-4 flex shrink-0 flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="mb-3 font-headline text-2xl font-black uppercase tracking-tight text-slate-900 sm:text-3xl">
+            <h1 className="font-headline text-xl font-black uppercase tracking-tight text-slate-900 sm:text-2xl">
                Lịch trình <span className="text-violet-700 tracking-tighter">Hệ thống</span>
             </h1>
-            <p className="text-zinc-500 text-sm font-medium">Bố trí thời gian rảnh và quản lý các buổi hẹn mentor</p>
+            <p className="text-xs font-medium text-zinc-500 sm:text-sm">Bố trí thời gian rảnh và quản lý các buổi hẹn mentor</p>
           </div>
-          <div className="flex gap-4">
-            <button onClick={() => setShowAvailability(true)} className="px-8 py-4 rounded-3xl bg-secondary text-black text-xs font-black uppercase tracking-widest hover:scale-105 transition-all shadow-xl flex items-center gap-2">
-              <Clock size={16} /> Cài đặt làm việc
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={() => setShowAvailability(true)}
+            className="flex shrink-0 items-center gap-2 self-start rounded-xl bg-gradient-to-r from-[#93f72b] to-[#7fe015] px-5 py-2.5 text-xs font-bold text-[#0a0814] shadow-[0_6px_18px_rgba(196,255,71,0.2)] transition-all hover:brightness-110 sm:px-6 sm:py-3"
+          >
+            <Clock size={15} /> Cài đặt làm việc
+          </button>
         </div>
 
-        <div className="grid lg:grid-cols-12 gap-10 items-start">
-           {/* Calendar Glass UI */}
-           <div className="lg:col-span-12 xl:col-span-7 glass-card p-10">
-              <div className="flex items-center justify-between mb-10">
-                 <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-center text-violet-700">
-                       <CalendarIcon size={22} />
+        <div className="grid min-h-0 flex-1 grid-cols-1 gap-4 lg:grid-cols-12 lg:gap-5">
+           {/* Calendar */}
+           <div className="glass-card flex min-h-0 flex-col p-4 sm:p-5 lg:col-span-7">
+              <div className="mb-3 flex shrink-0 items-center justify-between">
+                 <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-violet-700">
+                       <CalendarIcon size={18} />
                     </div>
                     <div>
-                       <h3 className="text-2xl font-black text-slate-900 tracking-tighter italic">
+                       <h3 className="text-lg font-black tracking-tighter text-slate-900 italic sm:text-xl">
                           {currentDate.toLocaleDateString("vi-VN", { month: "long", year: "numeric" })}
                        </h3>
-                       <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">Lịch trình khả dụng</p>
+                       <p className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Lịch trình khả dụng</p>
                     </div>
                  </div>
-                 <div className="flex gap-2">
-                    <button onClick={() => setCurrentDate((prev) => new Date(prev.getFullYear(), prev.getMonth() - 1, 1))} className="w-10 h-10 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center text-zinc-500 hover:text-slate-900 transition-all"><ChevronLeft size={18} /></button>
-                    <button onClick={() => setCurrentDate((prev) => new Date(prev.getFullYear(), prev.getMonth() + 1, 1))} className="w-10 h-10 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center text-zinc-500 hover:text-slate-900 transition-all"><ChevronRight size={18} /></button>
+                 <div className="flex gap-1.5">
+                    <button onClick={() => setCurrentDate((prev) => new Date(prev.getFullYear(), prev.getMonth() - 1, 1))} className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-zinc-500 transition-all hover:text-slate-900"><ChevronLeft size={16} /></button>
+                    <button onClick={() => setCurrentDate((prev) => new Date(prev.getFullYear(), prev.getMonth() + 1, 1))} className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-zinc-500 transition-all hover:text-slate-900"><ChevronRight size={16} /></button>
                  </div>
               </div>
 
-              <div className="grid grid-cols-7 gap-4 mb-4">
+              <div className="grid min-h-0 flex-1 grid-cols-7 grid-rows-[auto_repeat(6,minmax(0,1fr))] gap-1 sm:gap-1.5">
                  {["T2", "T3", "T4", "T5", "T6", "T7", "CN"].map(d => (
-                   <div key={d} className="text-center text-[10px] font-black text-zinc-600 uppercase tracking-widest py-4">{d}</div>
+                   <div key={d} className="py-1 text-center text-[9px] font-black uppercase tracking-widest text-zinc-600 sm:text-[10px]">{d}</div>
                  ))}
                  {finalDays.map((cell, i) => {
                    const isSelected = selectedDate.toDateString() === cell.date.toDateString();
@@ -492,60 +500,68 @@ export function MentorSchedule() {
                         onClick={() => setSelectedDate(cell.date)}
                         className={`calendar-cell ${isSelected ? 'active' : ''} ${cell.currentMonth ? 'text-slate-900' : 'text-zinc-700 opacity-30'} ${hasMeetings ? 'dot' : ''}`}
                      >
-                        <span className="text-xs">{cell.date.getDate()}</span>
-                        {isToday && !isSelected && <div className="absolute top-2 right-2 w-1 h-1 rounded-full bg-primary-fixed" />}
+                        <span className="text-[11px] font-semibold sm:text-xs">{cell.date.getDate()}</span>
+                        {isToday && !isSelected && <div className="absolute right-1.5 top-1.5 h-1 w-1 rounded-full bg-primary-fixed" />}
                      </div>
                    );
                  })}
               </div>
-              <div className="mt-10 border-t border-slate-200 flex items-center gap-8 justify-center sm:justify-start">
-                 <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-zinc-500">
-                    <div className="w-3 h-3 rounded-full bg-primary-fixed" /> Hôm nay
+              <div className="mt-3 flex shrink-0 items-center gap-5 border-t border-slate-200 pt-3">
+                 <div className="flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest text-zinc-500">
+                    <div className="h-2.5 w-2.5 rounded-full bg-primary-fixed" /> Hôm nay
                  </div>
-                 <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-zinc-500">
-                    <div className="w-3 h-3 rounded-full bg-[#8037f4]" /> Có lịch hẹn
+                 <div className="flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest text-zinc-500">
+                    <div className="h-2.5 w-2.5 rounded-full bg-[#8037f4]" /> Có lịch hẹn
                  </div>
               </div>
            </div>
 
-           {/* Daily Schedule Stack */}
-           <div className="lg:col-span-12 xl:col-span-5 space-y-8">
-              <div className="glass-card p-10 h-full">
-                 <div className="flex items-center justify-between mb-8">
-                    <h4 className="text-lg font-black text-slate-900 uppercase tracking-tighter">Ngày {selectedDate.getDate()} thg {selectedDate.getMonth() + 1}</h4>
-                    <button className="w-10 h-10 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center text-violet-700 hover:bg-slate-100 transition-all"><Plus size={18} /></button>
+           {/* Daily schedule */}
+           <div className="flex min-h-0 flex-col lg:col-span-5">
+              <div className="glass-card flex h-full min-h-0 flex-col p-4 sm:p-5">
+                 <div className="mb-3 flex shrink-0 items-center justify-between">
+                    <h4 className="text-base font-black uppercase tracking-tighter text-slate-900 sm:text-lg">
+                      Ngày {selectedDate.getDate()} thg {selectedDate.getMonth() + 1}
+                    </h4>
+                    <button
+                      type="button"
+                      onClick={() => setShowAvailability(true)}
+                      className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-violet-700 transition-all hover:bg-slate-100"
+                    >
+                      <Plus size={16} />
+                    </button>
                  </div>
 
-                 <div className="space-y-4">
+                 <div className="min-h-0 flex-1 space-y-2.5 overflow-y-auto pr-0.5 custom-scrollbar">
                     {selectedDayMeetings.map((meeting, i) => (
                       <div
                          key={meeting.id || i}
                          onClick={() => meeting.id && navigate(`/mentor/meeting-detail/${meeting.id}`)}
-                         className="group relative p-6 rounded-[32px] bg-slate-50 border border-slate-200 hover:bg-slate-100 transition-all cursor-pointer overflow-hidden"
+                         className="group relative cursor-pointer overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 p-4 transition-all hover:bg-slate-100"
                       >
-                         <div className="absolute top-0 left-0 w-1.5 h-full bg-primary-fixed scale-y-0 group-hover:scale-y-100 transition-transform origin-top" />
-                         <div className="flex items-center gap-4 mb-4">
-                            <img src={meeting.mentee.avatar} className="w-10 h-10 rounded-2xl object-cover ring-2 ring-white/5" />
-                            <div>
-                               <p className="text-sm font-black text-slate-900">{meeting.mentee.name}</p>
-                               <p className="text-[10px] font-black text-zinc-600 uppercase tracking-widest">{meeting.position}</p>
+                         <div className="absolute left-0 top-0 h-full w-1 scale-y-0 bg-primary-fixed transition-transform origin-top group-hover:scale-y-100" />
+                         <div className="mb-2.5 flex items-center gap-3">
+                            <img src={meeting.mentee.avatar} alt="" className="h-9 w-9 rounded-xl object-cover ring-2 ring-white/5" />
+                            <div className="min-w-0">
+                               <p className="truncate text-sm font-black text-slate-900">{meeting.mentee.name}</p>
+                               <p className="truncate text-[10px] font-black uppercase tracking-widest text-zinc-600">{meeting.position}</p>
                             </div>
                          </div>
-                         <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-4 text-xs font-black text-violet-700 uppercase tracking-widest">
-                               <Clock3 size={14} /> {meeting.scheduledTime}
+                         <div className="flex items-center justify-between gap-2">
+                            <div className="flex items-center gap-2 text-[11px] font-black uppercase tracking-widest text-violet-700">
+                               <Clock3 size={13} /> {meeting.scheduledTime}
                             </div>
                             <span
-                              className={`text-[9px] font-black px-2 py-1 rounded-md uppercase tracking-widest ${
+                              className={`shrink-0 rounded-md border px-2.5 py-1 text-[10px] font-black uppercase tracking-wide ${
                                 String(meeting.status || "").toLowerCase() === "confirmed"
-                                  ? "bg-emerald-500/20 text-emerald-300"
+                                  ? "border-emerald-300 bg-emerald-100 text-emerald-900"
                                   : String(meeting.status || "").toLowerCase() === "pending"
-                                    ? "bg-amber-500/20 text-amber-300"
+                                    ? "border-violet-300 bg-violet-100 text-violet-900"
                                     : String(meeting.status || "").toLowerCase() === "completed"
-                                      ? "bg-sky-500/20 text-sky-300"
+                                      ? "border-sky-300 bg-sky-100 text-sky-900"
                                       : String(meeting.status || "").toLowerCase() === "cancelled"
-                                        ? "bg-red-500/20 text-red-300"
-                                        : "bg-slate-50 text-zinc-500"
+                                        ? "border-red-300 bg-red-100 text-red-900"
+                                        : "border-slate-200 bg-slate-100 text-slate-700"
                               }`}
                             >
                               {meeting.status || "online"}
@@ -554,14 +570,18 @@ export function MentorSchedule() {
                       </div>
                     ))}
                     {selectedDayMeetings.length === 0 && (
-                      <div className="p-6 rounded-[32px] border border-slate-200 flex flex-col items-center justify-center text-zinc-500 min-h-[120px]">
+                      <div className="flex min-h-[72px] flex-col items-center justify-center rounded-2xl border border-slate-200 p-4 text-zinc-500">
                         <p className="text-[10px] font-black uppercase tracking-widest">Không có lịch hẹn trong ngày này</p>
                       </div>
                     )}
-                    <div className="p-6 rounded-[32px] border-2 border-dashed border-slate-200 flex flex-col items-center justify-center text-zinc-700 hover:border-slate-200 hover:text-zinc-500 transition-all cursor-pointer min-h-[140px]">
-                       <PlusCircle size={32} className="mb-2 opacity-20" />
+                    <button
+                      type="button"
+                      onClick={() => setShowAvailability(true)}
+                      className="flex min-h-[72px] w-full cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-200 text-zinc-700 transition-all hover:border-violet-200 hover:text-violet-700"
+                    >
+                       <PlusCircle size={24} className="mb-1 opacity-25" />
                        <p className="text-[10px] font-black uppercase tracking-widest">Thêm slot trống mới</p>
-                    </div>
+                    </button>
                  </div>
               </div>
            </div>

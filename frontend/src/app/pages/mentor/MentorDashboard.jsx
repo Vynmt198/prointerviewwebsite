@@ -349,16 +349,13 @@ export function MentorDashboard() {
       <div className="relative z-10 mx-auto max-w-7xl px-6 pb-10 sm:px-8">
         <div className="mb-8 flex flex-col justify-between gap-4 md:mb-10 md:flex-row md:items-end md:gap-6">
           <div>
-            <h1 className="mb-2 font-headline text-2xl font-black tracking-tight text-slate-900 sm:text-3xl break-words">
+            <h1 className="font-headline text-2xl font-black tracking-tight text-slate-900 sm:text-3xl break-words">
                Xin chào,{" "}
                <span className="text-violet-700">{getDisplayName(user, "Mentor")}!</span>
             </h1>
-            <p className="max-w-xl text-sm font-medium leading-relaxed text-slate-600">
-              Bảng điều khiển tối ưu dành cho Mentor của ProInterview
-            </p>
           </div>
           <div className="flex gap-4">
-              <button type="button" onClick={() => navigate("/mentor/schedule")} className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-[#93f72b] to-[#7fe015] px-5 py-2.5 text-[10px] font-black uppercase tracking-widest text-[#0a0814] shadow-[0_8px_24px_rgba(196,255,71,0.22)] transition-all hover:brightness-110">
+              <button type="button" onClick={() => navigate("/mentor/schedule")} className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-[#93f72b] to-[#7fe015] px-5 py-2.5 text-xs font-bold text-[#0a0814] shadow-[0_8px_24px_rgba(196,255,71,0.22)] transition-all hover:brightness-110">
                  <Plus size={16} /> Tạo lịch mới
               </button>
           </div>

@@ -48,6 +48,9 @@ export function buildMentorApplyPayload(form) {
     portfolioLink: String(form.portfolioLink ?? "").trim(),
     responseTime: String(form.responseTime ?? "").trim() || "< 24 giờ",
     timezone: String(form.timezone ?? "").trim() || "Asia/Ho_Chi_Minh",
+    profileEducation: String(form.education ?? "").trim(),
+    profileExtracurricular: String(form.extracurricular ?? "").trim(),
+    profileAwards: String(form.awards ?? "").trim(),
   };
 }
 

@@ -397,7 +397,14 @@ export function CourseReviewsBlock({ course, enrolled, reviews, onReviewSubmitte
               />
               <div>
                 <p className="text-sm font-bold text-slate-900">{r.userName || "Học viên"}</p>
-                <StarRating rating={r.rating} />
+                <div className="flex flex-wrap items-center gap-2">
+                  <StarRating rating={r.rating} />
+                  {r.isPeerReview ? (
+                    <span className="rounded-sm bg-violet-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-violet-800">
+                      Đánh giá chéo mentor
+                    </span>
+                  ) : null}
+                </div>
               </div>
             </div>
             <p className="text-sm leading-relaxed text-slate-700">{r.comment}</p>
@@ -418,7 +425,7 @@ export function CourseReviewsBlock({ course, enrolled, reviews, onReviewSubmitte
       </div>
 
       {reviews.length === 0 ? (
-        <p className="text-sm text-slate-500">Chưa có đánh giá từ học viên.</p>
+        <p className="text-sm text-slate-500">Chưa có đánh giá cho khóa học này.</p>
       ) : null}
 
       {reviews.length > 3 ? (

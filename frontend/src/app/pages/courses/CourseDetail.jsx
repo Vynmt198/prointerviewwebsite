@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router";
 import { BookOpen, Check } from "lucide-react";
-import { fetchCourseById, fetchReviewsForCourse } from "../../utils/courseApi";
+import { fetchCourseById, fetchAllReviewsForCourse } from "../../utils/courseApi";
 import { enrollmentApi } from "../../utils/enrollmentApi";
 import { getUser } from "../../utils/auth";
 import { toastApiError, toastApiSuccess } from "../../utils/apiToast";
@@ -94,7 +94,7 @@ export function CourseDetail() {
 
   const reloadReviews = useCallback(async () => {
     if (!id) return;
-    const [revRes, courseRes] = await Promise.all([fetchReviewsForCourse(id), fetchCourseById(id)]);
+    const [revRes, courseRes] = await Promise.all([fetchAllReviewsForCourse(id), fetchCourseById(id)]);
     if (revRes.success) setReviews(revRes.reviews || []);
     if (courseRes.success) setCourse(mapApiCourse(courseRes.course));
   }, [id]);
@@ -107,7 +107,7 @@ export function CourseDetail() {
       try {
         const [res, revRes] = await Promise.all([
           fetchCourseById(id),
-          fetchReviewsForCourse(id),
+          fetchAllReviewsForCourse(id),
         ]);
         if (cancelled) return;
         if (res.success) {

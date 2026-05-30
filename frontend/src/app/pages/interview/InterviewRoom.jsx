@@ -973,7 +973,7 @@ export default function InterviewRoom() {
               title={
                 <>
                   <span className="font-extrabold text-[#6d2fd6]">Luyện phỏng vấn với AI</span>{" "}
-                  <span className="font-extrabold text-[#1a1b23]">Từ CV của bạn</span>
+                  <span className="font-extrabold text-[#1a1b23]">từ CV của bạn</span>
                 </>
               }
               subtitle="Từ CV của bạn, ProInterview tạo buổi phỏng vấn thử với HR AI (~30 phút), phân tích hành vi và góp ý sau từng câu trả lời để bạn tự tin hơn trước buổi thật."

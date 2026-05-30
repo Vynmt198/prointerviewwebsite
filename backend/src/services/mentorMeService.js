@@ -123,7 +123,7 @@ export async function applyForMentor(userId, body) {
   if (!mongoose.isValidObjectId(uid)) return { ok: false, status: 401, error: "Phiên đăng nhập không hợp lệ." };
 
   const user = await User.findById(uid).select(
-    "name email role isActive avatar profileExtracurricular profileEducation profileWorkExperience profileAwards school",
+    "name email role isActive avatar bio desiredPosition position currentCompany experience skills expertise school profileExtracurricular profileEducation profileWorkExperience profileAwards",
   );
   if (!user || user.isActive === false) {
     return { ok: false, status: 404, error: "Không tìm thấy tài khoản hợp lệ." };
@@ -192,7 +192,9 @@ export async function applyForMentor(userId, body) {
     companies = [company];
   }
 
-  const profileEducation = String(user.profileEducation || user.school || "").trim();
+  const profileEducation = String(
+    body?.profileEducation ?? body?.education ?? user.profileEducation ?? user.school ?? "",
+  ).trim();
   const profileWorkExperience = buildProfileWorkExperienceText(
     user,
     body,
@@ -200,8 +202,27 @@ export async function applyForMentor(userId, body) {
     company,
     expYears,
   );
-  const profileExtracurricular = String(user.profileExtracurricular ?? "").trim();
-  const profileAwards = String(user.profileAwards ?? "").trim();
+  const profileExtracurricular = String(
+    body?.profileExtracurricular ?? body?.extracurricular ?? user.profileExtracurricular ?? "",
+  ).trim();
+  const profileAwards = String(body?.profileAwards ?? body?.awards ?? user.profileAwards ?? "").trim();
+
+  if (bio) user.bio = bio;
+  if (profileEducation) user.profileEducation = profileEducation;
+  if (profileWorkExperience) user.profileWorkExperience = profileWorkExperience;
+  if (profileExtracurricular) user.profileExtracurricular = profileExtracurricular;
+  if (profileAwards) user.profileAwards = profileAwards;
+  if (mentorTitle) {
+    user.desiredPosition = mentorTitle;
+    user.position = mentorTitle;
+  }
+  if (company) user.currentCompany = company;
+  if (expYears >= 0) user.experience = expYears;
+  if (specialties.length) {
+    user.skills = specialties;
+    user.expertise = specialties;
+  }
+  await user.save();
 
   const baseProfile = {
     name: String(user.name || "Mentor").trim() || "Mentor",
@@ -277,6 +298,10 @@ export function toPublicMentorMe(doc) {
     companies: m.companies ?? [],
     linkedinUrl: m.linkedinUrl ?? "",
     portfolioUrl: m.portfolioUrl ?? "",
+    profileEducation: m.profileEducation ?? "",
+    profileWorkExperience: m.profileWorkExperience ?? "",
+    profileExtracurricular: m.profileExtracurricular ?? "",
+    profileAwards: m.profileAwards ?? "",
     experienceYears: m.experienceYears ?? 0,
     pricePerHour: m.pricePerHour ?? 0,
     sessionTypes: m.sessionTypes ?? [],

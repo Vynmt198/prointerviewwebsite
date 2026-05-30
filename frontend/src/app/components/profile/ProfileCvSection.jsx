@@ -91,11 +91,12 @@ export function ProfileCvTextarea({
 }
 
 /** Dòng mô tả dưới tiêu đề «Hồ sơ cá nhân» — không in đậm. */
-export function ProfileCvMentorHint() {
+export function ProfileCvMentorHint({ isMentor = false }) {
   return (
     <p className="profile-muted mt-2 text-sm font-normal leading-relaxed">
-      Hoàn thiện thông tin của bạn để ProInterview hiểu rõ hơn về học vấn, kinh nghiệm và mục tiêu
-      nghề nghiệp — từ đó hỗ trợ luyện phỏng vấn phù hợp hơn.
+      {isMentor
+        ? "Hoàn thiện hồ sơ để học viên hiểu rõ hơn về kinh nghiệm, chuyên môn và cách Mentor có thể đồng hành trong quá trình luyện tập."
+        : "Hoàn thiện thông tin của bạn để ProInterview hiểu rõ hơn về học vấn, kinh nghiệm và mục tiêu nghề nghiệp — từ đó hỗ trợ luyện phỏng vấn phù hợp hơn."}
     </p>
   );
 }

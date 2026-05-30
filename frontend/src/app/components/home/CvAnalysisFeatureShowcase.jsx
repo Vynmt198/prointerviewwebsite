@@ -133,7 +133,7 @@ export function CvAnalysisFeatureShowcase({ onCtaClick }) {
             ) : null}
           </article>
 
-          <section className="cv-showcase-visual relative z-10 flex min-w-0 flex-col items-center justify-center overflow-visible lg:justify-self-center">
+          <section className="cv-showcase-visual relative z-10 flex min-w-0 flex-col items-center justify-center overflow-visible lg:translate-x-12 lg:justify-self-center">
             <div className="relative mx-auto w-full max-w-[31rem] overflow-visible">
               <div className="pointer-events-none absolute left-1/2 top-0 z-0 w-[11.7rem] -translate-x-1/2 -translate-y-[1.14rem] sm:w-[13.7rem] sm:-translate-y-[1.39rem] lg:w-[15.2rem] lg:-translate-y-[1.64rem]">
                 <div className="relative">

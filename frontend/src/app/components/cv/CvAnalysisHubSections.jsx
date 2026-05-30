@@ -50,7 +50,7 @@ export function CvAnalysisHubHero({ onJd, onField, navShellAligned = false }) {
     : `relative flex min-h-0 flex-col bg-transparent pb-4 pt-12 sm:pb-5 ${CUSTOMER_SHELL_GUTTER}`;
 
   const innerClass = navShellAligned
-    ? "cv-hub-enter flex w-full flex-col overflow-visible lg:flex-row lg:items-stretch lg:gap-3 xl:gap-4"
+    ? "cv-hub-enter flex w-full flex-col overflow-visible lg:flex-row lg:items-center lg:gap-3 xl:gap-4"
     : `cv-hub-enter ${CUSTOMER_SHELL_MAX} flex flex-col overflow-visible lg:flex-row lg:items-stretch lg:gap-3 xl:gap-4`;
 
   return (
@@ -62,10 +62,10 @@ export function CvAnalysisHubHero({ onJd, onField, navShellAligned = false }) {
           {/* Trái — hero + linh vật */}
           <div
             className={`relative flex shrink-0 flex-col justify-center py-3 sm:py-4 lg:min-w-[28rem] lg:max-w-[36rem] lg:flex-[0.92] xl:max-w-[37rem] ${
-              navShellAligned ? "lg:translate-x-[1rem] lg:py-[7rem]" : "lg:py-2"
+              navShellAligned ? "lg:py-0" : "lg:py-2"
             }`}
           >
-            <div className="relative z-10 flex flex-col gap-2.5 pr-16 sm:gap-3 sm:pr-20 lg:-translate-y-24 lg:pr-0">
+            <div className={`relative z-10 flex flex-col gap-2.5 pr-16 sm:gap-3 sm:pr-20 lg:pr-0 ${navShellAligned ? "lg:translate-x-4" : ""}`}>
               <h1 className="max-w-[min(100%,32rem)] font-headline tracking-tight lg:max-w-[36rem]">
                 <span className="block text-[clamp(2.1rem,4.8vw,3rem)] font-extrabold leading-[1.12]">
                   <span className="block text-[#630ed4] max-lg:text-pretty lg:whitespace-nowrap">
@@ -113,17 +113,17 @@ export function CvAnalysisHubHero({ onJd, onField, navShellAligned = false }) {
           {/* Phải — demo: banner + 2 ô + card cùng full width */}
           <div
             className={`flex min-w-0 w-full flex-1 flex-col gap-2.5 sm:gap-3 lg:ml-auto lg:min-w-0 lg:max-w-[32rem] lg:flex-[1.08] xl:max-w-[33rem] ${
-              navShellAligned ? "lg:-translate-x-[2.1rem]" : ""
+              navShellAligned ? "lg:translate-x-12" : ""
             }`}
           >
-            <div className="flex items-center justify-between gap-2 px-0.5">
+            <div className="flex items-center justify-between gap-2 px-0.5 lg:-translate-x-20 lg:translate-y-16">
               <span className="inline-flex items-center gap-1.5 text-[10px] font-semibold text-violet-800 sm:text-xs">
                 Kết quả phân tích
               </span>
             </div>
 
             {/* Demo KQ: banner tím + 2 ô + bảng — scale chung, origin-top (không đè nhau) */}
-            <div className="cv-hub-demo-stack flex w-full flex-col gap-2.5 sm:gap-3 lg:origin-top lg:scale-[1.06] lg:gap-3">
+            <div className="cv-hub-demo-stack flex w-full flex-col gap-2.5 sm:gap-3 lg:origin-top lg:-translate-x-20 lg:translate-y-16 lg:scale-[1.06] lg:gap-3">
             <div
               className="w-full shrink-0 overflow-hidden rounded-xl sm:rounded-2xl"
               style={{ background: "linear-gradient(135deg,#6E35E8 0%,#9B6DFF 55%,#B794FF 100%)" }}

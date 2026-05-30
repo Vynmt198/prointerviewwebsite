@@ -6,14 +6,14 @@ export const MENTOR_REQUIRED_SECTION_LABELS = [
   "Giới thiệu bản thân",
   "Kinh nghiệm làm việc",
   "Kỹ năng & chứng chỉ",
-  "Thông tin đăng ký mentor",
+  "Mức giá đăng ký",
 ];
 
 export const PROFILE_CV_SECTIONS = [
   { key: "intro", label: "Giới thiệu bản thân", mentorRequired: true },
   { key: "work", label: "Kinh nghiệm làm việc", mentorRequired: true },
   { key: "skills", label: "Kỹ năng & chứng chỉ", mentorRequired: true },
-  { key: "targetRate", label: "Thông tin đăng ký mentor", mentorRequired: true },
+  { key: "targetRate", label: "Mức giá đăng ký", mentorRequired: true },
   { key: "education", label: "Quá trình học tập", mentorRequired: false },
   { key: "extracurricular", label: "Hoạt động ngoại khóa", mentorRequired: false },
 ];
@@ -52,7 +52,7 @@ export function getProfileCvMissing(cv, contact = {}) {
   if (!filled(cv?.intro)) missing.push("Giới thiệu bản thân");
   if (!hasWorkSection(cv)) missing.push("Kinh nghiệm làm việc");
   if (!filled(cv?.skillsCerts)) missing.push("Kỹ năng & chứng chỉ");
-  if (!hasMentorFee(cv)) missing.push("Thông tin đăng ký mentor");
+  if (!hasMentorFee(cv)) missing.push("Mức giá đăng ký");
   return missing;
 }
 
