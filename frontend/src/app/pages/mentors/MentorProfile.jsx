@@ -20,6 +20,7 @@ import {
   mentorFieldTags,
 } from "../../utils/mentorProfileHelpers";
 import { CUSTOMER_SHELL_GUTTER, CUSTOMER_SHELL_MAX } from "../../components/layout/customerShellLayout";
+import { formatEducationDisplay } from "../../utils/profileEducationHistory";
 
 const PROFILE_TABS = [
   { id: "intro", label: "Giới thiệu" },
@@ -136,7 +137,7 @@ export function MentorProfile() {
   const workEntries = buildWorkEntriesForDisplay(mentor);
   const scheduleRows = formatRecurringScheduleRows(mentor.recurringSchedule);
   const reviewSummary = buildReviewRatingSummary(realReviews);
-  const education = String(mentor.profileEducation || "").trim();
+  const education = formatEducationDisplay(mentor.profileEducation || "");
   const awards = String(mentor.profileAwards || "").trim();
 
   const goBook = () => navigate(bookingHref);

@@ -96,10 +96,10 @@ export async function startServer() {
       if (err.code === "EADDRINUSE" && server.listening) return;
       if (err.code === "EADDRINUSE") {
         console.error(
-          `\nCổng ${PORT} đang bị chiếm.\n` +
-            `Chạy: netstat -ano | findstr :${PORT}\n` +
-            `Rồi: taskkill /PID <số_PID> /F\n` +
-            `Sau đó: npm start lại trong thư mục backend.\n`,
+          `\nCổng ${PORT} đang bị chiếm (thường do backend cũ còn chạy).\n` +
+            `macOS/Linux: lsof -ti :${PORT} | xargs kill -9\n` +
+            `Windows: netstat -ano | findstr :${PORT}  →  taskkill /PID <PID> /F\n` +
+            `Hoặc tắt terminal đang chạy npm run dev / dev:full, rồi chạy lại.\n`,
         );
         process.exit(1);
         return;

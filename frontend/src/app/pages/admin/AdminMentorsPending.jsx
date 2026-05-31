@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import { CheckCircle, XCircle, FileText, Briefcase } from "lucide-react";
 import { adminApi } from "../../utils/adminApi";
 import { getInitials } from "../../utils/auth";
+import { formatEducationDisplay } from "../../utils/profileEducationHistory";
 import { formatWorkHistoryLines, parseWorkHistory } from "../../utils/profileWorkHistory";
 import { toast } from "sonner";
 
@@ -121,9 +122,10 @@ function getMentorPreviewFromApplication(mentor) {
     ? mentor.companies.filter(Boolean)
     : [];
 
-  const education =
+  const educationRaw =
     String(mentor?.profileEducation ?? "").trim() ||
     String(u.profileEducation || u.school || "").trim();
+  const education = formatEducationDisplay(educationRaw);
 
   const rawWork =
     String(mentor?.profileWorkExperience ?? "").trim() ||

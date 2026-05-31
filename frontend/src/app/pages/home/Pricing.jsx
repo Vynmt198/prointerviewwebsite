@@ -144,11 +144,11 @@ function normalizePlanKey(plan) {
 
 function BillingToggle({ billing, onChange, savePercent }) {
   return (
-    <div className="mx-auto flex w-fit max-w-full flex-wrap items-center justify-center gap-1 rounded-full border border-violet-200/80 bg-white p-1.5 shadow-[0_8px_28px_rgba(99,14,212,0.1)]">
+    <div className="mx-auto flex w-full max-w-md flex-nowrap items-stretch justify-center gap-0.5 rounded-full border border-violet-200/80 bg-white p-1 shadow-[0_8px_28px_rgba(99,14,212,0.1)] sm:max-w-lg lg:w-fit lg:max-w-full lg:flex-wrap lg:gap-1 lg:p-1.5">
       <button
         type="button"
         onClick={() => onChange("monthly")}
-        className={`rounded-full px-5 py-2.5 text-sm font-bold transition-all ${
+        className={`flex-1 rounded-full px-2 py-2 text-center text-xs font-bold transition-all sm:px-3 lg:flex-none lg:px-5 lg:py-2.5 lg:text-sm ${
           billing === "monthly"
             ? "bg-violet-100 text-violet-950 shadow-sm"
             : "text-violet-600 hover:text-violet-900"
@@ -159,14 +159,14 @@ function BillingToggle({ billing, onChange, savePercent }) {
       <button
         type="button"
         onClick={() => onChange("yearly")}
-        className={`inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-bold transition-all ${
+        className={`inline-flex flex-1 items-center justify-center gap-1 rounded-full px-2 py-2 text-xs font-bold transition-all sm:gap-1.5 sm:px-3 lg:flex-none lg:gap-2 lg:px-5 lg:py-2.5 lg:text-sm ${
           billing === "yearly"
             ? "bg-violet-100 text-violet-950 shadow-sm"
             : "text-violet-600 hover:text-violet-900"
         }`}
       >
-        Hàng năm
-        <span className="rounded-full bg-gradient-to-r from-[#93f72b] to-[#93f72b] px-2 py-0.5 text-[10px] font-extrabold text-violet-950">
+        <span className="whitespace-nowrap">Hàng năm</span>
+        <span className="shrink-0 whitespace-nowrap rounded-full bg-gradient-to-r from-[#93f72b] to-[#93f72b] px-1.5 py-px text-[9px] font-extrabold leading-tight text-violet-950 sm:px-2 sm:py-0.5 sm:text-[10px]">
           Tiết kiệm {savePercent}%
         </span>
       </button>

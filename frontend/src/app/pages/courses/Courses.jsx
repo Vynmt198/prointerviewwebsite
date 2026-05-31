@@ -1,7 +1,7 @@
 import { MentorPageShell } from "../../components/mentor/MentorPageShell";
 import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router";
-import { Search, Star, Clock, ChevronDown, ShoppingCart, ChevronLeft, ChevronRight } from "lucide-react";
+import { Search, Star, Clock, ShoppingCart, ChevronLeft, ChevronRight } from "lucide-react";
 import {
   Pagination,
   PaginationContent,
@@ -22,6 +22,11 @@ import {
   courseMatchesTopic,
   getCourseTopicLabel,
 } from "../../constants/courseCategories";
+import {
+  ExploreFilterSidebar,
+  FilterRadio,
+  FilterSection,
+} from "../../components/shared/ExploreFilterSidebar";
 
 const LEVEL_OPTIONS = [
   { label: "Người mới", value: "Beginner" },
@@ -134,42 +139,6 @@ function cnPageNav(disabled) {
   }`;
 }
 
-function FilterRadio({ active, onClick, children }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="flex w-full items-center gap-2.5 rounded-lg py-1.5 text-left text-sm text-slate-700 transition-colors hover:bg-violet-50/80"
-    >
-      <span
-        className={`flex size-4 shrink-0 items-center justify-center rounded-full border-2 transition-colors ${
-          active ? "border-[#8037f4] bg-[#8037f4]" : "border-slate-300 bg-white"
-        }`}
-        aria-hidden
-      >
-        {active ? <span className="size-1.5 rounded-full bg-white" /> : null}
-      </span>
-      <span className={active ? "font-semibold text-violet-950" : ""}>{children}</span>
-    </button>
-  );
-}
-
-function FilterSection({ title, open, onToggle, children }) {
-  return (
-    <div className="border-b border-slate-200/80 py-3 last:border-0">
-      <button
-        type="button"
-        onClick={onToggle}
-        className="flex w-full items-center justify-between text-left text-sm font-bold text-slate-800"
-      >
-        {title}
-        <ChevronDown className={`size-4 text-slate-400 transition-transform ${open ? "rotate-180" : ""}`} />
-      </button>
-      {open ? <div className="mt-2 space-y-0.5">{children}</div> : null}
-    </div>
-  );
-}
-
 function CoursesExploreSidebar({
   selectedLevel,
   onLevelChange,
@@ -181,14 +150,26 @@ function CoursesExploreSidebar({
   onClear,
   hasFilter,
 }) {
-  const [openLevel, setOpenLevel] = useState(true);
-  const [openCategory, setOpenCategory] = useState(true);
-  const [openFee, setOpenFee] = useState(true);
+  const filterSectionsOpenOnDesktop = () =>
+    typeof window !== "undefined" && window.matchMedia("(min-width: 1024px)").matches;
+
+  const [openLevel, setOpenLevel] = useState(filterSectionsOpenOnDesktop);
+  const [openCategory, setOpenCategory] = useState(filterSectionsOpenOnDesktop);
+  const [openFee, setOpenFee] = useState(filterSectionsOpenOnDesktop);
+
+  const collapseFilterSections = () => {
+    setOpenLevel(false);
+    setOpenCategory(false);
+    setOpenFee(false);
+  };
 
   return (
-    <aside className="w-full shrink-0 rounded-2xl border border-slate-200/90 bg-slate-50/90 p-4 lg:w-[15.5rem] xl:w-[17rem]">
-      <p className="mb-3 text-xs font-bold uppercase tracking-wider text-slate-500">Bộ lọc</p>
-
+    <ExploreFilterSidebar
+      onClear={onClear}
+      hasFilter={hasFilter}
+      mobileCollapsible
+      onMobilePanelOpen={collapseFilterSections}
+    >
       <FilterSection title="Cấp độ" open={openLevel} onToggle={() => setOpenLevel((v) => !v)}>
         {LEVEL_OPTIONS.map((opt) => (
           <FilterRadio
@@ -226,21 +207,14 @@ function CoursesExploreSidebar({
           </FilterRadio>
         ))}
       </FilterSection>
-
-      <button
-        type="button"
-        onClick={onClear}
-        disabled={!hasFilter}
-        className="mt-4 w-full rounded-lg bg-[#8037f4] py-2.5 text-sm font-bold text-white transition-colors hover:bg-violet-700 disabled:cursor-not-allowed disabled:opacity-40"
-      >
-        Xóa bộ lọc
-      </button>
-    </aside>
+    </ExploreFilterSidebar>
   );
 }
 
 function CourseListRow({ course, formatPrice, onOpen }) {
   const ratingDisplay = course.rating != null ? course.rating.toFixed(1) : "—";
+  const durationHours = Math.floor((course.duration || 0) / 60);
+  const mentorLine = [course.mentorName, course.mentorTitle].filter(Boolean).join(" · ");
 
   return (
     <article
@@ -253,48 +227,67 @@ function CourseListRow({ course, formatPrice, onOpen }) {
           onOpen();
         }
       }}
-      className="group flex cursor-pointer gap-4 rounded-md border border-slate-200/90 bg-white p-3 shadow-sm transition-all hover:border-violet-200 hover:shadow-md sm:gap-5 sm:p-4"
+      className="group cursor-pointer rounded-md border border-slate-200/90 bg-white p-3 shadow-sm transition-all hover:border-violet-200 hover:shadow-md lg:flex lg:items-stretch lg:gap-5 lg:p-4"
     >
-      <div className="relative h-24 w-32 shrink-0 overflow-hidden rounded-sm bg-violet-50 sm:h-28 sm:w-40">
-        <ImageWithFallback
-          src={course.thumbnail}
-          alt=""
-          className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-        />
-      </div>
+      <div className="grid grid-cols-[4.75rem_minmax(0,1fr)] gap-x-3 gap-y-2 lg:contents">
+        <div className="relative row-span-2 h-[4.75rem] w-full shrink-0 overflow-hidden rounded-sm bg-violet-50 lg:row-span-auto lg:h-28 lg:w-40">
+          <ImageWithFallback
+            src={course.thumbnail}
+            alt=""
+            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+          />
+        </div>
 
-      <div className="flex min-w-0 flex-1 flex-col justify-between py-0.5">
-        <div>
-          <h3 className="line-clamp-2 text-base font-bold leading-snug text-slate-900 group-hover:text-[#8037f4] sm:text-lg">
-            {course.title}
-          </h3>
-          {course.description ? (
-            <p className="mt-1.5 line-clamp-2 text-xs leading-relaxed text-slate-500 sm:text-sm">
-              {course.description}
+        <div className="col-start-2 flex min-w-0 flex-col justify-between py-0.5 lg:flex-1">
+          <div>
+            <div className="flex items-start justify-between gap-2">
+              <h3 className="line-clamp-2 flex-1 text-sm font-bold leading-snug text-slate-900 group-hover:text-[#8037f4] lg:text-lg">
+                {course.title}
+              </h3>
+              <p className="shrink-0 whitespace-nowrap pt-0.5 text-right text-[11px] font-black leading-tight text-[#8037f4] sm:text-xs lg:hidden">
+                {formatPrice(course.price)}
+              </p>
+            </div>
+            {course.description ? (
+              <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-slate-500 lg:mt-1.5 lg:text-sm">
+                {course.description}
+              </p>
+            ) : null}
+            <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-slate-500 lg:mt-2 lg:gap-3 lg:text-xs">
+              <span className="inline-flex shrink-0 items-center gap-1 font-semibold text-amber-600">
+                <Star className="size-3 fill-amber-400 text-amber-400 lg:size-3.5" />
+                {ratingDisplay}
+              </span>
+              <span className="inline-flex shrink-0 items-center gap-1">
+                <Clock className="size-3 lg:size-3.5" />
+                {durationHours > 0 ? `${durationHours}h` : "—"}
+              </span>
+              <span className="shrink-0">{getLevelBadge(course.level)}</span>
+            </div>
+          </div>
+          {mentorLine ? (
+            <p className="mt-1.5 line-clamp-2 text-[11px] leading-snug text-slate-500 lg:mt-2 lg:line-clamp-1 lg:truncate lg:text-xs">
+              {mentorLine}
             </p>
           ) : null}
-          <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-slate-500">
-            <span className="inline-flex items-center gap-1 font-semibold text-amber-600">
-              <Star className="size-3.5 fill-amber-400 text-amber-400" />
-              {ratingDisplay}
-            </span>
-            <span className="inline-flex items-center gap-1">
-              <Clock className="size-3.5" />
-              {Math.floor(course.duration / 60)}h
-            </span>
-            <span>{getLevelBadge(course.level)}</span>
+          <div className="mt-2 flex justify-end lg:hidden">
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onOpen();
+              }}
+              className="flex size-9 items-center justify-center rounded-sm border-2 border-[#8037f4] text-[#8037f4] transition-colors hover:bg-violet-50"
+              aria-label="Xem khóa học"
+            >
+              <ShoppingCart className="size-4" strokeWidth={2} />
+            </button>
           </div>
         </div>
-        <p className="mt-2 truncate text-xs text-slate-500">
-          {course.mentorName}
-          {course.mentorTitle ? ` · ${course.mentorTitle}` : ""}
-        </p>
       </div>
 
-      <div className="flex shrink-0 flex-col items-end justify-between gap-2 py-0.5">
-        <p className="text-right text-base font-black text-slate-900 sm:text-lg">
-          {formatPrice(course.price)}
-        </p>
+      <div className="hidden shrink-0 flex-col items-end justify-between gap-2 py-0.5 lg:flex">
+        <p className="text-right text-lg font-black text-[#8037f4]">{formatPrice(course.price)}</p>
         <button
           type="button"
           onClick={(e) => {
@@ -335,7 +328,7 @@ const getLevelBadge = (level) => {
   const cfg = configs[level] || configs.Intermediate;
   return (
     <span
-      className="text-xs font-bold px-2.5 py-1 rounded-sm"
+      className="inline-block shrink-0 whitespace-nowrap rounded-sm px-2 py-0.5 text-[10px] font-bold lg:px-2.5 lg:py-1 lg:text-xs"
       style={{
         background: cfg.bg,
         color: cfg.text,
@@ -502,31 +495,58 @@ export function Courses() {
                   />
 
                   <div className="min-w-0 flex-1">
-                    <div className="mb-4 flex flex-col gap-3 rounded-xl bg-gradient-to-r from-violet-100/80 via-violet-50/50 to-slate-50 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
-                      <p className="text-sm font-semibold text-violet-950">
-                        <span className="text-lg font-black">{filteredCourses.length}</span> kết quả
-                        {selectedCategory ? (
-                          <span className="font-normal text-slate-600">
-                            {" "}
-                            · {getCourseTopicLabel(selectedCategory)}
-                          </span>
-                        ) : null}
-                        {selectedLevel ? (
-                          <span className="font-normal text-slate-600">
-                            {" "}
-                            ·{" "}
-                            {LEVEL_OPTIONS.find((o) => o.value === selectedLevel)?.label ||
-                              selectedLevel}
-                          </span>
-                        ) : null}
-                        {selectedFee ? (
-                          <span className="font-normal text-slate-600">
-                            {" "}
-                            · {FEE_OPTIONS.find((o) => o.value === selectedFee)?.label}
-                          </span>
-                        ) : null}
-                      </p>
-                      <label className="flex items-center gap-2 text-sm text-slate-600">
+                    <label className="mb-3 flex items-center gap-2 text-sm text-slate-600 lg:hidden">
+                      <span className="shrink-0 font-medium">Sắp xếp theo</span>
+                      <select
+                        value={sortBy}
+                        onChange={(e) => setSortBy(e.target.value)}
+                        className="min-w-0 flex-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-800 shadow-sm focus:border-violet-300 focus:outline-none focus:ring-1 focus:ring-violet-200"
+                      >
+                        {SORT_OPTIONS.map((opt) => (
+                          <option key={opt.value} value={opt.value}>
+                            {opt.label}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+
+                    <div
+                      className={`mb-4 lg:flex lg:flex-row lg:items-center lg:justify-between ${
+                        exploreHasFilter
+                          ? "rounded-xl bg-gradient-to-r from-violet-100/80 via-violet-50/50 to-slate-50 px-4 py-3"
+                          : "lg:justify-end"
+                      }`}
+                    >
+                      {exploreHasFilter ? (
+                        <p className="text-sm font-semibold text-violet-950">
+                          <span className="text-lg font-black">{filteredCourses.length}</span> kết quả
+                          {selectedCategory ? (
+                            <span className="font-normal text-slate-600">
+                              {" "}
+                              · {getCourseTopicLabel(selectedCategory)}
+                            </span>
+                          ) : null}
+                          {selectedLevel ? (
+                            <span className="font-normal text-slate-600">
+                              {" "}
+                              ·{" "}
+                              {LEVEL_OPTIONS.find((o) => o.value === selectedLevel)?.label ||
+                                selectedLevel}
+                            </span>
+                          ) : null}
+                          {selectedFee ? (
+                            <span className="font-normal text-slate-600">
+                              {" "}
+                              · {FEE_OPTIONS.find((o) => o.value === selectedFee)?.label}
+                            </span>
+                          ) : null}
+                        </p>
+                      ) : null}
+                      <label
+                        className={`hidden items-center gap-2 text-sm text-slate-600 lg:flex ${
+                          exploreHasFilter ? "mt-3 lg:mt-0" : ""
+                        }`}
+                      >
                         <span className="shrink-0 font-medium">Sắp xếp theo</span>
                         <select
                           value={sortBy}

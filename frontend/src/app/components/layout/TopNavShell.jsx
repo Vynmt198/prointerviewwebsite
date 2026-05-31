@@ -1,5 +1,5 @@
 import React from "react";
-import { CUSTOMER_SHELL_GUTTER, CUSTOMER_SHELL_MAX } from "./customerShellLayout";
+import { CUSTOMER_SHELL_MAX } from "./customerShellLayout";
 
 export function TopNavShell({ variant = "light", scrolled = true, alignTop = false, children }) {
   const isDark = variant === "dark";
@@ -25,12 +25,12 @@ export function TopNavShell({ variant = "light", scrolled = true, alignTop = fal
 
   return (
     <nav
-      className={`fixed left-0 right-0 z-[100] pointer-events-none ${CUSTOMER_SHELL_GUTTER} ${
+      className={`top-nav-shell-outer fixed left-0 right-0 z-[100] pointer-events-none lg:px-24 ${
         alignTop ? "top-0 pt-3 sm:pt-4" : "top-4"
       }`}
     >
       <div
-        className={`top-nav-pill pointer-events-auto flex h-10 w-full max-w-full min-w-0 flex-nowrap items-center justify-between gap-2 px-4 py-0 sm:h-12 sm:gap-3 sm:px-6 md:h-14 md:px-8 ${CUSTOMER_SHELL_MAX}`}
+        className={`top-nav-pill pointer-events-auto mx-auto flex h-10 w-full max-w-full min-w-0 flex-nowrap items-center justify-between gap-2 px-3 py-0 max-lg:px-3.5 sm:h-12 sm:gap-3 sm:px-6 md:h-14 md:px-8 ${CUSTOMER_SHELL_MAX}`}
         style={pillStyle}
       >
         {children}

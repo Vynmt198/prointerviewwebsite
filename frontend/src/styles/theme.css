@@ -348,15 +348,49 @@ body:has(.app-user-shell) {
 
 html.app-route-home,
 html.app-route-home body {
-  background-color: #dcd2eb;
+  background-color: #d6c9e8;
 }
 
 .app-user-shell--home {
-  overflow-x: auto;
   overflow-y: visible;
 }
 
+@media (max-width: 1023px) {
+  /* Navbar fixed — không clip shadow/bo góc pill */
+  .app-user-shell {
+    overflow-x: visible;
+  }
+
+  .app-user-shell main {
+    overflow-x: hidden;
+  }
+
+  .app-user-shell--home {
+    overflow-x: visible;
+  }
+
+  .top-nav-shell-outer {
+    box-sizing: border-box;
+    padding-left: max(1rem, env(safe-area-inset-left, 0px));
+    padding-right: max(1rem, env(safe-area-inset-right, 0px));
+    overflow: visible;
+  }
+
+  .home-hero-section {
+    overflow-x: hidden;
+  }
+
+  html.app-route-home .home-layout-fixed {
+    width: 100%;
+    min-width: 0;
+    overflow-x: visible;
+  }
+}
+
 @media (min-width: 1024px) {
+  .app-user-shell--home {
+    overflow-x: auto;
+  }
   .home-layout-fixed {
     width: max(100%, 90rem);
     min-width: 90rem;

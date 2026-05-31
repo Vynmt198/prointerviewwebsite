@@ -11,8 +11,10 @@ import { HOME_DEMO_COURSES } from "../../data/homeLandingDemo";
 import { COURSES_SHOWCASE_COPY } from "../../constants/brandVoice";
 import {
   HOME_SECTION_TITLE_CLAMP,
+  HOME_COURSES_TITLE_CLAMP,
   homeSectionClasses as ty,
 } from "../../constants/homeTypography";
+import { SparkleGlyph } from "../decor/SparkleGlyph";
 
 /** Một khóa mẫu cố định (STAR) — tab lọc chỉ minh họa UI. */
 const DEMO_COURSE = HOME_DEMO_COURSES[0];
@@ -96,10 +98,11 @@ function CoursesLearningMockup() {
   return (
     <div className="courses-mock-panel relative w-full overflow-visible rounded-[1.75rem] px-[1.2rem] pb-[1.45rem] pt-[5.2rem] sm:rounded-[2rem] sm:px-[1.45rem] sm:pb-[1.7rem] sm:pt-[5.7rem]">
       <div
-        className="pointer-events-none absolute left-1/2 top-0 z-[2] w-[14rem] -translate-x-[calc(50%+12.8rem)] translate-y-[calc(-50%+2.575rem)] sm:w-[16rem]"
+        className="pointer-events-none absolute left-[15%] sm:left-[20%] lg:left-1/2 top-0 z-[2] w-[12rem] -translate-x-[calc(50%+0.5rem)] lg:-translate-x-[calc(50%+12.8rem)] translate-y-[calc(-50%+2.3rem)] lg:translate-y-[calc(-50%+2.575rem)] sm:w-[14rem] lg:w-[16rem]"
         aria-hidden
       >
         <div className="courses-mascot-sticker relative mx-auto w-fit">
+          <SparkleGlyph className="absolute -left-[2rem] top-[1rem] w-10 h-10 -rotate-12 drop-shadow-md sm:-left-[3rem] sm:top-[1.5rem] sm:w-14 sm:h-14" />
           <img
             src="/mascot-courses-ready.png?v=7"
             alt=""
@@ -255,22 +258,23 @@ export function CoursesFeatureShowcase({ onCtaClick }) {
         }
       `}</style>
       <div className={`home-mobile-gutter relative z-10 flex w-full items-center overflow-visible py-2 ${HOME_SECTION_INNER}`}>
-        <div className="mx-auto grid w-full max-w-6xl origin-center scale-x-[1] scale-y-[1.08] grid-cols-1 items-center gap-[1.45rem] overflow-visible sm:scale-x-[1.02] sm:scale-y-[1.1] lg:grid-cols-[1.12fr_0.88fr] lg:scale-x-[1.05] lg:scale-y-[1.12] lg:items-center lg:gap-[1.45rem] xl:max-w-[68rem] xl:scale-x-[1.07] xl:scale-y-[1.14]">
-          <div className="relative z-10 flex w-full min-w-0 justify-center px-1 sm:px-2">
+        <div className="mx-auto grid w-full max-w-6xl origin-center grid-cols-1 items-center gap-10 overflow-visible lg:grid-cols-[1.12fr_0.88fr] lg:scale-x-[1.05] lg:scale-y-[1.12] lg:gap-[1.45rem] xl:max-w-[68rem] xl:scale-x-[1.07] xl:scale-y-[1.14]">
+          <div className="relative z-10 flex w-full min-w-0 justify-center px-1 sm:px-2 max-lg:order-last">
             <CoursesLearningMockup />
           </div>
 
-          <article className="relative z-10 flex flex-col items-start gap-[0.825rem] pl-1 sm:gap-[0.95rem] sm:pl-3 lg:pl-0 lg:pr-0 xl:pl-1 xl:pr-2">
+          <article className="relative z-10 flex flex-col items-start gap-[0.825rem] pl-1 sm:gap-[0.95rem] sm:pl-3 lg:pl-0 lg:pr-0 xl:pl-1 xl:pr-2 max-lg:order-first">
             <span className={ty.badge}>
               <GraduationCap className="h-3.5 w-3.5 shrink-0" aria-hidden />
               {COURSES_SHOWCASE_COPY.badge}
             </span>
             <h2
-              className={`${ty.title} text-balance`}
-              style={{ fontSize: HOME_SECTION_TITLE_CLAMP }}
+              className={`${ty.title} sm:max-w-none`}
+              style={{ fontSize: HOME_COURSES_TITLE_CLAMP }}
             >
-              <span className="block">{COURSES_SHOWCASE_COPY.titleLine1}</span>
-              <span className={ty.titleLineAccent}>{COURSES_SHOWCASE_COPY.titleLine2}</span>
+              <span className="block sm:whitespace-nowrap">{COURSES_SHOWCASE_COPY.titleLine1}</span>
+              <span className={`${ty.titleLineAccent} sm:whitespace-nowrap`}>{COURSES_SHOWCASE_COPY.titleLine2}</span>
+              <span className={`${ty.titleLineAccent} sm:whitespace-nowrap`}>{COURSES_SHOWCASE_COPY.titleLine3}</span>
             </h2>
             <p className={ty.body}>{COURSES_SHOWCASE_COPY.body}</p>
             <ul className={ty.bulletList}>

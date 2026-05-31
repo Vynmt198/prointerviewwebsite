@@ -45,6 +45,7 @@ import {
   ProfileCvTextarea,
 } from "../../components/profile/ProfileCvSection";
 import { ProfileWorkHistoryEditor } from "../../components/profile/ProfileWorkHistoryEditor";
+import { ProfileEducationHistoryEditor } from "../../components/profile/ProfileEducationHistoryEditor";
 import { uploadFile } from "../../utils/uploadApi";
 import { normalizeStoredUploadUrl, resolveMediaUrl } from "../../utils/mediaUrl";
 import {
@@ -57,6 +58,12 @@ import {
   pickCurrentWorkEntry,
   serializeWorkHistory,
 } from "../../utils/profileWorkHistory";
+import {
+  formatEducationHistoryLines,
+  hasEducationHistoryContent,
+  parseEducationHistory,
+  serializeEducationHistory,
+} from "../../utils/profileEducationHistory";
 
 function buildCvProfileFromSources(u, mentor) {
   const skillsFromUser =
@@ -93,6 +100,9 @@ function buildCvProfileFromSources(u, mentor) {
   const current = pickCurrentWorkEntry(workHistory);
   const years =
     mentor?.experienceYears ?? u?.experience ?? estimateExperienceYears(workHistory) ?? "";
+  const rawEdu = mentor?.profileEducation || u?.profileEducation || u?.school || "";
+  const educationHistory = parseEducationHistory(rawEdu);
+  const hasStructuredEdu = String(rawEdu).trim().startsWith("{");
   return {
     intro: mentor?.bio || u?.bio || "",
     title: current?.role || mentor?.title || u?.position || "",
@@ -100,7 +110,10 @@ function buildCvProfileFromSources(u, mentor) {
     yearsOfExperience: String(years ?? ""),
     workHistory,
     workExperience: hasStructured ? formatWorkHistoryLines(workHistory) : String(rawWork).trim(),
-    education: mentor?.profileEducation || u?.profileEducation || u?.school || "",
+    educationHistory,
+    education: hasStructuredEdu
+      ? formatEducationHistoryLines(educationHistory)
+      : String(rawEdu).trim(),
     extracurricular: mentor?.profileExtracurricular || u?.profileExtracurricular || "",
     awards: mentor?.profileAwards || u?.profileAwards || "",
     skillsCerts:
@@ -113,6 +126,14 @@ function buildCvProfileFromSources(u, mentor) {
     fields: Array.isArray(mentor?.fields) ? mentor.fields.join(", ") : "",
     responseTime: mentor?.responseTime || "",
     timezone: mentor?.timezone || "Asia/Ho_Chi_Minh",
+  };
+}
+
+function syncCvFromEducationHistory(cv) {
+  const entries = Array.isArray(cv.educationHistory) ? cv.educationHistory : [];
+  return {
+    ...cv,
+    education: entries.length ? formatEducationHistoryLines(entries) : cv.education ?? "",
   };
 }
 
@@ -141,7 +162,9 @@ function expandCvSectionsWithContent(cv) {
   ) {
     next.work = true;
   }
-  if (String(cv?.education ?? "").trim()) next.education = true;
+  if (hasEducationHistoryContent(cv?.educationHistory) || String(cv?.education ?? "").trim()) {
+    next.education = true;
+  }
   if (String(cv?.extracurricular ?? "").trim()) next.extracurricular = true;
   if (String(cv?.awards ?? "").trim()) next.awards = true;
   if (String(cv?.skillsCerts ?? "").trim()) next.skills = true;
@@ -155,17 +178,19 @@ async function persistCvProfileToUser(cv) {
       .split(",")
       .map((x) => x.trim())
       .filter(Boolean);
-  const synced = syncCvFromWorkHistory(cv);
+  const synced = syncCvFromEducationHistory(syncCvFromWorkHistory(cv));
   const years = Number(synced.yearsOfExperience);
   const workStored = serializeWorkHistory(synced.workHistory || []);
+  const eduStored = serializeEducationHistory(synced.educationHistory || []);
+  const eduText = formatEducationHistoryLines(synced.educationHistory || []);
   return updateUser({
     bio: synced.intro,
     position: synced.title,
     company: synced.company,
     experience: Number.isFinite(years) && years >= 0 ? years : 0,
-    school: synced.education,
+    school: eduText,
     profileWorkExperience: workStored,
-    profileEducation: synced.education,
+    profileEducation: eduStored,
     profileExtracurricular: synced.extracurricular,
     profileAwards: synced.awards,
     expertise: splitCsv(synced.skillsCerts),
@@ -181,7 +206,8 @@ function getCvSectionCopy(isMentor) {
         : "Chia sẻ ngắn về bản thân, định hướng nghề nghiệp và mục tiêu hiện tại.",
     },
     education: {
-      placeholder: "Cập nhật trường, chuyên ngành và thông tin học vấn liên quan.",
+      placeholder:
+        "Thêm trường, bằng cấp, chuyên ngành và thời gian học — có thể nhiều mốc.",
     },
     extracurricular: {
       placeholder: "Thêm hoạt động, câu lạc bộ hoặc dự án ngoài lớp bạn từng tham gia.",
@@ -941,14 +967,12 @@ export function Profile() {
                   isOpen={openCvSections.education}
                   onToggle={() => toggleCvSection("education")}
                 >
-                  <ProfileCvTextarea
-                    placeholder={cvSectionCopy.education.placeholder}
-                    value={cvProfile.education}
-                    onChange={(e) => {
+                  <ProfileEducationHistoryEditor
+                    entries={cvProfile.educationHistory}
+                    onChange={(educationHistory) => {
                       setMentorApplyError("");
-                      setCvProfile({ ...cvProfile, education: e.target.value });
+                      setCvProfile(syncCvFromEducationHistory({ ...cvProfile, educationHistory }));
                     }}
-                    rows={3}
                   />
                 </ProfileCvAccordionSection>
 

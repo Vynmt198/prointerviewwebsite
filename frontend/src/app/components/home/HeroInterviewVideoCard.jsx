@@ -76,7 +76,7 @@ export function HeroInterviewVideoCard() {
           }
         }
       `}</style>
-      <div className="hero-video-hud-compact relative mx-auto mt-6 w-full max-w-full translate-x-4 -translate-y-8 overflow-visible sm:mt-8 lg:mt-0 lg:ml-auto lg:max-w-[28rem] max-lg:mt-1 max-lg:w-[min(88vw,14rem)] max-lg:max-w-[14rem] max-lg:translate-x-0 max-lg:translate-y-0">
+      <div className="hero-video-hud-compact relative mx-auto mt-6 w-full max-w-full translate-x-4 -translate-y-8 overflow-visible sm:mt-8 lg:mt-0 lg:ml-auto lg:max-w-[28rem] max-lg:mt-2 max-lg:w-[min(88vw,19rem)] max-lg:max-w-[19rem] max-lg:translate-x-0 max-lg:translate-y-0">
         <div className="@container relative overflow-visible rounded-[1.65rem] bg-white p-2 shadow-[0_16px_44px_rgba(99,14,212,0.14)] sm:rounded-[1.85rem] sm:p-2.5 max-lg:rounded-md max-lg:border max-lg:border-violet-100/80 max-lg:p-1 max-lg:shadow-sm">
           <div className="relative w-full min-h-[calc(100cqw*3.51/4+1.5rem)] max-lg:aspect-[3/4] max-lg:min-h-0">
             <div className="absolute inset-0 overflow-hidden rounded-[1.2rem] bg-slate-100 sm:rounded-[1.35rem] max-lg:rounded-sm">

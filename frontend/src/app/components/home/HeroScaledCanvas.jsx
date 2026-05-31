@@ -14,7 +14,7 @@ export function HeroScaledCanvas({ children, className = "" }) {
 
   if (!desktop) {
     return (
-      <div className={`grid grid-cols-1 gap-8 max-lg:gap-5 ${className}`.trim()}>
+      <div className={`grid w-full grid-cols-1 gap-8 max-lg:gap-6 ${className}`.trim()}>
         {children}
       </div>
     );

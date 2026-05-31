@@ -65,7 +65,7 @@ export function CvAnalysisHubHero({ onJd, onField, navShellAligned = false }) {
               navShellAligned ? "lg:py-0" : "lg:py-2"
             }`}
           >
-            <div className={`relative z-10 flex flex-col gap-2.5 pr-16 sm:gap-3 sm:pr-20 lg:pr-0 ${navShellAligned ? "lg:translate-x-4" : ""}`}>
+            <div className={`relative z-10 flex flex-col gap-2.5 sm:gap-3 ${navShellAligned ? "lg:translate-x-4" : ""}`}>
               <h1 className="max-w-[min(100%,32rem)] font-headline tracking-tight lg:max-w-[36rem]">
                 <span className="block text-[clamp(2.1rem,4.8vw,3rem)] font-extrabold leading-[1.12]">
                   <span className="block text-[#630ed4] max-lg:text-pretty lg:whitespace-nowrap">
@@ -76,38 +76,31 @@ export function CvAnalysisHubHero({ onJd, onField, navShellAligned = false }) {
                   </span>
                 </span>
                 <p className="mt-2 max-w-[min(100%,30rem)] text-[clamp(0.9375rem,2vw,1.0625rem)] font-medium leading-snug text-slate-600 lg:max-w-[36rem]">
-                  <span className="block max-lg:text-pretty">{CV_HUB_HERO_COPY.bodyLine1}</span>
-                  <span className="mt-0.5 block max-lg:text-pretty lg:whitespace-nowrap">
-                    {CV_HUB_HERO_COPY.bodyLine2}
+                  <span className="max-lg:inline block">{CV_HUB_HERO_COPY.bodyLine1}</span>
+                  <span className="max-lg:inline block mt-0.5 lg:whitespace-nowrap">
+                    {" "}{CV_HUB_HERO_COPY.bodyLine2}
                   </span>
                 </p>
               </h1>
 
-              <div className="flex flex-wrap items-center gap-2.5 pt-0.5">
+              <div className="flex w-full flex-col items-center gap-2.5 pt-0.5 max-lg:mx-auto max-lg:max-w-sm lg:flex-row lg:flex-wrap lg:items-center lg:justify-start">
                 <button
                   type="button"
                   onClick={onJd}
-                  className="cv-hub-cta inline-flex items-center justify-center rounded-2xl bg-gradient-to-br from-[#630ed4] to-[#7c3aed] px-5 py-2.5 text-xs font-bold text-white shadow-lg shadow-violet-500/25 hover:brightness-105 hover:shadow-xl hover:shadow-violet-500/30 sm:text-sm"
+                  className="cv-hub-cta inline-flex w-full max-w-[20rem] items-center justify-center rounded-2xl bg-gradient-to-br from-[#630ed4] to-[#7c3aed] px-5 py-2.5 text-center text-xs font-bold text-white shadow-lg shadow-violet-500/25 hover:brightness-105 hover:shadow-xl hover:shadow-violet-500/30 sm:text-sm lg:w-auto lg:max-w-none"
                 >
                   {CV_HUB_HERO_COPY.ctaJd}
                 </button>
                 <button
                   type="button"
                   onClick={onField}
-                  className="cv-hub-cta inline-flex items-center gap-2 rounded-2xl border-2 border-violet-200/80 bg-white/90 px-5 py-2.5 text-xs font-bold text-[#630ed4] shadow-sm backdrop-blur-sm hover:border-violet-300 hover:bg-white hover:shadow-md sm:text-sm"
+                  className="cv-hub-cta inline-flex w-full max-w-[20rem] items-center justify-center gap-2 rounded-2xl border-2 border-violet-200/80 bg-white/90 px-5 py-2.5 text-center text-xs font-bold text-[#630ed4] shadow-sm backdrop-blur-sm hover:border-violet-300 hover:bg-white hover:shadow-md sm:text-sm lg:w-auto lg:max-w-none"
                 >
                   {CV_HUB_HERO_COPY.ctaField}
                 </button>
               </div>
             </div>
 
-            <div className="pointer-events-none absolute right-0 top-[1.3rem] z-0 translate-x-[0.7rem] lg:hidden" aria-hidden>
-              <img
-                src="/mascot-cv-hub-knowledge.png?v=8"
-                alt=""
-                className="h-[11.5rem] w-[11.5rem] object-contain drop-shadow-[0_12px_28px_rgba(99,14,212,0.12)] sm:h-[11.5rem] sm:w-[11.5rem]"
-              />
-            </div>
           </div>
 
           {/* Phải — demo: banner + 2 ô + card cùng full width */}
@@ -125,7 +118,7 @@ export function CvAnalysisHubHero({ onJd, onField, navShellAligned = false }) {
             {/* Demo KQ: banner tím + 2 ô + bảng — scale chung, origin-top (không đè nhau) */}
             <div className="cv-hub-demo-stack flex w-full flex-col gap-2.5 sm:gap-3 lg:origin-top lg:-translate-x-20 lg:translate-y-16 lg:scale-[1.06] lg:gap-3">
             <div
-              className="w-full shrink-0 overflow-hidden rounded-xl sm:rounded-2xl"
+              className="w-full shrink-0 overflow-hidden rounded-md"
               style={{ background: "linear-gradient(135deg,#6E35E8 0%,#9B6DFF 55%,#B794FF 100%)" }}
             >
               <div className="relative px-4 py-3.5 text-white sm:px-5 sm:py-4">

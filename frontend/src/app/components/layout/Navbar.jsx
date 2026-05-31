@@ -249,14 +249,14 @@ function CustomerNavbar() {
                   <DropdownMenuTrigger asChild>
                     <button
                       type="button"
-                      className="relative inline-flex size-9 items-center justify-center rounded-xl transition-all focus:outline-none"
+                      className="relative inline-flex size-8 shrink-0 items-center justify-center rounded-xl transition-all focus:outline-none md:size-9"
                       style={{
                         background: notifOpen ? "rgba(128,55,244,0.1)" : "transparent",
                         border: notifOpen ? "1px solid rgba(128,55,244,0.25)" : "1px solid transparent",
                       }}
                       aria-label="Thông báo"
                     >
-                      <Bell className="h-5 w-5 text-[#8037f4]/75" />
+                      <Bell className="size-4 text-[#8037f4]/75 md:size-5" />
                       {unreadCount > 0 && (
                         <span
                           className="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full font-bold text-[#1d1a26]"
@@ -326,15 +326,15 @@ function CustomerNavbar() {
                 <DropdownMenuTrigger asChild>
                   <button
                     type="button"
-                    className="flex items-center gap-2 rounded-full border border-violet-200/80 bg-white py-1 pl-1 pr-2.5 shadow-sm transition-colors hover:border-violet-300"
+                    className="flex shrink-0 items-center justify-center rounded-full border border-violet-200/80 bg-white p-0 shadow-sm transition-colors hover:border-violet-300 size-7 md:gap-2 md:py-1 md:pl-1 md:pr-2.5 md:size-auto"
                   >
                     <span
-                      className="flex size-8 items-center justify-center rounded-full text-xs font-bold text-white"
+                      className="flex size-full items-center justify-center rounded-full text-[10px] font-bold leading-none text-white md:size-8 md:text-xs"
                       style={{ background: "#8037f4" }}
                     >
                       {initials}
                     </span>
-                    <span className="hidden max-w-[7rem] truncate text-sm font-semibold text-slate-700 sm:inline">
+                    <span className="hidden max-w-[7rem] truncate text-sm font-semibold text-slate-700 md:inline">
                       {displayName}
                     </span>
                   </button>
@@ -384,11 +384,12 @@ function CustomerNavbar() {
               </Link>
               <Link
                 to={registerHref}
-                className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-4 py-1.5 text-sm font-semibold transition-all hover:scale-105 active:scale-95 sm:px-5"
+                className="hidden sm:inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-4 py-1.5 text-sm font-semibold transition-all hover:scale-105 active:scale-95 sm:px-5"
                 style={{
                   background: "#fff",
                   color: "#8037f4",
                   border: "1.5px solid #8037f4",
+
                 }}
               >
                 <UserPlus className="size-3.5 shrink-0" aria-hidden />
@@ -401,10 +402,10 @@ function CustomerNavbar() {
 
       {mobileOpen ? (
         <div
-          className={`fixed left-0 right-0 top-[3.65rem] z-[99] sm:top-[4.2rem] md:hidden ${CUSTOMER_SHELL_GUTTER}`}
+          className="top-nav-shell-outer fixed right-3 top-[3.8rem] z-[99] w-[14rem] sm:right-6 sm:top-[4.2rem] sm:w-[16rem] md:hidden"
         >
           <div
-            className={`rounded-2xl border border-slate-200 bg-white p-4 shadow-lg ${CUSTOMER_SHELL_MAX}`}
+            className="rounded-2xl border border-slate-200 bg-white p-3 shadow-2xl"
           >
           <ShellNavLinks
             items={CUSTOMER_NAV_ITEMS}
