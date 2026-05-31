@@ -128,17 +128,17 @@ const HERO_SPARKLE_MIN_MOVE_PX = 26;
 function heroSparkleFade(cursorSlot) {
   const slot = Math.min(2, Math.max(0, cursorSlot));
   const profiles = [
-    { duration: 1.65, times: [0, 0.14, 0.4, 1] },
-    { duration: 2.25, times: [0, 0.14, 0.58, 1] },
-    { duration: 2.95, times: [0, 0.15, 0.72, 1] },
+    { duration: 1.35, times: [0, 0.14, 0.4, 1] },
+    { duration: 1.85, times: [0, 0.14, 0.58, 1] },
+    { duration: 2.45, times: [0, 0.15, 0.72, 1] },
   ];
   const { duration, times } = profiles[slot];
-  const peak = 0.8 - slot * 0.04;
+  const peak = 1.0 - slot * 0.05; // Tăng opacity lên tối đa để rõ nét hơn
   return {
     duration,
     times,
-    opacity: [0, peak, peak * (0.55 - slot * 0.08), 0],
-    scale: [0.38, 0.74, 0.62, 0.28],
+    opacity: [0, peak, peak * (0.8 - slot * 0.1), 0],
+    scale: [0.38, 0.74, 0.62, 0.28], // Trả lại kích thước gốc
   };
 }
 
@@ -249,23 +249,55 @@ function HeroAtmosphere() {
   return (
     <>
       <div className="codex-mesh-bg" aria-hidden="true">
-        <motion.div style={{ x: pX1, y: pY1 }} className="absolute w-[60vw] h-[60vw] top-[-30%] left-[-20%]">
-          <div className="codex-organic-blob" style={{ background: 'radial-gradient(circle closest-side, rgba(128,55,244,0.4), rgba(128,55,244,0))', animation: 'organic-float-1 12s ease-in-out infinite alternate' }} />
-        </motion.div>
-        
-        <motion.div style={{ x: pX2, y: pY2 }} className="absolute w-[60vw] h-[60vw] top-[-30%] right-[-20%]">
-          <div className="codex-organic-blob" style={{ background: 'radial-gradient(circle closest-side, rgba(99,14,212,0.3), rgba(99,14,212,0))', animation: 'organic-float-2 15s ease-in-out infinite alternate' }} />
-        </motion.div>
-        
-        <motion.div style={{ x: pX3, y: pY3 }} className="absolute w-[70vw] h-[70vw] bottom-[-30%] left-[-20%]">
-          <div className="codex-organic-blob" style={{ background: 'radial-gradient(circle closest-side, rgba(163,112,247,0.35), rgba(163,112,247,0))', animation: 'organic-float-3 18s ease-in-out infinite alternate' }} />
-        </motion.div>
+        <div className="cloud-base-wash" />
 
-        <motion.div style={{ x: pX1, y: pY2 }} className="absolute w-[60vw] h-[60vw] bottom-[-20%] right-[-10%]">
-          <div className="codex-organic-blob" style={{ background: 'radial-gradient(circle closest-side, rgba(255,255,255,0.9), rgba(255,255,255,0))', mixBlendMode: 'normal', animation: 'organic-float-4 10s ease-in-out infinite alternate' }} />
-        </motion.div>
+        {/* ── DEPTH 1: Far background haze (slowest parallax) ── */}
+        <div className="cloud-layer">
+          <div className="cb cb-far-1" />
+          <div className="cb cb-far-2" />
+          <div className="cb cb-far-3" />
+        </div>
 
-        <div className="codex-mesh-noise" />
+        {/* ── DEPTH 2: Deep mid-clouds ── */}
+        <div className="cloud-layer">
+          <div className="cb cb-deep-1" />
+          <div className="cb cb-deep-2" />
+          <div className="cb cb-deep-3" />
+          <div className="cb cb-deep-4" />
+        </div>
+
+        {/* ── DEPTH 3: Mid-layer cloud formations (main visible masses) ── */}
+        <div className="cloud-layer">
+          <div className="cb cb-mid-1" />
+          <div className="cb cb-mid-2" />
+          <div className="cb cb-mid-3" />
+          <div className="cb cb-mid-4" />
+          <div className="cb cb-mid-5" />
+        </div>
+
+        {/* ── DEPTH 4: Upper-right darker mass ── */}
+        <div className="cloud-layer">
+          <div className="cb cb-dark-1" />
+          <div className="cb cb-dark-2" />
+          <div className="cb cb-dark-3" />
+        </div>
+
+        {/* ── DEPTH 5: Near foreground wisps (strongest parallax) ── */}
+        <div className="cloud-layer">
+          <div className="cb cb-near-1" />
+          <div className="cb cb-near-2" />
+          <div className="cb cb-near-3" />
+          <div className="cb cb-near-4" />
+        </div>
+
+        {/* ── DEPTH 6: Illumination & glow ── */}
+        <div className="cloud-layer">
+          <div className="cb cb-glow-1" />
+          <div className="cb cb-glow-2" />
+          <div className="cb cb-glow-3" />
+        </div>
+
+        <div className="cloud-vignette" />
       </div>
 
       <div className="pointer-events-none fixed inset-0 z-[5] overflow-hidden">
@@ -658,66 +690,218 @@ export function Home() {
           }
         }
 
-        /* ── CODEX MESH BACKGROUND (Hero Only, Layered & Faded) ── */
+        /* ── ATMOSPHERIC CLOUD BACKGROUND (Hero Only) ── */
         .codex-mesh-bg {
           position: absolute;
-          top: 0;
-          left: 0;
-          right: 0;
+          top: 0; left: 0; right: 0;
           height: 130vh;
           z-index: 0;
           overflow: hidden;
           pointer-events: none;
           background-color: transparent;
-          
-          /* Fade out smoothly at the bottom to blend with the rest of the page */
-          mask-image: linear-gradient(to bottom, black 50%, transparent 100%);
-          -webkit-mask-image: linear-gradient(to bottom, black 50%, transparent 100%);
+          mask-image: linear-gradient(to bottom, black 55%, transparent 100%);
+          -webkit-mask-image: linear-gradient(to bottom, black 55%, transparent 100%);
         }
 
-        .codex-organic-blob {
-          width: 100%;
-          height: 100%;
-          will-change: transform;
-          /* Removed mix-blend-mode: multiply to fix GPU rendering border artifacts */
+        /* Soft lavender-white base */
+        .cloud-base-wash {
+          position: absolute; inset: 0; z-index: 0;
+          background: linear-gradient(155deg, #efe6fa 0%, #e8ddf5 18%, #f5f0fc 40%, #faf8fe 58%, #f0e9f8 78%, #e5dbf3 100%);
         }
 
-        @keyframes organic-float-1 {
-          0% { transform: scale(1) translate(0, 0); }
-          33% { transform: scale(1.3) translate(15%, 25%); }
-          66% { transform: scale(0.8) translate(-10%, 15%); }
-          100% { transform: scale(1.1) translate(25%, 5%); }
+        .cloud-layer { position: absolute; inset: 0; will-change: transform; }
+        .cb { position: absolute; border-radius: 50%; }
+
+        /* ═══════ DEPTH 1: FAR HAZE (most blur, lowest opacity) ═══════ */
+        .cb-far-1 {
+          width: 80vw; height: 65vh; top: -20%; left: -15%;
+          background: radial-gradient(ellipse at 40% 40%, rgba(128,55,244,0.45) 0%, rgba(128,55,244,0) 70%);
+          filter: blur(55px);
+          animation: fog-a 14s ease-in-out infinite;
+        }
+        .cb-far-2 {
+          width: 65vw; height: 55vh; bottom: -15%; right: -10%;
+          background: radial-gradient(ellipse at 55% 60%, rgba(147,87,245,0.4) 0%, rgba(147,87,245,0) 70%);
+          filter: blur(60px);
+          animation: fog-b 16s ease-in-out infinite;
+        }
+        .cb-far-3 {
+          width: 50vw; height: 45vh; top: 10%; right: 20%;
+          background: radial-gradient(ellipse at center, rgba(183,148,255,0.35) 0%, rgba(183,148,255,0) 65%);
+          filter: blur(50px);
+          animation: fog-c 12s ease-in-out infinite;
         }
 
-        @keyframes organic-float-2 {
-          0% { transform: scale(1) translate(0, 0); }
-          33% { transform: scale(1.4) translate(-25%, 15%); }
-          66% { transform: scale(0.9) translate(15%, -20%); }
-          100% { transform: scale(1.2) translate(-20%, 30%); }
+        /* ═══════ DEPTH 2: DEEP MID-CLOUDS ═══════ */
+        .cb-deep-1 {
+          width: 50vw; height: 40vh; top: -5%; left: 5%;
+          background: radial-gradient(ellipse at 35% 45%, rgba(110,53,232,0.5) 0%, rgba(110,53,232,0) 65%);
+          filter: blur(40px);
+          animation: fog-d 11s ease-in-out infinite;
+        }
+        .cb-deep-2 {
+          width: 40vw; height: 35vh; top: 30%; right: -5%;
+          background: radial-gradient(ellipse at 60% 40%, rgba(128,55,244,0.45) 0%, rgba(128,55,244,0) 60%);
+          filter: blur(35px);
+          animation: fog-a 12s ease-in-out infinite reverse;
+        }
+        .cb-deep-3 {
+          width: 45vw; height: 38vh; bottom: 5%; left: 15%;
+          background: radial-gradient(ellipse at 40% 55%, rgba(163,112,247,0.42) 0%, rgba(163,112,247,0) 65%);
+          filter: blur(45px);
+          animation: fog-b 15s ease-in-out infinite;
+        }
+        .cb-deep-4 {
+          width: 30vw; height: 28vh; top: 15%; left: 35%;
+          background: radial-gradient(ellipse at center, rgba(99,14,212,0.38) 0%, rgba(99,14,212,0) 60%);
+          filter: blur(32px);
+          animation: fog-c 10s ease-in-out infinite;
         }
 
-        @keyframes organic-float-3 {
-          0% { transform: scale(1) translate(0, 0); }
-          33% { transform: scale(1.2) translate(30%, -20%); }
-          66% { transform: scale(0.85) translate(-15%, -10%); }
-          100% { transform: scale(1.3) translate(20%, -30%); }
+        /* ═══════ DEPTH 3: MID FORMATIONS (main visible masses) ═══════ */
+        .cb-mid-1 {
+          width: 38vw; height: 32vh; top: 8%; left: 0%;
+          background: radial-gradient(ellipse at 45% 50%, rgba(128,55,244,0.55) 0%, rgba(128,55,244,0) 60%);
+          filter: blur(25px);
+          animation: fog-d 9s ease-in-out infinite;
+        }
+        .cb-mid-2 {
+          width: 32vw; height: 28vh; top: 25%; left: 28%;
+          background: radial-gradient(ellipse at 50% 45%, rgba(110,53,232,0.52) 0%, rgba(110,53,232,0) 58%);
+          filter: blur(20px);
+          animation: fog-a 11s ease-in-out infinite;
+        }
+        .cb-mid-3 {
+          width: 35vw; height: 30vh; top: 5%; right: 10%;
+          background: radial-gradient(ellipse at 55% 40%, rgba(147,87,245,0.48) 0%, rgba(147,87,245,0) 62%);
+          filter: blur(22px);
+          animation: fog-b 12s ease-in-out infinite reverse;
+        }
+        .cb-mid-4 {
+          width: 28vw; height: 25vh; bottom: 18%; right: 20%;
+          background: radial-gradient(ellipse at center, rgba(163,112,247,0.45) 0%, rgba(163,112,247,0) 58%);
+          filter: blur(18px);
+          animation: fog-c 8s ease-in-out infinite;
+        }
+        .cb-mid-5 {
+          width: 25vw; height: 22vh; bottom: 30%; left: 10%;
+          background: radial-gradient(ellipse at 40% 55%, rgba(128,55,244,0.42) 0%, rgba(128,55,244,0) 55%);
+          filter: blur(15px);
+          animation: fog-d 11s ease-in-out infinite reverse;
         }
 
-        @keyframes organic-float-4 {
-          0% { transform: scale(1) translate(0, 0); }
-          50% { transform: scale(1.5) translate(30%, 30%); }
-          100% { transform: scale(0.8) translate(-20%, 15%); }
+        /* ═══════ DEPTH 4: UPPER-RIGHT DARKER MASS ═══════ */
+        .cb-dark-1 {
+          width: 45vw; height: 40vh; top: -10%; right: -5%;
+          background: radial-gradient(ellipse at 60% 35%, rgba(79,20,180,0.6) 0%, rgba(79,20,180,0) 65%);
+          filter: blur(30px);
+          animation: fog-b 14s ease-in-out infinite;
+        }
+        .cb-dark-2 {
+          width: 30vw; height: 28vh; top: 5%; right: 8%;
+          background: radial-gradient(ellipse at 55% 40%, rgba(99,14,212,0.55) 0%, rgba(99,14,212,0) 60%);
+          filter: blur(22px);
+          animation: fog-c 12s ease-in-out infinite;
+        }
+        .cb-dark-3 {
+          width: 22vw; height: 20vh; top: 18%; right: 18%;
+          background: radial-gradient(ellipse at center, rgba(67,10,160,0.5) 0%, rgba(67,10,160,0) 55%);
+          filter: blur(15px);
+          animation: fog-d 10s ease-in-out infinite reverse;
         }
 
-        /* Noise texture for realistic cloud feel */
-        .codex-mesh-noise {
-          position: absolute;
-          inset: 0;
-          background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.008' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
-          mix-blend-mode: overlay;
-          opacity: 0.3;
+        /* ═══════ DEPTH 5: NEAR FOREGROUND WISPS (least blur) ═══════ */
+        .cb-near-1 {
+          width: 30vw; height: 25vh; bottom: 10%; left: 0%;
+          background: radial-gradient(ellipse at 35% 55%, rgba(163,112,247,0.48) 0%, rgba(163,112,247,0) 55%);
+          filter: blur(15px);
+          animation: fog-a 7s ease-in-out infinite;
+        }
+        .cb-near-2 {
+          width: 25vw; height: 20vh; top: 40%; left: 50%;
+          background: radial-gradient(ellipse at center, rgba(183,148,255,0.45) 0%, rgba(183,148,255,0) 50%);
+          filter: blur(12px);
+          animation: fog-b 8s ease-in-out infinite;
+        }
+        .cb-near-3 {
+          width: 20vw; height: 18vh; top: 15%; left: 55%;
+          background: radial-gradient(ellipse at 45% 45%, rgba(128,55,244,0.4) 0%, rgba(128,55,244,0) 50%);
+          filter: blur(10px);
+          animation: fog-c 6s ease-in-out infinite reverse;
+        }
+        .cb-near-4 {
+          width: 22vw; height: 20vh; bottom: 25%; right: 5%;
+          background: radial-gradient(ellipse at 50% 50%, rgba(147,87,245,0.42) 0%, rgba(147,87,245,0) 52%);
+          filter: blur(12px);
+          animation: fog-d 8s ease-in-out infinite;
+        }
+
+        /* ═══════ DEPTH 6: ILLUMINATION & GLOW ═══════ */
+        .cb-glow-1 {
+          width: 50vw; height: 45vh; top: 12%; left: 18%;
+          background: radial-gradient(ellipse at 45% 45%, rgba(255,255,255,0.75) 0%, rgba(255,255,255,0) 55%);
+          filter: blur(45px);
+          animation: fog-glow 11s ease-in-out infinite;
+        }
+        .cb-glow-2 {
+          width: 35vw; height: 30vh; top: 30%; left: 35%;
+          background: radial-gradient(ellipse at center, rgba(248,244,253,0.65) 0%, rgba(248,244,253,0) 50%);
+          filter: blur(35px);
+          animation: fog-glow 14s ease-in-out infinite reverse;
+        }
+        .cb-glow-3 {
+          width: 28vw; height: 24vh; bottom: 20%; left: 25%;
+          background: radial-gradient(ellipse at 40% 50%, rgba(255,255,255,0.55) 0%, rgba(255,255,255,0) 55%);
+          filter: blur(30px);
+          animation: fog-glow 10s ease-in-out infinite;
+        }
+
+        /* Vignette */
+        .cloud-vignette {
+          position: absolute; inset: 0; z-index: 6;
+          background: radial-gradient(
+            ellipse 70% 60% at 45% 45%,
+            transparent 0%, transparent 35%,
+            rgba(110,53,232,0.06) 65%,
+            rgba(79,20,180,0.13) 100%
+          );
           pointer-events: none;
-          z-index: 10;
+        }
+
+        /* Breathing — slow, subtle autonomous movement */
+        @keyframes fog-a {
+          0% { opacity: 1; transform: scale(1) translate(0, 0); }
+          33% { transform: scale(1.05) translate(6%, 8%); }
+          66% { opacity: 0.8; transform: scale(1.1) translate(-4%, 5%); }
+          100% { opacity: 1; transform: scale(1) translate(0, 0); }
+        }
+        @keyframes fog-b {
+          0% { opacity: 1; transform: scale(1) translate(0, 0); }
+          33% { transform: scale(1.08) translate(-8%, 5%); }
+          66% { opacity: 0.82; transform: scale(1.15) translate(5%, -6%); }
+          100% { opacity: 1; transform: scale(1) translate(0, 0); }
+        }
+        @keyframes fog-c {
+          0% { opacity: 1; transform: scale(1) translate(0, 0); }
+          33% { transform: scale(0.95) translate(9%, -8%); }
+          66% { opacity: 0.75; transform: scale(0.9) translate(-6%, -3%); }
+          100% { opacity: 1; transform: scale(1) translate(0, 0); }
+        }
+        @keyframes fog-d {
+          0% { opacity: 1; transform: scale(1) translate(0, 0); }
+          33% { transform: scale(1.05) translate(-6%, -9%); }
+          66% { opacity: 0.85; transform: scale(1.1) translate(8%, 5%); }
+          100% { opacity: 1; transform: scale(1) translate(0, 0); }
+        }
+        @keyframes fog-glow {
+          0% { opacity: 1; transform: scale(1) translate(0, 0); }
+          33% { transform: scale(1.1) translate(5%, 5%); }
+          66% { opacity: 0.7; transform: scale(1.15) translate(-3%, -3%); }
+          100% { opacity: 1; transform: scale(1) translate(0, 0); }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          .cb { animation: none !important; }
         }
       `}</style>
 
