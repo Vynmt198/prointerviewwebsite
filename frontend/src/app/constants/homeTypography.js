@@ -7,6 +7,10 @@ export const HOME_HERO_TITLE_CLAMP = "clamp(2.45rem, 6.5vw, 4.85rem)";
 export const HOME_SECTION_TITLE_CLAMP = "clamp(2.25rem, 3.5vw, 3.25rem)";
 /** Lộ trình — 2 dòng cố định */
 export const HOME_HOW_IT_WORKS_TITLE_CLAMP = "clamp(2.25rem, 3.5vw, 3.25rem)";
+/** Khoá học — nhỏ hơn 1 size */
+export const HOME_COURSES_TITLE_CLAMP = "clamp(2.05rem, 3.1vw, 2.9rem)";
+/** Testimonials — mobile nhỏ hơn section chuẩn 1 bậc */
+export const HOME_TESTIMONIALS_TITLE_MOBILE_CLAMP = "clamp(2.05rem, 4.2vw, 2.65rem)";
 /** CV showcase — lớn hơn section chuẩn 0.1rem */
 export const HOME_CV_SHOWCASE_TITLE_CLAMP =
   "clamp(2.35rem, calc(3.5vw + 0.1rem), 3.35rem)";

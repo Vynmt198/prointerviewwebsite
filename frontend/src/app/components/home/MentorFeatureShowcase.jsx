@@ -364,9 +364,9 @@ export function MentorFeatureShowcase({ onCtaClick }) {
               <Users className="h-3.5 w-3.5 shrink-0" aria-hidden />
               {MENTOR_SHOWCASE_COPY.badge}
             </span>
-            <h2 className={ty.title} style={{ fontSize: HOME_SECTION_TITLE_CLAMP }}>
+            <h2 className={`${ty.title} sm:max-w-none`} style={{ fontSize: HOME_SECTION_TITLE_CLAMP }}>
               <span className="block">{MENTOR_SHOWCASE_COPY.titleLine1}</span>
-              <span className={ty.titleLineAccent}>{MENTOR_SHOWCASE_COPY.titleLine2}</span>
+              <span className={`${ty.titleLineAccent} sm:whitespace-nowrap`}>{MENTOR_SHOWCASE_COPY.titleLine2}</span>
             </h2>
           </article>
 

@@ -57,13 +57,28 @@ function MentorsSidebar({
   onClear,
   hasFilter,
 }) {
-  const [openField, setOpenField] = useState(true);
-  const [openExp, setOpenExp] = useState(true);
-  const [openPrice, setOpenPrice] = useState(true);
-  const [openRating, setOpenRating] = useState(true);
+  const filterSectionsOpenOnDesktop = () =>
+    typeof window !== "undefined" && window.matchMedia("(min-width: 1024px)").matches;
+
+  const [openField, setOpenField] = useState(filterSectionsOpenOnDesktop);
+  const [openExp, setOpenExp] = useState(filterSectionsOpenOnDesktop);
+  const [openPrice, setOpenPrice] = useState(filterSectionsOpenOnDesktop);
+  const [openRating, setOpenRating] = useState(filterSectionsOpenOnDesktop);
+
+  const collapseFilterSections = () => {
+    setOpenField(false);
+    setOpenExp(false);
+    setOpenPrice(false);
+    setOpenRating(false);
+  };
 
   return (
-    <ExploreFilterSidebar onClear={onClear} hasFilter={hasFilter}>
+    <ExploreFilterSidebar
+      onClear={onClear}
+      hasFilter={hasFilter}
+      mobileCollapsible
+      onMobilePanelOpen={collapseFilterSections}
+    >
       <FilterSection title="Lĩnh vực" open={openField} onToggle={() => setOpenField((v) => !v)}>
         {MENTOR_FILTER_FIELDS.map((field) => (
           <FilterRadio
@@ -314,38 +329,43 @@ export function Mentors() {
                   ) : null}
                 </div>
 
-                <div className="mb-4 rounded-xl bg-gradient-to-r from-violet-100/80 via-violet-50/50 to-slate-50 px-4 py-3">
-                  <p className="text-sm font-semibold text-violet-950">
-                    {loading ? (
-                      <span className="inline-flex items-center gap-2">
-                        <CircleNotch className="size-4 animate-spin" />
-                        Đang tải...
-                      </span>
-                    ) : (
-                      <>
-                        <span className="text-lg font-black">{filteredMentors.length}</span> mentor phù hợp
-                        {selectedField ? (
-                          <span className="font-normal text-slate-600"> · {selectedField}</span>
-                        ) : null}
-                        {selectedExp ? (
-                          <span className="font-normal text-slate-600">
-                            {" "}
-                            · {EXPERIENCE_OPTIONS.find((o) => o.value === selectedExp)?.label}
-                          </span>
-                        ) : null}
-                        {selectedPriceIndex != null ? (
-                          <span className="font-normal text-slate-600">
-                            {" "}
-                            · {PRICE_OPTIONS[selectedPriceIndex].label}
-                          </span>
-                        ) : null}
-                        {selectedRating ? (
-                          <span className="font-normal text-slate-600"> · {selectedRating}</span>
-                        ) : null}
-                      </>
-                    )}
-                  </p>
-                </div>
+                {hasFilter ? (
+                  <div className="mb-4 rounded-xl bg-gradient-to-r from-violet-100/80 via-violet-50/50 to-slate-50 px-4 py-3">
+                    <p className="text-sm font-semibold text-violet-950">
+                      {loading ? (
+                        <span className="inline-flex items-center gap-2">
+                          <CircleNotch className="size-4 animate-spin" />
+                          Đang tải...
+                        </span>
+                      ) : (
+                        <>
+                          <span className="text-lg font-black">{filteredMentors.length}</span> mentor phù hợp
+                          {search ? (
+                            <span className="font-normal text-slate-600"> · &ldquo;{search}&rdquo;</span>
+                          ) : null}
+                          {selectedField ? (
+                            <span className="font-normal text-slate-600"> · {selectedField}</span>
+                          ) : null}
+                          {selectedExp ? (
+                            <span className="font-normal text-slate-600">
+                              {" "}
+                              · {EXPERIENCE_OPTIONS.find((o) => o.value === selectedExp)?.label}
+                            </span>
+                          ) : null}
+                          {selectedPriceIndex != null ? (
+                            <span className="font-normal text-slate-600">
+                              {" "}
+                              · {PRICE_OPTIONS[selectedPriceIndex].label}
+                            </span>
+                          ) : null}
+                          {selectedRating ? (
+                            <span className="font-normal text-slate-600"> · {selectedRating}</span>
+                          ) : null}
+                        </>
+                      )}
+                    </p>
+                  </div>
+                ) : null}
 
                 {loading ? (
                   <div className="divide-y divide-slate-200/90">
@@ -402,7 +422,7 @@ export function Mentors() {
                   </div>
                 ) : (
                   <>
-                    <div className="rounded-2xl border border-slate-200/80 bg-white px-3 sm:px-5">
+                    <div className="min-w-0 overflow-hidden rounded-2xl border border-slate-200/80 bg-white px-2 sm:px-5">
                       {paginatedMentors.map((mentor) => (
                         <MentorListCard
                           key={mentor.id}

@@ -191,7 +191,8 @@ export const BOOKING_POLICY_COPY = {
 export const COURSES_SHOWCASE_COPY = {
   badge: "Khóa học từ Mentor",
   titleLine1: "Học từ mentor thật",
-  titleLine2: "Chuẩn bị phỏng vấn bài bản hơn",
+  titleLine2: "Chuẩn bị",
+  titleLine3: "phỏng vấn bài bản hơn",
   body: "Khóa học do Mentor xây dựng, giúp bạn học theo từng chủ đề và cải thiện những kỹ năng cần thiết cho hành trình ứng tuyển.",
   bullets: [
     "Chủ đề đa dạng",

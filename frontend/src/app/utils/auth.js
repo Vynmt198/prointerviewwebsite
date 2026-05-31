@@ -47,7 +47,9 @@ function mapAuthHttpError(status, context = "auth") {
   if (status === 409) return "Email này đã được đăng ký hoặc liên kết tài khoản khác.";
   if (status === 429) return "Quá nhiều lần thử. Bạn đợi vài phút rồi thử lại nhé.";
   if (status === 503) return "Dịch vụ tạm chưa sẵn sàng. Kiểm tra backend đang chạy và biến môi trường.";
-  if (status >= 500) return "Lỗi máy chủ. Thử lại sau hoặc đăng nhập bằng email.";
+  if (status >= 500) {
+    return "Backend chưa chạy hoặc đang lỗi. Trong thư mục backend chạy `npm install` rồi `npm run dev` (cổng 5001), sau đó thử lại.";
+  }
   return "";
 }
 

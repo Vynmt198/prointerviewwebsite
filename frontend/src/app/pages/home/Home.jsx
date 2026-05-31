@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router";
 import {
   FileText,
@@ -16,6 +16,7 @@ import {
   BadgeCheck as SealCheck,
   GraduationCap
 } from "lucide-react";
+import { motion, useMotionValue, useSpring, useTransform } from "motion/react";
 import { RecommendedJourney } from "../../components/home/RecommendedJourney";
 import { CvAnalysisFeatureShowcase } from "../../components/home/CvAnalysisFeatureShowcase";
 import {
@@ -38,7 +39,6 @@ import {
 } from "../../components/layout/customerShellLayout";
 import { HOME_COPY, HOME_SECTION_COPY } from "../../constants/brandVoice";
 import {
-  HOME_SECTION_TITLE_CLAMP,
   HOME_HOW_IT_WORKS_TITLE_CLAMP,
   homeSectionClasses as homeTy,
 } from "../../constants/homeTypography";
@@ -115,6 +115,191 @@ const TESTIMONIALS = HOME_SECTION_COPY.testimonials.items.map((t, i) => ({
   stars: 5,
 }));
 
+/** 3 điểm dọc thân con trỏ. */
+const CURSOR_BODY_OFFSETS = [
+  { x: 0, y: 0 },
+  { x: 7, y: 10 },
+  { x: 13, y: 19 },
+];
+
+const HERO_SPARKLE_MIN_MOVE_PX = 26;
+
+/** 0 = đỉnh con trỏ (mờ trước), 2 = đuôi (ở lại lâu nhất). */
+function heroSparkleFade(cursorSlot) {
+  const slot = Math.min(2, Math.max(0, cursorSlot));
+  const profiles = [
+    { duration: 1.65, times: [0, 0.14, 0.4, 1] },
+    { duration: 2.25, times: [0, 0.14, 0.58, 1] },
+    { duration: 2.95, times: [0, 0.15, 0.72, 1] },
+  ];
+  const { duration, times } = profiles[slot];
+  const peak = 0.8 - slot * 0.04;
+  return {
+    duration,
+    times,
+    opacity: [0, peak, peak * (0.55 - slot * 0.08), 0],
+    scale: [0.38, 0.74, 0.62, 0.28],
+  };
+}
+
+function makeHeroSparkle(x, y, cursorSlot = 0) {
+  const angle = Math.random() * Math.PI * 2;
+  const drift = 22 + Math.random() * 28;
+  return {
+    id: `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+    x,
+    y,
+    driftX: Math.cos(angle) * drift,
+    driftY: Math.sin(angle) * drift - 10,
+    rotate: Math.random() * 90 - 45,
+    cursorSlot,
+  };
+}
+
+function sparklesAlongCursor(x, y) {
+  return CURSOR_BODY_OFFSETS.map((off, i) => makeHeroSparkle(x + off.x, y + off.y, i));
+}
+
+function HeroAtmosphere() {
+  // Use a fallback for SSR/initial render
+  const initX = typeof window !== 'undefined' ? window.innerWidth / 2 : 1000;
+  const initY = typeof window !== 'undefined' ? window.innerHeight / 2 : 500;
+  
+  const mouseX = useMotionValue(initX);
+  const mouseY = useMotionValue(initY);
+  
+  const pX1 = useTransform(mouseX, [0, 2000], [50, -50]);
+  const pY1 = useTransform(mouseY, [0, 1000], [50, -50]);
+  
+  const pX2 = useTransform(mouseX, [0, 2000], [-35, 35]);
+  const pY2 = useTransform(mouseY, [0, 1000], [-35, 35]);
+  
+  const pX3 = useTransform(mouseX, [0, 2000], [25, -25]);
+  const pY3 = useTransform(mouseY, [0, 1000], [25, -25]);
+
+  const [arrows, setArrows] = useState([]);
+
+  useEffect(() => {
+    let lastX = -1000;
+    let lastY = -1000;
+    
+    const heroEl = document.getElementById("home-hero-section");
+    if (!heroEl) return;
+    
+    const handleMouseMove = (e) => {
+      mouseX.set(e.clientX);
+      mouseY.set(e.clientY);
+
+      if (e.target.closest("button, a, video, h1, p, .aspect-video")) return;
+
+      const dist = Math.hypot(e.clientX - lastX, e.clientY - lastY);
+      if (dist >= HERO_SPARKLE_MIN_MOVE_PX) {
+        setArrows((prev) => [...prev, ...sparklesAlongCursor(e.clientX, e.clientY)]);
+        lastX = e.clientX;
+        lastY = e.clientY;
+      }
+    };
+    
+    let clickCount = 0;
+    let clickTimeout = null;
+
+    const handleMouseClick = (e) => {
+      // Prevent spawning particles when clicking UI elements
+      if (e.target.closest('button, a, video, h1, p, .aspect-video')) return;
+
+      clickCount++;
+      clearTimeout(clickTimeout);
+      clickTimeout = setTimeout(() => {
+        clickCount = 0;
+      }, 500); // Reset after 500ms of no clicking
+
+      const now = Date.now();
+      // Increase particles with clicks (base 6, max 20)
+      const burstCount = Math.min(4 + clickCount, 10);
+      const burstRadius = Math.min(120 + clickCount * 40, 360);
+
+      const newArrows = [];
+      for (let i = 0; i < burstCount; i++) {
+        const base = CURSOR_BODY_OFFSETS[i % CURSOR_BODY_OFFSETS.length];
+        const bx = e.clientX + base.x + (Math.random() - 0.5) * burstRadius;
+        const by = e.clientY + base.y + (Math.random() - 0.5) * burstRadius;
+        const angle = Math.random() * Math.PI * 2;
+        const drift = 18 + Math.random() * 24;
+        newArrows.push({
+          id: `${now}-${i}`,
+          x: bx,
+          y: by,
+          driftX: Math.cos(angle) * drift,
+          driftY: Math.sin(angle) * drift - 8,
+          rotate: Math.random() * 360,
+          cursorSlot: i % CURSOR_BODY_OFFSETS.length,
+        });
+      }
+      setArrows((prev) => [...prev, ...newArrows]);
+    };
+    
+    heroEl.addEventListener("mousemove", handleMouseMove);
+    heroEl.addEventListener("mousedown", handleMouseClick); // Use mousedown for instant feedback
+    return () => {
+      heroEl.removeEventListener("mousemove", handleMouseMove);
+      heroEl.removeEventListener("mousedown", handleMouseClick);
+    };
+  }, [mouseX, mouseY]);
+
+  return (
+    <>
+      <div className="codex-mesh-bg" aria-hidden="true">
+        <motion.div style={{ x: pX1, y: pY1 }} className="absolute w-[60vw] h-[60vw] top-[-30%] left-[-20%]">
+          <div className="codex-organic-blob" style={{ background: 'radial-gradient(circle closest-side, rgba(128,55,244,0.4), rgba(128,55,244,0))', animation: 'organic-float-1 12s ease-in-out infinite alternate' }} />
+        </motion.div>
+        
+        <motion.div style={{ x: pX2, y: pY2 }} className="absolute w-[60vw] h-[60vw] top-[-30%] right-[-20%]">
+          <div className="codex-organic-blob" style={{ background: 'radial-gradient(circle closest-side, rgba(99,14,212,0.3), rgba(99,14,212,0))', animation: 'organic-float-2 15s ease-in-out infinite alternate' }} />
+        </motion.div>
+        
+        <motion.div style={{ x: pX3, y: pY3 }} className="absolute w-[70vw] h-[70vw] bottom-[-30%] left-[-20%]">
+          <div className="codex-organic-blob" style={{ background: 'radial-gradient(circle closest-side, rgba(163,112,247,0.35), rgba(163,112,247,0))', animation: 'organic-float-3 18s ease-in-out infinite alternate' }} />
+        </motion.div>
+
+        <motion.div style={{ x: pX1, y: pY2 }} className="absolute w-[60vw] h-[60vw] bottom-[-20%] right-[-10%]">
+          <div className="codex-organic-blob" style={{ background: 'radial-gradient(circle closest-side, rgba(255,255,255,0.9), rgba(255,255,255,0))', mixBlendMode: 'normal', animation: 'organic-float-4 10s ease-in-out infinite alternate' }} />
+        </motion.div>
+
+        <div className="codex-mesh-noise" />
+      </div>
+
+      <div className="pointer-events-none fixed inset-0 z-[5] overflow-hidden">
+        {arrows.map((arrow) => {
+          const fade = heroSparkleFade(arrow.cursorSlot ?? 0);
+          const { driftX: dx, driftY: dy, rotate: r0 } = arrow;
+          return (
+            <motion.div
+              key={arrow.id}
+              className="pointer-events-none absolute -translate-x-1/2 -translate-y-1/2"
+              initial={{ opacity: 0, scale: fade.scale[0], x: arrow.x, y: arrow.y, rotate: r0 }}
+              animate={{
+                opacity: fade.opacity,
+                scale: fade.scale,
+                x: [arrow.x, arrow.x + dx * 0.35, arrow.x + dx * 0.75, arrow.x + dx],
+                y: [arrow.y, arrow.y + dy * 0.35, arrow.y + dy * 0.75, arrow.y + dy],
+                rotate: [r0, r0 + 10, r0 + 22, r0 + 28],
+              }}
+              transition={{
+                duration: fade.duration,
+                ease: [0.25, 0.1, 0.25, 1],
+                times: fade.times,
+              }}
+              onAnimationComplete={() => setArrows((prev) => prev.filter((a) => a.id !== arrow.id))}
+            >
+              <SparkleGlyph className="h-6 w-6" />
+            </motion.div>
+          );
+        })}
+      </div>
+    </>
+  );
+}
+
 export function Home() {
   const navigate = useNavigate();
 
@@ -157,8 +342,10 @@ export function Home() {
 
   return (
     <div
-      className="min-h-screen selection:bg-[rgba(147,247,43,0.42)] selection:text-slate-900 font-sans overflow-x-hidden relative bg-transparent text-slate-900"
+      className="min-h-screen selection:bg-[rgba(147,247,43,0.42)] selection:text-slate-900 font-sans relative bg-transparent text-slate-900 -mt-[12rem] pt-[12rem]"
     >
+      <HeroAtmosphere />
+
       <style>{`
         .cute-glass {
           background: linear-gradient(180deg, rgba(0,0,0,0.03), rgba(0,0,0,0.03));
@@ -242,7 +429,7 @@ export function Home() {
             overflow-wrap: break-word;
           }
           .home-hero-title {
-            font-size: 1.45rem !important;
+            font-size: clamp(1.75rem, 8vw, 2.25rem) !important;
             line-height: 1.12 !important;
           }
           .home-how-title {
@@ -470,24 +657,80 @@ export function Home() {
             animation: none !important;
           }
         }
+
+        /* ── CODEX MESH BACKGROUND (Hero Only, Layered & Faded) ── */
+        .codex-mesh-bg {
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          height: 130vh;
+          z-index: 0;
+          overflow: hidden;
+          pointer-events: none;
+          background-color: transparent;
+          
+          /* Fade out smoothly at the bottom to blend with the rest of the page */
+          mask-image: linear-gradient(to bottom, black 50%, transparent 100%);
+          -webkit-mask-image: linear-gradient(to bottom, black 50%, transparent 100%);
+        }
+
+        .codex-organic-blob {
+          width: 100%;
+          height: 100%;
+          will-change: transform;
+          /* Removed mix-blend-mode: multiply to fix GPU rendering border artifacts */
+        }
+
+        @keyframes organic-float-1 {
+          0% { transform: scale(1) translate(0, 0); }
+          33% { transform: scale(1.3) translate(15%, 25%); }
+          66% { transform: scale(0.8) translate(-10%, 15%); }
+          100% { transform: scale(1.1) translate(25%, 5%); }
+        }
+
+        @keyframes organic-float-2 {
+          0% { transform: scale(1) translate(0, 0); }
+          33% { transform: scale(1.4) translate(-25%, 15%); }
+          66% { transform: scale(0.9) translate(15%, -20%); }
+          100% { transform: scale(1.2) translate(-20%, 30%); }
+        }
+
+        @keyframes organic-float-3 {
+          0% { transform: scale(1) translate(0, 0); }
+          33% { transform: scale(1.2) translate(30%, -20%); }
+          66% { transform: scale(0.85) translate(-15%, -10%); }
+          100% { transform: scale(1.3) translate(20%, -30%); }
+        }
+
+        @keyframes organic-float-4 {
+          0% { transform: scale(1) translate(0, 0); }
+          50% { transform: scale(1.5) translate(30%, 30%); }
+          100% { transform: scale(0.8) translate(-20%, 15%); }
+        }
+
+        /* Noise texture for realistic cloud feel */
+        .codex-mesh-noise {
+          position: absolute;
+          inset: 0;
+          background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.008' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+          mix-blend-mode: overlay;
+          opacity: 0.3;
+          pointer-events: none;
+          z-index: 10;
+        }
       `}</style>
 
       {/* ═══ HERO ═══════════════════════════════════════════ */}
-      <section className="home-hero-section relative z-10 flex min-h-[100svh] flex-col justify-start overflow-x-hidden px-10 sm:px-16 lg:px-24 pt-6 sm:pt-8 md:pt-10 lg:justify-center lg:overflow-x-auto lg:py-10 max-lg:min-h-0 max-lg:px-4 max-lg:pb-10 max-lg:pt-[4.5rem]">
-        {renderSectionSticks(
-          [
-            { x: 5, y: 11, size: 38, opacity: 0.48 },
-            { x: 93, y: 13, size: 44, opacity: 0.55 },
-            { x: 3, y: 50, size: 32, opacity: 0.4 },
-            { x: 92, y: 80, size: 36, opacity: 0.46 },
-          ],
-          "violet"
-        )}
+      <section id="home-hero-section" className="home-hero-section relative z-10 flex min-h-[100svh] flex-col justify-start px-10 sm:px-16 lg:px-24 pt-6 sm:pt-8 md:pt-10 lg:justify-center lg:py-10 max-lg:min-h-0 max-lg:items-center max-lg:px-4 max-lg:pb-8 max-lg:pt-[4.25rem]">
+        
+        {/* Interactive Mouse Particles */}
+        {/* Note: HeroAtmosphere now handles both the background mesh and the mouse particles */}
 
         <div className={`relative z-10 w-full ${HOME_SHELL_MAX}`}>
           <HeroScaledCanvas>
-            <div className="hero-scale-canvas__copy order-1 text-left lg:py-2">
-              <div className="hero-intro-badge mb-7 max-lg:mb-5">
+            <div className="hero-scale-canvas__copy order-1 text-left lg:py-2 max-lg:text-center">
+              <div className="hero-intro-badge mb-[2.35rem] max-lg:mb-[1.85rem] max-lg:flex max-lg:justify-center">
                 <div
                   className="inline-flex items-center gap-2 rounded-full border-2 bg-white px-3 py-1.5 text-sm font-bold sm:text-base max-lg:rounded-lg max-lg:border max-lg:px-2.5 max-lg:py-1 max-lg:text-xs"
                   style={{
@@ -501,7 +744,7 @@ export function Home() {
               </div>
 
               <div className="hero-intro-copy">
-                <h1 className="home-hero-title hero-title-stack mb-8 max-w-full font-headline text-slate-900 cute-heading max-lg:mb-6">
+                <h1 className="home-hero-title hero-title-stack mb-[2.6rem] max-w-full font-headline text-slate-900 cute-heading max-lg:mb-[2.1rem]">
                   <span className="hero-title-line text-slate-900">
                     {HOME_COPY.titleLine1}{" "}
                     <span className="hero-title-highlight" style={{ color: "#8037f4" }}>
@@ -516,11 +759,11 @@ export function Home() {
                   </span>
                 </h1>
 
-                <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:justify-start">
+                <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:justify-start max-lg:justify-center max-lg:items-center">
                   <button
                     type="button"
                     onClick={() => navigate("/interview")}
-                    className="inline-flex items-center justify-center gap-2 rounded-full px-4 py-2 text-base font-black transition-all hover:brightness-105 active:scale-[0.98] hover:-translate-y-0.5 sm:text-lg max-lg:rounded-lg max-lg:px-3.5 max-lg:py-1.5 max-lg:text-sm"
+                    className="inline-flex items-center justify-center gap-2 rounded-full px-4 py-2 text-base font-black transition-all hover:brightness-105 active:scale-[0.98] hover:-translate-y-0.5 sm:text-lg max-lg:rounded-lg max-lg:px-3.5 max-lg:py-[0.475rem] max-lg:text-sm"
                     style={{
                       background: "#93f72b",
                       color: "#0f172a",
@@ -585,7 +828,7 @@ export function Home() {
             {STEPS.map((s, i) => (
               <LandingItem key={i}>
               <div
-                className={`glass-card group relative flex h-full min-h-[15.5rem] flex-col overflow-hidden p-5 selection:bg-[rgba(147,247,43,0.42)] selection:text-slate-900 transition-[border-color,box-shadow] duration-300 sm:min-h-[16rem] sm:p-6 lg:min-h-[17.5rem] max-lg:min-h-[10.5rem] max-lg:p-4 ${i === 1
+                className={`glass-card group relative flex h-full min-h-[15.5rem] flex-col overflow-hidden p-5 selection:bg-[rgba(147,247,43,0.42)] selection:text-slate-900 transition-[border-color,box-shadow] duration-300 sm:min-h-[16rem] sm:p-6 lg:min-h-[17.5rem] max-lg:min-h-0 max-lg:p-3.5 ${i === 1
                   ? "home-step-featured-dots"
                   : i === 2
                     ? "border-violet-400/35 shadow-[0_0_0_1px_rgba(167,139,250,0.15)_inset]"
@@ -598,9 +841,9 @@ export function Home() {
               >
                 <div className="relative z-[1] min-w-0 flex flex-1 flex-col">
                   {/* Hàng nhãn cố định — tránh absolute đè lên icon */}
-                  <div className="mb-3.5 min-h-[32px] flex items-center justify-start">
-                    {(i === 1 || i === 2) && (
-                    <span
+                  {(i === 1 || i === 2) ? (
+                    <div className="mb-2.5 flex min-h-0 items-center justify-start sm:mb-3.5 sm:min-h-[32px]">
+                      <span
                         className={`${homeTy.howItWorksStepBadge} ${i === 1
                           ? "border-[#8037f4]/50 bg-white/90 text-[#6d2fd6]"
                           : "border-violet-200 bg-violet-100 text-violet-800 shadow-sm"
@@ -608,15 +851,17 @@ export function Home() {
                       >
                         {i === 1 ? "Nổi bật" : "Gợi ý mentor"}
                       </span>
-                    )}
-                  </div>
+                    </div>
+                  ) : (
+                    <div className="hidden sm:block sm:mb-3.5 sm:min-h-[32px]" />
+                  )}
                   <div
-                    className={`pointer-events-none absolute top-0 right-0 p-4 transition-opacity ${
+                    className={`pointer-events-none absolute top-0 right-0 p-2 sm:p-4 transition-opacity ${
                       i === 1 ? "" : "opacity-[0.18] group-hover:opacity-[0.26]"
                     }`}
                   >
                     <span
-                      className={`text-8xl font-black italic leading-none ${
+                      className={`text-6xl sm:text-8xl font-black italic leading-none ${
                         i === 1
                           ? "text-[#d4c8eb] group-hover:text-[#c9b9e6]"
                           : "text-[#6d2fd6]/30"
@@ -683,8 +928,7 @@ export function Home() {
           <div className="flex min-w-0 w-full flex-col items-start gap-8 overflow-visible lg:flex-row lg:items-center lg:gap-4">
             <div className="relative z-20 w-full shrink-0 lg:w-fit lg:max-w-[min(100%,40rem)]">
               <h2
-                className="mb-0 flex w-full max-w-none flex-col items-start gap-0 font-headline font-extrabold leading-[1.08] tracking-tight text-slate-900"
-                style={{ fontSize: HOME_SECTION_TITLE_CLAMP }}
+                className="mb-0 flex w-full max-w-none flex-col items-start gap-0 font-headline text-[clamp(2.05rem,4.2vw,2.65rem)] font-extrabold leading-[1.08] tracking-tight text-slate-900 lg:text-[clamp(2.25rem,3.5vw,3.25rem)]"
               >
                 <span className="block max-w-full leading-none tracking-tight lg:whitespace-nowrap">
                   {HOME_SECTION_COPY.testimonials.titleLine}
