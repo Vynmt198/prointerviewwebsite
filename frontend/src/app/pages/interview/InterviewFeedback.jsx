@@ -322,8 +322,8 @@ export function InterviewFeedback() {
     return null;
   });
 
-  // Real AI evaluation state
-  const [evaluating,           setEvaluating]           = useState(false);
+  // Real AI evaluation state — bắt đầu true để tránh flash empty content trước khi useEffect chạy
+  const [evaluating,           setEvaluating]           = useState(true);
   const [evalError,            setEvalError]            = useState(null);
   const [retryKey,             setRetryKey]             = useState(0);
   const [realFeedback,         setRealFeedback]         = useState(null);
