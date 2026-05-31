@@ -544,6 +544,7 @@ export default function InterviewRoom() {
   const isNavigatingRef    = useRef(false);
   const questionStartTimeRef = useRef(Date.now());
   const lastSpokenQRef     = useRef(-1);
+  const lastTTSSpokenQRef  = useRef(-1); // guard riêng cho TTS, tách khỏi D-ID
   const ttsUtteranceRef    = useRef(null);
 
   /* ── Camera video ref (shared with FaceMesh hook) ─────── */
@@ -612,7 +613,11 @@ export default function InterviewRoom() {
     utterance.pitch = hrGender === "female" ? 1.1 : 0.88;
     utterance.onstart = () => setTtsSpeaking(true);
     utterance.onend   = () => { setTtsSpeaking(false); onEnd?.(); };
-    utterance.onerror = () => { setTtsSpeaking(false); onEnd?.(); };
+    // "interrupted" = bị cancel chủ động (D-ID retry) — không gọi onEnd
+    utterance.onerror = (e) => {
+      setTtsSpeaking(false);
+      if (e?.error !== "interrupted") onEnd?.();
+    };
     ttsUtteranceRef.current = utterance;
     synth.speak(utterance);
   }, [hrGender]);
@@ -737,10 +742,15 @@ export default function InterviewRoom() {
   useEffect(() => {
     if (isDIDActive || !ttsAvailable) return;
     if (phase !== "question" || hrPhase !== "asking") return;
-    if (lastSpokenQRef.current === currentQ) return;
-    lastSpokenQRef.current = currentQ;
+    if (lastTTSSpokenQRef.current === currentQ) return;
+    lastTTSSpokenQRef.current = currentQ;
     speakQuestionTTS(QUESTIONS[currentQ], startListening);
-    return () => { window.speechSynthesis?.cancel(); setTtsSpeaking(false); };
+    return () => {
+      // Reset guard khi bị cancel (D-ID retry) để lần sau vẫn nói được
+      lastTTSSpokenQRef.current = -1;
+      window.speechSynthesis?.cancel();
+      setTtsSpeaking(false);
+    };
   }, [phase, currentQ, hrPhase, isDIDActive, speakQuestionTTS, startListening]); // eslint-disable-line react-hooks/exhaustive-deps
 
   /* ── STT setup ────────────────────────────────────────── */
