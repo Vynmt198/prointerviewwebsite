@@ -98,7 +98,8 @@ export async function tryRefreshAccessToken() {
     });
     const body = await res.json().catch(() => ({}));
     if (!res.ok || !body.success || !body.token) {
-      clearAuthStorage();
+      // Chỉ xóa auth khi 4xx (token thực sự invalid), không xóa khi 5xx (server lỗi tạm thời)
+      if (res.status < 500) clearAuthStorage();
       return false;
     }
     persistLoginPayload(body);

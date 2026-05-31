@@ -136,6 +136,167 @@ function computeTranscriptMetrics(transcript = "", durationSeconds = 0) {
   return { wordCount, wpm, fillerCount, fillerRatio, fillerScore, paceScore, lengthScore };
 }
 
+/* ── Coaching Voice Panel ──────────────────────────────────────
+   Hiển thị ngay sau header: nhận xét AI dạng trích dẫn +
+   3 insight cards (điểm mạnh / ưu tiên cải thiện / chiều yếu).
+   Chỉ render khi có real feedback từ LLM.
+──────────────────────────────────────────────────────────────── */
+function CoachingVoicePanel({ overallComment, allQuestions, avgScores }) {
+  if (!allQuestions?.length) return null;
+  const sorted  = [...allQuestions].sort((a, b) => a.overall - b.overall);
+  const worstQ  = sorted[0];
+  const bestQ   = sorted[sorted.length - 1];
+  const weakDim = Object.entries(avgScores).sort(([, a], [, b]) => a - b)[0];
+
+  return (
+    <div className="mb-6 overflow-hidden rounded-xl border border-violet-200/80 bg-white shadow-sm">
+      {/* Header */}
+      <div className="flex items-center gap-3 border-b border-violet-100 bg-violet-50/60 px-5 py-3.5">
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#8037f4] to-[#a66ff8]">
+          <GraduationCap className="h-4 w-4 text-white" />
+        </div>
+        <div>
+          <p className="text-sm font-bold text-violet-950">Nhận xét từ HR AI Coach</p>
+          <p className="text-xs text-violet-500">Phân tích theo chuẩn SHRM/DDI Targeted Selection®</p>
+        </div>
+      </div>
+
+      {/* Overall comment as blockquote */}
+      {overallComment && (
+        <div className="border-b border-violet-100 px-5 py-4">
+          <div className="relative pl-6">
+            <Quotes className="absolute left-0 top-0.5 h-5 w-5 text-violet-300" />
+            <p className="text-sm leading-relaxed text-violet-900 italic">{overallComment}</p>
+          </div>
+        </div>
+      )}
+
+      {/* 3 insight cards */}
+      <div className="grid gap-3 p-5 sm:grid-cols-3">
+        {/* Best */}
+        <div className="rounded-lg border border-lime-200/80 bg-lime-50 p-3.5">
+          <div className="mb-2 flex items-center gap-1.5">
+            <Check className="h-3.5 w-3.5 text-green-600" />
+            <p className="text-xs font-bold text-green-700">Điểm mạnh nổi bật</p>
+          </div>
+          <p className="line-clamp-3 text-xs leading-relaxed text-green-900">
+            {bestQ?.strengths?.[0] ?? "Xem chi tiết bên dưới từng câu hỏi"}
+          </p>
+          {bestQ && (
+            <p className="mt-2 text-[10px] font-semibold text-green-600">
+              Câu {allQuestions.indexOf(bestQ) + 1} · {bestQ.overall.toFixed(1)}/5
+            </p>
+          )}
+        </div>
+
+        {/* Worst — priority improvement */}
+        <div className="rounded-lg border border-orange-200/80 bg-orange-50 p-3.5">
+          <div className="mb-2 flex items-center gap-1.5">
+            <TrendUp className="h-3.5 w-3.5 text-orange-600" />
+            <p className="text-xs font-bold text-orange-700">Ưu tiên cải thiện #1</p>
+          </div>
+          <p className="line-clamp-3 text-xs leading-relaxed text-orange-900">
+            {worstQ?.improvements?.[0] ?? "Xem chi tiết từng câu hỏi bên dưới"}
+          </p>
+          {worstQ && (
+            <p className="mt-2 text-[10px] font-semibold text-orange-600">
+              Câu {allQuestions.indexOf(worstQ) + 1} · {worstQ.overall.toFixed(1)}/5 · Câu cần tập trung nhất
+            </p>
+          )}
+        </div>
+
+        {/* Weakest dimension */}
+        <div className="rounded-lg border border-blue-200/80 bg-blue-50 p-3.5">
+          <div className="mb-2 flex items-center gap-1.5">
+            <BookOpen className="h-3.5 w-3.5 text-blue-600" />
+            <p className="text-xs font-bold text-blue-700">Chiều kỹ năng yếu nhất</p>
+          </div>
+          {weakDim ? (
+            <>
+              <p className="text-sm font-bold text-blue-900">{STAR_NAMES[weakDim[0]]}</p>
+              <p className="mt-0.5 text-xs leading-relaxed text-blue-700">
+                {weakDim[0] === "structure"   && "Luyện STAR: Situation → Task → Action → Result có số liệu"}
+                {weakDim[0] === "credibility" && "Thêm ví dụ thực tế với số liệu: %, thời gian, số người, doanh thu"}
+                {weakDim[0] === "relevance"   && "Chú ý trả lời đúng trọng tâm câu hỏi, liên kết với yêu cầu JD"}
+                {weakDim[0] === "clarity"     && "Mỗi câu 1 ý chính, tránh vòng vo và từ đệm kiểu như / tức là"}
+              </p>
+              <p className="mt-2 text-[10px] font-semibold text-blue-600">
+                Điểm trung bình: {weakDim[1].toFixed(1)}/5
+              </p>
+            </>
+          ) : (
+            <p className="text-xs text-blue-700">Xem phân tích điểm số bên dưới</p>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── Action Steps Panel ───────────────────────────────────────
+   3 bước cụ thể sau buổi phỏng vấn, dựa trên điểm yếu thực.
+──────────────────────────────────────────────────────────────── */
+function ActionStepsPanel({ avgScores, worstQuestion }) {
+  const weakDim = Object.entries(avgScores).sort(([, a], [, b]) => a - b)[0];
+  const steps = [
+    {
+      num: "1", color: "blue",
+      icon: <BookOpen className="h-4 w-4" />,
+      title: weakDim ? `Luyện ${STAR_NAMES[weakDim[0]]}` : "Luyện STAR Framework",
+      desc:
+        weakDim?.[0] === "structure"
+          ? "Chọn 3 tình huống thực tế từ kinh nghiệm, viết ra theo STAR (Situation → Task → Action → Result có số liệu). Đọc to mỗi ngày 5 phút."
+          : weakDim?.[0] === "credibility"
+          ? "Liệt kê 5 thành tích gần nhất, thêm số liệu vào từng thành tích: tăng X%, tiết kiệm Y ngày, ảnh hưởng Z người, tăng doanh thu W."
+          : weakDim?.[0] === "relevance"
+          ? "Đọc lại JD, gạch chân 5 keyword quan trọng. Khi trả lời câu hỏi, map câu chuyện vào đúng keyword đó rồi trả lời."
+          : "Luyện trình bày 1–2 ý chính/câu, dùng cấu trúc rõ ràng. Loại bỏ từ đệm: tức là, kiểu như, ờ, à.",
+    },
+    {
+      num: "2", color: "violet",
+      icon: <Microphone className="h-4 w-4" />,
+      title: "Luyện nói câu trả lời mẫu",
+      desc: worstQuestion?.suggestion
+        ? "Đọc lại câu trả lời mẫu (phần gợi ý) của câu điểm thấp nhất bên dưới. Tập nói to 3 lần theo cấu trúc đó, tự ghi âm và nghe lại để nhận ra điểm cần cải thiện."
+        : "Đọc to gợi ý cải thiện từng câu hỏi bên dưới, luyện nói lại theo cấu trúc mới ít nhất 3 lần, ghi âm và nghe lại.",
+    },
+    {
+      num: "3", color: "lime",
+      icon: <Calendar className="h-4 w-4" />,
+      title: "Phỏng vấn lại sau 3–5 ngày",
+      desc: "Sau 3–5 ngày luyện tập, quay lại phỏng vấn AI để đo tiến bộ. Mỗi buổi cải thiện thêm 0.5 điểm là rất tốt. Lịch sử phỏng vấn được lưu tại Dashboard.",
+    },
+  ];
+
+  const colorCls = {
+    blue:   { wrap: "bg-blue-50 border-blue-200/80",     icon: "bg-blue-100 text-blue-700",     title: "text-blue-900",   desc: "text-blue-800"   },
+    violet: { wrap: "bg-violet-50 border-violet-200/80", icon: "bg-violet-100 text-violet-700", title: "text-violet-900", desc: "text-violet-800" },
+    lime:   { wrap: "bg-lime-50 border-lime-200/80",     icon: "bg-lime-100 text-lime-700",     title: "text-lime-900",   desc: "text-lime-800"   },
+  };
+
+  return (
+    <div className="mb-6">
+      <h2 className="mb-4 text-base font-bold text-violet-950">C. Lộ trình cải thiện</h2>
+      <div className="grid gap-3 sm:grid-cols-3">
+        {steps.map((s) => {
+          const c = colorCls[s.color];
+          return (
+            <div key={s.num} className={`rounded-lg border p-4 ${c.wrap}`}>
+              <div className="mb-3 flex items-center gap-2.5">
+                <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${c.icon}`}>
+                  {s.icon}
+                </div>
+                <p className={`text-sm font-bold ${c.title}`}>{s.title}</p>
+              </div>
+              <p className={`text-xs leading-relaxed ${c.desc}`}>{s.desc}</p>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 export function InterviewFeedback() {
   const navigate   = useNavigate();
   const location   = useLocation();
@@ -163,6 +324,8 @@ export function InterviewFeedback() {
 
   // Real AI evaluation state
   const [evaluating,           setEvaluating]           = useState(false);
+  const [evalError,            setEvalError]            = useState(null);
+  const [retryKey,             setRetryKey]             = useState(0);
   const [realFeedback,         setRealFeedback]         = useState(null);
   const [sessionMeta,          setSessionMeta]          = useState({ position: "", duration: 0, overallComment: "" });
   const [behavioralSummary,    setBehavioralSummary]    = useState(null);
@@ -171,18 +334,20 @@ export function InterviewFeedback() {
   useEffect(() => {
     const sessionId = location.state?.sessionId
       ?? sessionStorage.getItem("prointerview_sessionId");
-    if (!sessionId) return;
+    if (!sessionId) {
+      setEvalError("Không tìm thấy phiên phỏng vấn. Vui lòng thử lại.");
+      return;
+    }
 
     setEvaluating(true);
+    setEvalError(null);
 
-    // Kèm questionText để backend dùng làm fallback khi session không có questions
     const answers = transcripts.map((t, i) => ({
       questionIndex: i,
       transcript: t || "",
       questionText: questionObjects?.[i]?.question || `Câu hỏi ${i + 1}`,
     }));
 
-    // Gửi kèm question objects nếu có (từ LLM); session.questions là fallback phía backend
     const questionsPayload = questionObjects
       ? questionObjects.map(q => ({
           question:       q.question,
@@ -196,12 +361,11 @@ export function InterviewFeedback() {
     evaluateInterviewSession(sessionId, answers, questionsPayload)
       .then(res => {
         if (!res.success || !res.evaluation?.perQuestion?.length) {
+          setEvalError(res.error || "AI chưa trả về kết quả đánh giá. Vui lòng thử lại.");
           return;
         }
-        // Map sang format mà UI đang dùng: { q, scores, overall, strengths, improvements, suggestion }
         const mapped = res.evaluation.perQuestion.map(evalQ => ({
           q:            questionObjects?.[evalQ.questionIndex]?.question
-                          ?? QUESTIONS_FEEDBACK[evalQ.questionIndex]?.q
                           ?? `Câu ${evalQ.questionIndex + 1}`,
           scores:       evalQ.scores,
           overall:      evalQ.overall,
@@ -211,6 +375,7 @@ export function InterviewFeedback() {
           suggestion:   evalQ.suggestion,
         }));
         setRealFeedback(mapped);
+        setEvalError(null);
         setSessionMeta({
           position:       res.inferredRole || "",
           duration:       res.totalDurationSeconds
@@ -221,13 +386,24 @@ export function InterviewFeedback() {
         if (res.behavioralSummary) setBehavioralSummary(res.behavioralSummary);
         if (res.behavioralPerQuestion?.length) setBehavioralPerQuestion(res.behavioralPerQuestion);
       })
-      .catch(() => {})
+      .catch(() => {
+        setEvalError("Không kết nối được máy chủ. Kiểm tra mạng và thử lại.");
+      })
       .finally(() => setEvaluating(false));
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [retryKey]);
 
-  // Dùng real feedback nếu có, fallback về mock
-  const allQuestions = realFeedback ?? QUESTIONS_FEEDBACK;
+  // Auto-expand câu điểm thấp nhất khi real feedback load xong
+  useEffect(() => {
+    if (!realFeedback?.length) return;
+    const worstIdx = realFeedback.reduce(
+      (minI, q, i, arr) => q.overall < arr[minI].overall ? i : minI,
+      0
+    );
+    setExpandedQ(worstIdx);
+  }, [realFeedback]);
+
+  const allQuestions = realFeedback ?? [];
   const visibleQuestions = isPro ? allQuestions : allQuestions.slice(0, FREE_LIMIT);
 
   const hasAnyTranscript = transcripts.some((t) => t && t.trim().length > 0);
@@ -264,19 +440,23 @@ export function InterviewFeedback() {
     : null;
 
   const avgScores = STAR_LABELS.reduce((acc, key) => {
-    acc[key] = visibleQuestions.reduce((sum, q) => sum + q.scores[key], 0) / visibleQuestions.length;
+    acc[key] = visibleQuestions.length
+      ? visibleQuestions.reduce((sum, q) => sum + (q.scores?.[key] ?? 0), 0) / visibleQuestions.length
+      : 0;
     return acc;
   }, {});
 
-  const overallAvg = visibleQuestions.reduce((sum, q) => sum + q.overall, 0) / visibleQuestions.length;
+  const overallAvg = visibleQuestions.length
+    ? visibleQuestions.reduce((sum, q) => sum + q.overall, 0) / visibleQuestions.length
+    : 0;
 
-  const weakAreas = realFeedback
+  const weakAreas = realFeedback?.length
     ? STAR_LABELS
-        .map(key => ({ label: STAR_NAMES[key], avg: allQuestions.reduce((s, q) => s + (q.scores[key] || 0), 0) / allQuestions.length }))
+        .map(key => ({ label: STAR_NAMES[key], avg: allQuestions.reduce((s, q) => s + (q.scores?.[key] || 0), 0) / allQuestions.length }))
         .sort((a, b) => a.avg - b.avg)
         .slice(0, 3)
         .map(a => `${a.label} — ${a.avg.toFixed(1)}/5`)
-    : ["Structure (STAR) — 3.2/5", "Credibility — 3.4/5", "Từ đệm"];
+    : [];
 
   const renderStars = (score, max = 5, onDark = false) => (
     <div className="flex items-center gap-0.5">
@@ -314,13 +494,58 @@ export function InterviewFeedback() {
         ? { cls: "bg-violet-100 text-violet-800", label: "Khá" }
         : { cls: "bg-violet-50 text-violet-700", label: "Cần cải thiện" };
 
-  return (
-    <MentorPageShell bottomPad="pb-16">
-      {evaluating && (
-        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-4 bg-white/80 backdrop-blur-sm">
+  // Chưa có data và đang load hoặc lỗi → hiện full-screen state
+  if (evaluating && !realFeedback) {
+    return (
+      <MentorPageShell bottomPad="pb-16">
+        <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4">
           <div className="h-12 w-12 animate-spin rounded-full border-4 border-violet-200 border-t-violet-600" />
           <p className="text-sm font-semibold text-violet-950">Đang phân tích câu trả lời của bạn...</p>
-          <p className="text-xs text-violet-600">AI đang đánh giá theo chuẩn SHRM/DDI</p>
+          <p className="text-xs text-violet-500">AI đánh giá theo chuẩn SHRM/DDI · mất 15–30 giây</p>
+        </div>
+      </MentorPageShell>
+    );
+  }
+
+  if (evalError && !realFeedback) {
+    return (
+      <MentorPageShell bottomPad="pb-16">
+        <div className="flex min-h-[60vh] flex-col items-center justify-center gap-5 px-6 text-center">
+          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-orange-100">
+            <Warning className="h-8 w-8 text-orange-500" />
+          </div>
+          <div>
+            <p className="text-base font-bold text-violet-950">Chưa lấy được kết quả đánh giá</p>
+            <p className="mt-1.5 max-w-sm text-sm leading-relaxed text-violet-600">{evalError}</p>
+          </div>
+          <div className="flex gap-3">
+            <button
+              type="button"
+              onClick={() => setRetryKey(k => k + 1)}
+              className="flex items-center gap-2 rounded-md bg-gradient-to-r from-[#6E35E8] to-[#8B4DFF] px-6 py-2.5 text-sm font-bold text-white shadow-md transition-all hover:brightness-105"
+            >
+              Thử lại
+            </button>
+            <button
+              type="button"
+              onClick={() => navigate("/interview")}
+              className="rounded-md border border-violet-200 bg-white px-5 py-2.5 text-sm font-medium text-violet-700 hover:bg-violet-50"
+            >
+              Phỏng vấn lại
+            </button>
+          </div>
+        </div>
+      </MentorPageShell>
+    );
+  }
+
+  return (
+    <MentorPageShell bottomPad="pb-16">
+      {/* Re-evaluate spinner (khi retry với data cũ vẫn hiện) */}
+      {evaluating && realFeedback && (
+        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-4 bg-white/80 backdrop-blur-sm">
+          <div className="h-12 w-12 animate-spin rounded-full border-4 border-violet-200 border-t-violet-600" />
+          <p className="text-sm font-semibold text-violet-950">Đang tải lại kết quả...</p>
         </div>
       )}
 
@@ -468,8 +693,17 @@ export function InterviewFeedback() {
         </div>
       </div>
 
-      {/* AI overall comment */}
-      {sessionMeta.overallComment && (
+      {/* ── Coaching Voice Panel (real feedback only) ─────────── */}
+      {realFeedback && (
+        <CoachingVoicePanel
+          overallComment={sessionMeta.overallComment}
+          allQuestions={allQuestions}
+          avgScores={avgScores}
+        />
+      )}
+
+      {/* AI overall comment — fallback khi không có realFeedback */}
+      {!realFeedback && sessionMeta.overallComment && (
         <div className="mb-6 rounded-md border border-violet-200/80 bg-violet-50/50 px-5 py-4">
           <div className="mb-2 flex items-center gap-2">
             <ChatTeardropDots className="h-4 w-4 text-violet-600" />
@@ -630,7 +864,9 @@ export function InterviewFeedback() {
 
       {/* Per-question feedback */}
       <div className="mb-6">
-        <h2 className="mb-4 text-base font-bold text-violet-950">B. Phân tích từng câu hỏi</h2>
+        <h2 className="mb-4 text-base font-bold text-violet-950">
+          {realFeedback ? "B." : ""} Phân tích từng câu hỏi
+        </h2>
         <div className="space-y-3">
           {/* ── Câu hỏi đã mở khóa ─── */}
           {visibleQuestions.map((item, i) => (
@@ -652,6 +888,13 @@ export function InterviewFeedback() {
                         {scoreBadge(item.overall).label}
                       </div>
                     </div>
+                    {/* Preview cải thiện khi chưa mở rộng */}
+                    {expandedQ !== i && item.improvements?.[0] && (
+                      <p className="mt-1.5 flex items-start gap-1 text-xs text-violet-600 line-clamp-1">
+                        <span className="shrink-0 text-orange-400 font-bold">→</span>
+                        <span>{item.improvements[0]}</span>
+                      </p>
+                    )}
                   </div>
                 </div>
                 {expandedQ === i ? (
@@ -728,47 +971,72 @@ export function InterviewFeedback() {
                     );
                   })()}
 
-                  <div className="grid grid-cols-2 gap-3 py-4 sm:grid-cols-4">
-                    {STAR_LABELS.map((key) => (
-                      <div key={key} className="rounded-md border border-violet-100 bg-violet-50/40 p-2 text-center">
-                        <p className="mb-1 text-xs capitalize text-violet-600">{key}</p>
-                        <div className="flex justify-center">{renderStars(item.scores[key])}</div>
-                      </div>
-                    ))}
-                  </div>
+                  {/* ── Điểm mạnh & Cần cải thiện ── */}
                   <div className="mb-4 grid gap-4 sm:grid-cols-2">
-                    <div>
-                      <h4 className="mb-2 flex items-center gap-1.5 text-xs font-semibold text-violet-950">
-                        <Check className="h-3.5 w-3.5 text-violet-600" /> Điểm mạnh
+                    <div className="rounded-lg border border-lime-200/80 bg-lime-50/60 p-3.5">
+                      <h4 className="mb-2.5 flex items-center gap-1.5 text-xs font-bold text-green-800">
+                        <Check className="h-3.5 w-3.5 text-green-600" /> Điểm mạnh
                       </h4>
-                      <ul className="space-y-1.5">
+                      <ul className="space-y-2">
                         {item.strengths.map((s, j) => (
-                          <li key={j} className="flex items-start gap-1.5 text-xs text-violet-700">
-                            <span className="mt-0.5 flex-shrink-0 text-[#b5e636]">•</span>{s}
+                          <li key={j} className="flex items-start gap-2 text-xs leading-relaxed text-green-900">
+                            <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-green-200 text-[9px] font-bold text-green-700">{j + 1}</span>
+                            {s}
                           </li>
                         ))}
                       </ul>
                     </div>
-                    <div>
-                      <h4 className="mb-2 flex items-center gap-1.5 text-xs font-semibold text-violet-950">
-                        <Warning className="h-3.5 w-3.5 text-violet-500" /> Cần cải thiện
+                    <div className="rounded-lg border border-orange-200/80 bg-orange-50/60 p-3.5">
+                      <h4 className="mb-2.5 flex items-center gap-1.5 text-xs font-bold text-orange-800">
+                        <Warning className="h-3.5 w-3.5 text-orange-500" /> Cần cải thiện
                       </h4>
-                      <ul className="space-y-1.5">
+                      <ul className="space-y-2">
                         {item.improvements.map((s, j) => (
-                          <li key={j} className="flex items-start gap-1.5 text-xs text-violet-700">
-                            <span className="mt-0.5 flex-shrink-0 text-violet-400">•</span>{s}
+                          <li key={j} className="flex items-start gap-2 text-xs leading-relaxed text-orange-900">
+                            <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-orange-200 text-[9px] font-bold text-orange-700">{j + 1}</span>
+                            {s}
                           </li>
                         ))}
                       </ul>
                     </div>
                   </div>
-                  <div className="rounded-md border border-violet-200/80 bg-violet-50/50 p-4">
-                    <div className="mb-2 flex items-center gap-2">
-                      <Lightbulb className="h-4 w-4 text-violet-600" {...IS} />
-                      <p className="text-xs font-semibold text-violet-800">Gợi ý câu trả lời tốt hơn</p>
-                    </div>
-                    <p className="text-xs leading-relaxed text-violet-900">{item.suggestion}</p>
+
+                  {/* ── Điểm số 4 chiều STAR ── */}
+                  <div className="mb-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
+                    {STAR_LABELS.map((key) => {
+                      const sc = item.scores[key];
+                      const barPct = `${(sc / 5) * 100}%`;
+                      const barColor = sc >= 4 ? "bg-[#b5e636]" : sc >= 3 ? "bg-violet-400" : "bg-orange-400";
+                      return (
+                        <div key={key} className="rounded-md border border-violet-100 bg-violet-50/40 p-2.5">
+                          <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-violet-500">{key}</p>
+                          <p className="mb-1.5 text-sm font-bold text-violet-950">{sc.toFixed(1)}<span className="text-xs font-normal text-violet-400">/5</span></p>
+                          <div className="h-1.5 overflow-hidden rounded-full bg-violet-100">
+                            <div className={`h-full rounded-full ${barColor}`} style={{ width: barPct }} />
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
+
+                  {/* ── Câu trả lời mẫu — Hero element ── */}
+                  {item.suggestion && (
+                    <div className="overflow-hidden rounded-xl border-2 border-violet-300/80 bg-gradient-to-br from-violet-50 to-white">
+                      <div className="flex items-center gap-2.5 border-b border-violet-200/60 bg-violet-100/60 px-4 py-3">
+                        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#8037f4]">
+                          <Lightbulb className="h-3.5 w-3.5 text-white" />
+                        </div>
+                        <div>
+                          <p className="text-xs font-bold text-violet-950">Câu trả lời mẫu từ HR AI</p>
+                          <p className="text-[10px] text-violet-500">Học theo cấu trúc này — thay placeholder bằng kinh nghiệm thực của bạn</p>
+                        </div>
+                      </div>
+                      <div className="relative p-4">
+                        <Quotes className="absolute left-3 top-3 h-5 w-5 text-violet-200" />
+                        <p className="pl-7 text-sm leading-relaxed text-violet-900">{item.suggestion}</p>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -847,6 +1115,14 @@ export function InterviewFeedback() {
           </div>
         )}
       </div>
+
+      {/* ── Lộ trình cải thiện (chỉ khi có real feedback) ─── */}
+      {realFeedback && (
+        <ActionStepsPanel
+          avgScores={avgScores}
+          worstQuestion={allQuestions.reduce((min, q) => q.overall < min.overall ? q : min, allQuestions[0])}
+        />
+      )}
 
       {/* Action buttons */}
       <div className="mb-6 rounded-md border border-violet-200/80 bg-white p-4 shadow-sm sm:p-5">
