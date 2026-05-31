@@ -268,23 +268,17 @@ export function CourseCreateStep1({
 
 export function CourseCreateFooter({
   onCancel,
-  onBack,
   onPrimary,
   primaryLabel = "Tiếp theo",
   extra,
 }) {
   return (
-    <div className="sticky bottom-0 z-20 -mx-1 mt-2 border-t border-slate-200/80 bg-white/95 px-1 py-4 backdrop-blur-md sm:-mx-2 sm:px-2">
+    <div className="mt-6 border-t border-slate-200/80 pt-4 sm:-mx-2 sm:px-2">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex gap-2">
           {onCancel ? (
             <button type="button" onClick={onCancel} className={mentorGhostBtnClass}>
               Hủy
-            </button>
-          ) : null}
-          {onBack ? (
-            <button type="button" onClick={onBack} className={mentorGhostBtnClass}>
-              Quay lại
             </button>
           ) : null}
         </div>

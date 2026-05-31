@@ -110,9 +110,6 @@ export function AdminUserDetail() {
 
   return (
     <AdminPanel title="Chi tiết người dùng" description="Thông tin tài khoản và quota.">
-      <Link to="/admin/users" className="mb-4 inline-block text-sm font-semibold text-violet-700 hover:underline">
-        ← Danh sách người dùng
-      </Link>
       {loading && <p className="text-sm text-slate-500">Đang tải…</p>}
       {error && !loading && <p className="text-sm text-red-600">{error}</p>}
       {user && (

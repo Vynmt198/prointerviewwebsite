@@ -4,6 +4,7 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { OAuth2Client } from "google-auth-library";
 import { User, toPublicUser } from "../models/User.js";
+import { sanitizeNotificationPrefsPatch } from "../constants/notificationPrefs.js";
 import * as emailService from "./emailService.js";
 import {
   buildSessionFingerprint,
@@ -797,6 +798,21 @@ export async function patchMeUser(userId, body, req, options = {}) {
   }
   if (typeof body.profileAwards === "string") {
     user.profileAwards = body.profileAwards.trim();
+  }
+
+  if (body.notificationPrefs && typeof body.notificationPrefs === "object") {
+    const patch = sanitizeNotificationPrefsPatch(user.role, body.notificationPrefs);
+    if (patch) {
+      if (!user.settings || typeof user.settings !== "object") {
+        user.settings = {};
+      }
+      const prev =
+        user.settings.notificationPrefs && typeof user.settings.notificationPrefs === "object"
+          ? user.settings.notificationPrefs
+          : {};
+      user.settings.notificationPrefs = { ...prev, ...patch };
+      user.markModified("settings");
+    }
   }
 
   if (typeof body.email === "string") {

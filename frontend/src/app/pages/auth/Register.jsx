@@ -113,12 +113,6 @@ export function Register() {
             >
               Về trang đăng nhập
             </Link>
-            <button
-              onClick={() => setRegisteredEmail("")}
-              className="text-sm font-bold text-gray-500 hover:text-[#8037f4] transition-colors"
-            >
-              Quay lại đăng ký
-            </button>
           </div>
         </div>
       </div>

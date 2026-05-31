@@ -15,8 +15,6 @@ import {
   COURSE_DETAIL_SHELL_MAX,
 } from "../../components/layout/customerShellLayout";
 import {
-  clearAdminCourseReturnPath,
-  getAdminCourseReturnPath,
   isAdminCoursePreviewMode,
 } from "../../utils/adminCoursePreview.js";
 import {
@@ -149,6 +147,8 @@ export function CourseDetail() {
   const isReadOnlyMentorView = isMentorViewer && !isOwnerMentor;
   const isAdminViewer = currentUser?.role === "admin";
   const adminPreviewMode = isAdminViewer && isAdminCoursePreviewMode(searchParams);
+  const mentorPeerReviewMode =
+    !!course && searchParams.get("peerReview") === "1" && isReadOnlyMentorView;
 
   const handleEnroll = async () => {
     if (!id || !course) return;
@@ -194,7 +194,7 @@ export function CourseDetail() {
             onClick={() => navigate("/courses")}
             className="rounded-sm bg-[#8037f4] px-6 py-3 font-semibold text-white"
           >
-            Quay lại danh sách
+            Khám phá khóa học
           </button>
         </div>
       </MentorPageShell>
@@ -225,16 +225,19 @@ export function CourseDetail() {
               <span className="font-bold">Preview admin</span> — Đây là trang marketplace học viên thấy
               (chưa ghi danh nên chỉ xem mô tả / danh sách bài, không vào phòng học đầy đủ).
             </p>
+          </div>
+        ) : null}
+        {mentorPeerReviewMode ? (
+          <div className="mb-4 flex flex-col gap-3 rounded-lg border border-violet-200 bg-violet-50 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-sm text-violet-950">
+              <span className="font-bold">Đánh giá chéo</span> — Xem đầy đủ video và tài liệu bài học (chỉ đọc) trước khi chấm điểm.
+            </p>
             <button
               type="button"
-              onClick={() => {
-                const back = getAdminCourseReturnPath();
-                clearAdminCourseReturnPath();
-                navigate(back);
-              }}
-              className="shrink-0 rounded-lg bg-violet-700 px-4 py-2 text-xs font-bold uppercase tracking-wide text-white hover:bg-violet-800"
+              onClick={() => navigate(`/courses/${id}/learn?peerReview=1`)}
+              className="shrink-0 rounded-lg bg-[#8037f4] px-4 py-2 text-sm font-bold text-white hover:bg-[#6d2fd6]"
             >
-              ← Quay lại quản trị khóa
+              Xem nội dung khóa học
             </button>
           </div>
         ) : null}

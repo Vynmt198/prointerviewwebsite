@@ -62,6 +62,8 @@ export async function startServer() {
             `[startup] Đồng bộ hồ sơ mentor: tạo mới ${sync.created}, lỗi ${sync.errors ?? 0}, user role mentor: ${sync.totalMentorUsers ?? "?"}`,
           );
         }
+        const { startBookingReminderJob } = await import("./jobs/bookingReminderJob.js");
+        startBookingReminderJob();
       }
     } else {
       console.warn("MONGO_URI is missing. Một số route sẽ trả 503 cho đến khi MongoDB được cấu hình.");

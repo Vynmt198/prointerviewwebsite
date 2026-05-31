@@ -9,9 +9,12 @@ import { Payment } from "../models/Payment.js";
 import { ensureMentorProfilesForAllMentorUsers } from "./mentorProfileService.js";
 import { recordAdminTransferSuccess, recordTransferPending, recordTransferSubmitted } from "./paymentsService.js";
 import { tryCreditMentorForCompletedBooking } from "./mentorEarningsService.js";
+import { deliverNotification } from "./notificationDeliveryService.js";
 import { runInTransaction } from "../helpers/dbHelper.js";
 import { resolveStoredUploadUrl } from "../utils/resolveStoredUploadUrl.js";
-import { isBookingInLiveWindow } from "../utils/bookingSchedule.js";
+import { isBookingInLiveWindow, isBookingSlotInFuture } from "../utils/bookingSchedule.js";
+import { newPaymentExpiresAt } from "../utils/transferPaymentExpiry.js";
+import { expireBookingTransferIfNeeded } from "./transferPaymentExpiryService.js";
 
 /**
  * Chính sách hủy (User) — đồng bộ `frontend/src/app/constants/bookingPolicy.js`:
@@ -119,10 +122,23 @@ function parseBookingDateTime(dateRaw, timeRaw) {
 
 async function notifyBookingOwner(userId, payload) {
   if (!mongoose.isValidObjectId(String(userId || ""))) return;
-  await Notification.create({
-    userId,
+  const customerPrefKey =
+    payload.type === "feedback" ? "mentor_feedback" : "interview_reminder";
+  await deliverNotification(userId, {
+    customerPrefKey,
     type: payload.type || "system",
     title: payload.title || "Cập nhật lịch hẹn",
+    body: payload.body || "",
+    metadata: payload.metadata || {},
+  });
+}
+
+async function notifyMentorBooking(mentorUserId, mentorPrefKey, payload) {
+  if (!mongoose.isValidObjectId(String(mentorUserId || ""))) return;
+  await deliverNotification(mentorUserId, {
+    mentorPrefKey,
+    type: payload.type || "system",
+    title: payload.title || "Cập nhật lịch mentor",
     body: payload.body || "",
     metadata: payload.metadata || {},
   });
@@ -628,7 +644,7 @@ export async function createBooking(userId, body) {
   if (!requestedAt || Number.isNaN(requestedAt.getTime())) {
     return { ok: false, status: 400, error: "Ngày/giờ đặt lịch không hợp lệ." };
   }
-  if (requestedAt.getTime() <= Date.now()) {
+  if (!isBookingSlotInFuture(dateNormalized, timeNormalized)) {
     return { ok: false, status: 400, error: "Không thể đặt lịch trong quá khứ." };
   }
 
@@ -666,14 +682,19 @@ export async function createBooking(userId, body) {
     // Nếu là chính user này đang đặt lại khung giờ cũ (ví dụ: quay lại trang Checkout hoặc tải lại)
     // và booking cũ vẫn đang ở trạng thái chờ thanh toán
     if (String(dup.userId) === uid && dup.status === "pending" && dup.paymentStatus === "pending") {
-      const clientOrder = extractOrderPart(body.orderNum);
-      if (clientOrder && extractOrderPart(dup.paymentRef) !== clientOrder) {
-        dup.paymentRef = clientOrder;
-        await dup.save();
+      const expired = await expireBookingTransferIfNeeded(dup);
+      if (!expired.expired) {
+        const clientOrder = extractOrderPart(body.orderNum);
+        if (clientOrder && extractOrderPart(dup.paymentRef) !== clientOrder) {
+          dup.paymentRef = clientOrder;
+          await dup.save();
+        }
+        return { ok: true, booking: toPublicBooking(dup, mentor) };
       }
-      return { ok: true, booking: toPublicBooking(dup, mentor) };
+      // Đơn cũ đã hết hạn — tiếp tục tạo booking mới (slot được giải phóng).
+    } else {
+      return { ok: false, status: 409, error: "Khung giờ này đã được đặt. Chọn giờ khác." };
     }
-    return { ok: false, status: 409, error: "Khung giờ này đã được đặt. Chọn giờ khác." };
   }
 
   const creditFromRaw =
@@ -716,6 +737,9 @@ export async function createBooking(userId, body) {
         ? body.paymentRef
         : "";
   const paymentRef = extractOrderPart(paymentRefCandidate);
+  const transferPending =
+    paymentStatus === "pending" && mapPaymentMethod(body.paymentMethod ?? body.method) === "transfer";
+  const paymentExpiresAt = transferPending ? newPaymentExpiresAt() : undefined;
 
   const doc = await Booking.create({
     userId: uid,
@@ -726,6 +750,10 @@ export async function createBooking(userId, body) {
     timezone,
     sessionType,
     notes: buildNotes(body),
+    cvFileName: typeof body.cvFile === "string" ? body.cvFile.trim().slice(0, 500) : "",
+    jdFileName: typeof body.jdFile === "string" ? body.jdFile.trim().slice(0, 500) : "",
+    cvFileUrl: typeof body.cvFileUrl === "string" ? body.cvFileUrl.trim().slice(0, 2000) : "",
+    jdFileUrl: typeof body.jdFileUrl === "string" ? body.jdFileUrl.trim().slice(0, 2000) : "",
     meetingLink,
     status,
     price,
@@ -735,6 +763,7 @@ export async function createBooking(userId, body) {
     paymentStatus,
     paymentMethod: rebookCreditSource ? "transfer" : mapPaymentMethod(body.paymentMethod ?? body.method),
     paymentRef,
+    paymentExpiresAt,
     paidAt: paymentStatus === "paid" ? new Date() : undefined,
     creditSourceBookingId: rebookCreditSource?._id ?? undefined,
   });
@@ -813,12 +842,27 @@ export async function createBooking(userId, body) {
         referenceModel: "Booking",
         referenceId: doc._id,
         amount: ledgerAmt,
+        paymentExpiresAt: doc.paymentExpiresAt,
       });
       if (!ledger.ok && !ledger.idempotent) {
         console.error("[createBooking] ledger:", ledger.error);
       }
     }
   }
+
+  const customerName = user?.name || "Học viên";
+  const payLabel =
+    doc.paymentStatus === "paid" ? "đã thanh toán" : "đang chờ thanh toán";
+  await notifyMentorBooking(mentor.userId, "booking_request", {
+    type: "new_booking_request",
+    title: "Yêu cầu đặt lịch mới",
+    body: `${customerName} đặt buổi ${dateNormalized} lúc ${timeNormalized} (${payLabel}).`,
+    metadata: {
+      bookingId: doc._id,
+      mentorId: mentor._id,
+      actionUrl: `/mentor/meeting-detail/${doc._id}`,
+    },
+  });
 
   return {
     ok: true,
@@ -871,6 +915,10 @@ export function toPublicBooking(doc, mentorLean) {
     timezone: b.timezone,
     sessionType: b.sessionType,
     notes: b.notes,
+    cvFileName: b.cvFileName ?? "",
+    jdFileName: b.jdFileName ?? "",
+    cvFileUrl: resolveStoredUploadUrl(b.cvFileUrl ?? ""),
+    jdFileUrl: resolveStoredUploadUrl(b.jdFileUrl ?? ""),
     mentorNotes: b.mentorNotes ?? "",
     reviewId: b.reviewId ? String(b.reviewId) : "",
     meetingLink: b.meetingLink ?? "",
@@ -882,6 +930,7 @@ export function toPublicBooking(doc, mentorLean) {
     paymentStatus: b.paymentStatus,
     paymentMethod: b.paymentMethod,
     paymentRef: b.paymentRef ?? "",
+    paymentExpiresAt: b.paymentExpiresAt ?? null,
     transferSubmittedAt: b.transferSubmittedAt ?? null,
     transferConfirmedAt: b.transferConfirmedAt ?? null,
     transferConfirmedBy: b.transferConfirmedBy ? String(b.transferConfirmedBy) : "",
@@ -1258,6 +1307,23 @@ export async function confirmBankTransferPaymentByAdmin(bookingId, options = {})
     })
     .populate({ path: "userId", select: "name email avatar" });
   if (!booking) return { ok: false, status: 404, error: "Không tìm thấy booking." };
+
+  const mentorUid =
+    booking.mentorId?.userId?._id || booking.mentorId?.userId;
+  const studentName =
+    booking.userId?.name || booking.userId?.email || "Học viên";
+  if (mentorUid) {
+    await notifyMentorBooking(mentorUid, "booking_request", {
+      type: "booking_confirmed",
+      title: "Buổi mentor đã được thanh toán",
+      body: `${studentName} — buổi ${booking.date} ${booking.timeSlot} đã xác nhận thanh toán.`,
+      metadata: {
+        bookingId: booking._id,
+        actionUrl: `/mentor/meeting-detail/${booking._id}`,
+      },
+    });
+  }
+
   return { ok: true, booking: toPublicBooking(booking) };
 }
 
@@ -1325,6 +1391,16 @@ export async function completeMentorBooking(mentorUserId, rawId) {
   const credit = await tryCreditMentorForCompletedBooking(booking._id);
   if (!credit.ok) {
     console.error("[completeMentorBooking] mentor earnings:", credit.error || credit);
+  } else if (credit.credited > 0) {
+    await notifyMentorBooking(mentorUserId, "payout_update", {
+      type: "payment_success",
+      title: "Đã ghi nhận thu nhập buổi mentor",
+      body: `+${Math.round(credit.credited).toLocaleString("vi-VN")}₫ đã vào số dư khả dụng.`,
+      metadata: {
+        bookingId: booking._id,
+        actionUrl: "/mentor/finance",
+      },
+    });
   }
 
   await booking.populate([
@@ -1418,17 +1494,15 @@ export async function updateMentorNotes(mentorUserId, rawId, body) {
     console.log(`Attempting to send email to ${student.email}`);
     // 1. Tạo thông báo trên Web
     try {
-      await Notification.create({
-        userId: student._id,
+      await notifyBookingOwner(student._id, {
+        type: "feedback",
         title: "Nhận xét mới từ Mentor",
         body: `Mentor ${mentorData?.name || "của bạn"} đã gửi nhận xét cho buổi học ${booking.sessionType === "mock_interview" ? "Phỏng vấn giả định" : "Tư vấn lộ trình"}.`,
-        type: "feedback",
         metadata: {
           bookingId: booking._id,
           mentorId: mentorData?._id,
-          actionUrl: `/session/${booking._id}`
+          actionUrl: `/session/${booking._id}`,
         },
-        isRead: false
       });
       console.log(`Web notification created.`);
     } catch (err) {
@@ -1583,7 +1657,21 @@ export async function cancelMyBooking(userId, rawId, body) {
     metadata: { bookingId: String(booking._id), refundAmountVnd: settlement.refundAmountVnd },
   });
 
-  const mentor = await Mentor.findById(booking.mentorId).lean();
+  const mentorLean = await Mentor.findById(booking.mentorId).select("userId").lean();
+  if (mentorLean?.userId) {
+    const student = await User.findById(booking.userId).select("name").lean();
+    await notifyMentorBooking(mentorLean.userId, "booking_change", {
+      type: "booking_cancelled",
+      title: "Học viên đã hủy buổi",
+      body: `${student?.name || "Học viên"} hủy lịch ${booking.date} ${booking.timeSlot}.`,
+      metadata: {
+        bookingId: booking._id,
+        actionUrl: "/mentor/schedule",
+      },
+    });
+  }
+
+  const mentor = mentorLean || (await Mentor.findById(booking.mentorId).lean());
   return {
     ok: true,
     booking: toPublicBooking(booking, mentor),
@@ -1952,8 +2040,11 @@ export async function resolveMentorCancelBooking(userId, rawId, body) {
     }
   }
   const rescheduleAt = parseBookingDateTime(newDateNorm, newSlot);
-  if (!rescheduleAt || Number.isNaN(rescheduleAt.getTime()) || rescheduleAt.getTime() <= Date.now()) {
+  if (!rescheduleAt || Number.isNaN(rescheduleAt.getTime())) {
     return { ok: false, status: 400, error: "Ngày/giờ đổi lịch không hợp lệ." };
+  }
+  if (!isBookingSlotInFuture(newDateNorm, newSlot)) {
+    return { ok: false, status: 400, error: "Không thể chọn khung giờ trong quá khứ." };
   }
   const dup = await Booking.findOne({
     mentorId: booking.mentorId,
@@ -2070,8 +2161,11 @@ export async function rescheduleMentorBooking(mentorUserId, rawId, body) {
     if (!allowedSlots.includes(newSlot)) return { ok: false, status: 400, error: "Khung giờ mới không nằm trong lịch mentor mở." };
   }
   const rescheduleAt = parseBookingDateTime(newDateNorm, newSlot);
-  if (!rescheduleAt || Number.isNaN(rescheduleAt.getTime()) || rescheduleAt.getTime() <= Date.now()) {
+  if (!rescheduleAt || Number.isNaN(rescheduleAt.getTime())) {
     return { ok: false, status: 400, error: "Ngày/giờ đổi lịch không hợp lệ." };
+  }
+  if (!isBookingSlotInFuture(newDateNorm, newSlot)) {
+    return { ok: false, status: 400, error: "Không thể chọn khung giờ trong quá khứ." };
   }
   const dup = await Booking.findOne({
     mentorId: booking.mentorId,

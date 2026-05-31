@@ -9,6 +9,7 @@ import { PayoutRequest } from "../models/PayoutRequest.js";
 import { Enrollment } from "../models/Enrollment.js";
 import { InterviewSession } from "../models/InterviewSession.js";
 import { Notification } from "../models/index.js";
+import { deliverNotification } from "../services/notificationDeliveryService.js";
 import { serializeCourseForApi, resolveStoredUploadUrl } from "../utils/resolveStoredUploadUrl.js";
 import {
   applyPaidEnrollmentCountsToAdminCourses,
@@ -1144,6 +1145,17 @@ export const AdminController = {
       payout.note = String(req.body?.note || "").trim();
       await payout.save();
 
+      const mentorApproved = await Mentor.findById(payout.mentorId).select("userId").lean();
+      if (mentorApproved?.userId) {
+        await deliverNotification(mentorApproved.userId, {
+          mentorPrefKey: "payout_update",
+          type: "payment_success",
+          title: "Yêu cầu rút tiền đã được duyệt",
+          body: `Admin đã duyệt rút ${Math.round(Number(payout.amount || 0)).toLocaleString("vi-VN")}₫ — chờ chuyển khoản.`,
+          metadata: { actionUrl: "/mentor/finance" },
+        });
+      }
+
       res.json({ success: true, payout });
     } catch (error) {
       next(error);
@@ -1177,6 +1189,17 @@ export const AdminController = {
         { _id: payout.mentorId },
         { $inc: { "finance.pendingBalance": -Number(payout.amount || 0) } },
       );
+
+      const mentorPaid = await Mentor.findById(payout.mentorId).select("userId").lean();
+      if (mentorPaid?.userId) {
+        await deliverNotification(mentorPaid.userId, {
+          mentorPrefKey: "payout_update",
+          type: "payment_success",
+          title: "Đã chuyển tiền rút về tài khoản",
+          body: `Số tiền ${Math.round(Number(payout.amount || 0)).toLocaleString("vi-VN")}₫ đã được ghi nhận chi.`,
+          metadata: { actionUrl: "/mentor/finance" },
+        });
+      }
 
       res.json({ success: true, payout });
     } catch (error) {

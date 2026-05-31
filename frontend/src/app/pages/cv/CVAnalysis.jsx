@@ -9,7 +9,6 @@ import {
   Zap,
   AlertTriangle as Warning,
   Briefcase,
-  ArrowLeft,
   Lock,
   Percent as SealPercent,
   Trash2 as Trash,

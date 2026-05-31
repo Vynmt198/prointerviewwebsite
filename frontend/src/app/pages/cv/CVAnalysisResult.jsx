@@ -112,7 +112,7 @@ export function CVAnalysisResult() {
             onClick={() => navigate(analysisPath)}
             className="mt-4 inline-flex items-center gap-2 rounded-xl bg-[#8037f4] px-5 py-2.5 text-sm font-semibold text-white"
           >
-            Quay lại phân tích
+            Mở trang phân tích
           </button>
         </div>
       )}

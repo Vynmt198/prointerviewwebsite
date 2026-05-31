@@ -751,13 +751,6 @@ export function Interview() {
             )}
           </button>
 
-          <button
-            type="button"
-            onClick={() => setFlowStep(1)}
-            className="w-full py-2 text-sm font-medium text-violet-600 hover:text-[#6d2fd6]"
-          >
-            ← Quay lại bước 1
-          </button>
         </section>
         )}
             </div>

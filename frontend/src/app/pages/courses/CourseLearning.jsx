@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import {
-  ArrowLeft,
   PlayCircle,
   CheckCircle,
   Clock,
@@ -31,7 +30,7 @@ import {
   Moon,
   Sun,
 } from "lucide-react";
-import { useParams, useNavigate } from "react-router";
+import { useParams, useNavigate, useSearchParams } from "react-router";
 import {
   fetchCourseById,
   fetchLessonContent,
@@ -44,6 +43,7 @@ import { enrollmentApi } from "../../utils/enrollmentApi";
 import { toastApiError, toastApiSuccess } from "../../utils/apiToast";
 import { avatarSrc, mediaSrc, DEFAULT_COURSE_THUMB } from "../../utils/mediaUrl";
 import { enrollmentAccessGranted } from "../../utils/enrollmentAccess.js";
+import { getUser } from "../../utils/auth";
 import { landingPrimaryButtonClass } from "../../constants/landingTheme";
 import { readLearningDarkMode, writeLearningDarkMode } from "../../utils/learningDarkMode";
 
@@ -811,12 +811,6 @@ function QASection({
 
   return (
     <div>
-      <div className="mb-3 flex items-center justify-between">
-        <p className="text-sm font-normal leading-relaxed text-slate-700 dark:text-slate-300">
-          Hỏi & Đáp với Mentor — đồng bộ trên hệ thống
-        </p>
-        <span className="text-xs font-medium text-slate-600 dark:text-slate-400">{items.length} câu hỏi</span>
-      </div>
       <div className="mb-3 flex items-center gap-3">
         <input
           value={newQuestion}
@@ -885,6 +879,9 @@ function QASection({
 export function CourseLearning() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const peerPreviewMode =
+    searchParams.get("peerReview") === "1" && getUser()?.role === "mentor";
 
   const [course, setCourse] = useState(null);
   const [enrollment, setEnrollment] = useState(null);
@@ -1010,7 +1007,7 @@ export function CourseLearning() {
 
   // Load notes from API
   useEffect(() => {
-    if (!id || !currentLesson?.id) return;
+    if (!id || !currentLesson?.id || peerPreviewMode) return;
     const key = `${id}:${currentLesson.id}`;
     notesLoadedFor.current = "";
     let cancelled = false;
@@ -1040,11 +1037,11 @@ export function CourseLearning() {
     return () => {
       cancelled = true;
     };
-  }, [id, currentLesson?.id]);
+  }, [id, currentLesson?.id, peerPreviewMode]);
 
   // Autosave notes (debounced)
   useEffect(() => {
-    if (!id || !currentLesson?.id || notesLoading) return;
+    if (!id || !currentLesson?.id || notesLoading || peerPreviewMode) return;
     const key = `${id}:${currentLesson.id}`;
     if (notesLoadedFor.current !== key) return;
 
@@ -1169,7 +1166,14 @@ export function CourseLearning() {
     );
   }
 
-  if (!loading && course && !enrollment && !paymentPendingInfo && lessons.length > 0) {
+  if (
+    !loading &&
+    course &&
+    !enrollment &&
+    !paymentPendingInfo &&
+    lessons.length > 0 &&
+    !peerPreviewMode
+  ) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#faf9fc] px-6 dark:bg-slate-950">
         <div className="text-center max-w-md">
@@ -1198,10 +1202,10 @@ export function CourseLearning() {
           <h2 className="mb-2 text-xl font-bold text-slate-900">Không tìm thấy khóa học</h2>
           <button
             type="button"
-            onClick={() => navigate(-1)}
+            onClick={() => navigate("/courses")}
             className={`${landingPrimaryButtonClass} mt-4 rounded-xl px-6 py-3 text-sm`}
           >
-            Quay lại
+            Khám phá khóa học
           </button>
         </div>
       </div>
@@ -1214,17 +1218,13 @@ export function CourseLearning() {
     <div
       className={`${isDarkMode ? "dark" : ""} flex h-screen flex-col overflow-hidden bg-slate-100 antialiased text-slate-900 dark:bg-slate-950 dark:text-slate-100`}
     >
+      {peerPreviewMode ? (
+        <div className="shrink-0 border-b border-violet-200 bg-violet-50 px-4 py-2 text-center text-sm text-violet-950 dark:border-violet-500/30 dark:bg-violet-950/40 dark:text-violet-100">
+          Xem trước đánh giá chéo — chỉ xem bài, không lưu tiến độ.
+        </div>
+      ) : null}
       {/* ── Top bar (Coursera / Udemy: breadcrumb + progress) ── */}
       <header className="z-30 flex min-h-14 shrink-0 items-center gap-3 border-b border-slate-200 bg-white px-3 py-2 dark:border-slate-800 dark:bg-slate-900 sm:px-4">
-        <button
-          type="button"
-          onClick={() => navigate(`/courses/${id}`)}
-          className="flex shrink-0 items-center gap-1.5 rounded-lg px-2 py-1.5 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          <span className="hidden sm:inline">Khóa học</span>
-        </button>
-        <div className="hidden h-8 w-px bg-slate-200 dark:bg-slate-700 sm:block" aria-hidden />
         <div className="min-w-0 flex-1 py-0.5">
           <h1 className="truncate text-base font-semibold leading-tight tracking-tight text-slate-900 dark:text-slate-50 sm:text-lg md:text-xl">
             {course.title}
@@ -1370,14 +1370,11 @@ export function CourseLearning() {
 
               {activeTab === "notes" && (
               <div>
-                <div className="mb-3 flex items-center justify-between">
-                  <p className="text-sm text-slate-600">
-                    Ghi chú của bạn — đồng bộ trên hệ thống
-                    {notesSaving && <span className="ml-2 text-slate-400">· đang lưu…</span>}
-                    {notesLoading && <span className="ml-2 text-slate-400">· đang tải…</span>}
+                {(notesSaving || notesLoading) && (
+                  <p className="mb-2 text-xs text-slate-400">
+                    {notesLoading ? "Đang tải…" : "Đang lưu…"}
                   </p>
-                  <span className="text-xs text-slate-400">{notes.length} ký tự</span>
-                </div>
+                )}
                 <textarea
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
