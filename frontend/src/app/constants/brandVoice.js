@@ -230,6 +230,14 @@ export const AUTH_COPY = {
     "Không đăng nhập được bằng Google (403). Thường do tài khoản bị khóa, hoặc frontend chưa trỏ đúng API. Kiểm tra VITE_API_URL và GOOGLE_CLIENT_ID khớp giữa Vercel/Render.",
   googleErrorUnauthorized:
     "Google chưa xác thực được. Kiểm tra GOOGLE_CLIENT_ID giống nhau ở frontend (.env.local) và backend (.env), và thêm localhost:5173 vào Authorized JavaScript origins trong Google Cloud.",
+  forgotPasswordSubtitle:
+    "Nhập email đã đăng ký. Nếu tài khoản có mật khẩu, ProInterview sẽ gửi link đặt lại qua email.",
+  forgotPasswordSentTitle: "Kiểm tra hộp thư",
+  forgotPasswordSentBody:
+    "Nếu email tồn tại và tài khoản có mật khẩu, bạn sẽ nhận hướng dẫn đặt lại trong vài phút. Nhớ kiểm tra cả hộp thư spam.",
+  resetPasswordSubtitle: "Nhập mật khẩu mới cho tài khoản ProInterview của bạn.",
+  resetPasswordDoneTitle: "Mật khẩu đã được cập nhật",
+  resetPasswordDoneBody: "Bạn có thể đăng nhập ngay bằng mật khẩu mới.",
 };
 
 export const DASHBOARD_GREETING_SUB =
