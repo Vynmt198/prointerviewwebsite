@@ -546,6 +546,7 @@ export default function InterviewRoom() {
   const lastSpokenQRef     = useRef(-1);
   const lastTTSSpokenQRef  = useRef(-1); // guard riêng cho TTS, tách khỏi D-ID
   const ttsUtteranceRef    = useRef(null);
+  const noopAttachVideo    = useCallback(() => {}, []); // stable no-op cho AILipSyncAvatar khi không dùng D-ID
 
   /* ── Camera video ref (shared with FaceMesh hook) ─────── */
   const cameraVideoRef = useRef(null);
@@ -1240,9 +1241,11 @@ export default function InterviewRoom() {
         <div className="grid min-h-0 flex-1 gap-2 px-3 pb-2 max-lg:grid-rows-[minmax(0,1fr)_minmax(0,1fr)_4.5rem] lg:grid-cols-2 lg:grid-rows-[minmax(0,1fr)_4.5rem]">
           {/* HR panel */}
           <div className={`relative min-h-0 h-full overflow-hidden rounded-xl border-2 bg-[#0a0a18] ${
-            isDIDActive ? "border-violet-300/80 shadow-[0_8px_32px_rgba(110,53,232,0.12)]" : "border-violet-200/70"
+            (isDIDActive || ttsAvailable) ? "border-violet-300/80 shadow-[0_8px_32px_rgba(110,53,232,0.12)]" : "border-violet-200/70"
           }`}>
-            {isDIDActive ? (
+
+            {/* ── Nhánh 1: D-ID WebRTC (lipsync thật) ── */}
+            {isDIDActive && (
               <>
                 <div className="absolute inset-0 pointer-events-none"
                   style={{ background: "radial-gradient(ellipse at 50% 48%, rgba(110,53,232,0.22) 0%, transparent 68%)" }} />
@@ -1270,18 +1273,19 @@ export default function InterviewRoom() {
                 <div className="absolute bottom-0 left-0 right-0 h-20 pointer-events-none"
                   style={{ background: "linear-gradient(to top, rgba(10,10,24,0.75) 0%, transparent 100%)" }} />
               </>
-            ) : (
+            )}
+
+            {/* ── Nhánh 2: TTS fallback — SVG avatar animate theo ttsSpeaking ── */}
+            {!isDIDActive && ttsAvailable && (
               <>
-                <HRVideoPanel
-                  questionVideoUrl={HR_QUESTION_URLS[hrGender][currentQ]}
-                  hrPhase={hrPhase}
-                  onAskingDone={ttsAvailable ? undefined : startListening}
-                  muted={ttsAvailable}
-                  isListening={isListening}
-                />
-                {/* TTS speaking indicator — hiện khi Web Speech API đang đọc câu hỏi */}
-                {ttsAvailable && ttsSpeaking && (
-                  <div className="absolute top-3 right-3 z-10 pointer-events-none">
+                <div className="absolute inset-0 pointer-events-none"
+                  style={{ background: "radial-gradient(ellipse at 50% 48%, rgba(110,53,232,0.22) 0%, transparent 68%)" }} />
+                <div className="absolute inset-0 flex items-center justify-center">
+                  {/* didStatus="idle" → SVG cartoon face; isSpeaking=ttsSpeaking → animate miệng */}
+                  <AILipSyncAvatar isSpeaking={ttsSpeaking} didStatus="idle" attachVideo={noopAttachVideo} size={220} />
+                </div>
+                {ttsSpeaking && (
+                  <div className="absolute top-3 right-3 z-10">
                     <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold"
                       style={{ background: "rgba(110,53,232,0.85)", backdropFilter: "blur(8px)" }}>
                       <div className="w-1.5 h-1.5 rounded-full bg-[#b5e636] animate-pulse" />
@@ -1289,9 +1293,8 @@ export default function InterviewRoom() {
                     </div>
                   </div>
                 )}
-                {/* Listening indicator — hiện khi đang chờ user trả lời */}
-                {ttsAvailable && !ttsSpeaking && hrPhase === "listening" && isListening && (
-                  <div className="absolute top-3 right-3 z-10 pointer-events-none">
+                {!ttsSpeaking && hrPhase === "listening" && isListening && (
+                  <div className="absolute top-3 right-3 z-10">
                     <div className="flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-semibold text-white"
                       style={{ background: "rgba(110,53,232,0.92)", backdropFilter: "blur(8px)" }}>
                       <div className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#b5e636]" />
@@ -1299,7 +1302,20 @@ export default function InterviewRoom() {
                     </div>
                   </div>
                 )}
+                <div className="absolute bottom-0 left-0 right-0 h-20 pointer-events-none"
+                  style={{ background: "linear-gradient(to top, rgba(10,10,24,0.75) 0%, transparent 100%)" }} />
               </>
+            )}
+
+            {/* ── Nhánh 3: Thuần video fallback (browser không hỗ trợ TTS) ── */}
+            {!isDIDActive && !ttsAvailable && (
+              <HRVideoPanel
+                questionVideoUrl={HR_QUESTION_URLS[hrGender][currentQ]}
+                hrPhase={hrPhase}
+                onAskingDone={startListening}
+                muted={false}
+                isListening={isListening}
+              />
             )}
             <div className="absolute bottom-3 left-3 flex items-center gap-1.5 px-2.5 py-1 rounded-lg"
               style={{ background: "rgba(0,0,0,0.7)", backdropFilter: "blur(8px)" }}>
