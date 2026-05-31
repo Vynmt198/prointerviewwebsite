@@ -115,7 +115,7 @@ const TESTIMONIALS = HOME_SECTION_COPY.testimonials.items.map((t, i) => ({
   stars: 5,
 }));
 
-/** 3 điểm dọc thân con trỏ — đủ “dài” mà không dày. */
+/** 3 điểm dọc thân con trỏ. */
 const CURSOR_BODY_OFFSETS = [
   { x: 0, y: 0 },
   { x: 7, y: 10 },
@@ -123,21 +123,41 @@ const CURSOR_BODY_OFFSETS = [
 ];
 
 const HERO_SPARKLE_MIN_MOVE_PX = 26;
-const HERO_SPARKLE_MAX_ON_SCREEN = 32;
 
-function makeHeroSparkle(x, y) {
+/** 0 = đỉnh con trỏ (mờ trước), 2 = đuôi (ở lại lâu nhất). */
+function heroSparkleFade(cursorSlot) {
+  const slot = Math.min(2, Math.max(0, cursorSlot));
+  const profiles = [
+    { duration: 1.65, times: [0, 0.14, 0.4, 1] },
+    { duration: 2.25, times: [0, 0.14, 0.58, 1] },
+    { duration: 2.95, times: [0, 0.15, 0.72, 1] },
+  ];
+  const { duration, times } = profiles[slot];
+  const peak = 0.8 - slot * 0.04;
+  return {
+    duration,
+    times,
+    opacity: [0, peak, peak * (0.55 - slot * 0.08), 0],
+    scale: [0.38, 0.74, 0.62, 0.28],
+  };
+}
+
+function makeHeroSparkle(x, y, cursorSlot = 0) {
+  const angle = Math.random() * Math.PI * 2;
+  const drift = 22 + Math.random() * 28;
   return {
     id: `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
     x,
     y,
-    offsetX: (Math.random() - 0.5) * 36,
-    offsetY: (Math.random() - 0.5) * 36,
+    driftX: Math.cos(angle) * drift,
+    driftY: Math.sin(angle) * drift - 10,
     rotate: Math.random() * 90 - 45,
+    cursorSlot,
   };
 }
 
 function sparklesAlongCursor(x, y) {
-  return CURSOR_BODY_OFFSETS.map((off) => makeHeroSparkle(x + off.x, y + off.y));
+  return CURSOR_BODY_OFFSETS.map((off, i) => makeHeroSparkle(x + off.x, y + off.y, i));
 }
 
 function HeroAtmosphere() {
@@ -174,9 +194,7 @@ function HeroAtmosphere() {
 
       const dist = Math.hypot(e.clientX - lastX, e.clientY - lastY);
       if (dist >= HERO_SPARKLE_MIN_MOVE_PX) {
-        setArrows((prev) =>
-          [...prev, ...sparklesAlongCursor(e.clientX, e.clientY)].slice(-HERO_SPARKLE_MAX_ON_SCREEN),
-        );
+        setArrows((prev) => [...prev, ...sparklesAlongCursor(e.clientX, e.clientY)]);
         lastX = e.clientX;
         lastY = e.clientY;
       }
@@ -203,16 +221,21 @@ function HeroAtmosphere() {
       const newArrows = [];
       for (let i = 0; i < burstCount; i++) {
         const base = CURSOR_BODY_OFFSETS[i % CURSOR_BODY_OFFSETS.length];
+        const bx = e.clientX + base.x + (Math.random() - 0.5) * burstRadius;
+        const by = e.clientY + base.y + (Math.random() - 0.5) * burstRadius;
+        const angle = Math.random() * Math.PI * 2;
+        const drift = 18 + Math.random() * 24;
         newArrows.push({
           id: `${now}-${i}`,
-          x: e.clientX + base.x,
-          y: e.clientY + base.y,
-          offsetX: (Math.random() - 0.5) * burstRadius,
-          offsetY: (Math.random() - 0.5) * burstRadius,
+          x: bx,
+          y: by,
+          driftX: Math.cos(angle) * drift,
+          driftY: Math.sin(angle) * drift - 8,
           rotate: Math.random() * 360,
+          cursorSlot: i % CURSOR_BODY_OFFSETS.length,
         });
       }
-      setArrows((prev) => [...prev, ...newArrows].slice(-HERO_SPARKLE_MAX_ON_SCREEN));
+      setArrows((prev) => [...prev, ...newArrows]);
     };
     
     heroEl.addEventListener("mousemove", handleMouseMove);
@@ -246,28 +269,32 @@ function HeroAtmosphere() {
       </div>
 
       <div className="pointer-events-none fixed inset-0 z-[5] overflow-hidden">
-        {arrows.map(arrow => (
-          <motion.div
-            key={arrow.id}
-            className="absolute -translate-x-1/2 -translate-y-1/2 pointer-events-none"
-            initial={{ opacity: 0.45, scale: 0.4, x: arrow.x, y: arrow.y, rotate: arrow.rotate }}
-            animate={{
-              opacity: [0.45, 0.82, 0.72, 0],
-              scale: [0.4, 0.78, 0.72, 0.28],
-              x: arrow.x + arrow.offsetX,
-              y: arrow.y - 18 + arrow.offsetY,
-              rotate: arrow.rotate + 45,
-            }}
-            transition={{
-              duration: 2.5,
-              ease: [0.25, 0.1, 0.25, 1],
-              times: [0, 0.14, 0.58, 1],
-            }}
-            onAnimationComplete={() => setArrows(prev => prev.filter(a => a.id !== arrow.id))}
-          >
-            <SparkleGlyph className="w-6 h-6" />
-          </motion.div>
-        ))}
+        {arrows.map((arrow) => {
+          const fade = heroSparkleFade(arrow.cursorSlot ?? 0);
+          const { driftX: dx, driftY: dy, rotate: r0 } = arrow;
+          return (
+            <motion.div
+              key={arrow.id}
+              className="pointer-events-none absolute -translate-x-1/2 -translate-y-1/2"
+              initial={{ opacity: 0, scale: fade.scale[0], x: arrow.x, y: arrow.y, rotate: r0 }}
+              animate={{
+                opacity: fade.opacity,
+                scale: fade.scale,
+                x: [arrow.x, arrow.x + dx * 0.35, arrow.x + dx * 0.75, arrow.x + dx],
+                y: [arrow.y, arrow.y + dy * 0.35, arrow.y + dy * 0.75, arrow.y + dy],
+                rotate: [r0, r0 + 10, r0 + 22, r0 + 28],
+              }}
+              transition={{
+                duration: fade.duration,
+                ease: [0.25, 0.1, 0.25, 1],
+                times: fade.times,
+              }}
+              onAnimationComplete={() => setArrows((prev) => prev.filter((a) => a.id !== arrow.id))}
+            >
+              <SparkleGlyph className="h-6 w-6" />
+            </motion.div>
+          );
+        })}
       </div>
     </>
   );
