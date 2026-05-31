@@ -222,8 +222,29 @@ export async function refreshAccessToken(rawRefresh, req, options = {}) {
 
   sub.lastUsedAt = new Date();
   user.authSessions = user.authSessions.filter((s) => !s._id.equals(sid));
-  const { refreshToken } = pushNewSession(user, req);
-  await user.save();
+  let { refreshToken } = pushNewSession(user, req);
+
+  // Retry up to 3 lần khi gặp Mongoose VersionError (concurrent saves trong interview room).
+  // Mỗi lần: re-fetch user mới nhất, rebuild session, thử save lại.
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      await user.save();
+      break; // success
+    } catch (err) {
+      if (err.name !== "VersionError") throw err;
+      if (attempt === 2) {
+        // Hết retry — trả lỗi graceful thay vì crash 500
+        return { ok: false, status: 409, error: "Xung đột phiên đăng nhập. Vui lòng thử lại." };
+      }
+      // Re-fetch user mới nhất và rebuild session
+      const fresh = await User.findById(user._id).select("+authSessions");
+      if (!fresh) return { ok: false, status: 401, error: "Tài khoản không còn tồn tại." };
+      fresh.authSessions = fresh.authSessions.filter((s) => !s._id.equals(sid));
+      const { refreshToken: newRT } = pushNewSession(fresh, req);
+      refreshToken = newRT; // dùng token từ retry
+      user = fresh;
+    }
+  }
 
   const access = issueAccessToken(user);
   if (!access.ok) return access;

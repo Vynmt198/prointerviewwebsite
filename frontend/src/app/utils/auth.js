@@ -98,9 +98,14 @@ export async function tryRefreshAccessToken() {
     });
     const body = await res.json().catch(() => ({}));
     if (!res.ok || !body.success || !body.token) {
-      if (res.status === 401 || res.status === 403) {
-        clearAuthStorage();
-      }
+  <<<<<<< feat/mentor-peer-review-booking-ops
+        if (res.status === 401 || res.status === 403) {
+          clearAuthStorage();
+        }
+  =======
+        // Chỉ xóa auth khi 4xx (token thực sự invalid), không xóa khi 5xx (server lỗi tạm thời)
+        if (res.status < 500) clearAuthStorage();
+  >>>>>>> main
       return false;
     }
     persistLoginPayload(body);
