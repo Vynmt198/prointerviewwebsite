@@ -12,7 +12,6 @@ import {
   HOME_CV_SHOWCASE_TITLE_CLAMP,
   homeSectionClasses as ty,
 } from "../../constants/homeTypography";
-import { SparkleGlyph } from "../decor/SparkleGlyph";
 
 const DEMO_MATCH = CV_HUB_DEMO_MATCH;
 
@@ -95,8 +94,8 @@ export function CvAnalysisFeatureShowcase({ onCtaClick }) {
         }
       `}</style>
       <div className={`home-mobile-gutter relative z-10 flex w-full items-center overflow-visible py-2 ${HOME_SECTION_INNER}`}>
-        <div className="grid w-full origin-center grid-cols-1 items-center gap-10 overflow-visible lg:grid-cols-[minmax(0,1.14fr)_minmax(0,0.86fr)] lg:scale-100 lg:gap-6 xl:gap-7 lg:-translate-x-[1.7rem]">
-          <article className="relative z-10 flex min-w-0 flex-col items-start gap-3 sm:gap-3.5">
+        <div className="grid w-full origin-center scale-[0.92] grid-cols-1 items-center gap-4 overflow-visible max-lg:scale-[0.9] max-lg:gap-3 sm:scale-[0.96] lg:grid-cols-[minmax(0,1.14fr)_minmax(0,0.86fr)] lg:scale-100 lg:gap-6 xl:gap-7 lg:-translate-x-8">
+          <article className="relative z-10 flex min-w-0 flex-col items-start gap-3 sm:gap-3.5 lg:translate-y-6">
             <span className={ty.cvShowcaseBadge}>
               <FileText className="h-3.5 w-3.5 shrink-0" aria-hidden />
               {CV_SHOWCASE_COPY.badge}
@@ -134,11 +133,10 @@ export function CvAnalysisFeatureShowcase({ onCtaClick }) {
             ) : null}
           </article>
 
-          <section className="cv-showcase-visual relative z-10 flex min-w-0 flex-col items-center justify-center overflow-visible lg:translate-x-12 lg:justify-self-center">
-            <div className="relative mx-auto w-full max-w-[31rem] overflow-visible max-lg:scale-[0.9] max-lg:origin-top">
-              <div className="pointer-events-none absolute left-1/2 top-0 z-0 w-[12rem] -translate-x-1/2 -translate-y-[0.75rem] sm:w-[13.7rem] sm:-translate-y-[1.39rem] lg:w-[15.2rem] lg:-translate-y-[1.64rem]">
+          <section className="cv-showcase-visual relative z-10 flex min-w-0 flex-col items-center justify-center overflow-visible lg:translate-x-12 lg:-translate-y-6 lg:justify-self-center">
+            <div className="relative mx-auto w-full max-w-[31rem] overflow-visible">
+              <div className="pointer-events-none absolute left-1/2 top-0 z-0 w-[11.7rem] -translate-x-1/2 -translate-y-[1.14rem] sm:w-[13.7rem] sm:-translate-y-[1.39rem] lg:w-[15.2rem] lg:-translate-y-[1.64rem]">
                 <div className="relative">
-                  <SparkleGlyph className="absolute -left-[3rem] top-[1.5rem] w-12 h-12 -rotate-12 drop-shadow-md lg:-left-[4rem] lg:top-[2rem] lg:w-16 lg:h-16" />
                   <MascotSparkle className="left-[14%] top-[18%] h-2 w-2 sm:left-[16%]" />
                   <MascotSparkle className="left-[10%] top-[34%] h-1.5 w-1.5 opacity-90 sm:left-[12%]" />
                   <img
@@ -150,7 +148,7 @@ export function CvAnalysisFeatureShowcase({ onCtaClick }) {
                 </div>
               </div>
 
-              <div className="relative z-10 flex w-full flex-col -space-y-3 pt-[6.2rem] sm:pt-[8.5rem] lg:pt-[9rem]">
+              <div className="relative z-10 flex w-full flex-col -space-y-3 pt-[7.75rem] sm:pt-[8.5rem] lg:pt-[9rem]">
                 <CardReveal delayMs={0} className="relative z-10 translate-x-4 lg:translate-x-8">
                   <ScoreCard
                     className="rotate-1 scale-95 transform"
@@ -163,7 +161,7 @@ export function CvAnalysisFeatureShowcase({ onCtaClick }) {
                 </CardReveal>
 
                 <CardReveal delayMs={140} className="relative z-20 lg:-translate-x-4">
-                  <div className="cv-analysis-glass-card -rotate-1 scale-100 transform rounded-3xl border border-[#ccc3d8] bg-white px-[1.1rem] py-[0.7rem] shadow-xl transition-all duration-300 hover:scale-[1.02] sm:px-[1.75rem] sm:py-[1.15rem]">
+                  <div className="cv-analysis-glass-card -rotate-1 scale-100 transform rounded-3xl border border-[#ccc3d8] bg-white px-[1.5rem] py-[0.875rem] shadow-xl transition-all duration-300 hover:scale-[1.02] sm:px-[1.75rem] sm:py-[1.15rem]">
                     <div className="mb-3 flex items-center gap-2.5 sm:mb-3.5">
                       <div className="flex h-[1.7rem] w-[1.7rem] shrink-0 items-center justify-center rounded-lg bg-violet-100 sm:h-[1.95rem] sm:w-[1.95rem]">
                         <FileText className="h-[0.7rem] w-[0.7rem] text-[#6d2fd6] sm:h-[0.825rem] sm:w-[0.825rem]" />
@@ -174,7 +172,7 @@ export function CvAnalysisFeatureShowcase({ onCtaClick }) {
                       {CV_HOME_DEMO_JD_KEYWORDS.map((kw) => (
                         <span
                           key={kw}
-                          className="rounded-full border border-lime-400/70 bg-lime-50 px-2 py-0.5 text-[0.8rem] font-semibold lowercase text-emerald-900 sm:px-2.5 sm:py-1 sm:text-base"
+                          className="rounded-full border border-lime-400/70 bg-lime-50 px-2.5 py-1 text-sm font-semibold lowercase text-emerald-900 sm:text-base"
                         >
                           {kw} ✓
                         </span>
