@@ -56,7 +56,7 @@ function containsFuzzy(a, b) {
 }
 
 // ── LLM helper ────────────────────────────────────────────────────────────────
-async function callLLM(system, user, { maxTokens = 4000, temp = 0.1, retries = 2 } = {}) {
+async function callLLM(system, user, { maxTokens = 4000, temp = 0.6, retries = 2 } = {}) {
   const { baseUrl, apiKey, model } = cfg();
   let lastErr;
   for (let attempt = 0; attempt <= retries; attempt++) {
@@ -237,6 +237,18 @@ Trả về JSON hợp lệ (không markdown, không giải thích thêm):
 
 // ── XML-delimited user prompt (delimiter defense) ────────────────────────────
 function buildSecureUserPrompt(cvText, jdText) {
+  // Variety seed: đảm bảo mỗi session sinh câu hỏi khác nhau dù cùng CV
+  const varietyHints = [
+    "Tập trung vào các tình huống xử lý áp lực và deadline.",
+    "Tập trung vào kỹ năng làm việc nhóm và giao tiếp liên phòng ban.",
+    "Tập trung vào sáng kiến cải tiến quy trình và problem-solving.",
+    "Tập trung vào leadership, mentoring và định hướng sự nghiệp.",
+    "Tập trung vào adaptability, học hỏi công nghệ mới và resilience.",
+    "Tập trung vào data-driven decision making và đo lường kết quả.",
+    "Tập trung vào customer focus và cross-functional collaboration.",
+  ];
+  const hint = varietyHints[Math.floor(Math.random() * varietyHints.length)];
+
   return [
     "<candidate_cv>",
     cvText,
@@ -246,7 +258,8 @@ function buildSecureUserPrompt(cvText, jdText) {
     jdText,
     "</job_description>",
     "",
-    "Sinh 5 câu hỏi STAR cá nhân hóa dựa trên dữ liệu trong các tag trên. Trả về JSON đúng schema.",
+    `Góc độ ưu tiên phiên này: ${hint}`,
+    "Sinh 5 câu hỏi STAR cá nhân hóa, đa dạng, không trùng lặp với các buổi phỏng vấn thông thường. Trả về JSON đúng schema.",
   ].join("\n");
 }
 
