@@ -234,7 +234,7 @@ function Waveform({ active, color = "#9B6DFF" }) {
 }
 
 /* ── Full-panel HR Video ─────────────────────────────────── */
-function HRVideoPanel({ questionVideoUrl, hrPhase, onAskingDone, isListening }) {
+function HRVideoPanel({ questionVideoUrl, hrPhase, onAskingDone, isListening, muted = false }) {
   const videoRef  = useRef(null);
   const [videoState, setVideoState] = useState("loading");
   const doneRef = useRef(false);
@@ -252,19 +252,20 @@ function HRVideoPanel({ questionVideoUrl, hrPhase, onAskingDone, isListening }) 
     return () => { v.removeEventListener("canplay", onCanPlay); v.removeEventListener("error", onError); v.pause(); };
   }, [questionVideoUrl]);
 
+  // 8s fallback timer — chỉ dùng khi không có TTS (muted=false)
   useEffect(() => {
-    if (hrPhase !== "asking") return;
+    if (hrPhase !== "asking" || muted) return;
     const t = setTimeout(() => {
-      if (!doneRef.current) { doneRef.current = true; setVideoState("done"); onAskingDone(); }
+      if (!doneRef.current) { doneRef.current = true; setVideoState("done"); onAskingDone?.(); }
     }, 8000);
     return () => clearTimeout(t);
-  }, [hrPhase, onAskingDone]);
+  }, [hrPhase, onAskingDone, muted]);
 
   const handleEnded = () => {
     if (doneRef.current) return;
     doneRef.current = true;
     setVideoState("done");
-    onAskingDone();
+    onAskingDone?.();
   };
 
   const isVisible = videoState === "playing" || videoState === "done";
@@ -276,7 +277,9 @@ function HRVideoPanel({ questionVideoUrl, hrPhase, onAskingDone, isListening }) 
         src={questionVideoUrl}
         playsInline
         preload="auto"
-        onEnded={handleEnded}
+        muted={muted}
+        loop={muted}
+        onEnded={muted ? undefined : handleEnded}
         className="absolute inset-0 h-full w-full object-cover object-center"
         style={{ display: isVisible ? "block" : "none" }}
       />
@@ -500,6 +503,10 @@ export default function InterviewRoom() {
   });
   const isDIDActive = Boolean(DID_API_KEY) && didStatus !== "error";
 
+  /* ── Web Speech TTS fallback (khi D-ID không khả dụng) ── */
+  const ttsAvailable = typeof window !== "undefined" && Boolean(window.speechSynthesis);
+  const [ttsSpeaking, setTtsSpeaking] = useState(false);
+
   /* ── Resolve questions & session ID ──────────────────── */
   const apiQuestions = location.state?.questions ?? (() => {
     try { return JSON.parse(sessionStorage.getItem("prointerview_questions") ?? "null"); }
@@ -537,6 +544,7 @@ export default function InterviewRoom() {
   const isNavigatingRef    = useRef(false);
   const questionStartTimeRef = useRef(Date.now());
   const lastSpokenQRef     = useRef(-1);
+  const ttsUtteranceRef    = useRef(null);
 
   /* ── Camera video ref (shared with FaceMesh hook) ─────── */
   const cameraVideoRef = useRef(null);
@@ -583,6 +591,31 @@ export default function InterviewRoom() {
       sessionStorage.setItem("prointerview_hr_gender", location.state.hrGender);
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  /* ── startListening — dùng chung cho TTS callback và HRVideoPanel fallback ── */
+  const startListening = useCallback(() => {
+    setHrPhase("listening");
+    latencyStartRef.current = Date.now();
+    isListeningRef.current  = true;
+    setIsListening(true);
+    try { recognitionRef.current?.start(); } catch (_) {}
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  /* ── speakQuestionTTS — Web Speech API đọc câu hỏi AI ── */
+  const speakQuestionTTS = useCallback((text, onEnd) => {
+    const synth = window.speechSynthesis;
+    if (!synth) { onEnd?.(); return; }
+    synth.cancel();
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang  = "vi-VN";
+    utterance.rate  = 0.88;
+    utterance.pitch = hrGender === "female" ? 1.1 : 0.88;
+    utterance.onstart = () => setTtsSpeaking(true);
+    utterance.onend   = () => { setTtsSpeaking(false); onEnd?.(); };
+    utterance.onerror = () => { setTtsSpeaking(false); onEnd?.(); };
+    ttsUtteranceRef.current = utterance;
+    synth.speak(utterance);
+  }, [hrGender]);
 
   /* ── Web Audio setup — nhận audio track từ UserCameraTile (không mở getUserMedia riêng) */
   const handleAudioTrack = useCallback((track) => {
@@ -669,8 +702,8 @@ export default function InterviewRoom() {
       recognitionRef.current?.abort();
       clearInterval(timerRef.current);
       clearInterval(audioIntervalRef.current);
-      // Close AudioContext (audio track itself managed by UserCameraTile)
       audioCtxRef.current?.close().catch(() => {});
+      window.speechSynthesis?.cancel();
       didDisconnect();
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -697,18 +730,18 @@ export default function InterviewRoom() {
     if (lastSpokenQRef.current === currentQ) return;
     if (hrPhase !== "asking") return;
     lastSpokenQRef.current = currentQ;
-    speakWithText(
-      QUESTIONS[currentQ],
-      () => {
-        setHrPhase("listening");
-        latencyStartRef.current = Date.now();
-        isListeningRef.current = true;
-        setIsListening(true);
-        try { recognitionRef.current?.start(); } catch (_) {}
-      },
-      DID_VOICES[hrGender],
-    );
+    speakWithText(QUESTIONS[currentQ], startListening, DID_VOICES[hrGender]);
   }, [phase, didStatus, currentQ, hrPhase]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  /* ── TTS fallback: khi D-ID không khả dụng, Web Speech API đọc câu hỏi ── */
+  useEffect(() => {
+    if (isDIDActive || !ttsAvailable) return;
+    if (phase !== "question" || hrPhase !== "asking") return;
+    if (lastSpokenQRef.current === currentQ) return;
+    lastSpokenQRef.current = currentQ;
+    speakQuestionTTS(QUESTIONS[currentQ], startListening);
+    return () => { window.speechSynthesis?.cancel(); setTtsSpeaking(false); };
+  }, [phase, currentQ, hrPhase, isDIDActive, speakQuestionTTS, startListening]); // eslint-disable-line react-hooks/exhaustive-deps
 
   /* ── STT setup ────────────────────────────────────────── */
   useEffect(() => {
@@ -1228,18 +1261,35 @@ export default function InterviewRoom() {
                   style={{ background: "linear-gradient(to top, rgba(10,10,24,0.75) 0%, transparent 100%)" }} />
               </>
             ) : (
-              <HRVideoPanel
-                questionVideoUrl={HR_QUESTION_URLS[hrGender][currentQ]}
-                hrPhase={hrPhase}
-                onAskingDone={() => {
-                  setHrPhase("listening");
-                  latencyStartRef.current = Date.now();
-                  isListeningRef.current  = true;
-                  setIsListening(true);
-                  try { recognitionRef.current?.start(); } catch (_) {}
-                }}
-                isListening={isListening}
-              />
+              <>
+                <HRVideoPanel
+                  questionVideoUrl={HR_QUESTION_URLS[hrGender][currentQ]}
+                  hrPhase={hrPhase}
+                  onAskingDone={ttsAvailable ? undefined : startListening}
+                  muted={ttsAvailable}
+                  isListening={isListening}
+                />
+                {/* TTS speaking indicator — hiện khi Web Speech API đang đọc câu hỏi */}
+                {ttsAvailable && ttsSpeaking && (
+                  <div className="absolute top-3 right-3 z-10 pointer-events-none">
+                    <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold"
+                      style={{ background: "rgba(110,53,232,0.85)", backdropFilter: "blur(8px)" }}>
+                      <div className="w-1.5 h-1.5 rounded-full bg-[#b5e636] animate-pulse" />
+                      <span className="text-white">HR đang hỏi...</span>
+                    </div>
+                  </div>
+                )}
+                {/* Listening indicator — hiện khi đang chờ user trả lời */}
+                {ttsAvailable && !ttsSpeaking && hrPhase === "listening" && isListening && (
+                  <div className="absolute top-3 right-3 z-10 pointer-events-none">
+                    <div className="flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-semibold text-white"
+                      style={{ background: "rgba(110,53,232,0.92)", backdropFilter: "blur(8px)" }}>
+                      <div className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#b5e636]" />
+                      Đang ghi âm câu trả lời...
+                    </div>
+                  </div>
+                )}
+              </>
             )}
             <div className="absolute bottom-3 left-3 flex items-center gap-1.5 px-2.5 py-1 rounded-lg"
               style={{ background: "rgba(0,0,0,0.7)", backdropFilter: "blur(8px)" }}>
