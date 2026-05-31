@@ -56,9 +56,10 @@ export function createApp() {
 
   const apiLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
-    max: isProd ? 500 : 1500,
+    max: isProd ? 500 : 10_000,
     standardHeaders: true,
     legacyHeaders: false,
+    skip: (req) => req.path === "/health",
     message: { success: false, error: "Quá nhiều yêu cầu. Vui lòng thử lại sau." },
   });
 

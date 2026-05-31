@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router";
 import { 
-  ArrowLeft, 
   Star, 
   Clock, 
   CheckCircle2, 
@@ -103,15 +102,8 @@ ${generalNotes || "Không có ghi chú thêm."}
           className="space-y-10"
         >
           {/* Header Section */}
-          <div className="flex items-center justify-between mb-16">
-            <button 
-              onClick={() => navigate(-1)} 
-              className="group flex items-center gap-3 text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 hover:text-slate-900 transition-all"
-            >
-              <ArrowLeft size={16} className="transition-transform group-hover:-translate-x-1" /> Quay lại
-            </button>
-            <div className="h-px flex-1 bg-gradient-to-r from-transparent via-slate-200 to-transparent mx-10" />
-            <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em]">Session Feedback</span>
+          <div className="mb-16 flex items-center justify-end">
+            <span className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Session Feedback</span>
           </div>
 
           <div className="text-center space-y-4 mb-20">

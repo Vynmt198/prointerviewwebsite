@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router";
 import { motion } from "motion/react";
 import {
-  ArrowLeft,
   Briefcase,
   Building2,
   ExternalLink,
@@ -125,14 +124,6 @@ export function AdminMentorDetail() {
 
   return (
     <div className={adminPageWrap}>
-      <Link
-        to="/admin/mentors"
-        className="inline-flex items-center gap-1.5 text-sm font-semibold text-violet-700 hover:text-violet-900"
-      >
-        <ArrowLeft className="h-4 w-4" />
-        Danh sách cố vấn
-      </Link>
-
       {loading && (
         <p className="text-sm text-slate-500">Đang tải hồ sơ cố vấn…</p>
       )}

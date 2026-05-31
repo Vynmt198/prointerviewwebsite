@@ -151,13 +151,6 @@ export function MentorCancelSessionPanel({
                 <div className="flex flex-wrap gap-2">
                   <button
                     type="button"
-                    onClick={() => setMentorResolutionStep("")}
-                    className="rounded-xl border border-slate-200 px-4 py-2 text-xs font-semibold text-gray-600"
-                  >
-                    Quay lại
-                  </button>
-                  <button
-                    type="button"
                     disabled={resolutionBusy || rescheduleSlotOptions.length === 0}
                     onClick={() => onResolve("reschedule")}
                     className="rounded-xl px-5 py-2.5 text-xs font-black uppercase tracking-wider text-white disabled:opacity-50"
@@ -178,7 +171,6 @@ export function MentorCancelSessionPanel({
                 refundAccountHolder={refundAccountHolder}
                 setRefundAccountHolder={setRefundAccountHolder}
                 busy={resolutionBusy}
-                onBack={() => setMentorResolutionStep("")}
                 onSubmit={() => onResolve("refund")}
                 submitLabel="Xác nhận hoàn 100%"
               />
@@ -243,7 +235,6 @@ function RefundForm({
   refundAccountHolder,
   setRefundAccountHolder,
   busy,
-  onBack,
   onSubmit,
   submitLabel,
   tone = "violet",
@@ -282,15 +273,6 @@ function RefundForm({
         className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-violet-400"
       />
       <div className="flex flex-wrap gap-2 pt-1">
-        {onBack ? (
-          <button
-            type="button"
-            onClick={onBack}
-            className="rounded-xl border border-slate-200 px-4 py-2 text-xs font-semibold text-gray-600"
-          >
-            Quay lại
-          </button>
-        ) : null}
         <button
           type="button"
           disabled={busy}

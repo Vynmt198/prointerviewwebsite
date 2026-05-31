@@ -132,7 +132,6 @@ export function CourseCreateStep2({
   thumbnailFileName,
   onThumbnailUploaded,
   canContinue,
-  onBack,
   onNext,
 }) {
   const [warn, setWarn] = useState(false);
@@ -289,7 +288,7 @@ export function CourseCreateStep2({
         </p>
       ) : null}
 
-      <CourseCreateFooter onBack={onBack} onPrimary={handleNext} />
+      <CourseCreateFooter onPrimary={handleNext} />
     </div>
   );
 }

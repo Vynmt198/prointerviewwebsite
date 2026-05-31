@@ -6,7 +6,6 @@ import {
   Upload as UploadSimple,
   FileText,
   Check,
-  ArrowLeft,
   ChevronRight as CaretRight,
   Video as VideoCamera,
   Bell,
@@ -21,8 +20,10 @@ import {
   X,
 } from "lucide-react";
 import { fetchMentor, fetchMentorAvailability } from "../../utils/mentorApi";
+import { isBookingSlotInFuture } from "../../utils/bookingSchedule";
 import { fetchBookedSlots, fetchRebookCredit } from "../../utils/bookingsApi";
-import { toastApiError } from "../../utils/apiToast";
+import { toastApiError, toastApiSuccess } from "../../utils/apiToast";
+import { uploadFile } from "../../utils/uploadApi";
 import { getSuggestedBookingDataAsync, saveUploadedCV, saveUploadedJD } from "../../utils/history";
 import { MentorPageShell } from "../../components/mentor/MentorPageShell";
 import { BookingStepBar } from "../../components/booking/BookingStepBar";
@@ -146,7 +147,11 @@ export function Booking() {
   const [suggestedData, setSuggestedData] = useState(null);
   const [showSmartBanner, setShowSmartBanner] = useState(false);
   const [selectedCvFile, setSelectedCvFile] = useState("");
+  const [selectedCvUrl, setSelectedCvUrl] = useState("");
+  const [cvUploading, setCvUploading] = useState(false);
   const [selectedJdFile, setSelectedJdFile] = useState("");
+  const [selectedJdUrl, setSelectedJdUrl] = useState("");
+  const [jdUploading, setJdUploading] = useState(false);
   const cvInputRef = useRef(null);
   const jdInputRef = useRef(null);
   const calendarWeeks = useMemo(() => {
@@ -187,27 +192,55 @@ export function Booking() {
     setShowSmartBanner(false);
   };
 
-  const handleCvFileChange = (e) => {
+  const handleCvFileChange = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    setCvUploading(true);
     setSelectedCvFile(file.name);
+    setSelectedCvUrl("");
+    const res = await uploadFile(file, "cv");
+    setCvUploading(false);
+    e.target.value = "";
+    if (!res.success || !res.url) {
+      setSelectedCvFile("");
+      toastApiError(res.error, "Không tải CV lên được.");
+      return;
+    }
+    setSelectedCvFile(res.fileName || file.name);
+    setSelectedCvUrl(res.url);
     setForm((prev) => ({ ...prev, cv: true }));
     saveUploadedCV({ name: file.name, size: file.size, type: file.type });
-    e.target.value = "";
+    toastApiSuccess("Đã tải CV lên — mentor có thể mở khi xem buổi hẹn.");
   };
 
-  const handleJdFileChange = (e) => {
+  const handleJdFileChange = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    setJdUploading(true);
     setSelectedJdFile(file.name);
+    setSelectedJdUrl("");
+    const res = await uploadFile(file, "jd");
+    setJdUploading(false);
+    e.target.value = "";
+    if (!res.success || !res.url) {
+      setSelectedJdFile("");
+      toastApiError(res.error, "Không tải JD lên được.");
+      return;
+    }
+    setSelectedJdFile(res.fileName || file.name);
+    setSelectedJdUrl(res.url);
     setForm((prev) => ({ ...prev, jd: true }));
     saveUploadedJD({ name: file.name, size: file.size, type: file.type });
-    e.target.value = "";
+    toastApiSuccess("Đã tải JD lên.");
   };
 
   const handleProceed = () => {
-    if (!selectedCvFile) {
-      toastApiError("Vui lòng tải lên CV (chọn file PDF/DOC).");
+    if (!selectedCvFile || !selectedCvUrl) {
+      toastApiError("Vui lòng tải CV lên server (chọn file và đợi tải xong).");
+      return;
+    }
+    if (form.jd && selectedJdFile && !selectedJdUrl) {
+      toastApiError("JD chưa tải xong — chọn lại file hoặc bỏ JD.");
       return;
     }
     const params = new URLSearchParams({
@@ -219,7 +252,9 @@ export function Booking() {
       position: form.position,
       note: form.note,
       cvFile: selectedCvFile,
+      cvFileUrl: selectedCvUrl,
       jdFile: form.jd && selectedJdFile ? selectedJdFile : "",
+      jdFileUrl: form.jd && selectedJdUrl ? selectedJdUrl : "",
     });
     if (rebookFrom) params.set("rebookFrom", rebookFrom);
     navigate(`/checkout?${params.toString()}`);
@@ -278,25 +313,8 @@ export function Booking() {
     return row && Array.isArray(row.slots) ? row.slots.map((x) => String(x).trim()).filter(Boolean) : [];
   };
 
-  const isSelectedDayToday = useMemo(() => {
-    if (!selectedDay) return false;
-    const [d, m, y] = selectedDay.split("/").map(Number);
-    if (!d || !m || !y) return false;
-    const dayDate = new Date(y, m - 1, d);
-    return toDateOnly(dayDate).getTime() === toDateOnly(new Date()).getTime();
-  }, [selectedDay]);
-
-  const isPastTimeInSelectedDay = (time) => {
-    if (!isSelectedDayToday) return false;
-    const [h, mi] = String(time).split(":").map(Number);
-    const now = new Date();
-    if (h < now.getHours()) return true;
-    if (h === now.getHours() && (mi || 0) <= now.getMinutes()) return true;
-    return false;
-  };
-
   const isSlotBooked = (time) => (selectedDay ? getBookedOfDay(selectedDay).includes(time) : false);
-  const isSlotPast = (time) => isPastTimeInSelectedDay(time);
+  const isSlotPast = (time) => (selectedDay ? !isBookingSlotInFuture(selectedDay, time) : false);
 
   const availableSlotCount = selectedDay
     ? (() => {
@@ -350,15 +368,6 @@ export function Booking() {
         <div
           className={`${CUSTOMER_SHELL_MAX} w-full font-sans text-slate-900 antialiased selection:bg-[rgba(122,35,229,0.18)] selection:text-slate-900`}
         >
-        <button
-          type="button"
-          onClick={() => (step === 1 ? navigate(-1) : setStep(1))}
-          className="group -ml-1 mb-6 flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold text-slate-600 transition-colors hover:bg-white hover:text-slate-900"
-        >
-          <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
-          Quay lại
-        </button>
-
         <BookingStepBar current={step} />
 
         {step === 1 ? (
@@ -667,12 +676,19 @@ export function Booking() {
                         : "border-slate-300 hover:border-violet-300 hover:bg-violet-50/40"
                     }`}
                   >
-                    {form.cv && selectedCvFile ? (
-                      <div className="flex items-center justify-center gap-2 text-sm font-bold text-[#2f4200]">
-                        <Check className="h-4 w-4 shrink-0" strokeWidth={2.5} />
-                        <span className="truncate max-w-[280px]" title={selectedCvFile}>
-                          {selectedCvFile}
-                        </span>
+                    {cvUploading ? (
+                      <p className="text-sm font-medium text-violet-700">Đang tải CV lên server…</p>
+                    ) : form.cv && selectedCvFile ? (
+                      <div className="flex flex-col items-center gap-1">
+                        <div className="flex items-center justify-center gap-2 text-sm font-bold text-[#2f4200]">
+                          <Check className="h-4 w-4 shrink-0" strokeWidth={2.5} />
+                          <span className="truncate max-w-[280px]" title={selectedCvFile}>
+                            {selectedCvFile}
+                          </span>
+                        </div>
+                        {selectedCvUrl ? (
+                          <p className="text-xs text-slate-500">Mentor sẽ mở được file sau khi đặt lịch</p>
+                        ) : null}
                       </div>
                     ) : (
                       <div className="flex items-center justify-center gap-3">
@@ -710,7 +726,9 @@ export function Booking() {
                         : "border-slate-300 hover:border-violet-300 hover:bg-violet-50/40"
                     }`}
                   >
-                    {form.jd && selectedJdFile ? (
+                    {jdUploading ? (
+                      <p className="text-sm font-medium text-violet-700">Đang tải JD lên server…</p>
+                    ) : form.jd && selectedJdFile ? (
                       <div className="flex items-center justify-center gap-2 text-sm font-bold text-[#2f4200]">
                         <Check className="h-4 w-4 shrink-0" strokeWidth={2.5} />
                         <span className="truncate max-w-[280px]" title={selectedJdFile}>
@@ -799,15 +817,15 @@ export function Booking() {
               </div>
               <button
                 type="button"
-                disabled={!form.position || !form.cv || !selectedCvFile}
+                disabled={!form.position || !form.cv || !selectedCvFile || !selectedCvUrl || cvUploading || jdUploading}
                 onClick={handleProceed}
                 className={`flex w-full items-center justify-center gap-2 rounded-2xl px-8 py-4 text-sm font-black uppercase tracking-wide transition-all active:scale-[0.98] sm:w-auto ${
-                  form.position && form.cv && selectedCvFile
+                  form.position && form.cv && selectedCvFile && selectedCvUrl && !cvUploading && !jdUploading
                     ? "shadow-[0_8px_28px_rgba(147,247,43,0.35)] hover:brightness-95"
                     : "cursor-not-allowed border border-slate-200 bg-slate-100 text-slate-400"
                 }`}
                 style={
-                  form.position && form.cv && selectedCvFile
+                  form.position && form.cv && selectedCvFile && selectedCvUrl && !cvUploading && !jdUploading
                     ? BRAND_CTA_LIME_STYLE
                     : undefined
                 }

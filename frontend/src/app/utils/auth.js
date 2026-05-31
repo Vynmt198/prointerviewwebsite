@@ -98,8 +98,9 @@ export async function tryRefreshAccessToken() {
     });
     const body = await res.json().catch(() => ({}));
     if (!res.ok || !body.success || !body.token) {
-      // Chỉ xóa auth khi 4xx (token thực sự invalid), không xóa khi 5xx (server lỗi tạm thời)
-      if (res.status < 500) clearAuthStorage();
+      if (res.status === 401 || res.status === 403) {
+        clearAuthStorage();
+      }
       return false;
     }
     persistLoginPayload(body);
@@ -107,6 +108,11 @@ export async function tryRefreshAccessToken() {
   } catch {
     return false;
   }
+}
+
+/** Lỗi tạm thời (backend restart, rate limit) — giữ phiên local, không đăng xuất. */
+function isTransientAuthStatus(status) {
+  return status === 429 || status === 503 || status >= 500;
 }
 
 /**
@@ -375,36 +381,57 @@ export async function restoreSession() {
   const hasRefresh = !!getRefreshToken();
   if (!hasAccess && !hasRefresh) return false;
 
+  const cachedUser = getUser();
+
+  const finishMe = async (res) => {
+    if (res.ok) {
+      const body = await res.json();
+      if (body.success && body.user) {
+        setLoggedIn(body.user);
+        return true;
+      }
+    }
+    if (isTransientAuthStatus(res.status) && cachedUser) {
+      setLoggedIn(cachedUser);
+      return true;
+    }
+    if (res.status === 401 || res.status === 403) return false;
+    return null;
+  };
+
   if (hasAccess) {
     try {
-      const res = await fetch(apiUrl("/api/auth/me"), {
-        headers: bearerHeaders(),
-      });
-      if (res.ok) {
-        const body = await res.json();
-        if (body.success && body.user) {
-          setLoggedIn(body.user);
-          return true;
-        }
+      const res = await fetch(apiUrl("/api/auth/me"), { headers: bearerHeaders() });
+      const ok = await finishMe(res);
+      if (ok === true) return true;
+      if (ok === false) {
+        clearAuthStorage();
+        return false;
       }
     } catch {
-      /* fall through — thử refresh */
+      if (cachedUser) {
+        setLoggedIn(cachedUser);
+        return true;
+      }
     }
   }
 
   if (await tryRefreshAccessToken()) {
     try {
       const res = await fetch(apiUrl("/api/auth/me"), { headers: bearerHeaders() });
-      if (res.ok) {
-        const body = await res.json();
-        if (body.success && body.user) {
-          setLoggedIn(body.user);
-          return true;
-        }
-      }
+      const ok = await finishMe(res);
+      if (ok === true) return true;
     } catch {
-      /* */
+      if (cachedUser) {
+        setLoggedIn(cachedUser);
+        return true;
+      }
     }
+  }
+
+  if (cachedUser && (hasAccess || hasRefresh)) {
+    setLoggedIn(cachedUser);
+    return true;
   }
 
   clearAuthStorage();

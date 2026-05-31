@@ -2,6 +2,7 @@ import { Course } from "../models/Course.js";
 import { Enrollment } from "../models/Enrollment.js";
 import { Mentor } from "../models/Mentor.js";
 import { enrollmentAccessGranted } from "../helpers/enrollmentAccess.js";
+import { mentorCanPeerPreviewCourse } from "../helpers/mentorPeerPreviewAccess.js";
 import {
   applyPaidEnrollmentCountsToCourses,
   countPaidEnrollmentsByCourseIds,
@@ -144,18 +145,19 @@ export const CoursesController = {
 
       if (!lesson) return res.status(404).json({ success: false, error: "Bài học không tồn tại" });
 
-      // Kiểm tra quyền truy cập (nếu không miễn phí thì phải có ghi danh)
-      if (!lesson.isFree) {
+      let hasAccess = Boolean(lesson.isFree);
+      if (!hasAccess) {
         const enrolled = await Enrollment.findOne({ userId, courseId });
-        if (!enrolled) {
-          return res.status(403).json({ success: false, error: "Bạn chưa ghi danh khóa học này để xem nội dung" });
-        }
-        if (!enrollmentAccessGranted(enrolled)) {
-          return res.status(403).json({
-            success: false,
-            error: "Khóa học có phí — hoàn tất thanh toán chuyển khoản để xem bài học.",
-          });
-        }
+        hasAccess = Boolean(enrolled && enrollmentAccessGranted(enrolled));
+      }
+      if (!hasAccess) {
+        hasAccess = await mentorCanPeerPreviewCourse(userId, course);
+      }
+      if (!hasAccess) {
+        return res.status(403).json({
+          success: false,
+          error: "Bạn chưa ghi danh khóa học này để xem nội dung",
+        });
       }
 
       const lessonPayload = lesson.toObject ? lesson.toObject() : { ...lesson };

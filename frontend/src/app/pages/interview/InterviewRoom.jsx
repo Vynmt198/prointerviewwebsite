@@ -1091,10 +1091,6 @@ export default function InterviewRoom() {
                       className="w-full rounded-md bg-gradient-to-r from-[#c4ff47] to-[#d4ff00] py-3.5 text-sm font-bold text-violet-950 shadow-[0_8px_24px_rgba(196,255,71,0.22)] transition-all hover:brightness-105">
                       Bắt đầu phỏng vấn →
                     </button>
-                    <button type="button" onClick={() => navigate(-1)}
-                      className="text-center text-sm font-medium text-violet-600 hover:text-[#630ed4]">
-                      ← Quay lại
-                    </button>
                   </div>
                 </div>
               </div>

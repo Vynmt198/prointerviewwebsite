@@ -2,7 +2,6 @@ import React, { useState, useEffect, useMemo } from "react";
 import { useParams, useNavigate } from "react-router";
 import { motion, AnimatePresence } from "motion/react";
 import {
-  ArrowLeft,
   Calendar,
   Clock,
   Video,
@@ -39,6 +38,7 @@ import {
   updateBookingRefundDestination,
 } from "../../utils/bookingsApi";
 import { loadMentorRescheduleSlotOptions } from "../../utils/bookingRescheduleSlots";
+import { isBookingSlotInFuture } from "../../utils/bookingSchedule";
 import { apiBookingToLocal } from "../../utils/bookingMappers";
 import {
   buildGoogleCalendarEventUrl,
@@ -579,6 +579,10 @@ export function SessionDetail() {
         toastApiError("Vui lòng chọn ngày và giờ mới.");
         return;
       }
+      if (!isBookingSlotInFuture(rescheduleDate, rescheduleSlot)) {
+        toastApiError("Không thể chọn khung giờ đã qua. Vui lòng chọn thời gian trong tương lai.");
+        return;
+      }
       setResolutionBusy(true);
       let res;
       try {
@@ -805,17 +809,6 @@ export function SessionDetail() {
         <div
           className={`${CUSTOMER_SHELL_MAX} w-full antialiased selection:bg-[rgba(122,35,229,0.18)] selection:text-slate-900`}
         >
-      {state !== "done" ? (
-        <button
-          type="button"
-          onClick={() => navigate(-1)}
-          className="group -ml-3 mb-6 flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-900"
-        >
-          <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
-          Quay lại
-        </button>
-      ) : null}
-
       {canReportNoShow && !mentorActionMode ? (
         <div className="mb-6 rounded-2xl border border-red-200 bg-red-50/90 p-4">
           <p className="text-sm font-bold text-red-900">Mentor không tham gia?</p>
@@ -994,7 +987,19 @@ export function SessionDetail() {
                       <p className="text-xs font-semibold text-gray-700 truncate">{sessionData.cvFile}</p>
                       <p className="text-xs text-gray-400">CV đính kèm</p>
                     </div>
-                    <Check className="w-4 h-4 flex-shrink-0" style={{ color: "#4A7A00" }} />
+                    {sessionData.cvFileUrl ? (
+                      <a
+                        href={sessionData.cvFileUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs font-semibold shrink-0"
+                        style={{ color: "#8037f4" }}
+                      >
+                        Mở
+                      </a>
+                    ) : (
+                      <Check className="w-4 h-4 flex-shrink-0" style={{ color: "#4A7A00" }} />
+                    )}
                   </div>
                 )}
                 {sessionData.jdFile && (
@@ -1004,7 +1009,19 @@ export function SessionDetail() {
                       <p className="text-xs font-semibold text-gray-700 truncate">{sessionData.jdFile}</p>
                       <p className="text-xs text-gray-400">JD đính kèm</p>
                     </div>
-                    <Check className="w-4 h-4 flex-shrink-0" style={{ color: "#4A7A00" }} />
+                    {sessionData.jdFileUrl ? (
+                      <a
+                        href={sessionData.jdFileUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs font-semibold shrink-0"
+                        style={{ color: "#8037f4" }}
+                      >
+                        Mở
+                      </a>
+                    ) : (
+                      <Check className="w-4 h-4 flex-shrink-0" style={{ color: "#4A7A00" }} />
+                    )}
                   </div>
                 )}
                 {!sessionData.jdFile && (

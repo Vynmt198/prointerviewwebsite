@@ -71,6 +71,8 @@ export function apiBookingToLocal(b) {
     note: "",
     cvFile,
     jdFile,
+    cvFileUrl: b.cvFileUrl || "",
+    jdFileUrl: b.jdFileUrl || "",
     status: mapBookingStatus(b.status),
     paymentStatus: b.paymentStatus || "pending",
     paymentRef: ref,

@@ -6,6 +6,7 @@ import { Review } from "../models/Review.js";
 import { Course } from "../models/Course.js";
 import { MentorPeerReview } from "../models/MentorPeerReview.js";
 import { User } from "../models/User.js";
+import { deliverNotification } from "./notificationDeliveryService.js";
 import { recalcCourseReviewStats } from "./reviewsService.js";
 
 const MONGO_ERR = "MongoDB chưa kết nối. Kiểm tra MONGO_URI trong .env.";
@@ -85,10 +86,20 @@ function toPayoutHistoryRow(row) {
   };
 }
 
+const BANK_NAME_MIN = 2;
+const BANK_NAME_MAX = 80;
+
+function isValidBankName(bankName) {
+  const name = sanitizeText(bankName);
+  if (!name || name.length < BANK_NAME_MIN || name.length > BANK_NAME_MAX) return false;
+  if (SUPPORTED_BANKS.has(name)) return true;
+  return /^[\p{L}\p{N}\s.&()-]+$/u.test(name);
+}
+
 function hasValidPayoutAccount(account) {
   const accountNumberOk = /^\d{8,19}$/.test(account.accountNumber || "");
   const accountNameOk = (account.accountName || "").length >= 2;
-  const bankOk = SUPPORTED_BANKS.has(account.bankName || "");
+  const bankOk = isValidBankName(account.bankName || "");
   return Boolean(bankOk && accountNumberOk && accountNameOk);
 }
 
@@ -324,6 +335,14 @@ export async function requestPayout(userId, body) {
     },
   );
 
+  await deliverNotification(userId, {
+    mentorPrefKey: "payout_update",
+    type: "system",
+    title: "Đã gửi yêu cầu rút tiền",
+    body: `Yêu cầu ${roundedAmount.toLocaleString("vi-VN")}₫ đang chờ admin duyệt.`,
+    metadata: { actionUrl: "/mentor/finance" },
+  });
+
   return { ok: true, payout: { id: String(payout._id), amount: roundedAmount, status: payout.status, payoutAccount } };
 }
 
@@ -340,7 +359,7 @@ export async function updatePayoutAccount(userId, body) {
     return {
       ok: false,
       status: 400,
-      error: "Thông tin tài khoản chưa hợp lệ. Chỉ hỗ trợ ngân hàng nội địa trong danh sách và số tài khoản 8-19 chữ số.",
+      error: "Thông tin tài khoản chưa hợp lệ. Tên ngân hàng 2–80 ký tự và số tài khoản 8–19 chữ số.",
     };
   }
 

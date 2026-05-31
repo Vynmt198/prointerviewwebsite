@@ -14,7 +14,6 @@ import {
   X,
   Search,
   Filter,
-  Download,
   Calendar,
   ArrowRight
 } from "lucide-react";
@@ -41,19 +40,29 @@ import { getUser } from "../../utils/auth";
 import { MentorPageShell } from "../../components/mentor/MentorPageShell";
 import { fetchMentorAnalytics } from "../../utils/mentorApi";
 import { toastApiError } from "../../utils/apiToast";
+import {
+  mentorPageTitle,
+  mentorPageSubtitle,
+  mentorStatValue,
+  mentorSectionTitle,
+  mentorAccentText,
+  mentorSearchInput,
+} from "../../components/mentor/mentorTypography";
+import { avatarSrc } from "../../utils/mediaUrl";
 
-const MENTOR_ANALYTICS_INPUT_CSS = `
-        .input-glass {
-           background: rgba(255, 255, 255, 0.05);
-           border: 1px solid rgba(255, 255, 255, 0.1);
-           border-radius: 14px;
-           padding: 12px 20px;
-           color: white;
-           font-weight: 500;
-           transition: border-color 0.2s ease, background 0.2s ease;
-        }
-        .input-glass:focus { border-color: rgba(196, 255, 71, 0.45); background: rgba(255, 255, 255, 0.08); outline: none; box-shadow: 0 0 0 2px rgba(196, 255, 71, 0.12); }
-`;
+const RADAR_SKILLS = [
+  { subject: "Tình huống", A: 120, fullMark: 150 },
+  { subject: "Nhiệm vụ", A: 98, fullMark: 150 },
+  { subject: "Hành động", A: 86, fullMark: 150 },
+  { subject: "Kết quả", A: 99, fullMark: 150 },
+  { subject: "Phản hồi", A: 85, fullMark: 150 },
+];
+
+const TREND_LABELS = {
+  improving: "Cải thiện",
+  declining: "Giảm dần",
+  stable: "Ổn định",
+};
 
 export function MentorAnalytics() {
   const navigate = useNavigate();
@@ -71,7 +80,7 @@ export function MentorAnalytics() {
       if (res.success && res.analytics) setAnalytics(res.analytics);
       else if (!res.success) toastApiError(res.error, "Không tải được dữ liệu phân tích.");
     }).catch(() => toastApiError("Lỗi kết nối khi tải phân tích."));
-  }, [navigate, user?.role]);
+  }, [navigate, user?.role, user?.id]);
 
   if (!user || user.role !== "mentor") return null;
 
@@ -106,15 +115,18 @@ export function MentorAnalytics() {
   );
 
   return (
-    <MentorPageShell bottomPad="pb-32" extraStyles={MENTOR_ANALYTICS_INPUT_CSS}>
+    <MentorPageShell bottomPad="pb-32">
       <div className="relative z-10 mx-auto max-w-7xl px-10 pb-10">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-10 mb-16">
           <div>
-            <h1 className="mb-3 font-headline text-2xl font-black uppercase tracking-tight text-slate-900 sm:text-3xl">
-               Phân tích <span className="text-secondary tracking-tighter">& Thông kê</span>
+            <h1 className={`mb-3 ${mentorPageTitle}`}>
+              <span>Phân tích</span>{" "}
+              <span className={mentorAccentText}>& Thống kê</span>
             </h1>
-            <p className="text-sm font-medium leading-relaxed text-slate-600">Theo dõi dữ liệu thực tế và tiến độ của các mentees</p>
+            <p className={mentorPageSubtitle}>
+              Theo dõi dữ liệu thực tế và tiến độ của học viên
+            </p>
           </div>
         </div>
 
@@ -122,19 +134,19 @@ export function MentorAnalytics() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-16">
            {[
              { label: "Buổi mentor", value: stats.totalSessions, trend: "+12", icon: ChartLineIcon, color: "#8037f4" },
-             { label: "Tổng Mentees", value: stats.totalMentees, trend: "Ổn định", icon: Users, color: "#93f72b" },
-             { label: "Đang cải thiện", value: stats.improvingCount, trend: "Live", icon: Target, color: "#f59e0b" },
-             { label: "Xếp hạng top", value: Number(stats.topAvgScore || 0).toFixed(1), trend: "/5.0", icon: Star, color: "#secondary" }
+             { label: "Tổng mentee", value: stats.totalMentees, trend: "Ổn định", icon: Users, color: "#93f72b" },
+             { label: "Đang cải thiện", value: stats.improvingCount, trend: "Theo dõi", icon: Target, color: "#f59e0b" },
+             { label: "Điểm trung bình", value: Number(stats.topAvgScore || 0).toFixed(1), trend: "/ 5.0", icon: Star, color: "#8037f4" }
            ].map((stat, i) => (
              <div key={i} className="glass-card p-8 group">
                 <div className="flex items-center justify-between mb-6">
                    <div className="w-10 h-10 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center">
                       <stat.icon size={18} style={{ color: stat.color }} />
                    </div>
-                   <span className="text-[10px] font-black text-zinc-600 uppercase tracking-widest">{stat.trend}</span>
+                   <span className="text-xs font-medium text-slate-500">{stat.trend}</span>
                 </div>
-                <h3 className="mb-1 text-2xl font-black tracking-tight text-slate-900 sm:text-3xl">{stat.value}</h3>
-                <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest leading-none">{stat.label}</p>
+                <h3 className={`mb-1 ${mentorStatValue}`}>{stat.value}</h3>
+                <p className="text-xs font-semibold text-slate-500">{stat.label}</p>
              </div>
            ))}
         </div>
@@ -146,13 +158,20 @@ export function MentorAnalytics() {
               <div className="glass-card p-10 h-full">
                  <div className="flex items-center justify-between mb-10">
                     <div>
-                       <h4 className="text-xl font-black text-slate-900 tracking-tight flex items-center gap-3 mb-2">
+                       <h4 className={`${mentorSectionTitle} flex items-center gap-3 mb-2`}>
                           <ChartLineIcon className="text-violet-700" size={20} /> Hiệu suất đào tạo tuần
                        </h4>
-                       <p className="text-xs font-medium text-zinc-500 uppercase tracking-widest">Dữ liệu hoàn thành các buổi phỏng vấn thử</p>
+                       <p className="text-xs font-medium text-slate-500">
+                         Dữ liệu hoàn thành các buổi phỏng vấn thử
+                       </p>
                     </div>
                     <div className="flex gap-2">
-                       <button type="button" className="rounded-lg bg-slate-100 px-4 py-2 text-[10px] font-black uppercase tracking-widest text-slate-700">Toàn thời gian</button>
+                       <button
+                         type="button"
+                         className="rounded-lg bg-slate-100 px-4 py-2 text-xs font-semibold text-slate-700"
+                       >
+                         Toàn thời gian
+                       </button>
                     </div>
                  </div>
 
@@ -199,28 +218,27 @@ export function MentorAnalytics() {
            {/* Performance Radar Example or Sidebar Stats */}
            <div className="lg:col-span-4">
               <div className="glass-card p-10 h-full">
-                 <h4 className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.2em] mb-10">Kỹ năng tập trung</h4>
+                 <h4 className={`${mentorSectionTitle} mb-8`}>Kỹ năng tập trung</h4>
                  <div className="h-[280px] w-full">
                     <ResponsiveContainer width="100%" height="100%">
-                       <RadarChart cx="50%" cy="50%" outerRadius="80%" data={[
-                          { subject: 'Situation', A: 120, fullMark: 150 },
-                          { subject: 'Task', A: 98, fullMark: 150 },
-                          { subject: 'Action', A: 86, fullMark: 150 },
-                          { subject: 'Result', A: 99, fullMark: 150 },
-                          { subject: 'Feedback', A: 85, fullMark: 150 },
-                        ]}>
-                          <PolarGrid stroke="rgba(255,255,255,0.05)" />
-                          <PolarAngleAxis dataKey="subject" tick={{ fill: "#666", fontSize: 9, fontWeight: 800 }} />
+                       <RadarChart cx="50%" cy="50%" outerRadius="72%" data={RADAR_SKILLS}>
+                          <PolarGrid stroke="rgba(148, 163, 184, 0.25)" />
+                          <PolarAngleAxis
+                            dataKey="subject"
+                            tick={{ fill: "#64748b", fontSize: 11, fontWeight: 600 }}
+                          />
                           <Radar name="Skills" dataKey="A" stroke="#93f72b" fill="#93f72b" fillOpacity={0.2} strokeWidth={2} />
                        </RadarChart>
                     </ResponsiveContainer>
                  </div>
                  <div className="mt-8 space-y-4">
                     <div className="flex items-center justify-between p-4 rounded-2xl bg-slate-50 border border-slate-200">
-                       <span className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">Trung bình STAR</span>
-                       <span className="text-sm font-black text-violet-700">4.2/5.0</span>
+                       <span className="text-xs font-semibold text-slate-500">Trung bình STAR</span>
+                       <span className="text-sm font-bold text-violet-700">4.2 / 5.0</span>
                     </div>
-                    <p className="text-[10px] text-zinc-600 font-bold uppercase tracking-widest text-center">Phân tích dựa trên 150+ buổi mentor</p>
+                    <p className="text-center text-xs font-medium text-slate-500">
+                      Phân tích dựa trên dữ liệu buổi mentor
+                    </p>
                  </div>
               </div>
            </div>
@@ -234,32 +252,35 @@ export function MentorAnalytics() {
                     <Users size={20} />
                  </div>
                  <div>
-                    <h4 className="text-xl font-black text-slate-900 tracking-tight">Chi tiết Mentees</h4>
-                    <p className="text-xs font-medium text-zinc-600 uppercase tracking-widest">Danh sách mentees và tiến trình STAR</p>
+                    <h4 className={mentorSectionTitle}>Chi tiết mentee</h4>
+                    <p className="text-xs font-medium text-slate-500">
+                      Danh sách học viên và tiến trình STAR
+                    </p>
                  </div>
               </div>
-              <div className="flex items-center gap-4">
-                 <div className="relative">
-                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-600" size={16} />
-                    <input 
-                       type="text" 
-                       placeholder="Tìm kiếm mentee..." 
-                       value={search}
-                       onChange={(e) => setSearch(e.target.value)}
-                       className="input-glass pl-12 w-64 text-sm"
+              <div className="flex flex-wrap items-center gap-3">
+                 <div className="relative w-full sm:w-64">
+                    <Search
+                      className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-slate-400"
+                      aria-hidden
+                    />
+                    <input
+                      type="search"
+                      placeholder="Tìm kiếm học viên…"
+                      value={search}
+                      onChange={(e) => setSearch(e.target.value)}
+                      className={mentorSearchInput}
+                      aria-label="Tìm kiếm học viên trong danh sách"
                     />
                  </div>
-                 <button className="w-12 h-12 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-center text-zinc-500 hover:text-slate-900 transition-all">
-                    <Download size={18} />
-                 </button>
               </div>
            </div>
 
            <div className="overflow-x-auto">
               <table className="w-full text-left">
                  <thead>
-                    <tr className="border-b border-slate-200 text-[10px] font-black text-zinc-600 uppercase tracking-[0.2em]">
-                       <th className="px-10 py-6">Mentee</th>
+                    <tr className="border-b border-slate-200 text-xs font-semibold text-slate-500">
+                       <th className="px-10 py-6">Học viên</th>
                        <th className="px-10 py-6">Số buổi</th>
                        <th className="px-10 py-6">Điểm TB</th>
                        <th className="px-10 py-6">Xu hướng</th>
@@ -271,10 +292,20 @@ export function MentorAnalytics() {
                       <tr key={mentee.menteeId} className="hover:bg-slate-50 transition-colors group">
                          <td className="px-10 py-6">
                             <div className="flex items-center gap-4">
-                               <img src={mentee.menteeAvatar} className="w-12 h-12 rounded-2xl object-cover ring-2 ring-white/5" />
+                               <img
+                                 src={avatarSrc(mentee.menteeAvatar)}
+                                 alt=""
+                                 className="h-12 w-12 rounded-2xl object-cover ring-2 ring-white/5"
+                                 onError={(e) => {
+                                   e.currentTarget.onerror = null;
+                                   e.currentTarget.src = avatarSrc("");
+                                 }}
+                               />
                                <div>
-                                  <p className="text-sm font-black text-slate-900 tracking-tight">{mentee.menteeName}</p>
-                                  <p className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest">Cập nhật: {new Date(mentee.lastSessionDate).toLocaleDateString("vi-VN")}</p>
+                                  <p className="text-sm font-semibold text-slate-900">{mentee.menteeName}</p>
+                                  <p className="text-xs text-slate-500">
+                                    Cập nhật: {new Date(mentee.lastSessionDate).toLocaleDateString("vi-VN")}
+                                  </p>
                                </div>
                             </div>
                          </td>
@@ -290,15 +321,20 @@ export function MentorAnalytics() {
                          <td className="px-10 py-6">
                             <div className="flex items-center gap-2">
                                {getTrendIcon(mentee.progressTrend)}
-                               <span className={`text-[10px] font-black uppercase tracking-widest ${mentee.progressTrend === 'improving' ? 'text-violet-700' : 'text-zinc-500'}`}>
-                                  {mentee.progressTrend === 'improving' ? 'Cải thiện' : 'Ổn định'}
+                               <span
+                                 className={`text-xs font-semibold ${
+                                   mentee.progressTrend === "improving" ? "text-violet-700" : "text-slate-500"
+                                 }`}
+                               >
+                                  {TREND_LABELS[mentee.progressTrend] || TREND_LABELS.stable}
                                </span>
                             </div>
                          </td>
                          <td className="px-10 py-6 text-right">
                             <button 
                                onClick={() => setSelectedMentee(mentee)}
-                               className="px-6 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-[10px] font-black uppercase tracking-widest text-zinc-500 hover:text-slate-900 hover:bg-slate-100 transition-all flex items-center justify-center gap-2 ml-auto">
+                               className="ml-auto flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-6 py-2.5 text-sm font-semibold text-slate-600 transition-all hover:bg-slate-100 hover:text-slate-900"
+                             >
                                Chi tiết <CaretRight size={14} />
                             </button>
                          </td>
@@ -329,10 +365,20 @@ export function MentorAnalytics() {
             >
                <div className="p-8 border-b border-slate-200 flex items-center justify-between">
                   <div className="flex items-center gap-6">
-                     <img src={selectedMentee.menteeAvatar} className="w-16 h-16 rounded-[24px] object-cover ring-4 ring-white/5" />
+                     <img
+                       src={avatarSrc(selectedMentee.menteeAvatar)}
+                       alt=""
+                       className="h-16 w-16 rounded-[24px] object-cover ring-4 ring-white/5"
+                       onError={(e) => {
+                         e.currentTarget.onerror = null;
+                         e.currentTarget.src = avatarSrc("");
+                       }}
+                     />
                      <div>
-                        <h2 className="text-xl font-black sm:text-2xl text-slate-900 tracking-tighter">{selectedMentee.menteeName}</h2>
-                        <p className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.2em] mt-1 text-violet-700">Phân tích hành vi & STAR</p>
+                        <h2 className="text-xl font-bold text-slate-900 sm:text-2xl">{selectedMentee.menteeName}</h2>
+                        <p className="mt-1 text-sm font-medium text-violet-700">
+                          Phân tích hành vi & STAR
+                        </p>
                      </div>
                   </div>
                   <button onClick={() => setSelectedMentee(null)} className="w-12 h-12 rounded-xl bg-slate-50 flex items-center justify-center text-zinc-500">
@@ -343,7 +389,7 @@ export function MentorAnalytics() {
                <div className="p-8 overflow-y-auto space-y-10 custom-scrollbar">
                   <div className="grid md:grid-cols-2 gap-10">
                      <div className="space-y-6">
-                        <h5 className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">Tiến trình STAR theo thời gian</h5>
+                        <h5 className="text-sm font-semibold text-slate-700">Tiến trình STAR theo thời gian</h5>
                         <div className="h-[250px] glass-card p-6 bg-white/[0.01]">
                            <ResponsiveContainer width="100%" height="100%">
                               <LineChart data={selectedMentee.starHistory}>
@@ -359,10 +405,12 @@ export function MentorAnalytics() {
                         </div>
                      </div>
                      <div className="space-y-6">
-                        <h5 className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">Ưu điểm & Hạn chế</h5>
+                        <h5 className="text-sm font-semibold text-slate-700">Ưu điểm & hạn chế</h5>
                         <div className="space-y-4">
                            <div className="p-6 rounded-3xl bg-primary-fixed/5 border border-primary-fixed/10">
-                              <h6 className="text-[10px] font-black text-violet-700 uppercase tracking-widest mb-4 flex items-center gap-2"><Lightning size={12} /> Điểm mạnh</h6>
+                              <h6 className="mb-4 flex items-center gap-2 text-xs font-semibold text-violet-700">
+                                <Lightning size={12} /> Điểm mạnh
+                              </h6>
                               <ul className="space-y-2">
                                  {selectedMentee.strengths.map((s, i) => (
                                    <li key={i} className="text-xs font-medium text-slate-600 flex gap-2"><span className="text-violet-700">•</span> {s}</li>
@@ -370,7 +418,9 @@ export function MentorAnalytics() {
                               </ul>
                            </div>
                            <div className="p-6 rounded-3xl bg-orange-500/5 border border-orange-500/10">
-                              <h6 className="text-[10px] font-black text-orange-400 uppercase tracking-widest mb-4 flex items-center gap-2"><Target size={12} /> Cần lưu ý</h6>
+                              <h6 className="mb-4 flex items-center gap-2 text-xs font-semibold text-orange-600">
+                                <Target size={12} /> Cần lưu ý
+                              </h6>
                               <ul className="space-y-2">
                                  {selectedMentee.weaknesses.map((w, i) => (
                                    <li key={i} className="text-xs font-medium text-slate-600 flex gap-2"><span className="text-orange-400">•</span> {w}</li>
@@ -383,7 +433,13 @@ export function MentorAnalytics() {
                </div>
                
                <div className="p-6 border-t border-slate-200 bg-slate-100 flex justify-end">
-                  <button onClick={() => setSelectedMentee(null)} className="px-8 py-4 rounded-xl bg-white text-black text-[10px] font-black uppercase tracking-widest">Đóng phân tích</button>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedMentee(null)}
+                    className="rounded-xl bg-white px-8 py-3 text-sm font-semibold text-slate-900 shadow-sm hover:bg-slate-50"
+                  >
+                    Đóng
+                  </button>
                </div>
             </motion.div>
           </motion.div>

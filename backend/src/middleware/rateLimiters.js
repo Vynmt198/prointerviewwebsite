@@ -1,9 +1,11 @@
 import rateLimit from "express-rate-limit";
 
+const isProd = process.env.NODE_ENV === "production";
+
 /** Đăng ký / đăng nhập / Google — chống brute-force theo IP. */
 export const authWriteLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 40,
+  max: isProd ? 40 : 200,
   standardHeaders: true,
   legacyHeaders: false,
   message: { success: false, error: "Quá nhiều yêu cầu. Thử lại sau ít phút." },

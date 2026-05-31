@@ -13,8 +13,18 @@ import { toastApiError, toastApiSuccess } from "../../utils/apiToast";
 import { logout, getUser, updateUser, refreshUserProfile } from "../../utils/auth";
 import { LoginSessionsSection } from "../../components/account/LoginSessionsSection";
 import { AccountDangerZone } from "../../components/account/AccountDangerZone";
+import {
+  mentorPageTitle,
+  mentorPageSubtitle,
+  mentorAccentText,
+} from "../../components/mentor/mentorTypography";
 
-const NOTIF_PREFS_KEY = "prointerview_notif_prefs";
+const NOTIF_PREFS_KEY_CUSTOMER = "prointerview_notif_prefs";
+const NOTIF_PREFS_KEY_MENTOR = "prointerview_notif_prefs_mentor";
+
+function notifStorageKey(role) {
+  return role === "mentor" ? NOTIF_PREFS_KEY_MENTOR : NOTIF_PREFS_KEY_CUSTOMER;
+}
 
 /** Tiêu đề / nhãn — in hoa qua CSS */
 const SETTINGS_TITLE_CLS =
@@ -22,15 +32,33 @@ const SETTINGS_TITLE_CLS =
 /** Mô tả — viết thường, câu bình thường */
 const ITEM_DESC_CLS = "text-sm text-slate-500 leading-relaxed tracking-normal";
 
-function loadNotifPrefs() {
+function loadNotifPrefs(storageKey) {
   try {
-    const raw = localStorage.getItem(NOTIF_PREFS_KEY);
+    const raw = localStorage.getItem(storageKey);
     if (!raw) return null;
     const parsed = JSON.parse(raw);
     return Array.isArray(parsed) ? parsed : null;
   } catch {
     return null;
   }
+}
+
+function mergeNotifPrefs(defaults, storageKey) {
+  const saved = loadNotifPrefs(storageKey);
+  if (!saved) return defaults;
+  return defaults.map((d) => {
+    const hit = saved.find((s) => s.id === d.id);
+    return hit ? { ...d, value: !!hit.value } : d;
+  });
+}
+
+function mergeNotifFromServer(defaults, serverPrefs, isMentor) {
+  const slice = isMentor ? serverPrefs?.mentor : serverPrefs?.customer;
+  if (!slice || typeof slice !== "object") return defaults;
+  return defaults.map((d) => ({
+    ...d,
+    value: typeof slice[d.id] === "boolean" ? slice[d.id] : d.value,
+  }));
 }
 
 /* ─── Reusable components ───────────────────────────────── */
@@ -127,63 +155,131 @@ function SaveBar({
 }
 
 /* ─── TAB: Notifications ────────────────────────────────── */
-const DEFAULT_NOTIFS = [
+const DEFAULT_CUSTOMER_NOTIFS = [
   {
     id: "interview_reminder",
     label: "Nhắc lịch phỏng vấn",
-    description: "Thông báo trước buổi hẹn 01 giờ.",
+    description: "Thông báo trước buổi hẹn khoảng 1 giờ.",
     value: true,
   },
   {
     id: "mentor_feedback",
-    label: "Phản hồi từ Mentor",
-    description: "Nhận thông báo khi Mentor gửi góp ý cho bạn.",
+    label: "Phản hồi từ mentor",
+    description: "Khi mentor gửi góp ý sau buổi hoặc nhận xét của bạn.",
     value: true,
   },
   {
     id: "streak_reminder",
     label: "Nhắc luyện tập đều đặn",
-    description: "Duy trì thói quen luyện phỏng vấn mỗi ngày.",
+    description: "Nhắc luyện phỏng vấn AI và hoàn thành mục tiêu tuần.",
     value: true,
   },
 ];
 
-function NotificationsTab() {
-  const [push, setPush] = useState(() => {
-    const saved = loadNotifPrefs();
-    if (!saved) return DEFAULT_NOTIFS;
-    return DEFAULT_NOTIFS.map((d) => {
-      const hit = saved.find((s) => s.id === d.id);
-      return hit ? { ...d, value: !!hit.value } : d;
-    });
-  });
+const DEFAULT_MENTOR_NOTIFS = [
+  {
+    id: "booking_request",
+    label: "Yêu cầu đặt lịch mới",
+    description: "Có lịch mới hoặc học viên đã thanh toán.",
+    value: true,
+  },
+  {
+    id: "session_reminder",
+    label: "Nhắc buổi mentor sắp tới",
+    description: "Nhắc trước buổi khoảng 1 giờ.",
+    value: true,
+  },
+  {
+    id: "mentee_review",
+    label: "Đánh giá từ học viên",
+    description: "Học viên gửi nhận xét sau buổi.",
+    value: true,
+  },
+  {
+    id: "booking_change",
+    label: "Đổi hoặc hủy lịch",
+    description: "Hủy buổi, đổi lịch hoặc cập nhật hoàn tiền.",
+    value: true,
+  },
+  {
+    id: "payout_update",
+    label: "Cập nhật tài chính",
+    description: "Thu nhập, rút tiền và xác nhận từ admin.",
+    value: true,
+  },
+  {
+    id: "peer_review_course",
+    label: "Đánh giá chéo khóa học",
+    description: "Có khóa học cần bạn đánh giá chéo.",
+    value: true,
+  },
+];
+
+function NotificationsTab({ isMentor, profileFromServer, onProfileSynced }) {
+  const defaults = isMentor ? DEFAULT_MENTOR_NOTIFS : DEFAULT_CUSTOMER_NOTIFS;
+  const storageKey = notifStorageKey(isMentor ? "mentor" : "customer");
+  const sectionTitle = isMentor ? "Thông báo mentor" : "Trung tâm thông báo";
+
+  const initialPrefs = () => {
+    if (profileFromServer?.notificationPrefs) {
+      return mergeNotifFromServer(defaults, profileFromServer.notificationPrefs, isMentor);
+    }
+    return mergeNotifPrefs(defaults, storageKey);
+  };
+
+  const [push, setPush] = useState(initialPrefs);
   const [dirty, setDirty] = useState(false);
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    const defs = isMentor ? DEFAULT_MENTOR_NOTIFS : DEFAULT_CUSTOMER_NOTIFS;
+    if (profileFromServer?.notificationPrefs) {
+      setPush(mergeNotifFromServer(defs, profileFromServer.notificationPrefs, isMentor));
+    } else {
+      setPush(mergeNotifPrefs(defs, storageKey));
+    }
+    setDirty(false);
+  }, [isMentor, profileFromServer?.notificationPrefs, storageKey]);
 
   const toggle = (id) => {
     setPush((prev) => prev.map((t) => (t.id === id ? { ...t, value: !t.value } : t)));
     setDirty(true);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     setSaving(true);
+    const prefMap = Object.fromEntries(push.map(({ id, value }) => [id, value]));
+    const payload = isMentor
+      ? { notificationPrefs: { mentor: prefMap } }
+      : { notificationPrefs: { customer: prefMap } };
+    const res = await updateUser(payload);
+    setSaving(false);
+    if (!res.success) {
+      toastApiError(res.error, "Không lưu được cài đặt thông báo.");
+      return;
+    }
     try {
       localStorage.setItem(
-        NOTIF_PREFS_KEY,
+        storageKey,
         JSON.stringify(push.map(({ id, value }) => ({ id, value }))),
       );
-      setDirty(false);
-      toastApiSuccess("Đã lưu cài đặt thông báo");
     } catch {
-      toastApiError("Không lưu được cài đặt trên trình duyệt.");
-    } finally {
-      setSaving(false);
+      /* cache optional */
     }
+    const u = getUser();
+    onProfileSynced?.(u);
+    setDirty(false);
+    toastApiSuccess("Đã lưu — thông báo sẽ áp dụng theo lựa chọn của bạn.");
+  };
+
+  const handleReset = () => {
+    setPush(defaults);
+    setDirty(false);
   };
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
-      <SectionCard title="Trung tâm Thông báo" icon={Bell}>
+      <SectionCard title={sectionTitle} icon={Bell}>
         <div className="space-y-4">
           {push.map((item) => (
             <div key={item.id} className="group flex items-center justify-between gap-6 rounded-2xl border border-slate-200 bg-white p-5">
@@ -196,7 +292,7 @@ function NotificationsTab() {
           ))}
         </div>
       </SectionCard>
-      <SaveBar dirty={dirty} saving={saving} saved={false} onSave={handleSave} onReset={() => { setPush(DEFAULT_NOTIFS); setDirty(false); }} />
+      <SaveBar dirty={dirty} saving={saving} saved={false} onSave={handleSave} onReset={handleReset} />
     </div>
   );
 }
@@ -392,6 +488,8 @@ export function Settings() {
     navigate("/");
   };
 
+  const isMentor = profileFromServer?.role === "mentor";
+
   return (
     <MentorPageShell bottomPad="pb-32">
       <style>{`
@@ -448,28 +546,19 @@ export function Settings() {
         }
       `}</style>
 
-      {/* ── Hero ── */}
-      <header className="relative border-b border-slate-200 pb-10 pt-8 sm:pb-12 sm:pt-10">
-        <div
-          className="pointer-events-none absolute inset-0 opacity-[0.11]"
-          style={{
-            backgroundImage:
-              "linear-gradient(rgba(255,255,255,0.55) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.45) 1px,transparent 1px)",
-            backgroundSize: "32px 32px",
-          }}
-          aria-hidden
-        />
-        <div className="relative z-10 mx-auto max-w-6xl px-6 sm:px-8">
-          <h1 className="font-headline app-page-title mb-2">
-            Cài đặt tài khoản
+      <div className="relative z-10 mx-auto max-w-7xl px-6 pb-16 sm:px-8 sm:pb-20">
+        <div className="mb-10 flex flex-col gap-3 md:mb-12">
+          <h1 className={mentorPageTitle}>
+            <span>Cài đặt</span>{" "}
+            <span className={mentorAccentText}>tài khoản</span>
           </h1>
-          <p className="app-page-subtitle tracking-normal">
-            Tùy chỉnh thông báo, bảo mật và trải nghiệm của bạn trên ProInterview.
+          <p className={mentorPageSubtitle}>
+            {isMentor
+              ? "Thông báo, bảo mật và phiên đăng nhập."
+              : "Thông báo và bảo mật tài khoản."}
           </p>
         </div>
-      </header>
 
-      <div className="relative z-10 mx-auto mt-10 max-w-6xl px-6 sm:mt-12 sm:px-8">
          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
             {/* Sidebar Navigation */}
             <aside className="lg:col-span-3">
@@ -505,7 +594,13 @@ export function Settings() {
             {/* Dynamic Content Area */}
             <main className="lg:col-span-9">
                <div className="min-h-[400px]">
-                  {activeTab === "notifications" && <NotificationsTab />}
+                  {activeTab === "notifications" && (
+                    <NotificationsTab
+                      isMentor={isMentor}
+                      profileFromServer={profileFromServer}
+                      onProfileSynced={(u) => setProfileFromServer(u ?? getUser())}
+                    />
+                  )}
                   {activeTab === "security" && (
                     <SecurityTab
                       profileFromServer={profileFromServer}
