@@ -23,7 +23,7 @@ import {
 import { getLatestCVAnalysisAsync, getUploadedCV, saveUploadedCV } from "../../utils/history";
 import { hasAuthCredentials, isLoggedIn } from "../../utils/auth";
 import { buildLoginPath } from "../../utils/authGate";
-import { generateInterviewQuestions, extractCvTextFromFile, createInterviewSession } from "../../utils/interviewsApi";
+import { generateInterviewQuestions, extractCvTextFromFile, createInterviewSession, pregenerateInterviewVideos } from "../../utils/interviewsApi";
 import { InterviewHistoryPanel } from "../../components/interview/InterviewHistoryPanel";
 import { InterviewPageTabs } from "../../components/interview/InterviewPageTabs";
 import { CV_JD_CARD_CLASS } from "../../components/cv/CvJdAnalysisFrame";
@@ -450,6 +450,31 @@ export function Interview() {
       }
     }
 
+    // Bước cuối: pre-generate video HR lipsync (D-ID Express API).
+    // Chỉ chạy nếu backend báo D-ID đang enabled, tránh flash loading vô ích.
+    let videoUrls = null;
+    try {
+      const configRes = await fetch("/api/ai/config");
+      const configBody = configRes.ok ? await configRes.json().catch(() => ({})) : {};
+      const didEnabled = configBody?.providers?.avatar?.did === true;
+
+      if (didEnabled) {
+        setLoadingStep("pregenerating_videos");
+        const questionTexts = (questions ?? []).map(q =>
+          typeof q === "string" ? q : (q.question ?? "")
+        ).filter(Boolean);
+
+        if (questionTexts.length > 0) {
+          const pregenResult = await pregenerateInterviewVideos(questionTexts, { gender: hrGender });
+          if (pregenResult.success && pregenResult.videoUrls?.some(Boolean)) {
+            videoUrls = pregenResult.videoUrls;
+          }
+        }
+      }
+    } catch {
+      // D-ID chưa set hoặc lỗi mạng — phỏng vấn vẫn chạy với TTS fallback
+    }
+
     setLoadingStep(null);
 
     const interviewData = {
@@ -457,6 +482,7 @@ export function Interview() {
       hrGender,
       questions,
       sessionId,
+      videoUrls,
       ...(option === "A" && { useLatestAnalysis: true, latestCV }),
       ...(option === "B" && { storedCV }),
     };
@@ -742,6 +768,7 @@ export function Interview() {
                 {loadingStep === "extracting_jd" && "Đang đọc JD..."}
                 {loadingStep === "generating_questions" && "AI đang tạo câu hỏi..."}
                 {loadingStep === "creating_session" && "Đang chuẩn bị..."}
+                {loadingStep === "pregenerating_videos" && "Đang tạo video HR..."}
               </>
             ) : (
               <>

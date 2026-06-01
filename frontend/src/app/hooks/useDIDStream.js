@@ -17,6 +17,7 @@
  */
 
 import { useRef, useState, useCallback } from "react";
+import { synthesizeSpeech, createAudioBlobUrl } from "../utils/interviewsApi.js";
 
 export const DID_API = "https://api.d-id.com";
 
@@ -163,14 +164,15 @@ export function useDIDStream({ apiKey, sourceImageUrl } = {}) {
         throw new Error(`SDP exchange thất bại: ${sdpRes.status}`);
       }
 
-      // Timeout 15s: nếu WebRTC không vào "connected" → fallback sang pre-recorded video
+      // Timeout 8s: nếu WebRTC không vào "connected" → error → TTS fallback kích hoạt ngay.
+      // 8s đủ cho ICE exchange trên mạng bình thường; giảm từ 15s để tránh user chờ im 15 giây.
       connectTimerRef.current = setTimeout(() => {
         if (pcRef.current && pcRef.current.connectionState !== "connected") {
           console.warn("[D-ID] connection timeout → fallback");
           setStatus("error");
           setError("Kết nối D-ID timeout");
         }
-      }, 15000);
+      }, 8000);
     } catch (err) {
       console.error("[D-ID] connect():", err);
       setStatus("error");
@@ -276,6 +278,54 @@ export function useDIDStream({ apiKey, sourceImageUrl } = {}) {
     }
   }, [getHeaders]);
 
+  // ── Nói với ElevenLabs audio (nếu TTS_PROVIDER=elevenlabs) ──
+  /**
+   * Gọi ElevenLabs TTS backend → tạo blob URL → feed vào D-ID speakWithAudio().
+   * Fallback về speakWithText() nếu ElevenLabs call thất bại.
+   *
+   * Dùng khi muốn giọng clone chất lượng cao thay vì Azure TTS của D-ID.
+   * Chỉ hoạt động khi D-ID stream đang connected (status === "connected").
+   *
+   * @param {string} text - Text tiếng Việt cần đọc
+   * @param {Function} [onEnd] - Callback khi audio kết thúc
+   * @param {object} [ttsOpts] - Options cho ElevenLabs (voiceId, stability, ...)
+   */
+  const speakWithElevenLabs = useCallback(async (text, onEnd, ttsOpts = {}) => {
+    if (!streamIdRef.current || !sessionIdRef.current) {
+      onEnd?.();
+      return;
+    }
+
+    let blobUrl = null;
+    try {
+      const result = await synthesizeSpeech(text, ttsOpts);
+      if (result.success && result.audioBuffer) {
+        blobUrl = createAudioBlobUrl(result.audioBuffer, result.contentType);
+      }
+    } catch {
+      // Fallback ngay nếu ElevenLabs call throw
+    }
+
+    if (blobUrl) {
+      // Feed blob URL vào D-ID speakWithAudio — D-ID sẽ lipsync với audio này
+      // Lưu ý: D-ID cần URL public accessible. Blob URLs chỉ work same-origin.
+      // Nếu D-ID reject blob URL → fallback về speakWithText tự động.
+      try {
+        await speakWithAudio(blobUrl, text, () => {
+          URL.revokeObjectURL(blobUrl);
+          onEnd?.();
+        });
+      } catch {
+        URL.revokeObjectURL(blobUrl);
+        // Fallback: D-ID Azure TTS
+        await speakWithText(text, onEnd);
+      }
+    } else {
+      // ElevenLabs unavailable → fallback về D-ID Azure TTS
+      await speakWithText(text, onEnd);
+    }
+  }, [speakWithAudio, speakWithText]);
+
   // ── Disconnect & cleanup ──────────────────────────────────
   const disconnect = useCallback(async () => {
     clearTimeout(endTimerRef.current);
@@ -310,5 +360,5 @@ export function useDIDStream({ apiKey, sourceImageUrl } = {}) {
     setStatus("idle");
   }, [getHeaders]);
 
-  return { status, error, connect, disconnect, speakWithAudio, speakWithText, attachVideo };
+  return { status, error, connect, disconnect, speakWithAudio, speakWithText, speakWithElevenLabs, attachVideo };
 }

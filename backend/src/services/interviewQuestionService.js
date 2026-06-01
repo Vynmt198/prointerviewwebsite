@@ -22,19 +22,72 @@ import { sanitizeUserInput } from "../utils/promptSafety.js";
 import { validateQuestionSet } from "../utils/outputValidator.js";
 import { logger } from "../config/logger.js";
 import { SecurityLog } from "../models/SecurityLog.js";
+import { createTrace, logGeneration, finalizeTrace } from "./langfuseService.js";
 
 // ── Env config (đọc động để hỗ trợ multi-provider) ───────────────────────────
 function cfg() {
   return {
-    baseUrl: process.env.LLM_BASE_URL ?? "https://api.openai.com/v1",
-    apiKey:  process.env.LLM_API_KEY  ?? "",
-    model:   process.env.LLM_MODEL    ?? "gpt-4o-mini",
-    cvUrl:   process.env.CV_ANALYZER_URL ?? "http://localhost:8000",
+    baseUrl:        process.env.LLM_BASE_URL        ?? "https://api.openai.com/v1",
+    apiKey:         process.env.LLM_API_KEY          ?? "",
+    model:          process.env.LLM_MODEL            ?? "gpt-4o-mini",
+    cvUrl:          process.env.CV_ANALYZER_URL      ?? "http://localhost:8000",
+    // Anthropic override (khi set thì dùng Claude thay vì OpenAI-compat provider)
+    anthropicKey:   process.env.ANTHROPIC_API_KEY    ?? "",
+    anthropicQgen:  process.env.ANTHROPIC_QGEN_MODEL ?? "claude-sonnet-4-5",
+    anthropicEval:  process.env.ANTHROPIC_EVAL_MODEL ?? "claude-opus-4-8",
   };
 }
 
 function isOllama(baseUrl) {
   return /localhost:11434|ollama/.test(baseUrl);
+}
+
+function isAnthropicUrl(baseUrl) {
+  return /anthropic\.com/i.test(baseUrl);
+}
+
+/**
+ * Trả về LLM provider đang active.
+ * Ưu tiên: LLM_PROVIDER env > detect từ URL > fallback openai_compat
+ * @returns {"anthropic"|"openai_compat"}
+ */
+function getLLMProvider() {
+  const explicit = process.env.LLM_PROVIDER?.toLowerCase();
+  const { anthropicKey, baseUrl } = cfg();
+  if (explicit === "anthropic" && anthropicKey) return "anthropic";
+  if (isAnthropicUrl(baseUrl) && anthropicKey) return "anthropic";
+  return "openai_compat"; // Groq, Gemini, OpenAI, Ollama, OpenRouter — tất cả OpenAI-compat
+}
+
+// ── Anthropic native API call ─────────────────────────────────────────────────
+async function callAnthropicLLM(system, user, { maxTokens = 4000, temp = 0.6, model = null } = {}) {
+  const { anthropicKey, anthropicQgen } = cfg();
+  const useModel = model ?? anthropicQgen;
+
+  const res = await fetch("https://api.anthropic.com/v1/messages", {
+    method:  "POST",
+    headers: {
+      "Content-Type":      "application/json",
+      "x-api-key":         anthropicKey,
+      "anthropic-version": "2023-06-01",
+    },
+    body: JSON.stringify({
+      model:       useModel,
+      max_tokens:  maxTokens,
+      temperature: temp,
+      system,
+      messages: [{ role: "user", content: user }],
+    }),
+    signal: AbortSignal.timeout(120_000),
+  });
+
+  if (!res.ok) {
+    const errBody = await res.text().catch(() => "");
+    throw new Error(`Anthropic HTTP ${res.status}: ${errBody.slice(0, 400)}`);
+  }
+
+  const data = await res.json();
+  return data.content?.[0]?.text ?? "";
 }
 
 // ── Fuzzy match (tiếng Việt) ──────────────────────────────────────────────────
@@ -56,7 +109,48 @@ function containsFuzzy(a, b) {
 }
 
 // ── LLM helper ────────────────────────────────────────────────────────────────
-async function callLLM(system, user, { maxTokens = 4000, temp = 0.6, retries = 2 } = {}) {
+/**
+ * @param {string} system
+ * @param {string} user
+ * @param {object} [opts]
+ * @param {number} [opts.maxTokens=4000]
+ * @param {number} [opts.temp=0.6]
+ * @param {number} [opts.retries=2]
+ * @param {string} [opts.traceId]    - Langfuse trace ID (fire-and-forget logging)
+ * @param {string} [opts.traceName]  - Tên generation cho Langfuse
+ * @param {string} [opts.anthropicModel] - Override Anthropic model (dùng eval model cho evaluation)
+ */
+async function callLLM(system, user, { maxTokens = 4000, temp = 0.6, retries = 2, traceId, traceName, anthropicModel } = {}) {
+  const provider = getLLMProvider();
+  const startMs  = Date.now();
+
+  // ── Anthropic native API ──────────────────────────────────────────────────
+  if (provider === "anthropic") {
+    let lastErr;
+    for (let attempt = 0; attempt <= retries; attempt++) {
+      try {
+        const output = await callAnthropicLLM(system, user, { maxTokens, temp, model: anthropicModel });
+        logGeneration({
+          traceId,
+          name:         traceName ?? "llm_call",
+          model:        anthropicModel ?? cfg().anthropicQgen,
+          systemPrompt: system,
+          userPrompt:   user,
+          output,
+          latencyMs:    Date.now() - startMs,
+        });
+        return output;
+      } catch (err) {
+        lastErr = err;
+        if (attempt < retries) {
+          await new Promise(r => setTimeout(r, Math.min(1000 * 2 ** attempt, 8_000)));
+        }
+      }
+    }
+    throw lastErr;
+  }
+
+  // ── OpenAI-compatible API (Groq, Gemini, OpenAI, OpenRouter, Ollama) ──────
   const { baseUrl, apiKey, model } = cfg();
   let lastErr;
   for (let attempt = 0; attempt <= retries; attempt++) {
@@ -91,8 +185,26 @@ async function callLLM(system, user, { maxTokens = 4000, temp = 0.6, retries = 2
         throw new Error(`LLM HTTP ${res.status}: ${errBody.slice(0, 400)}`);
       }
 
-      const data = await res.json();
-      return data.choices?.[0]?.message?.content ?? "";
+      const data   = await res.json();
+      const output = data.choices?.[0]?.message?.content ?? "";
+
+      // Langfuse: log generation nếu có traceId (fire-and-forget)
+      logGeneration({
+        traceId,
+        name:         traceName ?? "llm_call",
+        model,
+        systemPrompt: system,
+        userPrompt:   user,
+        output,
+        latencyMs:    Date.now() - startMs,
+        usage: {
+          inputTokens:  data.usage?.prompt_tokens,
+          outputTokens: data.usage?.completion_tokens,
+          totalTokens:  data.usage?.total_tokens,
+        },
+      });
+
+      return output;
     } catch (err) {
       lastErr = err;
       if (attempt < retries) {
@@ -281,12 +393,20 @@ export async function generateQuestionsFromText({
   sessionId = null,
   userId = null,
 }) {
-  const { apiKey } = cfg();
-  if (!apiKey) {
+  const { apiKey, anthropicKey } = cfg();
+  if (!apiKey && !anthropicKey) {
     throw new Error(
-      "LLM_API_KEY chưa được cấu hình. Xem backend/.env.example → mục LLM."
+      "LLM chưa được cấu hình. Cần ít nhất 1 trong: LLM_API_KEY (Groq/Gemini/OpenAI) hoặc ANTHROPIC_API_KEY."
     );
   }
+
+  // Langfuse trace (fire-and-forget — fail silently)
+  const traceId = createTrace({
+    name:      "generate_questions",
+    userId,
+    sessionId,
+    metadata:  { position, field, cvTextLen: cvText.length, jdTextLen: jdText.length },
+  });
 
   // Sanitize user-supplied text before injecting into LLM prompts
   const { text: cleanCV, injectionAttempts: cvInjections } = sanitizeUserInput(cvText, 6000);
@@ -326,14 +446,14 @@ export async function generateQuestionsFromText({
   const userMsg = buildSecureUserPrompt(ctxCV, ctxJD);
 
   // Step 3: LLM call với SHRM/DDI grounded prompt
-  let rawContent = await callLLM(systemPrompt, userMsg);
+  let rawContent = await callLLM(systemPrompt, userMsg, { traceId, traceName: "question_generation" });
 
   let parsed;
   try {
     parsed = JSON.parse(extractJson(rawContent));
   } catch {
     const repairPrompt = "Sửa JSON sau thành JSON hợp lệ. Chỉ trả về JSON thuần, không giải thích:";
-    rawContent = await callLLM(repairPrompt, rawContent, { maxTokens: 3000, temp: 0, retries: 1 });
+    rawContent = await callLLM(repairPrompt, rawContent, { maxTokens: 3000, temp: 0, retries: 1, traceId, traceName: "question_json_repair" });
     parsed = JSON.parse(extractJson(rawContent));
   }
 
@@ -353,18 +473,19 @@ export async function generateQuestionsFromText({
 
     // One retry at temp=0 — deterministic output is more likely to be well-structured
     logger.warn("llm_output_retry", { reason: validation.reason, sessionId, userId });
-    let retryRaw = await callLLM(systemPrompt, userMsg, { temp: 0, maxTokens: 4000, retries: 1 });
+    let retryRaw = await callLLM(systemPrompt, userMsg, { temp: 0, maxTokens: 4000, retries: 1, traceId, traceName: "question_retry" });
     try {
       parsed = JSON.parse(extractJson(retryRaw));
     } catch {
       const repairPrompt = "Sửa JSON sau thành JSON hợp lệ. Chỉ trả về JSON thuần:";
-      retryRaw = await callLLM(repairPrompt, retryRaw, { maxTokens: 3000, temp: 0, retries: 1 });
+      retryRaw = await callLLM(repairPrompt, retryRaw, { maxTokens: 3000, temp: 0, retries: 1, traceId, traceName: "question_retry_repair" });
       parsed = JSON.parse(extractJson(retryRaw));
     }
 
     validation = validateQuestionSet(parsed);
     if (!validation.valid) {
       logger.error("llm_output_still_invalid", { reason: validation.reason, sessionId, userId });
+      finalizeTrace(traceId, "error", validation.reason);
       throw new Error(`LLM output không hợp lệ sau retry: ${validation.reason}`);
     }
   }
@@ -407,6 +528,8 @@ export async function generateQuestionsFromText({
     generatedAt: new Date().toISOString(),
   };
 
+  finalizeTrace(traceId, "success");
+
   return {
     questions,
     inferredRole:      parsed.inferred_role      || position || "",
@@ -420,9 +543,16 @@ export async function generateQuestionsFromText({
  * @param {{ questions: object[], answers: {questionIndex: number, transcript: string}[] }} param
  * @returns {{ overallComment: string, perQuestion: object[] }}
  */
-export async function evaluateTranscripts({ questions, answers }) {
-  const { apiKey } = cfg();
-  if (!apiKey) throw new Error("LLM_API_KEY chưa được cấu hình.");
+export async function evaluateTranscripts({ questions, answers, userId, sessionId }) {
+  const { apiKey, anthropicKey, anthropicEval } = cfg();
+  if (!apiKey && !anthropicKey) throw new Error("LLM chưa được cấu hình.");
+
+  const traceId = createTrace({
+    name:      "evaluate_session",
+    userId,
+    sessionId,
+    metadata:  { questionCount: questions.length, answerCount: answers.length },
+  });
 
   // Build Q&A blocks — inject SHRM rubric per question
   const qaBlocks = questions.map((q, i) => {
@@ -493,14 +623,20 @@ Trả về JSON hợp lệ (không markdown, không giải thích thêm):
   ]
 }`;
 
-  const rawContent = await callLLM(systemPrompt, qaBlocks, { maxTokens: 3500, temp: 0.2, retries: 2 });
+  // Dùng Anthropic Opus cho evaluation nếu enabled (chất lượng đánh giá cao hơn)
+  const evalAnthropicModel = anthropicKey ? anthropicEval : undefined;
+  const rawContent = await callLLM(systemPrompt, qaBlocks, {
+    maxTokens: 3500, temp: 0.2, retries: 2,
+    traceId, traceName: "evaluation",
+    anthropicModel: evalAnthropicModel,
+  });
 
   let parsed;
   try {
     parsed = JSON.parse(extractJson(rawContent));
   } catch {
     const repair = "Sửa JSON sau thành hợp lệ, chỉ trả JSON thuần:";
-    const fixed  = await callLLM(repair, rawContent, { maxTokens: 3000, temp: 0, retries: 1 });
+    const fixed  = await callLLM(repair, rawContent, { maxTokens: 3000, temp: 0, retries: 1, traceId, traceName: "eval_repair" });
     parsed = JSON.parse(extractJson(fixed));
   }
 
@@ -520,6 +656,7 @@ Trả về JSON hợp lệ (không markdown, không giải thích thêm):
     suggestion:   q.suggestion ?? "",
   }));
 
+  finalizeTrace(traceId, "success");
   return { overallComment: parsed.overall_comment ?? "", perQuestion };
 }
 

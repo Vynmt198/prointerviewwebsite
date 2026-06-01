@@ -30,6 +30,7 @@ import { cvMatchRouter } from "./routes/cvMatch.js";
 import { interviewsRouter } from "./routes/interviews.js";
 import { uploadRouter } from "./routes/upload.js";
 import { mockCoursesRouter } from "./routes/mockCourses.js";
+import { aiProvidersRouter } from "./routes/aiProviders.js";
 import { notFoundHandler, globalErrorHandler } from "./middleware/errorHandler.js";
 
 export function createApp() {
@@ -192,6 +193,7 @@ export function createApp() {
   app.use("/api/interviews", interviewsRouter);
   app.use("/api/upload", uploadRouter);
   app.use("/api/mock", mockCoursesRouter);
+  app.use("/api/ai", aiProvidersRouter);
 
   app.use(notFoundHandler);
   app.use(globalErrorHandler);

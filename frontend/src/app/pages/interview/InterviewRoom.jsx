@@ -522,9 +522,15 @@ export default function InterviewRoom() {
     : [];
   const QUESTION_OBJECTS = apiQuestions?.length ? apiQuestions : null;
 
+  // Pre-generated video URLs từ D-ID Express API (truyền từ Interview.jsx)
+  const videoUrls       = location.state?.videoUrls ?? null;
+  const hasPregenVideos = Array.isArray(videoUrls) && videoUrls.some(Boolean);
+
   /* ── UI state ─────────────────────────────────────────── */
   const [phase,             setPhase]             = useState("ready");
   const [currentQ,          setCurrentQ]          = useState(0);
+  // URL video D-ID pre-generated của câu hỏi hiện tại — null khi không có
+  const currentVideoUrl = hasPregenVideos ? (videoUrls[currentQ] ?? null) : null;
   const [isListening,       setIsListening]       = useState(false);
   const [transcript,        setTranscript]        = useState("");
   const [interimTranscript, setInterimTranscript] = useState("");
@@ -714,24 +720,27 @@ export default function InterviewRoom() {
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  /* ── D-ID preconnect ──────────────────────────────────── */
+  /* ── D-ID preconnect — skip khi đã có pregen videos ─────── */
   const didConnectAttemptsRef = useRef(0);
   useEffect(() => {
-    if (!DID_API_KEY) return;
+    // Không cần WebRTC nếu đã có pre-generated videos từ D-ID Express API
+    if (!DID_API_KEY || hasPregenVideos) return;
     didConnectAttemptsRef.current = 1;
     didConnect();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    if (phase !== "question" || !DID_API_KEY) return;
+    if (hasPregenVideos || phase !== "question" || !DID_API_KEY) return;
     if (didStatus === "connected" || didStatus === "connecting") return;
     if (didConnectAttemptsRef.current >= 2) return;
     didConnectAttemptsRef.current += 1;
     didConnect();
   }, [phase, didStatus]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  /* ── D-ID speak ───────────────────────────────────────── */
+  /* ── D-ID speak — skip khi đang dùng pregen video ────────── */
   useEffect(() => {
+    // HRVideoPanel tự phát audio từ pre-generated video — không cần D-ID TTS
+    if (hasPregenVideos) return;
     if (phase !== "question" || didStatus !== "connected") return;
     if (lastSpokenQRef.current === currentQ) return;
     if (hrPhase !== "asking") return;
@@ -739,20 +748,21 @@ export default function InterviewRoom() {
     speakWithText(QUESTIONS[currentQ], startListening, DID_VOICES[hrGender]);
   }, [phase, didStatus, currentQ, hrPhase]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  /* ── TTS fallback: khi D-ID không khả dụng, Web Speech API đọc câu hỏi ── */
+  /* ── TTS fallback: khi không có pregen video VÀ D-ID không khả dụng ── */
   useEffect(() => {
+    // Có video pre-gen cho câu này → HRVideoPanel tự xử lý
+    if (currentVideoUrl) return;
     if (isDIDActive || !ttsAvailable) return;
     if (phase !== "question" || hrPhase !== "asking") return;
     if (lastTTSSpokenQRef.current === currentQ) return;
     lastTTSSpokenQRef.current = currentQ;
     speakQuestionTTS(QUESTIONS[currentQ], startListening);
     return () => {
-      // Reset guard khi bị cancel (D-ID retry) để lần sau vẫn nói được
       lastTTSSpokenQRef.current = -1;
       window.speechSynthesis?.cancel();
       setTtsSpeaking(false);
     };
-  }, [phase, currentQ, hrPhase, isDIDActive, speakQuestionTTS, startListening]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [phase, currentQ, hrPhase, isDIDActive, currentVideoUrl, speakQuestionTTS, startListening]); // eslint-disable-line react-hooks/exhaustive-deps
 
   /* ── STT setup ────────────────────────────────────────── */
   useEffect(() => {
@@ -1240,8 +1250,19 @@ export default function InterviewRoom() {
             (isDIDActive || ttsAvailable) ? "border-violet-300/80 shadow-[0_8px_32px_rgba(110,53,232,0.12)]" : "border-violet-200/70"
           }`}>
 
-            {/* ── Nhánh 1: D-ID WebRTC (lipsync thật) ── */}
-            {isDIDActive && (
+            {/* ── Nhánh 0: D-ID Express pre-generated video (ưu tiên cao nhất) ── */}
+            {currentVideoUrl && (
+              <HRVideoPanel
+                questionVideoUrl={currentVideoUrl}
+                hrPhase={hrPhase}
+                onAskingDone={startListening}
+                muted={false}
+                isListening={isListening}
+              />
+            )}
+
+            {/* ── Nhánh 1: D-ID WebRTC (lipsync thật) — dùng khi không có pregen ── */}
+            {!currentVideoUrl && isDIDActive && (
               <>
                 <div className="absolute inset-0 pointer-events-none"
                   style={{ background: "radial-gradient(ellipse at 50% 48%, rgba(110,53,232,0.22) 0%, transparent 68%)" }} />
@@ -1271,14 +1292,20 @@ export default function InterviewRoom() {
               </>
             )}
 
-            {/* ── Nhánh 2: TTS fallback — SVG avatar animate theo ttsSpeaking ── */}
-            {!isDIDActive && ttsAvailable && (
+            {/* ── Nhánh 2: TTS fallback — ảnh HR Cloudinary + animate khi nói ── */}
+            {!currentVideoUrl && !isDIDActive && ttsAvailable && (
               <>
                 <div className="absolute inset-0 pointer-events-none"
                   style={{ background: "radial-gradient(ellipse at 50% 48%, rgba(110,53,232,0.22) 0%, transparent 68%)" }} />
                 <div className="absolute inset-0 flex items-center justify-center">
-                  {/* didStatus="idle" → SVG cartoon face; isSpeaking=ttsSpeaking → animate miệng */}
-                  <AILipSyncAvatar isSpeaking={ttsSpeaking} didStatus="idle" attachVideo={noopAttachVideo} size={220} />
+                  {/* sourceImageUrl → hiện ảnh portrait Cloudinary thay vì SVG cartoon */}
+                  <AILipSyncAvatar
+                    isSpeaking={ttsSpeaking}
+                    didStatus="idle"
+                    attachVideo={noopAttachVideo}
+                    size={220}
+                    sourceImageUrl={DID_AVATAR_URLS[hrGender]}
+                  />
                 </div>
                 {ttsSpeaking && (
                   <div className="absolute top-3 right-3 z-10">
@@ -1304,7 +1331,7 @@ export default function InterviewRoom() {
             )}
 
             {/* ── Nhánh 3: Thuần video fallback (browser không hỗ trợ TTS) ── */}
-            {!isDIDActive && !ttsAvailable && (
+            {!currentVideoUrl && !isDIDActive && !ttsAvailable && (
               <HRVideoPanel
                 questionVideoUrl={HR_QUESTION_URLS[hrGender][currentQ]}
                 hrPhase={hrPhase}
