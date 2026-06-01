@@ -231,7 +231,7 @@ export const AIProvidersController = {
       });
     }
 
-    const { questions, gender = "female", voiceId } = req.body ?? {};
+    const { questions, gender = "male", voiceId } = req.body ?? {};
     if (!Array.isArray(questions) || questions.length === 0) {
       return res.status(400).json({ success: false, error: "Field 'questions' (string[]) là bắt buộc." });
     }
@@ -280,7 +280,7 @@ export const AIProvidersController = {
       });
     }
 
-    const { questions, gender = "female", voiceId } = req.body ?? {};
+    const { questions, gender = "male", voiceId } = req.body ?? {};
     if (!Array.isArray(questions) || questions.length === 0) {
       return res.status(400).json({ success: false, error: "Field 'questions' (string[]) là bắt buộc." });
     }

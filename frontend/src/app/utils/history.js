@@ -47,12 +47,14 @@ function mapApiAnalysisToLocal(doc) {
   if (!doc) return null;
   return {
     id: doc.analysisId || doc.id || doc._id,
+    analysisId: doc.analysisId || doc.id || doc._id,
     position: doc.position || "",
     company: doc.company || null,
     cvFile: doc.cvFileName || doc.cvFile || "cv",
     jdFile: doc.jdFileName || doc.jdFile || null,
     matchScore: doc.matchScore ?? doc.score ?? null,
     matchedKeywords: doc.matchedKeywords || [],
+    missingKeywords: doc.missingKeywords || [],
     date: doc.createdAt || doc.date || new Date().toISOString(),
     field: doc.field || null,
     mode: doc.mode || null,
