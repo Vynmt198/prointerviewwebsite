@@ -16,6 +16,7 @@ import { BrandLogo } from "../../components/brand/BrandLogo";
 import { SparkleGlyph } from "../../components/decor/SparkleGlyph.jsx";
 import { StickerLimeSparkle } from "../../components/decor/StickerLimeSparkle.jsx";
 import { AUTH_COPY } from "../../constants/brandVoice";
+import { AuthPurpleBackdrop } from "../../components/auth/AuthPurpleBackdrop";
 
 function pwStrength(pw) {
   if (!pw) return 0;
@@ -31,7 +32,7 @@ const STRENGTH_LABELS = ["Yếu", "Trung bình", "Mạnh"];
 const BRAND_LIME = "#93f72b";
 
 /** Nền trang (bên ngoài) — trắng ngà, không #fff tinh */
-const AUTH_PAGE_BG = "bg-white";
+const AUTH_PAGE_BG = "bg-transparent";
 
 /** Ô form — tím brand (cùng Login) */
 const AUTH_CARD_CLS =
@@ -98,6 +99,11 @@ export function Register() {
 
   const [registeredEmail, setRegisteredEmail] = useState("");
 
+  React.useEffect(() => {
+    document.documentElement.classList.add("app-route-home");
+    return () => document.documentElement.classList.remove("app-route-home");
+  }, []);
+
   const handleChange = (k, v) => {
     setForm((f) => ({ ...f, [k]: v }));
     if (error) setError("");
@@ -110,6 +116,13 @@ export function Register() {
   if (registeredEmail) {
     return (
       <div className={`relative flex h-screen flex-col items-center justify-center overflow-hidden px-6 text-center ${AUTH_PAGE_BG}`}>
+        <style>{`
+          html, body {
+            background: radial-gradient(ellipse at 50% 30%, #ffffff 0%, #fdfcff 60%, #f7f3fd 100%) !important;
+            background-attachment: fixed !important;
+          }
+        `}</style>
+        <AuthPurpleBackdrop />
         <div className={`relative z-10 w-full max-w-md ${AUTH_CARD_CLS}`}>
           <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-white/15">
             <Mail className="h-10 w-10 text-[#93f72b]" />
@@ -144,7 +157,13 @@ export function Register() {
       className={`relative flex h-screen flex-col overflow-hidden ${AUTH_PAGE_BG}`}
       style={{ fontFamily: "'Lexend', 'Plus Jakarta Sans', system-ui, sans-serif" }}
     >
-
+      <style>{`
+        html, body {
+          background: radial-gradient(ellipse at 50% 30%, #ffffff 0%, #fdfcff 60%, #f7f3fd 100%) !important;
+          background-attachment: fixed !important;
+        }
+      `}</style>
+      <AuthPurpleBackdrop />
       <div className="relative z-[1] flex min-h-0 flex-1 flex-col overflow-hidden">
 
 
@@ -155,17 +174,11 @@ export function Register() {
           <button onClick={() => navigate(getBrandClickPath())} className="flex items-center gap-2.5 group">
             <BrandLogo size="auth" />
           </button>
-          <p className="text-sm text-gray-500">
-            Đã có tài khoản?{" "}
-            <Link to="/login" className="font-semibold hover:underline" style={{ color: "#8037f4" }}>
-              Đăng nhập
-            </Link>
-          </p>
         </div>
 
         {/* Form + mascot — mép trên thẻ căn với /login (items-start + slot giống login) */}
-        <div className="relative z-10 flex flex-1 items-start justify-center overflow-x-visible overflow-y-auto px-6 pb-8 pt-[5.8rem] sm:px-10 sm:pt-[6.3rem]">
-          <div className="relative mx-auto w-full max-w-md shrink-0 overflow-visible -mt-[7.3rem]">
+        <div className="relative z-10 flex flex-1 items-start justify-center overflow-x-visible overflow-hidden px-6 pb-8 pt-[5.8rem] sm:px-10 sm:pt-[6.3rem]">
+          <div className="relative mx-auto w-full max-w-md shrink-0 overflow-visible -mt-[7.5rem]">
             <div
               className="pointer-events-none relative z-[5] mb-[-0.25rem] h-[15.85rem] w-full shrink-0 translate-y-[2.5rem] sm:h-[17.35rem]"
               aria-hidden
@@ -273,10 +286,12 @@ export function Register() {
                   }}>
                   {agreed && <Check className="h-3 w-3 text-slate-900" strokeWidth={3} />}
                 </button>
-                <span className="text-xs leading-relaxed text-white/75">
-                  Tôi đồng ý{" "}
-                  <a href="#" className="font-semibold text-[#93f72b] hover:underline">Điều khoản</a>{" "}và{" "}
-                  <a href="#" className="font-semibold text-[#93f72b] hover:underline">Bảo mật</a>.
+                 <span className="text-xs leading-relaxed text-white/75">
+                  Tôi đã đọc và đồng ý với{" "}
+                  <Link to="/terms" onClick={(e) => e.stopPropagation()} className="font-semibold text-[#93f72b] hover:underline">Điều khoản dịch vụ</Link>
+                  {" "}và{" "}
+                  <Link to="/privacy" onClick={(e) => e.stopPropagation()} className="font-semibold text-[#93f72b] hover:underline">Chính sách bảo mật</Link>
+                  {" "}của ProInterview.
                 </span>
               </label>
 
@@ -305,18 +320,18 @@ export function Register() {
 
             <GoogleSignInBlock onError={setError} />
 
-            <p className="mt-5 flex items-start justify-center gap-1.5 text-center text-xs leading-relaxed text-white/65">
-              <ShieldCheck className="mt-0.5 h-4 w-4 flex-shrink-0 text-[#93f72b]" strokeWidth={2} />
-              <span>
-                Mã hóa an toàn · Không bán dữ liệu.
-              </span>
+            <p className="mt-5 text-center text-sm text-white/80">
+              Đã có tài khoản?{" "}
+              <Link to="/login" className="font-bold text-[#93f72b] hover:underline">
+                Đăng nhập ngay
+              </Link>
             </p>
 
             </div>
 
             {/* Mascot + sparkle — giữ vị trí cũ; pointer-events-none để không chặn ô mật khẩu */}
             <div
-              className="pointer-events-none absolute bottom-0 right-0 z-20 w-full overflow-visible -translate-y-[33.75rem] max-md:-translate-y-[34.25rem] sm:-translate-y-[33.6rem]"
+              className="pointer-events-none absolute bottom-0 right-0 z-20 w-full overflow-visible -translate-y-[35.05rem] max-md:-translate-y-[35.55rem] sm:-translate-y-[34.9rem]"
               aria-hidden
             >
               <img

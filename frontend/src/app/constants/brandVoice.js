@@ -86,7 +86,7 @@ export const HOME_SECTION_COPY = {
     {
       title: "Mentor 1:1 thật",
       desc: "Đặt lịch HR/Manager. Kinh nghiệm thực chiến, không hứa quá đà.",
-      cta: "Chọn mentor",
+      cta: "Chọn Mentor",
     },
     {
       title: "Theo dõi tiến độ",
@@ -103,7 +103,7 @@ export const HOME_SECTION_COPY = {
       {
         name: "Phạm Anh Tuấn",
         role: "Software Engineer @ Shopee",
-        text: "Mình luyện AI vài buổi rồi mock với mentor Shopee, tự tin hơn rõ. Câu hỏi sát thực tế, góp ý đúng chỗ cần sửa.",
+        text: "Mình luyện AI vài buổi rồi mock với Mentor Shopee, tự tin hơn rõ. Câu hỏi sát thực tế, góp ý đúng chỗ cần sửa.",
         tag: "Đã nhận việc",
       },
       {
@@ -171,10 +171,10 @@ export const MENTOR_SHOWCASE_COPY = {
 
 /** Sidebar đặt lịch / thẻ giá mentor (không dùng “Mock interview”). */
 export const MENTOR_BOOKING_COPY = {
-  sessionTitle: "Buổi mentor 1:1",
+  sessionTitle: "Buổi Mentor 1:1",
   sessionVia: "Buổi 1:1 qua Zoom / Google Meet",
   flexibleSchedule: "Tự chọn khung giờ linh hoạt",
-  feedbackAfter: "Góp ý sau buổi mentor",
+  feedbackAfter: "Góp ý sau buổi Mentor",
 };
 
 /** Copy ngắn — chi tiết bảng: `constants/bookingPolicy.js` + `BookingPolicySummary`. */
@@ -182,15 +182,15 @@ export const BOOKING_POLICY_COPY = {
   refundTitle: "Chính sách khi bạn hủy",
   refundDetail:
     "Từ 24 giờ trước buổi: hoàn 100%. 12–24 giờ: hoàn 50%. Dưới 12 giờ hoặc không tham gia: không hoàn.",
-  mentorCancelTitle: "Chính sách khi mentor hủy / no-show",
+  mentorCancelTitle: "Chính sách khi Mentor hủy / no-show",
   mentorCancelRefund:
-    "Mentor hủy từ 24 giờ trở lên: đổi lịch, đổi mentor hoặc hoàn 100% · Dưới 24 giờ: hoàn 100% ưu tiên · No-show: hoàn 100% + vi phạm mentor.",
+    "Mentor hủy từ 24 giờ trở lên: đổi lịch, đổi Mentor hoặc hoàn 100% · Dưới 24 giờ: hoàn 100% ưu tiên · No-show: hoàn 100% + vi phạm Mentor.",
   userChangeSlotNote: "Đổi giờ: hủy buổi rồi đặt lại.",
 };
 
 export const COURSES_SHOWCASE_COPY = {
   badge: "Khóa học từ Mentor",
-  titleLine1: "Học từ mentor thật",
+  titleLine1: "Học từ Mentor thật",
   titleLine2: "Chuẩn bị",
   titleLine3: "phỏng vấn bài bản hơn",
   body: "Khóa học do Mentor xây dựng, giúp bạn học theo từng chủ đề và cải thiện những kỹ năng cần thiết cho hành trình ứng tuyển.",
@@ -212,12 +212,12 @@ export const AUTH_COPY = {
   loginSubtitle: "Chào bạn trở lại! Tiếp tục luyện cùng ProInterview nhé.",
   loginRegisteredTitle: "Đăng ký thành công!",
   loginRegisteredBody: "Bạn đăng nhập để tiếp tục luyện nhé.",
-  registerSubtitle: "Tạo tài khoản, bắt đầu luyện, không cần thẻ tín dụng.",
+  registerSubtitle: "Tạo tài khoản, bắt đầu phỏng vấn với AI",
   registerPerks: [
     "3 buổi phỏng vấn AI để làm quen và luyện tập",
     "Phân tích CV/JD, biết chỗ cần chỉnh trước",
     "Câu hỏi theo ngành và vị trí bạn chọn",
-    "Lịch mentor và lịch sử luyện, theo dõi tiến bộ",
+    "Lịch Mentor và lịch sử luyện, theo dõi tiến bộ",
   ],
   registerFreeBadge: "Bắt đầu luyện miễn phí",
   registerFreeCta: "Tạo tài khoản và luyện nhé",

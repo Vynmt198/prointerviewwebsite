@@ -76,7 +76,7 @@ export function HeroInterviewVideoCard() {
           }
         }
       `}</style>
-      <div className="hero-video-hud-compact relative mx-auto mt-6 w-full max-w-full translate-x-4 -translate-y-8 overflow-visible sm:mt-8 lg:mt-0 lg:ml-auto lg:max-w-[29.6rem] max-lg:mt-2 max-lg:w-[min(88vw,19rem)] max-lg:max-w-[19rem] max-lg:translate-x-0 max-lg:translate-y-0">
+      <div className="hero-video-hud-compact relative mx-auto mt-6 w-full max-w-full translate-x-4 -translate-y-8 overflow-visible sm:mt-8 lg:mt-0 lg:ml-auto lg:max-w-[31.6rem] max-lg:mt-2 max-lg:w-[min(88vw,20.5rem)] max-lg:max-w-[20.5rem] max-lg:translate-x-0 max-lg:translate-y-0">
         <div className="@container relative overflow-visible rounded-[1rem] bg-white border border-slate-200 shadow-[0_20px_50px_rgba(99,14,212,0.14)] sm:rounded-[1.25rem] max-lg:rounded-md max-lg:border-violet-100/80 max-lg:shadow-sm">
           {/* Mac Window Header */}
           <div className="relative flex items-center justify-between rounded-t-[1rem] bg-white px-3 py-2.5 border-b border-slate-200/60 sm:rounded-t-[1.25rem] sm:px-4 sm:py-3 max-lg:px-2 max-lg:py-1.5">
@@ -92,7 +92,7 @@ export function HeroInterviewVideoCard() {
             <div className="w-12 sm:w-16" />
           </div>
           <div className="w-full">
-            <div className="relative w-full min-h-[calc(100cqw*3.51/4+1.5rem)] max-lg:aspect-[3/4] max-lg:min-h-0">
+            <div className="relative w-full min-h-[calc(100cqw*3.51/4+0.5rem)] max-lg:aspect-[3.4/4] max-lg:min-h-0">
               <div className="absolute inset-0 overflow-hidden rounded-b-[1rem] bg-slate-100 sm:rounded-b-[1.25rem] max-lg:rounded-b-md">
               <video autoPlay loop muted playsInline className="h-full w-full object-cover object-[center_18%]">
                 <source src={HOME_AI_DEMO_VIDEO} type="video/mp4" />

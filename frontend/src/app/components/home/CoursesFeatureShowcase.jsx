@@ -98,7 +98,7 @@ function CoursesLearningMockup() {
   return (
     <div className="courses-mock-panel relative w-full overflow-visible rounded-[1.75rem] px-[1.2rem] pb-[1.45rem] pt-[5.2rem] sm:rounded-[2rem] sm:px-[1.45rem] sm:pb-[1.7rem] sm:pt-[5.7rem]">
       <div
-        className="pointer-events-none absolute left-[15%] sm:left-[20%] lg:left-1/2 top-0 z-[2] w-[12rem] -translate-x-[calc(50%+0.5rem)] lg:-translate-x-[calc(50%+12.8rem)] translate-y-[calc(-50%+2.3rem)] lg:translate-y-[calc(-50%+2.575rem)] sm:w-[14rem] lg:w-[16rem]"
+        className="pointer-events-none absolute left-[15%] sm:left-[20%] lg:left-1/2 top-0 z-[2] w-[12rem] -translate-x-[calc(50%+0.5rem)] lg:-translate-x-[calc(50%+12.8rem)] translate-y-[calc(-50%+2.3rem)] lg:translate-y-[calc(-50%+2.575rem)] sm:w-[14rem] lg:w-[16rem] hidden lg:block"
         aria-hidden
       >
         <div className="courses-mascot-sticker relative mx-auto w-fit translate-x-[0.3rem]">

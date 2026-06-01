@@ -14,10 +14,15 @@ export function AppLayout() {
   const isMentor = user?.role === "mentor";
   const isHome = location.pathname === "/" || location.pathname === "";
   const pathNorm = location.pathname.replace(/^\/+/, "");
+  const isLegalDoc = pathNorm === "terms" || pathNorm === "privacy";
   const hideNavbar = pathNorm === "interview/room";
   const hideFooter = hideNavbar;
   const showSiteFooter = !isMentor && !hideFooter;
-  const ambientModifier = isHome ? " app-shell-ambient--home" : "";
+  const ambientModifier = isHome
+    ? " app-shell-ambient--home"
+    : isLegalDoc
+      ? " app-shell-ambient--legal"
+      : "";
 
   useEffect(() => {
     document.title = resolveDocumentTitle(location.pathname);
@@ -32,7 +37,9 @@ export function AppLayout() {
     `app-user-shell relative min-h-svh w-full text-slate-900 antialiased selection:bg-violet-100 selection:text-violet-900 ${
       isHome
         ? "app-user-shell--home overflow-x-auto overflow-y-visible bg-transparent"
-        : "overflow-x-hidden bg-[#f3f0f9]"
+        : isLegalDoc
+          ? "overflow-x-hidden bg-slate-50"
+          : "overflow-x-hidden bg-[#f3f0f9]"
     }`;
 
   const shellStyle = {

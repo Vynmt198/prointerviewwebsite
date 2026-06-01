@@ -600,7 +600,7 @@ export function Home() {
           background: #ffffff;
           backdrop-filter: none;
           border-radius: 28px;
-          border: 2px solid rgba(128, 55, 244, 0.32);
+          border: 2px solid #8037f4;
           transition: transform 0.35s ease, border-color 0.25s ease, box-shadow 0.35s ease;
           position: relative;
           overflow: hidden;
@@ -615,18 +615,18 @@ export function Home() {
           opacity: 0;
         }
         .glass-card:hover {
-          border-color: rgba(128, 55, 244, 0.48);
+          border-color: #6d2fd6;
           transform: translateY(-2px);
           box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
         }
         /* 4 ô How it works — trắng ngà sáng, không #fff tinh / không đục */
         .home-how-step-card {
           background: linear-gradient(180deg, #fefeff 0%, #faf8fc 100%) !important;
-          border: 2px solid rgba(128, 55, 244, 0.38) !important;
+          border: 2px solid #8037f4 !important;
           box-shadow: 0 8px 22px rgba(15, 23, 42, 0.05);
         }
         .home-how-step-card:hover {
-          border-color: rgba(128, 55, 244, 0.52) !important;
+          border-color: #6d2fd6 !important;
           box-shadow: 0 10px 26px rgba(15, 23, 42, 0.07);
         }
         /* Bước Nổi bật — giữ nhãn lime */
@@ -1001,7 +1001,7 @@ export function Home() {
                   className="relative z-10 h-auto w-[11rem] shrink-0 -translate-x-[1.9rem] -translate-y-[0.55rem] rotate-[3deg] object-contain sm:w-[12.5rem] sm:-translate-y-[0.75rem] md:w-[14rem] lg:w-[15rem] max-lg:w-[6.75rem] max-lg:translate-x-0 max-lg:translate-y-0"
                 />
                 <div className="relative z-0 -ml-[3.5rem] -translate-x-[0.1rem] text-left sm:-ml-[4rem] md:-ml-[4.35rem] lg:-ml-[4.75rem] max-lg:ml-0 max-lg:w-full max-lg:translate-x-0 max-lg:text-center">
-                  <span className="mb-3 ml-1.5 block h-1.5 w-12 rounded-full bg-[#8037f4]/40 sm:ml-2 max-lg:mx-auto max-lg:ml-0" />
+                  <span className="mb-3 ml-1.5 block h-1.5 w-12 rounded-full bg-[#8037f4]/40 sm:ml-2 max-lg:mx-auto" />
                   <h2
                     className={`home-how-title ${homeTy.howItWorksTitle} leading-[1.08]`}
                     style={{ fontSize: HOME_HOW_IT_WORKS_TITLE_CLAMP }}
@@ -1029,7 +1029,7 @@ export function Home() {
                   {(i === 1 || i === 2) ? (
                     <div className="mb-2.5 flex min-h-0 items-center justify-start sm:mb-3.5 sm:min-h-[32px]">
                       <span
-                        className={`${homeTy.howItWorksStepBadge} border-[#93f72b] bg-transparent text-[#93f72b] shadow-sm`}
+                        className={`${homeTy.howItWorksStepBadge} border-[#93f72b] bg-[#93f72b] text-slate-950 font-bold shadow-sm`}
                       >
                         {i === 1 ? "Nổi bật" : "Gợi ý mentor"}
                       </span>

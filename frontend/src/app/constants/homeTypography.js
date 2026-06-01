@@ -25,7 +25,7 @@ export const homeSectionClasses = {
   cvShowcaseBadge:
     "inline-flex items-center gap-2 rounded-full border border-violet-400/30 bg-violet-500/10 px-3.5 py-1 font-semibold text-violet-700 text-[0.975rem] sm:text-[1.1rem]",
   cvShowcaseBody:
-    "max-w-2xl text-pretty font-medium leading-relaxed text-slate-600 text-[1.225rem] sm:text-[1.35rem]",
+    "max-w-2xl font-medium leading-relaxed text-slate-600 text-[1.225rem] sm:text-[1.35rem]",
   bulletList: "max-w-2xl space-y-3 text-pretty text-base font-medium text-slate-600 sm:text-lg",
   bulletIcon: "mt-0.5 h-5 w-5 shrink-0 text-[#6d2fd6]",
   cta: "inline-flex shrink-0 items-center gap-2 rounded-full px-6 py-2.5 text-lg font-bold transition-all hover:scale-[1.02] active:scale-[0.98] sm:px-8 sm:py-3 sm:text-xl",

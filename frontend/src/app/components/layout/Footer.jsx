@@ -53,8 +53,8 @@ const NAV_LINKS = {
     { label: "Hồ sơ của tôi", path: "/profile" },
     { label: "Trung tâm trợ giúp", path: "#" },
     { label: "Hướng dẫn sử dụng", path: "#" },
-    { label: "Điều khoản dịch vụ", path: "#" },
-    { label: "Chính sách bảo mật", path: "#" },
+    { label: "Điều khoản dịch vụ", path: "/terms" },
+    { label: "Chính sách bảo mật", path: "/privacy" },
   ],
 };
 

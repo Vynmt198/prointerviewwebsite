@@ -20,11 +20,12 @@ import { BrandLogo } from "../../components/brand/BrandLogo";
 import { SparkleGlyph } from "../../components/decor/SparkleGlyph.jsx";
 import { StickerLimeSparkle } from "../../components/decor/StickerLimeSparkle.jsx";
 import { AUTH_COPY } from "../../constants/brandVoice";
+import { AuthPurpleBackdrop } from "../../components/auth/AuthPurpleBackdrop";
 
 const BRAND_LIME = "#93f72b";
 
 /** Nền trang (bên ngoài) — trắng ngà, không #fff tinh */
-const AUTH_PAGE_BG = "bg-white";
+const AUTH_PAGE_BG = "bg-transparent";
 
 /** Ô form đăng nhập/đăng ký — tím brand */
 const AUTH_CARD_CLS =
@@ -66,6 +67,11 @@ export function Login() {
     navigate(getPostLoginPath(user, searchParams.get("redirect")), { replace: true });
   }, [navigate, searchParams]);
 
+  React.useEffect(() => {
+    document.documentElement.classList.add("app-route-home");
+    return () => document.documentElement.classList.remove("app-route-home");
+  }, []);
+
   const handleLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -99,8 +105,13 @@ export function Login() {
       className={`relative flex h-screen flex-col overflow-hidden ${AUTH_PAGE_BG}`}
       style={{ fontFamily: "'Lexend', 'Plus Jakarta Sans', system-ui, sans-serif" }}
     >
-
-
+      <style>{`
+        html, body {
+          background: radial-gradient(ellipse at 50% 30%, #ffffff 0%, #fdfcff 60%, #f7f3fd 100%) !important;
+          background-attachment: fixed !important;
+        }
+      `}</style>
+      <AuthPurpleBackdrop />
       <div className="relative z-[1] flex min-h-0 flex-1 flex-col overflow-hidden">
         {/* Top bar */}
         <div
@@ -109,12 +120,6 @@ export function Login() {
           <button onClick={() => navigate(getBrandClickPath())} className="flex items-center gap-2.5 group">
             <BrandLogo size="auth" />
           </button>
-          <p className="text-sm text-gray-500">
-            Chưa có tài khoản?{" "}
-            <Link to="/register" className="font-semibold hover:underline" style={{ color: "#8037f4" }}>
-              Đăng ký
-            </Link>
-          </p>
         </div>
 
         {/* Form + mascot phía trên mép trên thẻ */}
@@ -251,11 +256,11 @@ export function Login() {
 
             <GoogleSignInBlock onError={setError} />
 
-            <p className="mt-5 text-center text-xs leading-relaxed text-white/65">
-              Bằng cách đăng nhập, bạn đồng ý với{" "}
-              <a href="#" className="font-semibold text-[#93f72b] hover:underline">Điều khoản dịch vụ</a>
-              {" "}và{" "}
-              <a href="#" className="font-semibold text-[#93f72b] hover:underline">Chính sách bảo mật</a>.
+            <p className="mt-5 text-center text-sm text-white/80">
+              Chưa có tài khoản?{" "}
+              <Link to="/register" className="font-bold text-[#93f72b] hover:underline">
+                Đăng ký ngay
+              </Link>
             </p>
             </div>
           </div>

@@ -46,7 +46,7 @@ const PANEL_MASCOTS = [
     src: "/mascot-mentor-feedback.png?v=5",
     fallback: HOME_MENTOR_MASCOTS.fallback,
     className:
-      "mentor-sticker-glow max-h-[9.5rem] w-auto max-w-[98%] -translate-x-[3.2rem] translate-y-[0.35rem] object-contain object-bottom sm:max-h-[10.25rem]",
+      "mentor-sticker-glow max-h-[10rem] w-auto max-w-[98%] -translate-x-[2.7rem] translate-y-[1.15rem] object-contain object-bottom sm:max-h-[10.25rem] sm:-translate-x-[3.2rem] sm:translate-y-[0.35rem]",
   },
 ];
 
@@ -237,7 +237,7 @@ function FeedbackVisual() {
   return (
     <div className="relative z-[1] flex h-full flex-col px-2 pb-4 pt-6 sm:px-2.5 sm:pb-5 sm:pt-7">
       <div className="relative flex h-full min-h-0 flex-1 translate-x-[0.4rem] flex-col overflow-visible">
-        <div className="relative z-[1] ml-auto flex h-full min-h-0 w-[72%] min-w-0 max-w-[12.25rem] flex-1 -translate-x-[0.9rem] flex-col pb-0.5 pr-0.5 sm:w-[70%] sm:max-w-[13rem]">
+        <div className="relative z-[1] ml-auto flex h-full min-h-0 w-[80%] min-w-0 max-w-[13.75rem] flex-1 -translate-x-[0.4rem] flex-col pb-0.5 pr-0.5 sm:w-[70%] sm:max-w-[13rem] sm:-translate-x-[0.9rem]">
           <p className="mb-1.5 shrink-0 text-[11px] font-bold leading-snug text-[#6d2fd6] sm:text-[12px]">
             {MENTOR_SHOWCASE_COPY.afterMockLead}
           </p>
@@ -293,7 +293,7 @@ function UpziStepCard({ step, index }) {
       style={{ animationDelay: `${index * 90}ms` }}
     >
       <div
-        className={`mentor-upzi-panel relative aspect-[1/0.92] w-full rounded-[1.35rem] shadow-[0_12px_32px_rgba(99,14,212,0.1)] sm:rounded-[1.5rem] sm:aspect-[1/0.88] ${
+        className={`mentor-upzi-panel relative w-full rounded-[1.35rem] shadow-[0_12px_32px_rgba(99,14,212,0.1)] sm:rounded-[1.5rem] ${
           index === 0 || index === 1 || index === 2 ? "overflow-visible" : "overflow-hidden"
         }`}
       >
@@ -316,6 +316,17 @@ export function MentorFeatureShowcase({ onCtaClick }) {
         .mentor-upzi-panel {
           background: linear-gradient(165deg, #f0ebf8 0%, #ebe4f6 50%, #e6ddf3 100%);
           border: 2px solid #8037f4;
+          height: 18rem;
+        }
+        @media (min-width: 640px) {
+          .mentor-upzi-panel {
+            height: 17.5rem;
+          }
+        }
+        @media (min-width: 1024px) {
+          .mentor-upzi-panel {
+            height: 19.5rem;
+          }
         }
         @keyframes mentor-upzi-rise {
           0% {
@@ -371,7 +382,7 @@ export function MentorFeatureShowcase({ onCtaClick }) {
             </h2>
           </article>
 
-          <div className="grid w-full grid-cols-1 gap-[1.2rem] sm:grid-cols-3 sm:gap-[0.95rem]">
+          <div className="grid w-full grid-cols-1 gap-[1.2rem] px-3 sm:px-0 sm:grid-cols-3 sm:gap-[0.95rem]">
             {UPZI_STEPS.map((step, idx) => (
               <UpziStepCard key={step.title} step={step} index={idx} />
             ))}

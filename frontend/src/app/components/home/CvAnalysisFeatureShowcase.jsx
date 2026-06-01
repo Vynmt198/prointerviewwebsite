@@ -58,7 +58,7 @@ export function CvAnalysisFeatureShowcase({ onCtaClick }) {
   return (
     <section
       id="cv-analysis"
-      className="home-mobile-tight relative z-10 flex h-screen max-h-screen flex-col justify-center overflow-x-hidden overflow-y-visible px-0 py-4 sm:py-6 max-lg:h-auto max-lg:max-h-none max-lg:min-h-0 max-lg:py-10"
+      className="home-mobile-tight relative z-10 flex h-screen max-h-screen flex-col justify-center overflow-x-hidden overflow-y-visible px-0 py-4 sm:py-6 max-lg:h-auto max-lg:max-h-none max-lg:min-h-0 max-lg:pt-10 max-lg:pb-[4.5rem]"
     >
       <style>{`
         .cv-analysis-glass-card {
@@ -94,21 +94,25 @@ export function CvAnalysisFeatureShowcase({ onCtaClick }) {
             </span>
             <h2 className={`max-w-full ${ty.title}`}>
               <span
-                className={`block ${ty.titleLineAccent}`}
+                className={`${ty.titleLineAccent} block`}
                 style={{ fontSize: HOME_CV_SHOWCASE_TITLE_CLAMP }}
               >
-                {CV_SHOWCASE_COPY.titleAccent}
+                Làm sao để CV
+                <span className="hidden sm:inline"> ấn tượng</span>
               </span>
               <span
-                className={`mt-0.5 block ${ty.titleLineDark}`}
+                className="mt-0.5 block"
                 style={{ fontSize: HOME_CV_SHOWCASE_TITLE_CLAMP }}
               >
-                trong mắt{" "}
-                <span className="whitespace-nowrap">nhà tuyển dụng?</span>
+                <span className={`${ty.titleLineAccent} inline sm:hidden`}>ấn tượng </span>
+                <span className={`${ty.titleLineDark} inline`}>
+                  trong mắt <span className="whitespace-nowrap">nhà tuyển dụng?</span>
+                </span>
               </span>
             </h2>
-            <p className={`max-w-full lg:max-w-lg ${ty.cvShowcaseBody}`}>
-              {CV_SHOWCASE_COPY.body}
+            <p className={`max-w-full lg:max-w-2xl ${ty.cvShowcaseBody}`}>
+              ProInterview giúp bạn kiểm tra, góp ý và cải thiện CV
+              <br className="hidden sm:inline" /> trước khi gửi đến nhà tuyển dụng
             </p>
             {onCtaClick ? (
               <button
@@ -127,7 +131,7 @@ export function CvAnalysisFeatureShowcase({ onCtaClick }) {
 
           <section className="cv-showcase-visual relative z-10 flex min-w-0 flex-col items-center justify-center overflow-visible lg:translate-x-12 lg:-translate-y-6 lg:justify-self-center">
             <div className="relative mx-auto w-full max-w-[31rem] overflow-visible">
-              <div className="pointer-events-none absolute left-1/2 top-0 z-40 w-[12.5rem] -translate-x-1/2 -translate-y-[1.68rem] sm:w-[14.5rem] sm:-translate-y-[1.88rem] lg:w-[16rem] lg:-translate-y-[2.08rem]">
+              <div className="pointer-events-none absolute left-1/2 top-0 z-40 w-[12.5rem] -translate-x-1/2 -translate-y-[0.68rem] sm:w-[14.5rem] sm:-translate-y-[1.88rem] lg:w-[16rem] lg:-translate-y-[2.08rem]">
                 <img
                   src="/mascot-cv-analysis.png?v=3"
                   alt=""
