@@ -577,6 +577,7 @@ export default function InterviewRoom() {
 
   /* ── Per-question behavioral storage ─────────────────── */
   const behavioralPerQRef  = useRef(Array(QUESTIONS.length).fill(null));
+  const durationPerQRef    = useRef(Array(QUESTIONS.length).fill(0));
 
   /* ── Google Vision emotion results per question ───────── */
   const emotionsRef        = useRef(Array(QUESTIONS.length).fill(null));
@@ -909,6 +910,7 @@ export default function InterviewRoom() {
     const sessionId = resolvedSessionId;
     if (!sessionId || !hasAuthCredentials()) return;
     const durationSeconds = Math.max(0, Math.round((Date.now() - questionStartTimeRef.current) / 1000));
+    durationPerQRef.current[qIndex] = durationSeconds;
     const behavioralData  = buildBehavioralData(qIndex);
     behavioralPerQRef.current[qIndex] = behavioralData;
     saveAnswer(sessionId, {
@@ -939,13 +941,13 @@ export default function InterviewRoom() {
       return emotion ? { ...bd, emotion } : bd;
     });
 
-    // Backup answers payload
+    // Backup answers payload — uses actual per-question durations recorded when each PATCH fired
     const backupAnswers = transcripts
       .map((t, i) => ({
         questionIndex:   i,
         questionText:    QUESTIONS[i] ?? "",
         transcript:      t ?? "",
-        durationSeconds: 0,
+        durationSeconds: durationPerQRef.current[i] ?? 0,
         behavioralData:  finalBehavioral[i] ?? undefined,
       }))
       .filter((a) => a.transcript.trim().length > 0);
@@ -1111,7 +1113,30 @@ export default function InterviewRoom() {
     );
   }
 
-  if (!apiQuestions?.length || !resolvedSessionId) return null;
+  if (!apiQuestions?.length) return null;
+
+  if (!resolvedSessionId) {
+    return (
+      <MentorPageShell>
+        <div className="flex flex-col items-center justify-center min-h-[60vh] gap-6 px-4 text-center">
+          <AlertCircle className="h-12 w-12 text-violet-400" />
+          <div>
+            <h2 className="text-lg font-semibold text-violet-900 mb-2">Không thể tạo phiên phỏng vấn</h2>
+            <p className="text-sm text-violet-600 max-w-sm">
+              Đã xảy ra lỗi khi kết nối với máy chủ. Vui lòng quay lại và thử lại.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => navigate("/interview")}
+            className="rounded-md bg-violet-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-violet-700"
+          >
+            Quay lại thiết lập
+          </button>
+        </div>
+      </MentorPageShell>
+    );
+  }
 
   /* ══ RENDER — Interview room ═════════════════════════════ */
   return (
@@ -1394,7 +1419,16 @@ export default function InterviewRoom() {
                   </p>
                   <textarea
                     value={transcript}
-                    onChange={(e) => { setTranscript(e.target.value); transcriptRef.current = e.target.value; }}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setTranscript(val);
+                      transcriptRef.current = val;
+                      setAllTranscripts((prev) => {
+                        const next = [...prev];
+                        next[currentQ] = val;
+                        return next;
+                      });
+                    }}
                     placeholder="Gõ câu trả lời của bạn vào đây..."
                     rows={2}
                     className="w-full flex-1 resize-none rounded-xl border border-violet-200 bg-white p-3 text-sm text-black placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-violet-200"

@@ -25,8 +25,12 @@ import { logger } from "../config/logger.js";
 const DID_BASE = "https://api.d-id.com";
 
 // Cloudinary PNG portrait dùng làm base image cho D-ID
-const DEFAULT_AVATAR_URL =
+const DEFAULT_AVATAR_FEMALE_URL =
   "https://res.cloudinary.com/dee4bvivu/image/upload/v1778910708/AI-female_gxbcf1.png";
+const DEFAULT_AVATAR_MALE_URL =
+  "https://res.cloudinary.com/dee4bvivu/image/upload/v1778910708/AI-male_sdrvje.png";
+/** @deprecated use DEFAULT_AVATAR_FEMALE_URL */
+const DEFAULT_AVATAR_URL = DEFAULT_AVATAR_FEMALE_URL;
 
 // Cache TTL 180 ngày (video URLs D-ID CDN không expire sớm)
 const VIDEO_CACHE_TTL = 180 * 24 * 3600;
@@ -36,8 +40,8 @@ const VIDEO_CACHE_TTL = 180 * 24 * 3600;
 function cfg() {
   return {
     apiKey:    process.env.D_ID_API_KEY       ?? "",
-    avatarUrl: process.env.HR_AVATAR_IMAGE_URL ?? DEFAULT_AVATAR_URL,
-    maleUrl:   process.env.HR_AVATAR_MALE_URL  ?? DEFAULT_AVATAR_URL,
+    avatarUrl: process.env.HR_AVATAR_IMAGE_URL ?? DEFAULT_AVATAR_FEMALE_URL,
+    maleUrl:   process.env.HR_AVATAR_MALE_URL  ?? DEFAULT_AVATAR_MALE_URL,
   };
 }
 

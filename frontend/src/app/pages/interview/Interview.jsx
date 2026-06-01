@@ -24,6 +24,7 @@ import { getLatestCVAnalysisAsync, getUploadedCV, saveUploadedCV } from "../../u
 import { hasAuthCredentials, isLoggedIn } from "../../utils/auth";
 import { buildLoginPath } from "../../utils/authGate";
 import { generateInterviewQuestions, extractCvTextFromFile, createInterviewSession, pregenerateInterviewVideos } from "../../utils/interviewsApi";
+import { fetchCvAnalysisById } from "../../utils/cvApi";
 import { InterviewHistoryPanel } from "../../components/interview/InterviewHistoryPanel";
 import { InterviewPageTabs } from "../../components/interview/InterviewPageTabs";
 import { CV_JD_CARD_CLASS } from "../../components/cv/CvJdAnalysisFrame";
@@ -363,22 +364,39 @@ export function Interview() {
       let jdText = jdInputText.trim();
 
       if (option === "A" && latestCV) {
-        // Xây context có cấu trúc từ kết quả phân tích CV — chất lượng tốt hơn JSON dump
-        const parts = [
-          latestCV.position && `Vị trí ứng tuyển: ${latestCV.position}`,
-          latestCV.company  && `Công ty: ${latestCV.company}`,
-          latestCV.matchedKeywords?.length
-            && `Kỹ năng phù hợp với JD: ${latestCV.matchedKeywords.join(", ")}`,
-          latestCV.missingKeywords?.length
-            && `Kỹ năng còn thiếu: ${latestCV.missingKeywords.join(", ")}`,
-          latestCV.strengths?.length
-            && `Điểm mạnh:\n${latestCV.strengths.slice(0, 3).map(s => `- ${s}`).join("\n")}`,
-          latestCV.weaknesses?.length
-            && `Cần cải thiện:\n${latestCV.weaknesses.slice(0, 2).map(w => `- ${w}`).join("\n")}`,
-        ];
-        cvText = parts.filter(Boolean).join("\n\n");
+        // Fetch raw CV text from stored analysis — the list API strips cvText to save bandwidth,
+        // so we need a separate call to get the full document for genuine personalization.
+        const analysisId = latestCV.id || latestCV.analysisId;
+        if (analysisId) {
+          setLoadingStep("extracting_cv");
+          try {
+            const full = await fetchCvAnalysisById(analysisId);
+            if (full.success && full.analysis?.cvText?.trim()) {
+              cvText = full.analysis.cvText;
+              // Use the JD stored alongside this CV analysis as a fallback when user hasn't provided one
+              if (!jdText && full.analysis?.jdText?.trim()) {
+                jdText = full.analysis.jdText;
+              }
+            }
+          } catch {
+            // ignore — fall back to structured summary below
+          }
+        }
 
-        // Extract JD từ file nếu user upload (option A cũng hỗ trợ JD)
+        // Fallback: build a keyword-based summary if raw text is unavailable
+        if (!cvText) {
+          const parts = [
+            latestCV.position && `Vị trí ứng tuyển: ${latestCV.position}`,
+            latestCV.company  && `Công ty: ${latestCV.company}`,
+            latestCV.matchedKeywords?.length
+              && `Kỹ năng phù hợp với JD: ${latestCV.matchedKeywords.join(", ")}`,
+            latestCV.missingKeywords?.length
+              && `Kỹ năng còn thiếu: ${latestCV.missingKeywords.join(", ")}`,
+          ];
+          cvText = parts.filter(Boolean).join("\n\n");
+        }
+
+        // JD from a freshly uploaded file takes priority over the stored jdText
         if (jdFile && !jdText) {
           setLoadingStep("extracting_jd");
           const jdExtracted = await extractCvTextFromFile(jdFile);
