@@ -63,6 +63,13 @@ export function getAvatarProvider() {
   return "did"; // default: D-ID Express API
 }
 
+// ── Azure TTS voice map (fallback khi không có ElevenLabs) ───────────────────
+
+const AZURE_VOICES = {
+  female: "vi-VN-HoaiMyNeural",
+  male:   "vi-VN-NamMinhNeural",
+};
+
 // ── Cache key ─────────────────────────────────────────────────────────────────
 
 function buildCacheKey(questionText, avatarImageUrl, voiceId) {
@@ -200,19 +207,21 @@ export async function generateVideoForQuestion(questionText, opts = {}) {
   const { gender = "female", voiceId, avatarImageUrl } = opts;
   const { avatarUrl, maleUrl } = cfg();
   const resolvedAvatarUrl = avatarImageUrl ?? (gender === "male" ? maleUrl : avatarUrl);
+  // Derive Azure TTS voice from gender when no explicit voiceId provided
+  const resolvedVoiceId = voiceId ?? AZURE_VOICES[gender] ?? AZURE_VOICES.female;
 
   // 1. Cache lookup
-  const cacheKey = buildCacheKey(questionText, resolvedAvatarUrl, voiceId);
+  const cacheKey = buildCacheKey(questionText, resolvedAvatarUrl, resolvedVoiceId);
   const cached   = await cacheGet(cacheKey);
   if (cached) {
     return { videoUrl: cached, fromCache: true };
   }
 
   // 2. TTS audio (optional — if ElevenLabs not configured, D-ID uses its own Azure TTS)
-  const audioUrl = await generateAndUploadAudio(questionText, { voiceId });
+  const audioUrl = await generateAndUploadAudio(questionText, { voiceId: resolvedVoiceId });
 
   // 3. Create D-ID talk
-  const talkId = await createDIDTalk(resolvedAvatarUrl, audioUrl, questionText, { voiceId });
+  const talkId = await createDIDTalk(resolvedAvatarUrl, audioUrl, questionText, { voiceId: resolvedVoiceId });
 
   // 4. Poll until done
   const videoUrl = await pollDIDTalk(talkId);
