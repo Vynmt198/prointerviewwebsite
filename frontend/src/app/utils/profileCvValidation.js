@@ -58,11 +58,13 @@ export function getProfileCvMissing(cv, contact = {}) {
 
 export function getCvSectionKeysToExpand(cv, contact = {}) {
   const keys = [];
+  if (contactMissing(contact).length) {
+    /* Thông tin luôn hiển thị — không có accordion */
+  }
   if (!filled(cv?.intro)) keys.push("intro");
   if (!hasWorkSection(cv)) keys.push("work");
   if (!filled(cv?.skillsCerts)) keys.push("skills");
   if (!hasMentorFee(cv)) keys.push("mentorExtra");
-  if (contactMissing(contact).length) return keys;
   return keys;
 }
 
@@ -71,7 +73,7 @@ export function isProfileCvCompleteForMentor(cv, contact = {}) {
 }
 
 export const MENTOR_APPLY_INCOMPLETE_MSG =
-  "Vui lòng điền đầy đủ các mục bắt buộc (*) để đăng ký làm mentor.";
+  "Vui lòng điền đầy đủ các mục có dấu (*) để đăng ký làm mentor.";
 
 export const MENTOR_APPLY_RESUBMIT_CONFIRM_TITLE =
   "Hồ sơ mentor đang chờ admin duyệt";
@@ -80,5 +82,8 @@ export const MENTOR_APPLY_RESUBMIT_CONFIRM_BODY =
 
 export function mentorApplyBlockedMessage(missing) {
   if (!missing?.length) return "";
-  return MENTOR_APPLY_INCOMPLETE_MSG;
+  if (missing.length === 1) {
+    return `Còn thiếu: ${missing[0]}.`;
+  }
+  return `Còn thiếu các mục bắt buộc: ${missing.join(", ")}.`;
 }

@@ -389,7 +389,6 @@ function CustomerNavbar() {
                   background: "#fff",
                   color: "#8037f4",
                   border: "1.5px solid #8037f4",
-
                 }}
               >
                 <UserPlus className="size-3.5 shrink-0" aria-hidden />

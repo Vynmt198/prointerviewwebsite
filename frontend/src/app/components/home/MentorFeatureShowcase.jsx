@@ -18,7 +18,7 @@ export const HOME_MENTOR_MASCOTS = {
   cv: "/mascot-mentor-avatar-cv.png?v=1",
   headset: "/mascot-mentor-avatar-headset.png?v=1",
   pro: "/mascot-mentor-avatar-pro.png?v=1",
-  fallback: "/mascot-courses-ready.png?v=7",
+  fallback: "/mascot-courses-ready.png?v=8",
 };
 
 const MENTOR_CARD_MASCOTS = {
@@ -33,19 +33,19 @@ const PANEL_MASCOTS = [
     src: "/mascot-mentor-find.png?v=4",
     fallback: HOME_MENTOR_MASCOTS.fallback,
     className:
-      "mentor-sticker-glow max-h-[8.45rem] w-auto max-w-[88%] translate-x-[6.6rem] object-contain object-bottom sm:max-h-[9.45rem]",
+      "mentor-sticker-glow max-h-[8.95rem] w-auto max-w-[88%] translate-x-[6rem] translate-y-[0.4rem] object-contain object-bottom sm:max-h-[9.95rem]",
   },
   {
-    src: "/mascot-mentor-booking.png?v=3",
+    src: "/mascot-mentor-booking.png?v=4",
     fallback: HOME_MENTOR_MASCOTS.fallback,
     className:
-      "mentor-sticker-glow max-h-[8.45rem] w-auto max-w-[92%] -translate-y-[9.8rem] object-contain object-bottom sm:max-h-[9.45rem] sm:-translate-y-[10.3rem]",
+      "mentor-sticker-glow max-h-[11.65rem] w-auto max-w-[92%] -translate-y-[8rem] object-contain object-bottom sm:max-h-[12.65rem] sm:-translate-y-[8.5rem]",
   },
   {
-    src: "/mascot-mentor-feedback.png?v=3",
+    src: "/mascot-mentor-feedback.png?v=5",
     fallback: HOME_MENTOR_MASCOTS.fallback,
     className:
-      "mentor-sticker-glow max-h-[8.95rem] w-auto max-w-full -translate-x-[0.4rem] -translate-y-[0.8rem] object-contain object-bottom sm:max-h-[9.7rem]",
+      "mentor-sticker-glow max-h-[9.5rem] w-auto max-w-[98%] -translate-x-[3.2rem] translate-y-[0.35rem] object-contain object-bottom sm:max-h-[10.25rem]",
   },
 ];
 
@@ -314,7 +314,7 @@ export function MentorFeatureShowcase({ onCtaClick }) {
       <style>{`
         .mentor-upzi-panel {
           background: linear-gradient(165deg, #f0ebf8 0%, #ebe4f6 50%, #e6ddf3 100%);
-          border: 2px solid rgba(128, 55, 244, 0.4);
+          border: 2px solid #8037f4;
         }
         @keyframes mentor-upzi-rise {
           0% {

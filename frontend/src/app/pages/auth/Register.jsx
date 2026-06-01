@@ -14,8 +14,8 @@ import { toastApiError } from "../../utils/apiToast";
 import { GoogleSignInBlock } from "../../components/auth/GoogleSignInBlock";
 import { BrandLogo } from "../../components/brand/BrandLogo";
 import { SparkleGlyph } from "../../components/decor/SparkleGlyph.jsx";
+import { StickerLimeSparkle } from "../../components/decor/StickerLimeSparkle.jsx";
 import { AUTH_COPY } from "../../constants/brandVoice";
-import { AuthPurpleBackdrop } from "../../components/auth/AuthPurpleBackdrop";
 
 function pwStrength(pw) {
   if (!pw) return 0;
@@ -28,11 +28,26 @@ function pwStrength(pw) {
 const STRENGTH_COLORS = ["#FF8C42", "#FFB800", "#22c55e"];
 const STRENGTH_LABELS = ["Yếu", "Trung bình", "Mạnh"];
 
-/** Form đăng ký: ô hơi thấp hơn Login để vừa một màn hình */
+const BRAND_LIME = "#93f72b";
+
+/** Nền trang (bên ngoài) — trắng ngà, không #fff tinh */
+const AUTH_PAGE_BG = "bg-white";
+
+/** Ô form — tím brand (cùng Login) */
+const AUTH_CARD_CLS =
+  "rounded-3xl border border-white/15 bg-[#8037f4] p-8 shadow-[0_16px_48px_rgba(15,23,42,0.18)] sm:p-10";
+
+/** Cùng style ô nhập với Login */
 const INPUT_REG_CLS =
-  "w-full px-4 py-3 rounded-xl border border-gray-200 text-base outline-none transition-all " +
-  "focus:border-[#8037f4] focus:ring-2 focus:ring-[#8037f4]/15 text-gray-900 placeholder-gray-400 " +
-  "bg-white hover:bg-gray-50/50";
+  "w-full px-4 py-3.5 rounded-xl border border-white/25 text-base outline-none transition-all " +
+  "focus:border-[#93f72b] focus:ring-2 focus:ring-[#93f72b]/25 text-gray-900 placeholder-gray-400 " +
+  "bg-white hover:bg-gray-50";
+
+const AUTH_CTA_STYLE = {
+  background: BRAND_LIME,
+  color: "#0f172a",
+  boxShadow: "0 8px 22px rgba(147, 247, 43, 0.35)",
+};
 /** % = tâm sticker; kích thước lệch — nằm trong vùng inset của lớp nền */
 const AUTH_STICKS = [
   { x: 14, y: 22, size: 26 },
@@ -94,28 +109,27 @@ export function Register() {
 
   if (registeredEmail) {
     return (
-      <div className="relative flex h-screen flex-col items-center justify-center overflow-hidden bg-[#dcd2eb] px-6 text-center">
-        <AuthPurpleBackdrop />
-        <div className="relative z-10 w-full max-w-md rounded-3xl border border-violet-100/80 bg-white p-8 shadow-[0_12px_40px_rgba(128,55,244,0.08)]">
-          <div className="h-20 w-20 bg-[#8037f4]/10 rounded-full flex items-center justify-center mb-6 mx-auto">
-            <Mail className="h-10 w-10 text-[#8037f4]" />
+      <div className={`relative flex h-screen flex-col items-center justify-center overflow-hidden px-6 text-center ${AUTH_PAGE_BG}`}>
+        <div className={`relative z-10 w-full max-w-md ${AUTH_CARD_CLS}`}>
+          <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-white/15">
+            <Mail className="h-10 w-10 text-[#93f72b]" />
           </div>
-          <h1 className="text-3xl font-black mb-4 tracking-tight">Kiểm tra email của bạn</h1>
-          <p className="text-gray-600 mb-8 leading-relaxed">
+          <h1 className="mb-4 text-3xl font-black tracking-tight text-white">Kiểm tra email của bạn</h1>
+          <p className="mb-8 leading-relaxed text-white/80">
             {AUTH_COPY.verifyEmailLead}{" "}
-            <strong className="text-gray-900">{registeredEmail}</strong>
+            <strong className="text-white">{registeredEmail}</strong>
           </p>
           <div className="space-y-4">
             <Link
               to="/login"
-              className="w-full inline-flex items-center justify-center rounded-2xl px-6 py-4 text-base font-black text-white transition-all active:scale-[0.98]"
-              style={{ background: "#8037f4" }}
+              className="inline-flex w-full items-center justify-center rounded-2xl px-6 py-4 text-base font-black transition-all hover:brightness-105 active:scale-[0.98]"
+              style={AUTH_CTA_STYLE}
             >
               Về trang đăng nhập
             </Link>
             <button
               onClick={() => setRegisteredEmail("")}
-              className="text-sm font-bold text-gray-500 hover:text-[#8037f4] transition-colors"
+              className="text-sm font-bold text-white/70 transition-colors hover:text-[#93f72b]"
             >
               Quay lại đăng ký
             </button>
@@ -127,38 +141,16 @@ export function Register() {
 
   return (
     <div
-      className="relative flex h-screen flex-col overflow-hidden bg-[#dcd2eb]"
+      className={`relative flex h-screen flex-col overflow-hidden ${AUTH_PAGE_BG}`}
       style={{ fontFamily: "'Lexend', 'Plus Jakarta Sans', system-ui, sans-serif" }}
     >
-      <AuthPurpleBackdrop />
+
       <div className="relative z-[1] flex min-h-0 flex-1 flex-col overflow-hidden">
-        <div className="pointer-events-none absolute inset-4 z-0 hidden md:block md:inset-6" aria-hidden>
-          {AUTH_STICKS.map((s, idx) => (
-            <SparkleGlyph
-              key={`register-stick-${idx}`}
-              className="absolute"
-              style={{
-                left: `${s.x}%`,
-                top: `${s.y}%`,
-                width: `${s.size}px`,
-                height: `${s.size}px`,
-                opacity: 1,
-                filter: "drop-shadow(0 1px 2px rgba(15,23,42,0.12)) drop-shadow(0 0 8px rgba(95,0,240,0.35))",
-                transform: `translate(-50%, -50%) rotate(${
-                  typeof s.tilt === "number" ? s.tilt : idx % 4 === 0 ? 0 : idx % 4 === 1 ? -18 : idx % 4 === 2 ? 24 : -30
-                }deg)`,
-              }}
-            />
-          ))}
-        </div>
+
 
         {/* Top bar */}
         <div
-          className="relative z-10 flex h-20 flex-shrink-0 items-center justify-between border-b px-10 backdrop-blur-md"
-          style={{
-            borderColor: "rgba(128,55,244,0.12)",
-            background: "rgba(255,255,255,0.75)",
-          }}
+          className="relative z-10 flex h-20 flex-shrink-0 items-center justify-between px-10"
         >
           <button onClick={() => navigate(getBrandClickPath())} className="flex items-center gap-2.5 group">
             <BrandLogo size="auth" />
@@ -171,21 +163,24 @@ export function Register() {
           </p>
         </div>
 
-        {/* Form — giữa màn hình (desktop + mobile) */}
-        <div className="relative z-10 flex min-h-0 flex-1 flex-col items-center justify-center overflow-y-auto px-6 py-6 sm:px-10 sm:py-8">
-          <div className="w-full max-w-md shrink-0 rounded-3xl border border-violet-100/80 bg-white p-7 shadow-[0_12px_40px_rgba(128,55,244,0.08)] sm:p-9">
+        {/* Form + mascot — mép trên thẻ căn với /login (items-start + slot giống login) */}
+        <div className="relative z-10 flex flex-1 items-start justify-center overflow-x-visible overflow-y-auto px-6 pb-8 pt-[5.8rem] sm:px-10 sm:pt-[6.3rem]">
+          <div className="relative mx-auto w-full max-w-md shrink-0 overflow-visible -mt-[7.3rem]">
+            <div
+              className="pointer-events-none relative z-[5] mb-[-0.25rem] h-[15.85rem] w-full shrink-0 translate-y-[2.5rem] sm:h-[17.35rem]"
+              aria-hidden
+            />
+            <div className={`relative z-10 w-full -mt-[12.15rem] ${AUTH_CARD_CLS}`}>
 
-            <h1 className="text-gray-900 mb-0.5"
-              style={{ fontSize: "1.625rem", fontWeight: 750, letterSpacing: "-0.025em" }}>
+            <h1 className="mb-1 text-white"
+              style={{ fontSize: "1.875rem", fontWeight: 750, letterSpacing: "-0.025em" }}>
               Tạo tài khoản
             </h1>
-            <p className="text-gray-500 text-xs sm:text-sm mb-2">
-              {AUTH_COPY.registerSubtitle}
-            </p>
+            <p className="mb-4 text-sm text-white/80">{AUTH_COPY.registerSubtitle}</p>
 
             {/* Error */}
             {error && (
-              <div className={`mb-3 flex items-start gap-2 rounded-xl border px-3 py-2 text-sm ${errorIsGoogleEnvHint
+              <div className={`mb-5 flex items-start gap-3 rounded-2xl border px-4 py-3 text-sm ${errorIsGoogleEnvHint
                   ? "border-amber-400/25 bg-amber-50 text-amber-800"
                   : "border-red-300/40 bg-red-50 text-red-700"
                 }`}>
@@ -196,10 +191,10 @@ export function Register() {
               </div>
             )}
 
-            <form onSubmit={handleRegister} className="space-y-2">
+            <form onSubmit={handleRegister} className="space-y-3">
               {/* Name */}
               <div>
-                <label htmlFor="reg-name" className="mb-1 block text-xs font-semibold text-gray-700 sm:text-sm">Họ và tên</label>
+                <label htmlFor="reg-name" className="mb-1.5 block text-sm font-semibold text-white">Họ và tên</label>
                 <input id="reg-name" type="text" placeholder="Nguyễn Văn A"
                   value={form.name} onChange={(e) => handleChange("name", e.target.value)}
                   required className={INPUT_REG_CLS} />
@@ -207,7 +202,7 @@ export function Register() {
 
               {/* Email */}
               <div>
-                <label htmlFor="reg-email" className="mb-1 block text-xs font-semibold text-gray-700 sm:text-sm">Email</label>
+                <label htmlFor="reg-email" className="mb-1.5 block text-sm font-semibold text-white">Email</label>
                 <input id="reg-email" type="email" placeholder="email@example.com"
                   value={form.email} onChange={(e) => handleChange("email", e.target.value)}
                   required className={INPUT_REG_CLS} />
@@ -215,7 +210,7 @@ export function Register() {
 
               {/* Password */}
               <div>
-                <label htmlFor="reg-password" className="mb-1 block text-xs font-semibold text-gray-700 sm:text-sm">Mật khẩu</label>
+                <label htmlFor="reg-password" className="mb-1.5 block text-sm font-semibold text-white">Mật khẩu</label>
                 <div className="relative">
                   <input id="reg-password" type={showPass ? "text" : "password"}
                     placeholder="Tối thiểu 6 ký tự"
@@ -233,7 +228,7 @@ export function Register() {
                       <div key={lvl} className="h-0.5 flex-1 rounded-full transition-all duration-300"
                         style={{ background: strength >= lvl ? STRENGTH_COLORS[strength - 1] : "#E5E7EB" }} />
                     ))}
-                    <span className="ml-0.5 text-[10px] font-semibold sm:text-xs" style={{ color: STRENGTH_COLORS[strength - 1] }}>
+                    <span className="ml-0.5 text-xs font-semibold" style={{ color: STRENGTH_COLORS[strength - 1] }}>
                       {STRENGTH_LABELS[strength - 1]}
                     </span>
                   </div>
@@ -243,7 +238,7 @@ export function Register() {
 
               {form.role === "admin" && (
                 <div>
-                  <label className="mb-1 block text-xs font-semibold text-gray-700 sm:text-sm">Mã mời quản trị</label>
+                  <label className="mb-1.5 block text-sm font-semibold text-white">Mã mời quản trị</label>
                   <input type="password" autoComplete="off" placeholder="ADMIN_INVITE_CODE"
                     value={form.adminInviteCode} onChange={(e) => handleChange("adminInviteCode", e.target.value)}
                     className={INPUT_REG_CLS} />
@@ -256,28 +251,28 @@ export function Register() {
                   className="mt-0.5 flex flex-shrink-0 items-center justify-center rounded-md border-2 transition-all"
                   style={{
                     width: "18px", height: "18px",
-                    background: agreed ? "#8037f4" : "transparent",
-                    borderColor: agreed ? "rgba(128,55,244,0.6)" : "#D1D5DB",
+                    background: agreed ? BRAND_LIME : "transparent",
+                    borderColor: agreed ? BRAND_LIME : "rgba(255,255,255,0.45)",
                   }}>
-                  {agreed && <Check className="w-3 h-3 text-white" strokeWidth={3} />}
+                  {agreed && <Check className="h-3 w-3 text-slate-900" strokeWidth={3} />}
                 </button>
-                <span className="text-xs leading-snug text-gray-500 sm:text-sm">
+                <span className="text-xs leading-relaxed text-white/75">
                   Tôi đồng ý{" "}
-                  <a href="#" className="font-semibold text-[#8037f4] hover:underline">Điều khoản</a>{" "}và{" "}
-                  <a href="#" className="font-semibold text-[#8037f4] hover:underline">Bảo mật</a>.
+                  <a href="#" className="font-semibold text-[#93f72b] hover:underline">Điều khoản</a>{" "}và{" "}
+                  <a href="#" className="font-semibold text-[#93f72b] hover:underline">Bảo mật</a>.
                 </span>
               </label>
 
               {/* Submit */}
               <button type="submit" disabled={loading || !agreed}
-                className="w-full rounded-full py-3 text-sm font-bold text-white transition-all hover:brightness-110 active:scale-[0.98] disabled:opacity-50 sm:text-base"
+                className="w-full rounded-full py-3.5 text-base font-bold transition-all hover:brightness-105 active:scale-[0.98] disabled:opacity-60"
                 style={{
-                  background: "#8037f4",
-                  boxShadow: agreed ? "0 4px 20px rgba(128,55,244,0.3)" : "none",
+                  ...AUTH_CTA_STYLE,
+                  boxShadow: agreed ? AUTH_CTA_STYLE.boxShadow : "none",
                 }}>
                 {loading
                   ? <span className="flex items-center justify-center gap-2">
-                    <span className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                    <span className="h-5 w-5 animate-spin rounded-full border-2 border-slate-900/30 border-t-slate-900" />
                     Đang tạo tài khoản...
                   </span>
                   : "Tạo tài khoản"}
@@ -285,21 +280,41 @@ export function Register() {
             </form>
 
             {/* Divider */}
-            <div className="my-3 flex items-center gap-3 sm:my-4">
-              <div className="flex-1 h-px bg-gray-100" />
-              <span className="text-xs font-medium text-gray-400">hoặc</span>
-              <div className="flex-1 h-px bg-gray-100" />
+            <div className="my-5 flex items-center gap-3">
+              <div className="h-px flex-1 bg-white/25" />
+              <span className="text-xs font-medium text-white/60">hoặc</span>
+              <div className="h-px flex-1 bg-white/25" />
             </div>
 
             <GoogleSignInBlock onError={setError} />
 
-            <p className="mt-3 flex items-start justify-center gap-1.5 text-center text-[11px] leading-snug text-gray-500">
-              <ShieldCheck className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-[#8037f4]" strokeWidth={2} />
+            <p className="mt-5 flex items-start justify-center gap-1.5 text-center text-xs leading-relaxed text-white/65">
+              <ShieldCheck className="mt-0.5 h-4 w-4 flex-shrink-0 text-[#93f72b]" strokeWidth={2} />
               <span>
                 Mã hóa an toàn · Không bán dữ liệu.
               </span>
             </p>
 
+            </div>
+
+            <div
+              className="pointer-events-none absolute bottom-0 right-0 z-20 w-full overflow-visible -translate-y-[32.25rem] max-md:-translate-y-[32.75rem] sm:-translate-y-[32.1rem]"
+              aria-hidden
+            >
+              <img
+                src="/mascot-auth-register.png?v=6"
+                alt=""
+                width={280}
+                height={280}
+                className="absolute bottom-0 right-[-2.35rem] z-10 h-[17rem] w-[17rem] max-h-none max-w-none origin-bottom-right -rotate-[2deg] object-contain object-bottom max-md:right-[-1.45rem] max-md:h-[14rem] max-md:w-[14rem] sm:right-[-2.85rem] sm:h-[18.25rem] sm:w-[18.25rem] md:right-[-3.25rem]"
+              />
+              <StickerLimeSparkle
+                className="absolute z-30 bottom-[3rem] right-[0.2rem] h-[4.5rem] w-[4.5rem] rotate-[15deg] max-md:bottom-[1rem] max-md:right-[2.2rem] sm:bottom-[4rem] sm:right-[-1.8rem]"
+              />
+              <StickerLimeSparkle
+                className="absolute z-30 bottom-[6.3rem] right-[12.2rem] h-11 w-11 -rotate-[10deg] max-md:bottom-[3.3rem] max-md:right-[13.2rem] sm:bottom-[8.3rem] sm:right-[10.2rem]"
+              />
+            </div>
           </div>
         </div>
       </div>

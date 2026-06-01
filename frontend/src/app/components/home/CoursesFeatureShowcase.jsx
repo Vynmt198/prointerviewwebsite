@@ -22,7 +22,7 @@ const DEMO_FILTER_LABELS = ["Phỏng vấn", "Viết CV", "Technical", "Soft ski
 
 /** Avatar mentor trên thẻ khóa (mock) — linh vật, không dùng ảnh stock */
 const COURSE_CARD_MENTOR_AVATAR = "/mascot-course-card-avatar.png?v=1";
-const COURSE_CARD_AVATAR_FALLBACK = "/mascot-courses-ready.png?v=7";
+const COURSE_CARD_AVATAR_FALLBACK = "/mascot-courses-ready.png?v=8";
 
 const DEMO_PROGRESS = (() => {
   const a = HOME_DEMO_COURSES[0];
@@ -101,20 +101,17 @@ function CoursesLearningMockup() {
         className="pointer-events-none absolute left-[15%] sm:left-[20%] lg:left-1/2 top-0 z-[2] w-[12rem] -translate-x-[calc(50%+0.5rem)] lg:-translate-x-[calc(50%+12.8rem)] translate-y-[calc(-50%+2.3rem)] lg:translate-y-[calc(-50%+2.575rem)] sm:w-[14rem] lg:w-[16rem]"
         aria-hidden
       >
-        <div className="courses-mascot-sticker relative mx-auto w-fit">
-          <SparkleGlyph className="absolute -left-[2rem] top-[1rem] w-10 h-10 -rotate-12 drop-shadow-md sm:-left-[3rem] sm:top-[1.5rem] sm:w-14 sm:h-14" />
-          <img
-            src="/mascot-courses-ready.png?v=7"
-            alt=""
-            className="courses-mascot-img block h-auto w-[9.7rem] object-contain sm:w-[11.2rem]"
+        <div className="courses-mascot-sticker relative mx-auto w-fit translate-x-[0.3rem]">
+          <div
+            className="pointer-events-none absolute inset-[max(0px,calc(11%-0.65rem))] z-0 translate-x-[0.2rem] translate-y-[0.2rem] rounded-full border border-violet-100/80 bg-[#fefeff] shadow-[0_10px_24px_rgba(99,14,212,0.1)] sm:inset-[max(0px,calc(12%-0.65rem))]"
+            aria-hidden
           />
-          <div className="absolute -right-[3.84rem] top-[0.55rem] z-[1] sm:-right-[4.59rem] sm:top-[0.8rem]">
-            <div className="courses-speech-bubble px-2.5 py-1.5 sm:px-3 sm:py-2">
-              <p className="whitespace-nowrap font-headline text-[10px] font-bold leading-none text-[#6d2fd6] sm:text-[11px]">
-                Sẵn sàng học chưa?
-              </p>
-            </div>
-          </div>
+          <SparkleGlyph className="absolute -left-[2rem] top-[1rem] z-[3] w-10 h-10 -rotate-12 drop-shadow-md sm:-left-[3rem] sm:top-[1.5rem] sm:w-14 sm:h-14" />
+          <img
+            src="/mascot-courses-ready.png?v=8"
+            alt=""
+            className="relative z-[1] block h-auto w-[7.7rem] object-contain sm:w-[9.2rem]"
+          />
         </div>
       </div>
 
@@ -230,31 +227,11 @@ export function CoursesFeatureShowcase({ onCtaClick }) {
       <style>{`
         .courses-mock-panel {
           background: linear-gradient(165deg, #f0ebf8 0%, #ebe4f6 50%, #e6ddf3 100%);
-          border: 2px solid rgba(128, 55, 244, 0.4);
+          border: 2px solid #8037f4;
           box-shadow: 0 12px 32px rgba(99, 14, 212, 0.1);
         }
         .courses-mascot-img {
           filter: none;
-        }
-        .courses-speech-bubble {
-          position: relative;
-          background: #ffffff;
-          border-radius: 1.25rem;
-          box-shadow: 0 8px 18px -4px rgba(0, 0, 0, 0.05);
-          border: 1px solid rgba(124, 58, 237, 0.1);
-        }
-        .courses-speech-bubble::after {
-          content: "";
-          position: absolute;
-          left: -7px;
-          bottom: 10px;
-          width: 16px;
-          height: 16px;
-          background: #ffffff;
-          transform: skewX(-20deg);
-          border-radius: 4px;
-          border-left: 1px solid rgba(124, 58, 237, 0.1);
-          border-bottom: 1px solid rgba(124, 58, 237, 0.1);
         }
       `}</style>
       <div className={`home-mobile-gutter relative z-10 flex w-full items-center overflow-visible py-2 ${HOME_SECTION_INNER}`}>
