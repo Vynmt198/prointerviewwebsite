@@ -619,7 +619,17 @@ export function Home() {
           transform: translateY(-2px);
           box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
         }
-        /* Bước Nổi bật — nền tím nhạt */
+        /* 4 ô How it works — trắng ngà sáng, không #fff tinh / không đục */
+        .home-how-step-card {
+          background: linear-gradient(180deg, #fefeff 0%, #faf8fc 100%) !important;
+          border: 2px solid rgba(128, 55, 244, 0.38) !important;
+          box-shadow: 0 8px 22px rgba(15, 23, 42, 0.05);
+        }
+        .home-how-step-card:hover {
+          border-color: rgba(128, 55, 244, 0.52) !important;
+          box-shadow: 0 10px 26px rgba(15, 23, 42, 0.07);
+        }
+        /* Bước Nổi bật — giữ nhãn lime */
         .home-step-featured-dots {
           background: linear-gradient(180deg, #f0ebf8 0%, #ebe4f6 100%);
           border-color: rgba(128, 55, 244, 0.42) !important;
@@ -985,13 +995,13 @@ export function Home() {
             <div className="mx-auto mb-5 flex max-w-4xl flex-col items-center">
               <div className="flex items-center justify-center max-lg:w-full max-lg:flex-col max-lg:gap-3">
                 <img
-                  src="/mascot-features.png?v=8"
+                  src="/mascot-features.png?v=13"
                   alt=""
                   aria-hidden
-                  className="relative z-10 h-auto w-[11rem] shrink-0 -translate-x-[1.9rem] -translate-y-[0.85rem] rotate-[3deg] object-contain sm:w-[12.5rem] sm:-translate-y-[1.05rem] md:w-[14rem] lg:w-[15rem] max-lg:w-[6.75rem] max-lg:translate-x-0 max-lg:translate-y-0"
+                  className="relative z-10 h-auto w-[11rem] shrink-0 -translate-x-[1.9rem] -translate-y-[0.55rem] rotate-[3deg] object-contain sm:w-[12.5rem] sm:-translate-y-[0.75rem] md:w-[14rem] lg:w-[15rem] max-lg:w-[6.75rem] max-lg:translate-x-0 max-lg:translate-y-0"
                 />
                 <div className="relative z-0 -ml-[3.5rem] -translate-x-[0.1rem] text-left sm:-ml-[4rem] md:-ml-[4.35rem] lg:-ml-[4.75rem] max-lg:ml-0 max-lg:w-full max-lg:translate-x-0 max-lg:text-center">
-                  <span className="mb-3 block h-1.5 w-12 rounded-full bg-[#8037f4]/40 max-lg:mx-auto" />
+                  <span className="mb-3 ml-1.5 block h-1.5 w-12 rounded-full bg-[#8037f4]/40 sm:ml-2 max-lg:mx-auto max-lg:ml-0" />
                   <h2
                     className={`home-how-title ${homeTy.howItWorksTitle} leading-[1.08]`}
                     style={{ fontSize: HOME_HOW_IT_WORKS_TITLE_CLAMP }}
@@ -1012,26 +1022,14 @@ export function Home() {
             {STEPS.map((s, i) => (
               <LandingItem key={i}>
               <div
-                className={`glass-card group relative flex h-full min-h-[15.5rem] flex-col overflow-hidden p-5 selection:bg-[rgba(147,247,43,0.42)] selection:text-slate-900 transition-[border-color,box-shadow] duration-300 sm:min-h-[16rem] sm:p-6 lg:min-h-[17.5rem] max-lg:min-h-0 max-lg:p-3.5 ${i === 1
-                  ? "home-step-featured-dots"
-                  : i === 2
-                    ? "border-violet-400/35 shadow-[0_0_0_1px_rgba(167,139,250,0.15)_inset]"
-                    : "border-black/[0.05]"
-                  }`}
-                style={i === 1 ? undefined : {
-                  background: "linear-gradient(180deg, rgba(255,255,255,0.98) 0%, rgba(248,245,255,0.97) 100%)",
-                  boxShadow: "0 12px 26px rgba(15,23,42,0.09), 0 2px 10px rgba(95,0,240,0.08)",
-                }}
+                className={`glass-card home-how-step-card group relative flex h-full min-h-[15.5rem] flex-col overflow-hidden rounded-[1.25rem] p-5 selection:bg-[rgba(147,247,43,0.42)] selection:text-[#8037f4] transition-[border-color,box-shadow] duration-300 sm:min-h-[16rem] sm:p-6 lg:min-h-[17.5rem] max-lg:min-h-0 max-lg:p-3.5`}
               >
                 <div className="relative z-[1] min-w-0 flex flex-1 flex-col">
                   {/* Hàng nhãn cố định — tránh absolute đè lên icon */}
                   {(i === 1 || i === 2) ? (
                     <div className="mb-2.5 flex min-h-0 items-center justify-start sm:mb-3.5 sm:min-h-[32px]">
                       <span
-                        className={`${homeTy.howItWorksStepBadge} ${i === 1
-                          ? "border-[#8037f4]/50 bg-white/90 text-[#6d2fd6]"
-                          : "border-violet-200 bg-violet-100 text-violet-800 shadow-sm"
-                          }`}
+                        className={`${homeTy.howItWorksStepBadge} border-[#93f72b] bg-transparent text-[#93f72b] shadow-sm`}
                       >
                         {i === 1 ? "Nổi bật" : "Gợi ý mentor"}
                       </span>
@@ -1039,30 +1037,16 @@ export function Home() {
                   ) : (
                     <div className="hidden sm:block sm:mb-3.5 sm:min-h-[32px]" />
                   )}
-                  <div
-                    className={`pointer-events-none absolute top-0 right-0 p-2 sm:p-4 transition-opacity ${
-                      i === 1 ? "" : "opacity-[0.18] group-hover:opacity-[0.26]"
-                    }`}
-                  >
+                  <div className="pointer-events-none absolute top-0 right-0 p-2 sm:p-4">
                     <span
-                      className={`text-6xl sm:text-8xl font-black italic leading-none ${
-                        i === 1
-                          ? "text-[#d4c8eb] group-hover:text-[#c9b9e6]"
-                          : "text-[#6d2fd6]/30"
-                      }`}
+                      className="text-6xl font-black italic leading-none text-[#8037f4]/42 transition-colors group-hover:text-[#8037f4]/52 sm:text-8xl"
                     >
                       {s.step}
                     </span>
                   </div>
 
                   <div
-                    className={`relative mb-4 flex h-12 w-12 items-center justify-center rounded-xl shadow-lg transition-all duration-500 sm:h-[3.25rem] sm:w-[3.25rem] max-lg:mb-3 max-lg:h-10 max-lg:w-10 max-lg:rounded-lg ${
-                      i === 0
-                        ? "bg-[#8037f4] text-[#ffffff] shadow-[0_0_24px_rgba(167,139,250,0.12)]"
-                        : i === 1
-                          ? "border-2 border-[#630ed4] bg-white text-[#630ed4]"
-                          : "border border-white/10 bg-white/5 text-[#8037f4] group-hover:border-[#8037f4]/35 group-hover:bg-[#8037f4]/15"
-                    }`}
+                    className={`relative mb-4 flex h-12 w-12 items-center justify-center rounded-full border border-violet-100/80 bg-[#f5f2fa] shadow-sm transition-all duration-500 sm:h-[3.25rem] sm:w-[3.25rem] max-lg:mb-3 max-lg:h-10 max-lg:w-10 text-[#8037f4]`}
                   >
                     <s.icon className="h-[1.4rem] w-[1.4rem] sm:h-6 sm:w-6" />
                   </div>

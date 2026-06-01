@@ -23,13 +23,14 @@ function ScoreCard({
   scoreBorder,
   children,
   className = "",
+  titleClassName = "",
 }) {
   return (
     <div
       className={`cv-analysis-glass-card rounded-3xl border border-[#ccc3d8] bg-white px-[1.5rem] py-[0.875rem] shadow-xl transition-all duration-300 hover:scale-[1.02] sm:px-[1.75rem] sm:py-[1.15rem] max-lg:rounded-xl max-lg:px-4 max-lg:py-3 max-lg:shadow-md ${className}`}
     >
       <div className={`flex items-center justify-between gap-3 ${children ? "mb-3 sm:mb-3.5" : ""}`}>
-        <h3 className={ty.cardTitle}>{title}</h3>
+        <h3 className={`${ty.cardTitle} ${titleClassName}`}>{title}</h3>
         <span
           className={`${ty.cardScore} ${scoreBg} ${scoreClass} ${scoreBorder}`}
         >
@@ -38,15 +39,6 @@ function ScoreCard({
       </div>
       {children ? <ul className="space-y-2">{children}</ul> : null}
     </div>
-  );
-}
-
-function MascotSparkle({ className }) {
-  return (
-    <span
-      className={`pointer-events-none absolute block h-3 w-3 rotate-45 rounded-[2px] bg-[#FACC15] shadow-sm ${className}`}
-      aria-hidden
-    />
   );
 }
 
@@ -135,23 +127,20 @@ export function CvAnalysisFeatureShowcase({ onCtaClick }) {
 
           <section className="cv-showcase-visual relative z-10 flex min-w-0 flex-col items-center justify-center overflow-visible lg:translate-x-12 lg:-translate-y-6 lg:justify-self-center">
             <div className="relative mx-auto w-full max-w-[31rem] overflow-visible">
-              <div className="pointer-events-none absolute left-1/2 top-0 z-0 w-[11.7rem] -translate-x-1/2 -translate-y-[1.14rem] sm:w-[13.7rem] sm:-translate-y-[1.39rem] lg:w-[15.2rem] lg:-translate-y-[1.64rem]">
-                <div className="relative">
-                  <MascotSparkle className="left-[14%] top-[18%] h-2 w-2 sm:left-[16%]" />
-                  <MascotSparkle className="left-[10%] top-[34%] h-1.5 w-1.5 opacity-90 sm:left-[12%]" />
-                  <img
-                    src="/mascot-cv-analysis.png?v=2"
-                    alt=""
-                    aria-hidden
-                    className="block h-auto w-full object-contain"
-                  />
-                </div>
+              <div className="pointer-events-none absolute left-1/2 top-0 z-40 w-[12.5rem] -translate-x-1/2 -translate-y-[1.68rem] sm:w-[14.5rem] sm:-translate-y-[1.88rem] lg:w-[16rem] lg:-translate-y-[2.08rem]">
+                <img
+                  src="/mascot-cv-analysis.png?v=3"
+                  alt=""
+                  aria-hidden
+                  className="block h-auto w-full rotate-[1deg] object-contain"
+                />
               </div>
 
-              <div className="relative z-10 flex w-full flex-col -space-y-3 pt-[7.75rem] sm:pt-[8.5rem] lg:pt-[9rem]">
+              <div className="relative z-10 flex w-full flex-col -space-y-3 pt-[8.25rem] sm:pt-[9rem] lg:pt-[9.5rem]">
                 <CardReveal delayMs={0} className="relative z-10 translate-x-4 lg:translate-x-8">
                   <ScoreCard
-                    className="rotate-1 scale-95 transform"
+                    className="rotate-1 scale-95 transform px-[1.65rem] py-[1.025rem] sm:px-[1.9rem] sm:py-[1.3rem] max-lg:px-[1.15rem] max-lg:py-[0.9rem]"
+                    titleClassName="translate-y-[0.2rem]"
                     title="Độ khớp CV–JD"
                     score={`${DEMO_MATCH.percent}% Khá tốt`}
                     scoreBg="bg-[#e6f7ed]"

@@ -18,7 +18,12 @@ function PeriodSummary({ entry }) {
   );
 }
 
-export function ProfileWorkHistoryEditor({ entries, onChange, disabled = false }) {
+export function ProfileWorkHistoryEditor({
+  entries,
+  onChange,
+  disabled = false,
+  showMentorRequiredHint = false,
+}) {
   const list = Array.isArray(entries) && entries.length ? entries : [emptyWorkEntry()];
 
   const updateEntry = (index, patch) => {
@@ -57,6 +62,14 @@ export function ProfileWorkHistoryEditor({ entries, onChange, disabled = false }
       <p className="profile-muted text-sm leading-relaxed">
         Thêm các công việc, thực tập hoặc dự án bạn từng tham gia.
       </p>
+      {showMentorRequiredHint ? (
+        <p className="text-sm font-medium leading-relaxed text-violet-900">
+          <span className="font-extrabold text-red-500" aria-hidden>
+            *
+          </span>{" "}
+          Điền ít nhất <strong>chức danh</strong> hoặc <strong>công ty</strong> ở một mục bên dưới.
+        </p>
+      ) : null}
 
       {list.map((entry, index) => (
         <div

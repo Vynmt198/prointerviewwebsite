@@ -260,6 +260,15 @@ export function Profile() {
   });
   const [resubmitConfirmOpen, setResubmitConfirmOpen] = useState(false);
 
+  React.useEffect(() => {
+    if (!resubmitConfirmOpen) return;
+    const onKeyDown = (e) => {
+      if (e.key === "Escape") setResubmitConfirmOpen(false);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [resubmitConfirmOpen]);
+
   const toggleCvSection = (key) => {
     setOpenCvSections((prev) => ({ ...prev, [key]: !prev[key] }));
   };
@@ -716,6 +725,26 @@ export function Profile() {
         .profile-page .profile-mentor-apply-option:has([data-state="checked"]) span {
           color: var(--pf-purple-dark);
         }
+        .profile-mentor-resubmit-overlay {
+          animation: profile-mentor-overlay-in 0.22s ease-out;
+        }
+        .profile-mentor-resubmit-panel {
+          animation: profile-mentor-panel-in 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        @keyframes profile-mentor-overlay-in {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        @keyframes profile-mentor-panel-in {
+          from {
+            opacity: 0;
+            transform: scale(0.96) translateY(10px);
+          }
+          to {
+            opacity: 1;
+            transform: scale(1) translateY(0);
+          }
+        }
       `}</style>
       <div className="profile-page relative z-10 mx-auto max-w-6xl px-6 pb-8 pt-8 sm:px-8 sm:pt-10">
         {mentorApplyError && !isMentor && (
@@ -781,55 +810,65 @@ export function Profile() {
 
         {resubmitConfirmOpen && (
           <div
-            className="glass-card fixed bottom-10 right-10 z-[60] w-[min(100vw-2rem,22rem)] animate-in fade-in slide-in-from-bottom-5 rounded-2xl border border-[rgba(128,55,244,0.22)] p-5 shadow-2xl"
-            role="dialog"
-            aria-labelledby="mentor-resubmit-confirm-title"
-            aria-describedby="mentor-resubmit-confirm-desc"
+            className="profile-mentor-resubmit-overlay fixed inset-0 z-[60] flex items-center justify-center p-4 sm:p-6"
+            role="presentation"
+            onClick={() => setResubmitConfirmOpen(false)}
           >
-            <div className="mb-3 flex items-start gap-3">
-              <AlertTriangle size={20} className="profile-accent-purple mt-0.5 shrink-0" />
-              <div>
-                <p
-                  id="mentor-resubmit-confirm-title"
-                  className="text-sm font-black leading-snug text-[#2D1B69]"
-                >
-                  {MENTOR_APPLY_RESUBMIT_CONFIRM_TITLE}
-                </p>
-                <p id="mentor-resubmit-confirm-desc" className="profile-muted mt-2 text-xs leading-relaxed">
-                  {MENTOR_APPLY_RESUBMIT_CONFIRM_BODY}
-                </p>
+            <div className="absolute inset-0 bg-[#2D1B69]/45 backdrop-blur-[6px]" aria-hidden />
+            <div
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="mentor-resubmit-confirm-title"
+              aria-describedby="mentor-resubmit-confirm-desc"
+              className="profile-mentor-resubmit-panel relative w-full max-w-md overflow-hidden rounded-3xl border border-violet-200/80 bg-white shadow-[0_24px_64px_rgba(45,27,105,0.22)]"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="border-b border-violet-100/90 bg-gradient-to-br from-[#faf7fe] to-white px-6 pb-5 pt-6 sm:px-7">
+                <div className="flex items-start gap-4">
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-violet-100 text-[#8037f4]">
+                    <AlertTriangle size={22} strokeWidth={2.25} aria-hidden />
+                  </div>
+                  <div className="min-w-0 flex-1 pr-1">
+                    <p
+                      id="mentor-resubmit-confirm-title"
+                      className="text-base font-extrabold leading-snug tracking-tight text-[#2D1B69] sm:text-lg"
+                    >
+                      {MENTOR_APPLY_RESUBMIT_CONFIRM_TITLE}
+                    </p>
+                    <p
+                      id="mentor-resubmit-confirm-desc"
+                      className="profile-muted mt-2 text-sm leading-relaxed"
+                    >
+                      {MENTOR_APPLY_RESUBMIT_CONFIRM_BODY}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setResubmitConfirmOpen(false)}
+                    className="profile-muted shrink-0 rounded-xl p-2 transition-colors hover:bg-violet-50 hover:text-[#2D1B69]"
+                    aria-label="Đóng"
+                  >
+                    <X size={18} strokeWidth={2.25} />
+                  </button>
+                </div>
               </div>
-              <button
-                type="button"
-                onClick={() => {
-                  setResubmitConfirmOpen(false);
-                  setPendingSaveAndApply(false);
-                }}
-                className="profile-muted -mr-1 -mt-1 shrink-0 rounded-lg p-1 transition hover:text-[#2D1B69]"
-                aria-label="Đóng"
-              >
-                <X size={16} />
-              </button>
-            </div>
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={() => {
-                  setResubmitConfirmOpen(false);
-                  setPendingSaveAndApply(false);
-                }}
-                className="flex-1 rounded-xl border border-[rgba(128,55,244,0.2)] bg-white/80 py-2.5 text-[10px] font-black uppercase tracking-widest text-[#5c4d7a] transition hover:bg-white"
-              >
-                Huỷ
-              </button>
-              <button
-                type="button"
-                disabled={applying}
-                onClick={confirmResubmitMentor}
-                className="profile-btn-purple flex-1 rounded-xl py-2.5 text-[10px] font-black uppercase tracking-widest disabled:opacity-50"
-              >
-                {applying ? "Đang gửi…" : "Gửi lại"}
-              </button>
+              <div className="flex flex-col-reverse gap-2.5 px-6 py-5 sm:flex-row sm:justify-end sm:gap-3 sm:px-7">
+                <button
+                  type="button"
+                  onClick={() => setResubmitConfirmOpen(false)}
+                  className="w-full rounded-2xl border border-violet-200 bg-white px-4 py-3 text-sm font-semibold text-[#5c4d7a] transition-colors hover:border-violet-300 hover:bg-violet-50/50 sm:w-auto sm:min-w-[7.5rem]"
+                >
+                  Huỷ
+                </button>
+                <button
+                  type="button"
+                  disabled={applying}
+                  onClick={confirmResubmitMentor}
+                  className="profile-btn-lime w-full rounded-2xl px-5 py-3 text-sm font-bold transition-all hover:brightness-105 active:scale-[0.99] disabled:opacity-55 sm:w-auto sm:min-w-[9rem]"
+                >
+                  {applying ? "Đang gửi…" : "Gửi lại hồ sơ"}
+                </button>
+              </div>
             </div>
           </div>
         )}
@@ -905,7 +944,6 @@ export function Profile() {
               <div className="profile-cv-accordion-list">
                 <ProfileCvStaticSection
                   title="Thông tin"
-                  requiredMark={showMentorRequiredMarks}
                   showDividerBelow
                 >
                   <div className="grid gap-6 md:grid-cols-3">
@@ -955,12 +993,62 @@ export function Profile() {
                 >
                   <ProfileWorkHistoryEditor
                     entries={cvProfile.workHistory}
+                    showMentorRequiredHint={showMentorRequiredMarks}
                     onChange={(workHistory) => {
                       setMentorApplyError("");
                       setCvProfile(syncCvFromWorkHistory({ ...cvProfile, workHistory }));
                     }}
                   />
                 </ProfileCvAccordionSection>
+
+                <ProfileCvAccordionSection
+                  title="Kỹ năng & chứng chỉ"
+                  requiredMark={showMentorRequiredMarks}
+                  isOpen={openCvSections.skills}
+                  onToggle={() => toggleCvSection("skills")}
+                >
+                  <ProfileCvTextarea
+                    placeholder={cvSectionCopy.skills.placeholder}
+                    value={cvProfile.skillsCerts}
+                    onChange={(e) => {
+                      setMentorApplyError("");
+                      setCvProfile({ ...cvProfile, skillsCerts: e.target.value });
+                    }}
+                    rows={3}
+                  />
+                </ProfileCvAccordionSection>
+
+                {!isMentor && (
+                  <ProfileCvAccordionSection
+                    title="Mức giá đăng ký"
+                    requiredMark={showMentorRequiredMarks}
+                    isOpen={openCvSections.mentorExtra}
+                    onToggle={() => toggleCvSection("mentorExtra")}
+                  >
+                    <div className="relative max-w-md">
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        className="input-glass w-full pr-12"
+                        placeholder="VD: 300.000 (VNĐ / 60 phút)"
+                        value={
+                          cvProfile.targetRate
+                            ? Number(cvProfile.targetRate).toLocaleString("vi-VN")
+                            : ""
+                        }
+                        onChange={(e) =>
+                          setCvProfile({
+                            ...cvProfile,
+                            targetRate: e.target.value.replace(/\D/g, ""),
+                          })
+                        }
+                      />
+                      <span className="profile-muted pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-sm font-bold">
+                        ₫
+                      </span>
+                    </div>
+                  </ProfileCvAccordionSection>
+                )}
 
                 <ProfileCvAccordionSection
                   title="Quá trình học tập"
@@ -1007,54 +1095,6 @@ export function Profile() {
                     rows={2}
                   />
                 </ProfileCvAccordionSection>
-
-                <ProfileCvAccordionSection
-                  title="Kỹ năng & chứng chỉ"
-                  isOpen={openCvSections.skills}
-                  onToggle={() => toggleCvSection("skills")}
-                >
-                  <ProfileCvTextarea
-                    placeholder={cvSectionCopy.skills.placeholder}
-                    value={cvProfile.skillsCerts}
-                    onChange={(e) => {
-                      setMentorApplyError("");
-                      setCvProfile({ ...cvProfile, skillsCerts: e.target.value });
-                    }}
-                    rows={3}
-                  />
-                </ProfileCvAccordionSection>
-
-                {!isMentor && (
-                  <ProfileCvAccordionSection
-                    title="Mức giá đăng ký"
-                    requiredMark={showMentorRequiredMarks}
-                    isOpen={openCvSections.mentorExtra}
-                    onToggle={() => toggleCvSection("mentorExtra")}
-                  >
-                    <div className="relative max-w-md">
-                      <input
-                        type="text"
-                        inputMode="numeric"
-                        className="input-glass w-full pr-12"
-                        placeholder="VD: 300.000 (VNĐ / 60 phút)"
-                        value={
-                          cvProfile.targetRate
-                            ? Number(cvProfile.targetRate).toLocaleString("vi-VN")
-                            : ""
-                        }
-                        onChange={(e) =>
-                          setCvProfile({
-                            ...cvProfile,
-                            targetRate: e.target.value.replace(/\D/g, ""),
-                          })
-                        }
-                      />
-                      <span className="profile-muted pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-sm font-bold">
-                        ₫
-                      </span>
-                    </div>
-                  </ProfileCvAccordionSection>
-                )}
 
                 <div className="profile-divider border-t pt-6">
                   <button

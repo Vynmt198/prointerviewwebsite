@@ -76,10 +76,24 @@ export function HeroInterviewVideoCard() {
           }
         }
       `}</style>
-      <div className="hero-video-hud-compact relative mx-auto mt-6 w-full max-w-full translate-x-4 -translate-y-8 overflow-visible sm:mt-8 lg:mt-0 lg:ml-auto lg:max-w-[28rem] max-lg:mt-2 max-lg:w-[min(88vw,19rem)] max-lg:max-w-[19rem] max-lg:translate-x-0 max-lg:translate-y-0">
-        <div className="@container relative overflow-visible rounded-[1.65rem] bg-white p-2 shadow-[0_16px_44px_rgba(99,14,212,0.14)] sm:rounded-[1.85rem] sm:p-2.5 max-lg:rounded-md max-lg:border max-lg:border-violet-100/80 max-lg:p-1 max-lg:shadow-sm">
-          <div className="relative w-full min-h-[calc(100cqw*3.51/4+1.5rem)] max-lg:aspect-[3/4] max-lg:min-h-0">
-            <div className="absolute inset-0 overflow-hidden rounded-[1.2rem] bg-slate-100 sm:rounded-[1.35rem] max-lg:rounded-sm">
+      <div className="hero-video-hud-compact relative mx-auto mt-6 w-full max-w-full translate-x-4 -translate-y-8 overflow-visible sm:mt-8 lg:mt-0 lg:ml-auto lg:max-w-[29.6rem] max-lg:mt-2 max-lg:w-[min(88vw,19rem)] max-lg:max-w-[19rem] max-lg:translate-x-0 max-lg:translate-y-0">
+        <div className="@container relative overflow-visible rounded-[1rem] bg-white border border-slate-200 shadow-[0_20px_50px_rgba(99,14,212,0.14)] sm:rounded-[1.25rem] max-lg:rounded-md max-lg:border-violet-100/80 max-lg:shadow-sm">
+          {/* Mac Window Header */}
+          <div className="relative flex items-center justify-between rounded-t-[1rem] bg-white px-3 py-2.5 border-b border-slate-200/60 sm:rounded-t-[1.25rem] sm:px-4 sm:py-3 max-lg:px-2 max-lg:py-1.5">
+            <div className="flex items-center gap-1.5 z-10 w-12 sm:w-16">
+              <div className="h-2.5 w-2.5 rounded-full bg-[#ff5f56] sm:h-3 sm:w-3 max-lg:h-2 max-lg:w-2" />
+              <div className="h-2.5 w-2.5 rounded-full bg-[#ffbd2e] sm:h-3 sm:w-3 max-lg:h-2 max-lg:w-2" />
+              <div className="h-2.5 w-2.5 rounded-full bg-[#27c93f] sm:h-3 sm:w-3 max-lg:h-2 max-lg:w-2" />
+            </div>
+            <div className="absolute inset-0 flex items-center justify-center gap-1.5 pointer-events-none">
+              <div className="h-1.5 w-1.5 rounded-full bg-[#8037f4] sm:h-2 sm:w-2" />
+              <span className="text-[10px] font-bold text-slate-500 sm:text-xs">ProInterview - Phỏng vấn AI</span>
+            </div>
+            <div className="w-12 sm:w-16" />
+          </div>
+          <div className="w-full">
+            <div className="relative w-full min-h-[calc(100cqw*3.51/4+1.5rem)] max-lg:aspect-[3/4] max-lg:min-h-0">
+              <div className="absolute inset-0 overflow-hidden rounded-b-[1rem] bg-slate-100 sm:rounded-b-[1.25rem] max-lg:rounded-b-md">
               <video autoPlay loop muted playsInline className="h-full w-full object-cover object-[center_18%]">
                 <source src={HOME_AI_DEMO_VIDEO} type="video/mp4" />
               </video>
@@ -142,6 +156,7 @@ export function HeroInterviewVideoCard() {
                     <span className="shrink-0 font-bold text-[#6d2fd6]">{d.score.toFixed(1)}/5</span>
                   </div>
                 ))}
+              </div>
               </div>
             </div>
           </div>
