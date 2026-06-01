@@ -297,8 +297,9 @@ export function Register() {
 
             </div>
 
+            {/* Mascot + sparkle — giữ vị trí cũ; pointer-events-none để không chặn ô mật khẩu */}
             <div
-              className="pointer-events-none absolute bottom-0 right-0 z-20 w-full overflow-visible -translate-y-[32.25rem] max-md:-translate-y-[32.75rem] sm:-translate-y-[32.1rem]"
+              className="pointer-events-none absolute bottom-0 right-0 z-20 w-full overflow-visible -translate-y-[33.05rem] max-md:-translate-y-[33.55rem] sm:-translate-y-[32.9rem]"
               aria-hidden
             >
               <img
@@ -306,13 +307,13 @@ export function Register() {
                 alt=""
                 width={280}
                 height={280}
-                className="absolute bottom-0 right-[-2.35rem] z-10 h-[17rem] w-[17rem] max-h-none max-w-none origin-bottom-right -rotate-[2deg] object-contain object-bottom max-md:right-[-1.45rem] max-md:h-[14rem] max-md:w-[14rem] sm:right-[-2.85rem] sm:h-[18.25rem] sm:w-[18.25rem] md:right-[-3.25rem]"
+                className="pointer-events-none absolute bottom-0 right-[-2.35rem] z-10 h-[17rem] w-[17rem] max-h-none max-w-none origin-bottom-right -rotate-[2deg] object-contain object-bottom max-md:right-[-1.45rem] max-md:h-[14rem] max-md:w-[14rem] sm:right-[-2.85rem] sm:h-[18.25rem] sm:w-[18.25rem] md:right-[-3.25rem]"
               />
               <StickerLimeSparkle
-                className="absolute z-30 bottom-[3rem] right-[0.2rem] h-[4.5rem] w-[4.5rem] rotate-[15deg] max-md:bottom-[1rem] max-md:right-[2.2rem] sm:bottom-[4rem] sm:right-[-1.8rem]"
+                className="absolute bottom-[3rem] right-[0.2rem] z-30 h-[4.5rem] w-[4.5rem] rotate-[15deg] max-md:bottom-[1rem] max-md:right-[2.2rem] sm:bottom-[4rem] sm:right-[-1.8rem]"
               />
               <StickerLimeSparkle
-                className="absolute z-30 bottom-[6.3rem] right-[12.2rem] h-11 w-11 -rotate-[10deg] max-md:bottom-[3.3rem] max-md:right-[13.2rem] sm:bottom-[8.3rem] sm:right-[10.2rem]"
+                className="absolute bottom-[6.3rem] right-[12.2rem] z-30 h-11 w-11 -rotate-[10deg] max-md:bottom-[3.3rem] max-md:right-[13.2rem] sm:bottom-[8.3rem] sm:right-[10.2rem]"
               />
             </div>
           </div>

@@ -4,7 +4,7 @@ export function StickerLimeSparkle({ className = "", style }) {
   return (
     <svg
       viewBox="-12 -12 88 88"
-      className={className}
+      className={`pointer-events-none ${className}`.trim()}
       style={style}
       fill="none"
       xmlns="http://www.w3.org/2000/svg"

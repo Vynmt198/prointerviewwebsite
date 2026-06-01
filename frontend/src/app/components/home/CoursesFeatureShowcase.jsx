@@ -21,7 +21,7 @@ const DEMO_COURSE = HOME_DEMO_COURSES[0];
 const DEMO_FILTER_LABELS = ["Phỏng vấn", "Viết CV", "Technical", "Soft skills"];
 
 /** Avatar mentor trên thẻ khóa (mock) — linh vật, không dùng ảnh stock */
-const COURSE_CARD_MENTOR_AVATAR = "/mascot-course-card-avatar.png?v=1";
+const COURSE_CARD_MENTOR_AVATAR = "/mascot-course-card-avatar.png?v=2";
 const COURSE_CARD_AVATAR_FALLBACK = "/mascot-courses-ready.png?v=8";
 
 const DEMO_PROGRESS = (() => {

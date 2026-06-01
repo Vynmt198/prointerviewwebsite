@@ -217,13 +217,13 @@ export function CvAnalysisHubHero({ onJd, onField, navShellAligned = false }) {
               {/* Card đánh giá — hubPreview; gấu căn đáy card (desktop) */}
               <div className="relative hidden w-full shrink-0 overflow-visible lg:block">
                 <div
-                  className="pointer-events-none absolute bottom-0 left-0 z-20 -translate-x-[19rem] translate-y-[2.35rem] xl:-translate-x-[19.75rem] xl:translate-y-[2.25rem]"
+                  className="pointer-events-none absolute bottom-0 left-0 z-20 -translate-x-[16.65rem] translate-y-[2.35rem] xl:-translate-x-[17.4rem] xl:translate-y-[2.25rem]"
                   aria-hidden
                 >
                   <MascotSparkle className="left-[27%] top-[8%] h-2.5 w-2.5" />
                   <MascotSparkle className="right-[17%] top-[4.5%] h-2 w-2 opacity-80" />
                   <img
-                    src="/mascot-cv-hub-knowledge.png?v=10"
+                    src="/mascot-cv-hub-knowledge.png?v=11"
                     alt=""
                     className="block h-[23rem] w-[23rem] max-w-none object-contain object-bottom drop-shadow-[0_20px_50px_rgba(99,14,212,0.18)] xl:h-[24rem] xl:w-[24rem]"
                   />

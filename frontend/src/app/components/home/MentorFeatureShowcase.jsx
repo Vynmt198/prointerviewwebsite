@@ -15,15 +15,16 @@ const FEATURED_ALT = HOME_MENTORS[1];
 
 /** Linh vật mentor — 3 pose riêng, chia nhau các ô trên Home */
 export const HOME_MENTOR_MASCOTS = {
-  cv: "/mascot-mentor-avatar-cv.png?v=1",
-  headset: "/mascot-mentor-avatar-headset.png?v=1",
-  pro: "/mascot-mentor-avatar-pro.png?v=1",
+  cv: "/mascot-mentor-avatar-cv.png?v=2",
+  headset: "/mascot-mentor-avatar-headset.png?v=2",
+  pro: "/mascot-mentor-avatar-pro.png?v=2",
+  celebrate: "/mascot-home-avatar-celebrate.png?v=1",
   fallback: "/mascot-courses-ready.png?v=8",
 };
 
 const MENTOR_CARD_MASCOTS = {
   primary: HOME_MENTOR_MASCOTS.headset,
-  secondary: HOME_MENTOR_MASCOTS.pro,
+  secondary: HOME_MENTOR_MASCOTS.celebrate,
   fallback: HOME_MENTOR_MASCOTS.fallback,
 };
 

@@ -701,6 +701,12 @@ export function Profile() {
           color: var(--pf-purple-deep);
           box-shadow: 0 10px 24px rgba(180, 245, 0, 0.28);
         }
+        .profile-page .profile-btn-lime-outline {
+          background: #ffffff;
+          color: var(--pf-purple-deep);
+          border: 2px solid var(--pf-lime);
+          box-shadow: 0 8px 20px rgba(180, 245, 0, 0.14);
+        }
         .profile-page .profile-toast-purple {
           background: var(--pf-purple);
           border-color: rgba(139, 77, 255, 0.45);
@@ -1096,19 +1102,33 @@ export function Profile() {
                   />
                 </ProfileCvAccordionSection>
 
-                <div className="profile-divider border-t pt-6">
+                <div className="profile-divider flex flex-col gap-3 border-t pt-6 sm:flex-row">
                   <button
                     type="button"
-                    disabled={saving || applying}
+                    disabled={saving}
                     onClick={handleSaveProfile}
-                    className="profile-btn-lime flex w-full items-center justify-center rounded-2xl py-4 text-sm font-bold transition-all hover:brightness-110 active:scale-[0.99] disabled:opacity-50"
+                    className="profile-btn-lime-outline flex w-full flex-1 items-center justify-center rounded-2xl py-4 text-sm font-bold transition-all hover:bg-[#fafef5] active:scale-[0.99] disabled:opacity-50"
                   >
-                    {saving || applying ? (
+                    {saving ? (
                       <div className="h-4 w-4 animate-spin rounded-full border-2 border-[#2D1B69]/25 border-t-[#2D1B69]" />
                     ) : (
                       "Lưu hồ sơ"
                     )}
                   </button>
+                  {!isMentor && (
+                    <button
+                      type="button"
+                      disabled={applying}
+                      onClick={handleSidebarMentorRegister}
+                      className="profile-btn-lime flex w-full flex-1 items-center justify-center rounded-2xl py-4 text-sm font-bold transition-all hover:brightness-110 active:scale-[0.99] disabled:opacity-50"
+                    >
+                      {applying ? (
+                        <div className="h-4 w-4 animate-spin rounded-full border-2 border-[#2D1B69]/25 border-t-[#2D1B69]" />
+                      ) : (
+                        "Đăng ký làm Mentor"
+                      )}
+                    </button>
+                  )}
                 </div>
 
               </div>
