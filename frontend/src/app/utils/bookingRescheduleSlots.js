@@ -1,4 +1,5 @@
 import { fetchBookedSlots } from "./bookingsApi";
+import { isBookingSlotInFuture } from "./bookingSchedule";
 import { fetchMentorAvailability } from "./mentorApi";
 
 function toBookingDateFormat(input) {
@@ -20,7 +21,7 @@ function toBookingDateFormat(input) {
 /**
  * Danh sách slot trống của mentor cho form đổi lịch.
  * @param {string} mentorId
- * @param {{ excludeBookingId?: string }} [opts] — bỏ qua slot của chính booking đang đổi (nếu API trả booked)
+ * @param {{ allowCurrentSlot?: { date: string, time: string } }} [opts] — cho phép slot đang giữ bởi buổi hiện tại (dù booked)
  */
 export async function loadMentorRescheduleSlotOptions(mentorId, opts = {}) {
   if (!mentorId) return [];
@@ -33,15 +34,23 @@ export async function loadMentorRescheduleSlotOptions(mentorId, opts = {}) {
   if (!availability?.availableSlots) return [];
 
   const bookedMap = bookedRes.success ? bookedRes.booked || {} : {};
+  const allow = opts.allowCurrentSlot;
+  const allowDate = allow?.date ? toBookingDateFormat(allow.date) : "";
+  const allowTime = String(allow?.time || "").trim();
   const options = [];
 
   for (const [date, slots] of Object.entries(availability.availableSlots || {})) {
     const bookingDate = toBookingDateFormat(date);
     for (const slot of Array.isArray(slots) ? slots : []) {
-      const taken = Array.isArray(bookedMap[date]) ? bookedMap[date].includes(slot) : false;
-      if (!taken) {
-        options.push({ date: bookingDate, slot, label: `${bookingDate} • ${slot}` });
-      }
+      const time = String(slot).trim();
+      if (!time) continue;
+      if (!isBookingSlotInFuture(bookingDate, time)) continue;
+
+      const taken = Array.isArray(bookedMap[date]) ? bookedMap[date].includes(time) : false;
+      const isCurrent = allowDate && allowTime && bookingDate === allowDate && time === allowTime;
+      if (taken && !isCurrent) continue;
+
+      options.push({ date: bookingDate, slot: time, label: `${bookingDate} • ${time}` });
     }
   }
 

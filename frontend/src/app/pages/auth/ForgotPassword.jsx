@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router";
-import { CheckCircle2, AlertCircle, Info, ArrowLeft, Mail } from "lucide-react";
+import { CheckCircle2, AlertCircle, Info, Mail } from "lucide-react";
 import { BrandLogo } from "../../components/brand/BrandLogo";
 import { SparkleGlyph } from "../../components/decor/SparkleGlyph.jsx";
 import { AuthPurpleBackdrop } from "../../components/auth/AuthPurpleBackdrop";
@@ -165,14 +165,6 @@ export function ForgotPassword() {
               </div>
             ) : (
               <>
-                <Link
-                  to="/login"
-                  className="mb-5 inline-flex items-center gap-1.5 text-sm font-semibold text-gray-500 transition-colors hover:text-[#8037f4]"
-                >
-                  <ArrowLeft className="h-4 w-4" aria-hidden />
-                  Quay lại đăng nhập
-                </Link>
-
                 <h1
                   className="mb-1 text-gray-900"
                   style={{ fontSize: "1.875rem", fontWeight: 750, letterSpacing: "-0.025em" }}

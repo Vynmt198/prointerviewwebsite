@@ -5,7 +5,7 @@ import { MentorPeerReview } from "../models/MentorPeerReview.js";
 import { Booking } from "../models/Booking.js";
 import { Course } from "../models/Course.js";
 import { Enrollment } from "../models/Enrollment.js";
-import { Notification } from "../models/Notification.js";
+import { deliverNotification } from "./notificationDeliveryService.js";
 import { enrollmentAccessGranted } from "../helpers/enrollmentAccess.js";
 import { resolveStoredUploadUrl } from "../utils/resolveStoredUploadUrl.js";
 
@@ -56,8 +56,8 @@ async function notifyNewReview(review, targetType, targetIdRaw) {
     if (targetType === "mentor") {
       const mentor = await Mentor.findById(targetIdRaw).select("userId").lean();
       if (!mentor?.userId) return;
-      await Notification.create({
-        userId: mentor.userId,
+      await deliverNotification(mentor.userId, {
+        mentorPrefKey: "mentee_review",
         type: "new_review",
         title: "Có đánh giá mới",
         body: `Học viên đã để lại đánh giá ${review.rating} sao cho buổi mentor.`,
@@ -71,8 +71,8 @@ async function notifyNewReview(review, targetType, targetIdRaw) {
       .lean();
     const mentorUserId = course?.mentorId?.userId;
     if (!mentorUserId) return;
-    await Notification.create({
-      userId: mentorUserId,
+    await deliverNotification(mentorUserId, {
+      mentorPrefKey: "mentee_review",
       type: "new_review",
       title: "Đánh giá khóa học mới",
       body: `Khóa "${course.title || "của bạn"}" nhận đánh giá ${review.rating} sao.`,

@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
 import { useSearchParams, useNavigate } from "react-router";
 import {
-  ArrowLeft,
   Check,
   CheckCircle2,
   Lock,
@@ -21,6 +20,7 @@ import { BRAND_LIME, BRAND_PURPLE } from "../../constants/brandColors";
 import { landingPrimaryButtonClass } from "../../constants/landingTheme";
 import { fetchMentor } from "../../utils/mentorApi";
 import { createBooking, fetchRebookCredit } from "../../utils/bookingsApi";
+import { isBookingSlotInFuture } from "../../utils/bookingSchedule";
 import { fetchCourseById } from "../../utils/courseApi";
 import { enrollmentApi } from "../../utils/enrollmentApi";
 import { createSubscriptionTransferPending, fetchTransferStatus } from "../../utils/paymentsApi";
@@ -202,7 +202,7 @@ function CopyBtn({ text, variant = "default" }) {
       <button
         type="button"
         onClick={copy}
-        className={`flex shrink-0 items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-semibold transition-colors ${copied ? "bg-white/25 text-white" : "bg-white/15 text-white hover:bg-white/25"
+        className={`flex shrink-0 items-center gap-1.5 rounded px-3 py-2 text-xs font-semibold transition-colors ${copied ? "bg-white/25 text-white" : "bg-white/15 text-white hover:bg-white/25"
           }`}
       >
         {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
@@ -215,94 +215,165 @@ function CopyBtn({ text, variant = "default" }) {
     <button
       type="button"
       onClick={copy}
-      className={`flex items-center gap-1 rounded-lg border px-2.5 py-1 text-xs font-semibold transition-all ${copied
-          ? "border-[#93f72b]/50 bg-[#93f72b]/15 text-[#8037f4]"
-          : "border-[#8037f4]/25 bg-white text-[#8037f4]/80 shadow-sm hover:border-[#8037f4]/40 hover:bg-[#8037f4]/5 hover:text-[#8037f4]"
+      className={`flex shrink-0 items-center gap-1.5 rounded-md border px-2.5 py-1 text-xs font-bold transition-all ${copied
+          ? "border-[#8037f4]/40 bg-[#8037f4] text-white"
+          : "border-[#93f72b]/40 bg-[#93f72b] text-slate-900 shadow-sm hover:bg-[#7fe015]"
         }`}
     >
-      {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
-      {copied ? "Đã sao chép" : "Sao chép"}
+      {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+      {copied ? "Đã copy" : "Sao chép"}
     </button>
   );
 }
 
-function BankTransferPaymentDetails({ payAmount, transferOrderNum }) {
+function formatTransferCountdown(totalMs) {
+  const ms = Math.max(0, Number(totalMs) || 0);
+  const minutes = Math.floor(ms / 60000);
+  const seconds = Math.floor((ms % 60000) / 1000);
+  return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+}
+
+function parseApiExpiresAt(value) {
+  if (!value) return null;
+  const t = new Date(value).getTime();
+  return Number.isNaN(t) ? null : t;
+}
+
+function applyPaymentExpiryFromApi(setPaymentExpiresAtMs, setPaymentExpired, raw) {
+  const t = parseApiExpiresAt(raw);
+  if (t) {
+    setPaymentExpiresAtMs(t);
+    setPaymentExpired(false);
+  }
+}
+
+function BankTransferPaymentDetails({
+  payAmount,
+  transferOrderNum,
+  expiresInMs,
+  paymentExpired,
+  timeoutMinutes = 15,
+  onRetryOrder,
+}) {
   const bankName = displayBankName(BANK_TRANSFER.bankName);
+  const { value, suffix } = formatAmountParts(payAmount);
 
   return (
-    <div className="flex flex-col gap-3 sm:gap-3.5">
-      <PaymentAmountBlock payAmount={payAmount} />
-
-      <div className="rounded-2xl bg-[#8037f4] px-4 py-3 text-white shadow-[0_8px_24px_rgba(128,55,244,0.28)]">
-        <div className="flex items-start justify-between gap-3">
+    <div className="flex flex-col overflow-hidden rounded-lg border border-[#8037f4]/15 bg-white shadow-[0_8px_32px_rgba(128,55,244,0.08)] ring-1 ring-[#8037f4]/5">
+      <div className="bg-gradient-to-r from-[#faf8ff] via-white to-[#f5fce8]/40 px-3.5 py-3 sm:px-4 sm:py-3.5">
+        <div className="flex flex-wrap items-start justify-between gap-2.5">
           <div className="min-w-0">
-            <p className="text-[11px] font-semibold uppercase tracking-wider text-[#93f72b]">
-              Nội dung chuyển khoản
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-[#8037f4]/80">
+              Số tiền cần thanh toán
             </p>
-            <p className="mt-1 break-all font-mono text-lg font-bold sm:text-xl">{transferOrderNum}</p>
+            <p className="mt-1 text-[1.5rem] font-extrabold leading-none tabular-nums tracking-tight text-[#630ed4] sm:text-[1.75rem]">
+              {value}
+              {suffix}
+            </p>
           </div>
-          <CopyBtn text={transferOrderNum} variant="ghost-light" />
+          {!paymentExpired && typeof expiresInMs === "number" ? (
+            <div className="flex shrink-0 items-center gap-2 rounded border border-[#93f72b]/35 bg-[#93f72b]/10 px-2.5 py-1.5">
+              <Clock className="h-3.5 w-3.5 shrink-0 text-[#630ed4]" aria-hidden />
+              <span className="text-xs text-slate-600">Còn</span>
+              <span className="font-mono text-sm font-bold tabular-nums text-[#630ed4]">
+                {formatTransferCountdown(expiresInMs)}
+              </span>
+            </div>
+          ) : null}
         </div>
       </div>
 
-      <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3.5">
-        <ul className="space-y-2.5 border-l-[3px] border-[#93f72b] pl-4 text-sm">
-          <li>
-            <span className="block text-xs font-medium text-slate-500">Ngân hàng</span>
-            <span className="mt-0.5 block font-medium leading-snug text-slate-800">{bankName}</span>
-          </li>
-          <li>
-            <div className="flex items-start justify-between gap-2">
-              <div>
-                <span className="block text-xs font-medium text-slate-500">Số tài khoản</span>
-                <span className="mt-0.5 block font-mono text-base font-bold text-[#8037f4] sm:text-lg">
-                  {BANK_TRANSFER.accountNumber}
-                </span>
-              </div>
-              {BANK_TRANSFER.accountNumber ? <CopyBtn text={BANK_TRANSFER.accountNumber} /> : null}
-            </div>
-          </li>
-          {BANK_TRANSFER.accountOwner ? (
-            <li>
-              <span className="block text-xs font-medium text-slate-500">Chủ tài khoản</span>
-              <span className="mt-0.5 block font-semibold text-slate-900">{BANK_TRANSFER.accountOwner}</span>
-            </li>
+      <div className="px-3.5 pb-3.5 sm:px-4 sm:pb-4">
+      {paymentExpired ? (
+        <div className="rounded border border-red-200/80 bg-red-50/90 px-4 py-3 text-sm text-red-800">
+          <p className="font-semibold">Đơn đã hết hạn ({timeoutMinutes} phút)</p>
+          <p className="mt-1 text-xs leading-relaxed text-red-700/90">
+            Mã PI cũ không còn hiệu lực. Tạo đơn mới để nhận QR và mã chuyển khoản mới.
+          </p>
+          {onRetryOrder ? (
+            <button
+              type="button"
+              onClick={onRetryOrder}
+              className="mt-3 rounded bg-[#8037f4] px-4 py-2 text-xs font-bold text-white transition-colors hover:bg-[#6b2fd4]"
+            >
+              Tạo đơn mới
+            </button>
           ) : null}
-        </ul>
+        </div>
+      ) : null}
+
+      <div className="my-3 h-px bg-gradient-to-r from-[#93f72b]/30 via-[#8037f4]/20 to-transparent" />
+
+      <div className="overflow-hidden rounded-md border border-[#8037f4]/20">
+        <div className="flex items-center bg-gradient-to-r from-[#630ed4] to-[#8037f4] px-3 py-2">
+          <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-white/95">
+            Nội dung chuyển khoản
+          </p>
+        </div>
+        <div className="flex items-center justify-between gap-3 border-t border-[#8037f4]/10 bg-[#faf8ff] px-3.5 py-3 sm:px-4">
+          <p className="min-w-0 flex-1 break-all font-mono text-xl font-bold tracking-wide text-[#630ed4]">
+            {transferOrderNum}
+          </p>
+          <CopyBtn text={transferOrderNum} variant="lime" />
+        </div>
+      </div>
+
+      <div className="mt-3 overflow-hidden rounded-md border border-[#8037f4]/12 bg-[#faf8ff]/50">
+        <dl className="divide-y divide-[#8037f4]/8 text-sm">
+          <div className="px-3.5 py-2.5">
+            <dt className="text-[11px] font-semibold uppercase tracking-wide text-[#8037f4]/70">Ngân hàng</dt>
+            <dd className="mt-1 font-medium leading-snug text-slate-800">{bankName}</dd>
+          </div>
+          <div className="relative flex items-start justify-between gap-3 bg-white/60 px-3.5 py-2.5 pl-4">
+            <span className="absolute bottom-2 left-0 top-2 w-0.5 rounded-full bg-[#93f72b]" aria-hidden />
+            <div className="min-w-0">
+              <dt className="text-[11px] font-semibold uppercase tracking-wide text-[#8037f4]/70">Số tài khoản</dt>
+              <dd className="mt-1 font-mono text-base font-bold text-[#630ed4] sm:text-lg">
+                {BANK_TRANSFER.accountNumber}
+              </dd>
+            </div>
+            {BANK_TRANSFER.accountNumber ? <CopyBtn text={BANK_TRANSFER.accountNumber} /> : null}
+          </div>
+          {BANK_TRANSFER.accountOwner ? (
+            <div className="px-3.5 py-2.5">
+              <dt className="text-[11px] font-semibold uppercase tracking-wide text-[#8037f4]/70">Chủ tài khoản</dt>
+              <dd className="mt-1 font-semibold text-slate-900">{BANK_TRANSFER.accountOwner}</dd>
+            </div>
+          ) : null}
+        </dl>
+      </div>
       </div>
     </div>
   );
 }
 
-/** QR phóng tối đa tới sát thanh trạng thái (mobile) */
+/** QR VietQR — căn giữa, khung đồng bộ panel thông tin CK */
 function BankTransferQrFocus({ vietQrUrl, vietQrLoadFailed, onQrError, onOpenQrModal }) {
   return (
-    <div className="flex min-h-0 flex-1 flex-col items-center">
+    <div className="flex min-h-0 flex-1 flex-col items-center justify-center lg:py-2">
       {vietQrUrl && !vietQrLoadFailed ? (
         <button
           type="button"
           onClick={onOpenQrModal}
-          className="group flex min-h-0 w-full max-w-[17rem] flex-1 flex-col lg:flex-none"
+          className="group flex w-full max-w-[15.5rem] flex-col sm:max-w-[17rem]"
         >
-          <div className="flex min-h-0 flex-1 flex-col rounded-2xl border border-slate-200 bg-white p-2.5 shadow-sm ring-1 ring-[#8037f4]/10 transition-shadow group-hover:shadow-md group-hover:ring-[#8037f4]/25 sm:p-3 lg:flex-none lg:max-h-[min(32vh,13.5rem)]">
+          <div className="rounded-2xl border border-[#8037f4]/10 bg-white p-3 shadow-[0_8px_28px_rgba(128,55,244,0.08)] ring-1 ring-[#8037f4]/5 transition-all group-hover:shadow-[0_12px_36px_rgba(128,55,244,0.12)] group-hover:ring-[#8037f4]/20">
             <img
               src={vietQrUrl}
               alt="Mã QR VietQR"
-              className="min-h-0 w-full flex-1 rounded-xl object-contain"
+              className="aspect-square w-full rounded-xl object-contain"
               loading="lazy"
               onError={onQrError}
             />
           </div>
-          <span className="mt-1 shrink-0 pb-0.5 text-center text-xs font-medium text-slate-600 group-hover:text-[#8037f4] group-hover:underline lg:mt-2 lg:pb-0">
+          <span className="mt-2.5 text-center text-xs font-medium text-slate-500 transition-colors group-hover:text-[#8037f4]">
             Chạm để phóng to QR
           </span>
         </button>
       ) : vietQrUrl && vietQrLoadFailed ? (
-        <p className="m-auto max-w-xs text-center text-sm text-slate-600">
-          Không tải được QR — xem STK bên dưới.
-        </p>
+        <p className="max-w-xs text-center text-sm text-slate-600">Không tải được QR — dùng thông tin bên cạnh.</p>
       ) : (
-        <p className="m-auto max-w-xs text-center text-sm text-slate-600">
+        <p className="max-w-xs text-center text-sm text-slate-600">
           Thêm <span className="font-mono text-xs">VITE_VIETQR_BANK_ID</span> để hiện mã QR.
         </p>
       )}
@@ -318,20 +389,31 @@ function BankTransferFocusLayout({
   vietQrLoadFailed,
   onQrError,
   onOpenQrModal,
+  expiresInMs,
+  paymentExpired,
+  timeoutMinutes,
+  onRetryOrder,
 }) {
   const paymentDetails = (
-    <BankTransferPaymentDetails payAmount={payAmount} transferOrderNum={transferOrderNum} />
+    <BankTransferPaymentDetails
+      payAmount={payAmount}
+      transferOrderNum={transferOrderNum}
+      expiresInMs={expiresInMs}
+      paymentExpired={paymentExpired}
+      timeoutMinutes={timeoutMinutes}
+      onRetryOrder={onRetryOrder}
+    />
   );
 
   return (
-    <div className="flex h-full min-h-0 flex-1 flex-col lg:grid lg:grid-cols-2 lg:items-center lg:gap-6">
+    <div className="flex flex-col gap-5 lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)] lg:items-start lg:gap-6">
       <BankTransferQrFocus
         vietQrUrl={vietQrUrl}
         vietQrLoadFailed={vietQrLoadFailed}
         onQrError={onQrError}
         onOpenQrModal={onOpenQrModal}
       />
-      <div className="hidden w-full min-h-0 overflow-y-auto lg:block">{paymentDetails}</div>
+      <div className="w-full min-h-0">{paymentDetails}</div>
     </div>
   );
 }
@@ -344,23 +426,19 @@ function TransferMemoCard({ transferOrderNum, payAmount, fmt, large }) {
 
   return (
     <div
-      className={`overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_2px_14px_rgba(15,23,42,0.07)] ${large ? "w-full max-w-md" : ""
+      className={`overflow-hidden rounded-md border border-[#8037f4]/15 shadow-sm ${large ? "w-full max-w-md" : ""
         }`}
     >
-      <div className="flex min-h-[4.25rem]">
-        <div className="relative flex min-w-0 flex-1 flex-col justify-center px-4 py-3 pl-5">
-          <span
-            className="absolute left-0 top-3 bottom-3 w-1 rounded-r-full bg-[#8037f4]"
-            aria-hidden
-          />
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
-            Nội dung chuyển khoản
-          </p>
-          <p className={`mt-1 break-all ${codeClass}`}>{transferOrderNum}</p>
-        </div>
-        <CopyBtn text={transferOrderNum} variant="pane" />
+      <div className="flex items-center bg-gradient-to-r from-[#630ed4] to-[#8037f4] px-3 py-2">
+        <p className="text-[10px] font-bold uppercase tracking-wider text-white/95">Nội dung chuyển khoản</p>
       </div>
-      <div className="flex items-center justify-between gap-3 border-t border-slate-100 bg-slate-50/90 px-4 py-2.5">
+      <div className="bg-[#faf8ff] px-4 py-3">
+        <div className="flex items-center justify-between gap-3">
+          <p className={`min-w-0 flex-1 break-all ${codeClass} text-[#630ed4]`}>{transferOrderNum}</p>
+          <CopyBtn text={transferOrderNum} variant="lime" />
+        </div>
+      </div>
+      <div className="flex items-center justify-between gap-3 border-t border-[#8037f4]/10 bg-[#93f72b]/8 px-4 py-2.5">
         <span className="text-xs font-medium text-slate-600">Số tiền cần chuyển</span>
         <span
           className={`tabular-nums font-bold text-slate-900 ${large ? "text-base sm:text-lg" : "text-sm"}`}
@@ -725,6 +803,10 @@ function BankTransferBlock({
   onQrError,
   onOpenQrModal,
   variant = "default",
+  expiresInMs,
+  paymentExpired,
+  timeoutMinutes,
+  onRetryOrder,
 }) {
   const large = variant === "large";
   const labelClass = large ? "text-xs font-medium text-slate-500" : labelMuted;
@@ -753,12 +835,38 @@ function BankTransferBlock({
         vietQrLoadFailed={vietQrLoadFailed}
         onQrError={onQrError}
         onOpenQrModal={onOpenQrModal}
+        expiresInMs={expiresInMs}
+        paymentExpired={paymentExpired}
+        timeoutMinutes={timeoutMinutes}
+        onRetryOrder={onRetryOrder}
       />
     );
   }
 
   return (
     <div className="mt-4 grid gap-4 md:grid-cols-2">
+      {paymentExpired ? (
+        <div className="md:col-span-2 rounded-xl border border-red-200/80 bg-red-50/90 px-4 py-3 text-sm text-red-800">
+          <p className="font-semibold">Đơn đã hết hạn ({timeoutMinutes ?? 15} phút)</p>
+          {onRetryOrder ? (
+            <button
+              type="button"
+              onClick={onRetryOrder}
+              className="mt-2 rounded-lg bg-[#8037f4] px-3 py-1.5 text-xs font-bold text-white"
+            >
+              Tạo đơn mới
+            </button>
+          ) : null}
+        </div>
+      ) : typeof expiresInMs === "number" ? (
+        <div className="md:col-span-2 flex items-center justify-center gap-2 rounded-full border border-[#8037f4]/12 bg-[#faf8ff] px-4 py-2 text-sm text-slate-600">
+          <Clock className="h-3.5 w-3.5 text-[#8037f4]" aria-hidden />
+          Còn{" "}
+          <strong className="font-mono font-bold tabular-nums text-[#8037f4]">
+            {formatTransferCountdown(expiresInMs)}
+          </strong>
+        </div>
+      ) : null}
       <div className="space-y-3 text-sm">
         <TransferDetailRow label="Ngân hàng" large={false} labelClass={labelClass} valueWrapClass={valueClass}>
           <p className="leading-snug text-slate-800">{displayBankName(BANK_TRANSFER.bankName)}</p>
@@ -877,7 +985,9 @@ export function Checkout() {
   const bookingPosition = searchParams.get("position") ?? "";
   const bookingNote = searchParams.get("note") ?? "";
   const bookingCvFile = searchParams.get("cvFile") || null;
+  const bookingCvFileUrl = searchParams.get("cvFileUrl") || "";
   const bookingJdFile = searchParams.get("jdFile") || null;
+  const bookingJdFileUrl = searchParams.get("jdFileUrl") || "";
   const rebookFrom =
     searchParams.get("rebookFrom") ||
     (typeof sessionStorage !== "undefined" ? sessionStorage.getItem("prointerview_rebook_from") : "") ||
@@ -910,6 +1020,10 @@ export function Checkout() {
   const [bankEnrollmentId, setBankEnrollmentId] = useState(null);
   const [bankSubscriptionPaymentId, setBankSubscriptionPaymentId] = useState(null);
   const [awaitingAutoConfirm, setAwaitingAutoConfirm] = useState(false);
+  const [paymentExpiresAtMs, setPaymentExpiresAtMs] = useState(null);
+  const [expiresInMs, setExpiresInMs] = useState(null);
+  const [paymentExpired, setPaymentExpired] = useState(false);
+  const [transferTimeoutMinutes, setTransferTimeoutMinutes] = useState(15);
   const [paymentSuccessOverlay, setPaymentSuccessOverlay] = useState(null);
   const autoOrderStartedRef = useRef(false);
   const paidRedirectStartedRef = useRef(false);
@@ -993,6 +1107,8 @@ export function Checkout() {
         if (apiRes.success && apiRes.paymentId) {
           if (apiRes.providerRef) setTransferOrderNum(apiRes.providerRef);
           setBankSubscriptionPaymentId(apiRes.paymentId);
+          applyPaymentExpiryFromApi(setPaymentExpiresAtMs, setPaymentExpired, apiRes.paymentExpiresAt);
+          if (apiRes.timeoutMinutes) setTransferTimeoutMinutes(apiRes.timeoutMinutes);
           setAppStep("awaiting_transfer");
           if (!silent) {
             toastApiSuccess(
@@ -1045,6 +1161,11 @@ export function Checkout() {
           const serverOrder = extractOrderPart(apiRes.orderNum || apiRes.enrollment?.paymentRef);
           if (serverOrder) setTransferOrderNum(serverOrder);
           setBankEnrollmentId(String(eid));
+          applyPaymentExpiryFromApi(
+            setPaymentExpiresAtMs,
+            setPaymentExpired,
+            apiRes.paymentExpiresAt || apiRes.enrollment?.paymentExpiresAt,
+          );
           setAppStep("awaiting_transfer");
           if (!silent) toastApiSuccess("Đã tạo ghi danh. Quét QR và chuyển khoản — hệ thống tự xác nhận qua SePay.");
           return { ok: true, enrollmentId: String(eid) };
@@ -1063,6 +1184,13 @@ export function Checkout() {
 
     if (!bookingMentor || !bookingDate || !bookingTime) {
       setCardError("Thiếu thông tin đặt lịch. Hãy quay lại bước đặt lịch với mentor.");
+      return { ok: false };
+    }
+
+    if (!isBookingSlotInFuture(bookingDate, bookingTime)) {
+      const msg = "Không thể đặt lịch trong quá khứ. Vui lòng chọn ngày và giờ trong tương lai.";
+      setCardError(msg);
+      toastApiError(msg);
       return { ok: false };
     }
 
@@ -1090,7 +1218,9 @@ export function Checkout() {
           position: bookingPosition,
           note: bookingNote,
           cvFile: bookingCvFile || "",
+          cvFileUrl: bookingCvFileUrl || "",
           jdFile: bookingJdFile || "",
+          jdFileUrl: bookingJdFileUrl || "",
           price: bookingPrice,
           durationMinutes: 60,
           applyRebookCreditFromBookingId: rebookFrom,
@@ -1119,7 +1249,9 @@ export function Checkout() {
         position: bookingPosition,
         note: bookingNote,
         cvFile: bookingCvFile || "",
+        cvFileUrl: bookingCvFileUrl || "",
         jdFile: bookingJdFile || "",
+        jdFileUrl: bookingJdFileUrl || "",
         price: bookingPrice,
         durationMinutes: 60,
         orderNum: transferOrderNum,
@@ -1130,6 +1262,7 @@ export function Checkout() {
         const serverOrder = extractOrderPart(apiRes.booking?.paymentRef);
         if (serverOrder) setTransferOrderNum(serverOrder);
         setBankBookingId(apiRes.booking.id);
+        applyPaymentExpiryFromApi(setPaymentExpiresAtMs, setPaymentExpired, apiRes.booking?.paymentExpiresAt);
         setAppStep("awaiting_transfer");
         if (!silent) {
           toastApiSuccess(
@@ -1232,8 +1365,38 @@ export function Checkout() {
     });
   };
 
+  const handleRetryTransferOrder = () => {
+    autoOrderStartedRef.current = false;
+    setPaymentExpired(false);
+    setPaymentExpiresAtMs(null);
+    setExpiresInMs(null);
+    setAppStep("checkout");
+    setTransferOrderNum(`PI${Math.floor(Math.random() * 900000 + 100000)}`);
+    setBankBookingId(null);
+    setBankEnrollmentId(null);
+    setBankSubscriptionPaymentId(null);
+    setCardError("");
+  };
+
   useEffect(() => {
-    if (!showBankQr || !isLoggedIn() || payBlocked || orderCreated || autoOrderStartedRef.current) return;
+    if (!paymentExpiresAtMs || paymentConfirmed || paymentExpired) return undefined;
+    const tick = () => {
+      const left = paymentExpiresAtMs - Date.now();
+      if (left <= 0) {
+        setExpiresInMs(0);
+        setPaymentExpired(true);
+        setAwaitingAutoConfirm(false);
+        return;
+      }
+      setExpiresInMs(left);
+    };
+    tick();
+    const iv = window.setInterval(tick, 1000);
+    return () => window.clearInterval(iv);
+  }, [paymentExpiresAtMs, paymentConfirmed, paymentExpired]);
+
+  useEffect(() => {
+    if (!showBankQr || !isLoggedIn() || payBlocked || orderCreated || autoOrderStartedRef.current || paymentExpired) return;
     if (isCourse && !courseInfo) return;
     if (isBooking && (!bookingMentor || !bookingDate || !bookingTime)) return;
     autoOrderStartedRef.current = true;
@@ -1245,6 +1408,7 @@ export function Checkout() {
     showBankQr,
     payBlocked,
     orderCreated,
+    paymentExpired,
     isCourse,
     courseInfo,
     isBooking,
@@ -1256,10 +1420,23 @@ export function Checkout() {
   const pollErrorShownRef = useRef(false);
 
   const runTransferPoll = async () => {
+    if (paymentExpired) return;
     const r = await fetchTransferStatus(transferOrderNum);
     if (r.success && r.status === "paid") {
       handlePaymentSuccess(r);
       return;
+    }
+    if (r.success && r.status === "expired") {
+      setPaymentExpired(true);
+      setAwaitingAutoConfirm(false);
+      setExpiresInMs(0);
+      toastApiError("Đơn thanh toán đã hết hạn. Tạo mã mới để thử lại.");
+      return;
+    }
+    if (r.success) {
+      if (r.paymentExpiresAt) applyPaymentExpiryFromApi(setPaymentExpiresAtMs, setPaymentExpired, r.paymentExpiresAt);
+      if (Number.isFinite(r.expiresInMs)) setExpiresInMs(Math.max(0, r.expiresInMs));
+      if (r.timeoutMinutes) setTransferTimeoutMinutes(r.timeoutMinutes);
     }
     if (!r.success && !pollErrorShownRef.current) {
       pollErrorShownRef.current = true;
@@ -1271,7 +1448,7 @@ export function Checkout() {
   };
 
   useEffect(() => {
-    if (!orderCreated || paymentConfirmed || !showBankQr || !transferOrderNum) {
+    if (!orderCreated || paymentConfirmed || !showBankQr || !transferOrderNum || paymentExpired) {
       setAwaitingAutoConfirm(false);
       return undefined;
     }
@@ -1296,6 +1473,7 @@ export function Checkout() {
     transferOrderNum,
     courseId,
     bankBookingId,
+    paymentExpired,
   ]);
 
   /* ── Checkout UI ── */
@@ -1311,35 +1489,26 @@ export function Checkout() {
 
       <main
         className={`fade-in relative z-[1] w-full ${mainTopPad} ${CUSTOMER_SHELL_GUTTER} ${transferFocus
-            ? `${CUSTOMER_SHELL_MAX} flex max-h-[calc(100svh-4.5rem)] flex-col overflow-hidden pb-3`
+            ? `${CUSTOMER_SHELL_MAX} mx-auto flex flex-1 flex-col pb-8`
             : "mx-auto max-w-6xl flex-1 flex-col pb-10"
           }`}
       >
-        <button
-          type="button"
-          onClick={() => navigate(-1)}
-          className={`group -ml-1 flex shrink-0 items-center gap-1.5 rounded-lg px-2 py-1.5 text-sm font-semibold text-slate-600 transition-colors hover:bg-white hover:text-slate-900 ${transferFocus ? "mb-2" : "mb-6"
-            }`}
-        >
-          <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
-          Quay lại
-        </button>
         {transferFocus ? (
-          <div className="flex min-h-0 flex-1 flex-col">
+          <div className="flex flex-col">
             {!orderCreated ? (
-              <div
-                className={`${checkoutCard} flex flex-1 flex-col items-center justify-center gap-2 p-6 text-center`}
-              >
+              <div className={`${checkoutCard} flex flex-col items-center justify-center gap-2 p-8 text-center`}>
                 <span className="inline-block h-7 w-7 animate-spin rounded-full border-2 border-violet-200 border-t-[#8037f4]" />
                 <p className="text-sm font-medium text-slate-600">Đang tạo đơn chờ chuyển khoản…</p>
               </div>
             ) : (
-              <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-3xl bg-white p-4 shadow-[0_16px_48px_rgba(128,55,244,0.12)] ring-1 ring-[#8037f4]/15 sm:p-5 lg:p-6">
-                <header className="mb-2 shrink-0">
-                  <h1 className="text-xl font-bold text-slate-900 sm:text-2xl">Quét QR hoặc chuyển khoản</h1>
-                  <p className="mt-1 text-sm text-slate-600">Đơn được xác nhận tự động sau khi chuyển khoản.</p>
+              <div className="rounded-lg bg-white p-4 shadow-[0_16px_48px_rgba(128,55,244,0.1)] ring-1 ring-[#8037f4]/10 sm:p-5">
+                <header className="mb-3 shrink-0 border-b border-[#8037f4]/8 pb-3">
+                  <h1 className="text-xl font-bold text-slate-900 sm:text-2xl">Thanh toán chuyển khoản</h1>
+                  <p className="mt-1 text-sm text-slate-600">
+                    Quét QR hoặc chuyển thủ công — hệ thống tự xác nhận qua SePay.
+                  </p>
                 </header>
-                <div className="relative z-0 min-h-0 flex-1 overflow-hidden">
+                <div className="relative z-0">
                   <BankTransferBlock
                     variant="large"
                     hasBank={hasBank}
@@ -1350,34 +1519,25 @@ export function Checkout() {
                     vietQrLoadFailed={vietQrLoadFailed}
                     onQrError={() => setVietQrLoadFailed(true)}
                     onOpenQrModal={() => setQrModalOpen(true)}
+                    expiresInMs={expiresInMs}
+                    paymentExpired={paymentExpired}
+                    timeoutMinutes={transferTimeoutMinutes}
+                    onRetryOrder={handleRetryTransferOrder}
                   />
                 </div>
-                {awaitingAutoConfirm && !paymentConfirmed ? (
-                  <div className="relative z-10 mt-auto shrink-0 border-t border-[#8037f4]/10 bg-white pt-3">
-                    <div
-                      className="flex items-center justify-center gap-2.5 rounded-xl px-4 py-2.5 text-sm font-semibold text-white"
-                      style={{ background: BRAND_PURPLE }}
-                    >
+                {awaitingAutoConfirm && !paymentConfirmed && !paymentExpired ? (
+                  <div className="relative z-10 mt-4 shrink-0">
+                    <div className="flex items-center justify-center gap-2.5 rounded border border-[#8037f4]/12 bg-[#faf8ff] px-4 py-2.5 text-sm font-medium text-[#630ed4]">
                       <span className="relative flex h-2 w-2 shrink-0" aria-hidden>
                         <span
-                          className="absolute inline-flex h-full w-full animate-ping rounded-full opacity-70"
-                          style={{ background: BRAND_LIME }}
+                          className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#93f72b]/70 opacity-75"
                         />
-                        <span
-                          className="relative inline-flex h-2 w-2 rounded-full"
-                          style={{ background: BRAND_LIME }}
-                        />
+                        <span className="relative inline-flex h-2 w-2 rounded-full bg-[#93f72b]" />
                       </span>
                       Đang chờ xác nhận thanh toán…
                     </div>
                   </div>
                 ) : null}
-                <div className="max-h-[36vh] shrink-0 overflow-y-auto border-t border-[#8037f4]/10 pt-3 lg:hidden">
-                  <BankTransferPaymentDetails
-                    payAmount={payAmount}
-                    transferOrderNum={transferOrderNum}
-                  />
-                </div>
                 {cardError ? (
                   <div className="mt-4 flex shrink-0 items-start gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-xs text-red-700">
                     <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
@@ -1441,6 +1601,10 @@ export function Checkout() {
                         vietQrLoadFailed={vietQrLoadFailed}
                         onQrError={() => setVietQrLoadFailed(true)}
                         onOpenQrModal={() => setQrModalOpen(true)}
+                        expiresInMs={expiresInMs}
+                        paymentExpired={paymentExpired}
+                        timeoutMinutes={transferTimeoutMinutes}
+                        onRetryOrder={handleRetryTransferOrder}
                       />
                     </>
                   )}
@@ -1534,9 +1698,9 @@ export function Checkout() {
                         {payMode === PAY_MODE.REBOOK_READY ? "Xác nhận đặt lại" : "Tiếp tục"}
                       </button>
                     ) : null}
-                    {showBankQr && orderCreated && !paymentConfirmed && awaitingAutoConfirm ? (
-                      <div className="flex items-center justify-center gap-2 text-center text-sm text-violet-800">
-                        <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-violet-200 border-t-[#8037f4]" />
+                    {showBankQr && orderCreated && !paymentConfirmed && awaitingAutoConfirm && !paymentExpired ? (
+                      <div className="flex items-center justify-center gap-2 rounded-xl border border-[#8037f4]/12 bg-[#faf8ff] py-2.5 text-center text-sm font-medium text-[#630ed4]">
+                        <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-[#8037f4]/20 border-t-[#8037f4]" />
                         Đang chờ xác nhận thanh toán…
                       </div>
                     ) : null}

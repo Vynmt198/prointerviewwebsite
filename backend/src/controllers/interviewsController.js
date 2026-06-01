@@ -134,19 +134,36 @@ export const InterviewsController = {
       const { id } = req.params;
       const { questionIndex, questionText, transcript, durationSeconds, behavioralData } = req.body;
 
-      const session = await InterviewSession.findOne({ _id: id, userId: req.userId });
-      if (!session) return res.status(404).json({ success: false, error: "Phiên phỏng vấn không tồn tại" });
-      if (session.status !== "in_progress") {
-        return res.status(400).json({ success: false, error: "Phiên phỏng vấn này đã kết thúc" });
-      }
-
       const entry = {
         questionIndex, questionText, transcript, durationSeconds,
         recordedAt: new Date(),
         ...(behavioralData && { behavioralData }),
       };
-      session.answers.push(entry);
-      await session.save();
+
+      // Upsert: cập nhật answer đã có cho questionIndex, hoặc push mới nếu chưa có.
+      // Dùng findOneAndUpdate thay vì load-modify-save để tránh race condition với analyzeFace.
+      let session = await InterviewSession.findOneAndUpdate(
+        { _id: id, userId: req.userId, status: "in_progress", "answers.questionIndex": questionIndex },
+        { $set: { "answers.$": entry } },
+        { new: true },
+      );
+
+      if (!session) {
+        // Chưa có answer cho questionIndex này — push mới.
+        // Filter status: "in_progress" xử lý đồng thời 404 và "đã kết thúc".
+        session = await InterviewSession.findOneAndUpdate(
+          { _id: id, userId: req.userId, status: "in_progress" },
+          { $push: { answers: entry } },
+          { new: true },
+        );
+
+        if (!session) {
+          const exists = await InterviewSession.exists({ _id: id, userId: req.userId });
+          if (!exists) return res.status(404).json({ success: false, error: "Phiên phỏng vấn không tồn tại" });
+          return res.status(400).json({ success: false, error: "Phiên phỏng vấn này đã kết thúc" });
+        }
+      }
+
       res.json({ success: true, session });
     } catch (error) {
       res.status(500).json({ success: false, error: error.message });
@@ -419,6 +436,8 @@ export const InterviewsController = {
       const evalResult = await evaluateTranscripts({
         questions: questionsToUse,
         answers:   answersToEval,
+        userId:    req.userId,
+        sessionId: id,
       });
 
       // Persist to MongoDB
@@ -520,16 +539,14 @@ export const InterviewsController = {
         lightingOk:    !["LIKELY", "VERY_LIKELY"].includes(face.underExposedLikelihood),
       };
 
-      // Persist emotion into session answer (best-effort)
+      // Persist emotion into session answer — atomic $set để không race với updateAnswer PATCH.
+      // Nếu answer cho questionIndex chưa tồn tại (PATCH chưa kịp ghi), updateOne bỏ qua
+      // một cách im lặng; emotion vẫn được trả về FE và lưu qua backup trong completeSession.
       if (typeof questionIndex === "number" && questionIndex >= 0) {
-        const session = await InterviewSession.findOne({ _id: id, userId: req.userId });
-        if (session) {
-          const answer = session.answers.find((a) => a.questionIndex === questionIndex);
-          if (answer) {
-            answer.behavioralData = { ...(answer.behavioralData?.toObject?.() ?? answer.behavioralData ?? {}), emotion };
-            await session.save();
-          }
-        }
+        await InterviewSession.updateOne(
+          { _id: id, userId: req.userId, "answers.questionIndex": questionIndex },
+          { $set: { "answers.$.behavioralData.emotion": emotion } },
+        ).catch(() => {}); // fire-and-forget: không block response nếu DB lỗi
       }
 
       logger.info("analyze_face_ok", { userId: req.userId, sessionId: id, questionIndex, joy: emotion.joy });

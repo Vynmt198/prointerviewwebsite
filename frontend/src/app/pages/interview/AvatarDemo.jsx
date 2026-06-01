@@ -4,7 +4,6 @@ import { AvatarInterviewerSimple } from "../../components/interview/AvatarInterv
 import { 
   Play, 
   Pause, 
-  ArrowLeft, 
   Mic as Microphone, 
   Video as VideoCamera, 
   Brain, 
@@ -93,19 +92,6 @@ export function AvatarDemo() {
       }}>
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
-            <button
-              onClick={() => navigate('/interview')}
-              className="flex items-center gap-2 px-4 py-2 rounded-xl font-semibold transition-all hover:brightness-95"
-              style={{ 
-                background: "rgba(128, 55, 244,0.08)", 
-                color: "#8037f4",
-                border: "1px solid rgba(128, 55, 244,0.15)"
-              }}
-            >
-              <ArrowLeft className="w-4 h-4" />
-              <span className="text-sm">Quay lại</span>
-            </button>
-            
             <div className="flex items-center gap-3 px-5 py-2.5 rounded-xl" style={{
               background: "linear-gradient(135deg, rgba(128, 55, 244,0.06), rgba(139, 77, 255,0.03))",
               border: "1px solid rgba(128, 55, 244,0.12)"

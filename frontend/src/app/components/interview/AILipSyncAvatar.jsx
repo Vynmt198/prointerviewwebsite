@@ -120,6 +120,7 @@ export function AILipSyncAvatar({
   didStatus,
   attachVideo,
   size = 200,
+  sourceImageUrl = null,  // Cloudinary portrait URL — hiện khi không dùng D-ID WebRTC
 }) {
   const getOpenness  = useSpeechWave(isSpeaking);
   const openness     = useAnimFrame(getOpenness);
@@ -130,8 +131,10 @@ export function AILipSyncAvatar({
 
   // Only show D-ID video when it actually has frames — prevents black-circle when
   // WebRTC is "connected/speaking" but stream data hasn't arrived yet.
-  const isVideoMode  = (didStatus === "connected" || didStatus === "speaking") && videoHasData;
-  const isConnecting = didStatus === "connecting";
+  const isVideoMode    = (didStatus === "connected" || didStatus === "speaking") && videoHasData;
+  const isConnecting   = didStatus === "connecting";
+  // Portrait mode: hiện ảnh Cloudinary khi không có D-ID WebRTC (TTS fallback)
+  const isPortraitMode = Boolean(sourceImageUrl) && !isVideoMode;
 
   /* ── Geometry ─────────────────────────────────────────── */
   const R  = size / 2;
@@ -277,16 +280,49 @@ export function AILipSyncAvatar({
             <stop offset="60%"  stopColor="#1a1a3e" />
             <stop offset="100%" stopColor="#0a0a1a" />
           </radialGradient>
+
+          {/* Portrait vignette gradient (dùng khi sourceImageUrl set) */}
+          <linearGradient id={`${uid}portraitGrad`} x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%"   stopColor="#0d0820" stopOpacity="0" />
+            <stop offset="100%" stopColor="#0d0820" stopOpacity="0.55" />
+          </linearGradient>
         </defs>
 
         {/* ── Ambient aura (outside face circle) ─────────── */}
         <circle cx={cx} cy={cy} r={fR + size * 0.22}
           fill={`url(#${uid}aura)`} />
 
+        {/* ── Portrait mode: ảnh Cloudinary HR thật ───────── */}
+        {isPortraitMode && (
+          <g clipPath={`url(#${uid}clip)`}>
+            {/* Dark background khi ảnh đang load */}
+            <rect x={0} y={0} width={size} height={size} fill="#0d0820" />
+            {/* Portrait image */}
+            <image
+              href={sourceImageUrl}
+              x={0} y={0} width={size} height={size}
+              preserveAspectRatio="xMidYMid slice"
+            />
+            {/* Subtle gradient vignette ở dưới cho chữ HR name */}
+            <rect
+              x={0} y={size * 0.62} width={size} height={size * 0.38}
+              fill={`url(#${uid}portraitGrad)`}
+            />
+            {/* Speaking indicator — breathing glow khi đang nói */}
+            {isSpeaking && (
+              <circle
+                cx={cx} cy={cy} r={fR}
+                fill={`rgba(139,77,255,${(0.10 + openness * 0.18).toFixed(3)})`}
+              />
+            )}
+          </g>
+        )}
+
         {/* ══════════════════════════════════════════════════
             FACE — all elements clipped to circle
+            (chỉ hiện khi không có portrait và không có D-ID)
         ══════════════════════════════════════════════════ */}
-        <g clipPath={`url(#${uid}clip)`}>
+        <g clipPath={`url(#${uid}clip)`} style={{ display: isPortraitMode ? 'none' : undefined }}>
 
           {/* Background: dark studio */}
           <rect x={0} y={0} width={size} height={size} fill="#0d0820" />
@@ -607,7 +643,7 @@ export function AILipSyncAvatar({
           </text>
         </g>
 
-        {/* Speaking waveform bars */}
+        {/* Speaking waveform bars — cartoon mode + portrait mode */}
         {isSpeaking && (
           <g transform={`translate(${cx}, ${cy + fR + size * 0.068})`}>
             {Array.from({ length: 9 }, (_, i) => {

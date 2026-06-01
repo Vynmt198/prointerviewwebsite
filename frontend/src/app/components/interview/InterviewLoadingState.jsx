@@ -5,6 +5,7 @@ const STEPS = [
   { key: "analyzing_role",       label: "Phân tích vai trò & competencies", duration: 5 },
   { key: "generating_questions", label: "Tạo câu hỏi phỏng vấn",           duration: 30 },
   { key: "creating_session",     label: "Chuẩn bị phiên phỏng vấn",        duration: 3 },
+  { key: "pregenerating_videos", label: "Tạo video HR lipsync",             duration: 70 },
 ];
 
 // Map real loadingStep values to visual positions.
@@ -15,6 +16,7 @@ const STEP_INDEX = {
   extracting_jd:        0,
   generating_questions: 2,
   creating_session:     3,
+  pregenerating_videos: 4,
 };
 
 export function InterviewLoadingState({ currentStep }) {

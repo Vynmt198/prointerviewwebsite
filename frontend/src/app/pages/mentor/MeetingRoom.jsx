@@ -172,13 +172,6 @@ export function MeetingRoom() {
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <button
               type="button"
-              onClick={() => navigate(-1)}
-              className="px-8 py-3 bg-white/10 text-white rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-white/15"
-            >
-              Quay lại
-            </button>
-            <button
-              type="button"
               onClick={() => navigate(isMentor ? "/mentor/dashboard" : `/session/${sessionId}`)}
               className="px-8 py-3 bg-[#93f72b] text-slate-900 rounded-2xl text-xs font-black uppercase tracking-widest"
             >
