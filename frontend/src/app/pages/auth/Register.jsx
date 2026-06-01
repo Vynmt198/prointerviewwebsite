@@ -222,17 +222,34 @@ export function Register() {
                     {showPass ? <EyeSlash className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                   </button>
                 </div>
-                {form.password.length > 0 && (
-                  <div className="mt-1 flex items-center gap-1.5">
+                {/* Chừa chỗ cố định từ đầu; chỉ hiện thanh + nhãn khi đã gõ MK */}
+                <div
+                  className="mt-1 flex min-h-[1.125rem] items-center gap-1.5"
+                  aria-live="polite"
+                  aria-hidden={form.password.length === 0}
+                >
+                  <div
+                    className={`flex flex-1 items-center gap-1.5 transition-opacity duration-200 ${
+                      form.password.length > 0 ? "opacity-100" : "pointer-events-none opacity-0"
+                    }`}
+                  >
                     {[1, 2, 3].map((lvl) => (
-                      <div key={lvl} className="h-0.5 flex-1 rounded-full transition-all duration-300"
-                        style={{ background: strength >= lvl ? STRENGTH_COLORS[strength - 1] : "#E5E7EB" }} />
+                      <div
+                        key={lvl}
+                        className="h-0.5 flex-1 rounded-full transition-all duration-300"
+                        style={{
+                          background: strength >= lvl ? STRENGTH_COLORS[strength - 1] : "#E5E7EB",
+                        }}
+                      />
                     ))}
-                    <span className="ml-0.5 text-xs font-semibold" style={{ color: STRENGTH_COLORS[strength - 1] }}>
-                      {STRENGTH_LABELS[strength - 1]}
+                    <span
+                      className="ml-0.5 min-w-[4.5rem] text-xs font-semibold"
+                      style={{ color: STRENGTH_COLORS[strength - 1] }}
+                    >
+                      {form.password.length > 0 ? STRENGTH_LABELS[strength - 1] : ""}
                     </span>
                   </div>
-                )}
+                </div>
               </div>
 
 
@@ -299,7 +316,7 @@ export function Register() {
 
             {/* Mascot + sparkle — giữ vị trí cũ; pointer-events-none để không chặn ô mật khẩu */}
             <div
-              className="pointer-events-none absolute bottom-0 right-0 z-20 w-full overflow-visible -translate-y-[33.05rem] max-md:-translate-y-[33.55rem] sm:-translate-y-[32.9rem]"
+              className="pointer-events-none absolute bottom-0 right-0 z-20 w-full overflow-visible -translate-y-[33.75rem] max-md:-translate-y-[34.25rem] sm:-translate-y-[33.6rem]"
               aria-hidden
             >
               <img
@@ -310,10 +327,10 @@ export function Register() {
                 className="pointer-events-none absolute bottom-0 right-[-2.35rem] z-10 h-[17rem] w-[17rem] max-h-none max-w-none origin-bottom-right -rotate-[2deg] object-contain object-bottom max-md:right-[-1.45rem] max-md:h-[14rem] max-md:w-[14rem] sm:right-[-2.85rem] sm:h-[18.25rem] sm:w-[18.25rem] md:right-[-3.25rem]"
               />
               <StickerLimeSparkle
-                className="absolute bottom-[3rem] right-[0.2rem] z-30 h-[4.5rem] w-[4.5rem] rotate-[15deg] max-md:bottom-[1rem] max-md:right-[2.2rem] sm:bottom-[4rem] sm:right-[-1.8rem]"
+                className="absolute bottom-[2.6rem] right-[0.2rem] z-30 h-[4.5rem] w-[4.5rem] rotate-[15deg] max-md:bottom-[0.6rem] max-md:right-[2.2rem] sm:bottom-[3.6rem] sm:right-[-1.8rem]"
               />
               <StickerLimeSparkle
-                className="absolute bottom-[6.3rem] right-[12.2rem] z-30 h-11 w-11 -rotate-[10deg] max-md:bottom-[3.3rem] max-md:right-[13.2rem] sm:bottom-[8.3rem] sm:right-[10.2rem]"
+                className="absolute bottom-[5.9rem] right-[12.2rem] z-30 h-11 w-11 -rotate-[10deg] max-md:bottom-[2.9rem] max-md:right-[13.2rem] sm:bottom-[7.9rem] sm:right-[10.2rem]"
               />
             </div>
           </div>
