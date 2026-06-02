@@ -286,6 +286,18 @@ export const InterviewsController = {
   generateQuestions: async (req, res) => {
     try {
       const { cvText = "", jdText = "", position = "", field = "", level = "" } = req.body;
+
+      // Quota pre-check BEFORE calling LLM — prevents token waste when user has no quota left.
+      // createSession also checks quota, but that runs after the LLM call. Checking here ensures
+      // we never consume expensive LLM tokens for a request that will be rejected at session creation.
+      const userForQuota = await User.findById(req.userId).select("quota").lean();
+      if (!userForQuota) {
+        return res.status(404).json({ success: false, error: "Người dùng không tồn tại" });
+      }
+      if (userForQuota.quota.interviewUsed >= userForQuota.quota.interviewLimit) {
+        return res.status(403).json({ success: false, error: "quota_exceeded", message: "Bạn đã hết lượt phỏng vấn thử. Vui lòng nâng cấp gói." });
+      }
+
       logger.info("generate_questions_start", { userId: req.userId, position, field, cvTextLen: cvText.length });
 
       // Layer 3: Accumulation — lấy few-shot từ MongoDB (sẽ giàu dần theo thời gian)
