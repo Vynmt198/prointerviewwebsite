@@ -469,28 +469,39 @@ export function Interview() {
     }
 
     // Bước cuối: pre-generate video HR lipsync (D-ID Express API).
-    // Chỉ chạy nếu backend báo D-ID đang enabled, tránh flash loading vô ích.
+    // Guards:
+    //   1. sessionId phải tồn tại — nếu session creation thất bại thì room sẽ show error page,
+    //      không có lý do tiêu D-ID credits cho videos không ai dùng được.
+    //   2. Timeout 45s — nếu D-ID render chậm, graceful fallback sang TTS thay vì chặn user.
     let videoUrls = null;
-    try {
-      const configRes = await fetch("/api/ai/config");
-      const configBody = configRes.ok ? await configRes.json().catch(() => ({})) : {};
-      const didEnabled = configBody?.providers?.avatar?.did === true;
+    if (sessionId) {
+      try {
+        const configRes = await fetch("/api/ai/config");
+        const configBody = configRes.ok ? await configRes.json().catch(() => ({})) : {};
+        const didEnabled = configBody?.providers?.avatar?.did === true;
 
-      if (didEnabled) {
-        setLoadingStep("pregenerating_videos");
-        const questionTexts = (questions ?? []).map(q =>
-          typeof q === "string" ? q : (q.question ?? "")
-        ).filter(Boolean);
+        if (didEnabled) {
+          setLoadingStep("pregenerating_videos");
+          const questionTexts = (questions ?? []).map(q =>
+            typeof q === "string" ? q : (q.question ?? "")
+          ).filter(Boolean);
 
-        if (questionTexts.length > 0) {
-          const pregenResult = await pregenerateInterviewVideos(questionTexts, { gender: hrGender });
-          if (pregenResult.success && pregenResult.videoUrls?.some(Boolean)) {
-            videoUrls = pregenResult.videoUrls;
+          if (questionTexts.length > 0) {
+            const pregenTimeout = new Promise((resolve) =>
+              setTimeout(() => resolve({ success: false, timedOut: true }), 45_000)
+            );
+            const pregenResult = await Promise.race([
+              pregenerateInterviewVideos(questionTexts, { gender: hrGender }),
+              pregenTimeout,
+            ]);
+            if (pregenResult.success && pregenResult.videoUrls?.some(Boolean)) {
+              videoUrls = pregenResult.videoUrls;
+            }
           }
         }
+      } catch {
+        // D-ID chưa set hoặc lỗi mạng — phỏng vấn vẫn chạy với TTS fallback
       }
-    } catch {
-      // D-ID chưa set hoặc lỗi mạng — phỏng vấn vẫn chạy với TTS fallback
     }
 
     setLoadingStep(null);
