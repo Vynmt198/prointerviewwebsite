@@ -157,10 +157,12 @@ async function createDIDTalk(avatarImageUrl, audioUrl, questionText, opts = {}) 
 /**
  * Poll D-ID talk job đến khi status=done.
  * @param {string} talkId
- * @param {number} [timeoutMs=120000]
+ * @param {number} [timeoutMs=35000] - 35s đủ cho D-ID render bình thường (5-15s);
+ *   nếu job vẫn chưa xong sau 35s thì đang stuck/throttled — fail fast để tránh
+ *   block request và không tốn thêm time chờ.
  * @returns {string} result_url (MP4 video URL)
  */
-async function pollDIDTalk(talkId, timeoutMs = 120_000) {
+async function pollDIDTalk(talkId, timeoutMs = 35_000) {
   const deadline = Date.now() + timeoutMs;
   let interval   = 2000;
 
@@ -235,8 +237,15 @@ export async function generateVideoForQuestion(questionText, opts = {}) {
 }
 
 /**
- * Pre-generate videos cho nhiều câu hỏi song song.
- * Trả mảng kết quả theo thứ tự questions[].
+ * Pre-generate videos cho nhiều câu hỏi.
+ *
+ * Strategy: probe-first để tránh tạo nhiều D-ID job khi service không hoạt động.
+ *   1. Chạy Q1 trước (probe) — nếu D-ID timeout/error thì chỉ tốn 1 job thay vì 5.
+ *   2. Nếu Q1 thành công → Q2…N chạy song song (D-ID đang ổn, parallel an toàn).
+ *   3. Nếu Q1 fail → abort ngay, trả toàn null — không tạo thêm job nào.
+ *
+ * Trước đây dùng Promise.all cho tất cả: D-ID throttle/stuck → 5 job × 120s = 2 phút
+ * waste + 5× credit. Với probe-first: chỉ 1 job × 35s → fail fast, tiết kiệm 80% credit.
  *
  * @param {string[]} questions - Danh sách câu hỏi text
  * @param {object} [opts]     - Shared options (gender, voiceId, avatarImageUrl)
@@ -244,10 +253,27 @@ export async function generateVideoForQuestion(questionText, opts = {}) {
  * @returns {Promise<Array<{videoUrl: string, fromCache: boolean, error?: string}>>}
  */
 export async function pregenerateVideos(questions, opts = {}, onProgress) {
-  const total   = questions.length;
-  let   done    = 0;
+  const total = questions.length;
+  if (total === 0) return [];
+  let done = 0;
 
-  const tasks = questions.map(async (questionText) => {
+  // Step 1: Probe — chạy Q1 trước để xác nhận D-ID đang hoạt động
+  let firstResult;
+  try {
+    firstResult = await generateVideoForQuestion(questions[0], opts);
+    done++;
+    onProgress?.(done, total);
+  } catch (err) {
+    logger.error("pregen_video_failed", { questionText: questions[0].slice(0, 80), error: err.message });
+    logger.warn("pregen_aborted_early", { reason: "probe_failed", error: err.message });
+    // D-ID không hoạt động — không tạo thêm job, trả về toàn null ngay lập tức
+    return questions.map(() => ({ videoUrl: null, fromCache: false, error: err.message }));
+  }
+
+  if (total === 1) return [firstResult];
+
+  // Step 2: D-ID đang ổn → Q2…N chạy song song
+  const remainingTasks = questions.slice(1).map(async (questionText) => {
     try {
       const result = await generateVideoForQuestion(questionText, opts);
       done++;
@@ -261,8 +287,8 @@ export async function pregenerateVideos(questions, opts = {}, onProgress) {
     }
   });
 
-  // Parallel execution — tất cả task chạy đồng thời
-  return Promise.all(tasks);
+  const remainingResults = await Promise.all(remainingTasks);
+  return [firstResult, ...remainingResults];
 }
 
 /**
