@@ -12,7 +12,7 @@ import { requireLoginNavigate } from "../../utils/authGate";
 import { getUser, isLoggedIn } from "../../utils/auth";
 import { fetchCurrentPlan } from "../../utils/plansApi";
 import { CUSTOMER_SHELL_GUTTER, CUSTOMER_SHELL_MAX } from "../../components/layout/customerShellLayout";
-import { CustomerPageHeader, CustomerPageSplitTitle } from "../../components/layout/CustomerPageHeader";
+import { CustomerPageHeader } from "../../components/layout/CustomerPageHeader";
 import { PRICING_SUBTITLE, PRICING_FAQ } from "../../constants/brandVoice";
 
 function PricingFaqAnswer({ item }) {
@@ -215,10 +215,12 @@ export function Pricing() {
             centered
             className="mb-8 sm:mb-10"
             title={
-              <CustomerPageSplitTitle
-                accent="Sẵn sàng hơn cho"
-                rest="mọi buổi phỏng vấn"
-              />
+              <>
+                Sẵn sàng hơn cho{" "}
+                <span className="text-[#8037f4]">
+                  mọi buổi phỏng vấn
+                </span>
+              </>
             }
             subtitle={PRICING_SUBTITLE}
             subtitleClassName="mt-3 max-w-2xl text-base font-medium leading-relaxed text-violet-700/90"

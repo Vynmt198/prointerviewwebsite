@@ -106,25 +106,17 @@ export async function fetchAllReviewsForCourse(courseId) {
 }
 
 export async function fetchMyMentorCourses() {
-  if (!hasAuthCredentials()) {
-    return { success: false, error: "Chưa đăng nhập.", courses: [], summary: null };
-  }
+  if (!hasAuthCredentials()) return { success: false, error: "Chưa đăng nhập.", courses: [] };
   try {
     const res = await authFetch("/api/courses/me", {
       method: "GET",
       headers: { ...jsonHeaders },
     });
     const body = await res.json().catch(() => ({}));
-    if (!res.ok) {
-      return { success: false, error: body.error || `Lỗi ${res.status}`, courses: [], summary: null };
-    }
-    return {
-      success: true,
-      courses: body.courses || [],
-      summary: body.summary ?? null,
-    };
+    if (!res.ok) return { success: false, error: body.error || `Lỗi ${res.status}`, courses: [] };
+    return { success: true, courses: body.courses || [] };
   } catch {
-    return { success: false, error: "Không kết nối được backend.", courses: [], summary: null };
+    return { success: false, error: "Không kết nối được backend.", courses: [] };
   }
 }
 

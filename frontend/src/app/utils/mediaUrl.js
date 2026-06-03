@@ -2,7 +2,8 @@ import { API_BASE_URL } from "./api.js";
 
 export const DEFAULT_AVATAR = "https://api.dicebear.com/7.x/avataaars/svg?seed=ProInterview";
 
-export const DEFAULT_COURSE_THUMB = "/mascot-courses-ready.png";
+export const DEFAULT_COURSE_THUMB =
+  "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&q=80";
 
 const LOCAL_BACKEND = /^https?:\/\/(?:127\.0\.0\.1|localhost)(?::\d+)?/i;
 

@@ -1,6 +1,5 @@
 import { User, toPublicUser } from "../models/User.js";
 import { Mentor } from "../models/Mentor.js";
-import { activateMentorCommissionPolicy } from "./mentorCommissionService.js";
 
 /**
  * Admin đặt role `customer` | `mentor` cho user khác (không đụng tài khoản admin).
@@ -61,10 +60,6 @@ export async function setRoleByAdmin(adminId, targetUserId, newRole) {
         },
       },
     ).catch(() => {});
-    const mentorDoc = await Mentor.findOne({ userId: target._id }).select("_id").lean();
-    if (mentorDoc?._id) {
-      await activateMentorCommissionPolicy(mentorDoc._id).catch(() => {});
-    }
   }
 
   return { ok: true, user: toPublicUser(target) };

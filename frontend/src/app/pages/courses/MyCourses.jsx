@@ -8,7 +8,7 @@ import { enrollmentAccessGranted } from "../../utils/enrollmentAccess.js";
 import { mediaSrc, DEFAULT_COURSE_THUMB, avatarSrc } from "../../utils/mediaUrl";
 import { ImageWithFallback } from "../../components/figma/ImageWithFallback";
 import { MentorPageShell } from "../../components/mentor/MentorPageShell";
-import { CustomerPageHeader, CustomerPageSplitTitle } from "../../components/layout/CustomerPageHeader";
+import { CustomerPageHeader } from "../../components/layout/CustomerPageHeader";
 import { CUSTOMER_SHELL_GUTTER, CUSTOMER_SHELL_MAX } from "../../components/layout/customerShellLayout";
 
 function CourseCard({ item, onDetails }) {
@@ -139,7 +139,11 @@ export function MyCourses() {
       <div className={`relative z-10 flex flex-col pb-10 pt-8 sm:pt-10 ${CUSTOMER_SHELL_GUTTER}`}>
         <div className={`${CUSTOMER_SHELL_MAX} w-full`}>
           <CustomerPageHeader
-            title={<CustomerPageSplitTitle accent="Khóa học" rest="của bạn" />}
+            title={
+              <>
+                Khóa học <span className="text-[#6d2fd6]">của bạn</span>
+              </>
+            }
             subtitle="Tiếp tục xem lại bài cũ và theo dõi tiến độ trong các khóa đã mua."
             className="mb-6"
           />

@@ -12,7 +12,6 @@ const Toaster = ({ ...props }) => {
       className="toaster group"
       toastOptions={{
         classNames: {
-          icon: "[&_svg]:!text-[#93f72b] group-data-[type=error]:[&_svg]:!text-[#8037f4]",
           toast: TOAST_CLASS,
           title: "!font-bold !text-[#1a1b23]",
           description: "!text-slate-600",
@@ -20,7 +19,7 @@ const Toaster = ({ ...props }) => {
           cancelButton: "!bg-violet-50 !text-[#6d2fd6]",
           closeButton:
             "!border-violet-200 !bg-violet-50 !text-[#6d2fd6] hover:!bg-violet-100",
-          success: "!border-[#93f72b]/45 !bg-[#93f72b]/12 !text-slate-900 !shadow-[#93f72b]/15",
+          success: "!border-emerald-200/80 !shadow-emerald-500/10",
           error: "!border-violet-300/80",
           warning: "!border-amber-200/80",
           info: "!border-l-4 !border-l-[#6d2fd6] !from-violet-50/95 !to-white !bg-gradient-to-r",
@@ -30,9 +29,9 @@ const Toaster = ({ ...props }) => {
         "--normal-bg": "#ffffff",
         "--normal-text": "#1a1b23",
         "--normal-border": "rgba(128, 55, 244, 0.22)",
-        "--success-bg": "rgba(147, 247, 43, 0.12)",
-        "--success-border": "rgba(147, 247, 43, 0.45)",
-        "--success-text": "#1a1b23",
+        "--success-bg": "#f0fdf4",
+        "--success-border": "rgba(34, 197, 94, 0.35)",
+        "--success-text": "#166534",
         "--error-bg": "#faf5ff",
         "--error-border": "rgba(128, 55, 244, 0.35)",
         "--error-text": "#8037f4",

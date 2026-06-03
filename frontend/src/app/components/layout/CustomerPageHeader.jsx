@@ -1,20 +1,5 @@
 import React from "react";
 
-/** Phần đầu tiêu đề H1: tím brand */
-export const CUSTOMER_TITLE_ACCENT = "font-extrabold text-[#6d2fd6]";
-/** Phần sau tiêu đề H1: đen */
-export const CUSTOMER_TITLE_REST = "font-extrabold text-[#1a1b23]";
-
-/** Tiêu đề 2 tông: tím → đen (đồng bộ Mentors, Courses, Pricing, …) */
-export function CustomerPageSplitTitle({ accent, rest }) {
-  return (
-    <>
-      <span className={CUSTOMER_TITLE_ACCENT}>{accent}</span>{" "}
-      <span className={CUSTOMER_TITLE_REST}>{rest}</span>
-    </>
-  );
-}
-
 /** Pill badge + tiêu đề — đồng bộ CV hub / Pricing / các trang customer */
 export function CustomerPageBadge({ children, pulse = true, className = "" }) {
   return (

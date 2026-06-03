@@ -6,7 +6,7 @@ import { MentorPageShell } from "../../components/mentor/MentorPageShell";
 import { fetchMentorReviews } from "../../utils/mentorApi";
 import { replyToReview } from "../../utils/reviewsApi";
 import { toastApiError, tryApi } from "../../utils/apiToast";
-import { avatarSrc, DEFAULT_AVATAR } from "../../utils/mediaUrl";
+import { avatarSrc } from "../../utils/mediaUrl";
 import {
   mentorPageTitle,
   mentorPageSubtitle,
@@ -27,6 +27,7 @@ function filterAriaLabel(value, stars) {
   return `Lọc đánh giá ${stars} sao`;
 }
 
+const DEFAULT_AVATAR = "https://i.pravatar.cc/120?img=22";
 
 function formatReviewDate(value) {
   if (!value) return "—";
@@ -64,7 +65,7 @@ export function MentorReviews() {
             avatar: avatarSrc(r.mentee?.avatar) || DEFAULT_AVATAR,
           },
           position: r.position || "Học viên",
-          company: r.company || "",
+          company: r.company || "ProInterview",
           menteeReview: {
             rating: Number(r.rating || 0),
             comment: r.comment || "",

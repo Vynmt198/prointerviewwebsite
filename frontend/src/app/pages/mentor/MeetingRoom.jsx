@@ -25,7 +25,6 @@ import {
   isBookingInLiveWindow,
 } from "../../utils/meetingLinks";
 import { toastApiError, toastApiSuccess } from "../../utils/apiToast";
-import { sessionTypeLabel } from "../../utils/sessionTypeLabels";
 
 export function MeetingRoom() {
   const { sessionId } = useParams();
@@ -99,8 +98,14 @@ export function MeetingRoom() {
           customerName: b.customerName || b.user?.name || b.customer?.name || "Học viên",
         });
         // Lưu metadata booking để pre-fill KnowledgeCaptureModal
+        const SESSION_TYPE_LABEL = {
+          mock_interview:    "Mock Interview",
+          cv_review:         "CV Review",
+          career_consulting: "Career Consulting",
+          custom:            "",
+        };
         setBookingMeta({
-          role: sessionTypeLabel(b.sessionType, ""),
+          role:  SESSION_TYPE_LABEL[b.sessionType] ?? "",
           field: "",
         });
         setJoined(true);

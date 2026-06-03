@@ -3,7 +3,6 @@ import { sendMentorFeedbackEmail } from "./emailService.js";
 import fs from "fs";
 import { Booking } from "../models/Booking.js";
 import { Mentor } from "../models/Mentor.js";
-import { Review } from "../models/Review.js";
 import { User } from "../models/User.js";
 import { Notification } from "../models/Notification.js";
 import { Payment } from "../models/Payment.js";
@@ -16,7 +15,6 @@ import { resolveStoredUploadUrl } from "../utils/resolveStoredUploadUrl.js";
 import { isBookingInLiveWindow, isBookingSlotInFuture } from "../utils/bookingSchedule.js";
 import { newPaymentExpiresAt } from "../utils/transferPaymentExpiry.js";
 import { expireBookingTransferIfNeeded } from "./transferPaymentExpiryService.js";
-import { resolveBookingPlatformFeeRate } from "./mentorCommissionService.js";
 
 /**
  * Chính sách hủy (User) — đồng bộ `frontend/src/app/constants/bookingPolicy.js`:
@@ -664,7 +662,7 @@ export async function createBooking(userId, body) {
     : null;
   if (st && typeof st.price === "number" && st.price > 0) basePrice = st.price;
 
-  const { rate: platformRate } = resolveBookingPlatformFeeRate(mentor);
+  const platformRate = parseFeeRate(process.env.BOOKING_PLATFORM_FEE_RATE, 0.15);
   /** VAT tách trong giá hiển thị (mentor.price), không cộng thêm lên số khách CK. */
   const vatRate = parseFeeRate(process.env.BOOKING_VAT_RATE, 0);
 
@@ -759,7 +757,6 @@ export async function createBooking(userId, body) {
     meetingLink,
     status,
     price,
-    platformFeeRate: platformRate,
     platformFee,
     vat,
     totalAmount,
@@ -927,7 +924,6 @@ export function toPublicBooking(doc, mentorLean) {
     meetingLink: b.meetingLink ?? "",
     status: b.status,
     price: b.price,
-    platformFeeRate: b.platformFeeRate ?? null,
     platformFee: b.platformFee,
     vat: b.vat,
     totalAmount: b.totalAmount,
@@ -1129,33 +1125,7 @@ export async function listMentorBookings(mentorUserId) {
     .populate({ path: "userId", select: "name email avatar" })
     .lean();
 
-  const bookingIds = rows.map((r) => r._id).filter(Boolean);
-  const reviewRows =
-    bookingIds.length > 0
-      ? await Review.find({
-          bookingId: { $in: bookingIds },
-          targetType: "mentor",
-          isVisible: { $ne: false },
-        })
-          .select("bookingId rating comment")
-          .lean()
-      : [];
-  const reviewByBookingId = new Map(
-    reviewRows.map((r) => [String(r.bookingId), r]),
-  );
-
-  return {
-    ok: true,
-    bookings: rows.map((row) => {
-      const booking = toPublicBooking(row);
-      const rev = reviewByBookingId.get(String(row._id));
-      if (rev) {
-        booking.menteeRating = Number(rev.rating || 0);
-        booking.reviewComment = String(rev.comment || "").trim();
-      }
-      return booking;
-    }),
-  };
+  return { ok: true, bookings: rows.map((row) => toPublicBooking(row)) };
 }
 
 export async function getMyBooking(userId, rawId) {
@@ -1185,27 +1155,15 @@ export async function getMentorBooking(mentorUserId, rawId) {
 
   const row = await Booking.findOne({ _id: rawId, mentorId: mentor._id })
     .populate({ path: "userId", select: "name email avatar" })
-    .populate({
-      path: "mentorId",
+    .populate({ 
+      path: "mentorId", 
       select: "name title company avatar publicId userId",
       populate: { path: "userId", select: "email" }
     })
     .lean();
 
   if (!row) return { ok: false, status: 404, error: "Không tìm thấy booking." };
-  const booking = toPublicBooking(row);
-  const review = await Review.findOne({
-    bookingId: row._id,
-    targetType: "mentor",
-    isVisible: { $ne: false },
-  })
-    .select("rating comment")
-    .lean();
-  if (review) {
-    booking.menteeRating = Number(review.rating || 0);
-    booking.reviewComment = String(review.comment || "").trim();
-  }
-  return { ok: true, booking };
+  return { ok: true, booking: toPublicBooking(row) };
 }
 
 /**

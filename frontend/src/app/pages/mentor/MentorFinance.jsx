@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import { useNavigate } from "react-router";
 import { motion, AnimatePresence } from "motion/react";
 import {
+  CircleDollarSign as CurrencyCircleDollar,
   ArrowUpRight,
   ArrowDownRight,
   History,
@@ -10,7 +11,6 @@ import {
   Wallet,
   PieChart as ChartPie,
   Calendar,
-  BookOpen,
   CheckCircle2 as CheckCircle,
   Clock,
   Download,
@@ -24,7 +24,6 @@ import { getUser, getDisplayName } from "../../utils/auth";
 import { MentorPageShell } from "../../components/mentor/MentorPageShell";
 import { fetchMentorFinance, requestMentorPayout, updateMentorPayoutAccount } from "../../utils/mentorApi";
 import { toastApiError, toastApiSuccess } from "../../utils/apiToast";
-import { AppSelect } from "../../components/ui/AppSelect";
 
 const MENTOR_FINANCE_EXTRA_CSS = `
         .glass-tag {
@@ -85,13 +84,6 @@ function isValidBankName(name) {
   if (!n || n.length < 2 || n.length > 80) return false;
   if (SUPPORTED_BANKS.includes(n)) return true;
   return /^[\p{L}\p{N}\s.&()-]+$/u.test(n);
-}
-
-function percentLabel(rate) {
-  const n = Number(rate || 0) * 100;
-  if (!Number.isFinite(n)) return "0%";
-  const rounded = Math.round(n * 10) / 10;
-  return Number.isInteger(rounded) ? `${rounded}%` : `${rounded.toFixed(1)}%`;
 }
 
 /* ── Withdrawal Modal ────────────────────────────────────────────────── */
@@ -207,7 +199,7 @@ function WithdrawalModal({
                       <p className="mt-1 text-sm text-white/85">
                         Số dư khả dụng{" "}
                         <span className="font-bold text-[#93f72b]">
-                          {balance.toLocaleString("vi-VN")} Đ
+                          {balance.toLocaleString("vi-VN")} ₫
                         </span>
                       </p>
                     </div>
@@ -229,20 +221,22 @@ function WithdrawalModal({
                   <div className="space-y-3">
                     <div>
                       <label className={withdrawFieldLabel}>Ngân hàng</label>
-                      <AppSelect
-                        size="md"
-                        value={bankSelect || undefined}
-                        onValueChange={(v) => {
-                          setBankSelect(v);
-                          if (v !== BANK_OTHER) setCustomBankName("");
+                      <select
+                        value={bankSelect}
+                        onChange={(e) => {
+                          setBankSelect(e.target.value);
+                          if (e.target.value !== BANK_OTHER) setCustomBankName("");
                         }}
-                        placeholder="Chọn ngân hàng"
-                        triggerClassName={withdrawFieldInput}
-                        options={[
-                          ...SUPPORTED_BANKS.map((bank) => ({ value: bank, label: bank })),
-                          { value: BANK_OTHER, label: "Ngân hàng khác…" },
-                        ]}
-                      />
+                        className={withdrawFieldInput}
+                      >
+                        <option value="">Chọn ngân hàng</option>
+                        {SUPPORTED_BANKS.map((bank) => (
+                          <option key={bank} value={bank}>
+                            {bank}
+                          </option>
+                        ))}
+                        <option value={BANK_OTHER}>Ngân hàng khác…</option>
+                      </select>
                       {bankSelect === BANK_OTHER ? (
                         <div className="mt-3">
                           <label className={withdrawFieldLabel}>Tên ngân hàng</label>
@@ -270,7 +264,7 @@ function WithdrawalModal({
                         placeholder="8–19 chữ số"
                         value={accountNumber}
                         onChange={(e) => setAccountNumber(e.target.value.replace(/\D/g, ""))}
-                        className={`${withdrawFieldInput} tabular-nums tracking-wide`}
+                        className={`${withdrawFieldInput} font-mono tracking-wide`}
                       />
                     </div>
                   </div>
@@ -310,18 +304,18 @@ function WithdrawalModal({
                       className={`${withdrawFieldInput} py-3 pr-12 text-lg font-bold text-[#630ed4] placeholder:font-medium placeholder:text-slate-400`}
                     />
                     <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-sm font-semibold text-slate-400">
-                      Đ
+                      ₫
                     </span>
                   </div>
                   <p className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-slate-500">
                     <span>
                       Rút:{" "}
                       <strong className="font-semibold text-slate-800">
-                        {amountValue.toLocaleString("vi-VN")} Đ
+                        {amountValue.toLocaleString("vi-VN")} ₫
                       </strong>
                     </span>
                     <span className="hidden text-slate-300 sm:inline">·</span>
-                    <span>Tối thiểu 100.000 Đ</span>
+                    <span>Tối thiểu 100.000 ₫</span>
                   </p>
                 </section>
 
@@ -379,13 +373,10 @@ export function MentorFinance() {
   const availableBalance = Number(finance?.availableBalance || 0);
   const pendingBalance = Number(finance?.pendingBalance || 0);
   const totalEarned = Number(finance?.totalEarned || 0);
-  const bookingIncome = Number(finance?.incomeBreakdown?.booking || 0);
-  const courseIncome = Number(finance?.incomeBreakdown?.course || 0);
   const payoutAccount = finance?.payoutAccount || {};
   const payoutAccountMasked = finance?.payoutAccountMasked || "";
   const payoutAccountOwnerName = finance?.payoutAccountOwnerName || getDisplayName(user, "Mentor");
   const transactions = Array.isArray(finance?.history) ? finance.history : [];
-  const commissionPolicy = finance?.commissionPolicy || null;
   const totalSessions = Number(finance?.totalSessions ?? 0);
   const filteredTransactions = transactions.filter((tx) => {
     if (activeTab === "all") return true;
@@ -397,34 +388,36 @@ export function MentorFinance() {
     transactionSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
   const payoutStatusMeta = (status) => {
-    const purpleTag =
-      "rounded-full border border-[#8037f4] bg-[#8037f4]/12 px-4 py-1.5 font-semibold text-[#8037f4]";
-    const greenTag =
-      "rounded-full border border-[#93f72b] bg-[#93f72b]/12 px-4 py-1.5 font-semibold text-[#93f72b]";
     if (status === "paid") {
-      return { text: "Đã chuyển khoản", className: greenTag };
+      return {
+        text: "Đã chuyển khoản",
+        className: "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20",
+      };
     }
     if (status === "approved") {
-      return { text: "Đã duyệt — chờ chuyển khoản", className: purpleTag };
+      return {
+        text: "Đã duyệt — chờ chuyển khoản",
+        className: "bg-amber-500/10 text-amber-400 border border-amber-500/20",
+      };
     }
     if (status === "completed") {
-      return { text: "Hoàn tất", className: greenTag };
+      return {
+        text: "Hoàn tất",
+        className: "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20",
+      };
     }
     if (status === "failed") {
-      return { text: "Từ chối", className: purpleTag };
+      return {
+        text: "Từ chối",
+        className: "bg-red-500/10 text-red-400 border border-red-500/20",
+      };
     }
-    return { text: "Đang xử lý", className: purpleTag };
+    return {
+      text: "Đang xử lý",
+      className: "bg-orange-400/10 text-orange-400 border border-orange-400/20",
+    };
   };
-  const txDisplayTitle = (tx) => {
-    const raw = String(tx?.description || "").toLowerCase();
-    if (tx?.type === "income") {
-      if (raw.includes("booking")) return "Thu nhập buổi tư vấn";
-      if (raw.includes("khóa học")) return "Thu nhập khóa học";
-      return "Thu nhập";
-    }
-    if (raw.includes("rút tiền")) return "Yêu cầu rút tiền";
-    return tx?.description || "Giao dịch";
-  };
+
   return (
     <MentorPageShell bottomPad="pb-32" extraStyles={MENTOR_FINANCE_EXTRA_CSS}>
       <div className="relative z-10 mx-auto max-w-7xl px-10 pb-10">
@@ -447,9 +440,9 @@ export function MentorFinance() {
               </div>
               <div className="relative z-10">
                  <p className="mb-2 text-sm font-semibold text-violet-700">Số dư khả dụng</p>
-                 <div className="mb-10 flex items-baseline gap-4">
-                    <h2 className="text-xl font-black tracking-tight text-slate-900 sm:text-4xl">{availableBalance.toLocaleString()}</h2>
-                    <p className="mb-1 text-lg font-black text-zinc-500">Đ</p>
+                 <div className="flex items-baseline gap-4 mb-10">
+                    <h2 className="text-xl font-bold sm:text-2xl tracking-tight text-slate-900 sm:text-4xl">{availableBalance.toLocaleString()}</h2>
+                    <p className="text-lg font-semibold text-zinc-500 mb-1">₫</p>
                  </div>
                  <div className="flex flex-wrap gap-4">
                     <button 
@@ -464,30 +457,6 @@ export function MentorFinance() {
                        Xem lịch sử rút
                     </button>
                  </div>
-                 <div className="mt-6 grid grid-cols-1 gap-3">
-                    <div className="rounded-2xl border border-violet-200/70 bg-gradient-to-br from-white to-violet-50/40 px-4 py-3 shadow-sm">
-                      <div className="flex items-center justify-between gap-3">
-                        <p className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500">Từ đặt lịch</p>
-                        <span className="flex h-7 w-7 items-center justify-center rounded-full bg-violet-100 text-violet-700">
-                          <Calendar size={14} />
-                        </span>
-                      </div>
-                      <p className="mt-2 text-[28px] font-black leading-none tracking-tight text-slate-900">
-                        {bookingIncome.toLocaleString("vi-VN")} Đ
-                      </p>
-                    </div>
-                    <div className="rounded-2xl border border-violet-200/70 bg-gradient-to-br from-white to-violet-50/40 px-4 py-3 shadow-sm">
-                      <div className="flex items-center justify-between gap-3">
-                        <p className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500">Từ khóa học</p>
-                        <span className="flex h-7 w-7 items-center justify-center rounded-full bg-violet-100 text-violet-700">
-                          <BookOpen size={14} />
-                        </span>
-                      </div>
-                      <p className="mt-2 text-[28px] font-black leading-none tracking-tight text-slate-900">
-                        {courseIncome.toLocaleString("vi-VN")} Đ
-                      </p>
-                    </div>
-                 </div>
               </div>
            </div>
 
@@ -496,7 +465,7 @@ export function MentorFinance() {
               <div className="glass-card p-10 flex items-center justify-between border-t border-t-secondary/20">
                  <div>
                     <p className="mb-1 text-sm font-semibold text-zinc-500">Chờ giải ngân</p>
-                    <h3 className="text-2xl font-black tracking-tight text-slate-900 sm:text-3xl">{pendingBalance.toLocaleString()} Đ</h3>
+                    <h3 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">{pendingBalance.toLocaleString()} ₫</h3>
                     <p className="mt-2 text-xs text-zinc-600">Dự kiến sau 7 ngày</p>
                  </div>
                  <div className="w-14 h-14 rounded-2xl bg-secondary/10 flex items-center justify-center text-secondary">
@@ -507,59 +476,18 @@ export function MentorFinance() {
               <div className="glass-card p-10 flex items-center justify-between">
                  <div>
                     <p className="mb-1 text-sm font-semibold text-zinc-500">Tổng thu nhập</p>
-                    <h3 className="text-2xl font-black tracking-tight text-slate-900 sm:text-3xl">{totalEarned.toLocaleString()} Đ</h3>
-                    <p className="mt-2 text-xs text-zinc-500">Tổng cộng từ đặt lịch và khóa học (sau phí nền tảng).</p>
+                    <h3 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">{totalEarned.toLocaleString()} ₫</h3>
+                    <p className="mt-2 flex items-center gap-2 text-xs text-zinc-600">
+                       <ArrowUpRight size={14} className="text-violet-700" />
+                       {totalSessions > 0
+                         ? `Theo ${totalSessions} buổi đã hoàn thành + học phí khóa (sau phí nền tảng)`
+                         : "Tổng giá trị buổi hoàn thành & khóa học (sau phí nền tảng)"}
+                    </p>
                  </div>
                  <div className="w-14 h-14 rounded-2xl bg-primary-fixed/10 flex items-center justify-center text-violet-700">
                     <ChartPie size={28} />
                  </div>
               </div>
-              {commissionPolicy ? (
-                <div className="glass-card p-6 border border-violet-200 bg-violet-50/60">
-                  <p className="text-sm font-bold text-violet-900">Chính sách phí hiện tại</p>
-                  <div className="mt-3 rounded-2xl border border-violet-200/70 bg-white p-2.5 text-sm">
-                    <div className="flex items-center justify-between gap-3 rounded-xl px-3 py-2">
-                      <div>
-                        <p className="font-semibold text-slate-800">Booking</p>
-                        {commissionPolicy.bookingRateSource === "mentor_custom" ? (
-                          <p className="text-[11px] text-violet-700">Mức riêng theo hợp đồng</p>
-                        ) : null}
-                      </div>
-                      <span className="rounded-full border border-violet-200 bg-violet-50 px-3 py-1 text-sm font-bold text-violet-800">
-                        {percentLabel(commissionPolicy.bookingRate)}
-                      </span>
-                    </div>
-                    <div className="mx-3 h-px bg-violet-100" />
-                    <div className="flex items-center justify-between gap-3 rounded-xl px-3 py-2">
-                      <div>
-                        <p className="font-semibold text-slate-800">Khóa học</p>
-                        {commissionPolicy.courseRateSource === "mentor_custom" ? (
-                          <p className="text-[11px] text-violet-700">Mức riêng theo hợp đồng</p>
-                        ) : null}
-                      </div>
-                      <span className="rounded-full border border-violet-200 bg-violet-50 px-3 py-1 text-sm font-bold text-violet-800">
-                        {percentLabel(commissionPolicy.courseRate)}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="mt-2 text-xs text-violet-900">
-                    {commissionPolicy.isEarlyMentorActive && commissionPolicy.earlyMentorExpiresAt ? (
-                      <p>
-                        <span className="font-semibold">Ưu đãi Early Mentor</span>
-                        {" "}đến{" "}
-                        {new Date(commissionPolicy.earlyMentorExpiresAt).toLocaleDateString("vi-VN")}
-                      </p>
-                    ) : (
-                      <p>
-                        <span className="font-semibold">Mức phí tiêu chuẩn</span>
-                        {commissionPolicy.isEarlyMentor && commissionPolicy.earlyMentorExpiresAt
-                          ? ` (Early Mentor kết thúc ${new Date(commissionPolicy.earlyMentorExpiresAt).toLocaleDateString("vi-VN")})`
-                          : ""}
-                      </p>
-                    )}
-                  </div>
-                </div>
-              ) : null}
            </div>
         </div>
 
@@ -595,22 +523,16 @@ export function MentorFinance() {
                        <th className="px-10 py-6 text-right">Chi tiết</th>
                     </tr>
                  </thead>
-                 <tbody className="divide-y divide-slate-100">
-                    {filteredTransactions.map((tx) => (
-                      <tr key={tx.id} className="transition-colors hover:bg-slate-50">
+                 <tbody className="divide-y divide-white/5">
+                    {filteredTransactions.map((tx, i) => (
+                      <tr key={i} className="hover:bg-slate-50 transition-colors group">
                          <td className="px-10 py-8">
                             <div className="flex items-center gap-4">
-                               <div
-                                 className={`flex h-10 w-10 items-center justify-center rounded-full ${
-                                   tx.type === "income"
-                                     ? "border border-[#93f72b]/40 bg-[#93f72b]/15 text-[#8037f4]"
-                                     : "border border-[#8037f4]/35 bg-[#8037f4]/12 text-[#8037f4]"
-                                 }`}
-                               >
-                                  {tx.type === "income" ? <ArrowUpRight size={18} strokeWidth={2.5} /> : <ArrowDownRight size={18} strokeWidth={2.5} />}
+                               <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${tx.type === 'income' ? 'bg-primary-fixed/10 text-violet-700' : 'bg-orange-500/10 text-orange-400'}`}>
+                                  {tx.type === 'income' ? <ArrowUpRight size={18} /> : <ArrowDownRight size={18} />}
                                </div>
                                <div>
-                                  <p className="text-sm font-semibold text-slate-900">{txDisplayTitle(tx)}</p>
+                                  <p className="text-sm font-semibold text-slate-900">{tx.description}</p>
                                   <p className="text-xs text-zinc-500">Mã: {tx.id}</p>
                                </div>
                             </div>
@@ -619,21 +541,21 @@ export function MentorFinance() {
                             <p className="text-xs font-black text-slate-900">{new Date(tx.date).toLocaleDateString("vi-VN")}</p>
                          </td>
                          <td className="px-10 py-8">
-                            <p className={`text-sm font-black tracking-tight ${tx.type === "income" ? "text-violet-700" : "text-slate-700"}`}>
-                              {tx.type === "income" ? "+" : "-"}
-                              {Number(tx.amount || 0).toLocaleString("vi-VN")} Đ
+                            <p className={`text-sm font-black tracking-tight ${tx.type === 'income' ? 'text-violet-700' : 'text-slate-700'}`}>
+                               {tx.type === 'income' ? '+' : '-'}{tx.amount.toLocaleString()} ₫
                             </p>
                          </td>
                          <td className="px-10 py-8">
-                            <span className={`glass-tag ${payoutStatusMeta(tx.status).className}`}>
-                              {payoutStatusMeta(tx.status).text}
-                            </span>
+                            <div className="flex">
+                               <span className={`glass-tag ${payoutStatusMeta(tx.status).className}`}>
+                                  {payoutStatusMeta(tx.status).text}
+                               </span>
+                            </div>
                          </td>
                          <td className="px-10 py-8 text-right">
                             <button
-                               type="button"
                                onClick={() => setSelectedTx(tx)}
-                               className="ml-auto flex h-10 w-10 items-center justify-center rounded-xl bg-slate-50 text-zinc-600 transition-all hover:text-slate-900"
+                               className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-zinc-600 hover:text-slate-900 transition-all ml-auto"
                             >
                                <ArrowRight size={16} />
                             </button>
@@ -723,82 +645,70 @@ export function MentorFinance() {
               initial={{ scale: 0.95, y: 20, opacity: 0 }}
               animate={{ scale: 1, y: 0, opacity: 1 }}
               exit={{ scale: 0.95, y: 20, opacity: 0 }}
-              className="w-full max-w-lg rounded-2xl border border-[#8037f4]/20 bg-white p-8 shadow-xl"
+              className="glass-card w-full max-w-lg p-8 border border-slate-200"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="mb-6 flex items-start justify-between gap-3">
-                <h3 className="text-2xl font-bold text-[#630ed4]">Chi tiết giao dịch</h3>
-                <span className={`glass-tag ${payoutStatusMeta(selectedTx.status).className}`}>
+              <div className="flex items-start justify-between mb-6">
+                <h3 className="text-2xl font-bold text-slate-900">Chi tiết giao dịch</h3>
+                <span
+                  className={`glass-tag ${payoutStatusMeta(selectedTx.status).className}`}
+                >
                   {payoutStatusMeta(selectedTx.status).text}
                 </span>
               </div>
 
-              <div className="mb-5 rounded-2xl border border-[#8037f4]/20 bg-[#8037f4]/5 px-5 py-4">
-                <p className="mb-2 text-sm font-semibold text-[#8037f4]">Số tiền giao dịch</p>
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 px-5 py-4 mb-5">
+                <p className="mb-2 text-sm font-semibold text-zinc-500">Số tiền giao dịch</p>
                 <p
-                  className={`text-xl font-black tracking-tight sm:text-2xl ${
-                    selectedTx.type === "income" ? "text-[#630ed4]" : "text-slate-900"
+                  className={`text-xl font-black sm:text-2xl tracking-tight ${
+                    selectedTx.type === "income" ? "text-violet-700" : "text-orange-300"
                   }`}
                 >
                   {selectedTx.type === "income" ? "+" : "-"}
-                  {Number(selectedTx.amount || 0).toLocaleString("vi-VN")} Đ
+                  {selectedTx.amount.toLocaleString()} ₫
                 </p>
               </div>
 
               <div className="space-y-3 text-sm">
-                <p className="text-slate-900">
-                  <span className="font-semibold text-[#8037f4]">Mã giao dịch:</span> {selectedTx.id}
-                </p>
-                <p className="text-slate-900">
-                  <span className="font-semibold text-[#8037f4]">Loại:</span>{" "}
-                  {selectedTx.type === "income" ? "Thu nhập" : "Rút tiền"}
-                </p>
-                <p className="text-slate-900">
-                  <span className="font-semibold text-[#8037f4]">Mô tả:</span> {txDisplayTitle(selectedTx)}
-                </p>
-                <p className="text-slate-900">
-                  <span className="font-semibold text-[#8037f4]">Thời gian:</span>{" "}
-                  {new Date(selectedTx.date).toLocaleString("vi-VN")}
-                </p>
+                <p className="text-zinc-300"><span className="text-zinc-500">Mã giao dịch:</span> {selectedTx.id}</p>
+                <p className="text-zinc-300"><span className="text-zinc-500">Loại:</span> {selectedTx.type === "income" ? "Thu nhập" : "Rút tiền"}</p>
+                <p className="text-zinc-300"><span className="text-zinc-500">Mô tả:</span> {selectedTx.description}</p>
+                <p className="text-zinc-300"><span className="text-zinc-500">Thời gian:</span> {new Date(selectedTx.date).toLocaleString("vi-VN")}</p>
                 {selectedTx.reviewedAt ? (
-                  <p className="text-slate-900">
-                    <span className="font-semibold text-[#8037f4]">Thời gian xử lý:</span>{" "}
-                    {new Date(selectedTx.reviewedAt).toLocaleString("vi-VN")}
+                  <p className="text-zinc-300">
+                    <span className="text-zinc-500">Thời gian xử lý:</span> {new Date(selectedTx.reviewedAt).toLocaleString("vi-VN")}
                   </p>
                 ) : null}
                 {selectedTx.paidAt ? (
-                  <p className="text-slate-900">
-                    <span className="font-semibold text-[#8037f4]">Thời điểm đã chi:</span>{" "}
+                  <p className="text-zinc-300">
+                    <span className="text-zinc-500">Thời điểm đã chi:</span>{" "}
                     {new Date(selectedTx.paidAt).toLocaleString("vi-VN")}
                   </p>
                 ) : null}
                 {selectedTx.transferRef ? (
-                  <p className="text-slate-900">
-                    <span className="font-semibold text-[#8037f4]">Tham chiếu chuyển khoản:</span> {selectedTx.transferRef}
+                  <p className="text-zinc-300">
+                    <span className="text-zinc-500">Tham chiếu chuyển khoản:</span> {selectedTx.transferRef}
                   </p>
                 ) : null}
                 {selectedTx.providerRef ? (
-                  <p className="text-slate-900">
-                    <span className="font-semibold text-[#8037f4]">Mã tham chiếu:</span> {selectedTx.providerRef}
-                  </p>
+                  <p className="text-zinc-300"><span className="text-zinc-500">Mã tham chiếu:</span> {selectedTx.providerRef}</p>
                 ) : null}
                 {selectedTx.rejectReason ? (
-                  <div className="rounded-xl border border-[#8037f4]/25 bg-[#8037f4]/8 p-3">
-                    <p className="text-sm font-semibold text-[#630ed4]">Lý do từ chối</p>
-                    <p className="mt-1 text-sm text-slate-800">{selectedTx.rejectReason}</p>
+                  <div className="rounded-xl border border-red-500/25 bg-red-500/10 p-3">
+                    <p className="text-sm font-semibold text-red-700">Lý do từ chối</p>
+                    <p className="mt-1 text-sm text-red-100">{selectedTx.rejectReason}</p>
                   </div>
                 ) : null}
                 {selectedTx.note ? (
-                  <div className="rounded-xl border border-[#93f72b]/35 bg-[#93f72b]/15 p-3">
-                    <p className="text-sm font-semibold text-[#630ed4]">Ghi chú xử lý</p>
-                    <p className="mt-1 text-sm text-slate-800">{selectedTx.note}</p>
+                  <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+                    <p className="text-sm font-semibold text-zinc-600">Ghi chú xử lý</p>
+                    <p className="mt-1 text-sm text-zinc-200">{selectedTx.note}</p>
                   </div>
                 ) : null}
               </div>
               <button
-                type="button"
                 onClick={() => setSelectedTx(null)}
-                className="mt-8 w-full rounded-xl bg-[#93f72b] py-3 text-sm font-bold text-[#120B2E] shadow-[0_8px_24px_rgba(147,247,43,0.35)] transition hover:brightness-105"
+                className="mt-8 w-full rounded-xl bg-white py-3 text-sm font-semibold text-slate-900 shadow-xl"
               >
                 Đóng
               </button>
