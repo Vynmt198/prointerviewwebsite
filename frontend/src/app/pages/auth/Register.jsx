@@ -31,10 +31,10 @@ const STRENGTH_LABELS = ["Yếu", "Trung bình", "Mạnh"];
 
 const BRAND_LIME = "#93f72b";
 
-/** Nền trang (bên ngoài) — trắng ngà, không #fff tinh */
+/** Nền trang (bên ngoài), trắng ngà, không #fff tinh */
 const AUTH_PAGE_BG = "bg-transparent";
 
-/** Ô form — tím brand (cùng Login) */
+/** Ô form, tím brand (cùng Login) */
 const AUTH_CARD_CLS =
   "rounded-3xl border border-white/15 bg-[#8037f4] p-8 shadow-[0_16px_48px_rgba(15,23,42,0.18)] sm:p-10";
 
@@ -49,7 +49,7 @@ const AUTH_CTA_STYLE = {
   color: "#0f172a",
   boxShadow: "0 8px 22px rgba(147, 247, 43, 0.35)",
 };
-/** % = tâm sticker; kích thước lệch — nằm trong vùng inset của lớp nền */
+/** % = tâm sticker; kích thước lệch, nằm trong vùng inset của lớp nền */
 const AUTH_STICKS = [
   { x: 14, y: 22, size: 26 },
   { x: 82, y: 20, size: 36 },
@@ -176,7 +176,7 @@ export function Register() {
           </button>
         </div>
 
-        {/* Form + mascot — mép trên thẻ căn với /login (items-start + slot giống login) */}
+        {/* Form + mascot, mép trên thẻ căn với /login (items-start + slot giống login) */}
         <div className="relative z-10 flex flex-1 items-start justify-center overflow-x-visible overflow-hidden px-6 pb-8 pt-[5.8rem] sm:px-10 sm:pt-[6.3rem]">
           <div className="relative mx-auto w-full max-w-md shrink-0 overflow-visible -mt-[7.5rem]">
             <div
@@ -329,7 +329,7 @@ export function Register() {
 
             </div>
 
-            {/* Mascot + sparkle — giữ vị trí cũ; pointer-events-none để không chặn ô mật khẩu */}
+            {/* Mascot + sparkle, giữ vị trí cũ; pointer-events-none để không chặn ô mật khẩu */}
             <div
               className="pointer-events-none absolute bottom-0 right-0 z-20 w-full overflow-visible -translate-y-[35.05rem] max-md:-translate-y-[35.55rem] sm:-translate-y-[34.9rem]"
               aria-hidden

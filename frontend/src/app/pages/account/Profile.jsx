@@ -153,23 +153,8 @@ function syncCvFromWorkHistory(cv) {
 }
 
 function expandCvSectionsWithContent(cv) {
-  const next = {};
-  if (String(cv?.intro ?? "").trim()) next.intro = true;
-  if (
-    hasWorkHistoryContent(cv?.workHistory) ||
-    String(cv?.workExperience ?? "").trim() ||
-    String(cv?.title ?? "").trim()
-  ) {
-    next.work = true;
-  }
-  if (hasEducationHistoryContent(cv?.educationHistory) || String(cv?.education ?? "").trim()) {
-    next.education = true;
-  }
-  if (String(cv?.extracurricular ?? "").trim()) next.extracurricular = true;
-  if (String(cv?.awards ?? "").trim()) next.awards = true;
-  if (String(cv?.skillsCerts ?? "").trim()) next.skills = true;
-  if (Number(cv?.targetRate) > 0) next.mentorExtra = true;
-  return next;
+  // Return empty object to keep all sections closed by default as requested
+  return {};
 }
 
 async function persistCvProfileToUser(cv) {
@@ -207,7 +192,7 @@ function getCvSectionCopy(isMentor) {
     },
     education: {
       placeholder:
-        "Thêm trường, bằng cấp, chuyên ngành và thời gian học — có thể nhiều mốc.",
+        "Thêm trường, bằng cấp, chuyên ngành và thời gian học, có thể nhiều mốc.",
     },
     extracurricular: {
       placeholder: "Thêm hoạt động, câu lạc bộ hoặc dự án ngoài lớp bạn từng tham gia.",
@@ -632,7 +617,7 @@ export function Profile() {
           text-align: left;
           background: transparent;
           border: none;
-          cursor: pointer;
+           cursor: pointer;
           transition: opacity 0.2s ease;
         }
         .profile-page .profile-cv-accordion-trigger:hover {
@@ -652,6 +637,7 @@ export function Profile() {
           padding: 0 0 0.9rem;
           border-bottom: 1px solid rgba(128, 55, 244, 0.1);
         }
+
         .profile-page .profile-cv-static-body {
           margin-top: 0.65rem;
         }

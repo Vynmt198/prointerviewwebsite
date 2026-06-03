@@ -345,7 +345,7 @@ export function AIGenderSelection() {
                     </IconFrame>
                   </div>
                   <p className="mb-1 text-base font-bold text-slate-900">HR Nữ</p>
-                  <p className="text-xs font-medium text-slate-500">Sarah — AI Interviewer</p>
+                  <p className="text-xs font-medium text-slate-500">Sarah, AI Interviewer</p>
                 </button>
               </div>
             </div>

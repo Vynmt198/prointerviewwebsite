@@ -13,7 +13,7 @@ const HOME_MENTORS = HOME_DEMO_MENTORS;
 const FEATURED = HOME_MENTORS[0];
 const FEATURED_ALT = HOME_MENTORS[1];
 
-/** Linh vật mentor — 3 pose riêng, chia nhau các ô trên Home */
+/** Linh vật mentor, 3 pose riêng, chia nhau các ô trên Home */
 export const HOME_MENTOR_MASCOTS = {
   cv: "/mascot-mentor-avatar-cv.png?v=2",
   headset: "/mascot-mentor-avatar-headset.png?v=2",
@@ -28,25 +28,25 @@ const MENTOR_CARD_MASCOTS = {
   fallback: HOME_MENTOR_MASCOTS.fallback,
 };
 
-/** Mỗi ô một con — composite gốc (không đổi khi chỉ swap avatar thẻ) */
+/** Mỗi ô một con, composite gốc (không đổi khi chỉ swap avatar thẻ) */
 const PANEL_MASCOTS = [
   {
     src: "/mascot-mentor-find.png?v=4",
     fallback: HOME_MENTOR_MASCOTS.fallback,
     className:
-      "mentor-sticker-glow max-h-[8.95rem] w-auto max-w-[88%] translate-x-[6rem] translate-y-[0.4rem] object-contain object-bottom sm:max-h-[9.95rem]",
+      "mentor-sticker-glow max-h-[10.25rem] w-auto max-w-[88%] translate-x-[6rem] translate-y-[0.6rem] object-contain object-bottom sm:max-h-[11.25rem]",
   },
   {
     src: "/mascot-mentor-booking.png?v=4",
     fallback: HOME_MENTOR_MASCOTS.fallback,
     className:
-      "mentor-sticker-glow max-h-[11.65rem] w-auto max-w-[92%] -translate-y-[8rem] object-contain object-bottom sm:max-h-[12.65rem] sm:-translate-y-[8.5rem]",
+      "mentor-sticker-glow max-h-[12.95rem] w-auto max-w-[92%] -translate-y-[7.8rem] object-contain object-bottom sm:max-h-[13.95rem] sm:-translate-y-[8.3rem]",
   },
   {
     src: "/mascot-mentor-feedback.png?v=5",
     fallback: HOME_MENTOR_MASCOTS.fallback,
     className:
-      "mentor-sticker-glow max-h-[10rem] w-auto max-w-[98%] -translate-x-[2.7rem] translate-y-[1.15rem] object-contain object-bottom sm:max-h-[10.25rem] sm:-translate-x-[3.2rem] sm:translate-y-[0.35rem]",
+      "mentor-sticker-glow max-h-[10.3rem] w-auto max-w-[98%] -translate-x-[3.3rem] translate-y-[1.55rem] object-contain object-bottom sm:max-h-[12.55rem] sm:-translate-x-[3.8rem] sm:translate-y-[1.95rem]",
   },
 ];
 
@@ -121,12 +121,12 @@ function MentorMiniCard({ mentor, mascotSrc, className }) {
   );
 }
 
-/** Ô 1 — thẻ xếp chồng (kiểu Upzi trái) */
+/** Ô 1, thẻ xếp chồng (kiểu Upzi trái) */
 function FindMentorVisual() {
   if (!FEATURED) return null;
   return (
     <div className="relative z-[1] flex h-full flex-col px-3 pb-2 pt-8 sm:px-3.5 sm:pt-9">
-      <div className="relative mx-auto w-[88%] flex-1 -translate-y-[1.15rem] pb-[5.75rem] sm:pb-[6.5rem]">
+      <div className="relative mx-auto w-[88%] flex-1 -translate-y-[1.15rem] pb-[5.75rem] sm:pb-[6.5rem] origin-top scale-105">
         <div className="absolute left-0 right-4 top-0 z-[1] rotate-[-2deg] rounded-2xl bg-white p-2 shadow-lg">
           <div className="flex items-center gap-1.5 rounded-lg bg-violet-50 px-2 py-1">
             <Search className="h-3 w-3 text-[#6d2fd6]" />
@@ -167,7 +167,7 @@ function FindMentorVisual() {
   );
 }
 
-/** Ô 2 — mock đặt lịch thành công + gấu giữa */
+/** Ô 2, mock đặt lịch thành công + gấu giữa */
 function BookingVisual() {
   if (!FEATURED) return null;
   return (
@@ -189,7 +189,7 @@ function BookingVisual() {
             }}
           />
         </div>
-        <div className="relative z-[5] mb-1 w-full rounded-lg bg-white p-2.5 shadow-xl sm:p-3">
+        <div className="relative z-[5] mb-1 w-full rounded-md bg-white p-2.5 shadow-xl sm:p-3 origin-bottom sm:mb-2">
         <div className="flex flex-col items-center text-center">
           <div className="flex h-9 w-9 items-center justify-center rounded-full bg-violet-100">
             <CircleCheck className="h-5 w-5 text-[#6d2fd6]" strokeWidth={2.5} />
@@ -197,7 +197,7 @@ function BookingVisual() {
           <p className="mt-1.5 text-[10px] font-extrabold leading-snug text-[#6d2fd6]">
             Đặt lịch thành công!
           </p>
-          <span className="mt-1 rounded-md bg-violet-50 px-2.5 py-0.5 text-[7px] font-bold text-[#6d2fd6]">
+          <span className="mt-1 rounded bg-violet-50 px-2.5 py-0.5 text-[7px] font-bold text-[#6d2fd6]">
             Mã BK-2847
           </span>
         </div>
@@ -217,7 +217,7 @@ function BookingVisual() {
           </div>
           <div className="flex items-center justify-between gap-2 border-t border-violet-200/80 pt-1">
             <span className="text-[7px] font-semibold text-slate-500">Trạng thái</span>
-            <span className="rounded-md bg-[#6d2fd6] px-2 py-0.5 text-[7px] font-bold text-white">
+            <span className="rounded bg-[#6d2fd6] px-2 py-0.5 text-[7px] font-bold text-white">
               Đã đặt
             </span>
           </div>
@@ -230,14 +230,14 @@ function BookingVisual() {
 
 const AFTER_MOCK_POINTS = MENTOR_SHOWCASE_COPY.afterMockPoints;
 
-/** Ô 3 — gấu đè lên khung trắng (z cao hơn card) */
+/** Ô 3, gấu đè lên khung trắng (z cao hơn card) */
 function FeedbackVisual() {
   const mascot = PANEL_MASCOTS[2];
 
   return (
     <div className="relative z-[1] flex h-full flex-col px-2 pb-4 pt-6 sm:px-2.5 sm:pb-5 sm:pt-7">
       <div className="relative flex h-full min-h-0 flex-1 translate-x-[0.4rem] flex-col overflow-visible">
-        <div className="relative z-[1] ml-auto flex h-full min-h-0 w-[80%] min-w-0 max-w-[13.75rem] flex-1 -translate-x-[0.4rem] flex-col pb-0.5 pr-0.5 sm:w-[70%] sm:max-w-[13rem] sm:-translate-x-[0.9rem]">
+        <div className="relative z-[1] ml-auto flex h-full min-h-0 w-[74%] min-w-0 max-w-[12.25rem] flex-1 -translate-x-[0.4rem] flex-col pb-0.5 pr-0.5 sm:w-[70%] sm:max-w-[13.5rem] sm:-translate-x-[0.9rem] origin-right scale-105">
           <p className="mb-1.5 shrink-0 text-[11px] font-bold leading-snug text-[#6d2fd6] sm:text-[12px]">
             {MENTOR_SHOWCASE_COPY.afterMockLead}
           </p>
@@ -293,7 +293,7 @@ function UpziStepCard({ step, index }) {
       style={{ animationDelay: `${index * 90}ms` }}
     >
       <div
-        className={`mentor-upzi-panel relative w-full rounded-[1.35rem] shadow-[0_12px_32px_rgba(99,14,212,0.1)] sm:rounded-[1.5rem] ${
+        className={`mentor-upzi-panel relative w-full rounded-2xl shadow-[0_12px_32px_rgba(99,14,212,0.1)] sm:rounded-[1.35rem] ${
           index === 0 || index === 1 || index === 2 ? "overflow-visible" : "overflow-hidden"
         }`}
       >
@@ -305,7 +305,7 @@ function UpziStepCard({ step, index }) {
   );
 }
 
-/** Showcase mentor — Upzi layout, nền tím nhạt, CTA lime. */
+/** Showcase mentor, Upzi layout, nền tím nhạt, CTA lime. */
 export function MentorFeatureShowcase({ onCtaClick }) {
   return (
     <section
@@ -316,16 +316,16 @@ export function MentorFeatureShowcase({ onCtaClick }) {
         .mentor-upzi-panel {
           background: linear-gradient(165deg, #f0ebf8 0%, #ebe4f6 50%, #e6ddf3 100%);
           border: 2px solid #8037f4;
-          height: 18rem;
+          height: 19.0rem;
         }
         @media (min-width: 640px) {
           .mentor-upzi-panel {
-            height: 17.5rem;
+            height: 18.5rem;
           }
         }
         @media (min-width: 1024px) {
           .mentor-upzi-panel {
-            height: 19.5rem;
+            height: 20.5rem;
           }
         }
         @keyframes mentor-upzi-rise {
@@ -344,21 +344,36 @@ export function MentorFeatureShowcase({ onCtaClick }) {
         .mentor-sticker-glow {
           filter: drop-shadow(0 14px 28px rgba(99, 14, 212, 0.22));
         }
-        .mentor-showcase-uniform {
+        .mentor-showcase-cards-scale {
           --mentor-scale: 1.05;
           width: calc(100% / var(--mentor-scale));
-          max-width: calc(72rem / var(--mentor-scale));
+          max-width: calc(81.7rem / var(--mentor-scale));
           margin-inline: auto;
           transform: scale(var(--mentor-scale));
           transform-origin: center center;
         }
         @media (min-width: 640px) {
-          .mentor-showcase-uniform {
+          .mentor-showcase-cards-scale {
             --mentor-scale: 1.06;
           }
         }
         @media (min-width: 1024px) {
-          .mentor-showcase-uniform {
+          .mentor-showcase-cards-scale {
+            --mentor-scale: 1.065;
+          }
+        }
+        /* Chỉ thụt tiêu đề, khớp mép trái ô 1 khi hàng card scale giữa */
+        .mentor-showcase-heading-align {
+          padding-left: calc(0.75rem - 0.6rem);
+        }
+        @media (min-width: 640px) {
+          .mentor-showcase-heading-align {
+            --mentor-scale: 1.06;
+            padding-left: calc((100% - (100% / var(--mentor-scale))) / 2 - 0.6rem);
+          }
+        }
+        @media (min-width: 1024px) {
+          .mentor-showcase-heading-align {
             --mentor-scale: 1.065;
           }
         }
@@ -369,20 +384,24 @@ export function MentorFeatureShowcase({ onCtaClick }) {
         }
       `}</style>
 
-      <div className={`home-mobile-gutter relative z-10 w-full overflow-visible py-2 ${HOME_SECTION_INNER}`}>
-        <div className="mentor-showcase-uniform flex w-full flex-col gap-[1.2rem] sm:gap-[1.45rem]">
-          <article className="flex flex-col items-start gap-[0.7rem] sm:gap-[0.825rem]">
+      <div className={`home-mobile-gutter relative z-10 w-full overflow-visible py-2 ${HOME_SECTION_INNER} lg:!px-6 xl:!px-8 2xl:!px-12`}>
+        <div className="flex w-full flex-col gap-[1.2rem] sm:gap-[1.45rem]">
+          <article className="mentor-showcase-heading-align flex flex-col items-start gap-[0.7rem] sm:gap-[0.825rem]">
             <span className={ty.badge}>
               <Users className="h-3.5 w-3.5 shrink-0" aria-hidden />
               {MENTOR_SHOWCASE_COPY.badge}
             </span>
             <h2 className={`${ty.title} sm:max-w-none`} style={{ fontSize: HOME_SECTION_TITLE_CLAMP }}>
-              <span className="block">{MENTOR_SHOWCASE_COPY.titleLine1}</span>
-              <span className={`${ty.titleLineAccent} sm:whitespace-nowrap`}>{MENTOR_SHOWCASE_COPY.titleLine2}</span>
+              <span className={`${ty.titleLineSecond} ${ty.titleLineDark}`}>
+                {MENTOR_SHOWCASE_COPY.titleLine1}
+              </span>
+              <span className={`${ty.titleLineSecond} ${ty.titleLineAccent} sm:whitespace-nowrap`}>
+                {MENTOR_SHOWCASE_COPY.titleLine2}
+              </span>
             </h2>
           </article>
 
-          <div className="grid w-full grid-cols-1 gap-[1.2rem] px-3 sm:px-0 sm:grid-cols-3 sm:gap-[0.95rem]">
+          <div className="mentor-showcase-cards-scale mt-[1.5rem] sm:mt-4 grid w-full grid-cols-1 gap-[1.2rem] px-3 sm:px-0 sm:grid-cols-3 sm:gap-[1.75rem]">
             {UPZI_STEPS.map((step, idx) => (
               <UpziStepCard key={step.title} step={step} index={idx} />
             ))}

@@ -20,7 +20,7 @@ import {
   userCancelWarningMessage,
 } from "../../constants/bookingPolicy";
 
-/** Google Material Symbols Outlined — same family as mock (index.html loads the font). */
+/** Google Material Symbols Outlined, same family as mock (index.html loads the font). */
 function MsIcon({ name, className = "", filled = false, size = 24, style }) {
   return (
     <span
@@ -170,7 +170,7 @@ function CancellationModal({ booking, onClose, onConfirm }) {
               <div className="mb-2 space-y-2 rounded-2xl border border-sky-200 bg-sky-50/90 p-3 sm:p-4">
                 <p className="text-[10px] font-black uppercase tracking-[0.14em] text-sky-900">Tài khoản nhận hoàn tiền</p>
                 <p className="text-xs leading-snug text-sky-950/80">
-                  Tiền vào TK công ty — hệ thống không lưu STK nguồn. Điền STK nhận hoàn. Số tiền hoàn do hệ thống tính,
+                  Tiền vào TK công ty, hệ thống không lưu STK nguồn. Điền STK nhận hoàn. Số tiền hoàn do hệ thống tính,
                   không nhập tay.
                 </p>
                 <input
@@ -303,7 +303,7 @@ function MentorIssuesCompactPanel({ alerts, refundAlerts, onOpen }) {
               className="flex w-full items-center justify-between rounded-xl border border-dashed border-slate-300 bg-slate-50/80 px-3 py-2 text-left text-xs text-slate-600 hover:bg-slate-50"
             >
               <span>
-                {info.length} buổi mentor hủy — {infoOpen ? "thu gọn" : "xem danh sách"}
+                {info.length} buổi mentor hủy, {infoOpen ? "thu gọn" : "xem danh sách"}
               </span>
               <MsIcon name={infoOpen ? "expand_less" : "expand_more"} size={20} className="text-slate-500" />
             </button>
@@ -591,11 +591,11 @@ export function Dashboard() {
     const retained = Number(pol?.retainedAmountVnd ?? 0);
     const pct = typeof pol?.refundPercent === "number" ? pol.refundPercent : null;
     if (pol?.ledger === "cancelled_pending_transfer") {
-      toastApiSuccess("Đã hủy lịch. Giao dịch chờ chuyển khoản đã hủy — chưa thu tiền.");
+      toastApiSuccess("Đã hủy lịch. Giao dịch chờ chuyển khoản đã hủy, chưa thu tiền.");
     } else if (refundAmt > 0) {
       const tail = retained > 0 ? ` Giữ lại: ${Math.round(retained).toLocaleString("vi-VN")}₫.` : "";
       toastApiSuccess(
-        `Đã hủy lịch. Yêu cầu hoàn ${Math.round(refundAmt).toLocaleString("vi-VN")}₫${pct != null ? ` (${pct}%)` : ""} đã ghi nhận.${tail} Admin sẽ CK hoàn — bạn được báo khi hoàn xong.`,
+        `Đã hủy lịch. Yêu cầu hoàn ${Math.round(refundAmt).toLocaleString("vi-VN")}₫${pct != null ? ` (${pct}%)` : ""} đã ghi nhận.${tail} Admin sẽ CK hoàn, bạn được báo khi hoàn xong.`,
       );
     } else {
       toastApiSuccess(

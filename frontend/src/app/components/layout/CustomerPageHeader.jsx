@@ -1,6 +1,6 @@
 import React from "react";
 
-/** Pill badge + tiêu đề — đồng bộ CV hub / Pricing / các trang customer */
+/** Pill badge + tiêu đề, đồng bộ CV hub / Pricing / các trang customer */
 export function CustomerPageBadge({ children, pulse = true, className = "" }) {
   return (
     <div

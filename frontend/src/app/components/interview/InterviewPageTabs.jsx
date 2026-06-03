@@ -6,7 +6,7 @@ const TABS = [
 ];
 
 /**
- * Tab Phỏng vấn / Lịch sử — cùng style với CvJdAnalysisTabs (đầu card trắng).
+ * Tab Phỏng vấn / Lịch sử, cùng style với CvJdAnalysisTabs (đầu card trắng).
  * @param {"analysis"|"history"} activeTab
  */
 export function InterviewPageTabs({ activeTab, onTabChange }) {

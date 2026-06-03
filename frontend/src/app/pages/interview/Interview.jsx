@@ -42,14 +42,14 @@ function saveInterviewSetupDraft(draft) {
   } catch (_) {}
 }
 
-/** Stroke Lucide chuẩn UI — đồng bộ toàn trang */
+/** Stroke Lucide chuẩn UI, đồng bộ toàn trang */
 const IS = { strokeWidth: 1.75, strokeLinecap: "round", strokeLinejoin: "round" };
 
 /** Chiều cao cố định ô chi tiết bước 1 */
 const SOURCE_DETAIL_PANEL_CLASS =
   "flex h-[15rem] flex-col rounded-md border border-violet-200/80 bg-violet-50/50 px-4 py-4 sm:h-[16rem] sm:px-5 sm:py-5";
 
-/** Ô xem trước HR — cao hơn để video lớn hơn */
+/** Ô xem trước HR, cao hơn để video lớn hơn */
 const HR_PREVIEW_PANEL_CLASS =
   "flex h-[16rem] flex-col rounded-md border border-violet-200/80 bg-violet-50/50 px-4 py-3 sm:h-[18rem] sm:px-5";
 
@@ -66,7 +66,7 @@ function formatCvAnalysisDate(value) {
   }
 }
 
-/** Ô chi tiết — thông tin phân tích CV gần nhất */
+/** Ô chi tiết, thông tin phân tích CV gần nhất */
 function AnalyzedCvDetailPanel({ cv }) {
   const title = cv.position || cv.cvFile || cv.cvFileName || "Phân tích gần nhất";
   const cvName = cv.cvFileName || cv.cvFile;
@@ -110,7 +110,7 @@ function AnalyzedCvDetailPanel({ cv }) {
   );
 }
 
-/** Ô chi tiết — upload CV mới */
+/** Ô chi tiết, upload CV mới */
 function UploadCvDetailPanel({ cvUploaded, uploadedFile, onPickFile }) {
   return (
     <div className="flex h-full min-h-0 flex-col">
@@ -145,7 +145,7 @@ function UploadCvDetailPanel({ cvUploaded, uploadedFile, onPickFile }) {
   );
 }
 
-/** Bước 2 — video xem trước trong ô riêng (sau khi chọn HR) */
+/** Bước 2, video xem trước trong ô riêng (sau khi chọn HR) */
 function HrPreviewPanel({ hrGender }) {
   if (!hrGender) return null;
   const preview = HR_PREVIEWS[hrGender];
@@ -153,7 +153,7 @@ function HrPreviewPanel({ hrGender }) {
   return (
     <div className={HR_PREVIEW_PANEL_CLASS}>
       <p className="mb-2 shrink-0 text-xs font-semibold text-violet-600">
-        Xem trước — {preview.name}
+        Xem trước, {preview.name}
       </p>
       <div className="flex min-h-0 flex-1 items-center justify-center">
         <video
@@ -172,7 +172,7 @@ function HrPreviewPanel({ hrGender }) {
   );
 }
 
-/** Một ô dài chung — chỉ hiện sau khi đã chọn A hoặc B */
+/** Một ô dài chung, chỉ hiện sau khi đã chọn A hoặc B */
 function SourceDetailPanel({ option, latestCV, cvUploaded, uploadedFile, onPickFile }) {
   if (option !== "A" && option !== "B") return null;
 
@@ -364,7 +364,7 @@ export function Interview() {
       let jdText = jdInputText.trim();
 
       if (option === "A" && latestCV) {
-        // Fetch raw CV text from stored analysis — the list API strips cvText to save bandwidth,
+        // Fetch raw CV text from stored analysis, the list API strips cvText to save bandwidth,
         // so we need a separate call to get the full document for genuine personalization.
         const analysisId = latestCV.id || latestCV.analysisId;
         if (analysisId) {
@@ -379,7 +379,7 @@ export function Interview() {
               }
             }
           } catch {
-            // ignore — fall back to structured summary below
+            // ignore, fall back to structured summary below
           }
         }
 
@@ -412,7 +412,7 @@ export function Interview() {
         } else {
           setExtractWarning(
             extracted.error ||
-              "Không thể đọc CV. AI sẽ tạo câu hỏi dựa trên tên file — chất lượng cá nhân hóa thấp hơn.",
+              "Không thể đọc CV. AI sẽ tạo câu hỏi dựa trên tên file, chất lượng cá nhân hóa thấp hơn.",
           );
           cvText = `Tên file CV: ${uploadedFile.name}`;
         }
@@ -449,7 +449,7 @@ export function Interview() {
       return;
     }
 
-    // Tạo session ngay sau khi có questions — trước khi vào phòng
+    // Tạo session ngay sau khi có questions, trước khi vào phòng
     // sessionId được truyền vào InterviewRoom để lưu từng câu trả lời
     setLoadingStep("creating_session");
     let sessionId = null;
@@ -464,7 +464,7 @@ export function Interview() {
         });
         if (created.success) sessionId = created.sessionId;
       } catch {
-        // graceful degradation — phỏng vấn vẫn chạy, không lưu MongoDB
+        // graceful degradation, phỏng vấn vẫn chạy, không lưu MongoDB
       }
     }
 
@@ -502,6 +502,7 @@ export function Interview() {
       } catch {
         // D-ID chưa set hoặc lỗi mạng — phỏng vấn vẫn chạy với TTS fallback
       }
+
     }
 
     setLoadingStep(null);
@@ -594,8 +595,8 @@ export function Interview() {
             onChange={handleJdFileUpload}
           />
           <div>
-            <h2 className="text-base font-bold text-violet-950">Bước 1 — Chọn nguồn CV</h2>
-            <p className="mt-0.5 text-sm text-violet-600">
+            <h2 className="text-sm sm:text-base font-bold text-violet-950">Bước 1: Chọn nguồn CV</h2>
+            <p className="mt-0.5 text-xs sm:text-sm text-violet-600">
               AI đọc CV của bạn để tạo bộ câu hỏi phỏng vấn phù hợp.
             </p>
           </div>
@@ -663,7 +664,7 @@ export function Interview() {
                 onPickFile={openCvFilePicker}
               />
 
-              {/* JD optional — giúp câu hỏi sát yêu cầu công ty hơn */}
+              {/* JD optional, giúp câu hỏi sát yêu cầu công ty hơn */}
               <div className="rounded-md border border-violet-100 bg-violet-50/40">
                 <button
                   type="button"
@@ -692,7 +693,7 @@ export function Interview() {
                 {jdExpanded && (
                   <div className="space-y-2.5 border-t border-violet-100 px-4 pb-4 pt-3">
                     <p className="text-xs text-violet-500">
-                      Dán nội dung JD hoặc upload file — AI sẽ bám sát yêu cầu tuyển dụng thực tế khi tạo câu hỏi.
+                      Dán nội dung JD hoặc upload file, AI sẽ bám sát yêu cầu tuyển dụng thực tế khi tạo câu hỏi.
                     </p>
                     <textarea
                       value={jdInputText}
@@ -733,7 +734,7 @@ export function Interview() {
                   canProceedSetup ? CTA_LIME : "cursor-not-allowed bg-violet-100 text-violet-400"
                 }`}
               >
-                Tiếp tục — Chọn HR
+                Tiếp tục, Chọn HR
                 <ArrowRight className="h-4 w-4" {...IS} />
               </button>
         </section>
@@ -742,8 +743,8 @@ export function Interview() {
         {flowStep === 2 && (
         <section className="space-y-5">
           <div>
-            <h2 className="text-base font-bold text-violet-950">Bước 2 — Chọn HR AI</h2>
-            <p className="mt-0.5 text-sm text-violet-600">Chọn một HR — có thể xem video ngắn bên dưới trước khi bắt đầu.</p>
+            <h2 className="text-sm sm:text-base font-bold text-violet-950">Bước 2: Chọn HR AI</h2>
+            <p className="mt-0.5 text-xs sm:text-sm text-violet-600">Chọn một HR, có thể xem video ngắn bên dưới trước khi bắt đầu.</p>
           </div>
 
           <div className="grid items-stretch gap-3 sm:grid-cols-2">

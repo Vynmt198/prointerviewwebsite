@@ -1,17 +1,17 @@
 /**
- * AvatarVideoPlayer — D-ID Express API pre-generated video player.
+ * AvatarVideoPlayer, D-ID Express API pre-generated video player.
  *
  * Phát video MP4 đã pre-render (full khung, lipsync với ElevenLabs voice).
- * Thay thế WebRTC streaming — đơn giản hơn, chất lượng cao hơn, không có session limit.
+ * Thay thế WebRTC streaming, đơn giản hơn, chất lượng cao hơn, không có session limit.
  *
  * Props:
- *   videoUrl        — URL video MP4 cần phát (pre-generated)
- *   onEnded         — callback khi video phát xong
- *   onError         — callback khi không load được video
- *   isLoading       — hiện skeleton/spinner (khi đang pre-gen)
- *   gender          — "female" | "male" (dùng cho fallback avatar image)
- *   autoPlay        — true by default
- *   className       — CSS class bổ sung cho container
+ *   videoUrl       , URL video MP4 cần phát (pre-generated)
+ *   onEnded        , callback khi video phát xong
+ *   onError        , callback khi không load được video
+ *   isLoading      , hiện skeleton/spinner (khi đang pre-gen)
+ *   gender         , "female" | "male" (dùng cho fallback avatar image)
+ *   autoPlay       , true by default
+ *   className      , CSS class bổ sung cho container
  *
  * Fallback:
  *   - Nếu videoUrl = null + isLoading = false → hiện poster image HR tĩnh
@@ -49,7 +49,7 @@ export function AvatarVideoPlayer({
     setHasError(false);
     video.load();
     video.play().catch(() => {
-      // Autoplay blocked by browser — user cần click trước. Không throw.
+      // Autoplay blocked by browser, user cần click trước. Không throw.
     });
   }, [videoUrl, autoPlay]);
 

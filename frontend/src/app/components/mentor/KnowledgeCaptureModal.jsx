@@ -56,12 +56,12 @@ function ArrayInput({ label, placeholder, items, onChange }) {
 }
 
 /**
- * Modal post-session — mentor chia sẻ insights để AI học.
+ * Modal post-session, mentor chia sẻ insights để AI học.
  * Xuất hiện sau khi completeMentorBooking() thành công.
  *
  * @param {{ bookingId, defaultRole, defaultField, onClose, onDone }} props
- *   onClose — bỏ qua (navigate ngay)
- *   onDone  — sau submit thành công (navigate)
+ *   onClose, bỏ qua (navigate ngay)
+ *   onDone , sau submit thành công (navigate)
  */
 export function KnowledgeCaptureModal({ bookingId, defaultRole = "", defaultField = "", onClose, onDone }) {
   const [menteeRole,     setMenteeRole]     = useState(defaultRole);
@@ -87,7 +87,7 @@ export function KnowledgeCaptureModal({ bookingId, defaultRole = "", defaultFiel
         fullAdvice: fullAdvice.trim(),
       });
       if (res.success) {
-        toastApiSuccess("Đã lưu insights — AI sẽ học từ kinh nghiệm của bạn!");
+        toastApiSuccess("Đã lưu insights, AI sẽ học từ kinh nghiệm của bạn!");
         onDone();
       } else {
         toastApiError(res.error, "Không lưu được insights.");
@@ -109,7 +109,7 @@ export function KnowledgeCaptureModal({ bookingId, defaultRole = "", defaultFiel
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-bold text-white">Chia sẻ insights cho AI</p>
-            <p className="text-xs text-white/40">AI học từ chuyên gia thật — giúp ứng viên sau tốt hơn</p>
+            <p className="text-xs text-white/40">AI học từ chuyên gia thật, giúp ứng viên sau tốt hơn</p>
           </div>
           <button
             type="button"
@@ -120,7 +120,7 @@ export function KnowledgeCaptureModal({ bookingId, defaultRole = "", defaultFiel
           </button>
         </div>
 
-        {/* Body — scrollable */}
+        {/* Body, scrollable */}
         <div className="overflow-y-auto flex-1 px-5 py-4 space-y-5">
           {/* Context row */}
           <div className="grid grid-cols-2 gap-3">

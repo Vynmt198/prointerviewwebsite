@@ -1,5 +1,5 @@
 /**
- * AILipSyncAvatar — SVG Cartoon Face + Lip Sync
+ * AILipSyncAvatar, SVG Cartoon Face + Lip Sync
  * ──────────────────────────────────────────────────────────────
  * Dùng đúng cách demo (AvatarInterviewerSimple): vẽ face bằng SVG
  * elements, animate mouthRy theo openness → 100% smooth, không cần
@@ -21,7 +21,7 @@ import React, { useRef, useEffect, useState, useCallback } from "react";
 /* ── Props ────────────────────────────────────────────────── */
 
 /* ══════════════════════════════════════════════════════════
-   useSpeechWave — multi-freq sin-wave, pure, always works
+   useSpeechWave, multi-freq sin-wave, pure, always works
    Frequency ratios irrational → pattern never repeats exactly
    Mimics natural speech: syllable burst + phrase rhythm
 ══════════════════════════════════════════════════════════ */
@@ -68,7 +68,7 @@ function useSpeechWave(isSpeaking) {
 }
 
 /* ══════════════════════════════════════════════════════════
-   useAnimFrame — poll openness ref → React state at ~30fps
+   useAnimFrame, poll openness ref → React state at ~30fps
    Simple: luôn chạy, useSpeechWave tự fade về 0 khi !isSpeaking
 ══════════════════════════════════════════════════════════ */
 function useAnimFrame(getOpenness) {
@@ -81,7 +81,7 @@ function useAnimFrame(getOpenness) {
 }
 
 /* ══════════════════════════════════════════════════════════
-   useBlink — natural eye blink every 2.5-5s
+   useBlink, natural eye blink every 2.5-5s
 ══════════════════════════════════════════════════════════ */
 function useBlink() {
   const [blink, setBlink] = useState(false);
@@ -100,7 +100,7 @@ function useBlink() {
 }
 
 /* ══════════════════════════════════════════════════════════
-   useScanLine — holographic overlay phase (0→1 loop)
+   useScanLine, holographic overlay phase (0→1 loop)
 ══════════════════════════════════════════════════════════ */
 function useScanLine() {
   const [t, setT] = useState(0);
@@ -120,7 +120,7 @@ export function AILipSyncAvatar({
   didStatus,
   attachVideo,
   size = 200,
-  sourceImageUrl = null,  // Cloudinary portrait URL — hiện khi không dùng D-ID WebRTC
+  sourceImageUrl = null,  // Cloudinary portrait URL, hiện khi không dùng D-ID WebRTC
 }) {
   const getOpenness  = useSpeechWave(isSpeaking);
   const openness     = useAnimFrame(getOpenness);
@@ -129,7 +129,7 @@ export function AILipSyncAvatar({
   const videoRef     = useRef(null);
   const [videoHasData, setVideoHasData] = useState(false);
 
-  // Only show D-ID video when it actually has frames — prevents black-circle when
+  // Only show D-ID video when it actually has frames, prevents black-circle when
   // WebRTC is "connected/speaking" but stream data hasn't arrived yet.
   const isVideoMode    = (didStatus === "connected" || didStatus === "speaking") && videoHasData;
   const isConnecting   = didStatus === "connecting";
@@ -163,7 +163,7 @@ export function AILipSyncAvatar({
   /* Nose */
   const noseY = fH + fR * 0.08;
 
-  /* Mouth — key animation */
+  /* Mouth, key animation */
   const mouthY  = fH + fR * 0.345;
   const mouthRx = fR * 0.262;
   /* ry = base(closed) + openness * amplitude */
@@ -217,7 +217,7 @@ export function AILipSyncAvatar({
       />
 
       {/* ════════════════════════════════════════════════════
-          MAIN SVG — cartoon face + rings + effects
+          MAIN SVG, cartoon face + rings + effects
           Everything in one SVG, face clipped to circle
       ════════════════════════════════════════════════════ */}
       <svg
@@ -310,7 +310,7 @@ export function AILipSyncAvatar({
               x={0} y={size * 0.62} width={size} height={size * 0.38}
               fill={`url(#${uid}portraitGrad)`}
             />
-            {/* Speaking indicator — breathing glow khi đang nói */}
+            {/* Speaking indicator, breathing glow khi đang nói */}
             {isSpeaking && (
               <circle
                 cx={cx} cy={cy} r={fR}
@@ -321,7 +321,7 @@ export function AILipSyncAvatar({
         )}
 
         {/* ══════════════════════════════════════════════════
-            FACE — all elements clipped to circle
+            FACE, all elements clipped to circle
             (chỉ hiện khi không có portrait và không có D-ID)
         ══════════════════════════════════════════════════ */}
         <g clipPath={`url(#${uid}clip)`} style={{ display: isPortraitMode ? 'none' : undefined }}>
@@ -497,7 +497,7 @@ export function AILipSyncAvatar({
             rx={fR*0.038} ry={fR*0.030}
             fill="#c9a080" />
 
-          {/* ── MOUTH — THE KEY LIP SYNC ELEMENT ────────── */}
+          {/* ── MOUTH, THE KEY LIP SYNC ELEMENT ────────── */}
           {/* Same approach: animate ry */}
 
           {/* Outer lips */}
@@ -589,13 +589,13 @@ export function AILipSyncAvatar({
           style={{ transition: "stroke 0.2s, stroke-width 0.2s" }}
         />
 
-        {/* Ring 3 — slow ambient */}
+        {/* Ring 3, slow ambient */}
         <circle cx={cx} cy={cy} r={fR + size * 0.054} fill="none"
           stroke={`rgba(128, 55, 244,${isSpeaking ? (0.16 + ringPulse * 0.13).toFixed(3) : "0.07"})`}
           strokeWidth="1"
         />
 
-        {/* Ring 2 — dashed rotating */}
+        {/* Ring 2, dashed rotating */}
         <circle cx={cx} cy={cy} r={fR + size * 0.096} fill="none"
           stroke={`rgba(139, 77, 255,${isSpeaking ? (0.36 + ringPulse * 0.20).toFixed(3) : "0.11"})`}
           strokeWidth="1.5"
@@ -606,7 +606,7 @@ export function AILipSyncAvatar({
           }}
         />
 
-        {/* Ring 1 — CTA glow */}
+        {/* Ring 1, CTA glow */}
         <circle cx={cx} cy={cy} r={fR + size * 0.040} fill="none"
           stroke={ctaStroke}
           strokeWidth={isSpeaking ? 2.2 : 1.4}
@@ -645,7 +645,7 @@ export function AILipSyncAvatar({
           </text>
         </g>
 
-        {/* Speaking waveform bars — cartoon mode + portrait mode */}
+        {/* Speaking waveform bars, cartoon mode + portrait mode */}
         {isSpeaking && (
           <g transform={`translate(${cx}, ${cy + fR + size * 0.068})`}>
             {Array.from({ length: 9 }, (_, i) => {

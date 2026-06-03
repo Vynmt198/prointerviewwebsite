@@ -85,7 +85,7 @@ export function MeetingRoom() {
           const mins = getMinutesUntilBookingStart(b);
           setEarlyNotice(
             mins > 0
-              ? `Buổi hẹn chưa tới giờ (còn khoảng ${mins} phút). Bạn có thể vào thử phòng — lịch hẹn vẫn được giữ.`
+              ? `Buổi hẹn chưa tới giờ (còn khoảng ${mins} phút). Bạn có thể vào thử phòng, lịch hẹn vẫn được giữ.`
               : "Bạn vào phòng trước giờ hẹn. Lịch vẫn hiển thị cho đến khi buổi diễn ra.",
           );
         } else {
@@ -200,7 +200,7 @@ export function MeetingRoom() {
 
   return (
     <div className="min-h-svh bg-[#07060E] flex flex-col relative overflow-hidden font-sans">
-      {/* Knowledge Capture Modal — mentor chia sẻ insights sau buổi học */}
+      {/* Knowledge Capture Modal, mentor chia sẻ insights sau buổi học */}
       {showKnowledgeModal && (
         <KnowledgeCaptureModal
           bookingId={sessionId}

@@ -274,7 +274,7 @@ export function Mentors() {
               <p className="font-bold">Credit đổi mentor</p>
               <p className="mt-1 text-xs leading-relaxed text-violet-900/90">
                 Bạn có <strong>{Number(rebookCredit.creditVnd || 0).toLocaleString("vi-VN")}₫</strong> từ lịch mentor đã
-                hủy. Chọn <strong>mentor khác</strong> — nếu giá buổi mới ≤ credit thì{" "}
+                hủy. Chọn <strong>mentor khác</strong>, nếu giá buổi mới ≤ credit thì{" "}
                 <strong>không cần chuyển khoản lại</strong>.
               </p>
             </div>

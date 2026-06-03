@@ -49,8 +49,9 @@ const NAV_LINKS = {
     { label: "Kết nối Mentor 1:1", path: "/mentors" },
     { label: "Khóa học từ Mentor", path: "/courses" },
   ],
-  "Hỗ trợ": [
-    { label: "Hồ sơ của tôi", path: "/profile" },
+  "Về ProInterview": [
+    { label: "Giới thiệu", path: "/about" },
+    { label: "Thành tựu", path: "/achievements" },
     { label: "Trung tâm trợ giúp", path: "#" },
     { label: "Hướng dẫn sử dụng", path: "#" },
     { label: "Điều khoản dịch vụ", path: "/terms" },
@@ -101,7 +102,7 @@ const SOCIAL_LINKS = [
 ];
 
 /* ══════════════════════════════════════════════════════════════
-   DARK variant — trang nền tối (tùy chọn)
+   DARK variant, trang nền tối (tùy chọn)
 ══════════════════════════════════════════════════════════════ */
 function FooterDark() {
   const navigate = useNavigate();
@@ -117,7 +118,7 @@ function FooterDark() {
         boxShadow: "0 -1px 0 rgba(0, 0, 0, 0.45)",
       }}
     >
-      {/* Ánh violet rất nhẹ — không làm sáng cả khối */}
+      {/* Ánh violet rất nhẹ, không làm sáng cả khối */}
       <div
         className="pointer-events-none absolute z-0 h-[min(72vw,520px)] w-[min(72vw,520px)] rounded-full bg-[#6d2fd6]/14 blur-[100px] sm:h-[520px] sm:w-[520px] sm:blur-[110px]"
         style={{ left: "-14%", top: "38%" }}
@@ -232,7 +233,7 @@ function FooterDark() {
 }
 
 /* ══════════════════════════════════════════════════════════════
-   LIGHT variant — cùng nền / chữ với trang home (#f3f0f9)
+   LIGHT variant, cùng nền / chữ với trang home (#f3f0f9)
 ══════════════════════════════════════════════════════════════ */
 function FooterLight() {
   const navigate = useNavigate();

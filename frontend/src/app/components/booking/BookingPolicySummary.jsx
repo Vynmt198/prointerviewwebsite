@@ -7,7 +7,7 @@ import {
 import { UserCancelPolicyBrief } from "./UserCancelPolicyBrief";
 
 /**
- * Bảng chính sách hủy/hoàn — `full` khi xác nhận đặt lịch; `compact` rút gọn.
+ * Bảng chính sách hủy/hoàn, `full` khi xác nhận đặt lịch; `compact` rút gọn.
  */
 export function BookingPolicySummary({
   variant = "full",

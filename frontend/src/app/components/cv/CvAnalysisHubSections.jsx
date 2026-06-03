@@ -5,7 +5,8 @@ import {
   CV_HUB_DEMO_SCORE_ROWS,
   CV_HUB_DEMO_MATCH,
 } from "./CvAnalysisScoreBreakdown";
-import { CV_HUB_HERO_COPY } from "../../constants/brandVoice";
+import { CV_HUB_HERO_COPY, CV_SHOWCASE_COPY } from "../../constants/brandVoice";
+import { HOME_SECTION_TITLE_CLAMP } from "../../constants/homeTypography";
 import { CUSTOMER_SHELL_GUTTER, CUSTOMER_SHELL_MAX } from "../layout/customerShellLayout";
 
 const HUB_STYLES = `
@@ -50,8 +51,8 @@ export function CvAnalysisHubHero({ onJd, onField, navShellAligned = false }) {
     : `relative flex min-h-0 flex-col bg-transparent pb-4 pt-12 sm:pb-5 ${CUSTOMER_SHELL_GUTTER}`;
 
   const innerClass = navShellAligned
-    ? "cv-hub-enter flex w-full flex-col overflow-visible lg:flex-row lg:items-center lg:gap-3 xl:gap-4"
-    : `cv-hub-enter ${CUSTOMER_SHELL_MAX} flex flex-col overflow-visible lg:flex-row lg:items-stretch lg:gap-3 xl:gap-4`;
+    ? "cv-hub-enter flex w-full flex-col overflow-visible lg:-translate-x-4 lg:flex-row lg:items-center lg:gap-[3.75rem] xl:gap-16"
+    : `cv-hub-enter ${CUSTOMER_SHELL_MAX} flex flex-col overflow-visible lg:-translate-x-4 lg:flex-row lg:items-stretch lg:gap-[3.75rem] xl:gap-16`;
 
   return (
     <div className="cv-hub-page relative min-h-0 bg-transparent">
@@ -59,62 +60,56 @@ export function CvAnalysisHubHero({ onJd, onField, navShellAligned = false }) {
 
       <div className={outerClass}>
         <div className={innerClass}>
-          {/* Trái — hero + linh vật */}
+          {/* Trái, hero + linh vật */}
           <div
-            className={`relative flex shrink-0 flex-col justify-center py-3 sm:py-4 lg:min-w-[28rem] lg:max-w-[36rem] lg:flex-[0.92] xl:max-w-[37rem] ${navShellAligned ? "lg:py-0" : "lg:py-2"
+            className={`relative flex shrink-0 flex-col justify-center py-3 sm:py-4 lg:min-w-[34rem] lg:max-w-[38rem] lg:flex-[0.92] xl:max-w-[39rem] ${navShellAligned ? "lg:py-0" : "lg:py-2"
               }`}
           >
             <div className={`relative z-10 flex flex-col gap-2.5 sm:gap-3 ${navShellAligned ? "lg:translate-x-4" : ""}`}>
               <h1 className="max-w-[min(100%,32rem)] font-headline tracking-tight lg:max-w-[36rem]">
-                <span className="block text-[clamp(2.1rem,4.8vw,3rem)] font-extrabold leading-[1.12]">
-                  {/* Desktop Layout */}
-                  <span className="hidden lg:block">
-                    <span className="block text-[#630ed4] whitespace-nowrap">
-                      {CV_HUB_HERO_COPY.titleAccent}
-                    </span>
-                    <span className="mt-0.5 block text-[#1a1b23] whitespace-nowrap">
-                      {CV_HUB_HERO_COPY.titleRest}
-                    </span>
+                {/* Desktop, cùng cỡ tiêu đề section Home (Mentor, Khóa học, …) */}
+                <span
+                  className="hidden flex-col gap-[0.25rem] font-extrabold leading-none lg:flex"
+                  style={{ fontSize: HOME_SECTION_TITLE_CLAMP }}
+                >
+                  <span className="block text-[#630ed4] whitespace-nowrap">
+                    {CV_HUB_HERO_COPY.titleAccent}
                   </span>
-
-                  {/* Mobile Layout - 3 lines */}
-                  <span className="block lg:hidden text-[clamp(1.75rem,7.5vw,2.1rem)]">
-                    <span className="block text-[#630ed4] whitespace-nowrap">Làm sao để CV</span>
-                    <span className="mt-0.5 block whitespace-nowrap">
-                      <span className="text-[#630ed4]">ấn tượng </span>
-                      <span className="text-[#1a1b23]">trong mắt</span>
-                    </span>
-                    <span className="mt-0.5 block text-[#1a1b23] whitespace-nowrap">nhà tuyển dụng?</span>
+                  <span className="block text-[#1a1b23] whitespace-nowrap">
+                    {CV_HUB_HERO_COPY.titleRest}
                   </span>
                 </span>
-                <p className="mt-2 max-w-[min(100%,30rem)] text-[clamp(0.9375rem,2vw,1.0625rem)] font-medium leading-snug text-slate-600 lg:max-w-[36rem]">
-                  {/* Desktop Layout */}
-                  <span className="hidden lg:block">
-                    <span className="block">{CV_HUB_HERO_COPY.bodyLine1}</span>
-                    <span className="mt-0.5 block whitespace-nowrap">
-                      {CV_HUB_HERO_COPY.bodyLine2}
-                    </span>
-                  </span>
 
-                  {/* Mobile Layout */}
-                  <span className="block text-pretty lg:hidden">
-                    {CV_HUB_HERO_COPY.bodyLine1} {CV_HUB_HERO_COPY.bodyLine2}
+                {/* Mobile, giữ cỡ hub riêng */}
+                <span className="block text-[clamp(1.75rem,7.5vw,2.1rem)] font-extrabold leading-[1.12] lg:hidden">
+                  <span className="block text-[#630ed4] whitespace-nowrap">Làm sao để CV</span>
+                  <span className="mt-0.5 block whitespace-nowrap">
+                    <span className="text-[#630ed4]">ấn tượng </span>
+                    <span className="text-[#1a1b23]">trong mắt</span>
                   </span>
+                  <span className="mt-0.5 block text-[#1a1b23] whitespace-nowrap">nhà tuyển dụng?</span>
+                </span>
+                <p className="mt-2 max-w-[min(100%,30rem)] text-[clamp(1.0625rem,2.2vw,1.25rem)] font-medium leading-snug text-slate-600 lg:max-w-none">
+                  <span className="hidden lg:block">
+                    <span className="block whitespace-nowrap">{CV_HUB_HERO_COPY.bodyLine1}</span>
+                    <span className="block whitespace-nowrap">{CV_HUB_HERO_COPY.bodyLine2}</span>
+                  </span>
+                  <span className="block text-pretty lg:hidden">{CV_SHOWCASE_COPY.body}</span>
                 </p>
               </h1>
 
-              <div className="flex flex-wrap items-center justify-center gap-2.5 pt-0.5 sm:justify-start lg:justify-start">
+              <div className="flex flex-col gap-2 pt-0.5 max-sm:items-stretch sm:flex-row sm:flex-nowrap sm:items-center sm:justify-start sm:gap-2.5 lg:gap-3">
                 <button
                   type="button"
                   onClick={onJd}
-                  className="cv-hub-cta inline-flex items-center justify-center rounded-2xl bg-gradient-to-br from-[#630ed4] to-[#7c3aed] px-5 py-2.5 text-xs font-bold text-white shadow-lg shadow-violet-500/25 hover:brightness-105 hover:shadow-xl hover:shadow-violet-500/30 sm:text-sm"
+                  className="cv-hub-cta inline-flex shrink-0 items-center justify-center whitespace-nowrap rounded-2xl bg-gradient-to-br from-[#630ed4] to-[#7c3aed] px-6 py-3 text-sm font-bold text-white shadow-lg shadow-violet-500/25 hover:brightness-105 hover:shadow-xl hover:shadow-violet-500/30 sm:px-7 sm:py-3.5 sm:text-base"
                 >
                   {CV_HUB_HERO_COPY.ctaJd}
                 </button>
                 <button
                   type="button"
                   onClick={onField}
-                  className="cv-hub-cta inline-flex items-center gap-2 rounded-2xl border-2 border-violet-200/80 bg-white/90 px-5 py-2.5 text-xs font-bold text-[#630ed4] shadow-sm backdrop-blur-sm hover:border-violet-300 hover:bg-white hover:shadow-md sm:text-sm"
+                  className="cv-hub-cta inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-2xl border-2 border-violet-200/80 bg-white/90 px-6 py-3 text-sm font-bold text-[#630ed4] shadow-sm backdrop-blur-sm hover:border-violet-300 hover:bg-white hover:shadow-md sm:px-7 sm:py-3.5 sm:text-base"
                 >
                   {CV_HUB_HERO_COPY.ctaField}
                 </button>
@@ -122,19 +117,19 @@ export function CvAnalysisHubHero({ onJd, onField, navShellAligned = false }) {
             </div>
           </div>
 
-          {/* Phải — demo: banner + 2 ô + card cùng full width */}
+          {/* Phải, demo: banner + 2 ô + card cùng full width */}
           <div
-            className={`flex min-w-0 w-full flex-1 flex-col gap-2.5 sm:gap-3 lg:ml-auto lg:min-w-0 lg:max-w-[32rem] lg:flex-[1.08] xl:max-w-[33rem] ${navShellAligned ? "lg:translate-x-12" : ""
+            className={`flex min-w-0 w-full flex-1 flex-col gap-2.5 sm:gap-3 lg:ml-auto lg:min-w-0 lg:max-w-[31rem] lg:flex-[1.08] xl:max-w-[32rem] ${navShellAligned ? "lg:translate-x-12" : ""
               }`}
           >
-            <div className="flex items-center justify-between gap-2 px-0.5 lg:-translate-x-20 lg:translate-y-16">
-              <span className="inline-flex items-center gap-1.5 text-[10px] font-semibold text-violet-800 sm:text-xs">
+            <div className="flex items-center justify-between gap-2 px-0.5 lg:-translate-x-12 lg:translate-y-10">
+              <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-violet-800 sm:text-base">
                 Kết quả phân tích
               </span>
             </div>
 
-            {/* Demo KQ: banner tím + 2 ô + bảng — scale chung, origin-top (không đè nhau) */}
-            <div className="cv-hub-demo-stack flex w-full flex-col gap-2.5 sm:gap-3 lg:origin-top lg:-translate-x-20 lg:translate-y-16 lg:scale-[1.06] lg:gap-3">
+            {/* Demo KQ: banner tím + 2 ô + bảng, scale chung, origin-top (không đè nhau) */}
+            <div className="cv-hub-demo-stack flex w-full flex-col gap-2.5 sm:gap-3 lg:origin-top lg:-translate-x-12 lg:translate-y-10 lg:scale-[1.06] lg:gap-3">
               <div
                 className="w-full shrink-0 overflow-hidden rounded-[1.25rem] sm:rounded-[1.5rem]"
                 style={{ background: "linear-gradient(135deg,#6E35E8 0%,#9B6DFF 55%,#B794FF 100%)" }}
@@ -214,16 +209,16 @@ export function CvAnalysisHubHero({ onJd, onField, navShellAligned = false }) {
                 </div>
               </div>
 
-              {/* Card đánh giá — hubPreview; gấu căn đáy card (desktop) */}
+              {/* Card đánh giá, hubPreview; gấu căn đáy card (desktop) */}
               <div className="relative hidden w-full shrink-0 overflow-visible lg:block">
                 <div
-                  className="pointer-events-none absolute bottom-0 left-0 z-20 -translate-x-[16.65rem] translate-y-[2.35rem] xl:-translate-x-[17.4rem] xl:translate-y-[2.25rem]"
+                  className="pointer-events-none absolute bottom-0 left-0 z-20 -translate-x-[14.65rem] translate-y-[3.35rem] xl:-translate-x-[15.4rem] xl:translate-y-[3.25rem]"
                   aria-hidden
                 >
                   <MascotSparkle className="left-[27%] top-[8%] h-2.5 w-2.5" />
                   <MascotSparkle className="right-[17%] top-[4.5%] h-2 w-2 opacity-80" />
                   <img
-                    src="/mascot-cv-hub-knowledge.png?v=11"
+                    src="/mascot-cv-hub-pose1.png?v=1"
                     alt=""
                     className="block h-[23rem] w-[23rem] max-w-none object-contain object-bottom drop-shadow-[0_20px_50px_rgba(99,14,212,0.18)] xl:h-[24rem] xl:w-[24rem]"
                   />

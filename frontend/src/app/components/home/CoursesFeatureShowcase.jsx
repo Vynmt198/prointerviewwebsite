@@ -11,16 +11,15 @@ import { HOME_DEMO_COURSES } from "../../data/homeLandingDemo";
 import { COURSES_SHOWCASE_COPY } from "../../constants/brandVoice";
 import {
   HOME_SECTION_TITLE_CLAMP,
-  HOME_COURSES_TITLE_CLAMP,
   homeSectionClasses as ty,
 } from "../../constants/homeTypography";
 import { SparkleGlyph } from "../decor/SparkleGlyph";
 
-/** Một khóa mẫu cố định (STAR) — tab lọc chỉ minh họa UI. */
+/** Một khóa mẫu cố định (STAR), tab lọc chỉ minh họa UI. */
 const DEMO_COURSE = HOME_DEMO_COURSES[0];
 const DEMO_FILTER_LABELS = ["Phỏng vấn", "Viết CV", "Technical", "Soft skills"];
 
-/** Avatar mentor trên thẻ khóa (mock) — linh vật, không dùng ảnh stock */
+/** Avatar mentor trên thẻ khóa (mock), linh vật, không dùng ảnh stock */
 const COURSE_CARD_MENTOR_AVATAR = "/mascot-course-card-avatar.png?v=2";
 const COURSE_CARD_AVATAR_FALLBACK = "/mascot-courses-ready.png?v=8";
 
@@ -96,27 +95,22 @@ function CoursesLearningMockup() {
   const moreLessons = Math.max(0, (DEMO_COURSE.lessonsCount ?? 0) - displayLessons.length);
 
   return (
-    <div className="courses-mock-panel relative w-full overflow-visible rounded-[1.75rem] px-[1.2rem] pb-[1.45rem] pt-[5.2rem] sm:rounded-[2rem] sm:px-[1.45rem] sm:pb-[1.7rem] sm:pt-[5.7rem]">
+    <div className="courses-mock-panel relative w-full sm:w-[calc(100%+24.7rem)] lg:w-[calc(100%+25.7rem)] ml-0 sm:-ml-[12.35rem] lg:-ml-[12.85rem] overflow-visible rounded-[1.75rem] px-[1.2rem] pb-[1.45rem] pt-[5.2rem] sm:rounded-[2rem] sm:px-[1.45rem] sm:pb-[1.7rem] sm:pt-[5.7rem]">
       <div
-        className="pointer-events-none absolute left-[15%] sm:left-[20%] lg:left-1/2 top-0 z-[2] w-[12rem] -translate-x-[calc(50%+0.5rem)] lg:-translate-x-[calc(50%+12.8rem)] translate-y-[calc(-50%+2.3rem)] lg:translate-y-[calc(-50%+2.575rem)] sm:w-[14rem] lg:w-[16rem] hidden lg:block"
+        className="pointer-events-none absolute left-1/2 top-0 z-[2] w-[11.5rem] -translate-x-1/2 translate-y-[calc(-50%+1.9rem)] sm:w-[12rem] sm:translate-y-[calc(-50%+1.57rem)] lg:w-[16rem] lg:translate-y-[calc(-50%+1.845rem)]"
         aria-hidden
       >
-        <div className="courses-mascot-sticker relative mx-auto w-fit translate-x-[0.3rem]">
-          <div
-            className="pointer-events-none absolute inset-[max(0px,calc(11%-0.65rem))] z-0 translate-x-[0.2rem] translate-y-[0.2rem] rounded-full border border-violet-100/80 bg-[#fefeff] shadow-[0_10px_24px_rgba(99,14,212,0.1)] sm:inset-[max(0px,calc(12%-0.65rem))]"
-            aria-hidden
-          />
-          <SparkleGlyph className="absolute -left-[2rem] top-[1rem] z-[3] w-10 h-10 -rotate-12 drop-shadow-md sm:-left-[3rem] sm:top-[1.5rem] sm:w-14 sm:h-14" />
+        <div className="courses-mascot-sticker relative mx-auto w-fit">
           <img
-            src="/mascot-courses-ready.png?v=8"
+            src="/mascot-courses-pose8-removebg.png?v=1"
             alt=""
-            className="relative z-[1] block h-auto w-[7.7rem] object-contain sm:w-[9.2rem]"
+            className="relative z-[1] block h-auto w-[11.2rem] object-contain sm:w-[11.4rem] lg:w-[12.9rem]"
           />
         </div>
       </div>
 
       <div
-        className="pointer-events-none relative z-[1] flex flex-wrap justify-center gap-1.5 rounded-2xl bg-white/70 p-1.5 shadow-sm backdrop-blur-sm sm:gap-2"
+        className="pointer-events-none relative z-[1] flex flex-wrap justify-center gap-1.5 rounded-2xl bg-white/70 p-[0.525rem] shadow-sm backdrop-blur-sm sm:gap-2"
         aria-hidden
       >
         {DEMO_FILTER_LABELS.map((label, idx) => (
@@ -217,7 +211,7 @@ function CoursesLearningMockup() {
   );
 }
 
-/** Showcase khóa học — layout Upzi, nội dung khớp feature ProInterview. */
+/** Showcase khóa học, layout Upzi, nội dung khớp feature ProInterview. */
 export function CoursesFeatureShowcase({ onCtaClick }) {
   return (
     <section
@@ -235,26 +229,41 @@ export function CoursesFeatureShowcase({ onCtaClick }) {
         }
       `}</style>
       <div className={`home-mobile-gutter relative z-10 flex w-full items-center overflow-visible py-2 ${HOME_SECTION_INNER}`}>
-        <div className="mx-auto grid w-full max-w-6xl origin-center grid-cols-1 items-center gap-10 overflow-visible lg:grid-cols-[1.12fr_0.88fr] lg:scale-x-[1.05] lg:scale-y-[1.12] lg:gap-[1.45rem] xl:max-w-[68rem] xl:scale-x-[1.07] xl:scale-y-[1.14]">
-          <div className="relative z-10 flex w-full min-w-0 justify-center px-1 sm:px-2 max-lg:order-last">
+        <div className="mx-auto grid w-full max-w-6xl translate-x-0 lg:translate-x-[2.2rem] grid-cols-1 items-center gap-10 overflow-visible lg:grid-cols-[1.12fr_0.88fr] lg:gap-[1.45rem] xl:max-w-[68rem]">
+          <div className="relative z-10 flex w-full min-w-0 origin-center justify-center max-lg:order-last lg:translate-x-[5.3rem] lg:scale-x-[1.05] lg:scale-y-[1.12] xl:scale-x-[1.07] xl:scale-y-[1.14]">
             <CoursesLearningMockup />
           </div>
 
-          <article className="relative z-10 flex flex-col items-start gap-[0.825rem] pl-1 sm:gap-[0.95rem] sm:pl-3 lg:pl-0 lg:pr-0 xl:pl-1 xl:pr-2 max-lg:order-first">
+          <article className="relative z-10 flex flex-col items-start gap-[0.825rem] pl-1 sm:gap-[0.95rem] sm:pl-3 lg:translate-x-[5.2rem] lg:pl-0 lg:pr-0 xl:pl-1 xl:pr-2 max-lg:order-first">
+            <SparkleGlyph className="pointer-events-none absolute right-[2.8rem] top-[0.2rem] z-[3] h-10 w-10 rotate-12 drop-shadow-md sm:right-[2.2rem] sm:h-12 sm:w-12" />
             <span className={ty.badge}>
               <GraduationCap className="h-3.5 w-3.5 shrink-0" aria-hidden />
               {COURSES_SHOWCASE_COPY.badge}
             </span>
             <h2
               className={`${ty.title} sm:max-w-none`}
-              style={{ fontSize: HOME_COURSES_TITLE_CLAMP }}
+              style={{ fontSize: HOME_SECTION_TITLE_CLAMP }}
             >
-              <span className="block sm:whitespace-nowrap">{COURSES_SHOWCASE_COPY.titleLine1}</span>
-              <span className={`${ty.titleLineAccent} sm:whitespace-nowrap`}>{COURSES_SHOWCASE_COPY.titleLine2}</span>
-              <span className={`${ty.titleLineAccent} sm:whitespace-nowrap`}>{COURSES_SHOWCASE_COPY.titleLine3}</span>
+              {/* Desktop: 2 dòng gốc */}
+              <span className={`${ty.titleLineSecond} ${ty.titleLineDark} hidden sm:block lg:whitespace-nowrap`}>
+                {COURSES_SHOWCASE_COPY.titleLine1}
+              </span>
+              <span className={`${ty.titleLineSecond} ${ty.titleLineAccent} hidden sm:block lg:whitespace-nowrap`}>
+                {COURSES_SHOWCASE_COPY.titleLine2}
+              </span>
+              {/* Mobile: 3 dòng tự nhiên */}
+              <span className={`${ty.titleLineSecond} ${ty.titleLineDark} sm:hidden whitespace-nowrap`}>
+                Học từ kinh nghiệm
+              </span>
+              <span className={`${ty.titleLineSecond} ${ty.titleLineDark} sm:hidden whitespace-nowrap`}>
+                Mentor <span className="text-[#6d2fd6]">qua khóa học</span>
+              </span>
+              <span className={`${ty.titleLineSecond} ${ty.titleLineAccent} sm:hidden`}>
+                thực tế
+              </span>
             </h2>
-            <p className={ty.body}>{COURSES_SHOWCASE_COPY.body}</p>
-            <ul className={ty.bulletList}>
+            <p className={ty.coursesBody}>{COURSES_SHOWCASE_COPY.body}</p>
+            <ul className={ty.coursesBulletList}>
               {COURSES_SHOWCASE_COPY.bullets.map((item) => (
                 <li key={item} className="flex items-start gap-2">
                   <CircleCheck className={ty.bulletIcon} strokeWidth={2.5} />

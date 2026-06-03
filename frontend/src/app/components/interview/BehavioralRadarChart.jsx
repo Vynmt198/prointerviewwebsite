@@ -1,5 +1,5 @@
 /**
- * BehavioralRadarChart — spider chart hiển thị 6 chiều hành vi phỏng vấn.
+ * BehavioralRadarChart, spider chart hiển thị 6 chiều hành vi phỏng vấn.
  * Sử dụng Recharts RadarChart. Tất cả scores trên thang 0–5.
  */
 

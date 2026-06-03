@@ -474,7 +474,7 @@ export function MentorSchedule() {
       extraStyles={MENTOR_SCHEDULE_EXTRA_CSS}
     >
       <div className="relative z-10 mx-auto flex h-[calc(100svh-7.5rem)] max-h-[calc(100svh-7.5rem)] min-h-0 max-w-7xl flex-col overflow-visible px-6 pt-2 lg:px-8">
-        {/* Header — compact */}
+        {/* Header, compact */}
         <div className="mb-4 flex shrink-0 flex-col gap-3 overflow-visible pt-1 sm:flex-row sm:items-center sm:justify-between">
           <div className="min-w-0 overflow-visible">
             <h1 className="font-headline overflow-visible pb-0.5 text-2xl font-black leading-[1.2] tracking-tight text-slate-900 sm:text-3xl">

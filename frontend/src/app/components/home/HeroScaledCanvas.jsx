@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 
-/** Desktop: grid cố định chữ | video — zoom chỉ phóng to, không chồng cột. */
+/** Desktop: grid cố định chữ | video, zoom chỉ phóng to, không chồng cột. */
 export function HeroScaledCanvas({ children, className = "" }) {
   const [desktop, setDesktop] = useState(false);
 

@@ -89,7 +89,7 @@ function LessonRow({
                   </span>
                 </>
               ) : (
-                "MP4, MOV, WEBM — tối đa 2GB"
+                "MP4, MOV, WEBM, tối đa 2GB"
               )}
             </p>
 
@@ -271,7 +271,7 @@ export function CourseCreateStep2({
               />
             </label>
             <p className="mt-2 text-xs text-slate-500">
-              {thumbnailFileName || "PNG, JPG, WEBP — tối đa 5MB"}
+              {thumbnailFileName || "PNG, JPG, WEBP, tối đa 5MB"}
             </p>
           </div>
         </div>

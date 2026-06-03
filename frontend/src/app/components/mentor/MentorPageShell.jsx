@@ -1,7 +1,7 @@
 import React from "react";
 
 /**
- * Vỏ trang trong app user — nền trong suốt để lớp `app-shell-ambient` (Home) hiện ra;
+ * Vỏ trang trong app user, nền trong suốt để lớp `app-shell-ambient` (Home) hiện ra;
  * lưới + blur tím nhạt giống họ Home.
  */
 const MENTOR_LIGHT_STYLES = `
@@ -40,7 +40,7 @@ const MENTOR_LIGHT_STYLES = `
           letter-spacing: -0.045em;
           text-shadow: none;
         }
-        /* Nhãn uppercase tiếng Việt — tracking utility mặc định thường quá rộng */
+        /* Nhãn uppercase tiếng Việt, tracking utility mặc định thường quá rộng */
         .mentor-surface .tracking-widest,
         .mentor-surface .tracking-wider,
         .mentor-surface [class*="tracking-[0"] {

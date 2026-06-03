@@ -104,7 +104,7 @@ function SessionRow({ sess, isCurrent, suspicious, onRevoke, revoking, showChevr
           </button>
         )}
       </div>
-      {/* Phiên đang dùng: chỉ link chữ — không mũi tên (tránh trùng hành động + confirm browser) */}
+      {/* Phiên đang dùng: chỉ link chữ, không mũi tên (tránh trùng hành động + confirm browser) */}
       {showChevron && !isCurrent && (
         <button
           type="button"

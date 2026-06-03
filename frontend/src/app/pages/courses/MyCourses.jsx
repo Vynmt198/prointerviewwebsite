@@ -15,7 +15,7 @@ function CourseCard({ item, onDetails }) {
   const { course } = item;
   const description =
     course.description?.trim() ||
-    `Khóa học từ ${course.mentorName || "mentor"} — học theo lộ trình video ngắn, dễ áp dụng.`;
+    `Khóa học từ ${course.mentorName || "mentor"}, học theo lộ trình video ngắn, dễ áp dụng.`;
 
   return (
     <article className="group flex h-full flex-col overflow-hidden rounded-2xl border border-violet-200/70 bg-white shadow-sm transition-shadow hover:border-violet-300/80 hover:shadow-md">

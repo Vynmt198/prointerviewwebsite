@@ -1,7 +1,7 @@
 import React, { useId } from "react";
 
 /**
- * Ngôi sao 4 cánh — cùng visual trang Home (section sticks).
+ * Ngôi sao 4 cánh, cùng visual trang Home (section sticks).
  */
 export function SparkleGlyph({ className = "", style, tone = "brand" }) {
   const uid = useId().replace(/:/g, "");

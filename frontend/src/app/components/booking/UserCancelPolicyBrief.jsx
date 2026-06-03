@@ -51,7 +51,7 @@ function PolicySection({ icon: Icon, title, lines, activeTier, compact }) {
 }
 
 /**
- * Chính sách hủy/hoàn — `variant="icons"` (đặt lịch / sidebar buổi hẹn) hoặc `plain`.
+ * Chính sách hủy/hoàn, `variant="icons"` (đặt lịch / sidebar buổi hẹn) hoặc `plain`.
  */
 export function UserCancelPolicyBrief({
   hoursLeft = null,
