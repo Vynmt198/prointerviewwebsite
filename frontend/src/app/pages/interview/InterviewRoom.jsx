@@ -1308,9 +1308,11 @@ export default function InterviewRoom() {
                 <div className="absolute inset-0 pointer-events-none"
                   style={{ background: "radial-gradient(ellipse at 50% 48%, rgba(110,53,232,0.22) 0%, transparent 68%)" }} />
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <AILipSyncAvatar isSpeaking={didStatus === "speaking"} didStatus={didStatus} attachVideo={attachVideo} size={220} />
+                  {/* sourceImageUrl: portrait shows while D-ID video stream is loading/connecting;
+                      component switches to live video automatically when onPlay fires */}
+                  <AILipSyncAvatar isSpeaking={didStatus === "speaking"} didStatus={didStatus} attachVideo={attachVideo} size={220} sourceImageUrl={DID_AVATAR_URLS[hrGender]} />
                 </div>
-                {hrPhase === "asking" && didStatus === "speaking" && (
+                {hrPhase === "asking" && (didStatus === "speaking" || didStatus === "connected") && (
                   <div className="absolute top-3 right-3 z-10">
                     <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold"
                       style={{ background: "rgba(110,53,232,0.85)", backdropFilter: "blur(8px)" }}>
