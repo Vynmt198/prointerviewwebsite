@@ -1,9 +1,11 @@
 import mongoose from "mongoose";
 import { Enrollment } from "../models/Enrollment.js";
 import { Course } from "../models/Course.js";
+import { Mentor } from "../models/Mentor.js";
 import { enrollmentAccessGranted } from "../helpers/enrollmentAccess.js";
 import { recordTransferPending, recordTransferSubmitted } from "../services/paymentsService.js";
 import { incrementCourseEnrollmentCount } from "../services/courseStatsService.js";
+import { resolveCoursePlatformFeeRate } from "../services/mentorCommissionService.js";
 import { serializeCourseForApi } from "../utils/resolveStoredUploadUrl.js";
 import { newPaymentExpiresAt } from "../utils/transferPaymentExpiry.js";
 import { expireEnrollmentTransferIfNeeded } from "../services/transferPaymentExpiryService.js";
@@ -34,6 +36,11 @@ export const EnrollmentController = {
       if (!course) return res.status(404).json({ success: false, error: "Không tìm thấy khóa học" });
 
       const price = Number(course.price || 0);
+      const courseMentor = course?.mentorId
+        ? await Mentor.findById(course.mentorId).select("pricing").lean()
+        : null;
+      const { rate: coursePlatformFeeRate } = resolveCoursePlatformFeeRate(courseMentor);
+      const coursePlatformFee = Math.round(Math.max(0, price) * coursePlatformFeeRate);
       const existing = await Enrollment.findOne({ userId, courseId });
 
       if (existing) {
@@ -51,6 +58,14 @@ export const EnrollmentController = {
             let dirty = false;
             if (Math.round(Number(existing.pricePaid ?? 0)) !== coursePrice) {
               existing.pricePaid = coursePrice;
+              dirty = true;
+            }
+            if (Number(existing.platformFeeRate) !== Number(coursePlatformFeeRate)) {
+              existing.platformFeeRate = coursePlatformFeeRate;
+              dirty = true;
+            }
+            if (Math.round(Number(existing.platformFee ?? 0)) !== Math.round(coursePlatformFee)) {
+              existing.platformFee = coursePlatformFee;
               dirty = true;
             }
             if (clientOrder && extractOrderPart(existing.paymentRef) !== clientOrder) {
@@ -80,6 +95,8 @@ export const EnrollmentController = {
           userId,
           courseId,
           pricePaid: 0,
+          platformFeeRate: coursePlatformFeeRate,
+          platformFee: 0,
           paymentStatus: "paid",
           paymentMethod: "",
           lastAccessedAt: new Date(),
@@ -106,6 +123,8 @@ export const EnrollmentController = {
         userId,
         courseId,
         pricePaid: price,
+        platformFeeRate: coursePlatformFeeRate,
+        platformFee: coursePlatformFee,
         paymentStatus: "pending",
         paymentMethod: "transfer",
         paymentRef: orderRef,

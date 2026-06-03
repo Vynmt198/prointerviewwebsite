@@ -34,7 +34,7 @@ import { AILipSyncAvatar } from "../../components/interview/AILipSyncAvatar";
 import { MentorPageShell } from "../../components/mentor/MentorPageShell";
 import { InterviewStepBar } from "../../components/interview/InterviewStepBar";
 import { CUSTOMER_SHELL_GUTTER, CUSTOMER_SHELL_MAX } from "../../components/layout/customerShellLayout";
-import { CustomerPageHeader } from "../../components/layout/CustomerPageHeader";
+import { CustomerPageHeader, CustomerPageSplitTitle } from "../../components/layout/CustomerPageHeader";
 
 /* ── Session storage keys ────────────────────────────────── */
 const TRANSCRIPT_KEY = "prointerview_transcripts";
@@ -1043,10 +1043,7 @@ export default function InterviewRoom() {
             <CustomerPageHeader
               className="mb-5 w-full"
               title={
-                <>
-                  <span className="font-extrabold text-[#6d2fd6]">Luyện phỏng vấn với AI</span>{" "}
-                  <span className="font-extrabold text-[#1a1b23]">từ CV của bạn</span>
-                </>
+                <CustomerPageSplitTitle accent="Luyện phỏng vấn với AI" rest="từ CV của bạn" />
               }
               subtitle="Từ CV của bạn, ProInterview tạo buổi phỏng vấn thử với HR AI (~30 phút), phân tích hành vi và góp ý sau từng câu trả lời để bạn tự tin hơn trước buổi thật."
               subtitleClassName="mt-3 max-w-2xl text-base font-medium leading-relaxed text-violet-700/90"

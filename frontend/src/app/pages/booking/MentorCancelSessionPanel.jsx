@@ -1,5 +1,6 @@
 import { motion } from "motion/react";
 import { AlertCircle as WarningCircle } from "lucide-react";
+import { AppSelect } from "../../components/ui/AppSelect";
 
 /**
  * Giao diện xử lý sau khi mentor hủy / no-show — học viên chọn phương án hoặc điền STK.
@@ -132,21 +133,19 @@ export function MentorCancelSessionPanel({
                 ) : rescheduleSlotOptions.length === 0 ? (
                   <p className="text-xs text-amber-700">Không có slot trống — chọn hoàn tiền hoặc liên hệ support.</p>
                 ) : (
-                  <select
+                  <AppSelect
+                    size="md"
                     value={`${rescheduleDate}|${rescheduleSlot}`}
-                    onChange={(e) => {
-                      const [d, s] = e.target.value.split("|");
+                    onValueChange={(v) => {
+                      const [d, s] = String(v).split("|");
                       setRescheduleDate(d);
                       setRescheduleSlot(s);
                     }}
-                    className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm"
-                  >
-                    {rescheduleSlotOptions.map((o) => (
-                      <option key={`${o.date}|${o.slot}`} value={`${o.date}|${o.slot}`}>
-                        {o.label}
-                      </option>
-                    ))}
-                  </select>
+                    options={rescheduleSlotOptions.map((o) => ({
+                      value: `${o.date}|${o.slot}`,
+                      label: o.label,
+                    }))}
+                  />
                 )}
                 <div className="flex flex-wrap gap-2">
                   <button

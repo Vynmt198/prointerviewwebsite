@@ -25,15 +25,10 @@ import { MentorPageShell } from "../../components/mentor/MentorPageShell";
 import { listMentorBookings } from "../../utils/bookingsApi";
 import { fetchMentorAvailability, updateMyMentorAvailability } from "../../utils/mentorApi";
 import { toastApiError, toastApiSuccess } from "../../utils/apiToast";
+import { AppSelect } from "../../components/ui/AppSelect";
 
-const DEFAULT_AVATAR = "https://i.pravatar.cc/120?img=22";
-
-const SESSION_TYPE_LABELS = {
-  mock_interview: "Phỏng vấn giả lập",
-  cv_review: "Review CV",
-  career_consulting: "Tư vấn nghề nghiệp",
-  custom: "Buổi tùy chỉnh",
-};
+import { avatarSrc, DEFAULT_AVATAR } from "../../utils/mediaUrl";
+import { sessionTypeLabel } from "../../utils/sessionTypeLabels";
 
 const BOOKING_STATUS_LABELS = {
   pending: "Chờ xác nhận",
@@ -46,11 +41,7 @@ const BOOKING_STATUS_LABELS = {
 };
 
 function formatSessionType(value) {
-  const key = String(value || "").toLowerCase().replace(/\s+/g, "_");
-  if (SESSION_TYPE_LABELS[key]) return SESSION_TYPE_LABELS[key];
-  const raw = String(value || "").trim();
-  if (!raw || /^[a-z_]+$/i.test(raw)) return "Buổi mentor";
-  return raw;
+  return sessionTypeLabel(value);
 }
 
 function formatBookingStatus(value) {
@@ -69,7 +60,7 @@ function toMeetingItem(booking) {
     position: formatSessionType(booking.sessionType),
     mentee: {
       name: booking.customerName || "Học viên",
-      avatar: booking.customerAvatar || DEFAULT_AVATAR,
+      avatar: avatarSrc(booking.customerAvatar) || DEFAULT_AVATAR,
     },
   };
 }
@@ -326,36 +317,30 @@ function AvailabilityModal({ onClose, availability, onSaved }) {
                      <div className="flex-1 w-full grid grid-cols-2 gap-3">
                         <div className="space-y-1.5">
                            <p className="ml-3 text-xs font-semibold text-violet-700">Ngày trong tuần</p>
-                           <select
+                           <AppSelect
+                              size="default"
                               value={newSlotDay}
-                              onChange={(e) => setNewSlotDay(Number(e.target.value))}
-                              className="w-full px-5 py-3 rounded-2xl bg-white border border-slate-200 text-xs font-bold text-slate-900 outline-none focus:border-violet-400 focus:ring-4 focus:ring-violet-500/5 transition-all"
-                           >
-                              {DAY_ROWS.map((d) => (
-                                 <option key={d.key} value={d.key}>{d.label}</option>
-                              ))}
-                           </select>
+                              onValueChange={(v) => setNewSlotDay(Number(v))}
+                              options={DAY_ROWS.map((d) => ({ value: d.key, label: d.label }))}
+                           />
                         </div>
                         <div className="space-y-1.5">
                            <p className="ml-3 text-xs font-semibold text-violet-700">Bắt đầu từ</p>
-                           <select
+                           <AppSelect
+                              size="default"
                               value={newSlotRange}
-                              onChange={(e) => setNewSlotRange(e.target.value)}
-                              className="w-full px-5 py-3 rounded-2xl bg-white border border-slate-200 text-xs font-bold text-slate-900 outline-none focus:border-violet-400 focus:ring-4 focus:ring-violet-500/5 transition-all"
-                           >
-                              {SLOT_OPTIONS.map((start) => {
+                              onValueChange={setNewSlotRange}
+                              options={SLOT_OPTIONS.map((start) => {
                                  const range = toOneHourRange(start);
-                                 return (
-                                    <option key={range} value={range}>{range}</option>
-                                 )
+                                 return { value: range, label: range };
                               })}
-                           </select>
+                           />
                         </div>
                      </div>
                      <div className="md:pt-5 w-full md:w-auto">
                         <button
                            onClick={() => addSlot(newSlotDay, String(newSlotRange).split("-")[0].trim())}
-                           className="flex w-full items-center justify-center gap-2 rounded-2xl bg-violet-600 px-8 py-3.5 text-sm font-semibold text-white shadow-lg shadow-violet-200 transition-all hover:scale-[1.02] hover:bg-violet-700 active:scale-[0.98] md:w-auto"
+                           className="flex w-full items-center justify-center gap-2 rounded-2xl bg-[#8037f4] px-8 py-3.5 text-sm font-semibold text-white shadow-lg shadow-[#8037f4]/25 transition-all hover:scale-[1.02] hover:bg-[#6d2fd6] active:scale-[0.98] md:w-auto"
                         >
                            <Plus size={14} /> Thêm vào lịch
                         </button>
@@ -369,7 +354,7 @@ function AvailabilityModal({ onClose, availability, onSaved }) {
            <p className="px-4 text-xs text-zinc-600">Lưu ý: Thay đổi sẽ áp dụng từ tuần kế tiếp</p>
            <div className="flex gap-4">
               <button onClick={onClose} className="rounded-2xl border border-slate-200 bg-slate-50 px-8 py-3 text-sm font-semibold text-zinc-600 transition-all hover:text-slate-900">Hủy</button>
-              <button disabled={saving} onClick={handleSave} className="rounded-2xl bg-primary-fixed px-8 py-3 text-sm font-semibold text-slate-900 shadow-xl disabled:opacity-60">
+              <button disabled={saving} onClick={handleSave} className="rounded-2xl bg-[#93f72b] px-8 py-3 text-sm font-semibold text-[#120B2E] shadow-xl shadow-[#93f72b]/25 disabled:opacity-60">
                 {saving ? "Đang lưu..." : "Lưu cấu hình"}
               </button>
            </div>
@@ -486,7 +471,7 @@ export function MentorSchedule() {
           <button
             type="button"
             onClick={() => setShowAvailability(true)}
-            className="flex shrink-0 items-center gap-2 self-start rounded-xl bg-gradient-to-r from-[#93f72b] to-[#7fe015] px-5 py-2.5 text-xs font-bold text-[#0a0814] shadow-[0_6px_18px_rgba(196,255,71,0.2)] transition-all hover:brightness-110 sm:px-6 sm:py-3"
+            className="flex shrink-0 items-center gap-2 self-start rounded-xl bg-[#93f72b] px-5 py-2.5 text-xs font-bold text-[#120B2E] shadow-[0_6px_18px_rgba(147,247,43,0.32)] transition-all hover:brightness-105 sm:px-6 sm:py-3"
           >
             <Clock size={15} /> Cài đặt làm việc
           </button>
@@ -595,11 +580,11 @@ export function MentorSchedule() {
                             <span
                               className={`shrink-0 rounded-md border px-2.5 py-1 text-xs font-semibold ${
                                 String(meeting.status || "").toLowerCase() === "confirmed"
-                                  ? "border-emerald-300 bg-emerald-100 text-emerald-900"
+                                  ? "border-[#93f72b] bg-[#93f72b]/15 text-[#5a9a12]"
                                   : String(meeting.status || "").toLowerCase() === "pending"
-                                    ? "border-violet-300 bg-violet-100 text-violet-900"
+                                    ? "border-[#8037f4]/35 bg-[#8037f4]/10 text-[#8037f4]"
                                     : String(meeting.status || "").toLowerCase() === "completed"
-                                      ? "border-sky-300 bg-sky-100 text-sky-900"
+                                      ? "border-[#93f72b] bg-[#93f72b]/12 text-[#93f72b]"
                                       : String(meeting.status || "").toLowerCase() === "cancelled"
                                         ? "border-red-300 bg-red-100 text-red-900"
                                         : "border-slate-200 bg-slate-100 text-slate-700"

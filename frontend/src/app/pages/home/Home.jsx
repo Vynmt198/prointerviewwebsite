@@ -112,7 +112,7 @@ const TESTIMONIAL_MASCOTS = [
 const TESTIMONIALS = HOME_SECTION_COPY.testimonials.items.map((t, i) => ({
   ...t,
   mascot: TESTIMONIAL_MASCOTS[i],
-  stars: 5,
+    stars: 5,
 }));
 
 /** 3 điểm dọc thân con trỏ. */
@@ -256,7 +256,7 @@ function HeroAtmosphere() {
           <div className="cb cb-far-1" />
           <div className="cb cb-far-2" />
           <div className="cb cb-far-3" />
-        </div>
+            </div>
 
         {/* ── DEPTH 2: Deep mid-clouds ── */}
         <div className="cloud-layer">
@@ -264,7 +264,7 @@ function HeroAtmosphere() {
           <div className="cb cb-deep-2" />
           <div className="cb cb-deep-3" />
           <div className="cb cb-deep-4" />
-        </div>
+            </div>
 
         {/* ── DEPTH 3: Mid-layer cloud formations (main visible masses) ── */}
         <div className="cloud-layer">
@@ -273,14 +273,14 @@ function HeroAtmosphere() {
           <div className="cb cb-mid-3" />
           <div className="cb cb-mid-4" />
           <div className="cb cb-mid-5" />
-        </div>
+            </div>
 
         {/* ── DEPTH 4: Upper-right darker mass ── */}
         <div className="cloud-layer">
           <div className="cb cb-dark-1" />
           <div className="cb cb-dark-2" />
           <div className="cb cb-dark-3" />
-        </div>
+          </div>
 
         {/* ── DEPTH 5: Near foreground wisps (strongest parallax) ── */}
         <div className="cloud-layer">
@@ -288,17 +288,17 @@ function HeroAtmosphere() {
           <div className="cb cb-near-2" />
           <div className="cb cb-near-3" />
           <div className="cb cb-near-4" />
-        </div>
+            </div>
 
         {/* ── DEPTH 6: Illumination & glow ── */}
         <div className="cloud-layer">
           <div className="cb cb-glow-1" />
           <div className="cb cb-glow-2" />
           <div className="cb cb-glow-3" />
-        </div>
+                </div>
 
         <div className="cloud-vignette" />
-      </div>
+              </div>
 
       <div className="pointer-events-none fixed inset-0 z-[5] overflow-hidden">
         {arrows.map((arrow) => {
@@ -327,7 +327,7 @@ function HeroAtmosphere() {
             </motion.div>
           );
         })}
-      </div>
+                  </div>
     </>
   );
 }
@@ -927,11 +927,11 @@ export function Home() {
               <div className="hero-intro-badge mb-[2.35rem] max-lg:mb-[1.85rem] max-lg:flex max-lg:justify-center">
                 <div
                   className="inline-flex items-center gap-2 rounded-full border-2 bg-white px-3 py-1.5 text-sm font-bold sm:text-base max-lg:rounded-lg max-lg:border max-lg:px-2.5 max-lg:py-1 max-lg:text-xs"
-                  style={{
+                style={{
                     borderColor: "rgba(128, 55, 244, 0.42)",
                     color: "#8037f4",
-                  }}
-                >
+                }}
+              >
                   <SparkleGlyph className="h-3.5 w-3.5 shrink-0" tone="violet" />
                   {HOME_COPY.badge}
                 </div>
@@ -943,30 +943,30 @@ export function Home() {
                     {HOME_COPY.titleLine1}{" "}
                     <span className="hero-title-highlight" style={{ color: "#8037f4" }}>
                       {HOME_COPY.titleHighlight}
-                    </span>
-                  </span>
+                </span>
+                </span>
                   <span className="hero-title-line text-slate-900">
                     {HOME_COPY.titleLine2Suffix} {HOME_COPY.titleExtraLines?.[0] ?? ""}
                   </span>
                   <span className="hero-title-line text-slate-900">
                     {HOME_COPY.titleExtraLines?.[1] ?? ""} {HOME_COPY.titleExtraLines?.[2] ?? ""}
                   </span>
-                </h1>
+              </h1>
 
                 <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:justify-start max-lg:justify-center max-lg:items-center">
-                  <button
-                    type="button"
+                <button
+                  type="button"
                     onClick={() => navigate("/interview")}
                     className="inline-flex items-center justify-center gap-2 rounded-full px-4 py-2 text-base font-black transition-all hover:brightness-105 active:scale-[0.98] hover:-translate-y-0.5 sm:text-lg max-lg:rounded-lg max-lg:px-3.5 max-lg:py-[0.475rem] max-lg:text-sm"
-                    style={{
+                  style={{
                       background: "#93f72b",
-                      color: "#0f172a",
+                    color: "#0f172a",
                       boxShadow: "0 8px 22px rgba(147, 247, 43, 0.35)",
                     }}
                   >
                     <Lightning className="h-3.5 w-3.5" />
                     {HOME_COPY.cta}
-                  </button>
+                </button>
                 </div>
               </div>
             </div>
@@ -1012,8 +1012,8 @@ export function Home() {
                     <span className="mt-0.5 block whitespace-nowrap text-[#7c3aed] max-lg:whitespace-normal max-lg:text-balance">
                       {HOME_SECTION_COPY.howItWorks.titleLine2}
                     </span>
-                  </h2>
-                </div>
+            </h2>
+          </div>
               </div>
             </div>
           </LandingReveal>
@@ -1028,33 +1028,33 @@ export function Home() {
                   {/* Hàng nhãn cố định — tránh absolute đè lên icon */}
                   {(i === 1 || i === 2) ? (
                     <div className="mb-2.5 flex min-h-0 items-center justify-start sm:mb-3.5 sm:min-h-[32px]">
-                      <span
+                    <span
                         className={`${homeTy.howItWorksStepBadge} border-[#93f72b] bg-[#93f72b] text-slate-950 font-bold shadow-sm`}
                       >
                         {i === 1 ? "Nổi bật" : "Gợi ý mentor"}
                       </span>
-                    </div>
+                  </div>
                   ) : (
                     <div className="hidden sm:block sm:mb-3.5 sm:min-h-[32px]" />
                   )}
                   <div className="pointer-events-none absolute top-0 right-0 p-2 sm:p-4">
-                    <span
+                <span
                       className="text-6xl font-black italic leading-none text-[#8037f4]/42 transition-colors group-hover:text-[#8037f4]/52 sm:text-8xl"
-                    >
+                >
                       {s.step}
-                    </span>
+                </span>
                   </div>
 
                   <div
                     className={`relative mb-4 flex h-12 w-12 items-center justify-center rounded-full border border-violet-100/80 bg-[#f5f2fa] shadow-sm transition-all duration-500 sm:h-[3.25rem] sm:w-[3.25rem] max-lg:mb-3 max-lg:h-10 max-lg:w-10 text-[#8037f4]`}
                   >
                     <s.icon className="h-[1.4rem] w-[1.4rem] sm:h-6 sm:w-6" />
-                  </div>
+                      </div>
 
                   <h3 className={homeTy.howItWorksStepTitle}>{s.title}</h3>
                   <p className={`${homeTy.howItWorksStepBody} mt-auto`}>{s.desc}</p>
-                </div>
               </div>
+            </div>
               </LandingItem>
             ))}
           </LandingStagger>
@@ -1066,19 +1066,19 @@ export function Home() {
         <SectionReveal variant="cv">
           <CvAnalysisFeatureShowcase/>
         </SectionReveal>
-      </div>
+          </div>
 
       <div className="landing-section-flow" style={{ perspective: "1400px" }}>
         <SectionReveal variant="mentor">
           <MentorFeatureShowcase/>
         </SectionReveal>
-      </div>
+                    </div>
 
       <div className="landing-section-flow">
         <SectionReveal variant="courses" delay={0.05}>
           <CoursesFeatureShowcase/>
         </SectionReveal>
-      </div>
+                  </div>
 
 
 

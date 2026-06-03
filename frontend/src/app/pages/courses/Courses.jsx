@@ -16,7 +16,8 @@ import { normalizeCourseStats } from "../../utils/courseStats";
 import { mediaSrc, DEFAULT_COURSE_THUMB, avatarSrc } from "../../utils/mediaUrl";
 import { ImageWithFallback } from "../../components/figma/ImageWithFallback";
 import { CUSTOMER_SHELL_GUTTER, CUSTOMER_SHELL_MAX } from "../../components/layout/customerShellLayout";
-import { CustomerPageHeader } from "../../components/layout/CustomerPageHeader";
+import { AppSelect } from "../../components/ui/AppSelect";
+import { CustomerPageHeader, CustomerPageSplitTitle } from "../../components/layout/CustomerPageHeader";
 import {
   buildCourseFilterCategories,
   courseMatchesTopic,
@@ -469,12 +470,10 @@ export function Courses() {
         <div className={`${CUSTOMER_SHELL_MAX} w-full`}>
           <CustomerPageHeader
             title={
-              <>
-                Học kỹ năng,{" "}
-                <span className="bg-gradient-to-r from-[#6d2fd6] to-[#a66ff8] bg-clip-text text-transparent">
-                  tự tin hơn khi ứng tuyển
-                </span>
-              </>
+              <CustomerPageSplitTitle
+                accent="Học kỹ năng,"
+                rest="tự tin hơn khi ứng tuyển"
+              />
             }
             subtitle="Các khóa học do Mentor xây dựng, giúp bạn bổ sung kỹ năng cần thiết cho hành trình ứng tuyển."
             subtitleClassName="mt-3 max-w-2xl text-base font-medium leading-relaxed text-violet-700/90"
@@ -497,17 +496,13 @@ export function Courses() {
                   <div className="min-w-0 flex-1">
                     <label className="mb-3 flex items-center gap-2 text-sm text-slate-600 lg:hidden">
                       <span className="shrink-0 font-medium">Sắp xếp theo</span>
-                      <select
+                      <AppSelect
+                        size="compact"
                         value={sortBy}
-                        onChange={(e) => setSortBy(e.target.value)}
-                        className="min-w-0 flex-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-800 shadow-sm focus:border-violet-300 focus:outline-none focus:ring-1 focus:ring-violet-200"
-                      >
-                        {SORT_OPTIONS.map((opt) => (
-                          <option key={opt.value} value={opt.value}>
-                            {opt.label}
-                          </option>
-                        ))}
-                      </select>
+                        onValueChange={setSortBy}
+                        triggerClassName="min-w-0 flex-1"
+                        options={SORT_OPTIONS.map((opt) => ({ value: opt.value, label: opt.label }))}
+                      />
                     </label>
 
                     <div
@@ -548,17 +543,12 @@ export function Courses() {
                         }`}
                       >
                         <span className="shrink-0 font-medium">Sắp xếp theo</span>
-                        <select
+                        <AppSelect
+                          size="compact"
                           value={sortBy}
-                          onChange={(e) => setSortBy(e.target.value)}
-                          className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-800 shadow-sm focus:border-violet-300 focus:outline-none focus:ring-1 focus:ring-violet-200"
-                        >
-                          {SORT_OPTIONS.map((opt) => (
-                            <option key={opt.value} value={opt.value}>
-                              {opt.label}
-                            </option>
-                          ))}
-                        </select>
+                          onValueChange={setSortBy}
+                          options={SORT_OPTIONS.map((opt) => ({ value: opt.value, label: opt.label }))}
+                        />
                       </label>
                     </div>
 

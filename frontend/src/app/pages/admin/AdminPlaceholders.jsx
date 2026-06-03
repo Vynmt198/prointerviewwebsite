@@ -26,6 +26,7 @@ import {
   StatusPill,
 } from "../../components/admin/AdminStatusPill.jsx";
 import { AdminFilterSelect, AdminListFilterBar } from "../../components/admin/AdminListFilters.jsx";
+import { AppSelect } from "../../components/ui/AppSelect";
 import {
   AdminPageToolbar,
   adminGlassTable,
@@ -1186,17 +1187,18 @@ export function AdminPayouts() {
               <label className="mt-4 block text-[10px] font-black uppercase tracking-widest text-slate-500">
                 Lý do từ chối
               </label>
-              <select
-                value={rejectModal.reasonKey}
-                onChange={(e) => setRejectModal((prev) => ({ ...prev, reasonKey: e.target.value }))}
-                className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 p-3 text-sm text-slate-900 outline-none focus:border-violet-400"
-              >
-                {REJECT_REASON_OPTIONS.map((item) => (
-                  <option key={item.id} value={item.id}>
-                    {item.label}
-                  </option>
-                ))}
-              </select>
+              <div className="mt-2">
+                <AppSelect
+                  size="md"
+                  value={rejectModal.reasonKey}
+                  onValueChange={(v) => setRejectModal((prev) => ({ ...prev, reasonKey: v }))}
+                  triggerClassName="rounded-2xl border-slate-200 bg-slate-50"
+                  options={REJECT_REASON_OPTIONS.map((item) => ({
+                    value: item.id,
+                    label: item.label,
+                  }))}
+                />
+              </div>
               <label className="mt-4 block text-[10px] font-black uppercase tracking-widest text-slate-500">
                 Ghi chú bổ sung (tùy chọn)
               </label>

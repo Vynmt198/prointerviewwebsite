@@ -26,6 +26,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { getUser } from "../../utils/auth";
 import { MentorPageShell } from "../../components/mentor/MentorPageShell";
 import { toastApiError, toastApiSuccess } from "../../utils/apiToast";
+import { AppSelect } from "../../components/ui/AppSelect";
 import {
   fetchMentorBookingById,
   listMentorBookings,
@@ -35,6 +36,7 @@ import {
 import { loadMentorRescheduleSlotOptions } from "../../utils/bookingRescheduleSlots";
 import { isBookingSlotInFuture } from "../../utils/bookingSchedule";
 import { avatarSrc } from "../../utils/mediaUrl";
+import { sessionTypeLabel as sharedSessionTypeLabel } from "../../utils/sessionTypeLabels";
 import { getBookingAttachments } from "../../utils/bookingAttachments";
 import {
   DropdownMenu,
@@ -49,11 +51,7 @@ function normalizeSessionType(type) {
 }
 
 function sessionTypeLabel(type) {
-  const t = normalizeSessionType(type);
-  if (t === "mock_interview") return "Phỏng vấn thử";
-  if (t === "cv_review") return "Rà soát CV";
-  if (t === "career_consulting") return "Tư vấn nghề nghiệp";
-  return "Tư vấn chuyên sâu";
+  return sharedSessionTypeLabel(normalizeSessionType(type));
 }
 
 const MENTOR_MEETING_DETAIL_EXTRA_CSS = `
@@ -165,7 +163,7 @@ export function MentorMeetingDetail() {
         scheduledTime: b.timeSlot || "--:--",
         scheduledDate: b.date || "",
         duration: Number(b.durationMinutes || 60),
-        meetingType: b.sessionType || "mock_interview",
+        meetingType: b.sessionType || "custom",
         rescheduleCount: Array.isArray(b.rescheduleHistory) ? b.rescheduleHistory.length : 0,
         notes: b.notes || "",
         cvFileName: b.cvFileName || "",
@@ -174,9 +172,14 @@ export function MentorMeetingDetail() {
         jdFileUrl: b.jdFileUrl || "",
         feedback: b.mentorNotes || "",
         position: sessionTypeLabel(b.sessionType),
-        company: b.customerEmail || "ProInterview",
-        overallScore: 0,
-        starScores: { situation: 0, task: 0, action: 0, result: 0 },
+        company: b.customerEmail || "",
+        overallScore: Number(b.menteeRating || 0),
+        starScores: (() => {
+          const s = Number(b.menteeRating || 0);
+          return s > 0
+            ? { situation: s, task: s, action: s, result: s }
+            : { situation: 0, task: 0, action: 0, result: 0 };
+        })(),
         mentee: {
           name: b.customerName || "Học viên",
           avatar: avatarSrc(b.customerAvatar),
@@ -827,38 +830,31 @@ export function MentorMeetingDetail() {
                   <label htmlFor="reschedule-new-slot" className={rescheduleFieldLabel}>
                     Chọn thời gian mới <span className="text-red-500">*</span>
                   </label>
-                  <div className="relative">
-                    <select
-                      id="reschedule-new-slot"
-                      value={`${rescheduleForm.newDate}|${rescheduleForm.newTimeSlot}`}
-                      onChange={(e) => {
-                        const [date, time] = String(e.target.value).split("|");
-                        setRescheduleForm((p) => ({
-                          ...p,
-                          newDate: date || "",
-                          newTimeSlot: time || "",
-                        }));
-                      }}
-                      disabled={!canReschedule || loadingSlots || slotOptions.length === 0}
-                      className={`${rescheduleFieldInput} appearance-none pr-10`}
-                    >
-                      {loadingSlots && <option value="|">Đang tải khung giờ trống…</option>}
-                      {!loadingSlots && slotOptions.length === 0 && (
-                        <option value="|">Không có khung giờ trống phù hợp</option>
-                      )}
-                      {!loadingSlots &&
-                        slotOptions.map((opt) => (
-                          <option key={`${opt.date}|${opt.time}`} value={`${opt.date}|${opt.time}`}>
-                            {opt.label}
-                          </option>
-                        ))}
-                    </select>
-                    <ChevronDown
-                      size={18}
-                      className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-400"
-                      aria-hidden
-                    />
-                  </div>
+                  <AppSelect
+                    id="reschedule-new-slot"
+                    size="md"
+                    value={`${rescheduleForm.newDate}|${rescheduleForm.newTimeSlot}`}
+                    onValueChange={(v) => {
+                      const [date, time] = String(v).split("|");
+                      setRescheduleForm((p) => ({
+                        ...p,
+                        newDate: date || "",
+                        newTimeSlot: time || "",
+                      }));
+                    }}
+                    disabled={!canReschedule || loadingSlots || slotOptions.length === 0}
+                    triggerClassName={rescheduleFieldInput}
+                    options={
+                      loadingSlots
+                        ? [{ value: "|", label: "Đang tải khung giờ trống…" }]
+                        : slotOptions.length === 0
+                          ? [{ value: "|", label: "Không có khung giờ trống phù hợp" }]
+                          : slotOptions.map((opt) => ({
+                              value: `${opt.date}|${opt.time}`,
+                              label: opt.label,
+                            }))
+                    }
+                  />
                 </div>
 
                 <div>
