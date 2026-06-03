@@ -7,9 +7,9 @@ import {
   CV_HUB_DEMO_SCORE_ROWS,
   CV_HOME_DEMO_JD_KEYWORDS,
 } from "../cv/CvAnalysisScoreBreakdown";
-import { CV_SHOWCASE_COPY } from "../../constants/brandVoice";
+import { CV_HUB_HERO_COPY, CV_SHOWCASE_COPY } from "../../constants/brandVoice";
 import {
-  HOME_CV_SHOWCASE_TITLE_CLAMP,
+  HOME_SECTION_TITLE_CLAMP,
   homeSectionClasses as ty,
 } from "../../constants/homeTypography";
 
@@ -53,7 +53,7 @@ function CardReveal({ delayMs = 0, className = "", children }) {
   );
 }
 
-/** Showcase phân tích CV — màn riêng trên Home; navbar vẫn active Lộ trình (#features). */
+/** Showcase phân tích CV, màn riêng trên Home; navbar vẫn active Lộ trình (#features). */
 export function CvAnalysisFeatureShowcase({ onCtaClick }) {
   return (
     <section
@@ -86,33 +86,31 @@ export function CvAnalysisFeatureShowcase({ onCtaClick }) {
         }
       `}</style>
       <div className={`home-mobile-gutter relative z-10 flex w-full items-center overflow-visible py-2 ${HOME_SECTION_INNER}`}>
-        <div className="grid w-full origin-center scale-[0.92] grid-cols-1 items-center gap-4 overflow-visible max-lg:scale-[0.9] max-lg:gap-3 sm:scale-[0.96] lg:grid-cols-[minmax(0,1.14fr)_minmax(0,0.86fr)] lg:scale-100 lg:gap-6 xl:gap-7 lg:-translate-x-8">
+        <div className="grid w-full grid-cols-1 items-center gap-4 overflow-visible max-lg:gap-3 lg:grid-cols-[minmax(0,1.14fr)_minmax(0,0.86fr)] lg:gap-6 xl:gap-7 lg:-translate-x-8">
           <article className="relative z-10 flex min-w-0 flex-col items-start gap-3 sm:gap-3.5 lg:translate-y-6">
             <span className={ty.cvShowcaseBadge}>
               <FileText className="h-3.5 w-3.5 shrink-0" aria-hidden />
               {CV_SHOWCASE_COPY.badge}
             </span>
-            <h2 className={`max-w-full ${ty.title}`}>
-              <span
-                className={`${ty.titleLineAccent} block`}
-                style={{ fontSize: HOME_CV_SHOWCASE_TITLE_CLAMP }}
-              >
+            <h2
+              className={`max-w-full ${ty.title} sm:max-w-none`}
+              style={{ fontSize: HOME_SECTION_TITLE_CLAMP }}
+            >
+              <span className={`${ty.titleLineSecond} ${ty.titleLineAccent}`}>
                 Làm sao để CV
                 <span className="hidden sm:inline"> ấn tượng</span>
               </span>
-              <span
-                className="mt-0.5 block"
-                style={{ fontSize: HOME_CV_SHOWCASE_TITLE_CLAMP }}
-              >
-                <span className={`${ty.titleLineAccent} inline sm:hidden`}>ấn tượng </span>
-                <span className={`${ty.titleLineDark} inline`}>
-                  trong mắt <span className="whitespace-nowrap">nhà tuyển dụng?</span>
-                </span>
+              <span className={`${ty.titleLineSecond} ${ty.titleLineDark}`}>
+                <span className="sm:hidden">ấn tượng </span>
+                trong mắt <span className="whitespace-nowrap">nhà tuyển dụng?</span>
               </span>
             </h2>
-            <p className={`max-w-full lg:max-w-2xl ${ty.cvShowcaseBody}`}>
-              ProInterview giúp bạn kiểm tra, góp ý và cải thiện CV
-              <br className="hidden sm:inline" /> trước khi gửi đến nhà tuyển dụng
+            <p className={`max-w-full lg:max-w-none ${ty.cvShowcaseBody}`}>
+              <span className="hidden sm:block">
+                <span className="block whitespace-nowrap">{CV_HUB_HERO_COPY.bodyLine1}</span>
+                <span className="block whitespace-nowrap">{CV_HUB_HERO_COPY.bodyLine2}</span>
+              </span>
+              <span className="block text-pretty sm:hidden">{CV_SHOWCASE_COPY.body}</span>
             </p>
             {onCtaClick ? (
               <button
@@ -129,14 +127,14 @@ export function CvAnalysisFeatureShowcase({ onCtaClick }) {
             ) : null}
           </article>
 
-          <section className="cv-showcase-visual relative z-10 flex min-w-0 flex-col items-center justify-center overflow-visible lg:translate-x-12 lg:-translate-y-6 lg:justify-self-center">
+          <section className="cv-showcase-visual relative z-10 flex min-w-0 origin-center scale-[0.92] flex-col items-center justify-center overflow-visible max-lg:scale-[0.9] sm:scale-[0.96] lg:translate-x-12 lg:scale-100 lg:-translate-y-6 lg:justify-self-center">
             <div className="relative mx-auto w-full max-w-[31rem] overflow-visible">
-              <div className="pointer-events-none absolute left-1/2 top-0 z-40 w-[12.5rem] -translate-x-1/2 -translate-y-[0.68rem] sm:w-[14.5rem] sm:-translate-y-[1.88rem] lg:w-[16rem] lg:-translate-y-[2.08rem]">
+              <div className="pointer-events-none absolute left-1/2 top-0 z-[5] w-[14.5rem] -translate-x-1/2 -translate-y-[1.73rem] sm:w-[16.5rem] sm:-translate-y-[2.93rem] lg:w-[18rem] lg:-translate-y-[3.13rem]">
                 <img
-                  src="/mascot-cv-analysis.png?v=3"
+                  src="/mascot-cv-analysis-pose7.png?v=1"
                   alt=""
                   aria-hidden
-                  className="block h-auto w-full rotate-[1deg] object-contain"
+                  className="block h-auto w-full object-contain"
                 />
               </div>
 

@@ -210,7 +210,7 @@ export function Booking() {
     setSelectedCvUrl(res.url);
     setForm((prev) => ({ ...prev, cv: true }));
     saveUploadedCV({ name: file.name, size: file.size, type: file.type });
-    toastApiSuccess("Đã tải CV lên — mentor có thể mở khi xem buổi hẹn.");
+    toastApiSuccess("Đã tải CV lên, mentor có thể mở khi xem buổi hẹn.");
   };
 
   const handleJdFileChange = async (e) => {
@@ -240,7 +240,7 @@ export function Booking() {
       return;
     }
     if (form.jd && selectedJdFile && !selectedJdUrl) {
-      toastApiError("JD chưa tải xong — chọn lại file hoặc bỏ JD.");
+      toastApiError("JD chưa tải xong, chọn lại file hoặc bỏ JD.");
       return;
     }
     const params = new URLSearchParams({
@@ -303,7 +303,7 @@ export function Booking() {
 
     const recurring = Array.isArray(av.recurringSchedule) ? av.recurringSchedule : [];
     const slotMapKeys = Object.keys(av.availableSlots || {}).length;
-    // Chỉ chặn ngày (blockedDates) — không có lịch cụ thể → mở khung giờ mặc định (khớp backend).
+    // Chỉ chặn ngày (blockedDates), không có lịch cụ thể → mở khung giờ mặc định (khớp backend).
     if (!recurring.length && slotMapKeys === 0) {
       return TIME_GROUPS.flatMap((g) => g.slots);
     }
@@ -403,7 +403,7 @@ export function Booking() {
                 </div>
                 <div>
                   <p className="text-sm font-bold text-slate-900">Chọn ngày phỏng vấn</p>
-                  <p className="text-xs text-slate-500">Lịch trống của {mentor.name} — theo thời gian hiện tại</p>
+                  <p className="text-xs text-slate-500">Lịch trống của {mentor.name}, theo thời gian hiện tại</p>
                 </div>
               </div>
               <div className="space-y-5 p-5">
@@ -589,7 +589,7 @@ export function Booking() {
             >
               {selectedDay && selectedTime ? (
                 <>
-                  Tiếp tục — Thông tin và xác nhận <CaretRight className="h-4 w-4" />
+                  Tiếp tục, Thông tin và xác nhận <CaretRight className="h-4 w-4" />
                 </>
               ) : (
                 "Vui lòng chọn ngày và giờ"
@@ -830,7 +830,7 @@ export function Booking() {
                     : undefined
                 }
               >
-                Tiếp tục thanh toán — {mentor.price.toLocaleString("vi")}đ
+                Tiếp tục thanh toán, {mentor.price.toLocaleString("vi")}đ
                 <CaretRight className="h-4 w-4" />
               </button>
             </div>

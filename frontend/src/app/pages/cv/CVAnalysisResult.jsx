@@ -65,7 +65,7 @@ export function CVAnalysisResult() {
 
       const id = paramId || state?.viewHistoryId;
       if (!id) {
-        setLoadError("Không có dữ liệu kết quả — hãy phân tích CV trước.");
+        setLoadError("Không có dữ liệu kết quả, hãy phân tích CV trước.");
         setLoading(false);
         return;
       }

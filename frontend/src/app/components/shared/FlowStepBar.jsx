@@ -1,7 +1,7 @@
 import { Check } from "lucide-react";
 
 /**
- * Thanh bước ngang — đồng bộ luồng phỏng vấn AI & tạo khóa học mentor.
+ * Thanh bước ngang, đồng bộ luồng phỏng vấn AI & tạo khóa học mentor.
  * @param {{ steps: { n: number, label: string }[], current: number, className?: string, ariaLabel?: string }} props
  */
 export function FlowStepBar({

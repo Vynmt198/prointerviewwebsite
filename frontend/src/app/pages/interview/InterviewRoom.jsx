@@ -252,7 +252,7 @@ function HRVideoPanel({ questionVideoUrl, hrPhase, onAskingDone, isListening, mu
     return () => { v.removeEventListener("canplay", onCanPlay); v.removeEventListener("error", onError); v.pause(); };
   }, [questionVideoUrl]);
 
-  // 8s fallback timer — chỉ dùng khi không có TTS (muted=false)
+  // 8s fallback timer, chỉ dùng khi không có TTS (muted=false)
   useEffect(() => {
     if (hrPhase !== "asking" || muted) return;
     const t = setTimeout(() => {
@@ -344,7 +344,7 @@ const UserCameraTile = forwardRef(function UserCameraTile({ isRecording, onAudio
     (async () => {
       let stream = null;
       try {
-        // Request camera + audio together — single permission dialog
+        // Request camera + audio together, single permission dialog
         stream = await navigator.mediaDevices.getUserMedia({
           video: { width: { ideal: 640 }, height: { ideal: 480 }, facingMode: "user" },
           audio: true,
@@ -469,7 +469,7 @@ function UpgradeModal({ completedCount, totalCount, onUpgrade, onFinish }) {
           className="w-full py-3.5 rounded-2xl font-bold text-sm mb-3 transition-all hover:scale-[1.02]"
           style={{ background: "linear-gradient(135deg,#6E35E8,#8B4DFF)", color: "#fff", boxShadow: "0 8px 32px rgba(110,53,232,0.45)" }}>
           <Lightning className="inline w-4 h-4 mr-2 mb-0.5" />
-          Nâng cấp Pro — tiếp tục phỏng vấn
+          Nâng cấp Pro, tiếp tục phỏng vấn
         </button>
         <button onClick={onFinish}
           className="w-full py-3 rounded-2xl text-sm transition-all hover:bg-white/8"
@@ -529,7 +529,7 @@ export default function InterviewRoom() {
   /* ── UI state ─────────────────────────────────────────── */
   const [phase,             setPhase]             = useState("ready");
   const [currentQ,          setCurrentQ]          = useState(0);
-  // URL video D-ID pre-generated của câu hỏi hiện tại — null khi không có
+  // URL video D-ID pre-generated của câu hỏi hiện tại, null khi không có
   const currentVideoUrl = hasPregenVideos ? (videoUrls[currentQ] ?? null) : null;
   const [isListening,       setIsListening]       = useState(false);
   const [transcript,        setTranscript]        = useState("");
@@ -560,7 +560,7 @@ export default function InterviewRoom() {
   /* ── Web Audio refs ───────────────────────────────────── */
   const audioCtxRef        = useRef(null);
   const analyserRef        = useRef(null);
-  // audioStreamRef removed — audio track is now managed by UserCameraTile
+  // audioStreamRef removed, audio track is now managed by UserCameraTile
   const audioSampleRef     = useRef([]);   // amplitude samples (0–1) current question
   const silenceStartRef    = useRef(null); // timestamp when silence started
   const silenceEventsRef   = useRef(0);    // count of >2 s silences
@@ -601,7 +601,7 @@ export default function InterviewRoom() {
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  /* ── startListening — dùng chung cho TTS callback và HRVideoPanel fallback ── */
+  /* ── startListening, dùng chung cho TTS callback và HRVideoPanel fallback ── */
   const startListening = useCallback(() => {
     setHrPhase("listening");
     latencyStartRef.current = Date.now();
@@ -610,7 +610,7 @@ export default function InterviewRoom() {
     try { recognitionRef.current?.start(); } catch (_) {}
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  /* ── speakQuestionTTS — Web Speech API đọc câu hỏi AI ── */
+  /* ── speakQuestionTTS, Web Speech API đọc câu hỏi AI ── */
   const speakQuestionTTS = useCallback((text, onEnd) => {
     const synth = window.speechSynthesis;
     if (!synth) { onEnd?.(); return; }
@@ -637,7 +637,7 @@ export default function InterviewRoom() {
 
     utterance.onstart = () => setTtsSpeaking(true);
     utterance.onend   = () => { setTtsSpeaking(false); onEnd?.(); };
-    // "interrupted" = bị cancel chủ động (D-ID retry) — không gọi onEnd
+    // "interrupted" = bị cancel chủ động (D-ID retry), không gọi onEnd
     utterance.onerror = (e) => {
       setTtsSpeaking(false);
       if (e?.error !== "interrupted") onEnd?.();
@@ -646,7 +646,7 @@ export default function InterviewRoom() {
     synth.speak(utterance);
   }, [hrGender]);
 
-  /* ── Web Audio setup — nhận audio track từ UserCameraTile (không mở getUserMedia riêng) */
+  /* ── Web Audio setup, nhận audio track từ UserCameraTile (không mở getUserMedia riêng) */
   const handleAudioTrack = useCallback((track) => {
     try {
       const ctx      = new (window.AudioContext || window.webkitAudioContext)();
@@ -656,7 +656,7 @@ export default function InterviewRoom() {
       source.connect(analyser);
       audioCtxRef.current  = ctx;
       analyserRef.current  = analyser;
-    } catch (_) { /* browser không hỗ trợ Web Audio — bỏ qua, không crash */ }
+    } catch (_) { /* browser không hỗ trợ Web Audio, bỏ qua, không crash */ }
   }, []);
 
   /* ── Audio sampling interval (100 ms, while isListening) ─ */
@@ -673,7 +673,7 @@ export default function InterviewRoom() {
       audioSampleRef.current.push(amplitude);
 
       // Auto-calibrate silence threshold from first 30 samples (~3 s of actual recording)
-      // Runs once per session — calibSamplesRef is NOT reset between questions
+      // Runs once per session, calibSamplesRef is NOT reset between questions
       if (calibSamplesRef.current.length < 30) {
         calibSamplesRef.current.push(amplitude);
         if (calibSamplesRef.current.length === 30) {
@@ -737,7 +737,7 @@ export default function InterviewRoom() {
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  /* ── D-ID preconnect — skip khi đã có pregen videos ─────── */
+  /* ── D-ID preconnect, skip khi đã có pregen videos ─────── */
   const didConnectAttemptsRef = useRef(0);
   useEffect(() => {
     // Không cần WebRTC nếu đã có pre-generated videos từ D-ID Express API
@@ -754,9 +754,9 @@ export default function InterviewRoom() {
     didConnect();
   }, [phase, didStatus]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  /* ── D-ID speak — skip khi đang dùng pregen video ────────── */
+  /* ── D-ID speak, skip khi đang dùng pregen video ────────── */
   useEffect(() => {
-    // HRVideoPanel tự phát audio từ pre-generated video — không cần D-ID TTS
+    // HRVideoPanel tự phát audio từ pre-generated video, không cần D-ID TTS
     if (hasPregenVideos) return;
     if (phase !== "question" || didStatus !== "connected") return;
     if (lastSpokenQRef.current === currentQ) return;
@@ -957,7 +957,7 @@ export default function InterviewRoom() {
       return emotion ? { ...bd, emotion } : bd;
     });
 
-    // Backup answers payload — uses actual per-question durations recorded when each PATCH fired
+    // Backup answers payload, uses actual per-question durations recorded when each PATCH fired
     const backupAnswers = transcripts
       .map((t, i) => ({
         questionIndex:   i,
@@ -1034,7 +1034,7 @@ export default function InterviewRoom() {
   const hrTitle    = HR_TITLES[hrGender];
   const hrVideoUrl = HR_IDLE_URLS[hrGender];
 
-  /* ══ RENDER — Ready lobby ════════════════════════════════ */
+  /* ══ RENDER, Ready lobby ════════════════════════════════ */
   if (phase === "ready") {
     return (
       <MentorPageShell bottomPad="pb-16">
@@ -1055,8 +1055,8 @@ export default function InterviewRoom() {
             <div className="w-full rounded-md border border-violet-200/80 bg-white px-4 py-5 shadow-sm sm:px-6 sm:py-6">
               <InterviewStepBar current={3} />
               <div className="mb-6">
-                <h2 className="text-base font-bold text-violet-950">Bước 3 — Phỏng vấn</h2>
-                <p className="mt-0.5 text-sm text-violet-600">
+                <h2 className="text-sm sm:text-base font-bold text-violet-950">Bước 3: Phỏng vấn</h2>
+                <p className="mt-0.5 text-xs sm:text-sm text-violet-600">
                   Xác nhận HR và danh sách câu hỏi trước khi bắt đầu với {hrName}.
                 </p>
               </div>
@@ -1154,7 +1154,7 @@ export default function InterviewRoom() {
     );
   }
 
-  /* ══ RENDER — Interview room ═════════════════════════════ */
+  /* ══ RENDER, Interview room ═════════════════════════════ */
   return (
     <MentorPageShell bottomPad="pb-0" fillHeight className="!min-h-0 !pb-0">
       <div className="relative flex h-svh max-h-svh flex-col overflow-hidden antialiased">
@@ -1302,7 +1302,7 @@ export default function InterviewRoom() {
               />
             )}
 
-            {/* ── Nhánh 1: D-ID WebRTC (lipsync thật) — dùng khi không có pregen ── */}
+            {/* ── Nhánh 1: D-ID WebRTC (lipsync thật), dùng khi không có pregen ── */}
             {!currentVideoUrl && isDIDActive && (
               <>
                 <div className="absolute inset-0 pointer-events-none"
@@ -1335,7 +1335,7 @@ export default function InterviewRoom() {
               </>
             )}
 
-            {/* ── Nhánh 2: TTS fallback — ảnh HR Cloudinary + animate khi nói ── */}
+            {/* ── Nhánh 2: TTS fallback, ảnh HR Cloudinary + animate khi nói ── */}
             {!currentVideoUrl && !isDIDActive && ttsAvailable && (
               <>
                 <div className="absolute inset-0 pointer-events-none"
@@ -1390,7 +1390,7 @@ export default function InterviewRoom() {
             </div>
           </div>
 
-          {/* User camera panel — UserCameraTile exposes video to cameraVideoRef */}
+          {/* User camera panel, UserCameraTile exposes video to cameraVideoRef */}
           <div className={`relative min-h-0 h-full overflow-hidden rounded-xl border-2 ${
             isListening ? "border-violet-400 shadow-[0_0_20px_rgba(110,53,232,0.15)]" : "border-violet-200/80 shadow-[0_8px_24px_rgba(110,53,232,0.1)]"
           }`}>
@@ -1433,7 +1433,7 @@ export default function InterviewRoom() {
               {!sttSupported ? (
                 <div className="flex h-full flex-col gap-2">
                   <p className="text-xs text-violet-700">
-                    Trình duyệt không nhận diện được giọng nói — hãy gõ câu trả lời bên dưới.
+                    Trình duyệt không nhận diện được giọng nói, hãy gõ câu trả lời bên dưới.
                   </p>
                   <textarea
                     value={transcript}

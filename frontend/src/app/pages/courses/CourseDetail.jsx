@@ -222,7 +222,7 @@ export function CourseDetail() {
         {adminPreviewMode ? (
           <div className="mb-4 flex flex-col gap-3 rounded-lg border border-violet-200 bg-violet-50 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-sm text-violet-950">
-              <span className="font-bold">Preview admin</span> — Đây là trang marketplace học viên thấy
+              <span className="font-bold">Preview admin</span>, Đây là trang marketplace học viên thấy
               (chưa ghi danh nên chỉ xem mô tả / danh sách bài, không vào phòng học đầy đủ).
             </p>
           </div>
@@ -230,7 +230,7 @@ export function CourseDetail() {
         {mentorPeerReviewMode ? (
           <div className="mb-4 flex flex-col gap-3 rounded-lg border border-violet-200 bg-violet-50 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-sm text-violet-950">
-              <span className="font-bold">Đánh giá chéo</span> — Xem đầy đủ video và tài liệu bài học (chỉ đọc) trước khi chấm điểm.
+              <span className="font-bold">Đánh giá chéo</span>, Xem đầy đủ video và tài liệu bài học (chỉ đọc) trước khi chấm điểm.
             </p>
             <button
               type="button"

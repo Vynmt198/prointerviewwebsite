@@ -6,7 +6,7 @@
  */
 
 export const HOME_COPY = {
-  badge: "Bạn đồng hành luyện phỏng vấn",
+  badge: "Nền tảng luyện phỏng vấn dành cho IT.",
   titleLine1: "Phỏng vấn",
   titleHighlight: "1:1 với AI",
   titleLine2Suffix: "qua",
@@ -24,7 +24,7 @@ export const HOME_COPY = {
 export const HOME_SECTION_COPY = {
   howItWorks: {
     titleLine1: "Luyện phỏng vấn hôm nay,",
-    titleLine2: "tự tin chinh phục job ngày\u00a0mai",
+    titleLine2: "tự tin chinh phục job ngày\u00a0mai.",
   },
   /** Bản gốc sếp — tham chiếu, không xóa. */
   stepsBossOriginal: [
@@ -97,8 +97,8 @@ export const HOME_SECTION_COPY = {
   testimonials: {
     titleLine: "Phản hồi từ người dùng",
     body: "Luyện với AI, nhận góp ý từ Mentor và cải thiện rõ hơn sau từng buổi.",
-    socialProof: "bạn đã luyện và nhận offer",
-    badge: "Đánh giá nổi bật",
+    socialProof: "Bạn đã luyện và nhận offer.",
+    badge: "Đánh giá nổi bật.",
     items: [
       {
         name: "Phạm Anh Tuấn",
@@ -126,7 +126,7 @@ export const CV_SHOWCASE_COPY = {
   badge: "Tối ưu CV theo vị trí ứng tuyển",
   titleAccent: "Làm sao để CV ấn tượng",
   titleRest: "trong mắt nhà tuyển dụng?",
-  body: "ProInterview giúp bạn kiểm tra, góp ý và cải thiện CV trước khi gửi đến nhà tuyển dụng",
+  body: "ProInterview giúp bạn kiểm tra, góp ý và cải thiện CV trước khi gửi đến nhà tuyển dụng.",
   cta: "Tối ưu CV theo vị trí ứng tuyển ngay",
 };
 
@@ -134,8 +134,8 @@ export const CV_SHOWCASE_COPY = {
 export const CV_HUB_HERO_COPY = {
   titleAccent: "Làm sao để CV ấn tượng",
   titleRest: "trong mắt nhà tuyển dụng?",
-  bodyLine1: "ProInterview giúp bạn kiểm tra, góp ý và cải thiện CV trước khi gửi",
-  bodyLine2: "đến nhà tuyển dụng",
+  bodyLine1: "ProInterview giúp bạn kiểm tra, góp ý và cải thiện CV trước khi gửi đến",
+  bodyLine2: "nhà tuyển dụng.",
   ctaJd: "Tối ưu CV theo vị trí ứng tuyển",
   ctaField: "Phân tích CV theo ngành nghề",
 };
@@ -160,12 +160,12 @@ export const MENTOR_SHOWCASE_COPY = {
       description: "Nhận góp ý về CV, cách trả lời và hướng luyện tiếp theo.",
     },
   ],
-  afterMockLead: "Sau buổi mock, bạn nhận được",
+  afterMockLead: "Sau buổi mock, bạn nhận được.",
   afterMockPoints: [
-    { title: "Góp ý dễ hiểu", detail: "Mentor chỉ rõ điểm mạnh và phần cần chỉnh" },
-    { title: "Tự tin hơn", detail: "Biết cách trả lời khi vào vòng phỏng vấn thật" },
-    { title: "Lưu trên ProInterview", detail: "Báo cáo buổi mock, xem lại bất cứ lúc nào" },
-    { title: "Biết bước tiếp", detail: "Rõ nên ôn gì và luyện tiếp phần nào" },
+    { title: "Góp ý dễ hiểu", detail: "Mentor chỉ rõ điểm mạnh và phần cần chỉnh." },
+    { title: "Tự tin hơn", detail: "Biết cách trả lời khi vào vòng phỏng vấn thật." },
+    { title: "Lưu trên ProInterview", detail: "Báo cáo buổi mock, xem lại bất cứ lúc nào." },
+    { title: "Biết bước tiếp", detail: "Rõ nên ôn gì và luyện tiếp phần nào." },
   ],
 };
 
@@ -173,8 +173,8 @@ export const MENTOR_SHOWCASE_COPY = {
 export const MENTOR_BOOKING_COPY = {
   sessionTitle: "Buổi Mentor 1:1",
   sessionVia: "Buổi 1:1 qua Zoom / Google Meet",
-  flexibleSchedule: "Tự chọn khung giờ linh hoạt",
-  feedbackAfter: "Góp ý sau buổi Mentor",
+  flexibleSchedule: "Tự chọn khung giờ linh hoạt.",
+  feedbackAfter: "Góp ý sau buổi Mentor.",
 };
 
 /** Copy ngắn — chi tiết bảng: `constants/bookingPolicy.js` + `BookingPolicySummary`. */
@@ -190,19 +190,18 @@ export const BOOKING_POLICY_COPY = {
 
 export const COURSES_SHOWCASE_COPY = {
   badge: "Khóa học từ Mentor",
-  titleLine1: "Học từ Mentor thật",
-  titleLine2: "Chuẩn bị",
-  titleLine3: "phỏng vấn bài bản hơn",
+  titleLine1: "Học từ kinh nghiệm Mentor",
+  titleLine2: "qua khóa học thực tế",
   body: "Khóa học do Mentor xây dựng, giúp bạn học theo từng chủ đề và cải thiện những kỹ năng cần thiết cho hành trình ứng tuyển.",
   bullets: [
-    "Chủ đề đa dạng",
-    "Video ngắn, dễ học theo lộ trình",
-    "Chọn khóa đúng kỹ năng cần luyện",
+    "Chủ đề đa dạng.",
+    "Video ngắn, dễ học theo lộ trình.",
+    "Chọn khóa đúng kỹ năng cần luyện.",
   ],
   cta: "Xem tất cả khóa học",
   panelVideoTitle: "Video từng bài",
-  panelVideoBody: "Ghi danh xong, mở hết bài trong khóa",
-  panelVideoNote: "Ghi chú theo bài, học tiếp đúng chỗ",
+  panelVideoBody: "Ghi danh xong, mở hết bài trong khóa.",
+  panelVideoNote: "Ghi chú theo bài, học tiếp đúng chỗ.",
 };
 
 export const FOOTER_TAGLINE =
@@ -212,16 +211,16 @@ export const AUTH_COPY = {
   loginSubtitle: "Chào bạn trở lại! Tiếp tục luyện cùng ProInterview nhé.",
   loginRegisteredTitle: "Đăng ký thành công!",
   loginRegisteredBody: "Bạn đăng nhập để tiếp tục luyện nhé.",
-  registerSubtitle: "Tạo tài khoản, bắt đầu phỏng vấn với AI",
+  registerSubtitle: "Tạo tài khoản, bắt đầu phỏng vấn với AI.",
   registerPerks: [
-    "3 buổi phỏng vấn AI để làm quen và luyện tập",
-    "Phân tích CV/JD, biết chỗ cần chỉnh trước",
-    "Câu hỏi theo ngành và vị trí bạn chọn",
-    "Lịch Mentor và lịch sử luyện, theo dõi tiến bộ",
+    "3 buổi phỏng vấn AI để làm quen và luyện tập.",
+    "Phân tích CV/JD, biết chỗ cần chỉnh trước.",
+    "Câu hỏi theo ngành và vị trí bạn chọn.",
+    "Lịch Mentor và lịch sử luyện, theo dõi tiến bộ.",
   ],
   registerFreeBadge: "Bắt đầu luyện miễn phí",
   registerFreeCta: "Tạo tài khoản và luyện nhé",
-  registerSocialProof: "bạn đang luyện cùng ProInterview",
+  registerSocialProof: "Bạn đang luyện cùng ProInterview.",
   verifyEmailLead:
     "ProInterview đã gửi link xác thực đến email của bạn. Bạn mở email, nhấn link để kích hoạt tài khoản, rồi đăng nhập nhé.",
   googleErrorLocked:

@@ -418,7 +418,7 @@ export function AppSidebar() {
                     {initials}
                   </div>
 
-                  {/* Name + email — hidden when collapsed */}
+                  {/* Name + email, hidden when collapsed */}
                   <div className="min-w-0 flex-1 group-data-[collapsible=icon]:hidden">
                     <p className="truncate font-medium text-slate-900" style={{ fontSize: "0.78rem" }}>
                       {displayName}

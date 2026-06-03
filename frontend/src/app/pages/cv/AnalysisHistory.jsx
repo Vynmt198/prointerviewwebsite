@@ -31,7 +31,7 @@ import {
 const JD_ANALYSIS_PATH = CV_JD_ANALYSIS_PATH;
 const FIELD_ANALYSIS_PATH = CV_FIELD_ANALYSIS_PATH;
 
-/** "jd" | "field" — cố định theo URL, mỗi tính năng một trang lịch sử riêng */
+/** "jd" | "field", cố định theo URL, mỗi tính năng một trang lịch sử riêng */
 function historyModeFromPath(pathname) {
   if (pathname.includes("/cv-analysis/field/history")) return "field";
   if (pathname.includes("/cv-analysis/jd/history")) return "jd";

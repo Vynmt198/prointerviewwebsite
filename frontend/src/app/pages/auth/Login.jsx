@@ -24,10 +24,10 @@ import { AuthPurpleBackdrop } from "../../components/auth/AuthPurpleBackdrop";
 
 const BRAND_LIME = "#93f72b";
 
-/** Nền trang (bên ngoài) — trắng ngà, không #fff tinh */
+/** Nền trang (bên ngoài), trắng ngà, không #fff tinh */
 const AUTH_PAGE_BG = "bg-transparent";
 
-/** Ô form đăng nhập/đăng ký — tím brand */
+/** Ô form đăng nhập/đăng ký, tím brand */
 const AUTH_CARD_CLS =
   "rounded-3xl border border-white/15 bg-[#8037f4] p-8 shadow-[0_16px_48px_rgba(15,23,42,0.18)] sm:p-10";
 
@@ -42,7 +42,7 @@ const AUTH_CTA_STYLE = {
   boxShadow: "0 8px 22px rgba(147, 247, 43, 0.35)",
 };
 
-/** % = tâm sticker; kích thước lệch — nằm trong vùng inset của lớp nền */
+/** % = tâm sticker; kích thước lệch, nằm trong vùng inset của lớp nền */
 const AUTH_STICKS = [
   { x: 14, y: 22, size: 26 },
   { x: 82, y: 20, size: 36 },

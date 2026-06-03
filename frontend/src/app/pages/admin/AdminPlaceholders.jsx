@@ -61,7 +61,7 @@ function statusLabel(status) {
   if (key === "course_pending_ck") return "Chờ SePay (khóa học)";
   if (key === "confirmed") return "Đã xác nhận";
   if (key === "completed") return "Hoàn thành";
-  if (key === "approved") return "Đã duyệt — chờ chi";
+  if (key === "approved") return "Đã duyệt, chờ chi";
   if (key === "paid") return "Đã chuyển khoản";
   if (key === "cancelled") return "Đã hủy";
   if (key === "rejected") return "Đã từ chối";
@@ -139,7 +139,7 @@ export function AdminUserDetail() {
   );
 }
 
-/** @deprecated — dùng `AdminMentorDetail.jsx` */
+/** @deprecated, dùng `AdminMentorDetail.jsx` */
 export { AdminMentorDetail } from "./AdminMentorDetail.jsx";
 
 function bookingAmount(b) {
@@ -221,7 +221,7 @@ export function AdminFinance() {
       >
         <div className="min-w-0 flex-1">
           <h2 className="font-headline text-3xl font-black uppercase tracking-tighter text-slate-900">
-            <span className="text-violet-700">Tài chính</span> — Tổng quan
+            <span className="text-violet-700">Tài chính</span>, Tổng quan
           </h2>
         </div>
         <button
@@ -1296,7 +1296,7 @@ export function AdminPayouts() {
   );
 }
 
-/** @deprecated — dùng `AdminBookingDetail.jsx` */
+/** @deprecated, dùng `AdminBookingDetail.jsx` */
 export { AdminBookingDetail } from "./AdminBookingDetail.jsx";
 
 const INTERVIEW_STATUS_VI = {
@@ -1631,5 +1631,5 @@ export function AdminSystemSettings() {
   );
 }
 
-/** @deprecated — dùng `AdminSupport.jsx` */
+/** @deprecated, dùng `AdminSupport.jsx` */
 export { AdminSupport } from "./AdminSupport.jsx";

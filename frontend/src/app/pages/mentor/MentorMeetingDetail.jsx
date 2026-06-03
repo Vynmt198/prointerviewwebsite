@@ -186,7 +186,7 @@ export function MentorMeetingDetail() {
       setLoadError("");
       } catch {
         if (!active) return;
-        const msg = "Lỗi kết nối khi tải buổi hẹn. Backend có thể đang khởi động lại — thử lại sau vài giây.";
+        const msg = "Lỗi kết nối khi tải buổi hẹn. Backend có thể đang khởi động lại, thử lại sau vài giây.";
         setMeeting(null);
         setLoadError(msg);
         toastApiError(msg);
@@ -362,7 +362,7 @@ export function MentorMeetingDetail() {
     setActionError("");
     if (res.lateCancel) {
       toastApiSuccess(
-        "Đã hủy buổi (< 24h). Học viên được hoàn 100% ưu tiên — cần điền STK trên trang buổi hẹn.",
+        "Đã hủy buổi (< 24h). Học viên được hoàn 100% ưu tiên, cần điền STK trên trang buổi hẹn.",
       );
     } else if (res.refundPending) {
       toastApiSuccess("Đã hủy. Yêu cầu hoàn tiền đã được ghi nhận.");
@@ -819,7 +819,7 @@ export function MentorMeetingDetail() {
 
                 {!canReschedule && (
                   <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm font-medium text-amber-900">
-                    Buổi hẹn này đã dời 1 lần — không thể dời thêm.
+                    Buổi hẹn này đã dời 1 lần, không thể dời thêm.
                   </p>
                 )}
 
