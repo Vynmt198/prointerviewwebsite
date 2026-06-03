@@ -619,6 +619,22 @@ export default function InterviewRoom() {
     utterance.lang  = "vi-VN";
     utterance.rate  = 0.88;
     utterance.pitch = hrGender === "female" ? 1.1 : 0.88;
+
+    // Try to select a gender-appropriate Vietnamese voice.
+    // getVoices() may return [] on first call (async load) — pick from whatever is available.
+    const voices   = synth.getVoices();
+    const viVoices = voices.filter(v => v.lang === "vi-VN" || v.lang.startsWith("vi"));
+    if (viVoices.length > 0) {
+      const genderHints = hrGender === "male"
+        ? ["male", "nam", "minh", "quoc"]
+        : ["female", "nu", "nữ", "hoai", "my"];
+      const matched = viVoices.find(v =>
+        genderHints.some(kw => v.name.toLowerCase().includes(kw))
+      );
+      // Use matched gender voice; fall back to first available vi voice
+      utterance.voice = matched ?? viVoices[0];
+    }
+
     utterance.onstart = () => setTtsSpeaking(true);
     utterance.onend   = () => { setTtsSpeaking(false); onEnd?.(); };
     // "interrupted" = bị cancel chủ động (D-ID retry) — không gọi onEnd
@@ -1292,9 +1308,11 @@ export default function InterviewRoom() {
                 <div className="absolute inset-0 pointer-events-none"
                   style={{ background: "radial-gradient(ellipse at 50% 48%, rgba(110,53,232,0.22) 0%, transparent 68%)" }} />
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <AILipSyncAvatar isSpeaking={didStatus === "speaking"} didStatus={didStatus} attachVideo={attachVideo} size={220} />
+                  {/* sourceImageUrl: portrait shows while D-ID video stream is loading/connecting;
+                      component switches to live video automatically when onPlay fires */}
+                  <AILipSyncAvatar isSpeaking={didStatus === "speaking"} didStatus={didStatus} attachVideo={attachVideo} size={220} sourceImageUrl={DID_AVATAR_URLS[hrGender]} />
                 </div>
-                {hrPhase === "asking" && didStatus === "speaking" && (
+                {hrPhase === "asking" && (didStatus === "speaking" || didStatus === "connected") && (
                   <div className="absolute top-3 right-3 z-10">
                     <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold"
                       style={{ background: "rgba(110,53,232,0.85)", backdropFilter: "blur(8px)" }}>

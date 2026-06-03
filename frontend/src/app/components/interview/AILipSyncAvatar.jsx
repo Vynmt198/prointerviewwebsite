@@ -201,7 +201,9 @@ export function AILipSyncAvatar({
         autoPlay
         playsInline
         onLoadedData={() => setVideoHasData(true)}
+        onPlay={() => setVideoHasData(true)}
         onEmptied={() => setVideoHasData(false)}
+        onEnded={() => setVideoHasData(false)}
         style={{
           position: "absolute", inset: 0,
           width: size, height: size,
