@@ -501,7 +501,11 @@ export default function InterviewRoom() {
     apiKey: DID_API_KEY,
     sourceImageUrl: DID_AVATAR_URLS[hrGender],
   });
-  const isDIDActive = Boolean(DID_API_KEY) && didStatus !== "error";
+
+  // Track whether the WebRTC stream was forcibly closed after the max-duration guard.
+  // When true, isDIDActive becomes false → TTS fallback takes over (free, no per-minute charge).
+  const [didSessionExpired, setDidSessionExpired] = useState(false);
+  const isDIDActive = !didSessionExpired && Boolean(DID_API_KEY) && didStatus !== "error";
 
   /* ── Web Speech TTS fallback (khi D-ID không khả dụng) ── */
   const ttsAvailable = typeof window !== "undefined" && Boolean(window.speechSynthesis);
@@ -753,6 +757,19 @@ export default function InterviewRoom() {
     didConnectAttemptsRef.current += 1;
     didConnect();
   }, [phase, didStatus]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  /* ── D-ID max stream duration guard ─────────────────────────
+     D-ID Streaming API charges per minute. Disconnect after 15 minutes
+     to stop the meter — TTS fallback (free) takes over automatically
+     because setDidSessionExpired(true) makes isDIDActive = false.      */
+  useEffect(() => {
+    if (!DID_API_KEY || hasPregenVideos) return;
+    const t = setTimeout(() => {
+      setDidSessionExpired(true);
+      didDisconnect();
+    }, 15 * 60 * 1000);
+    return () => clearTimeout(t);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   /* ── D-ID speak — skip khi đang dùng pregen video ────────── */
   useEffect(() => {

@@ -143,19 +143,19 @@ export function getPregenerationStatus(jobId) {
 /**
  * Pre-generate toàn bộ và đợi kết quả (synchronous version).
  * Dùng khi muốn trả hết kết quả trong 1 request (thay vì polling).
- * Thời gian: 30-90s với 5-10 câu hỏi parallel.
  *
  * @param {string[]} questions
  * @param {object} opts
+ * @param {AbortSignal} [signal] - Dừng polling khi HTTP client ngắt kết nối
  * @returns {Promise<{videoUrls: string[], errors: object[], durationMs: number, cacheHits: number}>}
  */
-export async function pregenerateSync(questions, opts = {}) {
+export async function pregenerateSync(questions, opts = {}, signal) {
   if (!isDIDEnabled()) {
     throw new Error("D_ID_API_KEY chưa được cấu hình.");
   }
 
   const startMs = Date.now();
-  const results = await pregenerateVideos(questions, opts);
+  const results = await pregenerateVideos(questions, opts, undefined, signal);
 
   const videoUrls = results.map(r => r.videoUrl ?? null);
   const errors    = results
