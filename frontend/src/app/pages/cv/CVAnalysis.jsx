@@ -1046,7 +1046,7 @@ export function CVAnalysis() {
               {cvRemaining === 0 && !plans.starterPro && !plans.elitePro && (
                 <div className="mx-4 mb-0 mt-3 flex items-center justify-between gap-2 rounded-xl border border-amber-200/90 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-900 sm:mx-5">
                   <span>Đã hết lượt miễn phí, nâng cấp để tiếp tục</span>
-                  <button type="button" onClick={() => navigate("/pricing")} className="font-bold text-[#6d2fd6] hover:underline">
+                  <button type="button" onClick={() => navigate("/pricing")} className="font-bold text-[#630ed4] hover:underline">
                     Xem gói
                   </button>
                 </div>

@@ -27,7 +27,7 @@ export function InterviewPageTabs({ activeTab, onTabChange }) {
               }}
               className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition-all sm:px-3.5 sm:py-2 sm:text-sm ${
                 active
-                  ? "bg-white text-[#6d2fd6] shadow-sm ring-1 ring-violet-200/80"
+                  ? "bg-white text-[#630ed4] shadow-sm ring-1 ring-violet-200/80"
                   : "text-violet-600 hover:bg-violet-50/80 hover:text-violet-900"
               }`}
             >

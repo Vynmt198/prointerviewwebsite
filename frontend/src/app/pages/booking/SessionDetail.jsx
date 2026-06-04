@@ -784,7 +784,7 @@ export function SessionDetail() {
               <button
                 type="button"
                 onClick={() => navigate("/login")}
-                className="mt-4 rounded-xl bg-[#8037f4] px-4 py-2 text-sm font-medium text-white hover:bg-[#6d2fd6]"
+                className="mt-4 rounded-xl bg-[#8037f4] px-4 py-2 text-sm font-medium text-white hover:bg-[#630ed4]"
               >
                 Đăng nhập
               </button>
@@ -792,7 +792,7 @@ export function SessionDetail() {
               <button
                 type="button"
                 onClick={() => navigate("/")}
-                className="mt-4 rounded-xl bg-[#8037f4] px-4 py-2 text-sm font-medium text-white hover:bg-[#6d2fd6]"
+                className="mt-4 rounded-xl bg-[#8037f4] px-4 py-2 text-sm font-medium text-white hover:bg-[#630ed4]"
               >
                 Về trang chủ
               </button>
@@ -1645,7 +1645,7 @@ export function SessionDetail() {
                       type="button"
                       disabled={cancelBusy}
                       onClick={() => void handleConfirmCancelBooking()}
-                      className="rounded-xl bg-[#8037f4] py-3 text-xs font-bold text-white shadow-sm transition hover:bg-[#6d2fd6] disabled:opacity-50"
+                      className="rounded-xl bg-[#8037f4] py-3 text-xs font-bold text-white shadow-sm transition hover:bg-[#630ed4] disabled:opacity-50"
                     >
                       {cancelBusy ? "Đang xử lý…" : "Xác nhận hủy"}
                     </button>

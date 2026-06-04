@@ -181,7 +181,7 @@ function WithdrawalModal({
               <button
                 type="button"
                 onClick={onClose}
-                className="w-full rounded-lg bg-[#8037f4] py-3 text-sm font-semibold text-white transition-colors hover:bg-[#6d2fd6]"
+                className="w-full rounded-lg bg-[#8037f4] py-3 text-sm font-semibold text-white transition-colors hover:bg-[#630ed4]"
               >
                 Đóng
               </button>

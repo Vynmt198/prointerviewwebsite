@@ -1,6 +1,6 @@
 /** Màu brand ProInterview — đồng bộ với `src/styles/brand.css` (--pi-*). */
 export const BRAND_PURPLE = "#8037f4";
-export const BRAND_PURPLE_HOVER = "#6d2fd6";
+export const BRAND_PURPLE_HOVER = "#630ed4";
 export const BRAND_PURPLE_LIGHT = "#a66ff8";
 export const BRAND_PURPLE_SOFT = "rgba(128, 55, 244, 0.12)";
 export const BRAND_PURPLE_SOFT_LIGHT = "rgba(128, 55, 244, 0.08)";

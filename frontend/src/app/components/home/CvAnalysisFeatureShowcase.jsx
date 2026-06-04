@@ -87,7 +87,7 @@ export function CvAnalysisFeatureShowcase({ onCtaClick }) {
       `}</style>
       <div className={`home-mobile-gutter relative z-10 flex w-full items-center overflow-visible py-2 ${HOME_SECTION_INNER}`}>
         <div className="grid w-full grid-cols-1 items-center gap-4 overflow-visible max-lg:gap-3 lg:grid-cols-[minmax(0,1.14fr)_minmax(0,0.86fr)] lg:gap-6 xl:gap-7 lg:-translate-x-8">
-          <article className="relative z-10 flex min-w-0 flex-col items-start gap-3 sm:gap-3.5 lg:translate-y-6">
+          <article className="relative z-10 flex min-w-0 flex-col items-start gap-3 sm:gap-3.5 lg:-translate-y-10">
             <span className={ty.cvShowcaseBadge}>
               <FileText className="h-3.5 w-3.5 shrink-0" aria-hidden />
               {CV_SHOWCASE_COPY.badge}
@@ -129,7 +129,7 @@ export function CvAnalysisFeatureShowcase({ onCtaClick }) {
 
           <section className="cv-showcase-visual relative z-10 flex min-w-0 origin-center scale-[0.92] flex-col items-center justify-center overflow-visible max-lg:scale-[0.9] sm:scale-[0.96] lg:translate-x-12 lg:scale-100 lg:-translate-y-6 lg:justify-self-center">
             <div className="relative mx-auto w-full max-w-[31rem] overflow-visible">
-              <div className="pointer-events-none absolute left-1/2 top-0 z-[5] w-[14.5rem] -translate-x-1/2 -translate-y-[1.73rem] sm:w-[16.5rem] sm:-translate-y-[2.93rem] lg:w-[18rem] lg:-translate-y-[3.13rem]">
+              <div className="pointer-events-none absolute left-[calc(50%-0.3rem)] top-0 z-[5] w-[14.5rem] -translate-x-1/2 -translate-y-[1.73rem] sm:w-[16.5rem] sm:-translate-y-[2.93rem] lg:w-[18rem] lg:-translate-y-[3.13rem]">
                 <img
                   src="/mascot-cv-analysis-pose7.png?v=1"
                   alt=""
@@ -155,7 +155,7 @@ export function CvAnalysisFeatureShowcase({ onCtaClick }) {
                   <div className="cv-analysis-glass-card -rotate-1 scale-100 transform rounded-3xl border border-[#ccc3d8] bg-white px-[1.5rem] py-[0.875rem] shadow-xl transition-all duration-300 hover:scale-[1.02] sm:px-[1.75rem] sm:py-[1.15rem]">
                     <div className="mb-3 flex items-center gap-2.5 sm:mb-3.5">
                       <div className="flex h-[1.7rem] w-[1.7rem] shrink-0 items-center justify-center rounded-lg bg-violet-100 sm:h-[1.95rem] sm:w-[1.95rem]">
-                        <FileText className="h-[0.7rem] w-[0.7rem] text-[#6d2fd6] sm:h-[0.825rem] sm:w-[0.825rem]" />
+                        <FileText className="h-[0.7rem] w-[0.7rem] text-[#630ed4] sm:h-[0.825rem] sm:w-[0.825rem]" />
                       </div>
                       <h3 className={ty.cardTitle}>Từ khóa khớp với JD</h3>
                     </div>

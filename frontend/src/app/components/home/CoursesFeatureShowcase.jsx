@@ -63,7 +63,7 @@ function LessonRow({ title, active, locked }) {
       <span
         className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full sm:h-[1.375rem] sm:w-[1.375rem] ${
           active
-            ? "bg-[#6d2fd6] text-white"
+            ? "bg-[#630ed4] text-white"
             : locked
               ? "bg-slate-100 text-slate-400"
               : "bg-violet-50 text-violet-400"
@@ -78,7 +78,7 @@ function LessonRow({ title, active, locked }) {
       <span className="min-w-0 flex-1">
         <span
           className={`block text-[11px] font-semibold leading-snug sm:text-xs ${
-            active ? "text-[#6d2fd6]" : locked ? "text-slate-400" : "text-slate-700"
+            active ? "text-[#630ed4]" : locked ? "text-slate-400" : "text-slate-700"
           }`}
         >
           {title}
@@ -118,7 +118,7 @@ function CoursesLearningMockup() {
             key={label}
             className={`inline-flex items-center rounded-xl px-2.5 py-1.5 text-[11px] font-bold sm:px-3 sm:py-2 sm:text-xs ${
               idx === 0
-                ? "bg-[#6d2fd6] text-white shadow-md shadow-violet-500/25"
+                ? "bg-[#630ed4] text-white shadow-md shadow-violet-500/25"
                 : "text-slate-600"
             }`}
           >
@@ -151,7 +151,7 @@ function CoursesLearningMockup() {
               </p>
             </div>
           </div>
-          <p className="mb-2 text-xs font-bold text-[#6d2fd6] sm:text-sm">
+          <p className="mb-2 text-xs font-bold text-[#630ed4] sm:text-sm">
             Gồm {DEMO_COURSE.lessonsCount} bài video · {formatDurationMinutes(DEMO_COURSE.duration)}
           </p>
           <ul className="space-y-2 border-l-2 border-violet-100 pl-3">
@@ -174,7 +174,7 @@ function CoursesLearningMockup() {
         <div className="flex h-full flex-col justify-between gap-2.5 sm:gap-3">
           <div className="rounded-2xl border border-violet-100/80 bg-white px-3.5 py-2.5 shadow-sm sm:px-4 sm:py-3">
             <div className="flex items-center gap-2 text-[11px] font-bold text-slate-800 sm:text-xs">
-              <Video className="h-4 w-4 shrink-0 text-[#6d2fd6]" />
+              <Video className="h-4 w-4 shrink-0 text-[#630ed4]" />
               {COURSES_SHOWCASE_COPY.panelVideoTitle}
             </div>
             <p className="mt-1.5 text-[11px] font-medium text-slate-600 sm:text-xs">
@@ -192,13 +192,13 @@ function CoursesLearningMockup() {
                 <p className="line-clamp-2 text-[11px] font-bold leading-snug text-slate-800 sm:text-xs">
                   {mod.title}
                 </p>
-                <span className="shrink-0 text-[11px] font-bold text-[#6d2fd6]">
+                <span className="shrink-0 text-[11px] font-bold text-[#630ed4]">
                   {mod.done}/{mod.total}
                 </span>
               </div>
               <div className="h-2 overflow-hidden rounded-full bg-violet-100">
                 <div
-                  className="h-full rounded-full bg-gradient-to-r from-[#6d2fd6] to-[#a66ff8]"
+                  className="h-full rounded-full bg-gradient-to-r from-[#630ed4] to-[#a66ff8]"
                   style={{ width: `${mod.pct}%` }}
                 />
               </div>
@@ -256,7 +256,7 @@ export function CoursesFeatureShowcase({ onCtaClick }) {
                 Học từ kinh nghiệm
               </span>
               <span className={`${ty.titleLineSecond} ${ty.titleLineDark} sm:hidden whitespace-nowrap`}>
-                Mentor <span className="text-[#6d2fd6]">qua khóa học</span>
+                Mentor <span className="text-[#630ed4]">qua khóa học</span>
               </span>
               <span className={`${ty.titleLineSecond} ${ty.titleLineAccent} sm:hidden`}>
                 thực tế

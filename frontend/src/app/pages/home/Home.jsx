@@ -771,7 +771,7 @@ export function Home() {
           opacity: 0;
         }
         .glass-card:hover {
-          border-color: #6d2fd6;
+          border-color: #630ed4;
           transform: translateY(-2px);
           box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
         }
@@ -782,7 +782,7 @@ export function Home() {
           box-shadow: 0 8px 22px rgba(15, 23, 42, 0.05);
         }
         .home-how-step-card:hover {
-          border-color: #6d2fd6 !important;
+          border-color: #630ed4 !important;
           box-shadow: 0 10px 26px rgba(15, 23, 42, 0.07);
         }
         /* Bước Nổi bật, giữ nhãn lime */
@@ -1086,7 +1086,7 @@ export function Home() {
         >
           <div className="hero-intro-badge mb-5">
             <div
-              className="inline-flex items-center gap-2 rounded-full border border-white/70 bg-white/75 px-3.5 py-1.5 text-xs font-bold text-[#6d2fd6] shadow-sm backdrop-blur sm:text-sm"
+              className="inline-flex items-center gap-2 rounded-full border border-white/70 bg-white/75 px-3.5 py-1.5 text-xs font-bold text-[#630ed4] shadow-sm backdrop-blur sm:text-sm"
             >
               <SparkleGlyph className="h-3.5 w-3.5 shrink-0" tone="violet" />
               {HOME_COPY.badge}
@@ -1100,7 +1100,7 @@ export function Home() {
             >
               <span className="hero-title-line text-slate-900">
                 {HOME_COPY.titleLine1}{" "}
-                <span className="hero-title-highlight" style={{ color: "#8037f4" }}>
+                <span className="hero-title-highlight" style={{ color: "#630ed4" }}>
                   {HOME_COPY.titleHighlight}
                 </span>
               </span>

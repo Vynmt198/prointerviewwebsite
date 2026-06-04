@@ -235,7 +235,7 @@ export function CourseDetail() {
             <button
               type="button"
               onClick={() => navigate(`/courses/${id}/learn?peerReview=1`)}
-              className="shrink-0 rounded-lg bg-[#8037f4] px-4 py-2 text-sm font-bold text-white hover:bg-[#6d2fd6]"
+              className="shrink-0 rounded-lg bg-[#8037f4] px-4 py-2 text-sm font-bold text-white hover:bg-[#630ed4]"
             >
               Xem nội dung khóa học
             </button>
@@ -243,7 +243,7 @@ export function CourseDetail() {
         ) : null}
         <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_calc(280px+1rem)] lg:items-start lg:gap-5">
           <div className="min-w-0 space-y-5 lg:space-y-5">
-            <header className="overflow-hidden rounded-2xl bg-gradient-to-br from-[#8037f4] via-[#7230e8] to-[#6d2fd6] px-5 py-5 text-white shadow-[0_12px_40px_rgba(128,55,244,0.28)] sm:px-8 sm:py-6 lg:rounded-md lg:bg-gradient-to-r lg:from-[#8037f4] lg:to-[#6d2fd6] lg:px-10 lg:py-7 lg:shadow-none">
+            <header className="overflow-hidden rounded-2xl bg-gradient-to-br from-[#8037f4] via-[#7230e8] to-[#630ed4] px-5 py-5 text-white shadow-[0_12px_40px_rgba(128,55,244,0.28)] sm:px-8 sm:py-6 lg:rounded-md lg:bg-gradient-to-r lg:from-[#8037f4] lg:to-[#630ed4] lg:px-10 lg:py-7 lg:shadow-none">
               {course.category ? (
                 <p className="mb-2.5 inline-flex max-w-full truncate rounded-full bg-white/15 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white/95 backdrop-blur-sm sm:text-[11px] lg:hidden">
                   {course.category}

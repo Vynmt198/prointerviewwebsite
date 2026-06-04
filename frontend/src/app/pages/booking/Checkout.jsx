@@ -537,7 +537,7 @@ function CheckoutPayPanel({ mode, fmt, rebookCreditVnd, bookingTotalEstimate, bo
           <button
             type="button"
             onClick={() => navigate(`/mentors?rebookFrom=${encodeURIComponent(rebookFrom)}`)}
-            className="rounded-lg bg-[#8037f4] px-3 py-2 text-[10px] font-bold uppercase text-white hover:bg-[#6d2fd6]"
+            className="rounded-lg bg-[#8037f4] px-3 py-2 text-[10px] font-bold uppercase text-white hover:bg-[#630ed4]"
           >
             Mentor khác
           </button>

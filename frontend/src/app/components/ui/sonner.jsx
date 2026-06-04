@@ -15,14 +15,14 @@ const Toaster = ({ ...props }) => {
           toast: TOAST_CLASS,
           title: "!font-bold !text-[#1a1b23]",
           description: "!text-slate-600",
-          actionButton: "!bg-[#6d2fd6] !text-white",
-          cancelButton: "!bg-violet-50 !text-[#6d2fd6]",
+          actionButton: "!bg-[#630ed4] !text-white",
+          cancelButton: "!bg-violet-50 !text-[#630ed4]",
           closeButton:
-            "!border-violet-200 !bg-violet-50 !text-[#6d2fd6] hover:!bg-violet-100",
+            "!border-violet-200 !bg-violet-50 !text-[#630ed4] hover:!bg-violet-100",
           success: "!border-emerald-200/80 !shadow-emerald-500/10",
           error: "!border-violet-300/80",
           warning: "!border-amber-200/80",
-          info: "!border-l-4 !border-l-[#6d2fd6] !from-violet-50/95 !to-white !bg-gradient-to-r",
+          info: "!border-l-4 !border-l-[#630ed4] !from-violet-50/95 !to-white !bg-gradient-to-r",
         },
       }}
       style={{

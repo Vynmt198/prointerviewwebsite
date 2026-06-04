@@ -1044,12 +1044,12 @@ export default function InterviewRoom() {
               className="mb-5 w-full"
               title={
                 <>
-                  <span className="font-extrabold text-[#6d2fd6]">Luyện phỏng vấn với AI</span>{" "}
+                  <span className="font-extrabold text-[#630ed4]">Luyện phỏng vấn với AI</span>{" "}
                   <span className="font-extrabold text-[#1a1b23]">từ CV của bạn</span>
                 </>
               }
               subtitle="Từ CV của bạn, ProInterview tạo buổi phỏng vấn thử với HR AI (~30 phút), phân tích hành vi và góp ý sau từng câu trả lời để bạn tự tin hơn trước buổi thật."
-              subtitleClassName="mt-3 max-w-2xl text-base font-medium leading-relaxed text-violet-700/90"
+              subtitleClassName="mt-3 max-w-full text-sm font-medium leading-relaxed text-slate-600 sm:text-base"
             />
 
             <div className="w-full rounded-md border border-violet-200/80 bg-white px-4 py-5 shadow-sm sm:px-6 sm:py-6">

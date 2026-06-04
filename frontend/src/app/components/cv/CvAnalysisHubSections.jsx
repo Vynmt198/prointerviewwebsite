@@ -65,7 +65,7 @@ export function CvAnalysisHubHero({ onJd, onField, navShellAligned = false }) {
             className={`relative flex shrink-0 flex-col justify-center py-3 sm:py-4 lg:min-w-[34rem] lg:max-w-[38rem] lg:flex-[0.92] xl:max-w-[39rem] ${navShellAligned ? "lg:py-0" : "lg:py-2"
               }`}
           >
-            <div className={`relative z-10 flex flex-col gap-2.5 sm:gap-3 ${navShellAligned ? "lg:translate-x-4" : ""}`}>
+            <div className={`relative z-10 flex flex-col gap-2.5 sm:gap-3 lg:-translate-y-6 ${navShellAligned ? "lg:translate-x-4" : ""}`}>
               <h1 className="max-w-[min(100%,32rem)] font-headline tracking-tight lg:max-w-[36rem]">
                 {/* Desktop, cùng cỡ tiêu đề section Home (Mentor, Khóa học, …) */}
                 <span
@@ -81,7 +81,7 @@ export function CvAnalysisHubHero({ onJd, onField, navShellAligned = false }) {
                 </span>
 
                 {/* Mobile, giữ cỡ hub riêng */}
-                <span className="block text-[clamp(1.75rem,7.5vw,2.1rem)] font-extrabold leading-[1.12] lg:hidden">
+                <span className="block text-[clamp(2.25rem,3.5vw,3.25rem)] font-extrabold leading-[1.12] lg:hidden">
                   <span className="block text-[#630ed4] whitespace-nowrap">Làm sao để CV</span>
                   <span className="mt-0.5 block whitespace-nowrap">
                     <span className="text-[#630ed4]">ấn tượng </span>
@@ -89,10 +89,9 @@ export function CvAnalysisHubHero({ onJd, onField, navShellAligned = false }) {
                   </span>
                   <span className="mt-0.5 block text-[#1a1b23] whitespace-nowrap">nhà tuyển dụng?</span>
                 </span>
-                <p className="mt-2 max-w-[min(100%,30rem)] text-[clamp(1.0625rem,2.2vw,1.25rem)] font-medium leading-snug text-slate-600 lg:max-w-none">
-                  <span className="hidden lg:block">
-                    <span className="block whitespace-nowrap">{CV_HUB_HERO_COPY.bodyLine1}</span>
-                    <span className="block whitespace-nowrap">{CV_HUB_HERO_COPY.bodyLine2}</span>
+                <p className="mt-2 max-w-[min(100%,30rem)] text-sm font-medium leading-relaxed text-slate-600 sm:text-lg lg:max-w-none">
+                  <span className="hidden lg:block whitespace-nowrap">
+                    {CV_SHOWCASE_COPY.body}
                   </span>
                   <span className="block text-pretty lg:hidden">{CV_SHOWCASE_COPY.body}</span>
                 </p>
@@ -102,14 +101,14 @@ export function CvAnalysisHubHero({ onJd, onField, navShellAligned = false }) {
                 <button
                   type="button"
                   onClick={onJd}
-                  className="cv-hub-cta inline-flex shrink-0 items-center justify-center whitespace-nowrap rounded-2xl bg-gradient-to-br from-[#630ed4] to-[#7c3aed] px-6 py-3 text-sm font-bold text-white shadow-lg shadow-violet-500/25 hover:brightness-105 hover:shadow-xl hover:shadow-violet-500/30 sm:px-7 sm:py-3.5 sm:text-base"
+                  className="cv-hub-cta inline-flex shrink-0 items-center justify-center whitespace-nowrap rounded-2xl bg-gradient-to-br from-[#630ed4] to-[#7c3aed] px-4 py-2 text-sm font-bold text-white shadow-lg shadow-violet-500/25 hover:brightness-105 hover:shadow-xl hover:shadow-violet-500/30 sm:px-5 sm:py-2.5 sm:text-base"
                 >
                   {CV_HUB_HERO_COPY.ctaJd}
                 </button>
                 <button
                   type="button"
                   onClick={onField}
-                  className="cv-hub-cta inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-2xl border-2 border-violet-200/80 bg-white/90 px-6 py-3 text-sm font-bold text-[#630ed4] shadow-sm backdrop-blur-sm hover:border-violet-300 hover:bg-white hover:shadow-md sm:px-7 sm:py-3.5 sm:text-base"
+                  className="cv-hub-cta inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-2xl border-2 border-violet-200/80 bg-white/90 px-4 py-2 text-sm font-bold text-[#630ed4] shadow-sm backdrop-blur-sm hover:border-violet-300 hover:bg-white hover:shadow-md sm:px-5 sm:py-2.5 sm:text-base"
                 >
                   {CV_HUB_HERO_COPY.ctaField}
                 </button>
@@ -212,7 +211,7 @@ export function CvAnalysisHubHero({ onJd, onField, navShellAligned = false }) {
               {/* Card đánh giá, hubPreview; gấu căn đáy card (desktop) */}
               <div className="relative hidden w-full shrink-0 overflow-visible lg:block">
                 <div
-                  className="pointer-events-none absolute bottom-0 left-0 z-20 -translate-x-[14.65rem] translate-y-[3.35rem] xl:-translate-x-[15.4rem] xl:translate-y-[3.25rem]"
+                  className="pointer-events-none absolute bottom-0 left-0 z-20 -translate-x-[14.95rem] translate-y-[3.35rem] xl:-translate-x-[15.7rem] xl:translate-y-[3.25rem]"
                   aria-hidden
                 >
                   <MascotSparkle className="left-[27%] top-[8%] h-2.5 w-2.5" />

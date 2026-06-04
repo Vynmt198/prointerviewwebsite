@@ -283,12 +283,12 @@ export function Mentors() {
           <CustomerPageHeader
             title={
               <>
-                <span className="font-extrabold text-[#6d2fd6]">Kết nối Mentor</span>{" "}
+                <span className="font-extrabold text-[#630ed4]">Kết nối Mentor</span>{" "}
                 <span className="font-extrabold text-[#1a1b23]">phù hợp</span>
               </>
             }
             subtitle="Kết nối với Mentor để có thêm góc nhìn thực tế từ ngành, hiểu kỳ vọng của nhà tuyển dụng và chuẩn bị tự tin hơn cho buổi phỏng vấn thật."
-            subtitleClassName="mt-3 max-w-2xl text-base font-medium leading-relaxed text-slate-600"
+            subtitleClassName="mt-3 max-w-full text-sm font-medium leading-relaxed text-slate-600 sm:text-base"
             className="mb-6"
           />
 

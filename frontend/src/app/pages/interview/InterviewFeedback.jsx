@@ -560,7 +560,7 @@ export function InterviewFeedback() {
               {sessionMeta.duration > 0 ? ` · ${sessionMeta.duration} phút` : ""} ·{" "}
               {isPro ? allQuestions.length : FREE_LIMIT}/{allQuestions.length} câu hỏi
               {!isPro && (
-                <span className="ml-2 inline-flex items-center gap-1 rounded-full border border-violet-200 bg-white px-2 py-0.5 text-xs font-semibold text-[#6d2fd6]">
+                <span className="ml-2 inline-flex items-center gap-1 rounded-full border border-violet-200 bg-white px-2 py-0.5 text-xs font-semibold text-[#630ed4]">
                   <Lock className="h-3 w-3" /> 2 câu bị khóa
                 </span>
               )}
