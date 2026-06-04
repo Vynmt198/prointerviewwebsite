@@ -18,7 +18,7 @@
 
 import crypto from "crypto";
 import { uploadToCloudinary } from "../utils/cloudinaryUpload.js";
-import { synthesizeSpeech, getElevenLabsVoiceId } from "./ttsService.js";
+import { synthesizeSpeech, getElevenLabsVoiceId, isElevenLabsEnabled } from "./ttsService.js";
 import { cacheGet, cacheSet } from "./cacheService.js";
 import { logger } from "../config/logger.js";
 
@@ -123,13 +123,20 @@ function buildCacheKey(questionText, avatarImageUrl, voiceId) {
  * @param {string} [opts.voiceId] - Override ElevenLabs voice ID (nếu không set, dùng gender)
  */
 async function generateAndUploadAudio(text, opts = {}) {
+  if (!isElevenLabsEnabled()) {
+    // Voice ID chưa cấu hình đúng (hoặc là placeholder) → D-ID sẽ dùng Azure TTS.
+    // Log ở mức info để dễ nhận biết trong production.
+    logger.info("avatar_tts_provider", { provider: "did_azure", reason: "ElevenLabs voice ID not configured" });
+    return null;
+  }
+
   try {
     const { gender = "female", voiceId } = opts;
     // Resolve ElevenLabs voice ID from gender — NOT the Azure voice ID (vi-VN-NamMinhNeural).
     // Azure voice IDs are for D-ID text-script fallback only; ElevenLabs uses its own ID format.
     const elevenLabsVoiceId = voiceId || getElevenLabsVoiceId(gender);
     const ttsResult = await synthesizeSpeech(text, { voiceId: elevenLabsVoiceId });
-    if (!ttsResult) return null; // ElevenLabs not configured
+    if (!ttsResult) return null; // ElevenLabs not configured (should not reach here after check above)
 
     // Upload audio buffer → Cloudinary (resource_type: "video" cho audio files)
     const cdn = await uploadToCloudinary(ttsResult.buffer, {
@@ -140,6 +147,7 @@ async function generateAndUploadAudio(text, opts = {}) {
     });
 
     if (!cdn) return null; // Cloudinary not configured
+    logger.info("avatar_tts_provider", { provider: "elevenlabs", gender, voiceId: elevenLabsVoiceId });
     return cdn.url;
   } catch (err) {
     logger.warn("avatar_audio_upload_failed", { error: err.message });
