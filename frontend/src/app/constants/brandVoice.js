@@ -134,8 +134,8 @@ export const CV_SHOWCASE_COPY = {
 export const CV_HUB_HERO_COPY = {
   titleAccent: "Làm sao để CV ấn tượng",
   titleRest: "trong mắt nhà tuyển dụng?",
-  bodyLine1: "ProInterview giúp bạn kiểm tra, góp ý và cải thiện CV trước khi gửi đến nhà",
-  bodyLine2: "tuyển dụng.",
+  bodyLine1: "ProInterview giúp bạn kiểm tra, góp ý và cải thiện CV",
+  bodyLine2: "trước khi gửi đến nhà tuyển dụng.",
   ctaJd: "Tối ưu CV theo vị trí ứng tuyển",
   ctaField: "Phân tích CV theo ngành nghề",
 };
