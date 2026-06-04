@@ -199,12 +199,18 @@ async function pollDIDTalk(talkId, timeoutMs = 35_000, signal) {
   let interval   = 2000;
 
   while (Date.now() < deadline) {
-    // Stop immediately when client disconnects — no more D-ID calls, no more waiting
     if (signal?.aborted) throw new Error("pregen_aborted_client_disconnect");
 
-    await new Promise(r => setTimeout(r, interval));
+    // Abortable sleep: if signal fires mid-sleep, reject immediately instead of
+    // waiting up to 8s for the next signal check.
+    await new Promise((resolve, reject) => {
+      const t = setTimeout(resolve, interval);
+      signal?.addEventListener("abort", () => {
+        clearTimeout(t);
+        reject(new Error("pregen_aborted_client_disconnect"));
+      }, { once: true });
+    });
 
-    if (signal?.aborted) throw new Error("pregen_aborted_client_disconnect");
     interval = Math.min(interval * 1.3, 8000); // exponential backoff, max 8s
 
     const res = await fetch(`${DID_BASE}/talks/${talkId}`, {
@@ -333,6 +339,10 @@ export async function pregenerateVideos(questions, opts = {}, onProgress, signal
     } catch (err) {
       done++;
       onProgress?.(done, total);
+      // Record failures from Q2-N as well so the circuit breaker learns about
+      // D-ID degradation even when Q1 was a cache hit (0 D-ID calls).
+      const isClientAbort = err.message.includes("pregen_aborted_client_disconnect");
+      if (!isClientAbort) didCircuit.recordFailure();
       logger.error("pregen_video_failed", { questionText: questionText.slice(0, 80), error: err.message });
       return { videoUrl: null, fromCache: false, error: err.message };
     }

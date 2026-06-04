@@ -747,10 +747,18 @@ export default function InterviewRoom() {
 
   /* ── D-ID connect — lazy: chỉ kết nối khi user bắt đầu phỏng vấn ───────────
      Không preconnect trên màn "ready" vì D-ID sessions có idle timeout ~60s.
-     Nếu user đọc danh sách câu hỏi > 60s → session expired → speakWithText 400.
      Kết nối ngay khi phase = "question": stream mới, không bao giờ bị expire
-     trước lần speak đầu tiên.                                                  */
+     trước lần speak đầu tiên.
+     Attempt counter resets per question so D-ID can recover if it comes back.  */
   const didConnectAttemptsRef = useRef(0);
+
+  // Reset attempt counter each time user moves to a new question.
+  // This allows D-ID to recover after a transient failure on a previous question
+  // instead of permanently giving up after 3 lifetime attempts.
+  useEffect(() => {
+    didConnectAttemptsRef.current = 0;
+  }, [currentQ]); // eslint-disable-line react-hooks/exhaustive-deps
+
   useEffect(() => {
     if (hasPregenVideos || phase !== "question" || !DID_API_KEY) return;
     if (didStatus === "connected" || didStatus === "connecting") return;
@@ -761,9 +769,10 @@ export default function InterviewRoom() {
 
   /* ── Reset speak guard khi D-ID reconnect thành công ───────────────────────
      Sau khi session expired → status="error" → reconnect → status="connected".
-     Nếu không reset lastSpokenQRef, câu hỏi hiện tại sẽ không được đọc lại. */
+     Guard: chỉ reset khi hrPhase="asking" — tránh double-speak nếu reconnect
+     xảy ra sau khi user đã trả lời (hrPhase="listening").                     */
   useEffect(() => {
-    if (didStatus === "connected") {
+    if (didStatus === "connected" && hrPhase === "asking") {
       lastSpokenQRef.current = -1;
     }
   }, [didStatus]); // eslint-disable-line react-hooks/exhaustive-deps
