@@ -70,6 +70,39 @@ const AZURE_VOICES = {
   male:   "vi-VN-NamMinhNeural",
 };
 
+// ── D-ID circuit breaker (in-memory, per-process) ────────────────────────────
+// Open sau 3 probe failures liên tiếp → skip pregen để tránh tạo job lãng phí.
+// Tự reset sau 5 phút (half-open: cho probe tiếp theo qua để test lại).
+
+const didCircuit = {
+  failures:  0,
+  openSince: 0,
+  THRESHOLD: 3,
+  RESET_MS:  5 * 60 * 1000,
+
+  isOpen() {
+    if (this.failures < this.THRESHOLD) return false;
+    if (Date.now() - this.openSince > this.RESET_MS) {
+      this.failures = 0; // half-open: let next probe through
+      return false;
+    }
+    return true;
+  },
+  recordFailure() {
+    this.failures++;
+    if (this.failures >= this.THRESHOLD) this.openSince = Date.now();
+    logger.warn("did_circuit_failure", { failures: this.failures, open: this.isOpen() });
+  },
+  recordSuccess() {
+    if (this.failures > 0) logger.info("did_circuit_reset");
+    this.failures  = 0;
+    this.openSince = 0;
+  },
+};
+
+/** Expose circuit state cho /api/ai/config và pre-flight checks. */
+export function isCircuitOpen() { return didCircuit.isOpen(); }
+
 // ── Cache key ─────────────────────────────────────────────────────────────────
 
 function buildCacheKey(questionText, avatarImageUrl, voiceId) {
@@ -157,17 +190,21 @@ async function createDIDTalk(avatarImageUrl, audioUrl, questionText, opts = {}) 
 /**
  * Poll D-ID talk job đến khi status=done.
  * @param {string} talkId
- * @param {number} [timeoutMs=35000] - 35s đủ cho D-ID render bình thường (5-15s);
- *   nếu job vẫn chưa xong sau 35s thì đang stuck/throttled — fail fast để tránh
- *   block request và không tốn thêm time chờ.
+ * @param {number} [timeoutMs=35000] - 35s đủ cho D-ID render bình thường (5-15s).
+ * @param {AbortSignal} [signal] - Dừng ngay khi client ngắt kết nối (req.on('close')).
  * @returns {string} result_url (MP4 video URL)
  */
-async function pollDIDTalk(talkId, timeoutMs = 35_000) {
+async function pollDIDTalk(talkId, timeoutMs = 35_000, signal) {
   const deadline = Date.now() + timeoutMs;
   let interval   = 2000;
 
   while (Date.now() < deadline) {
+    // Stop immediately when client disconnects — no more D-ID calls, no more waiting
+    if (signal?.aborted) throw new Error("pregen_aborted_client_disconnect");
+
     await new Promise(r => setTimeout(r, interval));
+
+    if (signal?.aborted) throw new Error("pregen_aborted_client_disconnect");
     interval = Math.min(interval * 1.3, 8000); // exponential backoff, max 8s
 
     const res = await fetch(`${DID_BASE}/talks/${talkId}`, {
@@ -199,11 +236,17 @@ async function pollDIDTalk(talkId, timeoutMs = 35_000) {
  * @param {string} [opts.gender="female"] - "female" | "male"
  * @param {string} [opts.voiceId]         - ElevenLabs voice ID override
  * @param {string} [opts.avatarImageUrl]  - Override avatar image
+ * @param {AbortSignal} [signal]          - Abort polling when client disconnects
  * @returns {Promise<{videoUrl: string, fromCache: boolean, talkId?: string}>}
  */
-export async function generateVideoForQuestion(questionText, opts = {}) {
+export async function generateVideoForQuestion(questionText, opts = {}, signal) {
   if (!isDIDEnabled()) {
     throw new Error("D_ID_API_KEY chưa được cấu hình.");
+  }
+
+  // Circuit breaker: skip immediately when D-ID is degraded — avoid wasting credits
+  if (didCircuit.isOpen()) {
+    throw new Error("D-ID circuit open — service degraded, skipping to prevent credit waste");
   }
 
   const { gender = "female", voiceId, avatarImageUrl } = opts;
@@ -225,8 +268,8 @@ export async function generateVideoForQuestion(questionText, opts = {}) {
   // 3. Create D-ID talk
   const talkId = await createDIDTalk(resolvedAvatarUrl, audioUrl, questionText, { voiceId: resolvedVoiceId });
 
-  // 4. Poll until done
-  const videoUrl = await pollDIDTalk(talkId);
+  // 4. Poll until done — pass signal so polling stops on client disconnect
+  const videoUrl = await pollDIDTalk(talkId, 35_000, signal);
 
   // 5. Cache result
   await cacheSet(cacheKey, videoUrl, VIDEO_CACHE_TTL);
@@ -250,32 +293,40 @@ export async function generateVideoForQuestion(questionText, opts = {}) {
  * @param {string[]} questions - Danh sách câu hỏi text
  * @param {object} [opts]     - Shared options (gender, voiceId, avatarImageUrl)
  * @param {Function} [onProgress] - Callback(done, total) khi mỗi video xong
+ * @param {AbortSignal} [signal]  - Abort when HTTP client disconnects
  * @returns {Promise<Array<{videoUrl: string, fromCache: boolean, error?: string}>>}
  */
-export async function pregenerateVideos(questions, opts = {}, onProgress) {
+export async function pregenerateVideos(questions, opts = {}, onProgress, signal) {
   const total = questions.length;
   if (total === 0) return [];
   let done = 0;
 
-  // Step 1: Probe — chạy Q1 trước để xác nhận D-ID đang hoạt động
+  // Step 1: Probe — chạy Q1 trước để xác nhận D-ID đang hoạt động.
+  // Probe cũng cập nhật circuit breaker để ảnh hưởng đến các request tiếp theo.
   let firstResult;
   try {
-    firstResult = await generateVideoForQuestion(questions[0], opts);
+    firstResult = await generateVideoForQuestion(questions[0], opts, signal);
+    didCircuit.recordSuccess();
     done++;
     onProgress?.(done, total);
   } catch (err) {
+    const isClientAbort = err.message.includes("pregen_aborted_client_disconnect");
+    if (!isClientAbort) {
+      // Chỉ tính failure vào circuit khi D-ID thực sự fail, không phải client abort
+      didCircuit.recordFailure();
+    }
     logger.error("pregen_video_failed", { questionText: questions[0].slice(0, 80), error: err.message });
-    logger.warn("pregen_aborted_early", { reason: "probe_failed", error: err.message });
+    logger.warn("pregen_aborted_early", { reason: "probe_failed", isClientAbort, error: err.message });
     // D-ID không hoạt động — không tạo thêm job, trả về toàn null ngay lập tức
     return questions.map(() => ({ videoUrl: null, fromCache: false, error: err.message }));
   }
 
   if (total === 1) return [firstResult];
 
-  // Step 2: D-ID đang ổn → Q2…N chạy song song
+  // Step 2: D-ID đang ổn → Q2…N chạy song song, tiếp tục truyền signal
   const remainingTasks = questions.slice(1).map(async (questionText) => {
     try {
-      const result = await generateVideoForQuestion(questionText, opts);
+      const result = await generateVideoForQuestion(questionText, opts, signal);
       done++;
       onProgress?.(done, total);
       return result;
