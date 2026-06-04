@@ -18,7 +18,7 @@
 
 import crypto from "crypto";
 import { uploadToCloudinary } from "../utils/cloudinaryUpload.js";
-import { synthesizeSpeech } from "./ttsService.js";
+import { synthesizeSpeech, getElevenLabsVoiceId } from "./ttsService.js";
 import { cacheGet, cacheSet } from "./cacheService.js";
 import { logger } from "../config/logger.js";
 
@@ -116,10 +116,19 @@ function buildCacheKey(questionText, avatarImageUrl, voiceId) {
  * Sinh audio từ ElevenLabs rồi upload lên Cloudinary.
  * Trả về public audio URL (D-ID cần URL HTTP accessible).
  * Fallback: nếu ElevenLabs không có key → trả null → D-ID dùng text script thay thế.
+ *
+ * @param {string} text
+ * @param {object} [opts]
+ * @param {"male"|"female"} [opts.gender="female"] - Dùng để chọn ElevenLabs voice đúng giới tính
+ * @param {string} [opts.voiceId] - Override ElevenLabs voice ID (nếu không set, dùng gender)
  */
-async function generateAndUploadAudio(text, ttsOpts = {}) {
+async function generateAndUploadAudio(text, opts = {}) {
   try {
-    const ttsResult = await synthesizeSpeech(text, ttsOpts);
+    const { gender = "female", voiceId } = opts;
+    // Resolve ElevenLabs voice ID from gender — NOT the Azure voice ID (vi-VN-NamMinhNeural).
+    // Azure voice IDs are for D-ID text-script fallback only; ElevenLabs uses its own ID format.
+    const elevenLabsVoiceId = voiceId || getElevenLabsVoiceId(gender);
+    const ttsResult = await synthesizeSpeech(text, { voiceId: elevenLabsVoiceId });
     if (!ttsResult) return null; // ElevenLabs not configured
 
     // Upload audio buffer → Cloudinary (resource_type: "video" cho audio files)
@@ -199,12 +208,18 @@ async function pollDIDTalk(talkId, timeoutMs = 35_000, signal) {
   let interval   = 2000;
 
   while (Date.now() < deadline) {
-    // Stop immediately when client disconnects — no more D-ID calls, no more waiting
     if (signal?.aborted) throw new Error("pregen_aborted_client_disconnect");
 
-    await new Promise(r => setTimeout(r, interval));
+    // Abortable sleep: if signal fires mid-sleep, reject immediately instead of
+    // waiting up to 8s for the next signal check.
+    await new Promise((resolve, reject) => {
+      const t = setTimeout(resolve, interval);
+      signal?.addEventListener("abort", () => {
+        clearTimeout(t);
+        reject(new Error("pregen_aborted_client_disconnect"));
+      }, { once: true });
+    });
 
-    if (signal?.aborted) throw new Error("pregen_aborted_client_disconnect");
     interval = Math.min(interval * 1.3, 8000); // exponential backoff, max 8s
 
     const res = await fetch(`${DID_BASE}/talks/${talkId}`, {
@@ -262,10 +277,12 @@ export async function generateVideoForQuestion(questionText, opts = {}, signal) 
     return { videoUrl: cached, fromCache: true };
   }
 
-  // 2. TTS audio (optional — if ElevenLabs not configured, D-ID uses its own Azure TTS)
-  const audioUrl = await generateAndUploadAudio(questionText, { voiceId: resolvedVoiceId });
+  // 2. ElevenLabs TTS audio (if configured). Pass gender so the correct voice is selected.
+  //    resolvedVoiceId is the Azure voice name — only used as D-ID text-script fallback (step 3).
+  const audioUrl = await generateAndUploadAudio(questionText, { gender });
 
-  // 3. Create D-ID talk
+  // 3. Create D-ID talk — if audioUrl exists, D-ID lipsync with ElevenLabs audio;
+  //    otherwise D-ID uses its own Azure TTS with resolvedVoiceId.
   const talkId = await createDIDTalk(resolvedAvatarUrl, audioUrl, questionText, { voiceId: resolvedVoiceId });
 
   // 4. Poll until done — pass signal so polling stops on client disconnect
@@ -333,6 +350,10 @@ export async function pregenerateVideos(questions, opts = {}, onProgress, signal
     } catch (err) {
       done++;
       onProgress?.(done, total);
+      // Record failures from Q2-N as well so the circuit breaker learns about
+      // D-ID degradation even when Q1 was a cache hit (0 D-ID calls).
+      const isClientAbort = err.message.includes("pregen_aborted_client_disconnect");
+      if (!isClientAbort) didCircuit.recordFailure();
       logger.error("pregen_video_failed", { questionText: questionText.slice(0, 80), error: err.message });
       return { videoUrl: null, fromCache: false, error: err.message };
     }

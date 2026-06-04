@@ -745,22 +745,37 @@ export default function InterviewRoom() {
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  /* ── D-ID preconnect, skip khi đã có pregen videos ─────── */
+  /* ── D-ID connect — lazy: chỉ kết nối khi user bắt đầu phỏng vấn ───────────
+     Không preconnect trên màn "ready" vì D-ID sessions có idle timeout ~60s.
+     Kết nối ngay khi phase = "question": stream mới, không bao giờ bị expire
+     trước lần speak đầu tiên.
+     Attempt counter resets per question so D-ID can recover if it comes back.  */
   const didConnectAttemptsRef = useRef(0);
+
+  // Reset attempt counter each time user moves to a new question.
+  // This allows D-ID to recover after a transient failure on a previous question
+  // instead of permanently giving up after 3 lifetime attempts.
   useEffect(() => {
-    // Không cần WebRTC nếu đã có pre-generated videos từ D-ID Express API
-    if (!DID_API_KEY || hasPregenVideos) return;
-    didConnectAttemptsRef.current = 1;
-    didConnect();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+    didConnectAttemptsRef.current = 0;
+  }, [currentQ]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (hasPregenVideos || phase !== "question" || !DID_API_KEY) return;
     if (didStatus === "connected" || didStatus === "connecting") return;
-    if (didConnectAttemptsRef.current >= 2) return;
+    if (didConnectAttemptsRef.current >= 3) return;
     didConnectAttemptsRef.current += 1;
     didConnect();
   }, [phase, didStatus]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  /* ── Reset speak guard khi D-ID reconnect thành công ───────────────────────
+     Sau khi session expired → status="error" → reconnect → status="connected".
+     Guard: chỉ reset khi hrPhase="asking" — tránh double-speak nếu reconnect
+     xảy ra sau khi user đã trả lời (hrPhase="listening").                     */
+  useEffect(() => {
+    if (didStatus === "connected" && hrPhase === "asking") {
+      lastSpokenQRef.current = -1;
+    }
+  }, [didStatus]); // eslint-disable-line react-hooks/exhaustive-deps
 
   /* ── D-ID max stream duration guard ─────────────────────────
      D-ID Streaming API charges per minute. Disconnect after 15 minutes
