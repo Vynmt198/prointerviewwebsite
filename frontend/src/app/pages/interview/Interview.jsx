@@ -488,9 +488,9 @@ export function Interview() {
 
           if (questionTexts.length > 0) {
             const pregenTimeout = new Promise((resolve) =>
-              // 100s: probe Q1 (~20s) + Q2-5 parallel (~60s worst case) + buffer
-              // Tăng từ 45s vì Q4 cần 41s và Q5 cần 53s từ lúc parallel start
-              setTimeout(() => resolve({ success: false, timedOut: true }), 100_000)
+              // 180s: ElevenLabs x5 (~60s) + D-ID Express render x5 sequential (~55s) + buffer
+              // Tăng từ 100s: backend thực tế đo được 115s do ElevenLabs multilingual processing.
+              setTimeout(() => resolve({ success: false, timedOut: true }), 180_000)
             );
             const pregenResult = await Promise.race([
               pregenerateInterviewVideos(questionTexts, { gender: hrGender }),
