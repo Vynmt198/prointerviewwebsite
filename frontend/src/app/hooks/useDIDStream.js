@@ -137,7 +137,9 @@ export function useDIDStream({ apiKey, sourceImageUrl } = {}) {
       pc.onconnectionstatechange = () => {
         if (pc.connectionState === "connected") {
           clearTimeout(connectTimerRef.current);
-          setStatus("connected");
+          // D-ID stream needs ~1s after WebRTC "connected" to be fully ready
+          // for speak requests. Firing speakWithText immediately causes 400.
+          setTimeout(() => setStatus("connected"), 1000);
         } else if (
           pc.connectionState === "failed" ||
           pc.connectionState === "closed" ||
@@ -268,11 +270,32 @@ export function useDIDStream({ apiKey, sourceImageUrl } = {}) {
       });
 
       if (!res.ok) {
-        // 400 most often means the D-ID session expired while user was on the
-        // ready screen. Set status to "error" so the reconnect effect in
-        // InterviewRoom fires for the next question.
         const body = await res.json().catch(() => ({}));
-        console.error(`[D-ID] speakWithText ${res.status}:`, body);
+        console.error(`[D-ID] speakWithText ${res.status}:`, JSON.stringify(body));
+
+        if (res.status === 400) {
+          // 400 on a fresh stream = stream not fully ready yet.
+          // Retry once after 1.5s before giving up.
+          await new Promise(r => setTimeout(r, 1500));
+          const retry = await fetch(`${DID_API}/talks/streams/${streamIdRef.current}`, {
+            method: "POST",
+            headers: getHeaders(),
+            body: JSON.stringify({
+              script: { type: "text", input: text, provider: { type: "microsoft", voice_id: voiceId } },
+              config: { fluent: true, pad_audio: 0.5, stitch: true },
+              session_id: sessionIdRef.current,
+            }),
+          }).catch(() => null);
+
+          if (retry?.ok) {
+            endTimerRef.current = setTimeout(() => { setStatus("connected"); onEnd?.(); }, estimatedMs);
+            return;
+          }
+          const retryBody = await retry?.json().catch(() => ({}));
+          console.error(`[D-ID] speakWithText retry ${retry?.status}:`, JSON.stringify(retryBody));
+        }
+
+        // Expired session (400 after retry) or other error → reconnect for next Q
         setStatus("error");
         onEnd?.();
         return;
