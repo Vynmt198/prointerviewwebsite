@@ -199,11 +199,13 @@ async function createDIDTalk(avatarImageUrl, audioUrl, questionText, opts = {}) 
 /**
  * Poll D-ID talk job đến khi status=done.
  * @param {string} talkId
- * @param {number} [timeoutMs=35000] - 35s đủ cho D-ID render bình thường (5-15s).
+ * @param {number} [timeoutMs=60000] - 60s để D-ID xử lý kể cả khi bị queue sau nhiều job.
+ *   35s cũ quá ngắn: probe Q1 xong → Q2-5 parallel nhưng D-ID queue tuần tự, Q5 có thể
+ *   chờ 50-55s. 60s cho đủ headroom mà vẫn fail fast khi D-ID thực sự stuck.
  * @param {AbortSignal} [signal] - Dừng ngay khi client ngắt kết nối (req.on('close')).
  * @returns {string} result_url (MP4 video URL)
  */
-async function pollDIDTalk(talkId, timeoutMs = 35_000, signal) {
+async function pollDIDTalk(talkId, timeoutMs = 60_000, signal) {
   const deadline = Date.now() + timeoutMs;
   let interval   = 2000;
 
@@ -286,7 +288,7 @@ export async function generateVideoForQuestion(questionText, opts = {}, signal) 
   const talkId = await createDIDTalk(resolvedAvatarUrl, audioUrl, questionText, { voiceId: resolvedVoiceId });
 
   // 4. Poll until done — pass signal so polling stops on client disconnect
-  const videoUrl = await pollDIDTalk(talkId, 35_000, signal);
+  const videoUrl = await pollDIDTalk(talkId, 60_000, signal);
 
   // 5. Cache result
   await cacheSet(cacheKey, videoUrl, VIDEO_CACHE_TTL);
