@@ -3,7 +3,7 @@
  * Hero headline riêng (lớn hơn section).
  */
 // Hero headline — clamp responsive; desktop lg+ override 5.25rem trong theme.css
-export const HOME_HERO_TITLE_CLAMP = "clamp(2.25rem, 7.5vw, 9rem)";
+export const HOME_HERO_TITLE_CLAMP = "clamp(2.0rem, 7.5vw, 9rem)";
 /** Tiêu đề section Home (how-it-works, CV, Mentor, Khóa học, testimonials). */
 export const HOME_SECTION_TITLE_CLAMP = "clamp(2.25rem, 3.5vw, 3.25rem)";
 

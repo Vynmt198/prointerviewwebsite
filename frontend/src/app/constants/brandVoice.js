@@ -6,7 +6,7 @@
  */
 
 export const HOME_COPY = {
-  badge: "Nền tảng luyện phỏng vấn dành cho IT.",
+  badge: "Nền tảng luyện phỏng vấn dành cho IT",
   titleLine1: "Phỏng vấn",
   titleHighlight: "1:1 với AI",
   titleLine2Suffix: "qua",

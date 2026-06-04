@@ -1135,7 +1135,7 @@ export function Home() {
       <section
         id="home-hero-video-section"
         aria-label="Demo phỏng vấn AI"
-        className="home-hero-video-section pointer-events-none relative z-20 -mt-[37.9rem] px-6 pb-12 sm:-mt-[12.9rem] sm:px-10 sm:pb-14 lg:-mt-[14.7rem] lg:px-16 lg:pb-16"
+        className="home-hero-video-section pointer-events-none relative z-20 -mt-[37.7rem] px-6 pb-12 sm:-mt-[12.9rem] sm:px-10 sm:pb-14 lg:-mt-[14.9rem] lg:px-16 lg:pb-16"
       >
         <div className={`pointer-events-auto relative mx-auto w-full max-w-[66rem] overflow-visible ${HOME_SHELL_MAX}`}>
           <HeroInterviewVideoCard overlap />

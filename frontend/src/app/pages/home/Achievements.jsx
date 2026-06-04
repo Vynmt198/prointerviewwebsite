@@ -12,9 +12,9 @@ export function Achievements() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-[#f3f0f9]">
+    <div className="min-h-screen bg-transparent">
       {/* Hero Section */}
-      <section className="relative overflow-hidden pt-12 pb-8 sm:pt-16 sm:pb-12">
+      <section className="relative pt-12 pb-8 sm:pt-16 sm:pb-12">
         <div
           className="pointer-events-none absolute left-1/2 top-0 z-0 h-[min(60vw,600px)] w-[min(60vw,600px)] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#8037f4]/15 blur-[100px] sm:h-[800px] sm:w-[800px] sm:blur-[140px]"
           aria-hidden
