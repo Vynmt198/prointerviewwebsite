@@ -745,22 +745,28 @@ export default function InterviewRoom() {
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  /* ── D-ID preconnect, skip khi đã có pregen videos ─────── */
+  /* ── D-ID connect — lazy: chỉ kết nối khi user bắt đầu phỏng vấn ───────────
+     Không preconnect trên màn "ready" vì D-ID sessions có idle timeout ~60s.
+     Nếu user đọc danh sách câu hỏi > 60s → session expired → speakWithText 400.
+     Kết nối ngay khi phase = "question": stream mới, không bao giờ bị expire
+     trước lần speak đầu tiên.                                                  */
   const didConnectAttemptsRef = useRef(0);
-  useEffect(() => {
-    // Không cần WebRTC nếu đã có pre-generated videos từ D-ID Express API
-    if (!DID_API_KEY || hasPregenVideos) return;
-    didConnectAttemptsRef.current = 1;
-    didConnect();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
   useEffect(() => {
     if (hasPregenVideos || phase !== "question" || !DID_API_KEY) return;
     if (didStatus === "connected" || didStatus === "connecting") return;
-    if (didConnectAttemptsRef.current >= 2) return;
+    if (didConnectAttemptsRef.current >= 3) return;
     didConnectAttemptsRef.current += 1;
     didConnect();
   }, [phase, didStatus]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  /* ── Reset speak guard khi D-ID reconnect thành công ───────────────────────
+     Sau khi session expired → status="error" → reconnect → status="connected".
+     Nếu không reset lastSpokenQRef, câu hỏi hiện tại sẽ không được đọc lại. */
+  useEffect(() => {
+    if (didStatus === "connected") {
+      lastSpokenQRef.current = -1;
+    }
+  }, [didStatus]); // eslint-disable-line react-hooks/exhaustive-deps
 
   /* ── D-ID max stream duration guard ─────────────────────────
      D-ID Streaming API charges per minute. Disconnect after 15 minutes

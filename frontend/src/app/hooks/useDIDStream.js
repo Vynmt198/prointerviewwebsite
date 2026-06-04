@@ -246,7 +246,7 @@ export function useDIDStream({ apiKey, sourceImageUrl } = {}) {
     const estimatedMs = Math.max(4000, text.length * 80 + 2000);
 
     try {
-      await fetch(`${DID_API}/talks/streams/${streamIdRef.current}`, {
+      const res = await fetch(`${DID_API}/talks/streams/${streamIdRef.current}`, {
         method: "POST",
         headers: getHeaders(),
         body: JSON.stringify({
@@ -259,13 +259,24 @@ export function useDIDStream({ apiKey, sourceImageUrl } = {}) {
             },
           },
           config: {
-            fluent:     true,
-            pad_audio:  0.5,
-            stitch:     true,
+            fluent:    true,
+            pad_audio: 0.5,
+            stitch:    true,
           },
           session_id: sessionIdRef.current,
         }),
       });
+
+      if (!res.ok) {
+        // 400 most often means the D-ID session expired while user was on the
+        // ready screen. Set status to "error" so the reconnect effect in
+        // InterviewRoom fires for the next question.
+        const body = await res.json().catch(() => ({}));
+        console.error(`[D-ID] speakWithText ${res.status}:`, body);
+        setStatus("error");
+        onEnd?.();
+        return;
+      }
 
       endTimerRef.current = setTimeout(() => {
         setStatus("connected");
