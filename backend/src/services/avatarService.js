@@ -18,7 +18,7 @@
 
 import crypto from "crypto";
 import { uploadToCloudinary } from "../utils/cloudinaryUpload.js";
-import { synthesizeSpeech } from "./ttsService.js";
+import { synthesizeSpeech, getElevenLabsVoiceId } from "./ttsService.js";
 import { cacheGet, cacheSet } from "./cacheService.js";
 import { logger } from "../config/logger.js";
 
@@ -116,10 +116,19 @@ function buildCacheKey(questionText, avatarImageUrl, voiceId) {
  * Sinh audio từ ElevenLabs rồi upload lên Cloudinary.
  * Trả về public audio URL (D-ID cần URL HTTP accessible).
  * Fallback: nếu ElevenLabs không có key → trả null → D-ID dùng text script thay thế.
+ *
+ * @param {string} text
+ * @param {object} [opts]
+ * @param {"male"|"female"} [opts.gender="female"] - Dùng để chọn ElevenLabs voice đúng giới tính
+ * @param {string} [opts.voiceId] - Override ElevenLabs voice ID (nếu không set, dùng gender)
  */
-async function generateAndUploadAudio(text, ttsOpts = {}) {
+async function generateAndUploadAudio(text, opts = {}) {
   try {
-    const ttsResult = await synthesizeSpeech(text, ttsOpts);
+    const { gender = "female", voiceId } = opts;
+    // Resolve ElevenLabs voice ID from gender — NOT the Azure voice ID (vi-VN-NamMinhNeural).
+    // Azure voice IDs are for D-ID text-script fallback only; ElevenLabs uses its own ID format.
+    const elevenLabsVoiceId = voiceId || getElevenLabsVoiceId(gender);
+    const ttsResult = await synthesizeSpeech(text, { voiceId: elevenLabsVoiceId });
     if (!ttsResult) return null; // ElevenLabs not configured
 
     // Upload audio buffer → Cloudinary (resource_type: "video" cho audio files)
@@ -268,10 +277,12 @@ export async function generateVideoForQuestion(questionText, opts = {}, signal) 
     return { videoUrl: cached, fromCache: true };
   }
 
-  // 2. TTS audio (optional — if ElevenLabs not configured, D-ID uses its own Azure TTS)
-  const audioUrl = await generateAndUploadAudio(questionText, { voiceId: resolvedVoiceId });
+  // 2. ElevenLabs TTS audio (if configured). Pass gender so the correct voice is selected.
+  //    resolvedVoiceId is the Azure voice name — only used as D-ID text-script fallback (step 3).
+  const audioUrl = await generateAndUploadAudio(questionText, { gender });
 
-  // 3. Create D-ID talk
+  // 3. Create D-ID talk — if audioUrl exists, D-ID lipsync with ElevenLabs audio;
+  //    otherwise D-ID uses its own Azure TTS with resolvedVoiceId.
   const talkId = await createDIDTalk(resolvedAvatarUrl, audioUrl, questionText, { voiceId: resolvedVoiceId });
 
   // 4. Poll until done — pass signal so polling stops on client disconnect

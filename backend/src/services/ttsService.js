@@ -17,15 +17,30 @@ const ELEVENLABS_BASE = "https://api.elevenlabs.io/v1";
 
 function cfg() {
   return {
-    apiKey:  process.env.ELEVENLABS_API_KEY  ?? "",
-    voiceId: process.env.ELEVENLABS_VOICE_ID ?? "",
-    modelId: process.env.ELEVENLABS_MODEL_ID ?? "eleven_flash_v2_5",
+    apiKey:        process.env.ELEVENLABS_API_KEY         ?? "",
+    voiceId:       process.env.ELEVENLABS_VOICE_ID        ?? "", // default (female fallback)
+    voiceIdMale:   process.env.ELEVENLABS_VOICE_ID_MALE   ?? "", // David — giọng nam HR
+    voiceIdFemale: process.env.ELEVENLABS_VOICE_ID_FEMALE ?? "", // Sarah — giọng nữ HR
+    modelId:       process.env.ELEVENLABS_MODEL_ID        ?? "eleven_flash_v2_5",
   };
 }
 
 export function isElevenLabsEnabled() {
-  const { apiKey, voiceId } = cfg();
-  return Boolean(apiKey && voiceId);
+  const { apiKey, voiceId, voiceIdMale, voiceIdFemale } = cfg();
+  // Enabled nếu có key VÀ ít nhất một voice ID được cấu hình
+  return Boolean(apiKey && (voiceId || voiceIdMale || voiceIdFemale));
+}
+
+/**
+ * Trả về ElevenLabs voice ID tương ứng với giới tính HR.
+ * Priority: gender-specific → default ELEVENLABS_VOICE_ID → empty string
+ * @param {"male"|"female"} [gender="female"]
+ */
+export function getElevenLabsVoiceId(gender = "female") {
+  const { voiceId, voiceIdMale, voiceIdFemale } = cfg();
+  if (gender === "male"   && voiceIdMale)   return voiceIdMale;
+  if (gender === "female" && voiceIdFemale) return voiceIdFemale;
+  return voiceId; // fallback về default nếu không có gender-specific
 }
 
 /**
