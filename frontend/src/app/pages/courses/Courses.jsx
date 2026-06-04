@@ -471,13 +471,13 @@ export function Courses() {
             title={
               <>
                 Học kỹ năng,{" "}
-                <span className="bg-gradient-to-r from-[#6d2fd6] to-[#a66ff8] bg-clip-text text-transparent">
+                <span className="text-[#630ed4]">
                   tự tin hơn khi ứng tuyển
                 </span>
               </>
             }
             subtitle="Các khóa học do Mentor xây dựng, giúp bạn bổ sung kỹ năng cần thiết cho hành trình ứng tuyển."
-            subtitleClassName="mt-3 max-w-2xl text-base font-medium leading-relaxed text-violet-700/90"
+            subtitleClassName="mt-3 max-w-full text-sm font-medium leading-relaxed text-slate-600 sm:text-base"
           />
 
           <div className="w-full rounded-3xl border border-violet-200/80 bg-white px-5 py-5 shadow-sm sm:px-7 sm:py-6">

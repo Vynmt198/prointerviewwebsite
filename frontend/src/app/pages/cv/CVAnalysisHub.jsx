@@ -7,19 +7,21 @@ import { requireLoginNavigate } from "../../utils/authGate";
 const HUB_VIEWPORT_STYLES = `
   @media (min-width: 1024px) {
     .cv-hub-viewport {
-      --cv-hub-scale: min(1, calc((100svh - 4.25rem) / 49.5rem));
-      height: calc(100svh - 4.75rem);
-      max-height: calc(100svh - 4.75rem);
-      overflow: hidden;
+      --cv-hub-scale: 1;
+      min-height: calc(100svh - 4.75rem);
+      height: auto;
+      max-height: none;
+      overflow: visible;
       display: flex;
       align-items: center;
       justify-content: flex-start;
+      padding-top: 2rem;
+      padding-bottom: 4rem;
     }
-    /* Scale theo chiều cao; căn trái theo shell navbar (không dịch ngang toàn khối) */
     .cv-hub-fit {
-      width: calc(100% / var(--cv-hub-scale));
+      width: 100%;
       max-width: none;
-      transform: scale(var(--cv-hub-scale));
+      transform: translateY(-2rem) scale(1);
       transform-origin: left center;
     }
   }

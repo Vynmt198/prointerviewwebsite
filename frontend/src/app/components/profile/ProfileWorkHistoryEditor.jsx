@@ -59,9 +59,7 @@ export function ProfileWorkHistoryEditor({
 
   return (
     <div className="space-y-4">
-      <p className="profile-muted text-sm leading-relaxed">
-        Thêm các công việc, thực tập hoặc dự án bạn từng tham gia.
-      </p>
+      {/* Removed description text as requested */}
       {showMentorRequiredHint ? (
         <p className="text-sm font-medium leading-relaxed text-violet-900">
           <span className="font-extrabold text-red-500" aria-hidden>

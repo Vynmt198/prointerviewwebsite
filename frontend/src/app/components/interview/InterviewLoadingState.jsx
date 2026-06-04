@@ -9,7 +9,7 @@ const STEPS = [
 ];
 
 // Map real loadingStep values to visual positions.
-// "analyzing_role" is never set by Interview.jsx — it completes "instantly"
+// "analyzing_role" is never set by Interview.jsx, it completes "instantly"
 // when transitioning from extracting_cv → generating_questions.
 const STEP_INDEX = {
   extracting_cv:        0,

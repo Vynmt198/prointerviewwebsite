@@ -41,7 +41,7 @@ const CTA_PURPLE =
 
 const FREE_LIMIT = 3;
 
-/** Dùng chung InterviewRoom (lưu lịch sử) — điểm mẫu khớp trang feedback */
+/** Dùng chung InterviewRoom (lưu lịch sử), điểm mẫu khớp trang feedback */
 export const QUESTIONS_FEEDBACK = [
   {
     q: "Hãy giới thiệu về bản thân và điểm mạnh nổi bật nhất của bạn?",
@@ -189,7 +189,7 @@ function CoachingVoicePanel({ overallComment, allQuestions, avgScores }) {
           )}
         </div>
 
-        {/* Worst — priority improvement */}
+        {/* Worst, priority improvement */}
         <div className="rounded-lg border border-orange-200/80 bg-orange-50 p-3.5">
           <div className="mb-2 flex items-center gap-1.5">
             <TrendUp className="h-3.5 w-3.5 text-orange-600" />
@@ -322,7 +322,7 @@ export function InterviewFeedback() {
     return null;
   });
 
-  // Real AI evaluation state — bắt đầu true để tránh flash empty content trước khi useEffect chạy
+  // Real AI evaluation state, bắt đầu true để tránh flash empty content trước khi useEffect chạy
   const [evaluating,           setEvaluating]           = useState(true);
   const [evalError,            setEvalError]            = useState(null);
   const [retryKey,             setRetryKey]             = useState(0);
@@ -423,10 +423,10 @@ export function InterviewFeedback() {
   if (hasSpeakingData) {
     if (avgWpm > 160) speakingTips.push(`Giảm tốc độ nói xuống 130–150 từ/phút (hiện tại: ~${avgWpm} từ/phút)`);
     else if (avgWpm > 0 && avgWpm < 100) speakingTips.push(`Tăng tốc độ nói lên 120–140 từ/phút (hiện tại: ~${avgWpm} từ/phút)`);
-    else if (avgWpm >= 100) speakingTips.push(`Tốc độ nói ổn định ~${avgWpm} từ/phút — duy trì trong khoảng 120–160`);
-    if (totalFillers > 5) speakingTips.push(`Luyện bỏ từ đệm (phát hiện ${totalFillers} lần) — thay bằng cách dừng ngắn`);
-    if (avgWordCount < 60) speakingTips.push(`Mở rộng câu trả lời hơn — mục tiêu 100–200 từ mỗi câu (trung bình: ${avgWordCount} từ)`);
-    else if (avgWordCount > 300) speakingTips.push(`Câu trả lời hơi dài (tb. ${avgWordCount} từ) — tập trung vào điểm chính, tránh lan man`);
+    else if (avgWpm >= 100) speakingTips.push(`Tốc độ nói ổn định ~${avgWpm} từ/phút, duy trì trong khoảng 120–160`);
+    if (totalFillers > 5) speakingTips.push(`Luyện bỏ từ đệm (phát hiện ${totalFillers} lần), thay bằng cách dừng ngắn`);
+    if (avgWordCount < 60) speakingTips.push(`Mở rộng câu trả lời hơn, mục tiêu 100–200 từ mỗi câu (trung bình: ${avgWordCount} từ)`);
+    else if (avgWordCount > 300) speakingTips.push(`Câu trả lời hơi dài (tb. ${avgWordCount} từ), tập trung vào điểm chính, tránh lan man`);
   }
   if (speakingTips.length === 0) speakingTips.push("Luyện cấu trúc STAR để câu trả lời rõ ràng và thuyết phục hơn");
 
@@ -455,7 +455,7 @@ export function InterviewFeedback() {
         .map(key => ({ label: STAR_NAMES[key], avg: allQuestions.reduce((s, q) => s + (q.scores?.[key] || 0), 0) / allQuestions.length }))
         .sort((a, b) => a.avg - b.avg)
         .slice(0, 3)
-        .map(a => `${a.label} — ${a.avg.toFixed(1)}/5`)
+        .map(a => `${a.label}, ${a.avg.toFixed(1)}/5`)
     : [];
 
   const renderStars = (score, max = 5, onDark = false) => (
@@ -560,7 +560,7 @@ export function InterviewFeedback() {
               {sessionMeta.duration > 0 ? ` · ${sessionMeta.duration} phút` : ""} ·{" "}
               {isPro ? allQuestions.length : FREE_LIMIT}/{allQuestions.length} câu hỏi
               {!isPro && (
-                <span className="ml-2 inline-flex items-center gap-1 rounded-full border border-violet-200 bg-white px-2 py-0.5 text-xs font-semibold text-[#6d2fd6]">
+                <span className="ml-2 inline-flex items-center gap-1 rounded-full border border-violet-200 bg-white px-2 py-0.5 text-xs font-semibold text-[#630ed4]">
                   <Lock className="h-3 w-3" /> 2 câu bị khóa
                 </span>
               )}
@@ -702,7 +702,7 @@ export function InterviewFeedback() {
         />
       )}
 
-      {/* AI overall comment — fallback khi không có realFeedback */}
+      {/* AI overall comment, fallback khi không có realFeedback */}
       {!realFeedback && sessionMeta.overallComment && (
         <div className="mb-6 rounded-md border border-violet-200/80 bg-violet-50/50 px-5 py-4">
           <div className="mb-2 flex items-center gap-2">
@@ -769,7 +769,7 @@ export function InterviewFeedback() {
                        : (behavioralSummary.avgAmplitudeVariance ?? 0) > 0.03 ? 0.65 : 0.3,
                   display: (behavioralSummary.avgAmplitudeVariance ?? 0) > 0.07 ? "Biểu cảm"
                          : (behavioralSummary.avgAmplitudeVariance ?? 0) > 0.03 ? "Bình thường" : "Đơn điệu",
-                  tip: "Độ biến thiên âm lượng — cao = giọng biểu cảm",
+                  tip: "Độ biến thiên âm lượng, cao = giọng biểu cảm",
                 },
                 {
                   icon: <Wind className="h-3.5 w-3.5" />,
@@ -914,7 +914,7 @@ export function InterviewFeedback() {
                           <Microphone className="h-3 w-3 text-violet-600" />
                         </div>
                         <span className="text-xs font-semibold text-violet-800">
-                          Câu trả lời của bạn — được ghi nhận từ giọng nói
+                          Câu trả lời của bạn, được ghi nhận từ giọng nói
                         </span>
                         <span className="ml-auto text-xs tabular-nums text-violet-500">
                           {transcripts[i].trim().split(/\s+/).filter(Boolean).length} từ
@@ -933,7 +933,7 @@ export function InterviewFeedback() {
                     <div className="mb-4 mt-4 flex items-center gap-2.5 rounded-md border border-dashed border-violet-200 bg-violet-50/30 px-4 py-3">
                       <Microphone className="h-4 w-4 text-violet-400" />
                       <p className="text-xs text-violet-600">
-                        Chưa có ghi âm cho câu này — trả lời bằng giọng nói trong lần phỏng vấn tiếp theo để xem transcript tại đây.
+                        Chưa có ghi âm cho câu này, trả lời bằng giọng nói trong lần phỏng vấn tiếp theo để xem transcript tại đây.
                       </p>
                     </div>
                   )}
@@ -1019,7 +1019,7 @@ export function InterviewFeedback() {
                     })}
                   </div>
 
-                  {/* ── Câu trả lời mẫu — Hero element ── */}
+                  {/* ── Câu trả lời mẫu, Hero element ── */}
                   {item.suggestion && (
                     <div className="overflow-hidden rounded-xl border-2 border-violet-300/80 bg-gradient-to-br from-violet-50 to-white">
                       <div className="flex items-center gap-2.5 border-b border-violet-200/60 bg-violet-100/60 px-4 py-3">
@@ -1028,7 +1028,7 @@ export function InterviewFeedback() {
                         </div>
                         <div>
                           <p className="text-xs font-bold text-violet-950">Câu trả lời mẫu từ HR AI</p>
-                          <p className="text-[10px] text-violet-500">Học theo cấu trúc này — thay placeholder bằng kinh nghiệm thực của bạn</p>
+                          <p className="text-[10px] text-violet-500">Học theo cấu trúc này, thay placeholder bằng kinh nghiệm thực của bạn</p>
                         </div>
                       </div>
                       <div className="relative p-4">

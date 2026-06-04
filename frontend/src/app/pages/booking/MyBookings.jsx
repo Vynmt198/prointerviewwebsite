@@ -125,7 +125,7 @@ export function MyBookings() {
           <CustomerPageHeader
             title={
               <>
-                Lịch hẹn <span className="text-[#6d2fd6]">của bạn</span>
+                Lịch hẹn <span className="text-[#630ed4]">của bạn</span>
               </>
             }
             subtitle="Xem thông tin các buổi Mentor đã đặt, lịch sắp tới và trạng thái buổi hẹn."

@@ -57,10 +57,7 @@ export function ProfileEducationHistoryEditor({ entries, onChange, disabled = fa
 
   return (
     <div className="space-y-4">
-      <p className="profile-muted text-sm leading-relaxed">
-        Thêm trường, chuyên ngành, bằng cấp và thời gian học. Có thể thêm nhiều mốc (đại học, cao đẳng, khóa
-        học…).
-      </p>
+      {/* Removed description text for consistency */}
 
       {list.map((entry, index) => (
         <div

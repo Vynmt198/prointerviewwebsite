@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { useNavigate, Link } from "react-router";
 import {
   FileText,
@@ -25,7 +26,6 @@ import {
 } from "../../components/home/MentorFeatureShowcase";
 import { CoursesFeatureShowcase } from "../../components/home/CoursesFeatureShowcase";
 import { HeroInterviewVideoCard } from "../../components/home/HeroInterviewVideoCard";
-import { HeroScaledCanvas } from "../../components/home/HeroScaledCanvas";
 import { SparkleGlyph } from "../../components/decor/SparkleGlyph.jsx";
 import {
   SectionReveal,
@@ -39,7 +39,8 @@ import {
 } from "../../components/layout/customerShellLayout";
 import { HOME_COPY, HOME_SECTION_COPY } from "../../constants/brandVoice";
 import {
-  HOME_HOW_IT_WORKS_TITLE_CLAMP,
+  HOME_HERO_TITLE_CLAMP,
+  HOME_SECTION_TITLE_CLAMP,
   homeSectionClasses as homeTy,
 } from "../../constants/homeTypography";
 /* ─── Data ──────────────────────────────────────────────── */
@@ -115,49 +116,176 @@ const TESTIMONIALS = HOME_SECTION_COPY.testimonials.items.map((t, i) => ({
   stars: 5,
 }));
 
-/** 3 điểm dọc thân con trỏ. */
-const CURSOR_BODY_OFFSETS = [
-  { x: 0, y: 0 },
-  { x: 7, y: 10 },
-  { x: 13, y: 19 },
-];
+const HERO_SPARKLE_MIN_MOVE_PX = 18;
+const HERO_SPARKLE_MAX_ON_SCREEN = 55;
+const HERO_SPARKLE_FADE_DURATION_S = 4.0;
+/** Bán kính bung sao quanh đầu chuột khi di chuyển */
+const HERO_SPARKLE_MOVE_SPREAD_PX = 42;
+/** Phần chiều cao video (từ mép trên) được tính vào vùng bling */
+const HERO_VIDEO_SPARKLE_FRACTION = 1 / 3;
 
-const HERO_SPARKLE_MIN_MOVE_PX = 26;
+function getSparkleZoneTopBound(fallbackTop) {
+  const candidates = [fallbackTop];
+  const heroSection = document.getElementById("home-hero-section");
+  const navShell = document.querySelector(".top-nav-shell-outer");
+  if (heroSection) candidates.push(heroSection.getBoundingClientRect().top);
+  if (navShell) candidates.push(navShell.getBoundingClientRect().top);
+  return Math.min(...candidates);
+}
 
-/** 0 = đỉnh con trỏ (mờ trước), 2 = đuôi (ở lại lâu nhất). */
-function heroSparkleFade(cursorSlot) {
-  const slot = Math.min(2, Math.max(0, cursorSlot));
-  const profiles = [
-    { duration: 1.35, times: [0, 0.14, 0.4, 1] },
-    { duration: 1.85, times: [0, 0.14, 0.58, 1] },
-    { duration: 2.45, times: [0, 0.15, 0.72, 1] },
-  ];
-  const { duration, times } = profiles[slot];
-  const peak = 1.0 - slot * 0.05; // Tăng opacity lên tối đa để rõ nét hơn
+function getSparkleZoneHorizontalBounds(...rects) {
+  const valid = rects.filter(Boolean);
+  if (!valid.length) return { left: 0, width: 0 };
+  const left = Math.min(...valid.map((r) => r.left));
+  const right = Math.max(...valid.map((r) => r.right));
+  return { left, width: right - left };
+}
+
+function getHeroSparkleZoneBounds() {
+  const zoneEl = document.getElementById("home-hero-sparkle-zone");
+  if (!zoneEl) return null;
+
+  const zone = zoneEl.getBoundingClientRect();
+  const top = getSparkleZoneTopBound(zone.top);
+  const heroSection = document.getElementById("home-hero-section");
+  const heroRect = heroSection?.getBoundingClientRect();
+  const videoEl = document.getElementById("home-hero-video-card");
+
+  if (!videoEl) {
+    const { left, width } = getSparkleZoneHorizontalBounds(zone, heroRect);
+    return {
+      top,
+      left,
+      width,
+      height: Math.max(0, zone.bottom - top),
+      bottom: zone.bottom,
+    };
+  }
+
+  const video = videoEl.getBoundingClientRect();
+  const bottom = video.top + video.height * HERO_VIDEO_SPARKLE_FRACTION;
+  const { left, width } = getSparkleZoneHorizontalBounds(zone, video, heroRect);
+
   return {
-    duration,
-    times,
-    opacity: [0, peak, peak * (0.8 - slot * 0.1), 0],
-    scale: [0.38, 0.74, 0.62, 0.28], // Trả lại kích thước gốc
+    top,
+    left,
+    width,
+    height: Math.max(0, bottom - top),
+    bottom,
   };
 }
 
-function makeHeroSparkle(x, y, cursorSlot = 0) {
-  const angle = Math.random() * Math.PI * 2;
-  const drift = 22 + Math.random() * 28;
-  return {
-    id: `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
-    x,
-    y,
-    driftX: Math.cos(angle) * drift,
-    driftY: Math.sin(angle) * drift - 10,
-    rotate: Math.random() * 90 - 45,
-    cursorSlot,
-  };
+/** Cả mockup video (title bar + viền + ô phát), không spawn / không giữ sao */
+function isPointOverHeroVideoCard(clientX, clientY) {
+  const card = document.getElementById("home-hero-video-card");
+  if (!card) return false;
+  const rect = card.getBoundingClientRect();
+  return (
+    clientX >= rect.left &&
+    clientX <= rect.right &&
+    clientY >= rect.top &&
+    clientY <= rect.bottom
+  );
 }
 
-function sparklesAlongCursor(x, y) {
-  return CURSOR_BODY_OFFSETS.map((off, i) => makeHeroSparkle(x + off.x, y + off.y, i));
+function isPointOverNavPill(clientX, clientY) {
+  const pill = document.querySelector(".top-nav-pill");
+  if (!pill) return false;
+  const rect = pill.getBoundingClientRect();
+  return (
+    clientX >= rect.left &&
+    clientX <= rect.right &&
+    clientY >= rect.top &&
+    clientY <= rect.bottom
+  );
+}
+
+function isPointOverHeroIntroBadge(clientX, clientY) {
+  const badge = document.querySelector(".hero-intro-badge");
+  if (!badge) return false;
+  const rect = badge.getBoundingClientRect();
+  return (
+    clientX >= rect.left &&
+    clientX <= rect.right &&
+    clientY >= rect.top &&
+    clientY <= rect.bottom
+  );
+}
+
+function isPointOverHeroIntroCta(clientX, clientY) {
+  const cta = document.querySelector(".hero-intro-cta");
+  if (!cta) return false;
+  const rect = cta.getBoundingClientRect();
+  return (
+    clientX >= rect.left &&
+    clientX <= rect.right &&
+    clientY >= rect.top &&
+    clientY <= rect.bottom
+  );
+}
+
+function shouldSkipSparkleTarget(target, clientX, clientY) {
+  if (target.closest(".top-nav-pill, #home-hero-video-card, video")) return true;
+  if (isPointOverNavPill(clientX, clientY)) return true;
+  if (isPointOverHeroVideoCard(clientX, clientY)) return true;
+  if (target.closest(".hero-intro-badge") || isPointOverHeroIntroBadge(clientX, clientY)) return true;
+  if (target.closest(".hero-intro-cta") || isPointOverHeroIntroCta(clientX, clientY)) return true;
+  if (target.closest("a, h1, p, .aspect-video")) return true;
+  return false;
+}
+
+function isPointInSparkleZone(clientX, clientY, bounds) {
+  if (isPointOverNavPill(clientX, clientY)) return false;
+  if (isPointOverHeroVideoCard(clientX, clientY)) return false;
+  if (isPointOverHeroIntroBadge(clientX, clientY)) return false;
+  if (isPointOverHeroIntroCta(clientX, clientY)) return false;
+  return (
+    clientX >= bounds.left &&
+    clientX <= bounds.left + bounds.width &&
+    clientY >= bounds.top &&
+    clientY <= bounds.top + bounds.height
+  );
+}
+
+function filterSparklesOutsideBlockedAreas(items, bounds) {
+  return items.filter((item) => {
+    const clientX = bounds.left + item.x;
+    const clientY = bounds.top + item.y;
+    return (
+      !isPointOverNavPill(clientX, clientY) &&
+      !isPointOverHeroVideoCard(clientX, clientY) &&
+      !isPointOverHeroIntroBadge(clientX, clientY) &&
+      !isPointOverHeroIntroCta(clientX, clientY)
+    );
+  });
+}
+
+function isSparkleZoneOnScreen(bounds) {
+  return bounds.bottom > 0 && bounds.top < window.innerHeight;
+}
+
+function sparklesAtCursor(localX, localY, vx = 0, vy = 0) {
+  const count = Math.random() > 0.35 ? 3 : 2;
+  const stamp = Date.now();
+  return Array.from({ length: count }, (_, i) => {
+    const angle = Math.random() * Math.PI * 2;
+    const r = Math.random() * HERO_SPARKLE_MOVE_SPREAD_PX;
+    const driftAngle = angle + (Math.random() - 0.5);
+    const driftSpeed = Math.random() * 20 + 10;
+    
+    // Add strong momentum based on mouse velocity
+    const momentumX = vx * 2.5; 
+    const momentumY = vy * 2.5;
+    
+    return {
+      id: `${stamp}-${i}-${Math.random().toString(36).slice(2, 7)}`,
+      x: localX + Math.cos(angle) * r,
+      y: localY + Math.sin(angle) * r,
+      dx: momentumX + Math.cos(driftAngle) * driftSpeed,
+      dy: momentumY + Math.sin(driftAngle) * driftSpeed,
+      rotate: Math.random() * 60 - 30,
+    };
+  });
 }
 
 function HeroAtmosphere() {
@@ -178,71 +306,100 @@ function HeroAtmosphere() {
   const pY3 = useTransform(mouseY, [0, 1000], [25, -25]);
 
   const [arrows, setArrows] = useState([]);
+  const [sparklePortalReady, setSparklePortalReady] = useState(false);
+  const [heroBounds, setHeroBounds] = useState(null);
+
+  const pushSparkles = (items) => {
+    if (!items.length) return;
+    setArrows((prev) => {
+      const next = [...prev, ...items];
+      return next.length > HERO_SPARKLE_MAX_ON_SCREEN
+        ? next.slice(next.length - HERO_SPARKLE_MAX_ON_SCREEN)
+        : next;
+    });
+  };
+
+  useEffect(() => {
+    setSparklePortalReady(true);
+  }, []);
 
   useEffect(() => {
     let lastX = -1000;
     let lastY = -1000;
-    
-    const heroEl = document.getElementById("home-hero-section");
-    if (!heroEl) return;
-    
+
+    const syncHeroBounds = () => {
+      const bounds = getHeroSparkleZoneBounds();
+      if (!bounds || !isSparkleZoneOnScreen(bounds)) {
+        setHeroBounds(null);
+        setArrows([]);
+        return;
+      }
+      setHeroBounds(bounds);
+    };
+
+    syncHeroBounds();
+    window.addEventListener("scroll", syncHeroBounds, { passive: true });
+    window.addEventListener("resize", syncHeroBounds);
+
     const handleMouseMove = (e) => {
       mouseX.set(e.clientX);
       mouseY.set(e.clientY);
 
-      if (e.target.closest("button, a, video, h1, p, .aspect-video")) return;
+      const bounds = getHeroSparkleZoneBounds();
+      if (!bounds || !isSparkleZoneOnScreen(bounds)) {
+        setArrows([]);
+        return;
+      }
+      if (!isPointInSparkleZone(e.clientX, e.clientY, bounds)) {
+        return;
+      }
+      if (shouldSkipSparkleTarget(e.target, e.clientX, e.clientY)) return;
 
       const dist = Math.hypot(e.clientX - lastX, e.clientY - lastY);
       if (dist >= HERO_SPARKLE_MIN_MOVE_PX) {
-        setArrows((prev) => [...prev, ...sparklesAlongCursor(e.clientX, e.clientY)]);
+        const localX = e.clientX - bounds.left;
+        const localY = e.clientY - bounds.top;
+        const vx = e.clientX - lastX;
+        const vy = e.clientY - lastY;
+        pushSparkles(filterSparklesOutsideBlockedAreas(sparklesAtCursor(localX, localY, vx, vy), bounds));
         lastX = e.clientX;
         lastY = e.clientY;
       }
     };
-    
-    let clickCount = 0;
-    let clickTimeout = null;
 
     const handleMouseClick = (e) => {
-      // Prevent spawning particles when clicking UI elements
-      if (e.target.closest('button, a, video, h1, p, .aspect-video')) return;
+      const bounds = getHeroSparkleZoneBounds();
+      if (!bounds || !isPointInSparkleZone(e.clientX, e.clientY, bounds)) return;
+      if (shouldSkipSparkleTarget(e.target, e.clientX, e.clientY)) return;
 
-      clickCount++;
-      clearTimeout(clickTimeout);
-      clickTimeout = setTimeout(() => {
-        clickCount = 0;
-      }, 500); // Reset after 500ms of no clicking
-
+      const burstCount = 14;
+      const burstRadius = 130;
+      const localX = e.clientX - bounds.left;
+      const localY = e.clientY - bounds.top;
       const now = Date.now();
-      // Increase particles with clicks (base 6, max 20)
-      const burstCount = Math.min(4 + clickCount, 10);
-      const burstRadius = Math.min(120 + clickCount * 40, 360);
-
-      const newArrows = [];
-      for (let i = 0; i < burstCount; i++) {
-        const base = CURSOR_BODY_OFFSETS[i % CURSOR_BODY_OFFSETS.length];
-        const bx = e.clientX + base.x + (Math.random() - 0.5) * burstRadius;
-        const by = e.clientY + base.y + (Math.random() - 0.5) * burstRadius;
+      const burst = Array.from({ length: burstCount }, (_, i) => {
         const angle = Math.random() * Math.PI * 2;
-        const drift = 18 + Math.random() * 24;
-        newArrows.push({
+        const r = Math.random() * burstRadius;
+        const driftSpeed = Math.random() * 60 + 30;
+        return {
           id: `${now}-${i}`,
-          x: bx,
-          y: by,
-          driftX: Math.cos(angle) * drift,
-          driftY: Math.sin(angle) * drift - 8,
+          x: localX + Math.cos(angle) * r,
+          y: localY + Math.sin(angle) * r,
+          dx: Math.cos(angle) * driftSpeed,
+          dy: Math.sin(angle) * driftSpeed,
           rotate: Math.random() * 360,
-          cursorSlot: i % CURSOR_BODY_OFFSETS.length,
-        });
-      }
-      setArrows((prev) => [...prev, ...newArrows]);
+        };
+      });
+      pushSparkles(filterSparklesOutsideBlockedAreas(burst, bounds));
     };
-    
-    heroEl.addEventListener("mousemove", handleMouseMove);
-    heroEl.addEventListener("mousedown", handleMouseClick); // Use mousedown for instant feedback
+
+    document.addEventListener("mousemove", handleMouseMove);
+    document.addEventListener("mousedown", handleMouseClick);
     return () => {
-      heroEl.removeEventListener("mousemove", handleMouseMove);
-      heroEl.removeEventListener("mousedown", handleMouseClick);
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mousedown", handleMouseClick);
+      window.removeEventListener("scroll", syncHeroBounds);
+      window.removeEventListener("resize", syncHeroBounds);
     };
   }, [mouseX, mouseY]);
 
@@ -300,34 +457,36 @@ function HeroAtmosphere() {
         <div className="cloud-vignette" />
       </div>
 
-      <div className="pointer-events-none fixed inset-0 z-[5] overflow-hidden">
-        {arrows.map((arrow) => {
-          const fade = heroSparkleFade(arrow.cursorSlot ?? 0);
-          const { driftX: dx, driftY: dy, rotate: r0 } = arrow;
-          return (
-            <motion.div
-              key={arrow.id}
-              className="pointer-events-none absolute -translate-x-1/2 -translate-y-1/2"
-              initial={{ opacity: 0, scale: fade.scale[0], x: arrow.x, y: arrow.y, rotate: r0 }}
-              animate={{
-                opacity: fade.opacity,
-                scale: fade.scale,
-                x: [arrow.x, arrow.x + dx * 0.35, arrow.x + dx * 0.75, arrow.x + dx],
-                y: [arrow.y, arrow.y + dy * 0.35, arrow.y + dy * 0.75, arrow.y + dy],
-                rotate: [r0, r0 + 10, r0 + 22, r0 + 28],
-              }}
-              transition={{
-                duration: fade.duration,
-                ease: [0.25, 0.1, 0.25, 1],
-                times: fade.times,
-              }}
-              onAnimationComplete={() => setArrows((prev) => prev.filter((a) => a.id !== arrow.id))}
-            >
-              <SparkleGlyph className="h-6 w-6" />
-            </motion.div>
-          );
-        })}
-      </div>
+      {sparklePortalReady &&
+        heroBounds &&
+        createPortal(
+          <div
+            className="pointer-events-none fixed z-[60] overflow-hidden"
+            style={{
+              top: heroBounds.top,
+              left: heroBounds.left,
+              width: heroBounds.width,
+              height: heroBounds.height,
+            }}
+          >
+            {arrows.map((arrow) => (
+              <motion.div
+                key={arrow.id}
+                className="pointer-events-none absolute will-change-transform"
+                style={{ left: arrow.x, top: arrow.y }}
+                initial={{ x: "-50%", y: "-50%", opacity: 0.92, scale: 0.86, rotate: arrow.rotate }}
+                animate={{ x: `calc(-50% + ${arrow.dx || 0}px)`, y: `calc(-50% + ${arrow.dy || 0}px)`, opacity: 0, scale: 0.38, rotate: arrow.rotate + 18 }}
+                transition={{ duration: HERO_SPARKLE_FADE_DURATION_S, ease: [0.22, 1, 0.36, 1] }}
+                onAnimationComplete={() =>
+                  setArrows((prev) => prev.filter((a) => a.id !== arrow.id))
+                }
+              >
+                <SparkleGlyph className="h-6 w-6" />
+              </motion.div>
+            ))}
+          </div>,
+          document.body
+        )}
     </>
   );
 }
@@ -447,7 +606,7 @@ export function Home() {
         .hero-title-stack {
           display: flex;
           flex-direction: column;
-          gap: 0.7rem;
+          gap: 1.2rem;
           line-height: 0.98;
         }
         .hero-title-line {
@@ -460,15 +619,12 @@ export function Home() {
             white-space: normal;
             overflow-wrap: break-word;
           }
-          .home-hero-title {
-            font-size: clamp(1.75rem, 8vw, 2.25rem) !important;
-            line-height: 1.12 !important;
-          }
           .home-how-title {
-            font-size: clamp(1.15rem, 3.2vw, 1.45rem) !important;
+            font-size: clamp(1.35rem, 5vw, 1.65rem) !important;
+            line-height: 1.15 !important;
           }
           .home-hero-section .hero-title-stack {
-            gap: 0.4rem;
+            gap: 0.9rem;
           }
           .home-mobile-gutter {
             padding-left: 0.875rem;
@@ -588,6 +744,11 @@ export function Home() {
         .landing-section-flow {
           position: relative;
         }
+        @media (max-width: 639px) {
+          #features { margin-top: -2rem; }
+          #find-mentor { margin-top: -4rem; }
+          #courses { margin-top: 1.4rem; }
+        }
         @media (prefers-reduced-motion: reduce) {
           .hero-orbit-text { animation: none !important; }
           .float-icon, .float-icon-delay, .float-icon-slow { animation: none !important; }
@@ -615,21 +776,21 @@ export function Home() {
           opacity: 0;
         }
         .glass-card:hover {
-          border-color: #6d2fd6;
+          border-color: #630ed4;
           transform: translateY(-2px);
           box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
         }
-        /* 4 ô How it works — trắng ngà sáng, không #fff tinh / không đục */
+        /* 4 ô How it works, trắng ngà sáng, không #fff tinh / không đục */
         .home-how-step-card {
           background: linear-gradient(180deg, #fefeff 0%, #faf8fc 100%) !important;
           border: 2px solid #8037f4 !important;
           box-shadow: 0 8px 22px rgba(15, 23, 42, 0.05);
         }
         .home-how-step-card:hover {
-          border-color: #6d2fd6 !important;
+          border-color: #630ed4 !important;
           box-shadow: 0 10px 26px rgba(15, 23, 42, 0.07);
         }
-        /* Bước Nổi bật — giữ nhãn lime */
+        /* Bước Nổi bật, giữ nhãn lime */
         .home-step-featured-dots {
           background: linear-gradient(180deg, #f0ebf8 0%, #ebe4f6 100%);
           border-color: rgba(128, 55, 244, 0.42) !important;
@@ -878,7 +1039,7 @@ export function Home() {
           pointer-events: none;
         }
 
-        /* Breathing — slow, subtle autonomous movement */
+        /* Breathing, slow, subtle autonomous movement */
         @keyframes fog-a {
           0% { opacity: 1; transform: scale(1) translate(0, 0); }
           33% { transform: scale(1.05) translate(6%, 8%); }
@@ -915,75 +1076,81 @@ export function Home() {
         }
       `}</style>
 
-      {/* ═══ HERO ═══════════════════════════════════════════ */}
-      <section id="home-hero-section" className="home-hero-section relative z-10 flex min-h-[100svh] flex-col justify-start px-10 sm:px-16 lg:px-24 pt-6 sm:pt-8 md:pt-10 lg:justify-center lg:py-10 max-lg:min-h-0 max-lg:items-center max-lg:px-4 max-lg:pb-8 max-lg:pt-[4.25rem]">
+      {/* ═══ HERO (chỉ copy + CTA, clip bling ~1 màn; video section riêng bên dưới) ═══ */}
+      <section
+        id="home-hero-section"
+        className="home-hero-section relative z-10 flex min-h-[100svh] flex-col justify-center px-6 pb-8 pt-24 sm:px-10 sm:pt-28 lg:px-16 lg:pb-10 lg:pt-32"
+      >
         
         {/* Interactive Mouse Particles */}
         {/* Note: HeroAtmosphere now handles both the background mesh and the mouse particles */}
 
-        <div className={`relative z-10 w-full ${HOME_SHELL_MAX}`}>
-          <HeroScaledCanvas>
-            <div className="hero-scale-canvas__copy order-1 text-left lg:py-2 max-lg:text-center">
-              <div className="hero-intro-badge mb-[2.35rem] max-lg:mb-[1.85rem] max-lg:flex max-lg:justify-center">
-                <div
-                  className="inline-flex items-center gap-2 rounded-full border-2 bg-white px-3 py-1.5 text-sm font-bold sm:text-base max-lg:rounded-lg max-lg:border max-lg:px-2.5 max-lg:py-1 max-lg:text-xs"
-                  style={{
-                    borderColor: "rgba(128, 55, 244, 0.42)",
-                    color: "#8037f4",
-                  }}
-                >
-                  <SparkleGlyph className="h-3.5 w-3.5 shrink-0" tone="violet" />
-                  {HOME_COPY.badge}
-                </div>
-              </div>
-
-              <div className="hero-intro-copy">
-                <h1 className="home-hero-title hero-title-stack mb-[2.6rem] max-w-full font-headline text-slate-900 cute-heading max-lg:mb-[2.1rem]">
-                  <span className="hero-title-line text-slate-900">
-                    {HOME_COPY.titleLine1}{" "}
-                    <span className="hero-title-highlight" style={{ color: "#8037f4" }}>
-                      {HOME_COPY.titleHighlight}
-                    </span>
-                  </span>
-                  <span className="hero-title-line text-slate-900">
-                    {HOME_COPY.titleLine2Suffix} {HOME_COPY.titleExtraLines?.[0] ?? ""}
-                  </span>
-                  <span className="hero-title-line text-slate-900">
-                    {HOME_COPY.titleExtraLines?.[1] ?? ""} {HOME_COPY.titleExtraLines?.[2] ?? ""}
-                  </span>
-                </h1>
-
-                <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:justify-start max-lg:justify-center max-lg:items-center">
-                  <button
-                    type="button"
-                    onClick={() => navigate("/interview")}
-                    className="inline-flex items-center justify-center gap-2 rounded-full px-4 py-2 text-base font-black transition-all hover:brightness-105 active:scale-[0.98] hover:-translate-y-0.5 sm:text-lg max-lg:rounded-lg max-lg:px-3.5 max-lg:py-[0.475rem] max-lg:text-sm"
-                    style={{
-                      background: "#93f72b",
-                      color: "#0f172a",
-                      boxShadow: "0 8px 22px rgba(147, 247, 43, 0.35)",
-                    }}
-                  >
-                    <Lightning className="h-3.5 w-3.5" />
-                    {HOME_COPY.cta}
-                  </button>
-                </div>
-              </div>
+        <div
+          id="home-hero-sparkle-zone"
+          className={`home-hero-sparkle-zone relative z-10 mx-auto flex w-full -translate-y-[20.5rem] sm:-translate-y-[10rem] flex-col items-center px-4 py-6 text-center sm:px-8 sm:py-10 ${HOME_SHELL_MAX}`}
+        >
+          <div className="hero-intro-badge mb-5">
+            <div
+              className="inline-flex items-center gap-2 rounded-full border border-white/70 bg-white/75 px-3.5 py-1.5 text-xs font-bold text-[#630ed4] shadow-sm backdrop-blur sm:text-sm"
+            >
+              <SparkleGlyph className="h-3.5 w-3.5 shrink-0" tone="violet" />
+              {HOME_COPY.badge}
             </div>
+          </div>
 
+          <div className="hero-intro-copy max-w-4xl">
+            <h1
+              className="home-hero-title hero-title-stack cute-heading mx-auto mb-5 translate-y-[1rem] text-slate-900"
+              style={{ fontSize: HOME_HERO_TITLE_CLAMP }}
+            >
+              <span className="hero-title-line text-slate-900">
+                {HOME_COPY.titleLine1}{" "}
+                <span className="hero-title-highlight" style={{ color: "#630ed4" }}>
+                  {HOME_COPY.titleHighlight}
+                </span>
+              </span>
+              <span className="hero-title-line text-slate-900">
+                {HOME_COPY.titleLine2Suffix} {HOME_COPY.titleExtraLines?.[0] ?? ""}
+              </span>
+              <span className="hero-title-line text-slate-900">
+                {HOME_COPY.titleExtraLines?.[1] ?? ""} {HOME_COPY.titleExtraLines?.[2] ?? ""}
+              </span>
+            </h1>
 
-            <div className="hero-scale-canvas__media order-2 flex justify-center overflow-visible max-lg:w-full">
-              <HeroInterviewVideoCard />
+            <div className="mb-4 mt-[2.1rem] flex items-center justify-center translate-y-[1.0rem] sm:translate-y-[2.1rem]">
+              <button
+                type="button"
+                onClick={() => navigate("/interview")}
+                className="hero-intro-cta inline-flex items-center justify-center gap-1.5 rounded-full px-3.5 py-1.5 text-sm font-black transition-all hover:brightness-105 active:scale-[0.98] sm:px-5 sm:py-2 sm:text-lg"
+                style={{
+                  background: "#93f72b",
+                  color: "#0f172a",
+                  boxShadow: "0 8px 22px rgba(147, 247, 43, 0.35)",
+                }}
+              >
+                <Lightning className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+                {HOME_COPY.cta}
+              </button>
             </div>
-          </HeroScaledCanvas>
+          </div>
         </div>
+      </section>
 
+      {/* Video DOM tách khỏi hero, kéo lên chồng đáy hero, bling không theo section phía dưới */}
+      <section
+        id="home-hero-video-section"
+        aria-label="Demo phỏng vấn AI"
+        className="home-hero-video-section pointer-events-none relative z-20 -mt-[37.7rem] px-6 pb-12 sm:-mt-[12.9rem] sm:px-10 sm:pb-14 lg:-mt-[14.9rem] lg:px-16 lg:pb-16"
+      >
+        <div className={`pointer-events-auto relative mx-auto w-full max-w-[66rem] overflow-visible ${HOME_SHELL_MAX}`}>
+          <HeroInterviewVideoCard overlap />
+        </div>
       </section>
 
       {/* ═══ HOW IT WORKS ════════════════════════════════════ */}
       <section
         id="features"
-        className="landing-section-flow relative z-10 flex h-screen max-h-screen flex-col justify-center overflow-hidden pt-6 md:pt-8 lg:pt-10 max-lg:h-auto max-lg:max-h-none max-lg:min-h-0 max-lg:overflow-visible max-lg:py-10"
+        className="landing-section-flow relative z-10 flex h-screen max-h-screen flex-col justify-center overflow-hidden pt-6 md:pt-8 lg:pt-10 max-lg:h-auto max-lg:max-h-none max-lg:min-h-0 max-lg:overflow-visible max-lg:py-5"
       >
         {renderSectionSticks([
           { x: 10, y: 16, size: 34, opacity: 0.45 },
@@ -991,25 +1158,27 @@ export function Home() {
           { x: 82, y: 78, size: 32, opacity: 0.44 },
         ])}
         <div className={`${HOME_SECTION_INNER} home-mobile-gutter relative z-10 py-2`}>
-          <LandingReveal className="mb-8 pt-5 max-lg:pt-2" y={24}>
-            <div className="mx-auto mb-5 flex max-w-4xl flex-col items-center">
-              <div className="flex items-center justify-center max-lg:w-full max-lg:flex-col max-lg:gap-3">
-                <img
-                  src="/mascot-features.png?v=13"
-                  alt=""
-                  aria-hidden
-                  className="relative z-10 h-auto w-[11rem] shrink-0 -translate-x-[1.9rem] -translate-y-[0.55rem] rotate-[3deg] object-contain sm:w-[12.5rem] sm:-translate-y-[0.75rem] md:w-[14rem] lg:w-[15rem] max-lg:w-[6.75rem] max-lg:translate-x-0 max-lg:translate-y-0"
-                />
-                <div className="relative z-0 -ml-[3.5rem] -translate-x-[0.1rem] text-left sm:-ml-[4rem] md:-ml-[4.35rem] lg:-ml-[4.75rem] max-lg:ml-0 max-lg:w-full max-lg:translate-x-0 max-lg:text-center">
-                  <span className="mb-3 ml-1.5 block h-1.5 w-12 rounded-full bg-[#8037f4]/40 sm:ml-2 max-lg:mx-auto" />
+          <LandingReveal className="mb-8 w-full pt-5 max-lg:pt-2" y={24}>
+            <div className="mb-5 flex w-full justify-center">
+              <div className="grid w-fit max-w-full translate-x-0 grid-cols-1 place-items-center gap-3 sm:-translate-x-6 sm:grid-cols-[auto_auto] sm:items-center sm:gap-x-2 sm:gap-y-0 md:-translate-x-7 lg:-translate-x-8 lg:gap-x-3">
+                <div className="flex h-[7.25rem] w-[7.25rem] translate-x-0 translate-y-[0.9rem] items-center justify-center sm:-translate-x-[4.7rem] sm:translate-y-0 lg:-translate-y-2 sm:h-[12.5rem] sm:w-[12.5rem] md:h-[14rem] md:w-[14rem] lg:h-[15rem] lg:w-[15rem]">
+                  <img
+                    src="/mascot-features.png?v=13"
+                    alt=""
+                    aria-hidden
+                    className="max-h-full max-w-full rotate-[3deg] object-contain object-center"
+                  />
+                </div>
+                <div className="min-w-0 max-w-[min(100vw-2rem,36rem)] translate-x-0 text-center sm:-translate-x-[4.5rem] sm:-ml-8 sm:max-w-none sm:text-left md:-ml-11 lg:-ml-14">
+                  <span className="mx-auto mb-3 block h-1.5 w-12 rounded-full bg-[#8037f4]/40 sm:mx-0" />
                   <h2
-                    className={`home-how-title ${homeTy.howItWorksTitle} leading-[1.08]`}
-                    style={{ fontSize: HOME_HOW_IT_WORKS_TITLE_CLAMP }}
+                    className={`home-how-title ${homeTy.title} text-center sm:text-left`}
+                    style={{ fontSize: HOME_SECTION_TITLE_CLAMP }}
                   >
-                    <span className="block whitespace-nowrap text-slate-900 max-lg:whitespace-normal max-lg:text-balance">
+                    <span className={`${homeTy.titleLineSecond} ${homeTy.titleLineDark} text-balance sm:whitespace-nowrap`}>
                       {HOME_SECTION_COPY.howItWorks.titleLine1}
                     </span>
-                    <span className="mt-0.5 block whitespace-nowrap text-[#7c3aed] max-lg:whitespace-normal max-lg:text-balance">
+                    <span className={`${homeTy.titleLineSecond} ${homeTy.titleLineAccent} text-balance sm:whitespace-nowrap`}>
                       {HOME_SECTION_COPY.howItWorks.titleLine2}
                     </span>
                   </h2>
@@ -1018,14 +1187,14 @@ export function Home() {
             </div>
           </LandingReveal>
 
-          <LandingStagger className="grid grid-cols-1 gap-5 md:grid-cols-2 md:gap-4 lg:grid-cols-4 lg:gap-5" stagger={0.1}>
+          <LandingStagger className="grid grid-cols-1 gap-5 md:grid-cols-2 md:gap-4 lg:grid-cols-4 lg:gap-5 lg:-mx-[1.8rem]" stagger={0.1}>
             {STEPS.map((s, i) => (
               <LandingItem key={i}>
               <div
                 className={`glass-card home-how-step-card group relative flex h-full min-h-[15.5rem] flex-col overflow-hidden rounded-[1.25rem] p-5 selection:bg-[rgba(147,247,43,0.42)] selection:text-[#8037f4] transition-[border-color,box-shadow] duration-300 sm:min-h-[16rem] sm:p-6 lg:min-h-[17.5rem] max-lg:min-h-0 max-lg:p-3.5`}
               >
                 <div className="relative z-[1] min-w-0 flex flex-1 flex-col">
-                  {/* Hàng nhãn cố định — tránh absolute đè lên icon */}
+                  {/* Hàng nhãn cố định, tránh absolute đè lên icon */}
                   {(i === 1 || i === 2) ? (
                     <div className="mb-2.5 flex min-h-0 items-center justify-start sm:mb-3.5 sm:min-h-[32px]">
                       <span
@@ -1039,7 +1208,7 @@ export function Home() {
                   )}
                   <div className="pointer-events-none absolute top-0 right-0 p-2 sm:p-4">
                     <span
-                      className="text-6xl font-black italic leading-none text-[#8037f4]/42 transition-colors group-hover:text-[#8037f4]/52 sm:text-8xl"
+                      className="text-6xl font-black italic leading-none text-[#8037f4]/42 transition-all duration-200 group-hover:scale-[1.04] group-hover:text-[#8037f4]/80 sm:text-8xl"
                     >
                       {s.step}
                     </span>
@@ -1085,7 +1254,7 @@ export function Home() {
       {/* ═══ TESTIMONIALS ═══════════════════════════════════ */}
       <section
         id="mentors"
-        className="landing-section-flow relative z-10 -mt-[5rem] h-[calc(100vh+3rem)] max-h-[calc(100vh+3rem)] min-h-[calc(100vh+3rem)] overflow-x-hidden max-lg:mt-0 max-lg:h-auto max-lg:max-h-none max-lg:min-h-0 max-lg:py-10"
+        className="landing-section-flow relative z-10 -mt-[5rem] h-[calc(100vh+3rem)] max-h-[calc(100vh+3rem)] min-h-[calc(100vh+3rem)] overflow-x-hidden max-lg:mt-0 max-lg:h-auto max-lg:max-h-none max-lg:min-h-0 max-lg:py-5 lg:overflow-x-visible"
       >
         {renderSectionSticks([
           { x: 78, y: 12, size: 34, opacity: 0.46 },
@@ -1093,20 +1262,28 @@ export function Home() {
           { x: 10, y: 86, size: 30, opacity: 0.38 },
         ])}
         <div className={`${HOME_SECTION_INNER} home-mobile-gutter relative z-10 flex h-full w-full flex-col justify-center py-4 sm:py-6 max-lg:h-auto max-lg:py-0`}>
-          <div className="flex min-w-0 w-full flex-col items-start gap-8 overflow-visible lg:flex-row lg:items-center lg:gap-4">
-            <div className="relative z-20 w-full shrink-0 lg:w-fit lg:max-w-[min(100%,40rem)]">
+          <div className="flex min-w-0 w-full flex-col items-start gap-8 overflow-visible lg:flex-row lg:items-center lg:gap-16">
+            <div className="relative z-20 w-full shrink-0 lg:w-fit lg:max-w-[min(100%,40rem)] lg:-translate-x-[2rem]">
               <h2
-                className="mb-0 flex w-full max-w-none flex-col items-start gap-0 font-headline text-[clamp(2.05rem,4.2vw,2.65rem)] font-extrabold leading-[1.08] tracking-tight text-slate-900 lg:text-[clamp(2.25rem,3.5vw,3.25rem)]"
+                className={`mb-0 flex w-full max-w-none flex-col items-start gap-0 ${homeTy.title}`}
+                style={{ fontSize: HOME_SECTION_TITLE_CLAMP }}
               >
-                <span className="block max-w-full leading-none tracking-tight lg:whitespace-nowrap">
+                <span className="block max-w-full leading-none lg:whitespace-nowrap">
                   {HOME_SECTION_COPY.testimonials.titleLine}
                 </span>
-                <img
-                  src="/Logo.png"
-                  alt="ProInterview"
-                  className="mt-2 block h-11 w-auto max-w-[min(100%,20rem)] object-contain object-left contrast-[1.06] sm:mt-2.5 sm:h-12 sm:max-w-[min(100%,22rem)] md:h-[3.25rem] md:max-w-[min(100%,24rem)] lg:h-16"
-                  decoding="async"
-                />
+                <span
+                  className="mt-2 block h-[2.25rem] w-fit shrink-0 sm:mt-2.5 sm:h-[2.5rem] md:h-[2.75rem] lg:h-[3.5rem]"
+                  aria-hidden
+                >
+                  <img
+                    src="/Logo.png"
+                    alt="ProInterview"
+                    className="block h-full w-auto shrink-0 object-contain object-left contrast-[1.12] brightness-[0.94]"
+                    width={537}
+                    height={91}
+                    decoding="sync"
+                  />
+                </span>
               </h2>
               <p className={`mt-1 lg:max-w-none ${homeTy.body}`}>
                 {HOME_SECTION_COPY.testimonials.body}
@@ -1132,14 +1309,14 @@ export function Home() {
                     </div>
                   ))}
                 </div>
-                <p className="text-lg text-slate-600 sm:text-xl">
+                <p className={homeTy.body}>
                   <span className="font-black text-[#8037f4]">500+</span>{" "}
                   {HOME_SECTION_COPY.testimonials.socialProof}
                 </p>
               </div>
             </div>
 
-            <div className="relative z-10 flex min-h-0 min-w-0 w-full flex-1 flex-col overflow-visible py-[0.9rem] lg:min-h-[22rem] lg:pl-0">
+            <div className="relative z-10 flex min-h-0 min-w-0 w-full flex-1 flex-col overflow-visible py-[0.9rem] lg:min-h-[22rem] lg:min-w-0 lg:pl-0">
               <div className="mb-3 shrink-0">
                 <div className={homeTy.badge}>
                   <SparkleGlyph className="size-3.5" />
@@ -1147,12 +1324,12 @@ export function Home() {
                 </div>
               </div>
               <div
-                className="relative w-full overflow-hidden"
+                className="relative w-full overflow-hidden lg:-mx-[3rem] lg:w-[calc(100%+6rem)]"
                 style={{
                   maskImage:
-                    "linear-gradient(to right, transparent 0%, black 8%, black 92%, transparent 100%)",
+                    "linear-gradient(to right, transparent 0%, black 6%, black 94%, transparent 100%)",
                   WebkitMaskImage:
-                    "linear-gradient(to right, transparent 0%, black 8%, black 92%, transparent 100%)",
+                    "linear-gradient(to right, transparent 0%, black 6%, black 94%, transparent 100%)",
                 }}
               >
                 <div className="space-y-6">
@@ -1176,9 +1353,9 @@ export function Home() {
                                 }}
                               />
                             </div>
-                            <p className="text-xs uppercase tracking-widest text-[#8037f4] font-black leading-tight sm:text-sm">{t.tag}</p>
+                            <p className="text-[10px] uppercase tracking-widest text-[#8037f4] font-black leading-tight sm:text-xs lg:text-[0.8rem]">{t.tag}</p>
                           </div>
-                          <p className="text-base text-slate-700 leading-snug line-clamp-2 sm:text-lg">"{t.text}"</p>
+                          <p className="text-xs text-slate-700 leading-snug line-clamp-2 sm:text-sm lg:text-base">"<em className="not-italic">{t.text}</em>"</p>
                         </div>
                       ))}
                     </div>
@@ -1196,15 +1373,15 @@ export function Home() {
                               <Star key={`${t.name}-s-${i}-${j}`} className="size-4 text-yellow-400 fill-yellow-400" />
                             ))}
                           </div>
-                          <p className="mb-2.5 text-base leading-snug text-slate-700 line-clamp-2 sm:text-lg">"{t.text}"</p>
-                          <p className="text-base text-slate-600 font-semibold sm:text-lg">{t.name}</p>
+                          <p className="mb-2.5 text-xs leading-snug text-slate-700 line-clamp-2 sm:text-sm lg:text-base">"<em className="not-italic">{t.text}</em>"</p>
+                          <p className="text-[10px] font-bold text-slate-900 sm:text-xs lg:text-sm">{t.name}</p>
                         </div>
                       ))}
                     </div>
                   </div>
                 </div>
-                <div className="pointer-events-none absolute inset-y-0 left-0 z-[2] w-12 bg-gradient-to-r from-[#ebe4f6] via-[#ebe4f6]/80 to-transparent sm:w-14" />
-                <div className="pointer-events-none absolute inset-y-0 right-0 z-[2] w-12 bg-gradient-to-l from-[#ebe4f6] via-[#ebe4f6]/80 to-transparent sm:w-14" />
+                <div className="pointer-events-none absolute inset-y-0 left-0 z-[2] w-14 bg-gradient-to-r from-[#ebe4f6] via-[#ebe4f6]/80 to-transparent sm:w-16 lg:w-20" />
+                <div className="pointer-events-none absolute inset-y-0 right-0 z-[2] w-14 bg-gradient-to-l from-[#ebe4f6] via-[#ebe4f6]/80 to-transparent sm:w-16 lg:w-20" />
               </div>
             </div>
           </div>

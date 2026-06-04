@@ -6,7 +6,7 @@ import { motion } from "motion/react";
 const DEFAULT_SUBTITLE =
   "Gói dịch vụ ProInterview của bạn đã được kích hoạt thành công.";
 
-/** Trang thành công — VNPay (`PaymentReturn`) hoặc CK (Checkout → state). */
+/** Trang thành công, VNPay (`PaymentReturn`) hoặc CK (Checkout → state). */
 export function SuccessPage() {
   const { state } = useLocation();
   const details = state?.details || {};

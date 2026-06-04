@@ -15,7 +15,7 @@ function CourseCard({ item, onDetails }) {
   const { course } = item;
   const description =
     course.description?.trim() ||
-    `Khóa học từ ${course.mentorName || "mentor"} — học theo lộ trình video ngắn, dễ áp dụng.`;
+    `Khóa học từ ${course.mentorName || "mentor"}, học theo lộ trình video ngắn, dễ áp dụng.`;
 
   return (
     <article className="group flex h-full flex-col overflow-hidden rounded-2xl border border-violet-200/70 bg-white shadow-sm transition-shadow hover:border-violet-300/80 hover:shadow-md">
@@ -37,7 +37,7 @@ function CourseCard({ item, onDetails }) {
           <button
             type="button"
             onClick={onDetails}
-            className="text-xs font-semibold text-[#8037f4] transition-colors hover:text-[#6d2fd6] hover:underline sm:text-sm"
+            className="text-xs font-semibold text-[#8037f4] transition-colors hover:text-[#630ed4] hover:underline sm:text-sm"
           >
             Chi tiết
           </button>
@@ -141,7 +141,7 @@ export function MyCourses() {
           <CustomerPageHeader
             title={
               <>
-                Khóa học <span className="text-[#6d2fd6]">của bạn</span>
+                Khóa học <span className="text-[#630ed4]">của bạn</span>
               </>
             }
             subtitle="Tiếp tục xem lại bài cũ và theo dõi tiến độ trong các khóa đã mua."

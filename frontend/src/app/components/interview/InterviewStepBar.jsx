@@ -6,7 +6,7 @@ const INTERVIEW_STEPS = [
   { n: 3, label: "Phỏng vấn" },
 ];
 
-/** Thanh 3 bước — setup (#/interview) và phòng chờ (#/interview/room) */
+/** Thanh 3 bước, setup (#/interview) và phòng chờ (#/interview/room) */
 export function InterviewStepBar({ current = 1, className = "" }) {
   return (
     <FlowStepBar

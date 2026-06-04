@@ -181,7 +181,7 @@ function WithdrawalModal({
               <button
                 type="button"
                 onClick={onClose}
-                className="w-full rounded-lg bg-[#8037f4] py-3 text-sm font-semibold text-white transition-colors hover:bg-[#6d2fd6]"
+                className="w-full rounded-lg bg-[#8037f4] py-3 text-sm font-semibold text-white transition-colors hover:bg-[#630ed4]"
               >
                 Đóng
               </button>
@@ -274,7 +274,7 @@ function WithdrawalModal({
                     <div className="min-w-0 text-xs leading-relaxed text-slate-600">
                       <p className="font-semibold text-slate-900">{payoutAccountOwnerName || "Mentor"}</p>
                       <p className="mt-0.5">
-                        Tên theo hồ sơ đã xác minh — STK phải trùng chính chủ.
+                        Tên theo hồ sơ đã xác minh, STK phải trùng chính chủ.
                         {payoutAccountMasked ? (
                           <span className="text-slate-500"> · Đã lưu {payoutAccountMasked}</span>
                         ) : null}
@@ -396,7 +396,7 @@ export function MentorFinance() {
     }
     if (status === "approved") {
       return {
-        text: "Đã duyệt — chờ chuyển khoản",
+        text: "Đã duyệt, chờ chuyển khoản",
         className: "bg-amber-500/10 text-amber-400 border border-amber-500/20",
       };
     }

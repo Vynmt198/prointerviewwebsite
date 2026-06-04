@@ -145,7 +145,7 @@ export function MentorReviews() {
             <span>Đánh giá</span>{" "}
             <span className={mentorAccentText}>từ học viên</span>
           </h1>
-          <p className={mentorPageSubtitle}>Phản hồi sau buổi mentor — tìm kiếm và trả lời nhận xét</p>
+          <p className={mentorPageSubtitle}>Phản hồi sau buổi mentor, tìm kiếm và trả lời nhận xét</p>
         </div>
 
         <div className="mb-10 grid grid-cols-1 gap-5 md:mb-12 md:grid-cols-3 md:gap-6">

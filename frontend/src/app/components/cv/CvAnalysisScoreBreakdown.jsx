@@ -22,18 +22,18 @@ function barColor(status) {
 }
 
 /**
- * Khối «Đánh giá chi tiết» — vòng Điểm AI + 4 tiêu chí (dùng trên trang kết quả & hub preview).
+ * Khối «Đánh giá chi tiết», vòng Điểm AI + 4 tiêu chí (dùng trên trang kết quả & hub preview).
  */
 export function CvAnalysisScoreBreakdown({
   overallScore = 73,
   rows = [],
   compact = false,
   dense = false,
-  /** Home showcase — khoảng cách hàng tiêu chí hơi chặt, cỡ chữ giữ như compact */
+  /** Home showcase, khoảng cách hàng tiêu chí hơi chặt, cỡ chữ giữ như compact */
   homePreview = false,
-  /** /cv-analysis hub — cao hơn compact (+0.5rem padding dưới) */
+  /** /cv-analysis hub, cao hơn compact (+0.5rem padding dưới) */
   hubPreview = false,
-  /** Trừ kích thước vòng điểm (rem), mặc định 0 — không dùng trên Home */
+  /** Trừ kích thước vòng điểm (rem), mặc định 0, không dùng trên Home */
   homePreviewShrinkRem = 0,
   showHeader = true,
   className = "",
@@ -213,7 +213,7 @@ export function CvAnalysisScoreBreakdown({
   );
 }
 
-/** Dữ liệu minh họa hub — khớp UI trang kết quả */
+/** Dữ liệu minh họa hub, khớp UI trang kết quả */
 export const CV_HUB_DEMO_SCORE_ROWS = [
   {
     criteria: "Clarity (Rõ ràng)",
@@ -249,7 +249,7 @@ export const CV_HUB_DEMO_MATCH = {
   percent: 73,
   matched: ["React", "TypeScript", "Node.js", "REST API"],
   missing: ["AWS", "Docker", "Kubernetes"],
-  summary: "Khá tốt — bổ sung từ khóa còn thiếu có thể nâng điểm đáng kể.",
+  summary: "Khá tốt, bổ sung từ khóa còn thiếu có thể nâng điểm đáng kể.",
 };
 
 /** Từ khóa minh họa section Phân tích CV trên Home (khác preview hub). */

@@ -10,7 +10,7 @@ import { CustomerPageHeader } from "../layout/CustomerPageHeader";
 export const CV_JD_CARD_CLASS =
   "w-full overflow-hidden rounded-[1.75rem] border border-violet-200/80 bg-white shadow-[0_16px_40px_rgba(99,14,212,0.1)]";
 
-/** Field upload + dropdown ngành — cần overflow visible để list không bị cắt */
+/** Field upload + dropdown ngành, cần overflow visible để list không bị cắt */
 export const CV_JD_CARD_FIELD_CLASS =
   "w-full overflow-visible rounded-[1.75rem] border border-violet-200/80 bg-white shadow-[0_16px_40px_rgba(99,14,212,0.1)]";
 
@@ -21,16 +21,16 @@ const FIELD_SUBTITLE =
   "Tải CV, chọn nhóm ngành nghề. AI đánh giá cấu trúc, nội dung và gợi ý cải thiện theo chuẩn ngành.";
 
 const FIELD_SUBTITLE_CLASS =
-  "mt-2 max-w-2xl text-sm font-medium leading-relaxed text-violet-800/90 sm:text-[0.9375rem]";
+  "mt-2 max-w-2xl text-sm font-medium leading-relaxed text-slate-600 sm:text-base";
 
-/** Header cố định theo tính năng — tab Phân tích / Lịch sử dùng chung, không đổi tiêu đề khi chuyển tab */
+/** Header cố định theo tính năng, tab Phân tích / Lịch sử dùng chung, không đổi tiêu đề khi chuyển tab */
 export function cvAnalysisPageHeader(mode) {
   if (mode === "field") {
     return {
       badge: "Phân tích theo ngành",
       title: (
         <>
-          Phân tích CV <span className="text-[#6d2fd6]">theo ngành</span>
+          Phân tích CV <span className="text-[#630ed4]">theo ngành</span>
         </>
       ),
       subtitle: FIELD_SUBTITLE,
@@ -41,11 +41,11 @@ export function cvAnalysisPageHeader(mode) {
     badge: "Tối ưu CV theo vị trí ứng tuyển",
     title: (
       <>
-        Tối ưu CV theo vị trí <span className="text-[#6d2fd6]">ứng tuyển</span>
+        Tối ưu CV theo vị trí <span className="text-[#630ed4]">ứng tuyển</span>
       </>
     ),
     subtitle: JD_SUBTITLE,
-    subtitleClassName: "mt-3 max-w-3xl text-base font-medium leading-relaxed text-violet-800/90",
+    subtitleClassName: "mt-3 max-w-3xl text-sm font-medium leading-relaxed text-slate-600 sm:text-base",
   };
 }
 
@@ -62,11 +62,11 @@ export function CvJdAnalysisPage({
   badge = "Tối ưu CV theo vị trí ứng tuyển",
   title = (
     <>
-      Tối ưu CV theo vị trí <span className="text-[#6d2fd6]">ứng tuyển</span>
+      Tối ưu CV theo vị trí <span className="text-[#630ed4]">ứng tuyển</span>
     </>
   ),
   subtitle = JD_SUBTITLE,
-  subtitleClassName = "mt-3 max-w-3xl text-base font-medium leading-relaxed text-violet-800/90",
+  subtitleClassName = "mt-3 max-w-3xl text-sm font-medium leading-relaxed text-slate-600 sm:text-base",
   showTabs = true,
   showHeader = true,
   cardVariant = "default",
