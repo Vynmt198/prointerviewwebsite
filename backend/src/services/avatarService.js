@@ -18,7 +18,7 @@
 
 import crypto from "crypto";
 import { uploadToCloudinary } from "../utils/cloudinaryUpload.js";
-import { synthesizeSpeech, getElevenLabsVoiceId } from "./ttsService.js";
+import { synthesizeSpeech, getElevenLabsVoiceId, isElevenLabsEnabled } from "./ttsService.js";
 import { cacheGet, cacheSet } from "./cacheService.js";
 import { logger } from "../config/logger.js";
 
@@ -123,13 +123,20 @@ function buildCacheKey(questionText, avatarImageUrl, voiceId) {
  * @param {string} [opts.voiceId] - Override ElevenLabs voice ID (nếu không set, dùng gender)
  */
 async function generateAndUploadAudio(text, opts = {}) {
+  if (!isElevenLabsEnabled()) {
+    // Voice ID chưa cấu hình đúng (hoặc là placeholder) → D-ID sẽ dùng Azure TTS.
+    // Log ở mức info để dễ nhận biết trong production.
+    logger.info("avatar_tts_provider", { provider: "did_azure", reason: "ElevenLabs voice ID not configured" });
+    return null;
+  }
+
   try {
     const { gender = "female", voiceId } = opts;
     // Resolve ElevenLabs voice ID from gender — NOT the Azure voice ID (vi-VN-NamMinhNeural).
     // Azure voice IDs are for D-ID text-script fallback only; ElevenLabs uses its own ID format.
     const elevenLabsVoiceId = voiceId || getElevenLabsVoiceId(gender);
     const ttsResult = await synthesizeSpeech(text, { voiceId: elevenLabsVoiceId });
-    if (!ttsResult) return null; // ElevenLabs not configured
+    if (!ttsResult) return null; // ElevenLabs not configured (should not reach here after check above)
 
     // Upload audio buffer → Cloudinary (resource_type: "video" cho audio files)
     const cdn = await uploadToCloudinary(ttsResult.buffer, {
@@ -140,6 +147,7 @@ async function generateAndUploadAudio(text, opts = {}) {
     });
 
     if (!cdn) return null; // Cloudinary not configured
+    logger.info("avatar_tts_provider", { provider: "elevenlabs", gender, voiceId: elevenLabsVoiceId });
     return cdn.url;
   } catch (err) {
     logger.warn("avatar_audio_upload_failed", { error: err.message });
@@ -199,11 +207,13 @@ async function createDIDTalk(avatarImageUrl, audioUrl, questionText, opts = {}) 
 /**
  * Poll D-ID talk job đến khi status=done.
  * @param {string} talkId
- * @param {number} [timeoutMs=35000] - 35s đủ cho D-ID render bình thường (5-15s).
+ * @param {number} [timeoutMs=60000] - 60s để D-ID xử lý kể cả khi bị queue sau nhiều job.
+ *   35s cũ quá ngắn: probe Q1 xong → Q2-5 parallel nhưng D-ID queue tuần tự, Q5 có thể
+ *   chờ 50-55s. 60s cho đủ headroom mà vẫn fail fast khi D-ID thực sự stuck.
  * @param {AbortSignal} [signal] - Dừng ngay khi client ngắt kết nối (req.on('close')).
  * @returns {string} result_url (MP4 video URL)
  */
-async function pollDIDTalk(talkId, timeoutMs = 35_000, signal) {
+async function pollDIDTalk(talkId, timeoutMs = 60_000, signal) {
   const deadline = Date.now() + timeoutMs;
   let interval   = 2000;
 
@@ -286,7 +296,7 @@ export async function generateVideoForQuestion(questionText, opts = {}, signal) 
   const talkId = await createDIDTalk(resolvedAvatarUrl, audioUrl, questionText, { voiceId: resolvedVoiceId });
 
   // 4. Poll until done — pass signal so polling stops on client disconnect
-  const videoUrl = await pollDIDTalk(talkId, 35_000, signal);
+  const videoUrl = await pollDIDTalk(talkId, 60_000, signal);
 
   // 5. Cache result
   await cacheSet(cacheKey, videoUrl, VIDEO_CACHE_TTL);

@@ -488,7 +488,9 @@ export function Interview() {
 
           if (questionTexts.length > 0) {
             const pregenTimeout = new Promise((resolve) =>
-              setTimeout(() => resolve({ success: false, timedOut: true }), 45_000)
+              // 100s: probe Q1 (~20s) + Q2-5 parallel (~60s worst case) + buffer
+              // Tăng từ 45s vì Q4 cần 41s và Q5 cần 53s từ lúc parallel start
+              setTimeout(() => resolve({ success: false, timedOut: true }), 100_000)
             );
             const pregenResult = await Promise.race([
               pregenerateInterviewVideos(questionTexts, { gender: hrGender }),

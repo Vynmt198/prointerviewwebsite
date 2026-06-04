@@ -25,10 +25,24 @@ function cfg() {
   };
 }
 
+/**
+ * Kiểm tra voice ID có phải giá trị thật không.
+ * Loại bỏ placeholder dạng <...> (ví dụ: <voice ID vừa clone>) — những giá trị này
+ * khiến isElevenLabsEnabled() trả về true nhưng API call sẽ fail 404.
+ */
+function isRealVoiceId(id) {
+  if (!id || typeof id !== "string") return false;
+  const trimmed = id.trim();
+  if (!trimmed) return false;
+  // Placeholder pattern: bắt đầu < kết thúc > (e.g. "<voice ID vừa clone>")
+  if (trimmed.startsWith("<") && trimmed.endsWith(">")) return false;
+  return true;
+}
+
 export function isElevenLabsEnabled() {
   const { apiKey, voiceId, voiceIdMale, voiceIdFemale } = cfg();
-  // Enabled nếu có key VÀ ít nhất một voice ID được cấu hình
-  return Boolean(apiKey && (voiceId || voiceIdMale || voiceIdFemale));
+  // Enabled nếu có key VÀ ít nhất một voice ID thực sự hợp lệ (không phải placeholder)
+  return Boolean(apiKey && (isRealVoiceId(voiceId) || isRealVoiceId(voiceIdMale) || isRealVoiceId(voiceIdFemale)));
 }
 
 /**
@@ -38,9 +52,9 @@ export function isElevenLabsEnabled() {
  */
 export function getElevenLabsVoiceId(gender = "female") {
   const { voiceId, voiceIdMale, voiceIdFemale } = cfg();
-  if (gender === "male"   && voiceIdMale)   return voiceIdMale;
-  if (gender === "female" && voiceIdFemale) return voiceIdFemale;
-  return voiceId; // fallback về default nếu không có gender-specific
+  if (gender === "male"   && isRealVoiceId(voiceIdMale))   return voiceIdMale;
+  if (gender === "female" && isRealVoiceId(voiceIdFemale)) return voiceIdFemale;
+  return isRealVoiceId(voiceId) ? voiceId : ""; // trả "" nếu default cũng là placeholder
 }
 
 /**

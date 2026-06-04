@@ -531,7 +531,11 @@ export default function InterviewRoom() {
   const QUESTION_OBJECTS = apiQuestions?.length ? apiQuestions : null;
 
   // Pre-generated video URLs từ D-ID Express API (truyền từ Interview.jsx)
-  const videoUrls       = location.state?.videoUrls ?? null;
+  // Fallback về sessionStorage để giữ URLs khi user refresh trang trong phòng phỏng vấn.
+  const videoUrls = location.state?.videoUrls ?? (() => {
+    try { return JSON.parse(sessionStorage.getItem("prointerview_video_urls") ?? "null"); }
+    catch { return null; }
+  })();
   const hasPregenVideos = Array.isArray(videoUrls) && videoUrls.some(Boolean);
 
   /* ── UI state ─────────────────────────────────────────── */
@@ -606,6 +610,12 @@ export default function InterviewRoom() {
     sessionStorage.setItem("prointerview_sessionId", resolvedSessionId);
     if (location.state?.hrGender) {
       sessionStorage.setItem("prointerview_hr_gender", location.state.hrGender);
+    }
+    // Persist pre-gen video URLs so they survive a page refresh inside the room.
+    // Without this, refresh clears location.state → videoUrls = null → D-ID WebRTC
+    // stream is attempted instead of the already-rendered videos (wasting credits).
+    if (location.state?.videoUrls) {
+      sessionStorage.setItem("prointerview_video_urls", JSON.stringify(location.state.videoUrls));
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -742,6 +752,9 @@ export default function InterviewRoom() {
       audioCtxRef.current?.close().catch(() => {});
       window.speechSynthesis?.cancel();
       didDisconnect();
+      // Remove pre-gen URLs after leaving the room so the next fresh session
+      // does not accidentally load videos from a previous interview.
+      sessionStorage.removeItem("prointerview_video_urls");
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
