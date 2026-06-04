@@ -29,10 +29,10 @@ const AUTH_PAGE_BG = "bg-transparent";
 
 /** Ô form đăng nhập/đăng ký, tím brand */
 const AUTH_CARD_CLS =
-  "rounded-3xl border border-white/15 bg-[#8037f4] p-8 shadow-[0_16px_48px_rgba(15,23,42,0.18)] sm:p-10";
+  "rounded-3xl border border-white/15 bg-[#8037f4] p-6 shadow-[0_16px_48px_rgba(15,23,42,0.18)] sm:p-10";
 
 const INPUT_CLS =
-  "w-full px-4 py-3.5 rounded-xl border border-white/25 text-base outline-none transition-all " +
+  "w-full px-3 py-2 sm:px-4 sm:py-3.5 rounded-xl border border-white/25 text-sm sm:text-base outline-none transition-all " +
   "focus:border-[#93f72b] focus:ring-2 focus:ring-[#93f72b]/25 text-gray-900 placeholder-gray-400 " +
   "bg-white hover:bg-gray-50";
 
@@ -124,15 +124,15 @@ export function Login() {
 
         {/* Form + mascot phía trên mép trên thẻ */}
         <div className="relative z-10 flex flex-1 items-start justify-center overflow-x-visible overflow-y-auto px-6 pb-8 pt-[5.55rem] sm:px-10 sm:pt-[6.05rem]">
-          <div className="relative mx-auto w-full max-w-md shrink-0 overflow-visible -mt-[11.2rem]">
+          <div className="relative mx-auto w-full max-w-md shrink-0 overflow-visible -mt-[4rem] sm:-mt-[11.2rem]">
             <div
-              className="pointer-events-none relative z-[5] mb-[-0.25rem] h-[15.85rem] w-full translate-y-[3rem] sm:h-[17.35rem]"
+              className="pointer-events-none relative z-[5] mb-[-0.25rem] h-[11.85rem] w-full translate-y-[1rem] sm:h-[17.35rem] sm:translate-y-[3rem]"
               aria-hidden
             >
               <img
                 src="/mascot-auth-login.png?v=3"
                 alt=""
-                className="absolute bottom-0 left-[-6.6rem] h-full w-auto max-w-[min(92vw,15.85rem)] origin-bottom-left rotate-[2deg] object-contain object-bottom sm:left-[-7.15rem] sm:max-w-[17.35rem] md:left-[-7.5rem]"
+                className="absolute bottom-0 left-[-2.6rem] h-full w-auto max-w-[min(92vw,11.85rem)] origin-bottom-left rotate-[2deg] object-contain object-bottom sm:left-[-7.15rem] sm:max-w-[17.35rem] md:left-[-7.5rem]"
               />
             </div>
 
@@ -149,13 +149,12 @@ export function Login() {
               />
             </div>
 
-            <div className={`relative z-10 w-full -mt-[4.15rem] ${AUTH_CARD_CLS}`}>
+            <div className={`relative z-10 w-full -mt-[3.3rem] sm:-mt-[4.15rem] ${AUTH_CARD_CLS}`}>
 
-            <h1 className="mb-1 text-white"
-              style={{ fontSize: "1.875rem", fontWeight: 750, letterSpacing: "-0.025em" }}>
+            <h1 className="mb-1 text-white text-[1.35rem] sm:text-[1.875rem]" style={{ fontWeight: 750, letterSpacing: "-0.025em" }}>
               Đăng nhập
             </h1>
-            <p className="mb-4 text-sm text-white/80">{AUTH_COPY.loginSubtitle}</p>
+            <p className="mb-3 sm:mb-4 text-xs sm:text-sm text-white/80">{AUTH_COPY.loginSubtitle}</p>
 
             {/* Success banner */}
             {isRegistered && (
@@ -199,7 +198,7 @@ export function Login() {
               </div>
             )}
 
-            <form onSubmit={handleLogin} className="space-y-3">
+            <form onSubmit={handleLogin} className="space-y-2 sm:space-y-3">
               {/* Email */}
               <div>
                 <label htmlFor="login-email" className="mb-1.5 block text-sm font-semibold text-white">Email</label>
@@ -236,7 +235,7 @@ export function Login() {
 
               {/* Submit */}
               <button type="submit" disabled={loading}
-                className="w-full rounded-full py-3.5 text-base font-bold transition-all hover:brightness-105 active:scale-[0.98] disabled:opacity-60"
+                className="w-full rounded-full py-2.5 sm:py-3.5 text-sm sm:text-base font-bold transition-all hover:brightness-105 active:scale-[0.98] disabled:opacity-60"
                 style={AUTH_CTA_STYLE}>
                 {loading
                   ? <span className="flex items-center justify-center gap-2">
@@ -248,7 +247,7 @@ export function Login() {
             </form>
 
             {/* Divider */}
-            <div className="my-5 flex items-center gap-3">
+            <div className="my-3 sm:my-5 flex items-center gap-3">
               <div className="h-px flex-1 bg-white/25" />
               <span className="text-xs font-medium text-white/60">hoặc</span>
               <div className="h-px flex-1 bg-white/25" />
@@ -256,7 +255,7 @@ export function Login() {
 
             <GoogleSignInBlock onError={setError} />
 
-            <p className="mt-5 text-center text-sm text-white/80">
+            <p className="mt-3 sm:mt-5 text-center text-xs sm:text-sm text-white/80">
               Chưa có tài khoản?{" "}
               <Link to="/register" className="font-bold text-[#93f72b] hover:underline">
                 Đăng ký ngay

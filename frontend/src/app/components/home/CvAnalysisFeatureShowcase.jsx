@@ -96,13 +96,11 @@ export function CvAnalysisFeatureShowcase({ onCtaClick }) {
               className={`max-w-full ${ty.title} sm:max-w-none`}
               style={{ fontSize: HOME_SECTION_TITLE_CLAMP }}
             >
-              <span className={`${ty.titleLineSecond} ${ty.titleLineAccent}`}>
-                Làm sao để CV
-                <span className="hidden sm:inline"> ấn tượng</span>
+              <span className={`${ty.titleLineSecond} ${ty.titleLineAccent} block`}>
+                Làm sao để CV ấn tượng
               </span>
-              <span className={`${ty.titleLineSecond} ${ty.titleLineDark}`}>
-                <span className="sm:hidden">ấn tượng </span>
-                trong mắt <span className="whitespace-nowrap">nhà tuyển dụng?</span>
+              <span className={`${ty.titleLineSecond} ${ty.titleLineDark} block`}>
+                trong mắt nhà tuyển dụng?
               </span>
             </h2>
             <p className={`max-w-full lg:max-w-none ${ty.cvShowcaseBody}`}>
@@ -110,7 +108,7 @@ export function CvAnalysisFeatureShowcase({ onCtaClick }) {
                 <span className="block whitespace-nowrap">{CV_HUB_HERO_COPY.bodyLine1}</span>
                 <span className="block whitespace-nowrap">{CV_HUB_HERO_COPY.bodyLine2}</span>
               </span>
-              <span className="block text-pretty sm:hidden">{CV_SHOWCASE_COPY.body}</span>
+              <span className="block sm:hidden">{CV_SHOWCASE_COPY.body}</span>
             </p>
             {onCtaClick ? (
               <button
@@ -127,7 +125,7 @@ export function CvAnalysisFeatureShowcase({ onCtaClick }) {
             ) : null}
           </article>
 
-          <section className="cv-showcase-visual relative z-10 flex min-w-0 origin-center scale-[0.92] flex-col items-center justify-center overflow-visible max-lg:scale-[0.9] sm:scale-[0.96] lg:translate-x-12 lg:scale-100 lg:-translate-y-6 lg:justify-self-center">
+          <section className="cv-showcase-visual relative z-10 flex min-w-0 origin-center scale-[0.92] flex-col items-center justify-center overflow-visible max-lg:scale-[0.9] sm:scale-[0.96] translate-x-[0.2rem] lg:translate-x-12 lg:scale-100 lg:-translate-y-6 lg:justify-self-center">
             <div className="relative mx-auto w-full max-w-[31rem] overflow-visible">
               <div className="pointer-events-none absolute left-[calc(50%-0.3rem)] top-0 z-[5] w-[14.5rem] -translate-x-1/2 -translate-y-[1.73rem] sm:w-[16.5rem] sm:-translate-y-[2.93rem] lg:w-[18rem] lg:-translate-y-[3.13rem]">
                 <img

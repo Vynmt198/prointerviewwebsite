@@ -744,6 +744,11 @@ export function Home() {
         .landing-section-flow {
           position: relative;
         }
+        @media (max-width: 639px) {
+          #features { margin-top: -2rem; }
+          #find-mentor { margin-top: -4rem; }
+          #courses { margin-top: 1.4rem; }
+        }
         @media (prefers-reduced-motion: reduce) {
           .hero-orbit-text { animation: none !important; }
           .float-icon, .float-icon-delay, .float-icon-slow { animation: none !important; }
@@ -1145,7 +1150,7 @@ export function Home() {
       {/* ═══ HOW IT WORKS ════════════════════════════════════ */}
       <section
         id="features"
-        className="landing-section-flow relative z-10 flex h-screen max-h-screen flex-col justify-center overflow-hidden pt-6 md:pt-8 lg:pt-10 max-lg:h-auto max-lg:max-h-none max-lg:min-h-0 max-lg:overflow-visible max-lg:py-10"
+        className="landing-section-flow relative z-10 flex h-screen max-h-screen flex-col justify-center overflow-hidden pt-6 md:pt-8 lg:pt-10 max-lg:h-auto max-lg:max-h-none max-lg:min-h-0 max-lg:overflow-visible max-lg:py-5"
       >
         {renderSectionSticks([
           { x: 10, y: 16, size: 34, opacity: 0.45 },
@@ -1156,7 +1161,7 @@ export function Home() {
           <LandingReveal className="mb-8 w-full pt-5 max-lg:pt-2" y={24}>
             <div className="mb-5 flex w-full justify-center">
               <div className="grid w-fit max-w-full translate-x-0 grid-cols-1 place-items-center gap-3 sm:-translate-x-6 sm:grid-cols-[auto_auto] sm:items-center sm:gap-x-2 sm:gap-y-0 md:-translate-x-7 lg:-translate-x-8 lg:gap-x-3">
-                <div className="flex h-[6.75rem] w-[6.75rem] translate-x-0 items-center justify-center sm:-translate-x-[4.7rem] sm:h-[12.5rem] sm:w-[12.5rem] md:h-[14rem] md:w-[14rem] lg:h-[15rem] lg:w-[15rem]">
+                <div className="flex h-[7.25rem] w-[7.25rem] translate-x-0 translate-y-[0.9rem] items-center justify-center sm:-translate-x-[4.7rem] sm:translate-y-0 lg:-translate-y-2 sm:h-[12.5rem] sm:w-[12.5rem] md:h-[14rem] md:w-[14rem] lg:h-[15rem] lg:w-[15rem]">
                   <img
                     src="/mascot-features.png?v=13"
                     alt=""
@@ -1249,7 +1254,7 @@ export function Home() {
       {/* ═══ TESTIMONIALS ═══════════════════════════════════ */}
       <section
         id="mentors"
-        className="landing-section-flow relative z-10 -mt-[5rem] h-[calc(100vh+3rem)] max-h-[calc(100vh+3rem)] min-h-[calc(100vh+3rem)] overflow-x-hidden max-lg:mt-0 max-lg:h-auto max-lg:max-h-none max-lg:min-h-0 max-lg:py-10"
+        className="landing-section-flow relative z-10 -mt-[5rem] h-[calc(100vh+3rem)] max-h-[calc(100vh+3rem)] min-h-[calc(100vh+3rem)] overflow-x-hidden max-lg:mt-0 max-lg:h-auto max-lg:max-h-none max-lg:min-h-0 max-lg:py-5 lg:overflow-x-visible"
       >
         {renderSectionSticks([
           { x: 78, y: 12, size: 34, opacity: 0.46 },
@@ -1257,8 +1262,8 @@ export function Home() {
           { x: 10, y: 86, size: 30, opacity: 0.38 },
         ])}
         <div className={`${HOME_SECTION_INNER} home-mobile-gutter relative z-10 flex h-full w-full flex-col justify-center py-4 sm:py-6 max-lg:h-auto max-lg:py-0`}>
-          <div className="flex min-w-0 w-full flex-col items-start gap-8 overflow-visible lg:flex-row lg:items-center lg:gap-4">
-            <div className="relative z-20 w-full shrink-0 lg:w-fit lg:max-w-[min(100%,40rem)]">
+          <div className="flex min-w-0 w-full flex-col items-start gap-8 overflow-visible lg:flex-row lg:items-center lg:gap-16">
+            <div className="relative z-20 w-full shrink-0 lg:w-fit lg:max-w-[min(100%,40rem)] lg:-translate-x-[2rem]">
               <h2
                 className={`mb-0 flex w-full max-w-none flex-col items-start gap-0 ${homeTy.title}`}
                 style={{ fontSize: HOME_SECTION_TITLE_CLAMP }}
@@ -1311,7 +1316,7 @@ export function Home() {
               </div>
             </div>
 
-            <div className="relative z-10 flex min-h-0 min-w-0 w-full flex-1 flex-col overflow-visible py-[0.9rem] lg:min-h-[22rem] lg:pl-0">
+            <div className="relative z-10 flex min-h-0 min-w-0 w-full flex-1 flex-col overflow-visible py-[0.9rem] lg:min-h-[22rem] lg:min-w-0 lg:pl-0">
               <div className="mb-3 shrink-0">
                 <div className={homeTy.badge}>
                   <SparkleGlyph className="size-3.5" />
@@ -1319,12 +1324,12 @@ export function Home() {
                 </div>
               </div>
               <div
-                className="relative w-full overflow-hidden"
+                className="relative w-full overflow-hidden lg:-mx-[3rem] lg:w-[calc(100%+6rem)]"
                 style={{
                   maskImage:
-                    "linear-gradient(to right, transparent 0%, black 8%, black 92%, transparent 100%)",
+                    "linear-gradient(to right, transparent 0%, black 6%, black 94%, transparent 100%)",
                   WebkitMaskImage:
-                    "linear-gradient(to right, transparent 0%, black 8%, black 92%, transparent 100%)",
+                    "linear-gradient(to right, transparent 0%, black 6%, black 94%, transparent 100%)",
                 }}
               >
                 <div className="space-y-6">
@@ -1375,8 +1380,8 @@ export function Home() {
                     </div>
                   </div>
                 </div>
-                <div className="pointer-events-none absolute inset-y-0 left-0 z-[2] w-12 bg-gradient-to-r from-[#ebe4f6] via-[#ebe4f6]/80 to-transparent sm:w-14" />
-                <div className="pointer-events-none absolute inset-y-0 right-0 z-[2] w-12 bg-gradient-to-l from-[#ebe4f6] via-[#ebe4f6]/80 to-transparent sm:w-14" />
+                <div className="pointer-events-none absolute inset-y-0 left-0 z-[2] w-14 bg-gradient-to-r from-[#ebe4f6] via-[#ebe4f6]/80 to-transparent sm:w-16 lg:w-20" />
+                <div className="pointer-events-none absolute inset-y-0 right-0 z-[2] w-14 bg-gradient-to-l from-[#ebe4f6] via-[#ebe4f6]/80 to-transparent sm:w-16 lg:w-20" />
               </div>
             </div>
           </div>

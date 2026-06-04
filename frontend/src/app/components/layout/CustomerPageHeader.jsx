@@ -45,7 +45,7 @@ export function CustomerPageHeader({
           {actions ? <div className="flex shrink-0 items-center gap-2">{actions}</div> : null}
         </div>
       )}
-      <h1 className="font-headline text-[clamp(2.25rem,3.5vw,3.25rem)] font-extrabold leading-[1.12] tracking-tight text-[#1a1b23]">
+      <h1 className="font-headline text-[clamp(1.5rem,3.5vw,3.25rem)] font-extrabold leading-[1.12] tracking-tight text-[#1a1b23]">
         {title}
       </h1>
       {subtitle ? (

@@ -310,7 +310,7 @@ export function MentorFeatureShowcase({ onCtaClick }) {
   return (
     <section
       id="find-mentor"
-      className="relative z-10 flex h-screen max-h-screen flex-col justify-center overflow-x-hidden overflow-y-visible px-0 py-4 sm:py-6 max-lg:h-auto max-lg:max-h-none max-lg:min-h-0 max-lg:py-10"
+      className="relative z-10 flex h-screen max-h-screen flex-col justify-center overflow-x-hidden overflow-y-visible px-0 py-4 sm:py-6 max-lg:h-auto max-lg:max-h-none max-lg:min-h-0 max-lg:py-5"
     >
       <style>{`
         .mentor-upzi-panel {
@@ -391,11 +391,18 @@ export function MentorFeatureShowcase({ onCtaClick }) {
               <Users className="h-3.5 w-3.5 shrink-0" aria-hidden />
               {MENTOR_SHOWCASE_COPY.badge}
             </span>
-            <h2 className={`${ty.title} sm:max-w-none`} style={{ fontSize: HOME_SECTION_TITLE_CLAMP }}>
-              <span className={`${ty.titleLineSecond} ${ty.titleLineDark}`}>
+            <h2
+              className={`${ty.title} !gap-[0.35rem] !leading-[1.06] max-w-full sm:max-w-none`}
+              style={{ fontSize: HOME_SECTION_TITLE_CLAMP }}
+            >
+              <span
+                className={`${ty.titleLineSecond} ${ty.titleLineDark} block pl-[0.2rem] lg:whitespace-nowrap`}
+              >
                 {MENTOR_SHOWCASE_COPY.titleLine1}
               </span>
-              <span className={`${ty.titleLineSecond} ${ty.titleLineAccent} sm:whitespace-nowrap`}>
+              <span
+                className={`${ty.titleLineSecond} ${ty.titleLineAccent} block lg:whitespace-nowrap`}
+              >
                 {MENTOR_SHOWCASE_COPY.titleLine2}
               </span>
             </h2>

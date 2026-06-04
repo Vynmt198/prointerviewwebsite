@@ -81,19 +81,15 @@ export function CvAnalysisHubHero({ onJd, onField, navShellAligned = false }) {
                 </span>
 
                 {/* Mobile, giữ cỡ hub riêng */}
-                <span className="block text-[clamp(2.25rem,3.5vw,3.25rem)] font-extrabold leading-[1.12] lg:hidden">
-                  <span className="block text-[#630ed4] whitespace-nowrap">Làm sao để CV</span>
-                  <span className="mt-0.5 block whitespace-nowrap">
-                    <span className="text-[#630ed4]">ấn tượng </span>
-                    <span className="text-[#1a1b23]">trong mắt</span>
-                  </span>
-                  <span className="mt-0.5 block text-[#1a1b23] whitespace-nowrap">nhà tuyển dụng?</span>
+                <span className="block text-[clamp(1.5rem,3.5vw,3.25rem)] font-extrabold leading-[1.12] lg:hidden">
+                  <span className="block text-[#630ed4]">Làm sao để CV ấn tượng</span>
+                  <span className="mt-0.5 block text-[#1a1b23]">trong mắt nhà tuyển dụng?</span>
                 </span>
-                <p className="mt-2 max-w-[min(100%,30rem)] text-sm font-medium leading-relaxed text-slate-600 sm:text-base lg:max-w-none">
+                <p className="mt-2 max-w-[min(100%,30rem)] text-sm font-medium leading-relaxed text-slate-600 sm:text-lg lg:max-w-none">
                   <span className="hidden lg:block whitespace-nowrap">
                     {CV_SHOWCASE_COPY.body}
                   </span>
-                  <span className="block text-pretty lg:hidden">{CV_SHOWCASE_COPY.body}</span>
+                  <span className="block lg:hidden">{CV_SHOWCASE_COPY.body}</span>
                 </p>
               </h1>
 

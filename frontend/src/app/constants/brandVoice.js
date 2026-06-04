@@ -193,6 +193,9 @@ export const COURSES_SHOWCASE_COPY = {
   titleLine1: "Học từ kinh nghiệm Mentor",
   titleLine2: "qua khóa học thực tế",
   body: "Khóa học do Mentor xây dựng, giúp bạn học theo từng chủ đề và cải thiện những kỹ năng cần thiết cho hành trình ứng tuyển.",
+  bodyLine1:
+    "Khóa học do Mentor xây dựng, giúp bạn học theo từng chủ đề và cải thiện",
+  bodyLine2: "những kỹ năng cần thiết cho hành trình ứng tuyển.",
   bullets: [
     "Chủ đề đa dạng.",
     "Video ngắn, dễ học theo lộ trình.",

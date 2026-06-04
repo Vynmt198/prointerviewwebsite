@@ -3,9 +3,9 @@
  * Hero headline riêng (lớn hơn section).
  */
 // Hero headline — clamp responsive; desktop lg+ override 5.25rem trong theme.css
-export const HOME_HERO_TITLE_CLAMP = "clamp(2.0rem, 7.5vw, 9rem)";
+export const HOME_HERO_TITLE_CLAMP = "clamp(1.5rem, 5vw, 9rem)";
 /** Tiêu đề section Home (how-it-works, CV, Mentor, Khóa học, testimonials). */
-export const HOME_SECTION_TITLE_CLAMP = "clamp(2.25rem, 3.5vw, 3.25rem)";
+export const HOME_SECTION_TITLE_CLAMP = "clamp(1.5rem, 3.5vw, 3.25rem)";
 
 /** Mô tả / bullet section Home — một cỡ chữ cho CV, Khóa học, Mentor, How-it-works, testimonials */
 const HOME_SECTION_BODY =
@@ -13,7 +13,7 @@ const HOME_SECTION_BODY =
 
 export const homeSectionClasses = {
   badge:
-    "inline-flex items-center gap-2 rounded-full border border-violet-400/30 bg-violet-500/10 px-3.5 py-1 text-sm font-semibold text-violet-700 sm:text-base",
+    "inline-flex items-center gap-2 rounded-full border border-violet-400/30 bg-violet-500/10 px-3.5 py-1 font-semibold text-violet-700 text-xs sm:text-sm",
   /** gap-[0.25rem] = khoảng cách cố định giữa 2 dòng tiêu đề */
   title:
     "flex max-w-2xl flex-col gap-[0.25rem] font-headline font-extrabold leading-none tracking-tight text-[#1a1b23]",
@@ -22,9 +22,9 @@ export const homeSectionClasses = {
   titleLineSecond: "block w-full",
   body: `max-w-2xl ${HOME_SECTION_BODY}`,
   cvShowcaseBadge:
-    "inline-flex items-center gap-2 rounded-full border border-violet-400/30 bg-violet-500/10 px-3.5 py-1 font-semibold text-violet-700 text-[0.975rem] sm:text-[1.1rem]",
+    "inline-flex items-center gap-2 rounded-full border border-violet-400/30 bg-violet-500/10 px-3.5 py-1 font-semibold text-violet-700 text-xs sm:text-sm",
   cvShowcaseBody:
-    "max-w-2xl text-pretty text-base font-medium leading-relaxed text-slate-600 sm:text-base",
+    "max-w-2xl text-pretty text-sm font-medium leading-relaxed text-slate-600 sm:text-lg",
   coursesBody:
     "max-w-2xl text-pretty text-base font-medium leading-relaxed text-slate-600 sm:text-lg",
   coursesBulletList:
