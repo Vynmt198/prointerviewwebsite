@@ -471,7 +471,7 @@ export function Courses() {
             title={
               <>
                 Học kỹ năng,{" "}
-                <span className="bg-gradient-to-r from-[#6d2fd6] to-[#a66ff8] bg-clip-text text-transparent">
+                <span className="text-[#8037f4]">
                   tự tin hơn khi ứng tuyển
                 </span>
               </>
