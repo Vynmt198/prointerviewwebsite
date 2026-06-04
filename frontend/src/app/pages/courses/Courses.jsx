@@ -477,7 +477,7 @@ export function Courses() {
               </>
             }
             subtitle="Các khóa học do Mentor xây dựng, giúp bạn bổ sung kỹ năng cần thiết cho hành trình ứng tuyển."
-            subtitleClassName="mt-3 max-w-2xl text-base font-medium leading-relaxed text-violet-700/90"
+            subtitleClassName="mt-3 max-w-2xl text-base font-medium leading-relaxed text-slate-600"
           />
 
           <div className="w-full rounded-3xl border border-violet-200/80 bg-white px-5 py-5 shadow-sm sm:px-7 sm:py-6">

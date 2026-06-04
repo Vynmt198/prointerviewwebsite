@@ -560,7 +560,7 @@ export function Interview() {
               </>
             }
             subtitle="Từ CV của bạn, ProInterview tạo buổi phỏng vấn thử với HR AI và góp ý sau từng câu trả lời để bạn tự tin hơn trước buổi thật."
-            subtitleClassName="mt-3 max-w-2xl text-base font-medium leading-relaxed text-violet-700/90"
+            subtitleClassName="mt-3 max-w-2xl text-base font-medium leading-relaxed text-slate-600"
           />
 
         <div className={CV_JD_CARD_CLASS}>

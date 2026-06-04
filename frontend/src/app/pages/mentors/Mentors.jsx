@@ -288,7 +288,7 @@ export function Mentors() {
               </>
             }
             subtitle="Kết nối với Mentor để có thêm góc nhìn thực tế từ ngành, hiểu kỳ vọng của nhà tuyển dụng và chuẩn bị tự tin hơn cho buổi phỏng vấn thật."
-            subtitleClassName="mt-3 max-w-2xl text-base font-medium leading-relaxed text-violet-700/90"
+            subtitleClassName="mt-3 max-w-2xl text-base font-medium leading-relaxed text-slate-600"
             className="mb-6"
           />
 

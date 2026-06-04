@@ -223,7 +223,7 @@ export function Pricing() {
               </>
             }
             subtitle={PRICING_SUBTITLE}
-            subtitleClassName="mt-3 max-w-2xl text-base font-medium leading-relaxed text-violet-700/90"
+            subtitleClassName="mt-3 max-w-2xl text-base font-medium leading-relaxed text-slate-600"
           />
 
           <BillingToggle billing={billing} onChange={setBilling} savePercent={YEARLY_SAVE_PCT} />
