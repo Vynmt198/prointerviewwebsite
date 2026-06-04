@@ -30,7 +30,7 @@ import {
 } from "../../utils/interviewsApi";
 import { useDIDStream } from "../../hooks/useDIDStream";
 import { useFaceAnalysis } from "../../hooks/useFaceAnalysis";
-import { AILipSyncAvatar } from "../../components/interview/AILipSyncAvatar";
+// AILipSyncAvatar removed — portrait now renders as full-panel img in Nhánh 1/2
 import { MentorPageShell } from "../../components/mentor/MentorPageShell";
 import { InterviewStepBar } from "../../components/interview/InterviewStepBar";
 import { CUSTOMER_SHELL_GUTTER, CUSTOMER_SHELL_MAX } from "../../components/layout/customerShellLayout";
@@ -507,6 +507,10 @@ export default function InterviewRoom() {
   const [didSessionExpired, setDidSessionExpired] = useState(false);
   const isDIDActive = !didSessionExpired && Boolean(DID_API_KEY) && didStatus !== "error";
 
+  // True only when the D-ID WebRTC video element has actually started playing frames.
+  // Controls opacity of the video overlay on top of the portrait background.
+  const [didVideoReady, setDidVideoReady] = useState(false);
+
   /* ── Web Speech TTS fallback (khi D-ID không khả dụng) ── */
   const ttsAvailable = typeof window !== "undefined" && Boolean(window.speechSynthesis);
   const [ttsSpeaking, setTtsSpeaking] = useState(false);
@@ -556,7 +560,7 @@ export default function InterviewRoom() {
   const lastSpokenQRef     = useRef(-1);
   const lastTTSSpokenQRef  = useRef(-1); // guard riêng cho TTS, tách khỏi D-ID
   const ttsUtteranceRef    = useRef(null);
-  const noopAttachVideo    = useCallback(() => {}, []); // stable no-op cho AILipSyncAvatar khi không dùng D-ID
+  const noopAttachVideo    = useCallback(() => {}, []); // stable no-op cho Nhánh 3 (pure video fallback)
 
   /* ── Camera video ref (shared with FaceMesh hook) ─────── */
   const cameraVideoRef = useRef(null);
@@ -1319,16 +1323,50 @@ export default function InterviewRoom() {
               />
             )}
 
-            {/* ── Nhánh 1: D-ID WebRTC (lipsync thật) — dùng khi không có pregen ── */}
+            {/* ── Nhánh 1: D-ID WebRTC — portrait full panel + video overlay khi stream sẵn sàng ── */}
             {!currentVideoUrl && isDIDActive && (
               <>
-                <div className="absolute inset-0 pointer-events-none"
-                  style={{ background: "radial-gradient(ellipse at 50% 48%, rgba(110,53,232,0.22) 0%, transparent 68%)" }} />
-                <div className="absolute inset-0 flex items-center justify-center">
-                  {/* sourceImageUrl: portrait shows while D-ID video stream is loading/connecting;
-                      component switches to live video automatically when onPlay fires */}
-                  <AILipSyncAvatar isSpeaking={didStatus === "speaking"} didStatus={didStatus} attachVideo={attachVideo} size={220} sourceImageUrl={DID_AVATAR_URLS[hrGender]} />
-                </div>
+                {/* Portrait fills the entire panel — visible while D-ID connects or when idle */}
+                <img
+                  src={DID_AVATAR_URLS[hrGender]}
+                  alt={HR_NAMES[hrGender]}
+                  style={{
+                    position: "absolute", inset: 0,
+                    width: "100%", height: "100%",
+                    objectFit: "cover", objectPosition: "center top",
+                  }}
+                />
+                {/* D-ID WebRTC video — overlays portrait when stream is actually playing */}
+                <video
+                  ref={(el) => attachVideo(el)}
+                  autoPlay
+                  playsInline
+                  onPlay={() => setDidVideoReady(true)}
+                  onEnded={() => setDidVideoReady(false)}
+                  onEmptied={() => setDidVideoReady(false)}
+                  style={{
+                    position: "absolute", inset: 0,
+                    width: "100%", height: "100%",
+                    objectFit: "cover",
+                    opacity: didVideoReady ? 1 : 0,
+                    transition: "opacity 0.5s ease",
+                  }}
+                />
+                {/* Subtle connecting indicator (no full overlay — portrait stays visible) */}
+                {didStatus === "connecting" && (
+                  <div style={{
+                    position: "absolute", bottom: 48, left: "50%", transform: "translateX(-50%)",
+                    background: "rgba(13,8,32,0.75)", backdropFilter: "blur(8px)",
+                    borderRadius: 20, padding: "4px 14px",
+                  }}>
+                    <span style={{ color: "rgba(180,155,255,0.9)", fontSize: 12, fontWeight: 600 }}>Kết nối...</span>
+                  </div>
+                )}
+                {/* Subtle inset glow when speaking — replaces the old ring/bung effects */}
+                {didStatus === "speaking" && (
+                  <div className="absolute inset-0 pointer-events-none rounded-xl"
+                    style={{ boxShadow: "inset 0 0 60px rgba(139,77,255,0.35)" }} />
+                )}
                 {hrPhase === "asking" && (didStatus === "speaking" || didStatus === "connected") && (
                   <div className="absolute top-3 right-3 z-10">
                     <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold"
@@ -1352,22 +1390,25 @@ export default function InterviewRoom() {
               </>
             )}
 
-            {/* ── Nhánh 2: TTS fallback — ảnh HR Cloudinary + animate khi nói ── */}
+            {/* ── Nhánh 2: TTS fallback — portrait full panel, subtle glow khi nói ── */}
             {!currentVideoUrl && !isDIDActive && ttsAvailable && (
               <>
-                <div className="absolute inset-0 pointer-events-none"
-                  style={{ background: "radial-gradient(ellipse at 50% 48%, rgba(110,53,232,0.22) 0%, transparent 68%)" }} />
-                <div className="absolute inset-0 flex items-center justify-center">
-                  {/* sourceImageUrl → hiện ảnh portrait Cloudinary thay vì SVG cartoon */}
-                  <AILipSyncAvatar
-                    isSpeaking={ttsSpeaking}
-                    didStatus="idle"
-                    attachVideo={noopAttachVideo}
-                    size={220}
-                    sourceImageUrl={DID_AVATAR_URLS[hrGender]}
-                  />
-                </div>
+                {/* Portrait fills the entire panel */}
+                <img
+                  src={DID_AVATAR_URLS[hrGender]}
+                  alt={HR_NAMES[hrGender]}
+                  style={{
+                    position: "absolute", inset: 0,
+                    width: "100%", height: "100%",
+                    objectFit: "cover", objectPosition: "center top",
+                  }}
+                />
+                {/* Inset glow when TTS is speaking — no rings, no expanding effects */}
                 {ttsSpeaking && (
+                  <div className="absolute inset-0 pointer-events-none rounded-xl"
+                    style={{ boxShadow: "inset 0 0 60px rgba(139,77,255,0.35)" }} />
+                )}
+                {hrPhase === "asking" && ttsSpeaking && (
                   <div className="absolute top-3 right-3 z-10">
                     <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold"
                       style={{ background: "rgba(110,53,232,0.85)", backdropFilter: "blur(8px)" }}>
@@ -1376,7 +1417,7 @@ export default function InterviewRoom() {
                     </div>
                   </div>
                 )}
-                {!ttsSpeaking && hrPhase === "listening" && isListening && (
+                {hrPhase === "listening" && isListening && (
                   <div className="absolute top-3 right-3 z-10">
                     <div className="flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-semibold text-white"
                       style={{ background: "rgba(110,53,232,0.92)", backdropFilter: "blur(8px)" }}>
