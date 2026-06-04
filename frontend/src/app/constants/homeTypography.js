@@ -24,7 +24,7 @@ export const homeSectionClasses = {
   cvShowcaseBadge:
     "inline-flex items-center gap-2 rounded-full border border-violet-400/30 bg-violet-500/10 px-3.5 py-1 font-semibold text-violet-700 text-[0.975rem] sm:text-[1.1rem]",
   cvShowcaseBody:
-    "max-w-2xl text-pretty text-base font-medium leading-relaxed text-slate-600 sm:text-lg",
+    "max-w-2xl text-pretty text-base font-medium leading-relaxed text-slate-600 sm:text-base",
   coursesBody:
     "max-w-2xl text-pretty text-base font-medium leading-relaxed text-slate-600 sm:text-lg",
   coursesBulletList:

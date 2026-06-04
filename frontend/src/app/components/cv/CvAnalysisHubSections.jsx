@@ -89,7 +89,7 @@ export function CvAnalysisHubHero({ onJd, onField, navShellAligned = false }) {
                   </span>
                   <span className="mt-0.5 block text-[#1a1b23] whitespace-nowrap">nhà tuyển dụng?</span>
                 </span>
-                <p className="mt-2 max-w-[min(100%,30rem)] text-sm font-medium leading-relaxed text-slate-600 sm:text-lg lg:max-w-none">
+                <p className="mt-2 max-w-[min(100%,30rem)] text-sm font-medium leading-relaxed text-slate-600 sm:text-base lg:max-w-none">
                   <span className="hidden lg:block whitespace-nowrap">
                     {CV_SHOWCASE_COPY.body}
                   </span>
