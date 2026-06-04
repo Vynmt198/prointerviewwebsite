@@ -496,7 +496,7 @@ export default function InterviewRoom() {
     "male";
 
   /* ── D-ID lipsync ─────────────────────────────────────── */
-  const { status: didStatus, connect: didConnect, disconnect: didDisconnect,
+  const { status: didStatus, error: didError, connect: didConnect, disconnect: didDisconnect,
           speakWithText, attachVideo } = useDIDStream({
     apiKey: DID_API_KEY,
     sourceImageUrl: DID_AVATAR_URLS[hrGender],
@@ -763,6 +763,9 @@ export default function InterviewRoom() {
     if (hasPregenVideos || phase !== "question" || !DID_API_KEY) return;
     if (didStatus === "connected" || didStatus === "connecting") return;
     if (didConnectAttemptsRef.current >= 3) return;
+    // 401/403 = auth/plan failure — retrying with the same key will never succeed.
+    // Bail out immediately so TTS fallback kicks in without waiting for 3 retry cycles.
+    if (didError && /40[13]|Forbidden|Unauthorized/i.test(didError)) return;
     didConnectAttemptsRef.current += 1;
     didConnect();
   }, [phase, didStatus]); // eslint-disable-line react-hooks/exhaustive-deps
