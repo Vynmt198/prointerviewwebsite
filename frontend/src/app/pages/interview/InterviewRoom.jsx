@@ -252,14 +252,17 @@ function HRVideoPanel({ questionVideoUrl, hrPhase, onAskingDone, isListening, mu
     return () => { v.removeEventListener("canplay", onCanPlay); v.removeEventListener("error", onError); v.pause(); };
   }, [questionVideoUrl]);
 
-  // 8s fallback timer, chỉ dùng khi không có TTS (muted=false)
+  // Fallback timer: fires if video never starts or errors out within 8s.
+  // Skipped when videoState === "playing" — the video is running, let onEnded handle
+  // completion naturally. Without this guard, 12-15s questions get cut at 8s and
+  // recording starts before the avatar finishes speaking.
   useEffect(() => {
-    if (hrPhase !== "asking" || muted) return;
+    if (hrPhase !== "asking" || muted || videoState === "playing") return;
     const t = setTimeout(() => {
       if (!doneRef.current) { doneRef.current = true; setVideoState("done"); onAskingDone?.(); }
     }, 8000);
     return () => clearTimeout(t);
-  }, [hrPhase, onAskingDone, muted]);
+  }, [hrPhase, onAskingDone, muted, videoState]);
 
   const handleEnded = () => {
     if (doneRef.current) return;
