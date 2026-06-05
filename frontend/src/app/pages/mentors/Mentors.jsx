@@ -16,7 +16,7 @@ import {
   MENTOR_FILTER_FIELDS,
   mentorMatchesFilterField,
 } from "../../constants/mentorFilterFields";
-import { CustomerPageHeader } from "../../components/layout/CustomerPageHeader";
+import { CustomerPageHeader, CustomerPageSplitTitle } from "../../components/layout/CustomerPageHeader";
 import { CUSTOMER_SHELL_GUTTER, CUSTOMER_SHELL_MAX } from "../../components/layout/customerShellLayout";
 import {
   ExploreFilterSidebar,
@@ -274,21 +274,16 @@ export function Mentors() {
               <p className="font-bold">Credit đổi mentor</p>
               <p className="mt-1 text-xs leading-relaxed text-violet-900/90">
                 Bạn có <strong>{Number(rebookCredit.creditVnd || 0).toLocaleString("vi-VN")}₫</strong> từ lịch mentor đã
-                hủy. Chọn <strong>mentor khác</strong>, nếu giá buổi mới ≤ credit thì{" "}
+                hủy. Chọn <strong>mentor khác</strong> — nếu giá buổi mới ≤ credit thì{" "}
                 <strong>không cần chuyển khoản lại</strong>.
               </p>
             </div>
           ) : null}
 
           <CustomerPageHeader
-            title={
-              <>
-                <span className="font-extrabold text-[#630ed4]">Kết nối Mentor</span>{" "}
-                <span className="font-extrabold text-[#1a1b23]">phù hợp</span>
-              </>
-            }
+            title={<CustomerPageSplitTitle accent="Kết nối Mentor" rest="phù hợp" />}
             subtitle="Kết nối với Mentor để có thêm góc nhìn thực tế từ ngành, hiểu kỳ vọng của nhà tuyển dụng và chuẩn bị tự tin hơn cho buổi phỏng vấn thật."
-            subtitleClassName="mt-3 max-w-full text-sm font-medium leading-relaxed text-slate-600 sm:text-base"
+            subtitleClassName="mt-3 max-w-2xl text-base font-medium leading-relaxed text-violet-700/90"
             className="mb-6"
           />
 

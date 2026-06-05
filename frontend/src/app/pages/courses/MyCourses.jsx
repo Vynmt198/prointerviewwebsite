@@ -8,14 +8,14 @@ import { enrollmentAccessGranted } from "../../utils/enrollmentAccess.js";
 import { mediaSrc, DEFAULT_COURSE_THUMB, avatarSrc } from "../../utils/mediaUrl";
 import { ImageWithFallback } from "../../components/figma/ImageWithFallback";
 import { MentorPageShell } from "../../components/mentor/MentorPageShell";
-import { CustomerPageHeader } from "../../components/layout/CustomerPageHeader";
+import { CustomerPageHeader, CustomerPageSplitTitle } from "../../components/layout/CustomerPageHeader";
 import { CUSTOMER_SHELL_GUTTER, CUSTOMER_SHELL_MAX } from "../../components/layout/customerShellLayout";
 
 function CourseCard({ item, onDetails }) {
   const { course } = item;
   const description =
     course.description?.trim() ||
-    `Khóa học từ ${course.mentorName || "mentor"}, học theo lộ trình video ngắn, dễ áp dụng.`;
+    `Khóa học từ ${course.mentorName || "mentor"} — học theo lộ trình video ngắn, dễ áp dụng.`;
 
   return (
     <article className="group flex h-full flex-col overflow-hidden rounded-2xl border border-violet-200/70 bg-white shadow-sm transition-shadow hover:border-violet-300/80 hover:shadow-md">
@@ -37,7 +37,7 @@ function CourseCard({ item, onDetails }) {
           <button
             type="button"
             onClick={onDetails}
-            className="text-xs font-semibold text-[#8037f4] transition-colors hover:text-[#630ed4] hover:underline sm:text-sm"
+            className="text-xs font-semibold text-[#8037f4] transition-colors hover:text-[#6d2fd6] hover:underline sm:text-sm"
           >
             Chi tiết
           </button>
@@ -139,11 +139,7 @@ export function MyCourses() {
       <div className={`relative z-10 flex flex-col pb-10 pt-8 sm:pt-10 ${CUSTOMER_SHELL_GUTTER}`}>
         <div className={`${CUSTOMER_SHELL_MAX} w-full`}>
           <CustomerPageHeader
-            title={
-              <>
-                Khóa học <span className="text-[#630ed4]">của bạn</span>
-              </>
-            }
+            title={<CustomerPageSplitTitle accent="Khóa học" rest="của bạn" />}
             subtitle="Tiếp tục xem lại bài cũ và theo dõi tiến độ trong các khóa đã mua."
             className="mb-6"
           />

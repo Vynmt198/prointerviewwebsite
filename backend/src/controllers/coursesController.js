@@ -5,6 +5,7 @@ import { enrollmentAccessGranted } from "../helpers/enrollmentAccess.js";
 import { mentorCanPeerPreviewCourse } from "../helpers/mentorPeerPreviewAccess.js";
 import {
   applyPaidEnrollmentCountsToCourses,
+  buildMentorCourseListSummary,
   countPaidEnrollmentsByCourseIds,
 } from "../services/courseStatsService.js";
 import {
@@ -110,12 +111,15 @@ export const CoursesController = {
     try {
       const mentor = await Mentor.findOne({ userId: req.userId }).select("_id").lean();
       if (!mentor) return res.status(403).json({ success: false, error: "Tài khoản chưa là mentor." });
-      const courses = await Course.find({ mentorId: mentor._id }).sort({ updatedAt: -1 });
-      const serialized = courses.map((c) => serializeCourseForApi(c));
+      const courseRows = await Course.find({ mentorId: mentor._id }).sort({ updatedAt: -1 });
+      const serialized = courseRows.map((c) => serializeCourseForApi(c));
       const countMap = await countPaidEnrollmentsByCourseIds(serialized.map((c) => c._id));
+      const coursesWithCounts = applyPaidEnrollmentCountsToCourses(serialized, countMap);
+      const summary = await buildMentorCourseListSummary(coursesWithCounts);
       return res.json({
         success: true,
-        courses: applyPaidEnrollmentCountsToCourses(serialized, countMap),
+        courses: coursesWithCounts,
+        summary,
       });
     } catch (error) {
       return next(error);
