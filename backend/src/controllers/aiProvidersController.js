@@ -24,6 +24,7 @@ import { isElevenLabsEnabled, getTTSProvider, synthesizeSpeech, listVoices } fro
 import { isHumeEnabled, getEmotionProvider, analyzeAudioEmotion, analyzeFaceEmotion } from "../services/emotionService.js";
 import {
   isDIDEnabled,
+  isCircuitOpen,
   getAvatarProvider,
   getDIDUsage,
   listDIDPresenters,
@@ -65,10 +66,13 @@ export const AIProvidersController = {
           googleVision: Boolean(process.env.GOOGLE_VISION_API_KEY),
         },
         avatar: {
-          provider:       getAvatarProvider(),
-          did:            isDIDEnabled(),
-          mode:           "express",  // express = async REST (pre-generated MP4)
-          redis:          Boolean(process.env.UPSTASH_REDIS_REST_URL),
+          provider:        getAvatarProvider(),
+          // did=false khi key chưa set HOẶC circuit breaker đang open (D-ID degraded)
+          // → frontend dùng giá trị này để quyết định có call pregen không
+          did:             isDIDEnabled() && !isCircuitOpen(),
+          circuitOpen:     isCircuitOpen(),
+          mode:            "express",  // express = async REST (pre-generated MP4)
+          redis:           Boolean(process.env.UPSTASH_REDIS_REST_URL),
           elevenlabsAudio: isElevenLabsEnabled(),  // ElevenLabs feeds into D-ID
         },
       },
@@ -241,8 +245,16 @@ export const AIProvidersController = {
 
     logger.info("pregen_sync_start", { userId: req.userId, count: questions.length, gender });
 
+    // Wire client disconnect → abort D-ID polling immediately.
+    // When the frontend's 45s Promise.race times out and closes the connection,
+    // req fires 'close' → signal aborts → pollDIDTalk stops → no more D-ID calls.
+    const ac = new AbortController();
+    req.on("close", () => {
+      if (!res.headersSent) ac.abort();
+    });
+
     try {
-      const result = await pregenerateSync(questions, { gender, voiceId });
+      const result = await pregenerateSync(questions, { gender, voiceId }, ac.signal);
 
       logger.info("pregen_sync_ok", {
         userId:    req.userId,

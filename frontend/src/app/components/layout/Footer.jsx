@@ -49,8 +49,9 @@ const NAV_LINKS = {
     { label: "Kết nối Mentor 1:1", path: "/mentors" },
     { label: "Khóa học từ Mentor", path: "/courses" },
   ],
-  "Hỗ trợ": [
-    { label: "Hồ sơ của tôi", path: "/profile" },
+  "Về ProInterview": [
+    { label: "Giới thiệu", path: "/about" },
+    { label: "Thành tựu", path: "/achievements" },
     { label: "Trung tâm trợ giúp", path: "#" },
     { label: "Hướng dẫn sử dụng", path: "#" },
     { label: "Điều khoản dịch vụ", path: "/terms" },
@@ -101,7 +102,7 @@ const SOCIAL_LINKS = [
 ];
 
 /* ══════════════════════════════════════════════════════════════
-   DARK variant — trang nền tối (tùy chọn)
+   DARK variant, trang nền tối (tùy chọn)
 ══════════════════════════════════════════════════════════════ */
 function FooterDark() {
   const navigate = useNavigate();
@@ -117,9 +118,9 @@ function FooterDark() {
         boxShadow: "0 -1px 0 rgba(0, 0, 0, 0.45)",
       }}
     >
-      {/* Ánh violet rất nhẹ — không làm sáng cả khối */}
+      {/* Ánh violet rất nhẹ, không làm sáng cả khối */}
       <div
-        className="pointer-events-none absolute z-0 h-[min(72vw,520px)] w-[min(72vw,520px)] rounded-full bg-[#6d2fd6]/14 blur-[100px] sm:h-[520px] sm:w-[520px] sm:blur-[110px]"
+        className="pointer-events-none absolute z-0 h-[min(72vw,520px)] w-[min(72vw,520px)] rounded-full bg-[#630ed4]/14 blur-[100px] sm:h-[520px] sm:w-[520px] sm:blur-[110px]"
         style={{ left: "-14%", top: "38%" }}
         aria-hidden
       />
@@ -232,7 +233,7 @@ function FooterDark() {
 }
 
 /* ══════════════════════════════════════════════════════════════
-   LIGHT variant — cùng nền / chữ với trang home (#f3f0f9)
+   LIGHT variant, cùng nền / chữ với trang home (#f3f0f9)
 ══════════════════════════════════════════════════════════════ */
 function FooterLight() {
   const navigate = useNavigate();
@@ -260,7 +261,7 @@ function FooterLight() {
               <p className="mb-2 text-xs font-bold uppercase tracking-[0.15em] text-slate-500">Liên hệ</p>
               <a
                 href={`mailto:${CONTACT_EMAIL}`}
-                className="inline-flex max-w-[min(100%,320px)] items-start gap-2 break-all text-sm font-semibold text-[#8037f4] underline-offset-2 transition-colors hover:text-[#6d2fd6] hover:underline"
+                className="inline-flex max-w-[min(100%,320px)] items-start gap-2 break-all text-sm font-semibold text-[#8037f4] underline-offset-2 transition-colors hover:text-[#630ed4] hover:underline"
               >
                 <Mail className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
                 {CONTACT_EMAIL}

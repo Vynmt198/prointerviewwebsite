@@ -4,7 +4,7 @@ import { SidebarProvider, SidebarInset, SidebarTrigger } from "../../components/
 import { AdminSidebar } from "../../components/layout/AdminSidebar";
 import { MentorPageShell } from "../../components/mentor/MentorPageShell";
 
-/** Tiêu đề header — thứ tự từ cụ thể → tổng quan (regex). */
+/** Tiêu đề header, thứ tự từ cụ thể → tổng quan (regex). */
 const ADMIN_HEADER_RULES = [
   [/^\/admin\/users\/[^/]+$/, "Chi tiết người dùng"],
   [/^\/admin\/users$/, "Người dùng"],
@@ -20,6 +20,7 @@ const ADMIN_HEADER_RULES = [
   [/^\/admin\/finance$/, "Tài chính"],
   [/^\/admin\/content\/questions$/, "Phỏng vấn AI"],
   [/^\/admin\/content\/courses$/, "Khóa học"],
+  [/^\/admin\/achievements$/, "Quản lý Thành tựu"],
   [/^\/admin\/analytics$/, "Phân tích"],
   [/^\/admin\/reviews$/, "Đánh giá"],
   [/^\/admin\/support$/, "Hỗ trợ"],

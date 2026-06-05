@@ -885,7 +885,7 @@ export function CourseLearning() {
 
   const [course, setCourse] = useState(null);
   const [enrollment, setEnrollment] = useState(null);
-  /** Ghi danh CK đang chờ admin — không set vào `enrollment` để tránh coi như đã học được. */
+  /** Ghi danh CK đang chờ admin, không set vào `enrollment` để tránh coi như đã học được. */
   const [paymentPendingInfo, setPaymentPendingInfo] = useState(null);
   const [completedLessons, setCompletedLessons] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -1220,7 +1220,7 @@ export function CourseLearning() {
     >
       {peerPreviewMode ? (
         <div className="shrink-0 border-b border-violet-200 bg-violet-50 px-4 py-2 text-center text-sm text-violet-950 dark:border-violet-500/30 dark:bg-violet-950/40 dark:text-violet-100">
-          Xem trước đánh giá chéo — chỉ xem bài, không lưu tiến độ.
+          Xem trước đánh giá chéo, chỉ xem bài, không lưu tiến độ.
         </div>
       ) : null}
       {/* ── Top bar (Coursera / Udemy: breadcrumb + progress) ── */}
@@ -1379,7 +1379,7 @@ export function CourseLearning() {
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                   disabled={notesLoading}
-                  placeholder="Nhập ghi chú của bạn ở đây... Ví dụ: STAR method — S: mô tả bối cảnh rõ ràng trong 1-2 câu..."
+                  placeholder="Nhập ghi chú của bạn ở đây... Ví dụ: STAR method, S: mô tả bối cảnh rõ ràng trong 1-2 câu..."
                   rows={10}
                   className="w-full resize-none rounded-2xl border border-slate-200/80 bg-white p-5 text-[15px] font-normal leading-7 text-slate-800 shadow-sm outline-none transition-all placeholder:text-slate-500 focus:border-violet-300 focus:ring-2 focus:ring-violet-100/80 disabled:opacity-60 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:placeholder:text-slate-500 dark:focus:border-violet-500/40 dark:focus:ring-violet-900/30"
                 />
@@ -1416,7 +1416,7 @@ export function CourseLearning() {
           </div>
         </div>
 
-        {/* Desktop curriculum — có thể thu gọn */}
+        {/* Desktop curriculum, có thể thu gọn */}
         <aside
           id="course-curriculum-panel"
           className={`hidden shrink-0 flex-col overflow-hidden border-l border-slate-200/80 bg-[#faf9fc] shadow-sm transition-[width] duration-300 ease-out dark:border-slate-800 dark:bg-slate-900 lg:flex ${
@@ -1468,7 +1468,7 @@ export function CourseLearning() {
           </>
         )}
 
-        {/* Tab mép phải — mở lại nội dung khi đã thu gọn */}
+        {/* Tab mép phải, mở lại nội dung khi đã thu gọn */}
         {!curriculumOpen && (
           <button
             type="button"

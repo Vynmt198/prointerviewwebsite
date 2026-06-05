@@ -203,7 +203,7 @@ textarea {
 }
 
 .btn-gradient:hover {
-  background: #6d2fd6;
+  background: #630ed4;
   transform: translateY(-1px);
   box-shadow: 0 6px 20px rgba(128, 55, 244, 0.4);
 }

@@ -18,7 +18,7 @@ function filled(v) {
 
 function formatMonthLabel(ym) {
   const s = String(ym ?? "").trim();
-  if (!/^\d{4}-\d{2}$/.test(s)) return s || "—";
+  if (!/^\d{4}-\d{2}$/.test(s)) return s || "-";
   const [y, m] = s.split("-");
   return `${m}/${y}`;
 }
@@ -68,10 +68,10 @@ export function serializeEducationHistory(entries) {
 export function formatEducationEntryPeriod(entry) {
   if (!entry) return "";
   if (entry.isCurrent && entry.startMonth) {
-    return `${formatMonthLabel(entry.startMonth)} — Hiện tại`;
+    return `${formatMonthLabel(entry.startMonth)} - Hiện tại`;
   }
   if (entry.startMonth && entry.endMonth) {
-    return `${formatMonthLabel(entry.startMonth)} — ${formatMonthLabel(entry.endMonth)}`;
+    return `${formatMonthLabel(entry.startMonth)} - ${formatMonthLabel(entry.endMonth)}`;
   }
   if (entry.startMonth) return `Từ ${formatMonthLabel(entry.startMonth)}`;
   if (entry.isCurrent) return "Đang học";
@@ -82,8 +82,8 @@ export function formatEducationHistoryLines(entries) {
   const list = Array.isArray(entries) ? entries : [];
   const lines = [];
   for (const e of list) {
-    const school = e.school || "—";
-    const major = e.major ? ` — ${e.major}` : "";
+    const school = e.school || "-";
+    const major = e.major ? ` - ${e.major}` : "";
     const degree = e.degree ? `${e.degree} · ` : "";
     const period = formatEducationEntryPeriod(e);
     const periodPart = period ? ` (${period})` : "";

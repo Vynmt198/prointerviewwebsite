@@ -23,7 +23,6 @@ import { MentorPageShell } from "../../components/mentor/MentorPageShell";
 import { fetchMentorPeerReviews, submitMentorPeerReview } from "../../utils/mentorApi";
 import { toastApiError, tryApi } from "../../utils/apiToast";
 import { toast } from "sonner";
-import { mediaSrc, DEFAULT_COURSE_THUMB } from "../../utils/mediaUrl";
 
 const CATEGORY_LABELS = {
    all: "Tất cả lĩnh vực",
@@ -97,7 +96,9 @@ export function MentorPeerReview() {
          setCoursesForReview(
             res.items.map((item) => ({
                ...item,
-               cover: item.cover || "",
+               cover:
+                  item.cover ||
+                  "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&q=80&w=400",
             })),
          );
       })();
@@ -245,11 +246,7 @@ export function MentorPeerReview() {
                   {filtered.map((course) => (
                      <div key={course.id} className="glass-card overflow-hidden group">
                         <div className="relative h-48 overflow-hidden">
-                           <img
-                             src={mediaSrc(course.cover, DEFAULT_COURSE_THUMB)}
-                             alt=""
-                             className="h-full w-full object-cover transition-transform duration-1000 group-hover:scale-110"
-                           />
+                           <img src={course.cover} className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" />
                            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
                            <div className="absolute top-6 left-6 flex gap-2">
                               <span className="rounded-lg border border-violet-200 bg-violet-50 px-3 py-1 text-xs font-semibold text-violet-800 backdrop-blur-md">

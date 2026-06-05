@@ -665,6 +665,13 @@ export async function loginWithGoogle(body, req) {
     };
   }
 
+  /** Nâng resolution Google avatar từ s96-c → s400-c để tránh mờ */
+  function upgradeGooglePhotoRes(url) {
+    if (typeof url !== "string" || !url) return url;
+    // Dạng: ...=s96-c hoặc ...=s96 → đổi thành =s400-c
+    return url.replace(/=s\d+(-c)?$/, "=s400-c");
+  }
+
   let user = await User.findOne({
     $or: [{ googleId: sub }, { googleSub: sub }],
   }).select("+googleSub +authSessions");
@@ -680,11 +687,13 @@ export async function loginWithGoogle(body, req) {
           error: "Email này đã liên kết với tài khoản Google khác.",
         };
       }
-      const pic = typeof payload.picture === "string" ? payload.picture : undefined;
+      const pic = typeof payload.picture === "string" ? upgradeGooglePhotoRes(payload.picture) : undefined;
+      // Cập nhật avatar từ Google nếu: chưa có avatar, hoặc avatar hiện tại là Google URL (không phải file upload riêng)
+      const hasCustomUpload = typeof byEmail.avatar === "string" && byEmail.avatar.includes("/uploads/");
       await User.findByIdAndUpdate(byEmail._id, {
         $set: {
           googleId: sub,
-          ...(pic && !byEmail.avatar ? { avatar: pic } : {}),
+          ...(pic && !hasCustomUpload ? { avatar: pic } : {}),
         },
         $unset: { googleSub: 1 },
       });
@@ -700,7 +709,7 @@ export async function loginWithGoogle(body, req) {
       name,
       role: "customer",
       googleId: sub,
-      avatar: typeof payload.picture === "string" ? payload.picture : undefined,
+      avatar: typeof payload.picture === "string" ? upgradeGooglePhotoRes(payload.picture) : undefined,
     });
     user = await User.findById(user._id).select("+googleSub +authSessions");
   }

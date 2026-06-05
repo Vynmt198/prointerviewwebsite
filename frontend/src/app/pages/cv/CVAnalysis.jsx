@@ -122,7 +122,7 @@ function formatCvAnalyzerHttpError(status, body) {
 // ─── Constants ────────────────────────────────────────────────────────────────
 const DEFAULT_FIELD = "IT / Công nghệ";
 
-/** Ngành chọn được — các mục khác hiển thị badge «Sắp ra mắt». */
+/** Ngành chọn được, các mục khác hiển thị badge «Sắp ra mắt». */
 const FIELD_OPTIONS = [
   { label: DEFAULT_FIELD, available: true },
   { label: "Marketing", available: false },
@@ -144,7 +144,7 @@ function preventDragDefaults(e) {
   e.stopPropagation();
 }
 
-/** Chiều cao cố định — CV và JD luôn bằng nhau (chưa chọn / đã chọn) */
+/** Chiều cao cố định, CV và JD luôn bằng nhau (chưa chọn / đã chọn) */
 const UPLOAD_ZONE_HEIGHT =
   "flex h-[10.75rem] w-full flex-col items-center justify-between rounded-2xl border-2 border-dashed border-violet-200/90 bg-violet-50/25 px-5 py-4 text-center transition sm:h-[11rem] sm:px-6 sm:py-5";
 
@@ -197,7 +197,7 @@ function CvUploadDropZone({ kind, hasFile, fileName, fileSizeKb, onPick, onClear
           <p className="text-left text-xs font-bold leading-snug text-violet-950 sm:text-sm">{headline}</p>
         </div>
 
-        {/* Khối giữa cố định 2 dòng — tránh lệch chiều cao CV vs JD */}
+        {/* Khối giữa cố định 2 dòng, tránh lệch chiều cao CV vs JD */}
         <div className="flex min-h-[2.75rem] w-full max-w-sm flex-col items-center justify-center gap-0.5 px-1">
           {hasFile ? (
             <>
@@ -474,7 +474,7 @@ export function CVAnalysis() {
         };
 
         // Force-refresh the session BEFORE sending so we always have the
-        // freshest JWT — avoids the "Invalid JWT" 401 caused by stale tokens.
+        // freshest JWT, avoids the "Invalid JWT" 401 caused by stale tokens.
         // We deliberately do NOT send "apikey" as a header because this server's
         // CORS config blocks it (causes FunctionsFetchError / "Failed to fetch").
         const token = await getForceRefreshedToken();
@@ -487,7 +487,7 @@ export function CVAnalysis() {
           return;
         }
         
-        console.log("✅ CV Analysis — authenticated, token ready");
+        console.log("✅ CV Analysis, authenticated, token ready");
 
         let data;
 
@@ -569,7 +569,7 @@ export function CVAnalysis() {
           const strengths  = matchedSkills.slice(0, 6).map(sk => `Có kỹ năng "${sk}" phù hợp với yêu cầu JD`);
           const weaknesses = missingSkills.slice(0, 6).map(sk => `Thiếu kỹ năng "${sk}" mà JD yêu cầu`);
 
-          // Map rewritten_bullets → "fix" suggestions (hiển thị trước — high value)
+          // Map rewritten_bullets → "fix" suggestions (hiển thị trước, high value)
           const bulletSuggestions = (sugg.rewritten_bullets ?? []).map(b => ({
             type:          "fix",
             priority:      b.confidence === "high" ? "high" : b.confidence === "low" ? "low" : "medium",
@@ -592,7 +592,7 @@ export function CVAnalysis() {
             reason:        formatSkillSuggestionReason(item, {
               mode: routeMode === "field" ? "field" : "jd",
             }),
-            before:        `Chưa có trong CV — ước tính ${item.estimated_effort ?? "chưa rõ"}`,
+            before:        `Chưa có trong CV, ước tính ${item.estimated_effort ?? "chưa rõ"}`,
             after:
               item.acquisition_path && String(item.acquisition_path).trim() &&
               !/^(n\/a|không áp dụng)$/i.test(String(item.acquisition_path).trim())
@@ -621,10 +621,10 @@ export function CVAnalysis() {
                 credibility: s?.credibility?.score ?? 0,
               },
               scoreNotes: {
-                clarity:     s?.clarity?.reason     ?? (usedFallback ? "Chỉ phân tích cơ bản — không có điểm AI chi tiết." : ""),
-                structure:   s?.structure?.reason   ?? (usedFallback ? "Chỉ phân tích cơ bản — không có điểm AI chi tiết." : ""),
+                clarity:     s?.clarity?.reason     ?? (usedFallback ? "Chỉ phân tích cơ bản, không có điểm AI chi tiết." : ""),
+                structure:   s?.structure?.reason   ?? (usedFallback ? "Chỉ phân tích cơ bản, không có điểm AI chi tiết." : ""),
                 relevance:   s?.relevance?.reason   ?? (usedFallback ? `Ước tính từ tỷ lệ khớp từ khóa: ${Math.round(m.match_score ?? 0)}%` : ""),
-                credibility: s?.credibility?.reason ?? (usedFallback ? "Chỉ phân tích cơ bản — không có điểm AI chi tiết." : ""),
+                credibility: s?.credibility?.reason ?? (usedFallback ? "Chỉ phân tích cơ bản, không có điểm AI chi tiết." : ""),
               },
               strengths,
               weaknesses,
@@ -903,7 +903,7 @@ export function CVAnalysis() {
       {pageView === "history" && (
         <div className="px-4 py-5 sm:px-5 sm:py-6">
           <div className="flex items-center justify-between mb-4">
-            <p className="text-sm text-slate-600">Các phân tích đã lưu trên cloud — file gốc có thể tải lại</p>
+            <p className="text-sm text-slate-600">Các phân tích đã lưu trên cloud, file gốc có thể tải lại</p>
             <button onClick={loadHistory} className="flex items-center gap-1.5 text-xs font-medium text-[#8037f4] hover:underline">
               <RefreshCw className="w-3.5 h-3.5" /> Làm mới
             </button>
@@ -1045,8 +1045,8 @@ export function CVAnalysis() {
 
               {cvRemaining === 0 && !plans.starterPro && !plans.elitePro && (
                 <div className="mx-4 mb-0 mt-3 flex items-center justify-between gap-2 rounded-xl border border-amber-200/90 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-900 sm:mx-5">
-                  <span>Đã hết lượt miễn phí — nâng cấp để tiếp tục</span>
-                  <button type="button" onClick={() => navigate("/pricing")} className="font-bold text-[#6d2fd6] hover:underline">
+                  <span>Đã hết lượt miễn phí, nâng cấp để tiếp tục</span>
+                  <button type="button" onClick={() => navigate("/pricing")} className="font-bold text-[#630ed4] hover:underline">
                     Xem gói
                   </button>
                 </div>
@@ -1170,9 +1170,6 @@ export function CVAnalysis() {
                   <Zap className="h-5 w-5 shrink-0" strokeWidth={2.25} />
                   {primaryCtaLabel}
                 </button>
-                <p className="mt-2.5 text-center text-[10px] font-medium text-violet-600/90 sm:text-[11px]">
-                  Dữ liệu được xử lý an toàn · Gemini AI
-                </p>
               </div>
 
             </div>
@@ -1185,7 +1182,7 @@ export function CVAnalysis() {
                 <Loader2 className="w-10 h-10 text-white animate-spin" />
               </div>
               <h2 className="mb-3 text-xl font-semibold text-slate-900">Đang xử lý...</h2>
-              <p className="mb-8 text-sm text-slate-600">Hệ thống đang đọc file PDF và phân tích — vui lòng đợi.</p>
+              <p className="mb-8 text-sm text-slate-600">Hệ thống đang đọc file PDF và phân tích, vui lòng đợi.</p>
               <div className="mb-3 h-2.5 w-full overflow-hidden rounded-full bg-slate-200">
                 <div className="h-full rounded-full transition-all duration-700" style={{ width: `${progress}%`, background: "#8037f4" }} />
               </div>

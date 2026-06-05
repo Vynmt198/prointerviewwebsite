@@ -17,15 +17,44 @@ const ELEVENLABS_BASE = "https://api.elevenlabs.io/v1";
 
 function cfg() {
   return {
-    apiKey:  process.env.ELEVENLABS_API_KEY  ?? "",
-    voiceId: process.env.ELEVENLABS_VOICE_ID ?? "",
-    modelId: process.env.ELEVENLABS_MODEL_ID ?? "eleven_flash_v2_5",
+    apiKey:        process.env.ELEVENLABS_API_KEY         ?? "",
+    voiceId:       process.env.ELEVENLABS_VOICE_ID        ?? "", // default (female fallback)
+    voiceIdMale:   process.env.ELEVENLABS_VOICE_ID_MALE   ?? "", // David — giọng nam HR
+    voiceIdFemale: process.env.ELEVENLABS_VOICE_ID_FEMALE ?? "", // Sarah — giọng nữ HR
+    modelId:       process.env.ELEVENLABS_MODEL_ID        ?? "eleven_flash_v2_5",
   };
 }
 
+/**
+ * Kiểm tra voice ID có phải giá trị thật không.
+ * Loại bỏ placeholder dạng <...> (ví dụ: <voice ID vừa clone>) — những giá trị này
+ * khiến isElevenLabsEnabled() trả về true nhưng API call sẽ fail 404.
+ */
+function isRealVoiceId(id) {
+  if (!id || typeof id !== "string") return false;
+  const trimmed = id.trim();
+  if (!trimmed) return false;
+  // Placeholder pattern: bắt đầu < kết thúc > (e.g. "<voice ID vừa clone>")
+  if (trimmed.startsWith("<") && trimmed.endsWith(">")) return false;
+  return true;
+}
+
 export function isElevenLabsEnabled() {
-  const { apiKey, voiceId } = cfg();
-  return Boolean(apiKey && voiceId);
+  const { apiKey, voiceId, voiceIdMale, voiceIdFemale } = cfg();
+  // Enabled nếu có key VÀ ít nhất một voice ID thực sự hợp lệ (không phải placeholder)
+  return Boolean(apiKey && (isRealVoiceId(voiceId) || isRealVoiceId(voiceIdMale) || isRealVoiceId(voiceIdFemale)));
+}
+
+/**
+ * Trả về ElevenLabs voice ID tương ứng với giới tính HR.
+ * Priority: gender-specific → default ELEVENLABS_VOICE_ID → empty string
+ * @param {"male"|"female"} [gender="female"]
+ */
+export function getElevenLabsVoiceId(gender = "female") {
+  const { voiceId, voiceIdMale, voiceIdFemale } = cfg();
+  if (gender === "male"   && isRealVoiceId(voiceIdMale))   return voiceIdMale;
+  if (gender === "female" && isRealVoiceId(voiceIdFemale)) return voiceIdFemale;
+  return isRealVoiceId(voiceId) ? voiceId : ""; // trả "" nếu default cũng là placeholder
 }
 
 /**

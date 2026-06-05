@@ -7,20 +7,21 @@ import { requireLoginNavigate } from "../../utils/authGate";
 const HUB_VIEWPORT_STYLES = `
   @media (min-width: 1024px) {
     .cv-hub-viewport {
-      --cv-hub-scale: min(1, calc((100svh - 4.25rem) / 49.5rem));
-      height: calc(100svh - 4.75rem);
-      max-height: calc(100svh - 4.75rem);
-      overflow: hidden;
+      box-sizing: border-box;
+      min-height: calc(100svh - 4.75rem);
+      height: auto;
+      max-height: none;
+      overflow: visible;
       display: flex;
-      align-items: center;
-      justify-content: flex-start;
+      align-items: flex-start;
+      justify-content: center;
+      padding-top: clamp(1.5rem, 4vh, 2.5rem);
+      padding-bottom: clamp(2rem, 5vh, 3rem);
     }
-    /* Scale theo chiều cao; căn trái theo shell navbar (không dịch ngang toàn khối) */
     .cv-hub-fit {
-      width: calc(100% / var(--cv-hub-scale));
+      width: 100%;
       max-width: none;
-      transform: scale(var(--cv-hub-scale));
-      transform-origin: left center;
+      overflow: visible;
     }
   }
 `;
@@ -29,9 +30,9 @@ export function CVAnalysisHub() {
   const navigate = useNavigate();
 
   return (
-    <div className={`cv-hub-viewport flex min-h-0 flex-col ${CUSTOMER_SHELL_GUTTER}`}>
+    <div className={`cv-hub-viewport flex min-h-0 w-full flex-col ${CUSTOMER_SHELL_GUTTER}`}>
       <style>{HUB_VIEWPORT_STYLES}</style>
-      <div className={`cv-hub-fit min-h-0 ${CUSTOMER_SHELL_MAX}`}>
+      <div className={`cv-hub-fit w-full min-h-0 ${CUSTOMER_SHELL_MAX}`}>
         <CvAnalysisHubHero
           navShellAligned
           onJd={() => requireLoginNavigate(navigate, "/cv-analysis/jd")}

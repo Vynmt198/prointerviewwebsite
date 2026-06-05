@@ -220,10 +220,10 @@ function InterviewDetailModal({
             </h4>
             <div className="space-y-3.5">
               {[
-                { label: "Clarity — Rõ ràng & mạch lạc", score: item.scores.clarity },
-                { label: "Structure — Cấu trúc STAR", score: item.scores.structure },
-                { label: "Relevance — Liên quan vị trí", score: item.scores.relevance },
-                { label: "Credibility — Thuyết phục", score: item.scores.credibility },
+                { label: "Clarity, Rõ ràng & mạch lạc", score: item.scores.clarity },
+                { label: "Structure, Cấu trúc STAR", score: item.scores.structure },
+                { label: "Relevance, Liên quan vị trí", score: item.scores.relevance },
+                { label: "Credibility, Thuyết phục", score: item.scores.credibility },
               ].map((s) => (
                 <ScoreBar key={s.label} label={s.label} score={s.score} max={5} color="" />
               ))}
@@ -341,10 +341,10 @@ function CVAnalysisDetailModal({
     item.matchScore >= 80 ? "#10b981" : item.matchScore >= 65 ? "#3b82f6" : "#f59e0b";
 
   const SCORE_LABELS = {
-    clarity: "Clarity — Rõ ràng",
-    structure: "Structure — STAR format",
-    relevance: "Relevance — Liên quan JD",
-    credibility: "Credibility — Thuyết phục",
+    clarity: "Clarity, Rõ ràng",
+    structure: "Structure, STAR format",
+    relevance: "Relevance, Liên quan JD",
+    credibility: "Credibility, Thuyết phục",
   };
 
   const typeStyle = (type) =>
@@ -383,7 +383,7 @@ function CVAnalysisDetailModal({
                 className="text-xs font-semibold px-2.5 py-1 rounded-lg"
                 style={{ background: "rgba(255,255,255,0.2)", color: "#fff" }}
               >
-                {item.mode === "jd" ? "📄 Có JD — CV vs JD" : `🗂 Không có JD — ${item.field}`}
+                {item.mode === "jd" ? "📄 Có JD, CV vs JD" : `🗂 Không có JD, ${item.field}`}
               </span>
             </div>
             <h2 className="text-white font-bold" style={{ fontSize: "1.1rem" }}>

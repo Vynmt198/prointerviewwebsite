@@ -37,7 +37,7 @@ function hasUsableAvatar(url) {
   return s.startsWith("http") || s.startsWith("/");
 }
 
-/** Portal ra body — tránh fixed bị kẹt trong layout overflow-hidden của admin shell. */
+/** Portal ra body, tránh fixed bị kẹt trong layout overflow-hidden của admin shell. */
 function AdminModalPortal({ onClose, children, maxWidthClass = "max-w-2xl" }) {
   return createPortal(
     <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 sm:p-6 md:p-8">

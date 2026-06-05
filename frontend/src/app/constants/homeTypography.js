@@ -2,44 +2,48 @@
  * Cỡ chữ thống nhất — các section Home (showcase, how-it-works, testimonials).
  * Hero headline riêng (lớn hơn section).
  */
-// Hero headline — tăng lại 1 bậc so với bản trước
-export const HOME_HERO_TITLE_CLAMP = "clamp(2.45rem, 6.5vw, 4.85rem)";
-export const HOME_SECTION_TITLE_CLAMP = "clamp(2.25rem, 3.5vw, 3.25rem)";
-/** Lộ trình — 2 dòng cố định */
-export const HOME_HOW_IT_WORKS_TITLE_CLAMP = "clamp(2.25rem, 3.5vw, 3.25rem)";
-/** Khoá học — nhỏ hơn 1 size */
-export const HOME_COURSES_TITLE_CLAMP = "clamp(2.05rem, 3.1vw, 2.9rem)";
-/** Testimonials — mobile nhỏ hơn section chuẩn 1 bậc */
-export const HOME_TESTIMONIALS_TITLE_MOBILE_CLAMP = "clamp(2.05rem, 4.2vw, 2.65rem)";
-/** CV showcase — lớn hơn section chuẩn 0.1rem */
-export const HOME_CV_SHOWCASE_TITLE_CLAMP =
-  "clamp(2.35rem, calc(3.5vw + 0.1rem), 3.35rem)";
+// Hero headline — clamp responsive; desktop lg+ override 5.25rem trong theme.css
+export const HOME_HERO_TITLE_CLAMP = "clamp(1.5rem, 5vw, 9rem)";
+/** Tiêu đề section Home (how-it-works, CV, Mentor, Khóa học, testimonials). */
+export const HOME_SECTION_TITLE_CLAMP = "clamp(1.5rem, 3.5vw, 3.25rem)";
+
+/** Mô tả / bullet section Home — một cỡ chữ cho CV, Khóa học, Mentor, How-it-works, testimonials */
+const HOME_SECTION_BODY =
+  "text-pretty text-base font-medium leading-relaxed text-slate-600 sm:text-lg";
 
 export const homeSectionClasses = {
   badge:
-    "inline-flex items-center gap-2 rounded-full border border-violet-400/30 bg-violet-500/10 px-3.5 py-1 text-sm font-semibold text-violet-700 sm:text-base",
-  title: "max-w-2xl font-headline font-extrabold leading-[1.08] tracking-tight text-[#1a1b23]",
-  titleLineDark: "block text-slate-900",
-  titleLineAccent: "block font-headline text-[#6d2fd6]",
-  body: "max-w-2xl text-pretty text-lg font-medium leading-relaxed text-slate-600 sm:text-xl",
+    "inline-flex items-center gap-2 rounded-full border border-violet-400/30 bg-violet-500/10 px-3.5 py-1 font-semibold text-violet-700 text-xs sm:text-sm",
+  /** gap-[0.25rem] = khoảng cách cố định giữa 2 dòng tiêu đề */
+  title:
+    "flex max-w-2xl flex-col gap-[0.25rem] font-headline font-extrabold leading-none tracking-tight text-[#1a1b23]",
+  titleLineDark: "block w-full text-slate-900",
+  titleLineAccent: "block w-full text-[#630ed4]",
+  titleLineSecond: "block w-full",
+  body: `max-w-2xl ${HOME_SECTION_BODY}`,
   cvShowcaseBadge:
-    "inline-flex items-center gap-2 rounded-full border border-violet-400/30 bg-violet-500/10 px-3.5 py-1 font-semibold text-violet-700 text-[0.975rem] sm:text-[1.1rem]",
+    "inline-flex items-center gap-2 rounded-full border border-violet-400/30 bg-violet-500/10 px-3.5 py-1 font-semibold text-violet-700 text-xs sm:text-sm",
   cvShowcaseBody:
-    "max-w-2xl font-medium leading-relaxed text-slate-600 text-[1.225rem] sm:text-[1.35rem]",
-  bulletList: "max-w-2xl space-y-3 text-pretty text-base font-medium text-slate-600 sm:text-lg",
-  bulletIcon: "mt-0.5 h-5 w-5 shrink-0 text-[#6d2fd6]",
+    "max-w-2xl text-pretty text-sm font-medium leading-relaxed text-slate-600 sm:text-lg",
+  coursesBody:
+    "max-w-2xl text-pretty text-base font-medium leading-relaxed text-slate-600 sm:text-lg",
+  coursesBulletList:
+    "max-w-2xl space-y-3 text-pretty text-base font-medium leading-relaxed text-slate-600 sm:text-lg",
+  bulletList: `max-w-2xl space-y-3 ${HOME_SECTION_BODY}`,
+  bulletIcon: "mt-0.5 h-5 w-5 shrink-0 text-[#630ed4]",
   cta: "inline-flex shrink-0 items-center gap-2 rounded-full px-6 py-2.5 text-lg font-bold transition-all hover:scale-[1.02] active:scale-[0.98] sm:px-8 sm:py-3 sm:text-xl",
   cardTitle: "font-headline text-xl font-bold text-[#1a1b23] md:text-2xl",
   cardScore: "shrink-0 rounded-2xl border px-4 py-1.5 text-base font-bold sm:text-lg",
   stepCardTitle:
     "font-headline text-lg font-extrabold leading-snug text-[#1a1b23] sm:text-xl",
-  stepCardBody: "text-pretty text-base font-medium leading-relaxed text-slate-600 sm:text-lg",
+  stepCardBody:
+    "text-pretty text-sm font-medium leading-relaxed text-slate-600 sm:text-base",
   howItWorksTitle:
     "cute-heading text-pretty font-headline font-black leading-[1.06] tracking-tighter text-slate-900",
   howItWorksStepTitle:
     "mb-2 font-headline text-sm font-extrabold leading-snug tracking-tight text-slate-900 sm:text-base lg:text-[0.9375rem] xl:text-base",
   howItWorksStepBody:
-    "flex-1 text-pretty text-sm font-medium leading-[1.55] text-slate-600 sm:text-[0.9375rem] lg:min-h-[5.1rem] lg:text-sm lg:leading-[1.5] xl:text-base",
+    "flex-1 text-left text-pretty text-sm font-medium leading-relaxed text-slate-600 sm:text-base lg:min-h-[5.1rem]",
   howItWorksStepBadge:
     "inline-flex px-2 py-1 text-[10px] font-bold tracking-wide rounded-md border sm:text-[11px]",
 };

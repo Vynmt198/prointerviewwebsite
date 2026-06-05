@@ -29,7 +29,7 @@ import { submitReview } from "../../utils/courseApi";
 import { fetchMyReviewForTarget } from "../../utils/reviewsApi";
 import { ReviewReplyBlock } from "../reviews/ReviewReplyBlock";
 import { toastApiError, toastApiSuccess } from "../../utils/apiToast";
-import { avatarSrc } from "../../utils/mediaUrl";
+import { avatarSrc, mediaSrc } from "../../utils/mediaUrl";
 
 export const formatCoursePrice = (price) => {
   if (price === 0) return "Miễn phí";
@@ -88,6 +88,11 @@ function youtubeEmbedUrl(url) {
   return m ? `https://www.youtube.com/embed/${m[1]}` : null;
 }
 
+function isDirectVideoUrl(url) {
+  const raw = String(url || "").trim();
+  return /\.(mp4|webm|ogg)(\?|$)/i.test(raw) || raw.includes("cloudinary.com/video/");
+}
+
 export function CoursePurchaseCard({
   course,
   hasPaidEnrollment,
@@ -103,11 +108,13 @@ export function CoursePurchaseCard({
   const hasDiscount = discountPrice > 0 && discountPrice < price;
   const displayPrice = hasDiscount ? discountPrice : price;
   const discountPct = hasDiscount ? Math.round((1 - discountPrice / price) * 100) : 0;
-  const embed = youtubeEmbedUrl(course.previewVideoUrl);
+  const previewUrl = course.previewVideoUrl || "";
+  const embed = youtubeEmbedUrl(previewUrl);
+  const directPreview = !embed && isDirectVideoUrl(previewUrl) ? mediaSrc(previewUrl) : null;
   const includes = buildCourseIncludes(course);
 
   const ctaClassName =
-    "flex w-full items-center justify-center gap-2 rounded-xl bg-[#8037f4] py-3.5 text-sm font-bold text-white shadow-md shadow-violet-500/25 transition-all hover:bg-[#6d2fd6] active:scale-[0.99] lg:rounded-sm lg:py-3 lg:shadow-none";
+    "flex w-full items-center justify-center gap-2 rounded-xl bg-[#8037f4] py-3.5 text-sm font-bold text-white shadow-md shadow-violet-500/25 transition-all hover:bg-[#630ed4] active:scale-[0.99] lg:rounded-sm lg:py-3 lg:shadow-none";
 
   return (
     <div className="w-full overflow-hidden rounded-2xl border border-violet-200/60 bg-white shadow-[0_16px_48px_rgba(128,55,244,0.12)] lg:max-w-none lg:rounded-md lg:border-slate-200 lg:shadow-[0_12px_40px_rgba(15,23,42,0.08)]">
@@ -119,6 +126,16 @@ export function CoursePurchaseCard({
             className="h-full w-full"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             allowFullScreen
+          />
+        ) : directPreview ? (
+          <video
+            key={directPreview}
+            controls
+            playsInline
+            preload="metadata"
+            poster={course.thumbnail}
+            className="h-full w-full object-cover"
+            src={directPreview}
           />
         ) : (
           <ImageWithFallback src={course.thumbnail} alt="" className="h-full w-full object-cover" />

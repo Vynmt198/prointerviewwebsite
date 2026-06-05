@@ -2,7 +2,8 @@ import { API_BASE_URL } from "./api.js";
 
 export const DEFAULT_AVATAR = "https://api.dicebear.com/7.x/avataaars/svg?seed=ProInterview";
 
-export const DEFAULT_COURSE_THUMB = "/mascot-courses-ready.png";
+export const DEFAULT_COURSE_THUMB =
+  "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&q=80";
 
 const LOCAL_BACKEND = /^https?:\/\/(?:127\.0\.0\.1|localhost)(?::\d+)?/i;
 
@@ -45,20 +46,24 @@ export function resolveMediaUrl(src) {
   const raw = stored || (typeof src === "string" ? src.trim() : "");
   if (!raw) return "";
   if (/^https?:\/\//i.test(raw)) {
-    const uploadsIdx = raw.indexOf("/uploads/");
+    // Nâng resolution Google avatar: =s96-c → =s400-c
+    let resolved = raw;
+    if (/lh\d+\.googleusercontent\.com/i.test(raw)) {
+      resolved = raw.replace(/=s\d+(-c)?$/, "=s400-c");
+    }
+    const uploadsIdx = resolved.indexOf("/uploads/");
     if (uploadsIdx >= 0) {
-      const rel = raw.slice(uploadsIdx);
+      const rel = resolved.slice(uploadsIdx);
       const base = (API_BASE_URL || "").replace(/\/$/, "");
       if (base) {
-        if (LOCAL_BACKEND.test(raw)) return `${base}${rel}`;
+        if (LOCAL_BACKEND.test(resolved)) return `${base}${rel}`;
         return rel.startsWith("/") ? `${base}${rel}` : `${base}/${rel}`;
       }
-      // Dev qua Vite (:5173): dùng /uploads/... để proxy tới backend (tránh sai port 5000 vs 5001).
       return rel;
     }
     const base = (API_BASE_URL || "").replace(/\/$/, "");
-    if (base && LOCAL_BACKEND.test(raw)) {
-      const normalized = raw.replace(LOCAL_BACKEND, base);
+    if (base && LOCAL_BACKEND.test(resolved)) {
+      const normalized = resolved.replace(LOCAL_BACKEND, base);
       if (typeof window !== "undefined") {
         try {
           const path = new URL(normalized).pathname;
@@ -74,7 +79,7 @@ export function resolveMediaUrl(src) {
     }
     if (typeof window !== "undefined") {
       try {
-        const path = new URL(raw).pathname;
+        const path = new URL(resolved).pathname;
         if (path.startsWith("/uploads/")) {
           const sameOrigin = preferSameOriginUploadPath(path);
           if (sameOrigin) return sameOrigin;
@@ -83,7 +88,7 @@ export function resolveMediaUrl(src) {
         /* keep raw */
       }
     }
-    return raw;
+    return resolved;
   }
   if (raw.startsWith("/uploads/")) {
     return joinUploadPath(raw);

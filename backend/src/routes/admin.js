@@ -17,7 +17,6 @@ adminRouter.get("/mentors", asyncHandler(AdminController.getAllMentors));
 adminRouter.get("/mentors/:id", asyncHandler(AdminController.getMentorById));
 adminRouter.patch("/mentors/:id/status", asyncHandler(AdminController.toggleMentorStatus));
 adminRouter.patch("/mentors/:id/reject", asyncHandler(AdminController.rejectMentorApplication));
-adminRouter.patch("/mentors/:id/commission", asyncHandler(AdminController.updateMentorCommission));
 
 adminRouter.get("/users", asyncHandler(AdminController.getAllUsers));
 adminRouter.get("/users/:id", asyncHandler(AdminController.getUserById));
@@ -31,7 +30,6 @@ adminRouter.get("/content/stats", asyncHandler(AdminController.getContentStats))
 adminRouter.get("/content/interview-sessions", asyncHandler(AdminController.getRecentInterviewSessions));
 adminRouter.get("/content/course-media", asyncHandler(AdminController.getCourseMediaOverview));
 adminRouter.get("/finance/courses", asyncHandler(AdminController.getCourseFinanceSummary));
-adminRouter.get("/finance/platform-summary", asyncHandler(AdminController.getPlatformFinanceSummary));
 adminRouter.patch(
   "/bookings/:id/confirm-transfer-payment",
   asyncHandler(AdminController.confirmBookingTransferPayment),

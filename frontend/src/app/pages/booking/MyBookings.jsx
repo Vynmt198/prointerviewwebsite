@@ -3,7 +3,7 @@ import { useNavigate } from "react-router";
 import { motion } from "motion/react";
 import { Calendar, Video, Star, FileText } from "lucide-react";
 import { MentorPageShell } from "../../components/mentor/MentorPageShell";
-import { CustomerPageHeader, CustomerPageSplitTitle } from "../../components/layout/CustomerPageHeader";
+import { CustomerPageHeader } from "../../components/layout/CustomerPageHeader";
 import { CUSTOMER_SHELL_GUTTER, CUSTOMER_SHELL_MAX } from "../../components/layout/customerShellLayout";
 import { listBookings } from "../../utils/bookingsApi";
 import { apiBookingToLocal } from "../../utils/bookingMappers";
@@ -123,7 +123,11 @@ export function MyBookings() {
       >
         <div className={`${CUSTOMER_SHELL_MAX} w-full space-y-6`}>
           <CustomerPageHeader
-            title={<CustomerPageSplitTitle accent="Lịch hẹn" rest="của bạn" />}
+            title={
+              <>
+                Lịch hẹn <span className="text-[#630ed4]">của bạn</span>
+              </>
+            }
             subtitle="Xem thông tin các buổi Mentor đã đặt, lịch sắp tới và trạng thái buổi hẹn."
             className="mb-2"
           />

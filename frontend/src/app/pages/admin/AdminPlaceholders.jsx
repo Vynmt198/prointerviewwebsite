@@ -26,7 +26,6 @@ import {
   StatusPill,
 } from "../../components/admin/AdminStatusPill.jsx";
 import { AdminFilterSelect, AdminListFilterBar } from "../../components/admin/AdminListFilters.jsx";
-import { AppSelect } from "../../components/ui/AppSelect";
 import {
   AdminPageToolbar,
   adminGlassTable,
@@ -62,7 +61,7 @@ function statusLabel(status) {
   if (key === "course_pending_ck") return "Chờ SePay (khóa học)";
   if (key === "confirmed") return "Đã xác nhận";
   if (key === "completed") return "Hoàn thành";
-  if (key === "approved") return "Đã duyệt — chờ chi";
+  if (key === "approved") return "Đã duyệt, chờ chi";
   if (key === "paid") return "Đã chuyển khoản";
   if (key === "cancelled") return "Đã hủy";
   if (key === "rejected") return "Đã từ chối";
@@ -140,7 +139,7 @@ export function AdminUserDetail() {
   );
 }
 
-/** @deprecated — dùng `AdminMentorDetail.jsx` */
+/** @deprecated, dùng `AdminMentorDetail.jsx` */
 export { AdminMentorDetail } from "./AdminMentorDetail.jsx";
 
 function bookingAmount(b) {
@@ -222,7 +221,7 @@ export function AdminFinance() {
       >
         <div className="min-w-0 flex-1">
           <h2 className="font-headline text-3xl font-black uppercase tracking-tighter text-slate-900">
-            <span className="text-violet-700">Tài chính</span> — Tổng quan
+            <span className="text-violet-700">Tài chính</span>, Tổng quan
           </h2>
         </div>
         <button
@@ -1187,18 +1186,17 @@ export function AdminPayouts() {
               <label className="mt-4 block text-[10px] font-black uppercase tracking-widest text-slate-500">
                 Lý do từ chối
               </label>
-              <div className="mt-2">
-                <AppSelect
-                  size="md"
-                  value={rejectModal.reasonKey}
-                  onValueChange={(v) => setRejectModal((prev) => ({ ...prev, reasonKey: v }))}
-                  triggerClassName="rounded-2xl border-slate-200 bg-slate-50"
-                  options={REJECT_REASON_OPTIONS.map((item) => ({
-                    value: item.id,
-                    label: item.label,
-                  }))}
-                />
-              </div>
+              <select
+                value={rejectModal.reasonKey}
+                onChange={(e) => setRejectModal((prev) => ({ ...prev, reasonKey: e.target.value }))}
+                className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 p-3 text-sm text-slate-900 outline-none focus:border-violet-400"
+              >
+                {REJECT_REASON_OPTIONS.map((item) => (
+                  <option key={item.id} value={item.id}>
+                    {item.label}
+                  </option>
+                ))}
+              </select>
               <label className="mt-4 block text-[10px] font-black uppercase tracking-widest text-slate-500">
                 Ghi chú bổ sung (tùy chọn)
               </label>
@@ -1298,7 +1296,7 @@ export function AdminPayouts() {
   );
 }
 
-/** @deprecated — dùng `AdminBookingDetail.jsx` */
+/** @deprecated, dùng `AdminBookingDetail.jsx` */
 export { AdminBookingDetail } from "./AdminBookingDetail.jsx";
 
 const INTERVIEW_STATUS_VI = {
@@ -1633,5 +1631,5 @@ export function AdminSystemSettings() {
   );
 }
 
-/** @deprecated — dùng `AdminSupport.jsx` */
+/** @deprecated, dùng `AdminSupport.jsx` */
 export { AdminSupport } from "./AdminSupport.jsx";

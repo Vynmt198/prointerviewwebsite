@@ -16,8 +16,7 @@ import { normalizeCourseStats } from "../../utils/courseStats";
 import { mediaSrc, DEFAULT_COURSE_THUMB, avatarSrc } from "../../utils/mediaUrl";
 import { ImageWithFallback } from "../../components/figma/ImageWithFallback";
 import { CUSTOMER_SHELL_GUTTER, CUSTOMER_SHELL_MAX } from "../../components/layout/customerShellLayout";
-import { AppSelect } from "../../components/ui/AppSelect";
-import { CustomerPageHeader, CustomerPageSplitTitle } from "../../components/layout/CustomerPageHeader";
+import { CustomerPageHeader } from "../../components/layout/CustomerPageHeader";
 import {
   buildCourseFilterCategories,
   courseMatchesTopic,
@@ -470,13 +469,15 @@ export function Courses() {
         <div className={`${CUSTOMER_SHELL_MAX} w-full`}>
           <CustomerPageHeader
             title={
-              <CustomerPageSplitTitle
-                accent="Học kỹ năng,"
-                rest="tự tin hơn khi ứng tuyển"
-              />
+              <>
+                Học kỹ năng,{" "}
+                <span className="text-[#630ed4]">
+                  tự tin hơn khi ứng tuyển
+                </span>
+              </>
             }
             subtitle="Các khóa học do Mentor xây dựng, giúp bạn bổ sung kỹ năng cần thiết cho hành trình ứng tuyển."
-            subtitleClassName="mt-3 max-w-2xl text-base font-medium leading-relaxed text-violet-700/90"
+            subtitleClassName="mt-3 max-w-full text-sm font-medium leading-relaxed text-slate-600 sm:text-base"
           />
 
           <div className="w-full rounded-3xl border border-violet-200/80 bg-white px-5 py-5 shadow-sm sm:px-7 sm:py-6">
@@ -496,13 +497,17 @@ export function Courses() {
                   <div className="min-w-0 flex-1">
                     <label className="mb-3 flex items-center gap-2 text-sm text-slate-600 lg:hidden">
                       <span className="shrink-0 font-medium">Sắp xếp theo</span>
-                      <AppSelect
-                        size="compact"
+                      <select
                         value={sortBy}
-                        onValueChange={setSortBy}
-                        triggerClassName="min-w-0 flex-1"
-                        options={SORT_OPTIONS.map((opt) => ({ value: opt.value, label: opt.label }))}
-                      />
+                        onChange={(e) => setSortBy(e.target.value)}
+                        className="min-w-0 flex-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-800 shadow-sm focus:border-violet-300 focus:outline-none focus:ring-1 focus:ring-violet-200"
+                      >
+                        {SORT_OPTIONS.map((opt) => (
+                          <option key={opt.value} value={opt.value}>
+                            {opt.label}
+                          </option>
+                        ))}
+                      </select>
                     </label>
 
                     <div
@@ -543,12 +548,17 @@ export function Courses() {
                         }`}
                       >
                         <span className="shrink-0 font-medium">Sắp xếp theo</span>
-                        <AppSelect
-                          size="compact"
+                        <select
                           value={sortBy}
-                          onValueChange={setSortBy}
-                          options={SORT_OPTIONS.map((opt) => ({ value: opt.value, label: opt.label }))}
-                        />
+                          onChange={(e) => setSortBy(e.target.value)}
+                          className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-800 shadow-sm focus:border-violet-300 focus:outline-none focus:ring-1 focus:ring-violet-200"
+                        >
+                          {SORT_OPTIONS.map((opt) => (
+                            <option key={opt.value} value={opt.value}>
+                              {opt.label}
+                            </option>
+                          ))}
+                        </select>
                       </label>
                     </div>
 

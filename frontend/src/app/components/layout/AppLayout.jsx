@@ -14,6 +14,8 @@ export function AppLayout() {
   const isMentor = user?.role === "mentor";
   const isHome = location.pathname === "/" || location.pathname === "";
   const pathNorm = location.pathname.replace(/^\/+/, "");
+  const isCvAnalysisHub = pathNorm === "cv-analysis";
+  const allowHorizontalScroll = isHome || isCvAnalysisHub;
   const isLegalDoc = pathNorm === "terms" || pathNorm === "privacy";
   const hideNavbar = pathNorm === "interview/room";
   const hideFooter = hideNavbar;
@@ -35,7 +37,7 @@ export function AppLayout() {
 
   const shellClass =
     `app-user-shell relative min-h-svh w-full text-slate-900 antialiased selection:bg-violet-100 selection:text-violet-900 ${
-      isHome
+      allowHorizontalScroll
         ? "app-user-shell--home overflow-x-auto overflow-y-visible bg-transparent"
         : isLegalDoc
           ? "overflow-x-hidden bg-slate-50"
@@ -90,7 +92,7 @@ export function AppLayout() {
           className={`relative z-[1] min-h-0 flex-1 ${
             hideNavbar
               ? "flex min-h-svh flex-col pt-0"
-              : `pt-[3.75rem] sm:pt-[4.25rem] md:pt-[4.75rem] max-lg:overflow-x-hidden${isHome ? " lg:overflow-x-auto" : ""}`
+              : `pt-[3.75rem] sm:pt-[4.25rem] md:pt-[4.75rem] max-lg:overflow-x-hidden${allowHorizontalScroll ? " lg:overflow-x-auto lg:overflow-y-visible" : ""}`
           }`}
         >
           <Outlet />

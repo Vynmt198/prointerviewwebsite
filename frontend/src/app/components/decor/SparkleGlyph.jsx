@@ -1,12 +1,12 @@
 import React, { useId } from "react";
 
 /**
- * Ngôi sao 4 cánh — cùng visual trang Home (section sticks).
+ * Ngôi sao 4 cánh, cùng visual trang Home (section sticks).
  */
 export function SparkleGlyph({ className = "", style, tone = "brand" }) {
   const uid = useId().replace(/:/g, "");
   const isLime = tone === "lime";
-  const mainStart = isLime ? "#bef264" : "#6d2fd6";
+  const mainStart = isLime ? "#bef264" : "#630ed4";
   const mainEnd = isLime ? "#84cc16" : "#4B18CC";
   const coreStart = isLime ? "#ffffff" : "#99FF00";
   const coreEnd = isLime ? "#f1f5f9" : "#63D800";

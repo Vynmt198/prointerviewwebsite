@@ -44,7 +44,7 @@ export function ExploreFilterSidebar({
   children,
   /** Chỉ mobile (&lt; lg): thu gọn cả khối lọc. Desktop không đổi. */
   mobileCollapsible = false,
-  /** Gọi khi mở panel lọc trên mobile — để đóng các nhóm con. */
+  /** Gọi khi mở panel lọc trên mobile, để đóng các nhóm con. */
   onMobilePanelOpen,
 }) {
   const [mobileOpen, setMobileOpen] = useState(false);

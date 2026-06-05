@@ -26,10 +26,10 @@ function notifStorageKey(role) {
   return role === "mentor" ? NOTIF_PREFS_KEY_MENTOR : NOTIF_PREFS_KEY_CUSTOMER;
 }
 
-/** Tiêu đề / nhãn — in hoa qua CSS */
+/** Tiêu đề / nhãn, in hoa qua CSS */
 const SETTINGS_TITLE_CLS =
   "text-xs font-bold uppercase tracking-wide text-slate-800";
-/** Mô tả — viết thường, câu bình thường */
+/** Mô tả, viết thường, câu bình thường */
 const ITEM_DESC_CLS = "text-sm text-slate-500 leading-relaxed tracking-normal";
 
 function loadNotifPrefs(storageKey) {
@@ -269,7 +269,7 @@ function NotificationsTab({ isMentor, profileFromServer, onProfileSynced }) {
     const u = getUser();
     onProfileSynced?.(u);
     setDirty(false);
-    toastApiSuccess("Đã lưu — thông báo sẽ áp dụng theo lựa chọn của bạn.");
+    toastApiSuccess("Đã lưu, thông báo sẽ áp dụng theo lựa chọn của bạn.");
   };
 
   const handleReset = () => {
@@ -470,7 +470,7 @@ const TABS = [
 export function Settings() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("notifications");
-  /** Đồng bộ GET /me ngay khi vào Cài đặt — tránh tab Bảo mật đọc localStorage cũ thiếu hasGoogleLogin */
+  /** Đồng bộ GET /me ngay khi vào Cài đặt, tránh tab Bảo mật đọc localStorage cũ thiếu hasGoogleLogin */
   const [profileFromServer, setProfileFromServer] = useState(() => getUser());
 
   useEffect(() => {

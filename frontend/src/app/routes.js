@@ -47,6 +47,9 @@ import { MentorSessionFeedback } from "./pages/mentor/MentorSessionFeedback";
 import { Pricing } from "./pages/home/Pricing";
 import { Terms } from "./pages/home/Terms";
 import { Privacy } from "./pages/home/Privacy";
+import { About } from "./pages/home/About";
+import { Blog } from "./pages/home/Blog";
+import { Achievements } from "./pages/home/Achievements";
 import { AdminLayout } from "./pages/admin/AdminLayout.jsx";
 import { adminLoader } from "./pages/admin/adminLoader.js";
 import { AdminDashboard } from "./pages/admin/AdminDashboard.jsx";
@@ -72,6 +75,7 @@ import { AdminReviews } from "./pages/admin/AdminReviews.jsx";
 import { AdminSupport } from "./pages/admin/AdminSupport.jsx";
 import { AdminMentorDetail } from "./pages/admin/AdminMentorDetail.jsx";
 import { AdminBookingDetail } from "./pages/admin/AdminBookingDetail.jsx";
+import { AdminAchievements } from "./pages/admin/AdminAchievements.jsx";
 
 /** Đã đăng nhập mentor/admin → hub riêng, không xem landing customer. */
 function roleHomeLoader() {
@@ -92,6 +96,9 @@ export const router = createHashRouter([
       { path: "courses", Component: Courses },
       { path: "courses/:id", Component: CourseDetail },
       { path: "pricing", Component: Pricing },
+      { path: "about", Component: About },
+      { path: "achievements", Component: Achievements },
+      { path: "blog", Component: Blog },
       { path: "terms", Component: Terms },
       { path: "privacy", Component: Privacy },
       { path: "cv-analysis", Component: CVAnalysisHub },
@@ -199,6 +206,7 @@ export const router = createHashRouter([
       { path: "settings", Component: AdminSystemSettings },
       { path: "reviews", Component: AdminReviews },
       { path: "support", Component: AdminSupport },
+      { path: "achievements", Component: AdminAchievements },
       { path: "interview-metrics", loader: () => redirect("/admin/content/questions") },
     ],
   },

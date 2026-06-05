@@ -244,7 +244,7 @@ function meetingPlatformLabel(meetLink) {
 
 function sessionCalendarPayload(sessionData) {
   const platform = meetingPlatformLabel(sessionData.meetLink);
-  const title = `Phỏng vấn với ${sessionData.mentorName || "mentor"} — ProInterview`;
+  const title = `Phỏng vấn với ${sessionData.mentorName || "mentor"}, ProInterview`;
   const details = [
     `Mã đặt lịch: ${sessionData.orderNum}`,
     `Mentor: ${sessionData.mentorName || "—"}`,
@@ -342,7 +342,7 @@ export function SessionDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
 
-  /* ── Resolve session data — GET /api/bookings/:id (không dùng mock local) ── */
+  /* ── Resolve session data, GET /api/bookings/:id (không dùng mock local) ── */
   const [apiBooking, setApiBooking] = useState(undefined);
   const [loadError, setLoadError] = useState("");
 
@@ -532,7 +532,7 @@ export function SessionDetail() {
       const credit = Number(res.rebookCreditVnd ?? res.booking?.rebookCreditVnd ?? 0);
       toastApiSuccess(
         credit > 0
-          ? `Đã kích hoạt credit ${credit.toLocaleString("vi-VN")}₫ — chọn mentor khác, không cần CK lại nếu giá ≤ credit.`
+          ? `Đã kích hoạt credit ${credit.toLocaleString("vi-VN")}₫, chọn mentor khác, không cần CK lại nếu giá ≤ credit.`
           : "Hãy chọn mentor mới để đặt lịch.",
       );
       if (res.booking) setApiBooking(res.booking);
@@ -601,7 +601,7 @@ export function SessionDetail() {
         toastApiError(res.error, "Không đổi được lịch.");
         return;
       }
-      toastApiSuccess("Đã đổi lịch — buổi hẹn được khôi phục với thời gian mới.");
+      toastApiSuccess("Đã đổi lịch, buổi hẹn được khôi phục với thời gian mới.");
       if (res.booking) setApiBooking(res.booking);
       setMentorResolutionStep("");
     }
@@ -618,9 +618,9 @@ export function SessionDetail() {
 
   const refundBankFormTitle =
     mentorResolution === "no_show_refund"
-      ? "Mentor không tham gia — hoàn 100%"
+      ? "Mentor không tham gia, hoàn 100%"
       : mentorResolution === "late_cancel_refund"
-        ? "Mentor hủy gấp — hoàn 100% ưu tiên"
+        ? "Mentor hủy gấp, hoàn 100% ưu tiên"
         : String(sessionData?.cancelledBy || "") === "mentor"
           ? "Điền STK nhận hoàn tiền"
           : "Điền STK nhận hoàn tiền";
@@ -645,7 +645,7 @@ export function SessionDetail() {
         toastApiError(res.error, "Không gửi được báo no-show.");
         return;
       }
-      toastApiSuccess("Đã ghi nhận no-show. Hoàn 100% — vui lòng điền STK nếu được yêu cầu.");
+      toastApiSuccess("Đã ghi nhận no-show. Hoàn 100%, vui lòng điền STK nếu được yêu cầu.");
       if (res.booking) setApiBooking(res.booking);
     } catch {
       toastApiError("Lỗi kết nối khi gửi báo no-show.");
@@ -742,11 +742,11 @@ export function SessionDetail() {
       String(res.booking?.paymentStatus || "").toLowerCase() === "paid";
     let extra = "";
     if (refundAmt > 0) {
-      extra = ` Yêu cầu hoàn ${Math.round(refundAmt).toLocaleString("vi-VN")}₫${refundPct != null ? ` (${refundPct}%)` : ""} đã ghi nhận. Admin CK hoàn sau — bạn được báo khi xong.`;
+      extra = ` Yêu cầu hoàn ${Math.round(refundAmt).toLocaleString("vi-VN")}₫${refundPct != null ? ` (${refundPct}%)` : ""} đã ghi nhận. Admin CK hoàn sau, bạn được báo khi xong.`;
     } else if (paid && refundPct === 0) {
       extra = " Theo chính sách, không hoàn tiền cho khoảng thời gian này.";
     } else if (pol?.ledger === "cancelled_pending_transfer") {
-      extra = " Giao dịch chờ CK đã hủy — chưa thu tiền.";
+      extra = " Giao dịch chờ CK đã hủy, chưa thu tiền.";
     }
     toastApiSuccess(`Đã hủy lịch.${extra}`);
     setCancelModalOpen(false);
@@ -784,7 +784,7 @@ export function SessionDetail() {
               <button
                 type="button"
                 onClick={() => navigate("/login")}
-                className="mt-4 rounded-xl bg-[#8037f4] px-4 py-2 text-sm font-medium text-white hover:bg-[#6d2fd6]"
+                className="mt-4 rounded-xl bg-[#8037f4] px-4 py-2 text-sm font-medium text-white hover:bg-[#630ed4]"
               >
                 Đăng nhập
               </button>
@@ -792,7 +792,7 @@ export function SessionDetail() {
               <button
                 type="button"
                 onClick={() => navigate("/")}
-                className="mt-4 rounded-xl bg-[#8037f4] px-4 py-2 text-sm font-medium text-white hover:bg-[#6d2fd6]"
+                className="mt-4 rounded-xl bg-[#8037f4] px-4 py-2 text-sm font-medium text-white hover:bg-[#630ed4]"
               >
                 Về trang chủ
               </button>
@@ -870,7 +870,7 @@ export function SessionDetail() {
           {/* LEFT COL */}
           <div className="lg:col-span-2 space-y-5">
 
-            {/* ── Status header — chỉ trạng thái + mã; ngày/giờ xem cột Chi tiết buổi hẹn ── */}
+            {/* ── Status header, chỉ trạng thái + mã; ngày/giờ xem cột Chi tiết buổi hẹn ── */}
             <div
               className="flex items-center justify-between gap-4 rounded-2xl border px-5 py-4"
               style={{
@@ -1050,7 +1050,7 @@ export function SessionDetail() {
                   {Number(sessionData?.cancelRefundAmountVnd) > 0 ? (
                     <p className="text-[11px] text-amber-950/80">
                       {Number(sessionData?.rebookCreditRemainderVnd) > 0
-                        ? "Phần tiền thừa sau đổi mentor — hoàn: "
+                        ? "Phần tiền thừa sau đổi mentor, hoàn: "
                         : "Số hoàn dự kiến: "}
                       <strong>
                         {Math.round(
@@ -1094,7 +1094,7 @@ export function SessionDetail() {
                 </div>
               ) : null}
 
-              {/* Cancel booking (API) + refund policy — khớp backend bookingsService.cancelMyBooking */}
+              {/* Cancel booking (API) + refund policy, khớp backend bookingsService.cancelMyBooking */}
               <div className="space-y-3">
                 {canCancelOnServer ? (
                   <button
@@ -1154,7 +1154,7 @@ export function SessionDetail() {
                 {!inLiveWindow && minutesUntilStart > 0 && (
                   <div className="rounded-2xl border border-violet-200 bg-violet-50 px-5 py-4 text-sm text-violet-900">
                     Còn khoảng <strong>{minutesUntilStart} phút</strong> đến giờ hẹn. Bạn có thể vào
-                    thử phòng sớm — trạng thái buổi học chỉ chuyển sang &quot;đang diễn ra&quot; khi
+                    thử phòng sớm, trạng thái buổi học chỉ chuyển sang &quot;đang diễn ra&quot; khi
                     đến khung giờ cho phép.
                   </div>
                 )}
@@ -1234,7 +1234,7 @@ export function SessionDetail() {
             </div>
           </div>
 
-          {/* Right col — mentor + session info */}
+          {/* Right col, mentor + session info */}
           <div className="space-y-4">
             <div className="card-premium p-5">
               <img
@@ -1596,7 +1596,7 @@ export function SessionDetail() {
                     <div className="mt-4 space-y-2 rounded-2xl border border-sky-200 bg-sky-50/90 p-3 sm:p-4">
                       <p className="text-xs font-bold text-sky-900">Tài khoản nhận hoàn tiền</p>
                       <p className="text-[11px] leading-snug text-sky-950/80">
-                        Tiền vào TK công ty — hệ thống không lưu STK nguồn. Điền STK nhận hoàn (số tiền do hệ thống tính).
+                        Tiền vào TK công ty, hệ thống không lưu STK nguồn. Điền STK nhận hoàn (số tiền do hệ thống tính).
                       </p>
                       <input
                         type="text"
@@ -1645,7 +1645,7 @@ export function SessionDetail() {
                       type="button"
                       disabled={cancelBusy}
                       onClick={() => void handleConfirmCancelBooking()}
-                      className="rounded-xl bg-[#8037f4] py-3 text-xs font-bold text-white shadow-sm transition hover:bg-[#6d2fd6] disabled:opacity-50"
+                      className="rounded-xl bg-[#8037f4] py-3 text-xs font-bold text-white shadow-sm transition hover:bg-[#630ed4] disabled:opacity-50"
                     >
                       {cancelBusy ? "Đang xử lý…" : "Xác nhận hủy"}
                     </button>

@@ -29,7 +29,7 @@ import { InterviewHistoryPanel } from "../../components/interview/InterviewHisto
 import { InterviewPageTabs } from "../../components/interview/InterviewPageTabs";
 import { CV_JD_CARD_CLASS } from "../../components/cv/CvJdAnalysisFrame";
 import { CUSTOMER_SHELL_GUTTER, CUSTOMER_SHELL_MAX } from "../../components/layout/customerShellLayout";
-import { CustomerPageHeader, CustomerPageSplitTitle } from "../../components/layout/CustomerPageHeader";
+import { CustomerPageHeader } from "../../components/layout/CustomerPageHeader";
 
 const CTA_LIME =
   "bg-gradient-to-r from-[#93f72b] to-[#93f72b] text-violet-950 shadow-[0_8px_28px_rgba(196,255,71,0.25)] hover:brightness-110";
@@ -42,14 +42,14 @@ function saveInterviewSetupDraft(draft) {
   } catch (_) {}
 }
 
-/** Stroke Lucide chuẩn UI — đồng bộ toàn trang */
+/** Stroke Lucide chuẩn UI, đồng bộ toàn trang */
 const IS = { strokeWidth: 1.75, strokeLinecap: "round", strokeLinejoin: "round" };
 
 /** Chiều cao cố định ô chi tiết bước 1 */
 const SOURCE_DETAIL_PANEL_CLASS =
   "flex h-[15rem] flex-col rounded-md border border-violet-200/80 bg-violet-50/50 px-4 py-4 sm:h-[16rem] sm:px-5 sm:py-5";
 
-/** Ô xem trước HR — cao hơn để video lớn hơn */
+/** Ô xem trước HR, cao hơn để video lớn hơn */
 const HR_PREVIEW_PANEL_CLASS =
   "flex h-[16rem] flex-col rounded-md border border-violet-200/80 bg-violet-50/50 px-4 py-3 sm:h-[18rem] sm:px-5";
 
@@ -66,7 +66,7 @@ function formatCvAnalysisDate(value) {
   }
 }
 
-/** Ô chi tiết — thông tin phân tích CV gần nhất */
+/** Ô chi tiết, thông tin phân tích CV gần nhất */
 function AnalyzedCvDetailPanel({ cv }) {
   const title = cv.position || cv.cvFile || cv.cvFileName || "Phân tích gần nhất";
   const cvName = cv.cvFileName || cv.cvFile;
@@ -110,14 +110,14 @@ function AnalyzedCvDetailPanel({ cv }) {
   );
 }
 
-/** Ô chi tiết — upload CV mới */
+/** Ô chi tiết, upload CV mới */
 function UploadCvDetailPanel({ cvUploaded, uploadedFile, onPickFile }) {
   return (
     <div className="flex h-full min-h-0 flex-col">
       <p className="mb-3 shrink-0 text-xs font-bold uppercase tracking-wide text-violet-500">Tải file CV</p>
       {cvUploaded && uploadedFile ? (
         <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-2 text-center">
-          <Check className="h-10 w-10 text-[#6d2fd6]" {...IS} strokeWidth={2} />
+          <Check className="h-10 w-10 text-[#630ed4]" {...IS} strokeWidth={2} />
           <p className="text-sm font-semibold text-violet-950">{uploadedFile.name}</p>
           <p className="text-xs text-violet-500">
             {(uploadedFile.size / 1024 / 1024).toFixed(2)} MB
@@ -125,7 +125,7 @@ function UploadCvDetailPanel({ cvUploaded, uploadedFile, onPickFile }) {
           <button
             type="button"
             onClick={onPickFile}
-            className="text-sm font-semibold text-[#6d2fd6] hover:underline"
+            className="text-sm font-semibold text-[#630ed4] hover:underline"
           >
             Đổi file khác
           </button>
@@ -145,7 +145,7 @@ function UploadCvDetailPanel({ cvUploaded, uploadedFile, onPickFile }) {
   );
 }
 
-/** Bước 2 — video xem trước trong ô riêng (sau khi chọn HR) */
+/** Bước 2, video xem trước trong ô riêng (sau khi chọn HR) */
 function HrPreviewPanel({ hrGender }) {
   if (!hrGender) return null;
   const preview = HR_PREVIEWS[hrGender];
@@ -153,7 +153,7 @@ function HrPreviewPanel({ hrGender }) {
   return (
     <div className={HR_PREVIEW_PANEL_CLASS}>
       <p className="mb-2 shrink-0 text-xs font-semibold text-violet-600">
-        Xem trước — {preview.name}
+        Xem trước, {preview.name}
       </p>
       <div className="flex min-h-0 flex-1 items-center justify-center">
         <video
@@ -172,7 +172,7 @@ function HrPreviewPanel({ hrGender }) {
   );
 }
 
-/** Một ô dài chung — chỉ hiện sau khi đã chọn A hoặc B */
+/** Một ô dài chung, chỉ hiện sau khi đã chọn A hoặc B */
 function SourceDetailPanel({ option, latestCV, cvUploaded, uploadedFile, onPickFile }) {
   if (option !== "A" && option !== "B") return null;
 
@@ -197,8 +197,8 @@ function SelectOptionRing({ selected }) {
     <div
       className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full border-2 transition-all ${
         selected
-          ? "border-[#6d2fd6] bg-[#6d2fd6] shadow-[0_2px_10px_rgba(99,14,212,0.35)]"
-          : "border-violet-400 bg-white group-hover:border-[#6d2fd6]/70"
+          ? "border-[#630ed4] bg-[#630ed4] shadow-[0_2px_10px_rgba(99,14,212,0.35)]"
+          : "border-violet-400 bg-white group-hover:border-[#630ed4]/70"
       }`}
       aria-hidden
     >
@@ -364,7 +364,7 @@ export function Interview() {
       let jdText = jdInputText.trim();
 
       if (option === "A" && latestCV) {
-        // Fetch raw CV text from stored analysis — the list API strips cvText to save bandwidth,
+        // Fetch raw CV text from stored analysis, the list API strips cvText to save bandwidth,
         // so we need a separate call to get the full document for genuine personalization.
         const analysisId = latestCV.id || latestCV.analysisId;
         if (analysisId) {
@@ -379,7 +379,7 @@ export function Interview() {
               }
             }
           } catch {
-            // ignore — fall back to structured summary below
+            // ignore, fall back to structured summary below
           }
         }
 
@@ -412,7 +412,7 @@ export function Interview() {
         } else {
           setExtractWarning(
             extracted.error ||
-              "Không thể đọc CV. AI sẽ tạo câu hỏi dựa trên tên file — chất lượng cá nhân hóa thấp hơn.",
+              "Không thể đọc CV. AI sẽ tạo câu hỏi dựa trên tên file, chất lượng cá nhân hóa thấp hơn.",
           );
           cvText = `Tên file CV: ${uploadedFile.name}`;
         }
@@ -449,7 +449,7 @@ export function Interview() {
       return;
     }
 
-    // Tạo session ngay sau khi có questions — trước khi vào phòng
+    // Tạo session ngay sau khi có questions, trước khi vào phòng
     // sessionId được truyền vào InterviewRoom để lưu từng câu trả lời
     setLoadingStep("creating_session");
     let sessionId = null;
@@ -464,7 +464,7 @@ export function Interview() {
         });
         if (created.success) sessionId = created.sessionId;
       } catch {
-        // graceful degradation — phỏng vấn vẫn chạy, không lưu MongoDB
+        // graceful degradation, phỏng vấn vẫn chạy, không lưu MongoDB
       }
     }
 
@@ -488,7 +488,9 @@ export function Interview() {
 
           if (questionTexts.length > 0) {
             const pregenTimeout = new Promise((resolve) =>
-              setTimeout(() => resolve({ success: false, timedOut: true }), 45_000)
+              // 180s: ElevenLabs x5 (~60s) + D-ID Express render x5 sequential (~55s) + buffer
+              // Tăng từ 100s: backend thực tế đo được 115s do ElevenLabs multilingual processing.
+              setTimeout(() => resolve({ success: false, timedOut: true }), 180_000)
             );
             const pregenResult = await Promise.race([
               pregenerateInterviewVideos(questionTexts, { gender: hrGender }),
@@ -502,6 +504,7 @@ export function Interview() {
       } catch {
         // D-ID chưa set hoặc lỗi mạng — phỏng vấn vẫn chạy với TTS fallback
       }
+
     }
 
     setLoadingStep(null);
@@ -524,7 +527,7 @@ export function Interview() {
     "group relative w-full rounded-md border-2 p-4 text-left transition-all duration-200 sm:p-5";
   const optIdle =
     "cursor-pointer border-violet-200 bg-white hover:border-violet-300 hover:bg-violet-50/80";
-  const optOn = "border-[#6d2fd6] bg-violet-50 ring-2 ring-violet-200/80";
+  const optOn = "border-[#630ed4] bg-violet-50 ring-2 ring-violet-200/80";
 
   return (
     <MentorPageShell bottomPad="pb-24">
@@ -553,10 +556,13 @@ export function Interview() {
           <CustomerPageHeader
             className="mb-5 w-full"
             title={
-              <CustomerPageSplitTitle accent="Luyện phỏng vấn với AI" rest="từ CV của bạn" />
+              <>
+                <span className="font-extrabold text-[#630ed4]">Luyện phỏng vấn với AI</span>{" "}
+                <span className="font-extrabold text-[#1a1b23]">từ CV của bạn</span>
+              </>
             }
             subtitle="Từ CV của bạn, ProInterview tạo buổi phỏng vấn thử với HR AI và góp ý sau từng câu trả lời để bạn tự tin hơn trước buổi thật."
-            subtitleClassName="mt-3 max-w-2xl text-base font-medium leading-relaxed text-violet-700/90"
+            subtitleClassName="mt-3 max-w-full text-sm font-medium leading-relaxed text-slate-600 sm:text-base"
           />
 
         <div className={CV_JD_CARD_CLASS}>
@@ -591,8 +597,8 @@ export function Interview() {
             onChange={handleJdFileUpload}
           />
           <div>
-            <h2 className="text-base font-bold text-violet-950">Bước 1 — Chọn nguồn CV</h2>
-            <p className="mt-0.5 text-sm text-violet-600">
+            <h2 className="text-sm sm:text-base font-bold text-violet-950">Bước 1: Chọn nguồn CV</h2>
+            <p className="mt-0.5 text-xs sm:text-sm text-violet-600">
               AI đọc CV của bạn để tạo bộ câu hỏi phỏng vấn phù hợp.
             </p>
           </div>
@@ -609,7 +615,7 @@ export function Interview() {
                     <SelectOptionRing selected={option === "A"} />
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2">
-                        <FileStack className="h-5 w-5 shrink-0 text-[#6d2fd6]" {...IS} />
+                        <FileStack className="h-5 w-5 shrink-0 text-[#630ed4]" {...IS} />
                         <p className="font-bold text-violet-950">CV đã phân tích</p>
                       </div>
                       <p className="mt-0.5 text-xs text-violet-600">
@@ -629,7 +635,7 @@ export function Interview() {
                     <SelectOptionRing selected={option === "B"} />
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2">
-                        <CloudUpload className="h-5 w-5 shrink-0 text-[#6d2fd6]" {...IS} />
+                        <CloudUpload className="h-5 w-5 shrink-0 text-[#630ed4]" {...IS} />
                         <p className="font-bold text-violet-950">Tải CV mới</p>
                       </div>
                       <p className="mt-0.5 text-xs text-violet-600">Chọn thẻ, rồi upload file trong ô bên dưới</p>
@@ -644,7 +650,7 @@ export function Interview() {
                   <button
                     type="button"
                     onClick={() => navigate("/cv-analysis")}
-                    className="font-semibold text-[#6d2fd6] hover:underline"
+                    className="font-semibold text-[#630ed4] hover:underline"
                   >
                     Phân tích CV trước
                   </button>
@@ -660,7 +666,7 @@ export function Interview() {
                 onPickFile={openCvFilePicker}
               />
 
-              {/* JD optional — giúp câu hỏi sát yêu cầu công ty hơn */}
+              {/* JD optional, giúp câu hỏi sát yêu cầu công ty hơn */}
               <div className="rounded-md border border-violet-100 bg-violet-50/40">
                 <button
                   type="button"
@@ -689,7 +695,7 @@ export function Interview() {
                 {jdExpanded && (
                   <div className="space-y-2.5 border-t border-violet-100 px-4 pb-4 pt-3">
                     <p className="text-xs text-violet-500">
-                      Dán nội dung JD hoặc upload file — AI sẽ bám sát yêu cầu tuyển dụng thực tế khi tạo câu hỏi.
+                      Dán nội dung JD hoặc upload file, AI sẽ bám sát yêu cầu tuyển dụng thực tế khi tạo câu hỏi.
                     </p>
                     <textarea
                       value={jdInputText}
@@ -730,7 +736,7 @@ export function Interview() {
                   canProceedSetup ? CTA_LIME : "cursor-not-allowed bg-violet-100 text-violet-400"
                 }`}
               >
-                Tiếp tục — Chọn HR
+                Tiếp tục
                 <ArrowRight className="h-4 w-4" {...IS} />
               </button>
         </section>
@@ -739,8 +745,8 @@ export function Interview() {
         {flowStep === 2 && (
         <section className="space-y-5">
           <div>
-            <h2 className="text-base font-bold text-violet-950">Bước 2 — Chọn HR AI</h2>
-            <p className="mt-0.5 text-sm text-violet-600">Chọn một HR — có thể xem video ngắn bên dưới trước khi bắt đầu.</p>
+            <h2 className="text-sm sm:text-base font-bold text-violet-950">Bước 2: Chọn HR AI</h2>
+            <p className="mt-0.5 text-xs sm:text-sm text-violet-600">Chọn một HR, có thể xem video ngắn bên dưới trước khi bắt đầu.</p>
           </div>
 
           <div className="grid items-stretch gap-3 sm:grid-cols-2">
@@ -759,7 +765,7 @@ export function Interview() {
                     <SelectOptionRing selected={hrGender === g} />
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2">
-                        <Icon className="h-5 w-5 shrink-0 text-[#6d2fd6]" {...IS} />
+                        <Icon className="h-5 w-5 shrink-0 text-[#630ed4]" {...IS} />
                         <p className="font-bold text-violet-950">{preview.name}</p>
                       </div>
                       <p className="mt-0.5 text-xs text-violet-600">{preview.subtitle}</p>

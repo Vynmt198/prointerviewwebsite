@@ -6,7 +6,7 @@ import { MentorPageShell } from "../../components/mentor/MentorPageShell";
 import { fetchMentorReviews } from "../../utils/mentorApi";
 import { replyToReview } from "../../utils/reviewsApi";
 import { toastApiError, tryApi } from "../../utils/apiToast";
-import { avatarSrc, DEFAULT_AVATAR } from "../../utils/mediaUrl";
+import { avatarSrc } from "../../utils/mediaUrl";
 import {
   mentorPageTitle,
   mentorPageSubtitle,
@@ -27,6 +27,7 @@ function filterAriaLabel(value, stars) {
   return `Lọc đánh giá ${stars} sao`;
 }
 
+const DEFAULT_AVATAR = "https://i.pravatar.cc/120?img=22";
 
 function formatReviewDate(value) {
   if (!value) return "—";
@@ -64,7 +65,7 @@ export function MentorReviews() {
             avatar: avatarSrc(r.mentee?.avatar) || DEFAULT_AVATAR,
           },
           position: r.position || "Học viên",
-          company: r.company || "",
+          company: r.company || "ProInterview",
           menteeReview: {
             rating: Number(r.rating || 0),
             comment: r.comment || "",
@@ -144,7 +145,7 @@ export function MentorReviews() {
             <span>Đánh giá</span>{" "}
             <span className={mentorAccentText}>từ học viên</span>
           </h1>
-          <p className={mentorPageSubtitle}>Phản hồi sau buổi mentor — tìm kiếm và trả lời nhận xét</p>
+          <p className={mentorPageSubtitle}>Phản hồi sau buổi mentor, tìm kiếm và trả lời nhận xét</p>
         </div>
 
         <div className="mb-10 grid grid-cols-1 gap-5 md:mb-12 md:grid-cols-3 md:gap-6">

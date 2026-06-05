@@ -68,7 +68,7 @@ function formatAmountParts(amount) {
   return { value, suffix: "đ" };
 }
 
-/** Số tiền gom một khối — căn giữa, số và đ cùng kiểu chữ */
+/** Số tiền gom một khối, căn giữa, số và đ cùng kiểu chữ */
 function PaymentAmountBlock({ payAmount, className = "" }) {
   const { value, suffix } = formatAmountParts(payAmount);
   const amountClass =
@@ -105,14 +105,14 @@ function mentorIdsMatch(a, b) {
   return core(na) === core(nb);
 }
 
-/** Hiển thị trên checkout CK — Vite: .env / .env.local (dev) hoặc env trên host build (Vercel) + redeploy. */
+/** Hiển thị trên checkout CK, Vite: .env / .env.local (dev) hoặc env trên host build (Vercel) + redeploy. */
 const BANK_TRANSFER = {
   bankName: import.meta.env.VITE_BANK_TRANSFER_NAME || "",
   accountNumber: import.meta.env.VITE_BANK_TRANSFER_ACCOUNT || "",
   accountOwner: import.meta.env.VITE_BANK_TRANSFER_OWNER || "",
 };
 
-/** Tên ngân hàng đầy đủ — ưu tiên `VITE_BANK_TRANSFER_DISPLAY_NAME`, không viết tắt trên UI. */
+/** Tên ngân hàng đầy đủ, ưu tiên `VITE_BANK_TRANSFER_DISPLAY_NAME`, không viết tắt trên UI. */
 function displayBankName(raw) {
   const explicit = String(import.meta.env.VITE_BANK_TRANSFER_DISPLAY_NAME || "").trim();
   if (explicit) return explicit;
@@ -156,7 +156,7 @@ function inferVietQrBankId() {
   return "";
 }
 
-/** Ảnh QR VietQR: quét trong app NH — thường điền sẵn STK, số tiền, nội dung. */
+/** Ảnh QR VietQR: quét trong app NH, thường điền sẵn STK, số tiền, nội dung. */
 function buildVietQrImageUrl(bankId, accountDigits, amountVnd, addInfo) {
   const bid = String(bankId || "").trim().toUpperCase();
   const acc = String(accountDigits || "").replace(/\D/g, "");
@@ -347,7 +347,7 @@ function BankTransferPaymentDetails({
   );
 }
 
-/** QR VietQR — căn giữa, khung đồng bộ panel thông tin CK */
+/** QR VietQR, căn giữa, khung đồng bộ panel thông tin CK */
 function BankTransferQrFocus({ vietQrUrl, vietQrLoadFailed, onQrError, onOpenQrModal }) {
   return (
     <div className="flex min-h-0 flex-1 flex-col items-center justify-center lg:py-2">
@@ -371,7 +371,7 @@ function BankTransferQrFocus({ vietQrUrl, vietQrLoadFailed, onQrError, onOpenQrM
           </span>
         </button>
       ) : vietQrUrl && vietQrLoadFailed ? (
-        <p className="max-w-xs text-center text-sm text-slate-600">Không tải được QR — dùng thông tin bên cạnh.</p>
+        <p className="max-w-xs text-center text-sm text-slate-600">Không tải được QR, dùng thông tin bên cạnh.</p>
       ) : (
         <p className="max-w-xs text-center text-sm text-slate-600">
           Thêm <span className="font-mono text-xs">VITE_VIETQR_BANK_ID</span> để hiện mã QR.
@@ -381,7 +381,7 @@ function BankTransferQrFocus({ vietQrUrl, vietQrLoadFailed, onQrError, onOpenQrM
   );
 }
 
-/** Màn CK booking/khóa — mobile: QR full + STK dưới thanh chờ; desktop: 2 cột */
+/** Màn CK booking/khóa, mobile: QR full + STK dưới thanh chờ; desktop: 2 cột */
 function BankTransferFocusLayout({
   payAmount,
   transferOrderNum,
@@ -418,7 +418,7 @@ function BankTransferFocusLayout({
   );
 }
 
-/** Mã CK + số tiền — layout checkout thường (plan / sidebar) */
+/** Mã CK + số tiền, layout checkout thường (plan / sidebar) */
 function TransferMemoCard({ transferOrderNum, payAmount, fmt, large }) {
   const codeClass = large
     ? "font-mono text-lg font-bold tracking-wide text-slate-900 sm:text-xl"
@@ -522,7 +522,7 @@ function CheckoutPayPanel({ mode, fmt, rebookCreditVnd, bookingTotalEstimate, bo
     return (
       <div className="mb-6 rounded-xl border border-violet-200 bg-violet-50 px-4 py-4 text-xs leading-relaxed text-violet-900">
         Dùng <strong>{fmt(rebookCreditVnd)}</strong> đã trả cho buổi mới{" "}
-        <strong>{fmt(bookingTotalEstimate)}</strong>. Bấm xác nhận — không CK lại.
+        <strong>{fmt(bookingTotalEstimate)}</strong>. Bấm xác nhận, không CK lại.
       </div>
     );
   }
@@ -537,7 +537,7 @@ function CheckoutPayPanel({ mode, fmt, rebookCreditVnd, bookingTotalEstimate, bo
           <button
             type="button"
             onClick={() => navigate(`/mentors?rebookFrom=${encodeURIComponent(rebookFrom)}`)}
-            className="rounded-lg bg-[#8037f4] px-3 py-2 text-[10px] font-bold uppercase text-white hover:bg-[#6d2fd6]"
+            className="rounded-lg bg-[#8037f4] px-3 py-2 text-[10px] font-bold uppercase text-white hover:bg-[#630ed4]"
           >
             Mentor khác
           </button>
@@ -556,7 +556,7 @@ function CheckoutPayPanel({ mode, fmt, rebookCreditVnd, bookingTotalEstimate, bo
     return (
       <div className="mb-6 space-y-3 rounded-xl border border-red-200 bg-red-50 px-4 py-4 text-xs text-red-800">
         <p>
-          Credit {fmt(rebookCreditVnd)} — buổi {fmt(bookingTotalEstimate)} (thiếu{" "}
+          Credit {fmt(rebookCreditVnd)}, buổi {fmt(bookingTotalEstimate)} (thiếu{" "}
           {fmt(bookingTotalEstimate - rebookCreditVnd)}).
         </p>
         <div className="flex flex-wrap gap-2">
@@ -669,7 +669,7 @@ function VietQrModalDetailRow({ label, children, valueClassName = "" }) {
   );
 }
 
-/** Modal VietQR giữa màn hình — nền tối mờ + thẻ trắng (giống FES) */
+/** Modal VietQR giữa màn hình, nền tối mờ + thẻ trắng (giống FES) */
 function VietQrModal({
   open,
   onClose,
@@ -792,7 +792,7 @@ function VietQrModal({
   );
 }
 
-/** CK + QR — `variant="large"` màn booking/khóa chỉ hiện chuyển khoản */
+/** CK + QR, `variant="large"` màn booking/khóa chỉ hiện chuyển khoản */
 function BankTransferBlock({
   hasBank,
   payAmount,
@@ -898,7 +898,7 @@ function BankTransferBlock({
             <p className="mt-1 text-xs font-medium text-slate-500">Phóng to QR</p>
           </button>
         ) : vietQrUrl && vietQrLoadFailed ? (
-          <p className={`text-center text-xs ${labelMuted}`}>Không tải QR — chuyển thủ công theo STK.</p>
+          <p className={`text-center text-xs ${labelMuted}`}>Không tải QR, chuyển thủ công theo STK.</p>
         ) : (
           <p className={`text-center text-xs ${labelMuted}`}>
             Thêm <span className="font-mono">VITE_VIETQR_BANK_ID</span> để hiện QR.
@@ -1112,7 +1112,7 @@ export function Checkout() {
           setAppStep("awaiting_transfer");
           if (!silent) {
             toastApiSuccess(
-              "Đã tạo đơn gói cước. Quét QR, CK — khi tiền vào sẽ tự kích hoạt gói qua SePay.",
+              "Đã tạo đơn gói cước. Quét QR, CK, khi tiền vào sẽ tự kích hoạt gói qua SePay.",
             );
           }
           return { ok: true, subscriptionPaymentId: apiRes.paymentId };
@@ -1143,7 +1143,7 @@ export function Checkout() {
         setCardError("Khóa học miễn phí không cần thanh toán tại đây. Hãy đăng ký trực tiếp trên trang khóa học.");
         return { ok: false };
       }
-      // URL ?price= có thể cũ/sai — luôn ghi danh theo giá API, không chặn (tránh webhook SePay không khớp đơn).
+      // URL ?price= có thể cũ/sai, luôn ghi danh theo giá API, không chặn (tránh webhook SePay không khớp đơn).
       if (courseUrlPrice > 0 && Math.round(expected) !== Math.round(courseUrlPrice)) {
         console.warn(
           "[checkout] URL price",
@@ -1167,7 +1167,7 @@ export function Checkout() {
             apiRes.paymentExpiresAt || apiRes.enrollment?.paymentExpiresAt,
           );
           setAppStep("awaiting_transfer");
-          if (!silent) toastApiSuccess("Đã tạo ghi danh. Quét QR và chuyển khoản — hệ thống tự xác nhận qua SePay.");
+          if (!silent) toastApiSuccess("Đã tạo ghi danh. Quét QR và chuyển khoản, hệ thống tự xác nhận qua SePay.");
           return { ok: true, enrollmentId: String(eid) };
         }
         const msg = apiRes.error || "Không thể tạo ghi danh chờ chuyển khoản.";
@@ -1266,7 +1266,7 @@ export function Checkout() {
         setAppStep("awaiting_transfer");
         if (!silent) {
           toastApiSuccess(
-            "Đã tạo lịch. Quét QR, chuyển khoản — khi tiền vào sẽ tự xác nhận và chuyển sang buổi hẹn.",
+            "Đã tạo lịch. Quét QR, chuyển khoản, khi tiền vào sẽ tự xác nhận và chuyển sang buổi hẹn.",
           );
         }
         return { ok: true, bookingId: apiRes.booking.id };
@@ -1338,7 +1338,7 @@ export function Checkout() {
     const successSubtitle = isPlanCheckout
       ? `Gói ${plan.name} đã được kích hoạt sau chuyển khoản.`
       : isCourse
-        ? "Khóa học đã sẵn sàng — bạn có thể vào học ngay."
+        ? "Khóa học đã sẵn sàng, bạn có thể vào học ngay."
         : isBooking
           ? "Buổi mentor đã được xác nhận sau chuyển khoản."
           : "Chuyển khoản đã được xác nhận thành công.";
@@ -1505,7 +1505,7 @@ export function Checkout() {
                 <header className="mb-3 shrink-0 border-b border-[#8037f4]/8 pb-3">
                   <h1 className="text-xl font-bold text-slate-900 sm:text-2xl">Thanh toán chuyển khoản</h1>
                   <p className="mt-1 text-sm text-slate-600">
-                    Quét QR hoặc chuyển thủ công — hệ thống tự xác nhận qua SePay.
+                    Quét QR hoặc chuyển thủ công, hệ thống tự xác nhận qua SePay.
                   </p>
                 </header>
                 <div className="relative z-0">

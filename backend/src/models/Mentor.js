@@ -94,16 +94,6 @@ const mentorSchema = new Schema(
       reviewedAt: { type: Date, default: null },
       reviewedBy: { type: Schema.Types.ObjectId, ref: "User", default: null },
     },
-    pricing: {
-      mentorActivatedAt: { type: Date, default: null },
-      /** Override phí booking theo hợp đồng riêng của mentor (0..1) */
-      platformFeeRate: { type: Number, default: null },
-      /** Override phí khóa học theo hợp đồng riêng của mentor (0..1) */
-      coursePlatformFeeRate: { type: Number, default: null },
-      isEarlyMentor: { type: Boolean, default: false },
-      earlyMentorRank: { type: Number, default: null },
-      earlyMentorExpiresAt: { type: Date, default: null },
-    },
   },
   { collection: "mentors", timestamps: true }
 );

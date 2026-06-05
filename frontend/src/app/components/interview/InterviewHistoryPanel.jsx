@@ -14,7 +14,7 @@ function formatDate(value) {
 function scoreTone(score) {
   const s = Number(score || 0);
   if (s >= 75) return { bg: "bg-lime-100", text: "text-lime-900", ring: "ring-lime-200/80" };
-  if (s >= 55) return { bg: "bg-violet-100", text: "text-[#6d2fd6]", ring: "ring-violet-200/80" };
+  if (s >= 55) return { bg: "bg-violet-100", text: "text-[#630ed4]", ring: "ring-violet-200/80" };
   return { bg: "bg-amber-100", text: "text-amber-900", ring: "ring-amber-200/80" };
 }
 
@@ -90,7 +90,7 @@ export function InterviewHistoryPanel({ compact = false }) {
     <div className="space-y-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-2">
-          <Sparkle className="h-4 w-4 text-[#6d2fd6]" />
+          <Sparkle className="h-4 w-4 text-[#630ed4]" />
           <p className="text-sm font-extrabold text-violet-950">Lịch sử phỏng vấn</p>
         </div>
         <div className="text-xs font-semibold text-violet-600">{countText}</div>
@@ -107,7 +107,7 @@ export function InterviewHistoryPanel({ compact = false }) {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Tìm theo vị trí, HR, trạng thái, điểm…"
-          className="w-full rounded-xl border border-violet-200 bg-violet-50/40 py-2 pl-10 pr-3 text-sm text-violet-950 placeholder:text-violet-400 focus:border-[#6d2fd6] focus:outline-none focus:ring-2 focus:ring-violet-200/80"
+          className="w-full rounded-xl border border-violet-200 bg-violet-50/40 py-2 pl-10 pr-3 text-sm text-violet-950 placeholder:text-violet-400 focus:border-[#630ed4] focus:outline-none focus:ring-2 focus:ring-violet-200/80"
         />
         <Calendar className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-violet-400" />
       </div>
@@ -142,7 +142,7 @@ export function InterviewHistoryPanel({ compact = false }) {
 
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="rounded-full bg-violet-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[#6d2fd6]">
+                      <span className="rounded-full bg-violet-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[#630ed4]">
                         {s?.hrGender === "male" ? "HR Nam" : "HR Nữ"}
                       </span>
                       <span className="text-[11px] font-medium text-violet-500">

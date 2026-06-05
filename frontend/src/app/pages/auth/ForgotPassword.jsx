@@ -141,7 +141,7 @@ export function ForgotPassword() {
                 {import.meta.env.DEV && devResetUrl ? (
                   <details className="mb-5 rounded-2xl border border-dashed border-violet-200/90 bg-violet-50/40 px-4 py-3 text-left">
                     <summary className="cursor-pointer text-xs font-semibold text-violet-700">
-                      Dev — link đặt lại (không gửi email)
+                      Dev, link đặt lại (không gửi email)
                     </summary>
                     <a
                       href={devResetUrl}
