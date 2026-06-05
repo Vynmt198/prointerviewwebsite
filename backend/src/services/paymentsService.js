@@ -351,7 +351,7 @@ export async function recordTransferPending({
       if (billing && t === "subscription") {
         $set["providerResponse.billing"] = billing === "yearly" ? "yearly" : "monthly";
       }
-      if (paymentExpiresAt && !existing.paymentExpiresAt) {
+      if (paymentExpiresAt) {
         $set.paymentExpiresAt = paymentExpiresAt;
       }
       await Payment.updateOne({ _id: existing._id }, { $set });
@@ -438,7 +438,7 @@ function normalizeSubscriptionPlanKey(raw) {
 }
 
 /** Gói Pro/Elite — chuyển khoản: tạo payment pending + mã PI làm nội dung CK. */
-export async function createSubscriptionTransferPending(userId, { amount, planKey, orderNum, billing }) {
+export async function createSubscriptionTransferPending(userId, { amount, planKey, orderNum, billing, forceNew }) {
   if (!isMongoReady()) return { ok: false, status: 503, error: MONGO_ERR };
   if (!mongoose.isValidObjectId(userId)) return { ok: false, status: 401, error: "Phiên không hợp lệ." };
   const ref = String(orderNum || "").trim().slice(0, 100);
@@ -446,20 +446,23 @@ export async function createSubscriptionTransferPending(userId, { amount, planKe
   const plan = normalizeSubscriptionPlanKey(planKey);
   const expiresAt = newPaymentExpiresAt();
 
-  const pendingRow = await Payment.findOne({
+  let pendingRow = await Payment.findOne({
     userId,
     type: "subscription",
     provider: "transfer",
     status: "pending",
   }).select("_id referenceId providerRef paymentExpiresAt createdAt");
 
+  if (pendingRow && forceNew) {
+    pendingRow.status = "cancelled";
+    pendingRow.failureReason = "user_retry";
+    await pendingRow.save();
+    pendingRow = null;
+  }
+
   if (pendingRow) {
     const expired = await expireSubscriptionTransferIfNeeded(pendingRow);
     if (!expired.expired) {
-      if (pendingRow.providerRef !== ref) {
-        pendingRow.providerRef = ref;
-        await pendingRow.save();
-      }
       return {
         ok: true,
         paymentId: String(pendingRow._id),
@@ -468,6 +471,7 @@ export async function createSubscriptionTransferPending(userId, { amount, planKe
         paymentExpiresAt: pendingRow.paymentExpiresAt,
       };
     }
+    pendingRow = null;
   }
 
   const referenceId = pendingRow

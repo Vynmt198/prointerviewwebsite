@@ -172,6 +172,47 @@ function extractOrderPart(value) {
   return s.split("|")[0].trim();
 }
 
+function planCheckoutStorageKey(planKey, billing) {
+  return `prointerview_plan_ck_${planKey}_${billing}`;
+}
+
+function readPlanCheckoutSession(planKey, billing) {
+  if (typeof sessionStorage === "undefined") return null;
+  try {
+    const raw = sessionStorage.getItem(planCheckoutStorageKey(planKey, billing));
+    if (!raw) return null;
+    const data = JSON.parse(raw);
+    if (!data?.orderNum) return null;
+    return data;
+  } catch {
+    return null;
+  }
+}
+
+function writePlanCheckoutSession(planKey, billing, data) {
+  if (typeof sessionStorage === "undefined") return;
+  try {
+    sessionStorage.setItem(planCheckoutStorageKey(planKey, billing), JSON.stringify(data));
+  } catch {
+    /* ignore */
+  }
+}
+
+function clearPlanCheckoutSession(planKey, billing) {
+  if (typeof sessionStorage === "undefined") return;
+  try {
+    sessionStorage.removeItem(planCheckoutStorageKey(planKey, billing));
+  } catch {
+    /* ignore */
+  }
+}
+
+function readSavedPlanCheckoutFromParams(searchParams) {
+  const plan = searchParams.get("plan");
+  if (!plan) return null;
+  return readPlanCheckoutSession(plan, searchParams.get("billing") ?? "yearly");
+}
+
 /* ─── CopyBtn ────────────────────────────────────────────── */
 function CopyBtn({ text, variant = "default" }) {
   const [copied, setCopied] = useState(false);
@@ -241,10 +282,9 @@ function parseApiExpiresAt(value) {
 
 function applyPaymentExpiryFromApi(setPaymentExpiresAtMs, setPaymentExpired, raw) {
   const t = parseApiExpiresAt(raw);
-  if (t) {
-    setPaymentExpiresAtMs(t);
-    setPaymentExpired(false);
-  }
+  if (!t) return;
+  setPaymentExpiresAtMs(t);
+  setPaymentExpired(t <= Date.now());
 }
 
 function BankTransferPaymentDetails({
@@ -979,7 +1019,11 @@ export function Checkout() {
   const baseTotal = isBooking ? bookingPrice : isCourse ? coursePriceNum : planListPrice;
   const total = isBooking ? bookingPrice : isCourse ? coursePriceNum : price;
 
-  const [transferOrderNum, setTransferOrderNum] = useState(() => `PI${Math.floor(Math.random() * 900000 + 100000)}`);
+  const [transferOrderNum, setTransferOrderNum] = useState(() => {
+    const saved = readSavedPlanCheckoutFromParams(searchParams);
+    if (saved?.orderNum) return saved.orderNum;
+    return `PI${Math.floor(Math.random() * 900000 + 100000)}`;
+  });
 
   /* ── Read all booking params from URL ── */
   const bookingPosition = searchParams.get("position") ?? "";
@@ -1015,17 +1059,32 @@ export function Checkout() {
     })();
   }, [isBooking, rebookFrom]);
 
-  const [appStep, setAppStep] = useState("checkout");
+  const [appStep, setAppStep] = useState(() => {
+    const saved = readSavedPlanCheckoutFromParams(searchParams);
+    return saved?.paymentId ? "awaiting_transfer" : "checkout";
+  });
   const [bankBookingId, setBankBookingId] = useState(null);
   const [bankEnrollmentId, setBankEnrollmentId] = useState(null);
-  const [bankSubscriptionPaymentId, setBankSubscriptionPaymentId] = useState(null);
+  const [bankSubscriptionPaymentId, setBankSubscriptionPaymentId] = useState(() => {
+    const saved = readSavedPlanCheckoutFromParams(searchParams);
+    return saved?.paymentId ?? null;
+  });
   const [awaitingAutoConfirm, setAwaitingAutoConfirm] = useState(false);
-  const [paymentExpiresAtMs, setPaymentExpiresAtMs] = useState(null);
+  const [paymentExpiresAtMs, setPaymentExpiresAtMs] = useState(() => {
+    const saved = readSavedPlanCheckoutFromParams(searchParams);
+    return saved?.expiresAtMs ?? null;
+  });
   const [expiresInMs, setExpiresInMs] = useState(null);
-  const [paymentExpired, setPaymentExpired] = useState(false);
+  const [paymentExpired, setPaymentExpired] = useState(() => {
+    const saved = readSavedPlanCheckoutFromParams(searchParams);
+    if (saved?.expiresAtMs && saved.expiresAtMs <= Date.now()) return true;
+    return false;
+  });
   const [transferTimeoutMinutes, setTransferTimeoutMinutes] = useState(15);
   const [paymentSuccessOverlay, setPaymentSuccessOverlay] = useState(null);
-  const autoOrderStartedRef = useRef(false);
+  const autoOrderStartedRef = useRef(
+    Boolean(readSavedPlanCheckoutFromParams(searchParams)?.paymentId),
+  );
   const paidRedirectStartedRef = useRef(false);
 
   const [cardError, setCardError] = useState("");
@@ -1086,7 +1145,8 @@ export function Checkout() {
     setVietQrLoadFailed(false);
   }, [vietQrUrl]);
 
-  const handlePay = async ({ silent = false } = {}) => {
+  const handlePay = async ({ silent = false, orderNumOverride, forceNew = false } = {}) => {
+    const orderNum = String(orderNumOverride || transferOrderNum).trim();
     if (!isLoggedIn()) {
       setCardError("");
       const q = searchParams.toString();
@@ -1101,15 +1161,22 @@ export function Checkout() {
         const apiRes = await createSubscriptionTransferPending({
           amount: payAmount,
           planKey: apiPlanKey,
-          orderNum: transferOrderNum,
+          orderNum,
           billing,
+          forceNew,
         });
         if (apiRes.success && apiRes.paymentId) {
+          const resolvedOrder = apiRes.providerRef || orderNum;
           if (apiRes.providerRef) setTransferOrderNum(apiRes.providerRef);
           setBankSubscriptionPaymentId(apiRes.paymentId);
           applyPaymentExpiryFromApi(setPaymentExpiresAtMs, setPaymentExpired, apiRes.paymentExpiresAt);
           if (apiRes.timeoutMinutes) setTransferTimeoutMinutes(apiRes.timeoutMinutes);
           setAppStep("awaiting_transfer");
+          writePlanCheckoutSession(planKey, billing, {
+            orderNum: resolvedOrder,
+            paymentId: apiRes.paymentId,
+            expiresAtMs: parseApiExpiresAt(apiRes.paymentExpiresAt),
+          });
           if (!silent) {
             toastApiSuccess(
               "Đã tạo đơn gói cước. Quét QR, CK, khi tiền vào sẽ tự kích hoạt gói qua SePay.",
@@ -1155,7 +1222,7 @@ export function Checkout() {
       }
       setCardError("");
       try {
-        const apiRes = await enrollmentApi.enroll(courseId, { paymentMethod: "transfer", orderNum: transferOrderNum });
+        const apiRes = await enrollmentApi.enroll(courseId, { paymentMethod: "transfer", orderNum });
         const eid = apiRes.enrollment?._id || apiRes.enrollment?.id;
         if (apiRes.success && eid) {
           const serverOrder = extractOrderPart(apiRes.orderNum || apiRes.enrollment?.paymentRef);
@@ -1254,7 +1321,7 @@ export function Checkout() {
         jdFileUrl: bookingJdFileUrl || "",
         price: bookingPrice,
         durationMinutes: 60,
-        orderNum: transferOrderNum,
+        orderNum,
         paymentStatus: "pending",
         paymentMethod: "transfer",
       });
@@ -1335,6 +1402,9 @@ export function Checkout() {
         ? `Gói ${plan.name} đã được kích hoạt.`
         : "Thanh toán đã được xác nhận.";
     toastApiSuccess(toastMsg);
+    if (isPlanCheckout) {
+      clearPlanCheckoutSession(planKey, billing);
+    }
     const successSubtitle = isPlanCheckout
       ? `Gói ${plan.name} đã được kích hoạt sau chuyển khoản.`
       : isCourse
@@ -1365,17 +1435,33 @@ export function Checkout() {
     });
   };
 
-  const handleRetryTransferOrder = () => {
-    autoOrderStartedRef.current = false;
+  const pollErrorShownRef = useRef(false);
+
+  const handleRetryTransferOrder = async () => {
+    const nextOrderNum = `PI${Math.floor(Math.random() * 900000 + 100000)}`;
+    autoOrderStartedRef.current = true;
+    pollErrorShownRef.current = false;
     setPaymentExpired(false);
     setPaymentExpiresAtMs(null);
     setExpiresInMs(null);
+    setAwaitingAutoConfirm(false);
     setAppStep("checkout");
-    setTransferOrderNum(`PI${Math.floor(Math.random() * 900000 + 100000)}`);
+    setTransferOrderNum(nextOrderNum);
     setBankBookingId(null);
     setBankEnrollmentId(null);
     setBankSubscriptionPaymentId(null);
     setCardError("");
+    if (isPlanCheckout) {
+      clearPlanCheckoutSession(planKey, billing);
+    }
+    const created = await handlePay({
+      silent: false,
+      orderNumOverride: nextOrderNum,
+      forceNew: isPlanCheckout,
+    });
+    if (!created?.ok) {
+      autoOrderStartedRef.current = false;
+    }
   };
 
   useEffect(() => {
@@ -1417,8 +1503,6 @@ export function Checkout() {
     bookingTime,
   ]);
 
-  const pollErrorShownRef = useRef(false);
-
   const runTransferPoll = async () => {
     if (paymentExpired) return;
     const r = await fetchTransferStatus(transferOrderNum);
@@ -1430,6 +1514,9 @@ export function Checkout() {
       setPaymentExpired(true);
       setAwaitingAutoConfirm(false);
       setExpiresInMs(0);
+      if (isPlanCheckout) {
+        clearPlanCheckoutSession(planKey, billing);
+      }
       toastApiError("Đơn thanh toán đã hết hạn. Tạo mã mới để thử lại.");
       return;
     }
