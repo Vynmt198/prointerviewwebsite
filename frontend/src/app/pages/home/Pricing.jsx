@@ -12,7 +12,7 @@ import { requireLoginNavigate } from "../../utils/authGate";
 import { getUser, isLoggedIn } from "../../utils/auth";
 import { fetchCurrentPlan } from "../../utils/plansApi";
 import { CUSTOMER_SHELL_GUTTER, CUSTOMER_SHELL_MAX } from "../../components/layout/customerShellLayout";
-import { CustomerPageHeader } from "../../components/layout/CustomerPageHeader";
+import { CustomerPageHeader, CustomerPageSplitTitle } from "../../components/layout/CustomerPageHeader";
 import { PRICING_SUBTITLE, PRICING_FAQ } from "../../constants/brandVoice";
 
 function PricingFaqAnswer({ item }) {
@@ -22,7 +22,7 @@ function PricingFaqAnswer({ item }) {
         <p key={idx}>{p}</p>
       ))}
       {item.bullets?.length ? (
-        <ul className="list-disc space-y-2 pl-5 marker:text-[#630ed4]">
+        <ul className="list-disc space-y-2 pl-5 marker:text-[#6d2fd6]">
           {item.bullets.map((b, idx) => (
             <li key={idx}>{b}</li>
           ))}
@@ -127,7 +127,7 @@ function FeatureLabel({ text }) {
         <React.Fragment key={i}>
           {part}
           {i < parts.length - 1 && (
-            <span className="font-bold text-[#630ed4]">{UNLIMITED_HIGHLIGHT}</span>
+            <span className="font-bold text-[#6d2fd6]">{UNLIMITED_HIGHLIGHT}</span>
           )}
         </React.Fragment>
       ))}
@@ -215,15 +215,13 @@ export function Pricing() {
             centered
             className="mb-8 sm:mb-10"
             title={
-              <>
-                Sẵn sàng hơn cho{" "}
-                <span className="text-[#630ed4]">
-                  mọi buổi phỏng vấn
-                </span>
-              </>
+              <CustomerPageSplitTitle
+                accent="Sẵn sàng hơn cho"
+                rest="mọi buổi phỏng vấn"
+              />
             }
             subtitle={PRICING_SUBTITLE}
-            subtitleClassName="mt-3 max-w-full text-sm font-medium leading-relaxed text-slate-600 sm:text-base"
+            subtitleClassName="mt-3 max-w-2xl text-base font-medium leading-relaxed text-violet-700/90"
           />
 
           <BillingToggle billing={billing} onChange={setBilling} savePercent={YEARLY_SAVE_PCT} />
@@ -243,13 +241,13 @@ export function Pricing() {
                   key={plan.id}
                   className={`glass-card relative flex h-full w-full min-w-0 flex-col !rounded-[20px] p-6 pt-[0.7rem] sm:p-7 sm:pt-[0.95rem] ${
                     isPopular
-                      ? "z-10 !overflow-visible !border-[3px] !border-[#630ed4] !shadow-none hover:!translate-y-0 hover:!border-[#630ed4] hover:!shadow-none"
+                      ? "z-10 !overflow-visible !border-[3px] !border-[#6d2fd6] !shadow-none hover:!translate-y-0 hover:!border-[#6d2fd6] hover:!shadow-none"
                       : ""
                   }`}
                 >
                   {isPopular && (
                     <div className="pointer-events-none absolute left-1/2 top-0 -translate-x-1/2 -translate-y-[62%]">
-                      <span className="relative inline-block whitespace-nowrap rounded-full bg-[#630ed4] px-4 py-1 text-xs font-black uppercase tracking-widest text-white shadow-md">
+                      <span className="relative inline-block whitespace-nowrap rounded-full bg-[#6d2fd6] px-4 py-1 text-xs font-black uppercase tracking-widest text-white shadow-md">
                         Phổ biến nhất
                         <SparkleGlyph
                           className="absolute -right-5 -top-4 h-8 w-8"
@@ -303,7 +301,7 @@ export function Pricing() {
                     <p className="text-xs font-semibold text-slate-500">{plan.subtitle}</p>
                     <h3
                       className={`mt-1 font-headline text-xl font-bold ${
-                        variant === "elite" ? "text-[#630ed4]" : "text-slate-900"
+                        variant === "elite" ? "text-[#6d2fd6]" : "text-slate-900"
                       }`}
                     >
                       {plan.title}
@@ -325,7 +323,7 @@ export function Pricing() {
                       {isYearly && !isFree && plan.yearlyTotal != null && (
                         <p className="text-base font-bold leading-snug text-slate-900">
                           Thanh toán một lần:{" "}
-                          <span className="text-[#630ed4]">{fmtVnd(plan.yearlyTotal)}</span>
+                          <span className="text-[#6d2fd6]">{fmtVnd(plan.yearlyTotal)}</span>
                           <span className="font-semibold text-slate-600"> /năm</span>
                         </p>
                       )}
@@ -340,7 +338,7 @@ export function Pricing() {
                         </>
                       )}
                       {isYearly && plan.yearlySave != null && (
-                        <p className="text-sm font-semibold leading-snug text-[#630ed4]">
+                        <p className="text-sm font-semibold leading-snug text-[#6d2fd6]">
                           Tiết kiệm {fmtVnd(plan.yearlySave)}/năm
                         </p>
                       )}
@@ -353,11 +351,11 @@ export function Pricing() {
                     {plan.features.map((f, i) => (
                       <li key={i} className="flex items-start gap-2.5 text-sm text-slate-700">
                         {variant === "elite" ? (
-                          <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-[#630ed4]" />
+                          <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-[#6d2fd6]" />
                         ) : (
                           <CheckCircle2
                             className={`mt-0.5 h-4 w-4 shrink-0 ${
-                              variant === "lime" ? "text-[#630ed4]" : "text-slate-400"
+                              variant === "lime" ? "text-[#6d2fd6]" : "text-slate-400"
                             }`}
                           />
                         )}
@@ -428,7 +426,7 @@ export function Pricing() {
                     >
                       <h4 className="text-sm font-bold text-slate-900 sm:text-base">{item.q}</h4>
                       {isOpen ? (
-                        <ChevronUp className="h-5 w-5 shrink-0 text-[#630ed4]" />
+                        <ChevronUp className="h-5 w-5 shrink-0 text-[#6d2fd6]" />
                       ) : (
                         <ChevronDown className="h-5 w-5 shrink-0 text-slate-400" />
                       )}

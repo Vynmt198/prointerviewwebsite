@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { adminApi } from "../../utils/adminApi";
 import { toastApiError } from "../../utils/apiToast";
+import { AppSelect } from "../../components/ui/AppSelect";
 
 /** Cùng thứ tự ưu tiên với sidebar admin */
 const TILES = [
@@ -26,13 +27,13 @@ const TILES = [
     to: "/admin/subscription-payments",
     label: "Gói Pro/Elite",
     icon: Crown,
-    desc: "CK nâng cấp gói, SePay tự kích hoạt",
+    desc: "CK nâng cấp gói — SePay tự kích hoạt",
   },
   {
     to: "/admin/course-payments",
     label: "Học phí khóa",
     icon: BookOpen,
-    desc: "Ghi danh CK, SePay mở khóa",
+    desc: "Ghi danh CK — SePay mở khóa",
   },
   { to: "/admin/payouts", label: "Rút tiền cố vấn", icon: Banknote, desc: "Duyệt và chi trả mentor" },
   { to: "/admin/users", label: "Người dùng", icon: Users, desc: "Danh sách và chi tiết user" },
@@ -42,20 +43,73 @@ const TILES = [
   { to: "/admin/analytics", label: "Phân tích", icon: LineChart, desc: "Báo cáo và biểu đồ" },
 ];
 
+const VIETNAMESE_MONTHS = [
+  { value: "01", label: "Tháng 1" },
+  { value: "02", label: "Tháng 2" },
+  { value: "03", label: "Tháng 3" },
+  { value: "04", label: "Tháng 4" },
+  { value: "05", label: "Tháng 5" },
+  { value: "06", label: "Tháng 6" },
+  { value: "07", label: "Tháng 7" },
+  { value: "08", label: "Tháng 8" },
+  { value: "09", label: "Tháng 9" },
+  { value: "10", label: "Tháng 10" },
+  { value: "11", label: "Tháng 11" },
+  { value: "12", label: "Tháng 12" },
+];
+
 export function AdminDashboard() {
   const [stats, setStats] = useState(null);
+  const [platformFinance, setPlatformFinance] = useState(null);
+  const [selectedMonth, setSelectedMonth] = useState(() => new Date().toISOString().slice(0, 7));
   const [loading, setLoading] = useState(true);
+  const isAllTime = !selectedMonth;
+  const monthLabel = selectedMonth || "Tất cả thời gian";
+  const currentMonth = new Date().toISOString().slice(0, 7);
+  const currentYear = Number(currentMonth.slice(0, 4));
+  const currentMonthPart = currentMonth.slice(5, 7);
+  const selectedYear = selectedMonth ? selectedMonth.slice(0, 4) : String(currentYear);
+  const selectedMonthPart = selectedMonth ? selectedMonth.slice(5, 7) : currentMonthPart;
+  const yearOptions = Array.from({ length: 6 }, (_, idx) => String(currentYear - idx));
+
+  function updateMonthValue(nextYear, nextMonthPart) {
+    const clampedMonthPart = nextYear === String(currentYear) && nextMonthPart > currentMonthPart
+      ? currentMonthPart
+      : nextMonthPart;
+    setSelectedMonth(`${nextYear}-${clampedMonthPart}`);
+  }
 
   useEffect(() => {
-    adminApi.getStats().then((res) => {
-      if (res.success) setStats(res.stats);
-      else toastApiError(res.error, "Không tải được thống kê admin.");
-      setLoading(false);
-    }).catch(() => {
-      toastApiError("Lỗi kết nối khi tải dashboard admin.");
-      setLoading(false);
-    });
+    adminApi
+      .getStats()
+      .then((statsRes) => {
+        if (statsRes.success) setStats(statsRes.stats);
+        else toastApiError(statsRes.error, "Không tải được thống kê admin.");
+      })
+      .catch(() => {
+        toastApiError("Lỗi kết nối khi tải dashboard admin.");
+      });
   }, []);
+
+  useEffect(() => {
+    setLoading(true);
+    adminApi
+      .getPlatformFinanceSummary({ month: selectedMonth })
+      .then((financeRes) => {
+        if (financeRes.success) setPlatformFinance(financeRes.platformFinance || null);
+        else {
+          toastApiError(financeRes.error, "Không tải được tổng quan tài chính nền tảng.");
+          setPlatformFinance(null);
+        }
+      })
+      .catch(() => {
+        toastApiError("Lỗi kết nối khi tải tổng quan tài chính nền tảng.");
+        setPlatformFinance(null);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  }, [selectedMonth]);
 
   return (
     <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -90,6 +144,79 @@ export function AdminDashboard() {
           icon={Activity}
           color="#f59e0b"
         />
+      </div>
+
+      <div className="glass-card space-y-6 p-5 sm:p-6">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500">Doanh thu theo thời gian</p>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            {!isAllTime && (
+              <div className="inline-flex items-center gap-2 rounded-full border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700">
+                <AppSelect
+                  size="sm"
+                  value={selectedMonthPart}
+                  onValueChange={(v) => updateMonthValue(selectedYear, v)}
+                  options={VIETNAMESE_MONTHS.map((m) => ({
+                    value: m.value,
+                    label: m.label,
+                    disabled: selectedYear === String(currentYear) && m.value > currentMonthPart,
+                  }))}
+                />
+                <AppSelect
+                  size="sm"
+                  value={selectedYear}
+                  onValueChange={(v) => updateMonthValue(v, selectedMonthPart)}
+                  options={yearOptions.map((year) => ({ value: year, label: year }))}
+                />
+              </div>
+            )}
+            <button
+              type="button"
+              onClick={() => setSelectedMonth(currentMonth)}
+              className={`rounded-full border px-4 py-2 text-xs font-bold uppercase tracking-wide transition ${
+                !isAllTime
+                  ? "border-violet-300 bg-violet-100 text-violet-700"
+                  : "border-slate-300 bg-white text-slate-700 hover:border-violet-300 hover:text-violet-700"
+              }`}
+            >
+              Theo tháng
+            </button>
+            <button
+              type="button"
+              onClick={() => setSelectedMonth("")}
+              className={`rounded-full border px-4 py-2 text-xs font-bold uppercase tracking-wide transition ${
+                isAllTime
+                  ? "border-violet-300 bg-violet-100 text-violet-700"
+                  : "border-slate-300 bg-white text-slate-700 hover:border-violet-300 hover:text-violet-700"
+              }`}
+            >
+              Tất cả thời gian
+            </button>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+          <StatCard
+            label={`Tổng thu - ${monthLabel}`}
+            value={loading ? "..." : `${Number(platformFinance?.totals?.grossCollected || 0).toLocaleString("vi-VN")}đ`}
+            icon={Banknote}
+            color="#4f46e5"
+          />
+          <StatCard
+            label={`Chia mentor - ${monthLabel}`}
+            value={loading ? "..." : `${Number(platformFinance?.totals?.mentorNet || 0).toLocaleString("vi-VN")}đ`}
+            icon={Users}
+            color="#0f766e"
+          />
+          <StatCard
+            label={`Lợi nhuận nền tảng - ${monthLabel}`}
+            value={loading ? "..." : `${Number(platformFinance?.totals?.platformRevenue || 0).toLocaleString("vi-VN")}đ`}
+            icon={Activity}
+            color="#b45309"
+          />
+        </div>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">

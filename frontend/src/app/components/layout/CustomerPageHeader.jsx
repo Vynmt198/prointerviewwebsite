@@ -1,13 +1,28 @@
 import React from "react";
 
-/** Pill badge + tiêu đề, đồng bộ CV hub / Pricing / các trang customer */
+/** Phần đầu tiêu đề H1: tím brand */
+export const CUSTOMER_TITLE_ACCENT = "font-extrabold text-[#6d2fd6]";
+/** Phần sau tiêu đề H1: đen */
+export const CUSTOMER_TITLE_REST = "font-extrabold text-[#1a1b23]";
+
+/** Tiêu đề 2 tông: tím → đen (đồng bộ Mentors, Courses, Pricing, …) */
+export function CustomerPageSplitTitle({ accent, rest }) {
+  return (
+    <>
+      <span className={CUSTOMER_TITLE_ACCENT}>{accent}</span>{" "}
+      <span className={CUSTOMER_TITLE_REST}>{rest}</span>
+    </>
+  );
+}
+
+/** Pill badge + tiêu đề — đồng bộ CV hub / Pricing / các trang customer */
 export function CustomerPageBadge({ children, pulse = true, className = "" }) {
   return (
     <div
       className={`inline-flex items-center gap-1.5 rounded-full border border-violet-200/80 bg-white/90 px-3 py-1 shadow-sm backdrop-blur-sm ${className}`}
     >
       <span
-        className={`h-1.5 w-1.5 shrink-0 rounded-full bg-[#630ed4] ${pulse ? "animate-pulse" : ""}`}
+        className={`h-1.5 w-1.5 shrink-0 rounded-full bg-[#6d2fd6] ${pulse ? "animate-pulse" : ""}`}
         aria-hidden
       />
       <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#5b598c] sm:text-[11px]">
@@ -19,7 +34,7 @@ export function CustomerPageBadge({ children, pulse = true, className = "" }) {
 
 /**
  * Header trang customer: badge trắng + chấm tím, H1 đậm, subtitle tím nhạt.
- * `title` có thể là ReactNode (vd. <>Text <span className="text-[#630ed4]">highlight</span></>).
+ * `title` có thể là ReactNode (vd. <>Text <span className="text-[#6d2fd6]">highlight</span></>).
  */
 export function CustomerPageHeader({
   badge,
@@ -45,7 +60,7 @@ export function CustomerPageHeader({
           {actions ? <div className="flex shrink-0 items-center gap-2">{actions}</div> : null}
         </div>
       )}
-      <h1 className="font-headline text-[clamp(1.5rem,3.5vw,3.25rem)] font-extrabold leading-[1.12] tracking-tight text-[#1a1b23]">
+      <h1 className="font-headline text-[clamp(1.75rem,3.5vw,2.5rem)] font-extrabold leading-[1.12] tracking-tight text-[#1a1b23]">
         {title}
       </h1>
       {subtitle ? (
