@@ -105,9 +105,10 @@ export function isCircuitOpen() { return didCircuit.isOpen(); }
 
 // ── Cache key ─────────────────────────────────────────────────────────────────
 
-function buildCacheKey(questionText, avatarImageUrl, voiceId) {
-  const raw = `${questionText.trim()}::${avatarImageUrl}::${voiceId ?? "default"}`;
-  return `did:v2:${crypto.createHash("md5").update(raw).digest("hex")}`;
+function buildCacheKey(questionText, avatarImageUrl, azureVoiceId, elevenLabsVoiceId) {
+  // Include both voice IDs so changing ElevenLabs clone invalidates stale cached videos.
+  const raw = `${questionText.trim()}::${avatarImageUrl}::${azureVoiceId ?? "default"}::${elevenLabsVoiceId ?? "azure"}`;
+  return `did:v3:${crypto.createHash("md5").update(raw).digest("hex")}`;
 }
 
 // ── Audio: ElevenLabs TTS → Cloudinary CDN ───────────────────────────────────
@@ -207,13 +208,15 @@ async function createDIDTalk(avatarImageUrl, audioUrl, questionText, opts = {}) 
 /**
  * Poll D-ID talk job đến khi status=done.
  * @param {string} talkId
- * @param {number} [timeoutMs=60000] - 60s để D-ID xử lý kể cả khi bị queue sau nhiều job.
- *   35s cũ quá ngắn: probe Q1 xong → Q2-5 parallel nhưng D-ID queue tuần tự, Q5 có thể
- *   chờ 50-55s. 60s cho đủ headroom mà vẫn fail fast khi D-ID thực sự stuck.
+ * @param {number} [timeoutMs=120000] - 120s per-video budget.
+ *   Q2-Q5 chạy song song nhưng D-ID server xử lý tuần tự → Q5 có thể chờ 90-110s.
+ *   Đo thực tế: Q1 probe ~46s; Q5 worst-case = 55s (nhẹ tải) đến >60s (tải cao).
+ *   120s cho đủ headroom mà vẫn fail fast khi D-ID thực sự stuck.
+ *   Budget: frontend timeout 180s − Q1 probe ~46s − ElevenLabs ~10s = 124s còn lại cho poll.
  * @param {AbortSignal} [signal] - Dừng ngay khi client ngắt kết nối (req.on('close')).
  * @returns {string} result_url (MP4 video URL)
  */
-async function pollDIDTalk(talkId, timeoutMs = 60_000, signal) {
+async function pollDIDTalk(talkId, timeoutMs = 120_000, signal) {
   const deadline = Date.now() + timeoutMs;
   let interval   = 2000;
 
@@ -279,9 +282,12 @@ export async function generateVideoForQuestion(questionText, opts = {}, signal) 
   const resolvedAvatarUrl = avatarImageUrl ?? (gender === "male" ? maleUrl : avatarUrl);
   // Derive Azure TTS voice from gender when no explicit voiceId provided
   const resolvedVoiceId = voiceId ?? AZURE_VOICES[gender] ?? AZURE_VOICES.female;
+  // Resolve ElevenLabs voice ID now so the cache key includes it.
+  // Changing the ElevenLabs clone must bust the cache — otherwise stale videos get served.
+  const elevenLabsVoiceId = isElevenLabsEnabled() ? getElevenLabsVoiceId(gender) : null;
 
-  // 1. Cache lookup
-  const cacheKey = buildCacheKey(questionText, resolvedAvatarUrl, resolvedVoiceId);
+  // 1. Cache lookup — key includes both Azure fallback voice AND ElevenLabs voice
+  const cacheKey = buildCacheKey(questionText, resolvedAvatarUrl, resolvedVoiceId, elevenLabsVoiceId);
   const cached   = await cacheGet(cacheKey);
   if (cached) {
     return { videoUrl: cached, fromCache: true };
@@ -296,7 +302,7 @@ export async function generateVideoForQuestion(questionText, opts = {}, signal) 
   const talkId = await createDIDTalk(resolvedAvatarUrl, audioUrl, questionText, { voiceId: resolvedVoiceId });
 
   // 4. Poll until done — pass signal so polling stops on client disconnect
-  const videoUrl = await pollDIDTalk(talkId, 60_000, signal);
+  const videoUrl = await pollDIDTalk(talkId, 120_000, signal);
 
   // 5. Cache result
   await cacheSet(cacheKey, videoUrl, VIDEO_CACHE_TTL);
