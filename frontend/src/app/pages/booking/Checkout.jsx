@@ -1286,8 +1286,8 @@ export function Checkout() {
 
   const hasBank = Boolean(BANK_TRANSFER.bankName && BANK_TRANSFER.accountNumber);
   const showBankQr = payMode === PAY_MODE.BANK && payAmount > 0;
-  /** Booking / khóa học: màn chỉ còn khối chuyển khoản (không mentor, tổng, stepper). */
-  const transferFocus = showBankQr && (isBooking || isCourse);
+  /** Booking / khóa / gói cước: màn gọn chỉ còn khối chuyển khoản (QR + STK), không layout 2 cột cũ. */
+  const transferFocus = showBankQr && (isBooking || isCourse || isPlanCheckout);
   const orderCreated = appStep === "awaiting_transfer";
   const paymentConfirmed = appStep === "paid";
   const stepCurrent = paymentConfirmed || orderCreated ? 2 : 1;
