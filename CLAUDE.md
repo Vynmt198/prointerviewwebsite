@@ -130,7 +130,8 @@ Thực tế: auth, bookings, payments, plans, mentor dashboard, reviews, reports
 | `/api/enrollments` | `enrollments.js` | |
 | `/api/cv` | `cv.js` + `cvMatch.js` | cv.js: CRUD/quota; cvMatch.js: proxy sang Python |
 | `/api/interviews` | `interviews.js` | |
-| `/api/upload` | `upload.js` | |
+| `/api/upload` | `upload.js` | Cloudinary + fallback `/uploads` |
+| `/api/ai` | `aiProviders.js` | STT/TTS/emotion/avatar pregen |
 | `/api/mock` | `mockCourses.js` | Mock data cho dev/test |
 
 ### Services (`services/`)
@@ -270,27 +271,22 @@ utils/
 
 ## Tích hợp bên ngoài
 
-### Supabase Edge Functions — CV Analysis
+### CV Analysis — Express + Python (chính)
 
-- File: `frontend/src/app/pages/cv/CVAnalysis.jsx`
-- Base URL: `https://<projectId>.supabase.co/functions/v1/make-server-64a0c849/`
-- Dùng JWT backend (không phải Supabase JWT) để auth
-- Các endpoint: `GET cv/analyses`, `POST cv-analysis`, `GET cv/analyses/:id`, `DELETE cv/analyses/:id`
-- FE có fallback demo nếu không có token hoặc 401
-- **Kế hoạch:** migrate sang `POST /api/cv/analyses` trên Express
+- **Lịch sử:** `cvApi.js` → `GET/POST/DELETE /api/cv/analyses`, `GET /api/cv/quota`
+- **Phân tích:** `CVAnalysis.jsx` → `POST /api/cv/analyze`, `/analyze/full`, `/analyze/suggestions`, `/analyze/field` (proxy `cvMatch.js` → Python)
+- Python: `cv_jd_matching/` (port 8000); prod: `CV_ANALYZER_URL` trên backend
 
-### Express → Python CV/JD Matcher
+### Supabase Edge — CV (fallback, tùy env)
 
-- FE gọi `/api/cv/analyze*` → backend `cvMatch.js` proxy sang `CV_ANALYZER_URL` (FastAPI)
-- Python service: `cv_jd_matching/` (port 8000)
-- Cần set `CV_ANALYZER_URL` trong prod; dev dùng `http://localhost:8000`
+- Chỉ khi có `VITE_SUPABASE_PROJECT_ID` — `CVAnalysis.jsx` vẫn có nhánh Edge legacy
+- **Production khuyến nghị:** không set Supabase env; chỉ Express + Python
 
-### D-ID Streaming API — Avatar phỏng vấn
+### D-ID / AI providers — Avatar phỏng vấn
 
-- File: `frontend/src/app/hooks/useDIDStream.js`
-- Host: `https://api.d-id.com`
-- Auth: `Authorization: Basic base64(<API_KEY>:)`
-- Luồng: tạo stream → ICE → SDP → script → đóng stream
+- FE: `useDIDStream.js` → `https://api.d-id.com` (Basic auth) khi gọi trực tiếp
+- BE: `/api/ai/*` — pregen TTS, presenters, usage (`aiProviders.js`)
+- Interview: session CRUD `/api/interviews/*` + `generate-questions`, `analyze-face`
 
 ### Google Identity Services
 
@@ -339,31 +335,31 @@ Hủy booking: `DELETE /api/bookings/:id` (không dùng `PATCH .../cancel`).
 
 ### Backend ✅
 
-Toàn bộ 80+ endpoint Phase 1–4 đã implement và mount. Xem `ROADMAP.md` để biết status từng endpoint (✅/📋).
+Phase 1–4 + **Phase 5 (mở rộng)** đã có route trong Express (100+ endpoint). Chi tiết: `ROADMAP.md` (✅ BE) + `API_INDEX.md` Phần A.
 
-**Còn thiếu (📋):**
-- `DELETE /api/auth/me` — xóa tài khoản
-- `POST /api/bookings/:id/review` — alias route (dùng `POST /api/reviews` với `bookingId` thay thế)
+**BE hoàn tất theo roadmap gốc;** còn hardening prod (env, monitoring), không còn endpoint 📋 trong bảng Phase 1–4.
 
 ### Frontend — trạng thái từng domain
 
+*(Đồng bộ `ROADMAP.md` → Trạng thái Frontend.)*
+
 | Domain | Trạng thái |
 |:-------|:-----------|
-| Auth (login/register/Google/reset) | ✅ kết nối API thật |
-| Dashboard (`/dashboard`) | ✅ gọi `GET /api/users/dashboard-stats` |
-| Mentors list + profile | ✅ kết nối API thật |
-| Booking flow | ✅ phần lớn API thật; Checkout còn mock payment link |
-| Session detail (`/session/:id`) | 🔧 một số trường dùng mock/demo |
-| CV Analysis | 🔧 dùng Supabase Edge (chưa migrate sang Express) |
-| Interview (AI avatar) | 🔧 D-ID stream; session CRUD qua API; một phần demo state |
-| Courses | ✅ list/detail API thật; enrollment API thật |
-| Mentor dashboard/schedule/finance | ✅ gọi `/api/mentor/*` API thật |
-| Mentor meeting room | 🔧 một phần mock |
-| Admin dashboard/users/mentors/bookings | ✅ API thật |
-| Admin detail pages | 📋 Placeholders chưa implement |
-| Notifications | 🔧 UI có; cần kiểm tra kết nối |
-| Upload (avatar/CV/thumbnail) | 🔧 response trả mock URL |
-| Payment return/success/failure | ✅ nhận redirect từ gateway |
+| Auth (login/register/Google/reset/verify/delete account) | ✅ API thật |
+| Dashboard (`/dashboard`) | ✅ `GET /api/users/dashboard-stats` |
+| Mentors list + profile + booking + checkout CK | ✅ API thật (ưu tiên chuyển khoản / SePay) |
+| Session detail (`/session/:id`) | 🔧 chủ yếu API; một số UI demo |
+| CV Analysis | 🔧 phân tích: Express `/api/cv/analyze*`; lịch sử: `cvApi.js`; Supabase chỉ khi có env |
+| Analysis history | ✅ `/api/cv/analyses` |
+| Interview (AI avatar) | 🔧 session + `/api/ai/*`; D-ID stream |
+| Courses | ✅ list/detail/enrollment API |
+| Mentor dashboard/schedule/finance | ✅ `/api/mentor/*` |
+| Mentor meeting room | 🔧 một phần state local |
+| Admin list pages | ✅ `adminApi.js` |
+| Admin detail placeholders | 📋 routes placeholder (finance, user/:id, …) |
+| Notifications | 🔧 API có; kiểm tra badge trên prod |
+| Upload | 🔧 BE Cloudinary/local; FE gọi `POST /api/upload/*` |
+| Payment return/success/failure | ✅ redirect gateway / poll transfer-status |
 
 ### CV/JD Production Checklist
 
@@ -438,7 +434,7 @@ Có `Procfile` + `runtime.txt` — deploy được lên Heroku/Render. Sau deplo
 | DB | MongoDB (collections: 17 schemas) |
 | CV Analysis | Python FastAPI, pdf parsing, NLP skill extraction |
 | Payments | MoMo, ZaloPay (sandbox), VNPay partial |
-| External | Google Identity Services, Supabase Edge, D-ID API |
+| External | Google Identity Services, D-ID API, Supabase Edge (CV fallback), LLM/CV Python |
 
 ---
 

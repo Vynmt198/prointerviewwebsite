@@ -22,11 +22,15 @@ Khi merge xong một route: cập nhật **Phần A** trong `API_INDEX`, đổi 
 
 | Ký hiệu | Ý nghĩa |
 |:--------|:--------|
-| ✅ | Đã có route trong Express (chi tiết `API_INDEX.md` Phần C / file `routes/`) |
-| 📋 | Chưa có route — cần code backend (và thường nối FE sau) |
+| ✅ | Đã có route trong Express (chi tiết `API_INDEX.md` Phần A / file `routes/`) |
+| 📋 | Chưa có route — cần code backend |
+| 🔧 FE | Backend ✅ nhưng FE chưa nối đầy đủ hoặc còn fallback mock/Supabase |
+| ✅ FE | FE đã gọi API Express cho luồng chính |
 | `[AUTH]` | Cần đăng nhập |
 | `[MENTOR]` | `role === "mentor"` |
 | `[ADMIN]` | `role === "admin"` |
+
+**Lưu ý:** Cột **Trạng thái** trong Phase 1–4 = **backend**. Tiến độ tích hợp FE: xem [Trạng thái Frontend](#trạng-thái-frontend-theo-domain).
 
 ---
 
@@ -41,6 +45,7 @@ Khi merge xong một route: cập nhật **Phần A** trong `API_INDEX`, đổi 
 | GET | `/api/auth/me` | `[AUTH]` |
 | PATCH | `/api/auth/me` | `[AUTH]` — profile + đổi mật khẩu |
 | POST | `/api/auth/logout` | `[AUTH]` |
+| DELETE | `/api/auth/me` | `[AUTH]` |
 | GET | `/api/auth/sessions` | `[AUTH]` |
 | DELETE | `/api/auth/sessions/:sessionId` | `[AUTH]` |
 | GET | `/api/mentors` | Public |
@@ -60,9 +65,11 @@ Khi merge xong một route: cập nhật **Phần A** trong `API_INDEX`, đổi 
 | PATCH | `/api/admin/users/:id/status` | `[ADMIN]` |
 | PATCH | `/api/admin/mentors/:id/status` | `[ADMIN]` |
 
-Các nhóm endpoint theo phase (bookings, payments, plans, courses, enrollments, mentor, reviews, reports, notifications, …): xem **bảng Phase 1–4** bên dưới — cột **Trạng thái** đã đồng bộ với code hiện tại.
+Các nhóm endpoint theo phase (bookings, payments, plans, courses, enrollments, mentor, reviews, reports, notifications, …): xem **bảng Phase 1–4** bên dưới — cột **Trạng thái (BE)** đã đồng bộ với code hiện tại.
 
-**Ngoài Express:** Avatar stream — D-ID (`API_INDEX.md` phần B). **CV:** Express `/api/cv/*` + proxy Python `cv_jd_matching` (FE: `cvApi.js`, `CVAnalysis.jsx`).
+**Mở rộng sau Phase 4:** auth email, booking/payment CK, admin finance, `/api/ai/*` — xem [Phase 5 — Mở rộng](#phase-5--mở-rộng-đã-có-trong-code).
+
+**Ngoài Express:** Avatar — D-ID qua FE (`useDIDStream`) và/hoặc proxy `/api/ai/*` (`API_INDEX.md` phần B). **CV:** Express `/api/cv/analyses` + proxy `/api/cv/analyze*` → Python `cv_jd_matching` (FE: `cvApi.js`, `CVAnalysis.jsx`).
 
 ---
 
@@ -70,8 +77,8 @@ Các nhóm endpoint theo phase (bookings, payments, plans, courses, enrollments,
 
 **FE cần nối:** `Booking.jsx`, `SessionDetail.jsx`, `Checkout.jsx`, `Dashboard.jsx`
 
-| Trạng thái | Method | Endpoint | Auth | Mô tả ngắn |
-|:-----------|:-------|:---------|:-----|:-----------|
+| Trạng thái (BE) | Method | Endpoint | Auth | Mô tả ngắn |
+|:----------------|:-------|:---------|:-----|:-----------|
 | ✅ | POST | `/api/bookings` | `[AUTH]` | Tạo lịch: `mentorId`, `date`, `timeSlot`, `sessionType`, `notes`, `price`… (khớp `Booking.jsx`) |
 | ✅ | GET | `/api/bookings` | `[AUTH]` | Danh sách booking của user hiện tại |
 | ✅ | GET | `/api/bookings/:id` | `[AUTH]` | Chi tiết 1 booking (session detail) |
@@ -96,8 +103,8 @@ Các nhóm endpoint theo phase (bookings, payments, plans, courses, enrollments,
 
 **FE cần nối:** `MentorDashboard`, `MentorSchedule`, `MentorMeetingDetail`, `MeetingRoom`, `MentorFinance`, `MentorAnalytics`, `MentorReviews`, `ReportMentorModal`
 
-| Trạng thái | Method | Endpoint | Auth | Mô tả ngắn |
-|:-----------|:-------|:---------|:-----|:-----------|
+| Trạng thái (BE) | Method | Endpoint | Auth | Mô tả ngắn |
+|:----------------|:-------|:---------|:-----|:-----------|
 | ✅ | GET | `/api/bookings/mentor/list` | `[AUTH][MENTOR]` | Booking của mentor đăng nhập |
 | ✅ | PATCH | `/api/bookings/:id/confirm` | `[AUTH][MENTOR]` | Xác nhận |
 | ✅ | PATCH | `/api/bookings/:id/complete` | `[AUTH][MENTOR]` | Hoàn thành |
@@ -127,8 +134,8 @@ Các nhóm endpoint theo phase (bookings, payments, plans, courses, enrollments,
 
 **FE cần nối:** `Courses.jsx`, `CourseDetail.jsx`, `CourseLearning.jsx`, `MentorCourseManagement`, `MentorCourseEdit`
 
-| Trạng thái | Method | Endpoint | Auth | Mô tả ngắn |
-|:-----------|:-------|:---------|:-----|:-----------|
+| Trạng thái (BE) | Method | Endpoint | Auth | Mô tả ngắn |
+|:----------------|:-------|:---------|:-----|:-----------|
 | ✅ | GET | `/api/courses` | Public | List + filter (khớp `Courses.jsx`) |
 | ✅ | GET | `/api/courses/:id` | Public | Chi tiết — thay `getCourseById` tĩnh |
 | ✅ | POST | `/api/courses/:id/enroll` | `[AUTH]` | Ghi danh — thay `localStorage` enroll |
@@ -153,9 +160,9 @@ Các nhóm endpoint theo phase (bookings, payments, plans, courses, enrollments,
 
 **FE cần nối:** `CVAnalysis.jsx` (migrate), `Interview*`, `AnalysisHistory`, `Settings`
 
-| Trạng thái | Method | Endpoint | Auth | Mô tả ngắn |
-|:-----------|:-------|:---------|:-----|:-----------|
-| ✅ | POST | `/api/cv/analyses` | `[AUTH]` | Upload phân tích — nếu migrate từ Edge |
+| Trạng thái (BE) | Method | Endpoint | Auth | Mô tả ngắn |
+|:----------------|:-------|:---------|:-----|:-----------|
+| ✅ | POST | `/api/cv/analyses` | `[AUTH]` | Lưu kết quả phân tích (sau Python/Edge) |
 | ✅ | GET | `/api/cv/analyses` | `[AUTH]` | Lịch sử |
 | ✅ | GET | `/api/cv/analyses/:id` | `[AUTH]` | Chi tiết |
 | ✅ | DELETE | `/api/cv/analyses/:id` | `[AUTH]` | Xóa |
@@ -180,14 +187,116 @@ Các nhóm endpoint theo phase (bookings, payments, plans, courses, enrollments,
 
 **FE liên quan:** đăng xuất server-side (`tokenVersion` + refresh), xóa tài khoản (Settings / tương lai).
 
-| Trạng thái | Method | Endpoint | Auth | Mô tả ngắn |
-|:-----------|:-------|:---------|:-----|:-----------|
+| Trạng thái (BE) | Method | Endpoint | Auth | Mô tả ngắn |
+|:----------------|:-------|:---------|:-----|:-----------|
 | ✅ | POST | `/api/auth/logout` | `[AUTH]` | Blacklist jti access + xóa refresh sessions |
 | ✅ | POST | `/api/auth/refresh` | — (+ Bearer khuyến nghị) | Làm mới access; blacklist jti access cũ |
 | ✅ | GET / DELETE | `/api/auth/sessions`, `/api/auth/sessions/:id` | `[AUTH]` | Phiên + fingerprint; `?currentSessionId=` |
 | ✅ | DELETE | `/api/auth/me` | `[AUTH]` | Xóa tài khoản (Settings → Vùng nguy hiểm) |
 
 *Ghi chú:* `change-password` không dùng — đã gộp `PATCH /api/auth/me` (xem Phần A trong `API_INDEX.md`).
+
+**Auth bổ sung (có route, chưa liệt kê ở bảng trên):** `GET /api/auth/verify-email`, `POST /api/auth/resend-verification`, `POST /api/auth/forgot-password`, `POST /api/auth/reset-password`.
+
+---
+
+## Phase 5 — Mở rộng (đã có trong code)
+
+Các endpoint triển khai sau Phase 1–4 gốc. Chi tiết contract: [`API_INDEX.md`](./API_INDEX.md) Phần A.
+
+### Auth & mentors
+
+| BE | Method | Endpoint | Auth |
+|:---|:-------|:---------|:-----|
+| ✅ | GET | `/api/auth/verify-email` | — |
+| ✅ | POST | `/api/auth/resend-verification` | — |
+| ✅ | POST | `/api/auth/forgot-password` | — |
+| ✅ | POST | `/api/auth/reset-password` | — |
+| ✅ | POST | `/api/mentors/apply` | `[AUTH]` |
+| ✅ | GET | `/api/mentors/me` | `[AUTH]` |
+
+### CV proxy Python (`cvMatch.js`)
+
+| BE | Method | Endpoint | Auth |
+|:---|:-------|:---------|:-----|
+| ✅ | POST | `/api/cv/analyze` | `[AUTH]` |
+| ✅ | POST | `/api/cv/analyze/full` | `[AUTH]` |
+| ✅ | POST | `/api/cv/analyze/suggestions` | `[AUTH]` |
+| ✅ | POST | `/api/cv/analyze/field` | `[AUTH]` |
+
+### Payments & enrollments (chuyển khoản)
+
+| BE | Method | Endpoint | Auth |
+|:---|:-------|:---------|:-----|
+| ✅ | POST | `/api/payments/subscription/transfer-pending` | `[AUTH]` |
+| ✅ | PATCH | `/api/payments/subscription/:paymentId/submit-transfer` | `[AUTH]` |
+| ✅ | GET | `/api/payments/vnpay/ipn` | — |
+| ✅ | GET | `/api/payments/vnpay/vnpay-return` | — |
+| ✅ | PATCH | `/api/enrollments/:id/submit-transfer` | `[AUTH]` |
+
+### Bookings mở rộng (một số tiêu biểu)
+
+| BE | Method | Endpoint | Auth |
+|:---|:-------|:---------|:-----|
+| ✅ | PATCH | `/api/bookings/:id/submit-transfer` | `[AUTH]` |
+| ✅ | PATCH | `/api/bookings/:id/start` | `[AUTH]` |
+| ✅ | PATCH | `/api/bookings/mentor/:id/start` | `[AUTH][MENTOR]` |
+| ✅ | PATCH | `/api/bookings/:id/refund-destination` | `[AUTH]` |
+| ✅ | POST | `/api/bookings/:id/report-no-show` | `[AUTH]` |
+| ✅ | GET | `/api/bookings/:id/rebook-credit` | `[AUTH]` |
+| ✅ | POST | `/api/bookings/:id/mentor-knowledge` | `[AUTH][MENTOR]` |
+
+*Xem đầy đủ:* `backend/src/routes/bookings.js`.
+
+### Interviews & AI providers
+
+| BE | Method | Endpoint | Auth |
+|:---|:-------|:---------|:-----|
+| ✅ | POST | `/api/interviews/sessions/:id/evaluate` | `[AUTH]` |
+| ✅ | POST | `/api/interviews/sessions/:id/analyze-face` | `[AUTH]` |
+| ✅ | POST | `/api/interviews/generate-questions` | `[AUTH]` |
+| ✅ | POST | `/api/interviews/extract-cv-text` | `[AUTH]` |
+| ✅ | GET | `/api/ai/config` | — |
+| ✅ | POST | `/api/ai/transcribe`, `/api/ai/tts`, `/api/ai/emotion` | `[AUTH]` |
+| ✅ | GET | `/api/ai/tts/voices`, `/api/ai/avatar/presenters`, `/api/ai/avatar/usage` | `[AUTH]` |
+| ✅ | POST | `/api/ai/interview/pregenerate`, `/api/ai/interview/pregen/start` | `[AUTH]` |
+| ✅ | GET | `/api/ai/interview/pregen/:jobId` | `[AUTH]` |
+
+### Upload, mentor, courses, admin
+
+| BE | Method | Endpoint | Auth |
+|:---|:-------|:---------|:-----|
+| ✅ | POST | `/api/upload/jd` | `[AUTH]` |
+| ✅ | POST | `/api/upload/course-video` | `[AUTH][MENTOR]` |
+| ✅ | GET | `/api/mentor/payouts`, `PATCH /api/mentor/payout-account` | `[AUTH][MENTOR]` |
+| ✅ | GET/POST | `/api/mentor/peer-reviews`, `/api/mentor/peer-reviews/:courseId` | `[AUTH][MENTOR]` |
+| ✅ | GET | `/api/courses/me`, mentor QA routes | `[AUTH][MENTOR]` |
+| ✅ | *Nhiều route* | `/api/admin/*` (finance, payouts, enrollments CK, course approve/reject, interview-metrics, …) | `[ADMIN]` |
+
+*Admin đầy đủ:* `backend/src/routes/admin.js`, [`API_INDEX.md`](./API_INDEX.md) A.10.
+
+---
+
+## Trạng thái Frontend (theo domain)
+
+Đối chiếu `frontend/src/app/pages/` — **không** thay cho cột BE ✅ ở trên.
+
+| Domain | FE | Ghi chú |
+|:-------|:---|:--------|
+| Auth (login/register/Google/reset/verify) | ✅ FE | `auth.js`, Settings xóa tài khoản → `DELETE /api/auth/me` |
+| Dashboard | ✅ FE | `dashboardApi.js` |
+| Mentors + booking + checkout CK | ✅ FE | SePay/transfer; ưu tiên CK thật |
+| Session detail | 🔧 FE | Chủ yếu `GET /api/bookings/:id`; một số UI demo |
+| CV Analysis | 🔧 FE | Phân tích: Express `/api/cv/analyze*`; lịch sử: `cvApi.js`. Supabase Edge **chỉ khi** có `VITE_SUPABASE_PROJECT_ID` |
+| Analysis history | ✅ FE | `/api/cv/analyses` |
+| Interview AI | 🔧 FE | Session CRUD + `/api/ai/*`; avatar D-ID |
+| Courses + enrollment | ✅ FE | |
+| Mentor dashboard/schedule/finance | ✅ FE | |
+| Mentor meeting room | 🔧 FE | Một phần state local |
+| Admin list (users/mentors/bookings/content) | ✅ FE | `adminApi.js` |
+| Admin detail placeholders | 📋 FE | Routes `/admin/finance`, `/admin/users/:id`, … — UI placeholder |
+| Notifications | 🔧 FE | API có; kiểm tra badge/read-all trên prod |
+| Upload | 🔧 FE | BE: Cloudinary + fallback `/uploads`; FE cần gọi `POST /api/upload/*` |
 
 ---
 
@@ -320,4 +429,4 @@ Chi tiết response lỗi / thành công: tham chiếu `API_INDEX.md` (phần đ
 
 ---
 
-*Đánh dấu 📋 → ✅ khi đã có route Express; nối FE có thể làm sau (theo từng màn).*
+*Cập nhật lần cuối: đồng bộ BE Phase 1–5 + trạng thái FE. Đánh dấu 📋 → ✅ khi đã có route Express; cập nhật cột FE khi nối xong màn.*

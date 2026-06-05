@@ -223,12 +223,6 @@ export function CvAnalysisHubHero({ onJd, onField, navShellAligned = false }) {
 
           {/* Cột phải — demo kết quả */}
           <div className="cv-hub-unified-col cv-hub-unified-col--demo flex w-full min-w-0 shrink-0 flex-col gap-0 lg:w-[33rem] xl:w-[34.5rem]">
-            <div className="mb-0.5 flex w-full items-center justify-start gap-2 px-0.5 lg:mb-1">
-              <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-violet-800 sm:text-sm">
-                Kết quả phân tích
-              </span>
-            </div>
-
             {/* Demo KQ: banner + 2 ô + bảng — căn trái trong cột */}
             <div className="cv-hub-demo-stack -mt-0.5 flex w-full min-w-0 max-w-full flex-col gap-2.5 sm:gap-3 lg:mt-0 lg:gap-4 lg:pt-0">
               <div
