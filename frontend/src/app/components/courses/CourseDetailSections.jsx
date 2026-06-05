@@ -29,7 +29,7 @@ import { submitReview } from "../../utils/courseApi";
 import { fetchMyReviewForTarget } from "../../utils/reviewsApi";
 import { ReviewReplyBlock } from "../reviews/ReviewReplyBlock";
 import { toastApiError, toastApiSuccess } from "../../utils/apiToast";
-import { avatarSrc } from "../../utils/mediaUrl";
+import { avatarSrc, mediaSrc } from "../../utils/mediaUrl";
 
 export const formatCoursePrice = (price) => {
   if (price === 0) return "Miễn phí";
@@ -88,6 +88,11 @@ function youtubeEmbedUrl(url) {
   return m ? `https://www.youtube.com/embed/${m[1]}` : null;
 }
 
+function isDirectVideoUrl(url) {
+  const raw = String(url || "").trim();
+  return /\.(mp4|webm|ogg)(\?|$)/i.test(raw) || raw.includes("cloudinary.com/video/");
+}
+
 export function CoursePurchaseCard({
   course,
   hasPaidEnrollment,
@@ -103,7 +108,9 @@ export function CoursePurchaseCard({
   const hasDiscount = discountPrice > 0 && discountPrice < price;
   const displayPrice = hasDiscount ? discountPrice : price;
   const discountPct = hasDiscount ? Math.round((1 - discountPrice / price) * 100) : 0;
-  const embed = youtubeEmbedUrl(course.previewVideoUrl);
+  const previewUrl = course.previewVideoUrl || "";
+  const embed = youtubeEmbedUrl(previewUrl);
+  const directPreview = !embed && isDirectVideoUrl(previewUrl) ? mediaSrc(previewUrl) : null;
   const includes = buildCourseIncludes(course);
 
   const ctaClassName =
@@ -119,6 +126,16 @@ export function CoursePurchaseCard({
             className="h-full w-full"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             allowFullScreen
+          />
+        ) : directPreview ? (
+          <video
+            key={directPreview}
+            controls
+            playsInline
+            preload="metadata"
+            poster={course.thumbnail}
+            className="h-full w-full object-cover"
+            src={directPreview}
           />
         ) : (
           <ImageWithFallback src={course.thumbnail} alt="" className="h-full w-full object-cover" />

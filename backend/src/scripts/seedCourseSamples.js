@@ -31,7 +31,23 @@ function totalDuration(modules) {
   );
 }
 
-function buildModules(prefix) {
+/** Video Cloudinary đã host sẵn — phát được trong CourseLearning (thẻ <video>). */
+const CLOUDINARY_VIDEOS = [
+  "https://res.cloudinary.com/dee4bvivu/video/upload/v1774340828/FQ1vid_rdw1xo.mp4",
+  "https://res.cloudinary.com/dee4bvivu/video/upload/v1774340833/FQ2vid_vmp7ae.mp4",
+  "https://res.cloudinary.com/dee4bvivu/video/upload/v1774340829/FQ3vid_glpon5.mp4",
+  "https://res.cloudinary.com/dee4bvivu/video/upload/v1774340828/MQ1vid_hngp8o.mp4",
+  "https://res.cloudinary.com/dee4bvivu/video/upload/v1774340832/MQ2vid_xaioj6.mp4",
+  "https://res.cloudinary.com/dee4bvivu/video/upload/v1774340829/MQ3vid_h7t02k.mp4",
+  "https://res.cloudinary.com/dee4bvivu/video/upload/v1774336640/Female_delxmy.mp4",
+  "https://res.cloudinary.com/dee4bvivu/video/upload/v1774336646/Male_jioqsx.mp4",
+];
+
+function buildModules(prefix, videos = {}) {
+  const previewUrl = videos.previewMp4 || CLOUDINARY_VIDEOS[0];
+  const practiceUrl = videos.practiceMp4 || CLOUDINARY_VIDEOS[1];
+  const deepDiveUrl = videos.deepDiveMp4 || CLOUDINARY_VIDEOS[2];
+
   return [
     {
       title: `${prefix} — Nền tảng`,
@@ -40,22 +56,22 @@ function buildModules(prefix) {
         {
           title: `Giới thiệu ${prefix}`,
           type: "video",
-          videoUrl: "https://example.com/video/overview",
-          durationMinutes: 12,
-          description: `Tổng quan lộ trình ${prefix}`,
+          videoUrl: previewUrl,
+          durationMinutes: 15,
+          description: `Tổng quan lộ trình và kỳ vọng sau khóa ${prefix}`,
           transcript: "",
-          resources: [{ name: "Slide", url: "https://example.com/resource/slides" }],
+          resources: [],
           order: 1,
           isFree: true,
         },
         {
-          title: `Checklist ${prefix}`,
-          type: "document",
-          documentUrl: "https://example.com/docs/checklist.pdf",
-          durationMinutes: 8,
-          description: "Danh sách kiểm tra trước khi phỏng vấn",
+          title: `Câu hỏi thường gặp — ${prefix}`,
+          type: "video",
+          videoUrl: practiceUrl,
+          durationMinutes: 22,
+          description: "Phân tích dạng câu hỏi phỏng vấn và cách trả lời có cấu trúc",
           transcript: "",
-          resources: [{ name: "Checklist PDF", url: "https://example.com/resource/checklist" }],
+          resources: [],
           order: 2,
           isFree: false,
         },
@@ -66,21 +82,21 @@ function buildModules(prefix) {
       order: 2,
       lessons: [
         {
-          title: `Drill ${prefix}`,
+          title: `Mock drill — ${prefix}`,
           type: "video",
-          videoUrl: "https://example.com/video/drill",
-          durationMinutes: 18,
-          description: "Bài tập mô phỏng phỏng vấn",
+          videoUrl: deepDiveUrl,
+          durationMinutes: 28,
+          description: "Buổi luyện tập mô phỏng phỏng vấn có hướng dẫn",
           transcript: "",
-          resources: [{ name: "Template", url: "https://example.com/resource/template" }],
+          resources: [],
           order: 1,
           isFree: false,
         },
         {
-          title: `Quiz ${prefix}`,
+          title: `Tự đánh giá — ${prefix}`,
           type: "quiz",
-          durationMinutes: 6,
-          description: "Kiểm tra nhanh kiến thức",
+          durationMinutes: 8,
+          description: "Bài kiểm tra nhanh sau phần thực hành",
           transcript: "",
           resources: [],
           order: 2,
@@ -109,8 +125,12 @@ const SAMPLE_COURSES = [
     requirements: ["Biết JavaScript cơ bản", "Đã làm ít nhất 1 project React"],
     modulePrefix: "Frontend Interview",
     thumbnail: "https://images.unsplash.com/photo-1633356122544-f134324a6cee?w=800&q=80",
+    videos: {
+      previewMp4: CLOUDINARY_VIDEOS[0],
+      practiceMp4: CLOUDINARY_VIDEOS[1],
+      deepDiveMp4: CLOUDINARY_VIDEOS[2],
+    },
     price: 490_000,
-    discountPrice: 390_000,
     stats: { enrollmentCount: 24, rating: 4.8, reviewCount: 11, completionRate: 82 },
   },
   {
@@ -130,8 +150,12 @@ const SAMPLE_COURSES = [
     requirements: ["Có kinh nghiệm làm sản phẩm hoặc BA 1+ năm"],
     modulePrefix: "PM Interview",
     thumbnail: "https://images.unsplash.com/photo-1552664730-d307ca884978?w=800&q=80",
+    videos: {
+      previewMp4: CLOUDINARY_VIDEOS[2],
+      practiceMp4: CLOUDINARY_VIDEOS[3],
+      deepDiveMp4: CLOUDINARY_VIDEOS[4],
+    },
     price: 550_000,
-    discountPrice: 450_000,
     stats: { enrollmentCount: 18, rating: 4.9, reviewCount: 9, completionRate: 88 },
   },
   {
@@ -151,8 +175,12 @@ const SAMPLE_COURSES = [
     requirements: ["Biết Linux và Docker cơ bản"],
     modulePrefix: "DevOps Interview",
     thumbnail: "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=800&q=80",
+    videos: {
+      previewMp4: CLOUDINARY_VIDEOS[4],
+      practiceMp4: CLOUDINARY_VIDEOS[5],
+      deepDiveMp4: CLOUDINARY_VIDEOS[6],
+    },
     price: 650_000,
-    discountPrice: 550_000,
     stats: { enrollmentCount: 15, rating: 4.7, reviewCount: 7, completionRate: 79 },
   },
   {
@@ -172,8 +200,12 @@ const SAMPLE_COURSES = [
     requirements: ["Biết HTML/CSS/JS", "Đã học qua Node hoặc React"],
     modulePrefix: "Fullstack Interview",
     thumbnail: "https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=800&q=80",
+    videos: {
+      previewMp4: CLOUDINARY_VIDEOS[6],
+      practiceMp4: CLOUDINARY_VIDEOS[7],
+      deepDiveMp4: CLOUDINARY_VIDEOS[0],
+    },
     price: 390_000,
-    discountPrice: 290_000,
     stats: { enrollmentCount: 32, rating: 4.6, reviewCount: 14, completionRate: 85 },
   },
   {
@@ -193,8 +225,12 @@ const SAMPLE_COURSES = [
     requirements: ["Biết SQL cơ bản", "Có project data hoặc analytics"],
     modulePrefix: "Data Engineer Interview",
     thumbnail: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&q=80",
+    videos: {
+      previewMp4: CLOUDINARY_VIDEOS[3],
+      practiceMp4: CLOUDINARY_VIDEOS[5],
+      deepDiveMp4: CLOUDINARY_VIDEOS[7],
+    },
     price: 690_000,
-    discountPrice: 590_000,
     stats: { enrollmentCount: 12, rating: 5.0, reviewCount: 6, completionRate: 91 },
   },
 ];
@@ -206,7 +242,7 @@ async function resolveMentorByEmail(email) {
 }
 
 async function upsertCourseSample(definition, mentor, today) {
-  const modules = buildModules(definition.modulePrefix);
+  const modules = buildModules(definition.modulePrefix, definition.videos);
   const courseData = {
     mentorId: mentor._id,
     title: definition.title,
@@ -222,8 +258,8 @@ async function upsertCourseSample(definition, mentor, today) {
     settings: { autoEnroll: true, certificateEnabled: true, qaEnabled: true },
     isFree: false,
     price: definition.price,
-    discountPrice: definition.discountPrice,
-    discountEndsAt: addDays(today, 30),
+    discountPrice: 0,
+    discountEndsAt: null,
     stats: definition.stats,
     status: "published",
     publishedAt: addDays(today, -7),
