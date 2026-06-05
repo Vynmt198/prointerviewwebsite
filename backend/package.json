@@ -22,6 +22,8 @@
     "sync:mentor-profiles": "node src/scripts/syncMentorProfiles.js",
     "seed:mentor-bios": "node src/scripts/seedMentorBios.js",
     "seed:mentor-samples": "node src/scripts/seedMentorSamples.js",
+    "seed:course-samples": "node src/scripts/seedCourseSamples.js",
+    "seed:samples": "node src/scripts/seedMentorSamples.js && node src/scripts/seedCourseSamples.js",
     "db:normalize-transfer-refs": "node src/scripts/normalizeTransferRefs.js",
     "db:migrate-cv-analysis": "node src/scripts/migrate-cv-analysis.js",
     "db:migrate-cv-analysis:dry": "node src/scripts/migrate-cv-analysis.js --dry-run",

@@ -1,0 +1,269 @@
+/**
+ * Thêm 5 khóa học mẫu, gắn với 5 mentor từ seedMentorSamples.
+ * Chạy: npm run seed:course-samples (từ thư mục backend)
+ * Nên chạy seed:mentor-samples trước nếu chưa có mentor mẫu.
+ */
+import "../config/loadEnv.js";
+import mongoose from "mongoose";
+import { connectDatabase } from "../db/connect.js";
+import "../models/index.js";
+import { User } from "../models/User.js";
+import { Mentor } from "../models/Mentor.js";
+import { Course } from "../models/Course.js";
+
+const SEED_TAG = "sample-v1";
+
+function addDays(date, offset) {
+  const out = new Date(date);
+  out.setDate(out.getDate() + offset);
+  return out;
+}
+
+function totalLessons(modules) {
+  return (modules || []).reduce((sum, mod) => sum + (mod.lessons?.length || 0), 0);
+}
+
+function totalDuration(modules) {
+  return (modules || []).reduce(
+    (sum, mod) =>
+      sum + (mod.lessons || []).reduce((lessonSum, lesson) => lessonSum + Number(lesson.durationMinutes || 0), 0),
+    0,
+  );
+}
+
+function buildModules(prefix) {
+  return [
+    {
+      title: `${prefix} — Nền tảng`,
+      order: 1,
+      lessons: [
+        {
+          title: `Giới thiệu ${prefix}`,
+          type: "video",
+          videoUrl: "https://example.com/video/overview",
+          durationMinutes: 12,
+          description: `Tổng quan lộ trình ${prefix}`,
+          transcript: "",
+          resources: [{ name: "Slide", url: "https://example.com/resource/slides" }],
+          order: 1,
+          isFree: true,
+        },
+        {
+          title: `Checklist ${prefix}`,
+          type: "document",
+          documentUrl: "https://example.com/docs/checklist.pdf",
+          durationMinutes: 8,
+          description: "Danh sách kiểm tra trước khi phỏng vấn",
+          transcript: "",
+          resources: [{ name: "Checklist PDF", url: "https://example.com/resource/checklist" }],
+          order: 2,
+          isFree: false,
+        },
+      ],
+    },
+    {
+      title: `${prefix} — Thực hành`,
+      order: 2,
+      lessons: [
+        {
+          title: `Drill ${prefix}`,
+          type: "video",
+          videoUrl: "https://example.com/video/drill",
+          durationMinutes: 18,
+          description: "Bài tập mô phỏng phỏng vấn",
+          transcript: "",
+          resources: [{ name: "Template", url: "https://example.com/resource/template" }],
+          order: 1,
+          isFree: false,
+        },
+        {
+          title: `Quiz ${prefix}`,
+          type: "quiz",
+          durationMinutes: 6,
+          description: "Kiểm tra nhanh kiến thức",
+          transcript: "",
+          resources: [],
+          order: 2,
+          isFree: false,
+        },
+      ],
+    },
+  ];
+}
+
+const SAMPLE_COURSES = [
+  {
+    mentorEmail: "mentor.frontend@dev.local",
+    title: "React & TypeScript — Chuẩn bị phỏng vấn Frontend",
+    shortDescription: "Luyện React, TypeScript và system design UI cho vị trí Frontend mid–senior.",
+    description:
+      "Khóa học tập trung vào câu hỏi phỏng vấn Frontend thực tế: hooks, performance, state management, TypeScript patterns và cách trình bày case study UI.",
+    level: "intermediate",
+    tags: ["frontend", "react", "typescript", SEED_TAG],
+    topics: ["Technical"],
+    whatYoullLearn: [
+      "Trả lời câu hỏi React/TypeScript có cấu trúc",
+      "Giải thích trade-off performance và rendering",
+      "Trình bày system design UI rõ ràng",
+    ],
+    requirements: ["Biết JavaScript cơ bản", "Đã làm ít nhất 1 project React"],
+    modulePrefix: "Frontend Interview",
+    price: 890_000,
+    discountPrice: 690_000,
+    stats: { enrollmentCount: 24, rating: 4.8, reviewCount: 11, completionRate: 82 },
+  },
+  {
+    mentorEmail: "mentor.product@dev.local",
+    title: "Product Manager — Case Interview & Metrics",
+    shortDescription: "Luyện case PM, metric, prioritization và stakeholder cho phỏng vấn sản phẩm.",
+    description:
+      "Khóa dành cho ứng viên PM: framework case interview, đo lường metric, roadmap và cách trả lời behavioral trong môi trường scale-up.",
+    level: "intermediate",
+    tags: ["product", "pm", "case-interview", SEED_TAG],
+    topics: ["Behavioral", "Technical"],
+    whatYoullLearn: [
+      "Phân tích case sản phẩm theo framework",
+      "Chọn metric phù hợp và giải thích trade-off",
+      "Trình bày prioritization với stakeholder",
+    ],
+    requirements: ["Có kinh nghiệm làm sản phẩm hoặc BA 1+ năm"],
+    modulePrefix: "PM Interview",
+    price: 990_000,
+    discountPrice: 790_000,
+    stats: { enrollmentCount: 18, rating: 4.9, reviewCount: 9, completionRate: 88 },
+  },
+  {
+    mentorEmail: "mentor.devops@dev.local",
+    title: "DevOps & SRE — Phỏng vấn vận hành hệ thống",
+    shortDescription: "CI/CD, Kubernetes, incident response và cloud cho vị trí DevOps/SRE.",
+    description:
+      "Thực hành scenario vận hành production: deploy pipeline, observability, scaling và cách trả lời câu hỏi incident trong phỏng vấn.",
+    level: "advanced",
+    tags: ["devops", "sre", "kubernetes", SEED_TAG],
+    topics: ["Technical"],
+    whatYoullLearn: [
+      "Thiết kế CI/CD pipeline an toàn",
+      "Giải thích Kubernetes và cloud trade-off",
+      "Trình bày incident response có cấu trúc",
+    ],
+    requirements: ["Biết Linux và Docker cơ bản"],
+    modulePrefix: "DevOps Interview",
+    price: 1_190_000,
+    discountPrice: 990_000,
+    stats: { enrollmentCount: 15, rating: 4.7, reviewCount: 7, completionRate: 79 },
+  },
+  {
+    mentorEmail: "mentor.fullstack@dev.local",
+    title: "Fullstack Node.js + React — Từ Fresher đến Mid",
+    shortDescription: "API design, React patterns và behavioral cho ứng viên fullstack startup.",
+    description:
+      "Lộ trình ngắn gọn cho fresher–mid: REST API, auth, React component design và cách kể project fullstack trong phỏng vấn.",
+    level: "basic",
+    tags: ["fullstack", "nodejs", "react", SEED_TAG],
+    topics: ["Technical", "Behavioral"],
+    whatYoullLearn: [
+      "Thiết kế REST API rõ ràng",
+      "Kể project fullstack theo STAR",
+      "Trả lời câu hỏi React/Node phổ biến",
+    ],
+    requirements: ["Biết HTML/CSS/JS", "Đã học qua Node hoặc React"],
+    modulePrefix: "Fullstack Interview",
+    price: 750_000,
+    discountPrice: 590_000,
+    stats: { enrollmentCount: 32, rating: 4.6, reviewCount: 14, completionRate: 85 },
+  },
+  {
+    mentorEmail: "mentor.data@dev.local",
+    title: "Data Engineer — SQL, Spark & Pipeline Design",
+    shortDescription: "Luyện phỏng vấn Data Engineer: SQL, Spark, modeling và pipeline thực tế.",
+    description:
+      "Khóa nâng cao cho data engineer: query optimization, batch/stream pipeline, data modeling và cách trình bày project data warehouse.",
+    level: "advanced",
+    tags: ["data", "sql", "spark", SEED_TAG],
+    topics: ["Technical"],
+    whatYoullLearn: [
+      "Viết và tối ưu SQL cho interview",
+      "Giải thích Spark và pipeline batch",
+      "Trình bày data modeling và trade-off",
+    ],
+    requirements: ["Biết SQL cơ bản", "Có project data hoặc analytics"],
+    modulePrefix: "Data Engineer Interview",
+    price: 1_290_000,
+    discountPrice: 1_090_000,
+    stats: { enrollmentCount: 12, rating: 5.0, reviewCount: 6, completionRate: 91 },
+  },
+];
+
+async function resolveMentorByEmail(email) {
+  const user = await User.findOne({ email: email.trim().toLowerCase() });
+  if (!user) return null;
+  return Mentor.findOne({ userId: user._id });
+}
+
+async function upsertCourseSample(definition, mentor, today) {
+  const modules = buildModules(definition.modulePrefix);
+  const courseData = {
+    mentorId: mentor._id,
+    title: definition.title,
+    description: definition.description,
+    shortDescription: definition.shortDescription,
+    level: definition.level,
+    tags: definition.tags,
+    topics: definition.topics,
+    whatYoullLearn: definition.whatYoullLearn,
+    requirements: definition.requirements,
+    modules,
+    settings: { autoEnroll: true, certificateEnabled: true, qaEnabled: true },
+    isFree: false,
+    price: definition.price,
+    discountPrice: definition.discountPrice,
+    discountEndsAt: addDays(today, 30),
+    stats: definition.stats,
+    status: "published",
+    publishedAt: addDays(today, -7),
+    totalLessons: totalLessons(modules),
+    totalDurationMinutes: totalDuration(modules),
+  };
+
+  let course = await Course.findOne({ title: definition.title });
+  if (!course) {
+    course = await Course.create(courseData);
+  } else {
+    course.set(courseData);
+    await course.save();
+  }
+  return course;
+}
+
+async function main() {
+  const uri = process.env.MONGO_URI;
+  if (!uri) {
+    console.error("Thiếu MONGO_URI.");
+    process.exit(1);
+  }
+  await connectDatabase(uri);
+  const today = new Date();
+
+  console.log("Thêm / cập nhật 5 khóa học mẫu…");
+  let created = 0;
+  for (const def of SAMPLE_COURSES) {
+    const mentor = await resolveMentorByEmail(def.mentorEmail);
+    if (!mentor) {
+      console.warn(`  ⚠ Bỏ qua "${def.title}" — chưa có mentor ${def.mentorEmail}. Chạy: npm run seed:mentor-samples`);
+      continue;
+    }
+    const course = await upsertCourseSample(def, mentor, today);
+    console.log(`  ✓ ${course.title} → mentor ${def.mentorEmail}`);
+    created += 1;
+  }
+
+  const published = await Course.countDocuments({ status: "published", tags: SEED_TAG });
+  console.log(`\nĐã xử lý ${created}/${SAMPLE_COURSES.length} khóa. Tổng published (tag ${SEED_TAG}): ${published}`);
+
+  await mongoose.disconnect();
+}
+
+main().catch((e) => {
+  console.error(e);
+  process.exit(1);
+});
