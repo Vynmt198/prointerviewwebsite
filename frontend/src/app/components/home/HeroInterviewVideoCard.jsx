@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 const HOME_AI_DEMO_VIDEO = "https://res.cloudinary.com/dee4bvivu/video/upload/v1774336640/Female_delxmy.mp4";
 
-export function HeroInterviewVideoCard({ overlap = false }) {
+export function HeroInterviewVideoCard({ overlap = false, center = false }) {
   const videoRef = useRef(null);
   const containerRef = useRef(null);
   const streamRef = useRef(null);
@@ -84,7 +84,7 @@ export function HeroInterviewVideoCard({ overlap = false }) {
       <div
         id="home-hero-video-card"
         ref={containerRef}
-        className={`relative mx-auto w-full max-w-[min(95vw,68rem)] overflow-visible lg:max-w-[min(95vw,69rem)] ${
+        className={`relative w-full overflow-visible ${center ? "mx-auto max-w-[min(95vw,68rem)] lg:max-w-[min(95vw,69rem)]" : ""} ${
           overlap ? "-mt-2" : "mt-[3.8rem]"
         }`}
       >
@@ -105,7 +105,7 @@ export function HeroInterviewVideoCard({ overlap = false }) {
           </div>
 
           {/* Interview Room Mockup */}
-          <div className="flex flex-col h-[500px] sm:h-[580px] lg:h-[680px] bg-[#f3f0f9]">
+          <div className="flex flex-col h-[476px] sm:h-[532px] lg:h-[632px] bg-[#f3f0f9]">
             
             {/* Top bar */}
             <div className="flex shrink-0 items-center justify-between border-b border-violet-200/80 bg-white/85 px-3 py-2 sm:px-4 sm:py-2.5 backdrop-blur-sm">

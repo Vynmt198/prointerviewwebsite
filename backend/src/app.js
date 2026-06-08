@@ -31,6 +31,7 @@ import { interviewsRouter } from "./routes/interviews.js";
 import { uploadRouter } from "./routes/upload.js";
 import { mockCoursesRouter } from "./routes/mockCourses.js";
 import { aiProvidersRouter } from "./routes/aiProviders.js";
+import { achievementsRouter } from "./routes/achievements.js";
 import { notFoundHandler, globalErrorHandler } from "./middleware/errorHandler.js";
 
 export function createApp() {
@@ -145,6 +146,7 @@ export function createApp() {
       notifications: "/api/notifications",
       admin: "/api/admin",
       enrollments: "/api/enrollments",
+      achievements: "/api/achievements",
 
       cv: "/api/cv",
       interviews: "/api/interviews",
@@ -194,6 +196,7 @@ export function createApp() {
   app.use("/api/upload", uploadRouter);
   app.use("/api/mock", mockCoursesRouter);
   app.use("/api/ai", aiProvidersRouter);
+  app.use("/api/achievements", achievementsRouter);
 
   app.use(notFoundHandler);
   app.use(globalErrorHandler);

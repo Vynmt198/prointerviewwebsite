@@ -50,6 +50,7 @@ import { Privacy } from "./pages/home/Privacy";
 import { About } from "./pages/home/About";
 import { Blog } from "./pages/home/Blog";
 import { Achievements } from "./pages/home/Achievements";
+import { AchievementDetail } from "./pages/home/AchievementDetail";
 import { AdminLayout } from "./pages/admin/AdminLayout.jsx";
 import { adminLoader } from "./pages/admin/adminLoader.js";
 import { AdminDashboard } from "./pages/admin/AdminDashboard.jsx";
@@ -98,6 +99,7 @@ export const router = createHashRouter([
       { path: "pricing", Component: Pricing },
       { path: "about", Component: About },
       { path: "achievements", Component: Achievements },
+      { path: "achievements/:id", Component: AchievementDetail },
       { path: "blog", Component: Blog },
       { path: "terms", Component: Terms },
       { path: "privacy", Component: Privacy },

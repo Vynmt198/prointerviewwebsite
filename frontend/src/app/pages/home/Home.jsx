@@ -142,37 +142,9 @@ function getSparkleZoneHorizontalBounds(...rects) {
 }
 
 function getHeroSparkleZoneBounds() {
-  const zoneEl = document.getElementById("home-hero-sparkle-zone");
-  if (!zoneEl) return null;
-
-  const zone = zoneEl.getBoundingClientRect();
-  const top = getSparkleZoneTopBound(zone.top);
   const heroSection = document.getElementById("home-hero-section");
-  const heroRect = heroSection?.getBoundingClientRect();
-  const videoEl = document.getElementById("home-hero-video-card");
-
-  if (!videoEl) {
-    const { left, width } = getSparkleZoneHorizontalBounds(zone, heroRect);
-    return {
-      top,
-      left,
-      width,
-      height: Math.max(0, zone.bottom - top),
-      bottom: zone.bottom,
-    };
-  }
-
-  const video = videoEl.getBoundingClientRect();
-  const bottom = video.top + video.height * HERO_VIDEO_SPARKLE_FRACTION;
-  const { left, width } = getSparkleZoneHorizontalBounds(zone, video, heroRect);
-
-  return {
-    top,
-    left,
-    width,
-    height: Math.max(0, bottom - top),
-    bottom,
-  };
+  if (!heroSection) return null;
+  return heroSection.getBoundingClientRect();
 }
 
 /** Cả mockup video (title bar + viền + ô phát), không spawn / không giữ sao */
@@ -491,8 +463,29 @@ function HeroAtmosphere() {
   );
 }
 
+import { achievementsApi } from "../../api/achievementsApi.js";
+
 export function Home() {
   const navigate = useNavigate();
+  const [achievements, setAchievements] = useState([]);
+
+  useEffect(() => {
+    // Scroll to top
+    window.scrollTo({ top: 0, behavior: "smooth" });
+
+    // Fetch achievements
+    const fetchAchievements = async () => {
+      try {
+        const res = await achievementsApi.getAll();
+        if (res.data?.success) {
+          setAchievements(res.data.achievements || []);
+        }
+      } catch (err) {
+        console.error("Failed to load achievements", err);
+      }
+    };
+    fetchAchievements();
+  }, []);
 
   const renderSectionSticks = (sticks, sparkleTone = "brand") => (
     <div className="pointer-events-none absolute inset-0 z-[1] hidden md:block" aria-hidden>
@@ -1087,7 +1080,7 @@ export function Home() {
 
         <div
           id="home-hero-sparkle-zone"
-          className={`home-hero-sparkle-zone relative z-10 mx-auto flex w-full -translate-y-[20.5rem] sm:-translate-y-[10rem] flex-col items-center px-4 py-6 text-center sm:px-8 sm:py-10 ${HOME_SHELL_MAX}`}
+          className={`home-hero-sparkle-zone relative z-10 mx-auto flex w-full -translate-y-16 flex-col items-center px-4 py-6 text-center sm:px-8 sm:py-10 ${HOME_SHELL_MAX}`}
         >
           <div className="hero-intro-badge mb-5">
             <div
@@ -1100,7 +1093,7 @@ export function Home() {
 
           <div className="hero-intro-copy max-w-4xl">
             <h1
-              className="home-hero-title hero-title-stack cute-heading mx-auto mb-5 translate-y-[1rem] text-slate-900"
+              className="home-hero-title hero-title-stack cute-heading mx-auto mb-5 text-slate-900"
               style={{ fontSize: HOME_HERO_TITLE_CLAMP }}
             >
               <span className="hero-title-line text-slate-900">
@@ -1117,7 +1110,7 @@ export function Home() {
               </span>
             </h1>
 
-            <div className="mb-4 mt-[2.1rem] flex items-center justify-center translate-y-[1.0rem] sm:translate-y-[2.1rem]">
+            <div className="mb-4 mt-8 flex items-center justify-center">
               <button
                 type="button"
                 onClick={() => navigate("/interview")}
@@ -1136,104 +1129,56 @@ export function Home() {
         </div>
       </section>
 
-      {/* Video DOM tách khỏi hero, kéo lên chồng đáy hero, bling không theo section phía dưới */}
-      <section
-        id="home-hero-video-section"
-        aria-label="Demo phỏng vấn AI"
-        className="home-hero-video-section pointer-events-none relative z-20 -mt-[37.7rem] px-6 pb-12 sm:-mt-[12.9rem] sm:px-10 sm:pb-14 lg:-mt-[14.9rem] lg:px-16 lg:pb-16"
-      >
-        <div className={`pointer-events-auto relative mx-auto w-full max-w-[66rem] overflow-visible ${HOME_SHELL_MAX}`}>
-          <HeroInterviewVideoCard overlap />
-        </div>
-      </section>
 
-      {/* ═══ HOW IT WORKS ════════════════════════════════════ */}
-      <section
-        id="features"
-        className="landing-section-flow relative z-10 flex h-screen max-h-screen flex-col justify-center overflow-hidden pt-6 md:pt-8 lg:pt-10 max-lg:h-auto max-lg:max-h-none max-lg:min-h-0 max-lg:overflow-visible max-lg:py-5"
-      >
-        {renderSectionSticks([
-          { x: 10, y: 16, size: 34, opacity: 0.45 },
-          { x: 88, y: 20, size: 40, opacity: 0.55 },
-          { x: 82, y: 78, size: 32, opacity: 0.44 },
-        ])}
-        <div className={`${HOME_SECTION_INNER} home-mobile-gutter relative z-10 py-2`}>
-          <LandingReveal className="mb-8 w-full pt-5 max-lg:pt-2" y={24}>
-            <div className="mb-5 flex w-full justify-center">
-              <div className="grid w-fit max-w-full translate-x-0 grid-cols-1 place-items-center gap-3 sm:-translate-x-6 sm:grid-cols-[auto_auto] sm:items-center sm:gap-x-2 sm:gap-y-0 md:-translate-x-7 lg:-translate-x-8 lg:gap-x-3">
-                <div className="flex h-[7.25rem] w-[7.25rem] translate-x-0 translate-y-[0.9rem] items-center justify-center sm:-translate-x-[4.7rem] sm:translate-y-0 lg:-translate-y-2 sm:h-[12.5rem] sm:w-[12.5rem] md:h-[14rem] md:w-[14rem] lg:h-[15rem] lg:w-[15rem]">
-                  <img
-                    src="/mascot-features.png?v=13"
-                    alt=""
-                    aria-hidden
-                    className="max-h-full max-w-full rotate-[3deg] object-contain object-center"
-                  />
-                </div>
-                <div className="min-w-0 max-w-[min(100vw-2rem,36rem)] translate-x-0 text-center sm:-translate-x-[4.5rem] sm:-ml-8 sm:max-w-none sm:text-left md:-ml-11 lg:-ml-14">
-                  <span className="mx-auto mb-3 block h-1.5 w-12 rounded-full bg-[#8037f4]/40 sm:mx-0" />
-                  <h2
-                    className={`home-how-title ${homeTy.title} text-center sm:text-left`}
-                    style={{ fontSize: HOME_SECTION_TITLE_CLAMP }}
-                  >
-                    <span className={`${homeTy.titleLineSecond} ${homeTy.titleLineDark} text-balance sm:whitespace-nowrap`}>
-                      {HOME_SECTION_COPY.howItWorks.titleLine1}
-                    </span>
-                    <span className={`${homeTy.titleLineSecond} ${homeTy.titleLineAccent} text-balance sm:whitespace-nowrap`}>
-                      {HOME_SECTION_COPY.howItWorks.titleLine2}
-                    </span>
-                  </h2>
-                </div>
-              </div>
-            </div>
-          </LandingReveal>
 
-          <LandingStagger className="grid grid-cols-1 gap-5 md:grid-cols-2 md:gap-4 lg:grid-cols-4 lg:gap-5 lg:-mx-[1.8rem]" stagger={0.1}>
-            {STEPS.map((s, i) => (
-              <LandingItem key={i}>
-              <div
-                className={`glass-card home-how-step-card group relative flex h-full min-h-[15.5rem] flex-col overflow-hidden rounded-[1.25rem] p-5 selection:bg-[rgba(147,247,43,0.42)] selection:text-[#8037f4] transition-[border-color,box-shadow] duration-300 sm:min-h-[16rem] sm:p-6 lg:min-h-[17.5rem] max-lg:min-h-0 max-lg:p-3.5`}
-              >
-                <div className="relative z-[1] min-w-0 flex flex-1 flex-col">
-                  {/* Hàng nhãn cố định, tránh absolute đè lên icon */}
-                  {(i === 1 || i === 2) ? (
-                    <div className="mb-2.5 flex min-h-0 items-center justify-start sm:mb-3.5 sm:min-h-[32px]">
-                      <span
-                        className={`${homeTy.howItWorksStepBadge} border-[#93f72b] bg-[#93f72b] text-slate-950 font-bold shadow-sm`}
-                      >
-                        {i === 1 ? "Nổi bật" : "Gợi ý mentor"}
-                      </span>
-                    </div>
-                  ) : (
-                    <div className="hidden sm:block sm:mb-3.5 sm:min-h-[32px]" />
-                  )}
-                  <div className="pointer-events-none absolute top-0 right-0 p-2 sm:p-4">
-                    <span
-                      className="text-6xl font-black italic leading-none text-[#8037f4]/42 transition-all duration-200 group-hover:scale-[1.04] group-hover:text-[#8037f4]/80 sm:text-8xl"
-                    >
-                      {s.step}
-                    </span>
-                  </div>
-
-                  <div
-                    className={`relative mb-4 flex h-12 w-12 items-center justify-center rounded-full border border-violet-100/80 bg-[#f5f2fa] shadow-sm transition-all duration-500 sm:h-[3.25rem] sm:w-[3.25rem] max-lg:mb-3 max-lg:h-10 max-lg:w-10 text-[#8037f4]`}
-                  >
-                    <s.icon className="h-[1.4rem] w-[1.4rem] sm:h-6 sm:w-6" />
-                  </div>
-
-                  <h3 className={homeTy.howItWorksStepTitle}>{s.title}</h3>
-                  <p className={`${homeTy.howItWorksStepBody} mt-auto`}>{s.desc}</p>
-                </div>
-              </div>
-              </LandingItem>
-            ))}
-          </LandingStagger>
-        </div>
-      </section>
 
       {/* ═══ CV ANALYSIS (navbar #features) ═══ */}
       <div className="landing-section-flow">
         <SectionReveal variant="cv">
           <CvAnalysisFeatureShowcase/>
+        </SectionReveal>
+      </div>
+
+      {/* ═══ AI INTERVIEW SHOWCASE ═══ */}
+      <div className="landing-section-flow">
+        <SectionReveal variant="interview">
+          <section
+            id="ai-interview"
+            aria-label="Luyện phỏng vấn với AI"
+            className="relative z-10 flex min-h-screen flex-col justify-center overflow-hidden px-6 py-16 sm:px-10 lg:px-16 max-lg:min-h-0 max-lg:py-10"
+          >
+            <div className={`${HOME_SECTION_INNER} home-mobile-gutter relative z-10`}>
+              <div className="flex flex-col items-center gap-10 lg:flex-row lg:items-center lg:gap-2">
+
+                <div className="relative w-full flex-1 lg:flex-[1.8] max-w-[44rem] lg:max-w-[46.5rem] -ml-16 lg:-translate-y-8">
+                  {/* Mascot floating over card */}
+                  <div className="pointer-events-none absolute -bottom-12 -right-[7.2rem] z-20 hidden lg:block">
+                    <img
+                      src="/mascot-features.png"
+                      alt=""
+                      aria-hidden
+                      className="h-[17.1rem] w-auto object-contain drop-shadow-xl"
+                    />
+                  </div>
+                  <HeroInterviewVideoCard overlap={true} />
+                </div>
+
+                <div className="w-full flex-1 max-w-[32rem] xl:max-w-[36rem] flex flex-col items-start gap-3 sm:gap-3.5 lg:-translate-y-[6rem] lg:translate-x-[1.5rem] relative">
+                  <span className={homeTy.cvShowcaseBadge}>
+                    <Brain className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                    Luyện PV với AI
+                  </span>
+                  <h2
+                    className={`max-w-full ${homeTy.title} sm:max-w-none`}
+                    style={{ fontSize: HOME_SECTION_TITLE_CLAMP }}
+                  >
+                    <span className="block text-slate-900 lg:whitespace-nowrap">Luyện phỏng vấn với AI</span>
+                    <span className="block text-[#630ed4] lg:whitespace-nowrap">sẵn sàng cho cơ hội thật</span>
+                  </h2>
+                </div>
+              </div>
+            </div>
+          </section>
         </SectionReveal>
       </div>
 
@@ -1385,6 +1330,102 @@ export function Home() {
               </div>
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* ═══ ACHIEVEMENTS / NEWS SECTION ═══ */}
+      <section className="relative z-10 mx-auto max-w-[84.35rem] px-6 py-8 sm:py-16">
+        {/* Decorative blur orbs */}
+        <div className="pointer-events-none absolute -top-20 left-1/2 -z-10 h-[600px] w-[800px] -translate-x-1/2 rounded-full bg-[#8037f4]/10 blur-[120px]" aria-hidden />
+
+        <div className="text-center mb-8 flex flex-col items-center gap-3">
+          <span className="inline-flex items-center gap-2 rounded-full border border-violet-400/30 bg-violet-500/10 px-4 py-1.5 font-bold text-violet-700 text-sm">
+            <Medal className="h-4 w-4 shrink-0" aria-hidden />
+            Tin tức & Hoạt động
+          </span>
+          <h2 className="text-center text-[clamp(1.75rem,3.5vw,3rem)] font-black leading-tight tracking-tight text-slate-900 max-w-none lg:whitespace-nowrap">
+            Thành tựu nổi bật <span className="text-[#630ed4]">từ ProInterview</span>
+          </h2>
+          <p className="mx-auto max-w-2xl text-sm text-slate-600 sm:text-base">
+            Cập nhật những tin tức, sự kiện và cột mốc phát triển mới nhất của chúng tôi.
+          </p>
+        </div>
+
+        {achievements.length > 0 && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 lg:gap-6">
+            {achievements.map((item) => (
+              <article
+                key={item._id}
+                onClick={() => navigate(`/achievements/${item._id}`)}
+                className="group relative flex flex-col overflow-hidden rounded-[1.5rem] border border-white/60 bg-white/40 p-1.5 shadow-[0_8px_30px_rgb(0,0,0,0.04)] backdrop-blur-xl transition-all duration-500 hover:-translate-y-1.5 hover:bg-white/60 hover:shadow-[0_20px_40px_rgba(99,14,212,0.12)] hover:border-white cursor-pointer"
+              >
+                {/* Image */}
+                {item.imageUrl && (
+                  <div className="relative aspect-[16/9] w-full overflow-hidden rounded-[1.25rem]">
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#630ed4]/20 via-transparent to-transparent z-10 opacity-0 transition-opacity duration-500 group-hover:opacity-100 mix-blend-multiply" />
+                    <img
+                      src={item.imageUrl}
+                      alt={item.title}
+                      className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-110"
+                    />
+                  </div>
+                )}
+
+                {/* Content */}
+                <div className="flex flex-1 flex-col p-4 sm:p-5">
+                  {/* Date Tag */}
+                  <div className="mb-3">
+                    <span className="inline-flex items-center rounded-full bg-violet-100/50 px-2.5 py-0.5 text-[10px] sm:text-xs font-bold text-[#630ed4] border border-violet-200/50 shadow-sm backdrop-blur-md">
+                      {new Date(item.date).toLocaleDateString("vi-VN", {
+                        day: "2-digit",
+                        month: "2-digit",
+                        year: "numeric",
+                      })}
+                    </span>
+                  </div>
+                  
+                  {/* Title */}
+                  <h3 className="mb-2 text-base sm:text-lg font-black leading-snug tracking-tight text-slate-900 line-clamp-2 transition-colors duration-300 group-hover:text-[#630ed4]">
+                    {item.title}
+                  </h3>
+
+                  {/* Excerpt/Content summary */}
+                  <p className="mb-4 text-xs sm:text-sm leading-relaxed text-slate-600 line-clamp-2">
+                    {item.content}
+                  </p>
+
+                  {/* Author / Footer */}
+                  <div className="mt-auto flex items-center gap-2.5 pt-3 border-t border-slate-200/60">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white p-1 shadow-md border border-slate-100 shrink-0">
+                      <img
+                        src="/logo-mark.png?v=9"
+                        alt="ProInterview"
+                        className="h-full w-full object-contain"
+                      />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-xs sm:text-sm font-bold text-slate-900 leading-tight">ProInterview Team</p>
+                      <p className="text-[10px] sm:text-xs text-slate-500 truncate mt-0.5">contact@prointerview.vn</p>
+                    </div>
+                  </div>
+                </div>
+              </article>
+            ))}
+          </div>
+        )}
+
+        <div className="flex justify-center mt-8">
+          <button
+            onClick={() => navigate("/achievements")}
+            className="inline-flex items-center gap-2 rounded-full px-6 py-2.5 text-sm sm:text-base font-black transition-all duration-300 hover:scale-105 active:scale-[0.98]"
+            style={{
+              background: "linear-gradient(135deg, #a3ff3d 0%, #8ae819 100%)",
+              color: "#0f172a",
+              boxShadow: "0 10px 25px -5px rgba(147, 247, 43, 0.4), 0 8px 10px -6px rgba(147, 247, 43, 0.2)",
+            }}
+          >
+            Xem tất cả
+          </button>
         </div>
       </section>
     </div>
