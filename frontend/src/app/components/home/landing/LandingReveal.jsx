@@ -65,6 +65,13 @@ export const SECTION_MOTION = {
     duration: 0.65,
     ease: EASE_BOUNCE,
   },
+  /** AI Interview: từ dưới + blur nhẹ */
+  interview: {
+    hidden: { opacity: 0, y: 48, scale: 0.97, filter: "blur(6px)" },
+    visible: { opacity: 1, y: 0, scale: 1, filter: "blur(0px)" },
+    duration: 0.68,
+    ease: EASE_OUT,
+  },
   /** Testimonials: copy */
   testimonialCopy: {
     hidden: { opacity: 0, x: -40, filter: "blur(4px)" },

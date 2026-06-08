@@ -1,24 +1,25 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { AdminPanel } from "./AdminPanel.jsx";
-import { 
-  getAchievements, 
-  addAchievement, 
-  updateAchievement, 
-  deleteAchievement 
-} from "../../utils/mockAchievements.js";
-import { Plus, Edit2, Trash2, Check, X, Image as ImageIcon } from "lucide-react";
+import { achievementsApi } from "../../api/achievementsApi.js";
+import { Plus, Edit2, Trash2, Check, X, Image as ImageIcon, UploadCloud, Loader2 } from "lucide-react";
 import { toastApiSuccess, toastApiError } from "../../utils/apiToast";
 
 export function AdminAchievements() {
   const [achievements, setAchievements] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingId, setEditingId] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isUploadingCover, setIsUploadingCover] = useState(false);
+  const [isUploadingGallery, setIsUploadingGallery] = useState(false);
+
+  const coverInputRef = useRef(null);
+  const galleryInputRef = useRef(null);
   
-  // Form State
   const [formData, setFormData] = useState({
     title: "",
     content: "",
     imageUrl: "",
+    images: [],
     isPublished: true
   });
 
@@ -26,17 +27,25 @@ export function AdminAchievements() {
     loadData();
   }, []);
 
-  const loadData = () => {
-    setAchievements(getAchievements());
+  const loadData = async () => {
+    try {
+      const res = await achievementsApi.getAll(true);
+      if (res.data?.success) {
+        setAchievements(res.data.achievements || []);
+      }
+    } catch (err) {
+      toastApiError(err);
+    }
   };
 
   const handleOpenModal = (item = null) => {
     if (item) {
-      setEditingId(item.id);
+      setEditingId(item._id);
       setFormData({
         title: item.title || "",
         content: item.content || "",
         imageUrl: item.imageUrl || "",
+        images: item.images || [],
         isPublished: item.isPublished ?? true
       });
     } else {
@@ -45,6 +54,7 @@ export function AdminAchievements() {
         title: "",
         content: "",
         imageUrl: "",
+        images: [],
         isPublished: true
       });
     }
@@ -56,36 +66,87 @@ export function AdminAchievements() {
     setEditingId(null);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!formData.title.trim() || !formData.content.trim()) {
       toastApiError("Vui lòng nhập đầy đủ Tiêu đề và Nội dung.");
       return;
     }
 
-    if (editingId) {
-      updateAchievement(editingId, formData);
-      toastApiSuccess("Đã cập nhật thành tựu.");
-    } else {
-      addAchievement(formData);
-      toastApiSuccess("Đã thêm thành tựu mới.");
-    }
-    
-    loadData();
-    handleCloseModal();
-  };
-
-  const handleDelete = (id) => {
-    if (window.confirm("Bạn có chắc chắn muốn xóa thành tựu này?")) {
-      deleteAchievement(id);
-      toastApiSuccess("Đã xóa thành tựu.");
+    try {
+      setIsSubmitting(true);
+      if (editingId) {
+        await achievementsApi.update(editingId, formData);
+        toastApiSuccess("Đã cập nhật thành tựu.");
+      } else {
+        await achievementsApi.create(formData);
+        toastApiSuccess("Đã thêm thành tựu mới.");
+      }
+      
       loadData();
+      handleCloseModal();
+    } catch (err) {
+      toastApiError(err);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  const togglePublish = (item) => {
-    updateAchievement(item.id, { isPublished: !item.isPublished });
-    toastApiSuccess(`Đã ${!item.isPublished ? "hiển thị" : "ẩn"} thành tựu.`);
-    loadData();
+  const handleDelete = async (id) => {
+    if (window.confirm("Bạn có chắc chắn muốn xóa thành tựu này?")) {
+      try {
+        await achievementsApi.delete(id);
+        toastApiSuccess("Đã xóa thành tựu.");
+        loadData();
+      } catch (err) {
+        toastApiError(err);
+      }
+    }
+  };
+
+  const togglePublish = async (item) => {
+    try {
+      await achievementsApi.update(item._id, { isPublished: !item.isPublished });
+      toastApiSuccess(`Đã ${!item.isPublished ? "hiển thị" : "ẩn"} thành tựu.`);
+      loadData();
+    } catch (err) {
+      toastApiError(err);
+    }
+  };
+
+  const handleUploadCover = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      setIsUploadingCover(true);
+      const res = await achievementsApi.uploadImage(file);
+      if (res.data?.success) {
+        setFormData(prev => ({ ...prev, imageUrl: res.data.absoluteUrl }));
+        toastApiSuccess("Upload ảnh bìa thành công!");
+      }
+    } catch (err) {
+      toastApiError(err);
+    } finally {
+      setIsUploadingCover(false);
+      e.target.value = "";
+    }
+  };
+
+  const handleUploadGallery = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      setIsUploadingGallery(true);
+      const res = await achievementsApi.uploadImage(file);
+      if (res.data?.success) {
+        setFormData(prev => ({ ...prev, images: [...prev.images, res.data.absoluteUrl] }));
+        toastApiSuccess("Upload ảnh thư viện thành công!");
+      }
+    } catch (err) {
+      toastApiError(err);
+    } finally {
+      setIsUploadingGallery(false);
+      e.target.value = "";
+    }
   };
 
   return (
@@ -124,7 +185,7 @@ export function AdminAchievements() {
                 </tr>
               ) : (
                 achievements.map((item) => (
-                  <tr key={item.id} className="transition-colors hover:bg-violet-50/30">
+                  <tr key={item._id} className="transition-colors hover:bg-violet-50/30">
                     <td className="p-4">
                       {item.imageUrl ? (
                         <img 
@@ -147,7 +208,7 @@ export function AdminAchievements() {
                       </p>
                     </td>
                     <td className="p-4 text-slate-600">
-                      {new Date(item.date).toLocaleDateString("vi-VN")}
+                      {new Date(item.createdAt).toLocaleDateString("vi-VN")}
                     </td>
                     <td className="p-4 text-center">
                       <button
@@ -175,7 +236,7 @@ export function AdminAchievements() {
                           <Edit2 className="h-4 w-4" />
                         </button>
                         <button
-                          onClick={() => handleDelete(item.id)}
+                          onClick={() => handleDelete(item._id)}
                           className="flex size-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 transition hover:border-rose-300 hover:text-rose-600"
                           title="Xóa"
                         >
@@ -191,14 +252,13 @@ export function AdminAchievements() {
         </div>
       </div>
 
-      {/* Modal Overlay */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
           <div 
             className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" 
             onClick={handleCloseModal}
           />
-          <div className="relative w-full max-w-2xl rounded-2xl bg-white p-6 shadow-2xl animate-in zoom-in-95 duration-200">
+          <div className="relative w-full max-w-2xl rounded-2xl bg-white p-6 shadow-2xl animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
             <div className="mb-6 flex items-center justify-between">
               <h3 className="text-xl font-black text-slate-900">
                 {editingId ? "Sửa thành tựu" : "Thêm thành tựu mới"}
@@ -226,9 +286,24 @@ export function AdminAchievements() {
               </div>
 
               <div>
-                <label className="mb-1.5 block text-xs font-bold uppercase tracking-widest text-slate-500">
-                  Link hình ảnh (Tùy chọn)
+                <label className="mb-1.5 block text-xs font-bold uppercase tracking-widest text-slate-500 flex justify-between items-center">
+                  <span>Link ảnh bìa (Tùy chọn)</span>
+                  <button 
+                    onClick={() => coverInputRef.current?.click()}
+                    disabled={isUploadingCover}
+                    className="inline-flex items-center gap-1.5 text-violet-600 hover:text-violet-700 bg-violet-50 px-2 py-1 rounded normal-case tracking-normal"
+                  >
+                    {isUploadingCover ? <Loader2 className="h-3 w-3 animate-spin" /> : <UploadCloud className="h-3 w-3" />}
+                    Tải ảnh lên
+                  </button>
                 </label>
+                <input 
+                  type="file" 
+                  accept="image/*"
+                  ref={coverInputRef}
+                  className="hidden"
+                  onChange={handleUploadCover}
+                />
                 <input 
                   type="text" 
                   value={formData.imageUrl}
@@ -236,6 +311,35 @@ export function AdminAchievements() {
                   placeholder="https://..."
                   className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm font-semibold text-slate-900 outline-none transition focus:border-violet-400 focus:bg-white"
                 />
+              </div>
+
+              <div>
+                <label className="mb-1.5 block text-xs font-bold uppercase tracking-widest text-slate-500 flex justify-between items-center">
+                  <span>Thư viện ảnh chi tiết (Mỗi link cách nhau bằng dấu phẩy)</span>
+                  <button 
+                    onClick={() => galleryInputRef.current?.click()}
+                    disabled={isUploadingGallery}
+                    className="inline-flex items-center gap-1.5 text-violet-600 hover:text-violet-700 bg-violet-50 px-2 py-1 rounded normal-case tracking-normal"
+                  >
+                    {isUploadingGallery ? <Loader2 className="h-3 w-3 animate-spin" /> : <UploadCloud className="h-3 w-3" />}
+                    Tải ảnh lên
+                  </button>
+                </label>
+                <input 
+                  type="file" 
+                  accept="image/*"
+                  ref={galleryInputRef}
+                  className="hidden"
+                  onChange={handleUploadGallery}
+                />
+                <textarea 
+                  rows={3}
+                  value={formData.images ? formData.images.join(", ") : ""}
+                  onChange={(e) => setFormData({...formData, images: e.target.value.split(",").map(l => l.trim()).filter(Boolean)})}
+                  placeholder="https://link1.jpg, https://link2.jpg"
+                  className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm font-semibold text-slate-900 outline-none transition focus:border-violet-400 focus:bg-white"
+                />
+                <p className="text-[10px] text-slate-400 mt-1">Khi tải ảnh lên, link sẽ tự động được thêm vào ô này.</p>
               </div>
 
               <div>
@@ -274,8 +378,10 @@ export function AdminAchievements() {
               </button>
               <button 
                 onClick={handleSave}
-                className="rounded-xl bg-violet-600 px-6 py-2.5 text-sm font-bold text-white transition hover:bg-violet-700 shadow-lg shadow-violet-600/20"
+                disabled={isSubmitting}
+                className="rounded-xl bg-violet-600 px-6 py-2.5 text-sm font-bold text-white transition hover:bg-violet-700 shadow-lg shadow-violet-600/20 disabled:opacity-70 flex items-center gap-2"
               >
+                {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
                 Lưu lại
               </button>
             </div>

@@ -1,14 +1,25 @@
 import React, { useEffect, useState } from "react";
-import { getAchievements } from "../../utils/mockAchievements.js";
+import { useNavigate } from "react-router";
+import { achievementsApi } from "../../api/achievementsApi.js";
 import { Award, CalendarDays, ChevronRight } from "lucide-react";
 
 export function Achievements() {
   const [achievements, setAchievements] = useState([]);
+  const navigate = useNavigate();
 
   useEffect(() => {
-    // Chỉ lấy các bài viết đã được publish
-    const data = getAchievements().filter(item => item.isPublished);
-    setAchievements(data);
+    // Chỉ lấy các bài viết đã được publish (mặc định API getAll sẽ lọc nếu không có cờ all=true)
+    const fetchAchievements = async () => {
+      try {
+        const res = await achievementsApi.getAll();
+        if (res.data?.success) {
+          setAchievements(res.data.achievements || []);
+        }
+      } catch (err) {
+        console.error("Failed to load achievements", err);
+      }
+    };
+    fetchAchievements();
   }, []);
 
   return (
@@ -43,8 +54,9 @@ export function Achievements() {
           <div className="space-y-12 sm:space-y-16">
             {achievements.map((item, index) => (
               <div 
-                key={item.id} 
-                className="group relative flex flex-col gap-8 rounded-3xl border border-white/40 bg-white/60 p-6 shadow-xl shadow-slate-200/20 backdrop-blur-xl transition-all hover:bg-white/80 hover:shadow-2xl hover:shadow-[#8037f4]/10 sm:flex-row sm:items-center sm:p-8"
+                key={item._id} 
+                onClick={() => navigate(`/achievements/${item._id}`)}
+                className="group relative flex flex-col gap-8 rounded-3xl border border-white/40 bg-white/60 p-6 shadow-xl shadow-slate-200/20 backdrop-blur-xl transition-all hover:bg-white/80 hover:shadow-2xl hover:shadow-[#8037f4]/10 sm:flex-row sm:items-center sm:p-8 cursor-pointer"
               >
                 {/* Image */}
                 {item.imageUrl && (

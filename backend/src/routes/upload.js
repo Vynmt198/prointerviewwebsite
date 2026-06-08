@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { authJwt } from "../middleware/authJwt.js";
 import { requireMentor } from "../middleware/requireMentor.js";
+import { requireAdmin } from "../middleware/requireAdmin.js";
 import { UploadController } from "../controllers/uploadController.js";
 import { asyncHandler } from "../middleware/asyncHandler.js";
 import { formatApiError } from "../utils/apiErrors.js";
@@ -33,4 +34,5 @@ uploadRouter.post("/cv", authJwt, handleMulterError(upload.single("file")), asyn
 uploadRouter.post("/jd", authJwt, handleMulterError(upload.single("file")), asyncHandler(UploadController.uploadJD));
 uploadRouter.post("/course-thumbnail", authJwt, requireMentor, handleMulterError(upload.single("file")), asyncHandler(UploadController.uploadCourseThumbnail));
 uploadRouter.post("/course-video", authJwt, requireMentor, handleMulterError(upload.single("file")), asyncHandler(UploadController.uploadCourseVideo));
+uploadRouter.post("/achievement-image", authJwt, requireAdmin, handleMulterError(upload.single("file")), asyncHandler(UploadController.uploadAchievementImage));
 

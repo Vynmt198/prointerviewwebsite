@@ -58,7 +58,7 @@ export function CvAnalysisFeatureShowcase({ onCtaClick }) {
   return (
     <section
       id="cv-analysis"
-      className="home-mobile-tight relative z-10 flex h-screen max-h-screen flex-col justify-center overflow-x-hidden overflow-y-visible px-0 py-4 sm:py-6 max-lg:h-auto max-lg:max-h-none max-lg:min-h-0 max-lg:pt-10 max-lg:pb-[4.5rem]"
+      className="-translate-y-12 home-mobile-tight relative z-10 flex h-screen max-h-screen flex-col justify-center overflow-x-hidden overflow-y-visible px-0 py-4 sm:py-6 max-lg:h-auto max-lg:max-h-none max-lg:min-h-0 max-lg:pt-10 max-lg:pb-[4.5rem]"
     >
       <style>{`
         .cv-analysis-glass-card {
@@ -104,11 +104,7 @@ export function CvAnalysisFeatureShowcase({ onCtaClick }) {
               </span>
             </h2>
             <p className={`max-w-full lg:max-w-none ${ty.cvShowcaseBody}`}>
-              <span className="hidden sm:block">
-                <span className="block whitespace-nowrap">{CV_HUB_HERO_COPY.bodyLine1}</span>
-                <span className="block whitespace-nowrap">{CV_HUB_HERO_COPY.bodyLine2}</span>
-              </span>
-              <span className="block sm:hidden">{CV_SHOWCASE_COPY.body}</span>
+              {CV_SHOWCASE_COPY.body}
             </p>
             {onCtaClick ? (
               <button
@@ -139,7 +135,7 @@ export function CvAnalysisFeatureShowcase({ onCtaClick }) {
               <div className="relative z-10 flex w-full flex-col -space-y-3 pt-[8.25rem] sm:pt-[9rem] lg:pt-[9.5rem]">
                 <CardReveal delayMs={0} className="relative z-10 translate-x-4 lg:translate-x-8">
                   <ScoreCard
-                    className="rotate-1 scale-95 transform px-[1.65rem] py-[1.025rem] sm:px-[1.9rem] sm:py-[1.3rem] max-lg:px-[1.15rem] max-lg:py-[0.9rem]"
+                    className="scale-95 transform px-[1.65rem] py-[1.025rem] sm:px-[1.9rem] sm:py-[1.3rem] max-lg:px-[1.15rem] max-lg:py-[0.9rem]"
                     titleClassName="translate-y-[0.2rem]"
                     title="Độ khớp CV–JD"
                     score={`${DEMO_MATCH.percent}% Khá tốt`}
@@ -150,7 +146,7 @@ export function CvAnalysisFeatureShowcase({ onCtaClick }) {
                 </CardReveal>
 
                 <CardReveal delayMs={140} className="relative z-20 lg:-translate-x-4">
-                  <div className="cv-analysis-glass-card -rotate-1 scale-100 transform rounded-3xl border border-[#ccc3d8] bg-white px-[1.5rem] py-[0.875rem] shadow-xl transition-all duration-300 hover:scale-[1.02] sm:px-[1.75rem] sm:py-[1.15rem]">
+                  <div className="cv-analysis-glass-card scale-100 transform rounded-3xl border border-[#ccc3d8] bg-white px-[1.5rem] py-[0.875rem] shadow-xl transition-all duration-300 hover:scale-[1.02] sm:px-[1.75rem] sm:py-[1.15rem]">
                     <div className="mb-3 flex items-center gap-2.5 sm:mb-3.5">
                       <div className="flex h-[1.7rem] w-[1.7rem] shrink-0 items-center justify-center rounded-lg bg-violet-100 sm:h-[1.95rem] sm:w-[1.95rem]">
                         <FileText className="h-[0.7rem] w-[0.7rem] text-[#630ed4] sm:h-[0.825rem] sm:w-[0.825rem]" />
@@ -174,7 +170,7 @@ export function CvAnalysisFeatureShowcase({ onCtaClick }) {
                   delayMs={280}
                   className="relative z-30 -mx-4 w-[calc(100%+2rem)] sm:-mx-5 sm:w-[calc(100%+2.5rem)] lg:-mx-6 lg:w-[calc(100%+3rem)]"
                 >
-                  <div className="cv-analysis-glass-card relative w-full rotate-1 scale-[1.03] transform overflow-hidden rounded-3xl border border-[#ccc3d8] bg-white shadow-xl transition-all duration-300 hover:scale-[1.02]">
+                  <div className="cv-analysis-glass-card relative w-full scale-[1.03] transform overflow-hidden rounded-3xl border border-[#ccc3d8] bg-white shadow-xl transition-all duration-300 hover:scale-[1.02]">
                     <CvAnalysisScoreBreakdown
                       overallScore={DEMO_MATCH.percent}
                       rows={CV_HUB_DEMO_SCORE_ROWS}
