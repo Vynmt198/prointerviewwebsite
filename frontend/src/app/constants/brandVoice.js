@@ -10,7 +10,7 @@ export const HOME_COPY = {
   titleLine1: "Phỏng vấn",
   titleHighlight: "1:1 với AI",
   titleLine2Suffix: "qua",
-  titleExtraLines: ["mô phỏng", "hội thoại", "thông minh"],
+  titleExtraLines: ["mô phỏng", "hội thoại", "thông\u00A0minh"],
   cta: "Thử phỏng vấn miễn phí",
   stats: [
     { value: "10,000+", label: "Lượt luyện trên ProInterview" },

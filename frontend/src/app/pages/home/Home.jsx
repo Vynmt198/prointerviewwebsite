@@ -617,7 +617,7 @@ export function Home() {
             line-height: 1.15 !important;
           }
           .home-hero-section .hero-title-stack {
-            gap: 0.9rem;
+            gap: 0;
           }
           .home-mobile-gutter {
             padding-left: 0.875rem;
@@ -671,8 +671,6 @@ export function Home() {
         .hero-title-highlight {
           display: inline-block;
           transform-origin: 40% 70%;
-          animation: heroWiggle 1.25s ease-in-out infinite;
-          will-change: transform;
         }
         @media (prefers-reduced-motion: reduce) {
           .hero-title-highlight { animation: none; }
@@ -738,9 +736,6 @@ export function Home() {
           position: relative;
         }
         @media (max-width: 639px) {
-          #features { margin-top: -2rem; }
-          #find-mentor { margin-top: -4rem; }
-          #courses { margin-top: 1.4rem; }
         }
         @media (prefers-reduced-motion: reduce) {
           .hero-orbit-text { animation: none !important; }
@@ -1072,7 +1067,7 @@ export function Home() {
       {/* ═══ HERO (chỉ copy + CTA, clip bling ~1 màn; video section riêng bên dưới) ═══ */}
       <section
         id="home-hero-section"
-        className="home-hero-section relative z-10 flex min-h-[100svh] flex-col justify-center px-6 pb-8 pt-24 sm:px-10 sm:pt-28 lg:px-16 lg:pb-10 lg:pt-32"
+        className="home-hero-section relative z-10 flex min-h-[100svh] flex-col justify-center px-6 pb-8 pt-24 sm:px-10 sm:pt-28 lg:px-16 lg:pb-10 lg:pt-32 -mb-[17rem] lg:mb-0"
       >
         
         {/* Interactive Mouse Particles */}
@@ -1080,7 +1075,7 @@ export function Home() {
 
         <div
           id="home-hero-sparkle-zone"
-          className={`home-hero-sparkle-zone relative z-10 mx-auto flex w-full -translate-y-16 flex-col items-center px-4 py-6 text-center sm:px-8 sm:py-10 ${HOME_SHELL_MAX}`}
+          className={`home-hero-sparkle-zone relative z-10 mx-auto flex w-full -translate-y-48 lg:-translate-y-16 flex-col items-center px-4 py-6 text-center sm:px-8 sm:py-10 ${HOME_SHELL_MAX}`}
         >
           <div className="hero-intro-badge mb-5">
             <div
@@ -1145,12 +1140,12 @@ export function Home() {
           <section
             id="ai-interview"
             aria-label="Luyện phỏng vấn với AI"
-            className="relative z-10 flex min-h-screen flex-col justify-center overflow-hidden px-6 py-16 sm:px-10 lg:px-16 max-lg:min-h-0 max-lg:py-10"
+            className="relative z-10 flex min-h-screen flex-col justify-center overflow-x-hidden overflow-y-visible px-0 py-16 sm:px-10 lg:px-16 max-lg:min-h-0 max-lg:py-8 max-lg:px-0"
           >
-            <div className={`${HOME_SECTION_INNER} home-mobile-gutter relative z-10`}>
-              <div className="flex flex-col items-center gap-10 lg:flex-row lg:items-center lg:gap-2">
+            <div className={`${HOME_SECTION_INNER} home-mobile-gutter relative z-10 py-2`}>
+              <div className="flex flex-col-reverse items-center gap-10 lg:flex-row lg:items-center lg:gap-2">
 
-                <div className="relative w-full flex-1 lg:flex-[1.8] max-w-[44rem] lg:max-w-[46.5rem] -ml-16 lg:-translate-y-8">
+                <div className="relative mx-auto w-full flex-1 lg:flex-[1.8] max-w-[44rem] lg:max-w-[46.5rem] lg:-ml-16 lg:-translate-y-8">
                   {/* Mascot floating over card */}
                   <div className="pointer-events-none absolute -bottom-12 -right-[7.2rem] z-20 hidden lg:block">
                     <img
@@ -1175,6 +1170,9 @@ export function Home() {
                     <span className="block text-slate-900 lg:whitespace-nowrap">Luyện phỏng vấn với AI</span>
                     <span className="block text-[#630ed4] lg:whitespace-nowrap">sẵn sàng cho cơ hội thật</span>
                   </h2>
+                  <p className={`mt-2 max-w-xl ${homeTy.body}`}>
+                    Thực chiến phỏng vấn 1-1 cùng AI với bộ câu hỏi được cá nhân hoá theo CV & JD.
+                  </p>
                 </div>
               </div>
             </div>
@@ -1199,7 +1197,7 @@ export function Home() {
       {/* ═══ TESTIMONIALS ═══════════════════════════════════ */}
       <section
         id="mentors"
-        className="landing-section-flow relative z-10 -mt-[5rem] h-[calc(100vh+3rem)] max-h-[calc(100vh+3rem)] min-h-[calc(100vh+3rem)] overflow-x-hidden max-lg:mt-0 max-lg:h-auto max-lg:max-h-none max-lg:min-h-0 max-lg:py-5 lg:overflow-x-visible"
+        className="landing-section-flow relative z-10 -mt-[5rem] h-[calc(100vh+3rem)] max-h-[calc(100vh+3rem)] min-h-[calc(100vh+3rem)] overflow-x-hidden max-lg:mt-0 max-lg:h-auto max-lg:max-h-none max-lg:min-h-0 max-lg:py-4 lg:overflow-x-visible"
       >
         {renderSectionSticks([
           { x: 78, y: 12, size: 34, opacity: 0.46 },
@@ -1217,7 +1215,7 @@ export function Home() {
                   {HOME_SECTION_COPY.testimonials.titleLine}
                 </span>
                 <span
-                  className="mt-2 block h-[2.25rem] w-fit shrink-0 sm:mt-2.5 sm:h-[2.5rem] md:h-[2.75rem] lg:h-[3.5rem]"
+                  className="mt-2 block h-[1.95rem] w-fit shrink-0 sm:mt-2.5 sm:h-[2.2rem] md:h-[2.45rem] lg:h-[3.2rem]"
                   aria-hidden
                 >
                   <img
@@ -1338,7 +1336,7 @@ export function Home() {
         {/* Decorative blur orbs */}
         <div className="pointer-events-none absolute -top-20 left-1/2 -z-10 h-[600px] w-[800px] -translate-x-1/2 rounded-full bg-[#8037f4]/10 blur-[120px]" aria-hidden />
 
-        <div className="text-center mb-8 flex flex-col items-center gap-3">
+        <div className="text-center mb-6 flex flex-col items-center gap-3">
           <span className="inline-flex items-center gap-2 rounded-full border border-violet-400/30 bg-violet-500/10 px-4 py-1.5 font-bold text-violet-700 text-sm">
             <Medal className="h-4 w-4 shrink-0" aria-hidden />
             Tin tức & Hoạt động
@@ -1352,60 +1350,67 @@ export function Home() {
         </div>
 
         {achievements.length > 0 && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 lg:gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8 mx-auto max-w-[24rem] md:max-w-none">
             {achievements.map((item) => (
               <article
                 key={item._id}
                 onClick={() => navigate(`/achievements/${item._id}`)}
-                className="group relative flex flex-col overflow-hidden rounded-[1.5rem] border border-white/60 bg-white/40 p-1.5 shadow-[0_8px_30px_rgb(0,0,0,0.04)] backdrop-blur-xl transition-all duration-500 hover:-translate-y-1.5 hover:bg-white/60 hover:shadow-[0_20px_40px_rgba(99,14,212,0.12)] hover:border-white cursor-pointer"
+                className="group relative flex flex-col overflow-hidden rounded-2xl border border-violet-100 bg-[#f8faff] shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg cursor-pointer"
               >
                 {/* Image */}
                 {item.imageUrl && (
-                  <div className="relative aspect-[16/9] w-full overflow-hidden rounded-[1.25rem]">
-                    <div className="absolute inset-0 bg-gradient-to-t from-[#630ed4]/20 via-transparent to-transparent z-10 opacity-0 transition-opacity duration-500 group-hover:opacity-100 mix-blend-multiply" />
+                  <div className="relative aspect-[16/9] w-full shrink-0 overflow-hidden bg-slate-100">
                     <img
                       src={item.imageUrl}
                       alt={item.title}
-                      className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-110"
+                      className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
                     />
                   </div>
                 )}
 
                 {/* Content */}
-                <div className="flex flex-1 flex-col p-4 sm:p-5">
-                  {/* Date Tag */}
-                  <div className="mb-3">
-                    <span className="inline-flex items-center rounded-full bg-violet-100/50 px-2.5 py-0.5 text-[10px] sm:text-xs font-bold text-[#630ed4] border border-violet-200/50 shadow-sm backdrop-blur-md">
-                      {new Date(item.date).toLocaleDateString("vi-VN", {
-                        day: "2-digit",
-                        month: "2-digit",
-                        year: "numeric",
-                      })}
-                    </span>
-                  </div>
+                <div className="flex flex-1 flex-col p-5 sm:p-6 sm:px-7">
+                  {/* Date */}
+                  <span className="mb-3 text-[13px] sm:text-sm font-medium text-[#4f0baf]">
+                    {new Date(item.date).toLocaleDateString("en-US", {
+                      month: "short",
+                      day: "numeric",
+                      year: "numeric",
+                    })}
+                  </span>
                   
                   {/* Title */}
-                  <h3 className="mb-2 text-base sm:text-lg font-black leading-snug tracking-tight text-slate-900 line-clamp-2 transition-colors duration-300 group-hover:text-[#630ed4]">
+                  <h3 className="text-lg sm:text-xl font-black uppercase leading-snug text-[#4f0baf] line-clamp-3">
                     {item.title}
                   </h3>
 
-                  {/* Excerpt/Content summary */}
-                  <p className="mb-4 text-xs sm:text-sm leading-relaxed text-slate-600 line-clamp-2">
-                    {item.content}
-                  </p>
+                  {/* Excerpt */}
+                  {item.content && (
+                    <div className="hidden sm:block">
+                      <p className="mt-3 text-sm text-slate-600 line-clamp-2">
+                        {item.content}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Spacer to push footer to bottom if content is short */}
+                  <div className="flex-1" />
+
+                  {/* Divider */}
+                  <hr className="my-5 border-t border-violet-200" />
 
                   {/* Author / Footer */}
-                  <div className="mt-auto flex items-center gap-2.5 pt-3 border-t border-slate-200/60">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white p-1 shadow-md border border-slate-100 shrink-0">
+                  <div className="flex items-center gap-3 sm:gap-4">
+                    <div className="flex h-10 w-10 sm:h-12 sm:w-12 shrink-0 items-center justify-center rounded-full bg-white p-2 shadow-sm border border-slate-200">
                       <img
                         src="/logo-mark.png?v=9"
                         alt="ProInterview"
                         className="h-full w-full object-contain"
                       />
                     </div>
-                    <div className="min-w-0">
-                      <p className="text-xs sm:text-sm font-bold text-slate-900 leading-tight">ProInterview Team</p>
-                      <p className="text-[10px] sm:text-xs text-slate-500 truncate mt-0.5">contact@prointerview.vn</p>
+                    <div className="flex flex-col text-left">
+                      <span className="text-[13px] sm:text-base font-bold text-[#4f0baf] leading-tight">ProInterview Team</span>
+                      <span className="text-[11px] sm:text-sm text-[#4f0baf] mt-0.5 leading-tight">contact@prointerview.vn</span>
                     </div>
                   </div>
                 </div>
