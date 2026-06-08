@@ -37,10 +37,10 @@ export function AppLayout() {
 
   const shellClass =
     `app-user-shell relative min-h-svh w-full text-slate-900 antialiased selection:bg-violet-100 selection:text-violet-900 ${
-      allowHorizontalScroll
-        ? "app-user-shell--home overflow-x-auto overflow-y-visible bg-transparent"
-        : isLegalDoc
-          ? "overflow-x-hidden bg-slate-50"
+      isLegalDoc
+        ? "overflow-x-hidden bg-slate-50"
+        : allowHorizontalScroll
+          ? "overflow-x-hidden bg-transparent"
           : "overflow-x-hidden bg-[#f3f0f9]"
     }`;
 
@@ -92,7 +92,7 @@ export function AppLayout() {
           className={`relative z-[1] min-h-0 flex-1 ${
             hideNavbar
               ? "flex min-h-svh flex-col pt-0"
-              : `pt-[3.75rem] sm:pt-[4.25rem] md:pt-[4.75rem] max-lg:overflow-x-hidden${allowHorizontalScroll ? " lg:overflow-x-auto lg:overflow-y-visible" : ""}`
+              : `pt-[3.75rem] sm:pt-[4.25rem] md:pt-[4.75rem] overflow-x-hidden`
           }`}
         >
           <Outlet />
