@@ -219,7 +219,7 @@ export function CoursesFeatureShowcase({ onCtaClick }) {
   return (
     <section
       id="courses"
-      className="relative z-10 flex h-screen max-h-screen flex-col justify-center overflow-hidden px-0 py-4 sm:py-6 max-lg:h-auto max-lg:max-h-none max-lg:min-h-0 max-lg:py-5 lg:overflow-visible"
+      className="relative z-10 flex lg:h-screen lg:max-h-screen flex-col justify-center overflow-hidden lg:overflow-visible px-0 py-4 sm:py-6 max-lg:py-8"
     >
       <style>{`
         .courses-mock-panel {

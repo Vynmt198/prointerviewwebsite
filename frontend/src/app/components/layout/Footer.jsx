@@ -67,17 +67,17 @@ const CONTACT_EMAIL = "prointerview.ai@gmail.com";
 function FooterNavColumn({ section, links, navigate, variant = "light" }) {
   const headingClass =
     variant === "dark"
-      ? "mb-4 text-left text-[0.9375rem] font-bold tracking-tight text-white/90"
-      : "mb-4 text-left text-[0.9375rem] font-bold tracking-tight text-slate-900";
+      ? "mb-4 text-center sm:text-left text-[0.9375rem] font-bold tracking-tight text-white/90"
+      : "mb-4 text-center sm:text-left text-[0.9375rem] font-bold tracking-tight text-slate-900";
   const linkClass =
     variant === "dark"
-      ? "text-left text-sm text-white/55 transition-colors hover:text-white"
-      : "text-left text-sm text-slate-600 transition-colors hover:text-[#8037f4]";
+      ? "text-center sm:text-left text-sm text-white/55 transition-colors hover:text-white"
+      : "text-center sm:text-left text-sm text-slate-600 transition-colors hover:text-[#8037f4]";
 
   return (
-    <nav className="text-left" aria-label={section}>
+    <nav className="flex flex-col items-center sm:items-start text-center sm:text-left" aria-label={section}>
       <h4 className={headingClass}>{section}</h4>
-      <ul className="space-y-2.5">
+      <ul className="flex flex-col items-center sm:items-start space-y-2.5">
         {links.map((link) => (
           <li key={link.label}>
             <button
@@ -129,19 +129,19 @@ function FooterDark() {
       <div className="relative z-[1] max-w-7xl mx-auto px-6 py-16">
         <div className={FOOTER_MAIN_GRID}>
           {/* Brand */}
-          <div className="sm:col-span-2 lg:col-span-1">
-            <div className="mb-1 flex items-center gap-3">
+          <div className="sm:col-span-2 lg:col-span-1 flex flex-col items-center sm:items-start text-center sm:text-left">
+            <div className="mb-1 flex items-center justify-center sm:justify-start gap-3">
               <BrandLogo size="footer" />
             </div>
             <p className="text-white/65 text-sm leading-relaxed mb-6" style={{ maxWidth: 320 }}>
               {FOOTER_TAGLINE}
             </p>
 
-            <div className="mb-6">
+            <div className="mb-6 flex flex-col items-center sm:items-start">
               <p className="mb-2 text-xs font-bold uppercase tracking-[0.15em] text-white/40">Liên hệ</p>
               <a
                 href={`mailto:${CONTACT_EMAIL}`}
-                className="inline-flex max-w-[min(100%,320px)] items-start gap-2 break-all text-sm font-semibold text-[#93f72b] transition-colors hover:text-white"
+                className="inline-flex max-w-[min(100%,320px)] items-center sm:items-start justify-center sm:justify-start gap-2 break-all text-sm font-semibold text-[#93f72b] transition-colors hover:text-white"
               >
                 <Mail className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
                 {CONTACT_EMAIL}
@@ -149,9 +149,9 @@ function FooterDark() {
             </div>
 
             {/* Social links */}
-            <div className="mb-6">
+            <div className="mb-6 flex flex-col items-center sm:items-start">
               <p className="text-white/40 text-xs uppercase tracking-[0.15em] mb-4 font-bold">Kết nối với ProInterview</p>
-              <div className="flex gap-3">
+              <div className="flex justify-center sm:justify-start gap-3">
                 {SOCIAL_LINKS.map((s) => {
                   const Icon = s.icon;
                   const isHovered = hoveredSocial === s.name;
@@ -249,30 +249,30 @@ function FooterLight() {
 
       <div className="relative z-[1] mx-auto max-w-7xl px-6 py-16">
         <div className={FOOTER_MAIN_GRID}>
-          <div className="sm:col-span-2 lg:col-span-1">
-            <div className="-mt-1 mb-1 flex items-center gap-3">
+          <div className="sm:col-span-2 lg:col-span-1 flex flex-col items-center sm:items-start text-center sm:text-left">
+            <div className="-mt-1 mb-1 flex items-center justify-center sm:justify-start gap-3">
               <BrandLogo size="footer" />
             </div>
             <p className="mb-6 max-w-[320px] text-sm leading-relaxed text-slate-600">
               {FOOTER_TAGLINE}
             </p>
 
-            <div className="mb-6">
+            <div className="mb-6 flex flex-col items-center sm:items-start">
               <p className="mb-2 text-xs font-bold uppercase tracking-[0.15em] text-slate-500">Liên hệ</p>
               <a
                 href={`mailto:${CONTACT_EMAIL}`}
-                className="inline-flex max-w-[min(100%,320px)] items-start gap-2 break-all text-sm font-semibold text-[#8037f4] underline-offset-2 transition-colors hover:text-[#630ed4] hover:underline"
+                className="inline-flex max-w-[min(100%,320px)] items-center sm:items-start justify-center sm:justify-start gap-2 break-all text-sm font-semibold text-[#8037f4] underline-offset-2 transition-colors hover:text-[#630ed4] hover:underline"
               >
                 <Mail className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
                 {CONTACT_EMAIL}
               </a>
             </div>
 
-            <div className="mb-6">
+            <div className="mb-6 flex flex-col items-center sm:items-start">
               <p className="mb-4 text-xs font-bold uppercase tracking-[0.15em] text-slate-500">
                 Kết nối với ProInterview
               </p>
-              <div className="flex gap-3">
+              <div className="flex justify-center sm:justify-start gap-3">
                 {SOCIAL_LINKS.map((s) => {
                   const Icon = s.icon;
                   const isHovered = hoveredSocial === s.name;

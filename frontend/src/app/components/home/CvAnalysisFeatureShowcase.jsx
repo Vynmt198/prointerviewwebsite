@@ -58,7 +58,7 @@ export function CvAnalysisFeatureShowcase({ onCtaClick }) {
   return (
     <section
       id="cv-analysis"
-      className="-translate-y-12 home-mobile-tight relative z-10 flex h-screen max-h-screen flex-col justify-center overflow-x-hidden overflow-y-visible px-0 py-4 sm:py-6 max-lg:h-auto max-lg:max-h-none max-lg:min-h-0 max-lg:pt-10 max-lg:pb-[4.5rem]"
+      className="lg:-translate-y-12 home-mobile-tight relative z-10 flex lg:h-screen lg:max-h-screen flex-col justify-center overflow-x-hidden lg:overflow-visible px-0 py-4 sm:py-6 max-lg:py-8"
     >
       <style>{`
         .cv-analysis-glass-card {
@@ -121,7 +121,7 @@ export function CvAnalysisFeatureShowcase({ onCtaClick }) {
             ) : null}
           </article>
 
-          <section className="cv-showcase-visual relative z-10 flex min-w-0 origin-center scale-[0.92] flex-col items-center justify-center overflow-visible max-lg:scale-[0.9] sm:scale-[0.96] translate-x-[0.2rem] lg:translate-x-12 lg:scale-100 lg:-translate-y-6 lg:justify-self-center">
+          <section className="cv-showcase-visual relative z-10 flex min-w-0 origin-center scale-[0.92] flex-col items-center justify-center overflow-visible max-lg:scale-[0.9] max-lg:-mb-6 sm:scale-[0.96] translate-x-[0.2rem] lg:translate-x-12 lg:scale-100 lg:-translate-y-6 lg:justify-self-center">
             <div className="relative mx-auto w-full max-w-[31rem] overflow-visible">
               <div className="pointer-events-none absolute left-[calc(50%-0.3rem)] top-0 z-[5] w-[14.5rem] -translate-x-1/2 -translate-y-[1.73rem] sm:w-[16.5rem] sm:-translate-y-[2.93rem] lg:w-[18rem] lg:-translate-y-[3.13rem]">
                 <img
@@ -133,7 +133,7 @@ export function CvAnalysisFeatureShowcase({ onCtaClick }) {
               </div>
 
               <div className="relative z-10 flex w-full flex-col -space-y-3 pt-[8.25rem] sm:pt-[9rem] lg:pt-[9.5rem]">
-                <CardReveal delayMs={0} className="relative z-10 translate-x-4 lg:translate-x-8">
+                <CardReveal delayMs={0} className="relative z-10 lg:translate-x-8">
                   <ScoreCard
                     className="scale-95 transform px-[1.65rem] py-[1.025rem] sm:px-[1.9rem] sm:py-[1.3rem] max-lg:px-[1.15rem] max-lg:py-[0.9rem]"
                     titleClassName="translate-y-[0.2rem]"

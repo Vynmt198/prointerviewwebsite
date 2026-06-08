@@ -310,7 +310,7 @@ export function MentorFeatureShowcase({ onCtaClick }) {
   return (
     <section
       id="find-mentor"
-      className="relative z-10 flex h-screen max-h-screen flex-col justify-center overflow-x-hidden overflow-y-visible px-0 py-4 sm:py-6 max-lg:h-auto max-lg:max-h-none max-lg:min-h-0 max-lg:py-5"
+      className="relative z-10 flex lg:h-screen lg:max-h-screen flex-col justify-center overflow-x-hidden overflow-y-visible px-0 py-4 sm:py-6 max-lg:py-8"
     >
       <style>{`
         .mentor-upzi-panel {
