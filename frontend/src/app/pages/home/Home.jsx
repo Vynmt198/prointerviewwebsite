@@ -1074,23 +1074,32 @@ export function Home() {
           id="home-hero-sparkle-zone"
           className={`home-hero-sparkle-zone relative z-10 mx-auto flex w-full -translate-y-48 lg:-translate-y-16 flex-col items-center px-4 py-6 text-center sm:px-8 sm:py-10 ${HOME_SHELL_MAX}`}
         >
-          <div className="hero-intro-badge mb-5">
-            <div
-              className="inline-flex items-center gap-2 rounded-full border border-white/70 bg-white/75 px-3.5 py-1.5 text-xs font-bold text-[#630ed4] shadow-sm backdrop-blur sm:text-sm"
-            >
+          {/* Badge */}
+          <div className="hero-intro-badge mb-6">
+            <div className="inline-flex items-center gap-2 rounded-full border border-violet-200/80 bg-white/80 px-4 py-1.5 text-[11px] font-bold uppercase tracking-[0.14em] text-[#630ed4] shadow-[0_2px_12px_rgba(99,14,212,0.1)] backdrop-blur-sm sm:text-xs">
               <SparkleGlyph className="h-3.5 w-3.5 shrink-0" tone="violet" />
               {HOME_COPY.badge}
             </div>
           </div>
 
-          <div className="hero-intro-copy max-w-4xl">
+          {/* Headline */}
+          <div className="hero-intro-copy max-w-5xl">
             <h1
-              className="home-hero-title hero-title-stack cute-heading mx-auto mb-5 text-slate-900"
+              className="home-hero-title hero-title-stack cute-heading mx-auto mb-4 text-slate-900"
               style={{ fontSize: HOME_HERO_TITLE_CLAMP }}
             >
               <span className="hero-title-line text-slate-900">
                 {HOME_COPY.titleLine1}{" "}
-                <span className="hero-title-highlight" style={{ color: "#630ed4" }}>
+                <span
+                  className="hero-title-highlight"
+                  style={{
+                    background: "linear-gradient(135deg, #630ed4 0%, #9b4ff0 50%, #630ed4 100%)",
+                    backgroundSize: "200% 200%",
+                    WebkitBackgroundClip: "text",
+                    WebkitTextFillColor: "transparent",
+                    backgroundClip: "text",
+                  }}
+                >
                   {HOME_COPY.titleHighlight}
                 </span>
               </span>
@@ -1102,20 +1111,48 @@ export function Home() {
               </span>
             </h1>
 
-            <div className="mb-4 mt-8 flex items-center justify-center">
+            {/* Sub-copy */}
+            <p className="mx-auto mb-8 max-w-xl text-sm leading-relaxed text-slate-500 sm:text-base">
+              Luyện phỏng vấn thực chiến với AI, kết nối Mentor HR/Manager thật — sẵn sàng tự tin chinh phục mọi cơ hội.
+            </p>
+
+            {/* CTA — button-in-button pattern */}
+            <div className="hero-intro-cta mb-10 flex flex-col items-center gap-3 sm:flex-row sm:justify-center sm:gap-4">
               <button
                 type="button"
                 onClick={() => navigate("/interview")}
-                className="hero-intro-cta inline-flex items-center justify-center gap-1.5 rounded-full px-3.5 py-1.5 text-sm font-black transition-all hover:brightness-105 active:scale-[0.98] sm:px-5 sm:py-2 sm:text-lg"
+                className="group inline-flex items-center gap-3 rounded-full py-3 pl-6 pr-3 text-sm font-black transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:scale-[1.03] hover:brightness-105 active:scale-[0.98] sm:text-base"
                 style={{
-                  background: "#93f72b",
+                  background: "linear-gradient(135deg, #a3ff3d 0%, #88e614 100%)",
                   color: "#0f172a",
-                  boxShadow: "0 8px 22px rgba(147, 247, 43, 0.35)",
+                  boxShadow: "0 12px 32px -8px rgba(147,247,43,0.55), 0 4px 12px -4px rgba(147,247,43,0.3)",
                 }}
               >
-                <Lightning className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+                <Lightning className="h-4 w-4" />
                 {HOME_COPY.cta}
+                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-black/10 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-px">
+                  <ArrowRight className="h-3.5 w-3.5" />
+                </span>
               </button>
+
+              <button
+                type="button"
+                onClick={() => navigate("/mentors")}
+                className="inline-flex items-center gap-2 rounded-full border border-violet-200 bg-white/70 px-5 py-3 text-sm font-bold text-[#630ed4] backdrop-blur-sm transition-all duration-300 hover:border-violet-400 hover:bg-white hover:shadow-md active:scale-[0.98]"
+              >
+                <Users className="h-4 w-4" />
+                Tìm Mentor
+              </button>
+            </div>
+
+            {/* Stats row */}
+            <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-3 sm:gap-x-8">
+              {HOME_COPY.stats.map((s, i) => (
+                <div key={i} className="flex flex-col items-center gap-0.5">
+                  <span className="text-lg font-black tracking-tight text-slate-900 sm:text-xl">{s.value}</span>
+                  <span className="text-[11px] text-slate-500 sm:text-xs">{s.label}</span>
+                </div>
+              ))}
             </div>
           </div>
         </div>
