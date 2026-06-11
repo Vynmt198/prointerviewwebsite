@@ -1034,26 +1034,28 @@ export function Home() {
               className="home-hero-title hero-title-stack cute-heading mx-auto mb-5 text-slate-900"
               style={{ fontSize: HOME_HERO_TITLE_CLAMP }}
             >
-              <span className="hero-title-line text-slate-900">
+              {/* Line 1: "Phỏng vấn" + chip */}
+              <span className="hero-title-line inline-flex flex-wrap items-center gap-x-[0.28em] gap-y-1 text-slate-900">
                 {HOME_COPY.titleLine1}{" "}
                 <span
                   className="hero-title-highlight"
                   style={{
-                    background: "linear-gradient(135deg, #630ed4 0%, #9b4ff0 50%, #630ed4 100%)",
-                    backgroundSize: "200% 200%",
-                    WebkitBackgroundClip: "text",
-                    WebkitTextFillColor: "transparent",
-                    backgroundClip: "text",
+                    display: "inline-block",
+                    background: "linear-gradient(135deg, #630ed4 0%, #8037f4 100%)",
+                    color: "#ffffff",
+                    borderRadius: "6px",
+                    padding: "0.02em 0.4em 0.1em",
+                    fontWeight: 800,
                   }}
                 >
                   {HOME_COPY.titleHighlight}
                 </span>
               </span>
-              <span className="hero-title-line text-slate-900">
-                qua mô phỏng hội thoại
-              </span>
-              <span className="hero-title-line text-slate-900">
-                thông minh
+              <span className="hero-title-line text-slate-900">qua mô phỏng hội thoại</span>
+              {/* Line 3: sparkle + accent */}
+              <span className="hero-title-line inline-flex items-center gap-[0.2em]">
+                <SparkleGlyph className="inline-block h-[0.7em] w-[0.7em] shrink-0" tone="violet" aria-hidden />
+                <span style={{ color: "#630ed4" }}>thông minh</span>
               </span>
             </h1>
 
@@ -1079,22 +1081,6 @@ export function Home() {
               </button>
             </div>
 
-            <div className="flex flex-wrap items-center justify-center gap-2.5">
-              {[
-                "Phân tích CV thông minh",
-                "AI mô phỏng HR thật",
-                "Kết nối Mentor 1:1",
-                "Khóa học từ Mentor",
-              ].map((chip) => (
-                <span
-                  key={chip}
-                  className="inline-flex items-center gap-1.5 rounded-full border border-slate-200/80 bg-white/70 px-3.5 py-1.5 text-xs font-medium text-slate-600 backdrop-blur-sm"
-                >
-                  <span className="h-1.5 w-1.5 rounded-full bg-[#630ed4]" />
-                  {chip}
-                </span>
-              ))}
-            </div>
           </div>
         </div>
       </section>
