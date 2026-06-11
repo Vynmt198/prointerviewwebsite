@@ -196,12 +196,27 @@ function isPointOverHeroIntroCta(clientX, clientY) {
   );
 }
 
+/** Không spawn / giữ sao trôi trên headline hero (tránh sao “dính” cạnh chữ thông minh). */
+function isPointOverHeroHeadline(clientX, clientY) {
+  const headline = document.querySelector(".hero-intro-copy");
+  if (!headline) return false;
+  const rect = headline.getBoundingClientRect();
+  const pad = 12;
+  return (
+    clientX >= rect.left - pad &&
+    clientX <= rect.right + pad &&
+    clientY >= rect.top - pad &&
+    clientY <= rect.bottom + pad
+  );
+}
+
 function shouldSkipSparkleTarget(target, clientX, clientY) {
   if (target.closest(".top-nav-pill, #home-hero-video-card, video")) return true;
   if (isPointOverNavPill(clientX, clientY)) return true;
   if (isPointOverHeroVideoCard(clientX, clientY)) return true;
   if (target.closest(".hero-intro-badge") || isPointOverHeroIntroBadge(clientX, clientY)) return true;
   if (target.closest(".hero-intro-cta") || isPointOverHeroIntroCta(clientX, clientY)) return true;
+  if (target.closest(".hero-intro-copy, .home-hero-title") || isPointOverHeroHeadline(clientX, clientY)) return true;
   if (target.closest("a, h1, p, .aspect-video")) return true;
   return false;
 }
@@ -211,6 +226,7 @@ function isPointInSparkleZone(clientX, clientY, bounds) {
   if (isPointOverHeroVideoCard(clientX, clientY)) return false;
   if (isPointOverHeroIntroBadge(clientX, clientY)) return false;
   if (isPointOverHeroIntroCta(clientX, clientY)) return false;
+  if (isPointOverHeroHeadline(clientX, clientY)) return false;
   return (
     clientX >= bounds.left &&
     clientX <= bounds.left + bounds.width &&
@@ -227,7 +243,8 @@ function filterSparklesOutsideBlockedAreas(items, bounds) {
       !isPointOverNavPill(clientX, clientY) &&
       !isPointOverHeroVideoCard(clientX, clientY) &&
       !isPointOverHeroIntroBadge(clientX, clientY) &&
-      !isPointOverHeroIntroCta(clientX, clientY)
+      !isPointOverHeroIntroCta(clientX, clientY) &&
+      !isPointOverHeroHeadline(clientX, clientY)
     );
   });
 }
