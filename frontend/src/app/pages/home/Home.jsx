@@ -1329,103 +1329,111 @@ export function Home() {
       </section>
 
       {/* ═══ ACHIEVEMENTS / NEWS SECTION ═══ */}
-      <section className="relative z-10 mx-auto max-w-[84.35rem] px-6 py-8 sm:py-16">
+      <section className="relative z-10 mx-auto max-w-[84.35rem] px-4 py-16 sm:px-6 sm:py-24">
         {/* Decorative blur orbs */}
-        <div className="pointer-events-none absolute -top-20 left-1/2 -z-10 h-[600px] w-[800px] -translate-x-1/2 rounded-full bg-[#8037f4]/10 blur-[120px]" aria-hidden />
+        <div className="pointer-events-none absolute -top-20 left-1/2 -z-10 h-[600px] w-[800px] -translate-x-1/2 rounded-full bg-[#8037f4]/8 blur-[140px]" aria-hidden />
+        <div className="pointer-events-none absolute bottom-0 right-1/4 -z-10 h-[300px] w-[400px] rounded-full bg-[#a3ff3d]/6 blur-[100px]" aria-hidden />
 
-        <div className="text-center mb-6 flex flex-col items-center gap-3">
-          <span className="inline-flex items-center gap-2 rounded-full border border-violet-400/30 bg-violet-500/10 px-4 py-1.5 font-bold text-violet-700 text-sm">
-            <Medal className="h-4 w-4 shrink-0" aria-hidden />
+        {/* Section header */}
+        <div className="text-center mb-12 flex flex-col items-center gap-4">
+          <span className="inline-flex items-center gap-2 rounded-full border border-violet-200 bg-violet-50 px-4 py-1.5 text-[11px] font-bold uppercase tracking-[0.15em] text-violet-700">
+            <Medal className="h-3.5 w-3.5 shrink-0" aria-hidden />
             Tin tức & Hoạt động
           </span>
-          <h2 className="text-center text-[clamp(1.75rem,3.5vw,3rem)] font-black leading-tight tracking-tight text-slate-900 max-w-none lg:whitespace-nowrap">
-            Thành tựu nổi bật <span className="text-[#630ed4]">từ ProInterview</span>
+          <h2 className="text-center text-[clamp(2rem,4vw,3.25rem)] font-black leading-[1.05] tracking-[-0.03em] text-slate-900 max-w-none lg:whitespace-nowrap">
+            Thành tựu nổi bật{" "}
+            <span className="text-[#630ed4]">từ ProInterview</span>
           </h2>
-          <p className="mx-auto max-w-2xl text-sm text-slate-600 sm:text-base">
+          <p className="mx-auto max-w-xl text-sm text-slate-500 sm:text-base leading-relaxed">
             Cập nhật những tin tức, sự kiện và cột mốc phát triển mới nhất của chúng tôi.
           </p>
         </div>
 
         {achievements.length > 0 && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8 mx-auto max-w-[24rem] md:max-w-none">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 lg:gap-6 mx-auto max-w-[24rem] md:max-w-none">
             {achievements.slice(0, 3).map((item) => (
-              <article
+              /* Outer shell — double-bezel */
+              <div
                 key={item._id}
                 onClick={() => navigate(`/achievements/${item._id}`)}
-                className="group relative flex flex-col overflow-hidden rounded-2xl border border-violet-100 bg-[#f8faff] shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg cursor-pointer"
+                className="group cursor-pointer rounded-[1.75rem] border border-violet-100/80 bg-violet-50/40 p-1.5 shadow-sm transition-all duration-[600ms] ease-[cubic-bezier(0.32,0.72,0,1)] hover:-translate-y-2 hover:border-violet-200 hover:shadow-[0_20px_60px_-15px_rgba(99,14,212,0.18),0_8px_20px_-8px_rgba(99,14,212,0.1)]"
               >
-                {/* Image */}
-                {item.imageUrl && (
-                  <div className="relative aspect-[16/9] w-full shrink-0 overflow-hidden bg-slate-100">
-                    <img
-                      src={item.imageUrl}
-                      alt={item.title}
-                      className="h-full w-full object-cover object-top transition-transform duration-700 ease-out group-hover:scale-105"
-                    />
-                  </div>
-                )}
-
-                {/* Content */}
-                <div className="flex flex-1 flex-col p-5 sm:p-6 sm:px-7">
-                  {/* Date */}
-                  <span className="mb-3 text-[13px] sm:text-sm font-medium text-[#4f0baf]">
-                    {new Date(item.date).toLocaleDateString("en-US", {
-                      month: "short",
-                      day: "numeric",
-                      year: "numeric",
-                    })}
-                  </span>
-                  
-                  {/* Title */}
-                  <h3 className="text-lg sm:text-xl font-black uppercase leading-snug text-[#4f0baf] line-clamp-3">
-                    {item.title}
-                  </h3>
-
-                  {/* Excerpt */}
-                  {item.content && (
-                    <div className="hidden sm:block">
-                      <p className="mt-3 text-sm text-slate-600 line-clamp-2">
-                        {item.content}
-                      </p>
+                {/* Inner core */}
+                <article className="relative flex flex-col overflow-hidden rounded-[1.35rem] bg-white shadow-[inset_0_1px_1px_rgba(255,255,255,0.9)]">
+                  {/* Image */}
+                  {item.imageUrl && (
+                    <div className="relative aspect-[16/9] w-full shrink-0 overflow-hidden">
+                      <img
+                        src={item.imageUrl}
+                        alt={item.title}
+                        className="h-full w-full object-cover object-top transition-transform duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:scale-[1.04]"
+                      />
+                      {/* Gradient overlay on image */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
                     </div>
                   )}
 
-                  {/* Spacer to push footer to bottom if content is short */}
-                  <div className="flex-1" />
+                  {/* Content */}
+                  <div className="flex flex-1 flex-col p-5 sm:p-6">
+                    {/* Date */}
+                    <span className="mb-2.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-violet-500">
+                      {new Date(item.date).toLocaleDateString("en-US", {
+                        month: "short",
+                        day: "numeric",
+                        year: "numeric",
+                      })}
+                    </span>
 
-                  {/* Divider */}
-                  <hr className="my-5 border-t border-violet-200" />
+                    {/* Title */}
+                    <h3 className="text-base sm:text-lg font-black uppercase leading-snug tracking-[-0.01em] text-slate-900 line-clamp-3 transition-colors duration-300 group-hover:text-[#630ed4]">
+                      {item.title}
+                    </h3>
 
-                  {/* Author / Footer */}
-                  <div className="flex items-center gap-3 sm:gap-4">
-                    <div className="flex h-10 w-10 sm:h-12 sm:w-12 shrink-0 items-center justify-center rounded-full bg-white p-2 shadow-sm border border-slate-200">
-                      <img
-                        src="/logo-mark.png?v=9"
-                        alt="ProInterview"
-                        className="h-full w-full object-contain"
-                      />
-                    </div>
-                    <div className="flex flex-col text-left">
-                      <span className="text-[13px] sm:text-base font-bold text-[#4f0baf] leading-tight">ProInterview Team</span>
+                    {/* Excerpt */}
+                    {item.content && (
+                      <p className="mt-2.5 hidden text-sm text-slate-500 line-clamp-2 leading-relaxed sm:block">
+                        {item.content}
+                      </p>
+                    )}
+
+                    <div className="flex-1" />
+
+                    {/* Footer */}
+                    <div className="mt-5 flex items-center gap-3 border-t border-slate-100 pt-4">
+                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-violet-50 p-1.5 ring-1 ring-violet-100">
+                        <img
+                          src="/logo-mark.png?v=9"
+                          alt="ProInterview"
+                          className="h-full w-full object-contain"
+                        />
+                      </div>
+                      <span className="text-[13px] font-semibold text-slate-700">ProInterview Team</span>
+                      <div className="ml-auto flex h-7 w-7 items-center justify-center rounded-full bg-slate-50 ring-1 ring-slate-100 transition-all duration-300 group-hover:bg-[#630ed4] group-hover:ring-[#630ed4]">
+                        <ArrowRight className="h-3.5 w-3.5 text-slate-400 transition-colors duration-300 group-hover:translate-x-px group-hover:text-white" />
+                      </div>
                     </div>
                   </div>
-                </div>
-              </article>
+                </article>
+              </div>
             ))}
           </div>
         )}
 
-        <div className="flex justify-center mt-8">
+        {/* CTA button with button-in-button pattern */}
+        <div className="flex justify-center mt-10">
           <button
             onClick={() => navigate("/achievements")}
-            className="inline-flex items-center gap-2 rounded-full px-6 py-2.5 text-sm sm:text-base font-black transition-all duration-300 hover:scale-105 active:scale-[0.98]"
+            className="group inline-flex items-center gap-3 rounded-full py-3 pl-6 pr-3 text-sm sm:text-base font-black transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:scale-[1.03] active:scale-[0.98]"
             style={{
               background: "linear-gradient(135deg, #a3ff3d 0%, #8ae819 100%)",
               color: "#0f172a",
-              boxShadow: "0 10px 25px -5px rgba(147, 247, 43, 0.4), 0 8px 10px -6px rgba(147, 247, 43, 0.2)",
+              boxShadow: "0 10px 30px -8px rgba(147,247,43,0.5), 0 4px 12px -4px rgba(147,247,43,0.3)",
             }}
           >
             Xem tất cả
+            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-black/10 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-px">
+              <ArrowRight className="h-4 w-4" />
+            </span>
           </button>
         </div>
       </section>
