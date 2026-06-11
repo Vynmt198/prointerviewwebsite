@@ -392,11 +392,11 @@ export function MentorFeatureShowcase({ onCtaClick }) {
               {MENTOR_SHOWCASE_COPY.badge}
             </span>
             <h2
-              className={`${ty.title} !gap-[0.35rem] !leading-[1.06] max-w-full sm:max-w-none`}
+              className={`${ty.title} max-w-full sm:max-w-none`}
               style={{ fontSize: HOME_SECTION_TITLE_CLAMP }}
             >
               <span
-                className={`${ty.titleLineSecond} ${ty.titleLineDark} block pl-[0.2rem] lg:whitespace-nowrap`}
+                className={`${ty.titleLineSecond} ${ty.titleLineDark} block lg:whitespace-nowrap`}
               >
                 {MENTOR_SHOWCASE_COPY.titleLine1}
               </span>

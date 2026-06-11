@@ -3,7 +3,7 @@
  * Hero headline riêng (lớn hơn section).
  */
 // Hero headline — clamp responsive; desktop lg+ override 5.25rem trong theme.css
-export const HOME_HERO_TITLE_CLAMP = "clamp(2.65rem, 10.5vw, 11rem)";
+export const HOME_HERO_TITLE_CLAMP = "clamp(2.6rem, 8vw, 8.5rem)";
 /** Tiêu đề section Home (how-it-works, CV, Mentor, Khóa học, testimonials). */
 export const HOME_SECTION_TITLE_CLAMP = "clamp(1.5rem, 3.5vw, 3.25rem)";
 
@@ -16,7 +16,7 @@ export const homeSectionClasses = {
     "inline-flex items-center gap-2 rounded-full border border-violet-400/30 bg-violet-500/10 px-3.5 py-1 font-semibold text-violet-700 text-xs sm:text-sm",
   /** gap-[0.25rem] = khoảng cách cố định giữa 2 dòng tiêu đề */
   title:
-    "flex max-w-2xl flex-col gap-[0.25rem] font-headline font-extrabold leading-none tracking-tight text-[#1a1b23]",
+    "flex max-w-2xl flex-col gap-[0.55rem] font-headline font-extrabold leading-none tracking-tight text-[#1a1b23]",
   titleLineDark: "block w-full text-slate-900",
   titleLineAccent: "block w-full text-[#630ed4]",
   titleLineSecond: "block w-full",
@@ -28,7 +28,7 @@ export const homeSectionClasses = {
   coursesBody:
     "max-w-2xl text-pretty text-base font-medium leading-relaxed text-slate-600 sm:text-lg",
   coursesBulletList:
-    "max-w-2xl space-y-3 text-pretty text-base font-medium leading-relaxed text-slate-600 sm:text-lg",
+    "max-w-2xl space-y-3 text-pretty text-base font-normal leading-relaxed text-slate-600 sm:text-lg",
   bulletList: `max-w-2xl space-y-3 ${HOME_SECTION_BODY}`,
   bulletIcon: "mt-0.5 h-5 w-5 shrink-0 text-[#630ed4]",
   cta: "inline-flex shrink-0 items-center gap-2 rounded-full px-6 py-2.5 text-lg font-bold transition-all hover:scale-[1.02] active:scale-[0.98] sm:px-8 sm:py-3 sm:text-xl",

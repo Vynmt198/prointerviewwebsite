@@ -1,14 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import { achievementsApi } from "../../api/achievementsApi.js";
-import { Award, CalendarDays, ChevronRight } from "lucide-react";
+import { Medal } from "lucide-react";
 
 export function Achievements() {
   const [achievements, setAchievements] = useState([]);
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Chỉ lấy các bài viết đã được publish (mặc định API getAll sẽ lọc nếu không có cờ all=true)
     const fetchAchievements = async () => {
       try {
         const res = await achievementsApi.getAll();
@@ -24,77 +23,86 @@ export function Achievements() {
 
   return (
     <div className="min-h-screen bg-transparent">
-      {/* Hero Section */}
-      <section className="relative pt-12 pb-8 sm:pt-16 sm:pb-12">
+      {/* Header */}
+      <section className="relative pb-10 pt-12 sm:pt-16 sm:pb-14">
         <div
-          className="pointer-events-none absolute left-1/2 top-0 z-0 h-[min(60vw,600px)] w-[min(60vw,600px)] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#8037f4]/15 blur-[100px] sm:h-[800px] sm:w-[800px] sm:blur-[140px]"
+          className="pointer-events-none absolute left-1/2 top-0 -z-10 h-[500px] w-[700px] -translate-x-1/2 -translate-y-1/3 rounded-full bg-[#8037f4]/10 blur-[120px]"
           aria-hidden
         />
-        <div className="relative z-10 mx-auto max-w-7xl px-6 text-center">
-          <div className="inline-flex items-center gap-2 rounded-full bg-violet-100/80 px-3 py-1.5 text-xs font-bold uppercase tracking-widest text-violet-800 backdrop-blur-md mb-6 border border-violet-200">
-            <Award className="h-4 w-4" />
-            Câu chuyện thành công
-          </div>
-          <h1 className="mx-auto max-w-4xl text-balance text-4xl font-black uppercase tracking-tighter text-slate-900 sm:text-5xl lg:text-7xl">
-            Thành tựu <span className="text-[#8037f4]">ProInterview</span>
+        <div className="relative z-10 mx-auto max-w-3xl px-6 text-center">
+          <span className="mb-5 inline-flex items-center gap-2 rounded-full border border-violet-200 bg-violet-50 px-4 py-1.5 text-[11px] font-bold uppercase tracking-[0.15em] text-violet-700">
+            <Medal className="h-3.5 w-3.5 shrink-0" />
+            Tin tức & Hoạt động
+          </span>
+          <h1 className="text-balance text-4xl font-black leading-[1.05] tracking-[-0.03em] text-slate-900 sm:text-5xl lg:text-[3.5rem]">
+            Thành tựu nổi bật{" "}
+            <span className="text-[#630ed4]">từ ProInterview</span>
           </h1>
-          <p className="mx-auto mt-6 max-w-2xl text-base text-slate-600 sm:text-lg">
-            Cùng nhìn lại những cột mốc đáng nhớ và sự phát triển không ngừng của nền tảng luyện phỏng vấn ứng dụng AI hàng đầu.
+          <p className="mx-auto mt-5 max-w-xl text-base leading-relaxed text-slate-500 sm:text-lg">
+            Cập nhật những tin tức, sự kiện và cột mốc phát triển mới nhất của chúng tôi.
           </p>
         </div>
       </section>
 
-      {/* List Section */}
-      <section className="relative z-10 mx-auto max-w-5xl px-6 pb-24">
+      {/* Grid */}
+      <section className="mx-auto max-w-[84rem] px-6 pb-24 sm:px-8">
         {achievements.length === 0 ? (
-          <div className="rounded-3xl border border-slate-200/60 bg-white/50 py-24 text-center backdrop-blur-xl">
-            <p className="text-sm font-semibold text-slate-500 uppercase tracking-widest">Chưa có thành tựu nào được đăng tải</p>
+          <div className="rounded-2xl border border-slate-200 bg-white py-24 text-center">
+            <p className="text-sm font-semibold uppercase tracking-widest text-slate-400">
+              Chưa có bài viết nào được đăng tải
+            </p>
           </div>
         ) : (
-          <div className="space-y-12 sm:space-y-16">
-            {achievements.map((item, index) => (
-              <div 
-                key={item._id} 
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 lg:gap-6">
+            {achievements.map((item) => (
+              <article
+                key={item._id}
                 onClick={() => navigate(`/achievements/${item._id}`)}
-                className="group relative flex flex-col gap-8 rounded-3xl border border-white/40 bg-white/60 p-6 shadow-xl shadow-slate-200/20 backdrop-blur-xl transition-all hover:bg-white/80 hover:shadow-2xl hover:shadow-[#8037f4]/10 sm:flex-row sm:items-center sm:p-8 cursor-pointer"
+                className="group cursor-pointer overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm transition-all duration-500 hover:-translate-y-1.5 hover:shadow-[0_16px_40px_-8px_rgba(99,14,212,0.15)]"
               >
                 {/* Image */}
-                {item.imageUrl && (
-                  <div className="w-full shrink-0 overflow-hidden rounded-2xl sm:w-[320px] lg:w-[400px]">
-                    <div className="relative pt-[65%] sm:pt-[75%]">
-                      <img 
-                        src={item.imageUrl} 
-                        alt={item.title}
-                        className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
-                      />
-                    </div>
-                  </div>
-                )}
-                
+                <div className="relative aspect-[16/9] w-full overflow-hidden bg-slate-100">
+                  {item.imageUrl ? (
+                    <img
+                      src={item.imageUrl}
+                      alt={item.title}
+                      className="h-full w-full object-cover object-top transition-transform duration-700 group-hover:scale-[1.04]"
+                    />
+                  ) : (
+                    <div className="h-full w-full bg-gradient-to-br from-violet-100 to-violet-50" />
+                  )}
+                </div>
+
                 {/* Content */}
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 text-sm font-semibold text-slate-400 mb-3">
-                    <CalendarDays className="h-4 w-4" />
-                    <time dateTime={item.date}>
-                      {new Date(item.date).toLocaleDateString("vi-VN", {
-                        day: "2-digit",
-                        month: "2-digit",
-                        year: "numeric"
-                      })}
-                    </time>
-                  </div>
-                  <h3 className="mb-4 text-2xl font-black text-slate-900 lg:text-3xl line-clamp-2 group-hover:text-[#8037f4] transition-colors">
+                <div className="flex flex-col gap-3 p-5">
+                  <span className="text-[11px] font-semibold uppercase tracking-[0.1em] text-violet-500">
+                    {new Date(item.date).toLocaleDateString("en-US", {
+                      month: "short",
+                      day: "numeric",
+                      year: "numeric",
+                    })}
+                  </span>
+
+                  <h3 className="text-base font-bold leading-snug tracking-[-0.02em] text-slate-900 line-clamp-2 transition-colors duration-300 group-hover:text-[#630ed4] sm:text-[1.05rem]">
                     {item.title}
                   </h3>
-                  <p className="mb-6 text-slate-600 line-clamp-3 leading-relaxed">
-                    {item.content}
-                  </p>
-                  <button className="inline-flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-[#8037f4] transition-colors hover:text-[#5a22b5]">
-                    Xem chi tiết
-                    <ChevronRight className="h-4 w-4" />
-                  </button>
+
+                  {/* Footer */}
+                  <div className="mt-1 flex items-center gap-2.5">
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white ring-1 ring-slate-200">
+                      <img
+                        src="/logo-mark-circle.png"
+                        alt="ProInterview"
+                        className="h-full w-full object-contain"
+                      />
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-[12px] font-bold leading-none text-slate-800">ProInterview Team</span>
+                      <span className="mt-0.5 text-[11px] text-slate-400">prointerview.vn</span>
+                    </div>
+                  </div>
                 </div>
-              </div>
+              </article>
             ))}
           </div>
         )}

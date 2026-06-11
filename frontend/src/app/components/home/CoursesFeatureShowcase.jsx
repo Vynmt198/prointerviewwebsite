@@ -238,7 +238,7 @@ export function CoursesFeatureShowcase({ onCtaClick }) {
             </div>
           </div>
 
-          <article className="relative z-10 flex min-w-0 flex-col items-start gap-[0.825rem] sm:gap-[0.95rem] max-lg:order-first lg:-translate-x-[5rem] lg:pl-0 xl:-translate-x-[5.5rem]">
+          <article className="relative z-10 flex min-w-0 flex-col items-start gap-[0.825rem] sm:gap-[0.95rem] max-lg:order-first lg:-translate-x-[4rem] lg:pl-0 xl:-translate-x-[4.5rem]">
             <SparkleGlyph
               className="pointer-events-none absolute right-0 top-0 z-[3] h-9 w-9 rotate-12 drop-shadow-md sm:h-11 sm:w-11 lg:right-2"
               tone="violet"
@@ -248,7 +248,7 @@ export function CoursesFeatureShowcase({ onCtaClick }) {
               {COURSES_SHOWCASE_COPY.badge}
             </span>
             <h2
-              className={`${ty.title} max-w-full pr-10 sm:pr-12 lg:max-w-none`}
+              className={`${ty.title} max-w-full sm:max-w-none`}
               style={{ fontSize: HOME_SECTION_TITLE_CLAMP }}
             >
               <span
