@@ -92,7 +92,7 @@ export function AppLayout() {
           className={`relative z-[1] min-h-0 flex-1 ${
             hideNavbar
               ? "flex min-h-svh flex-col pt-0"
-              : `pt-[3.75rem] sm:pt-[4.25rem] md:pt-[4.75rem] overflow-x-hidden`
+              : `pt-[3.75rem] sm:pt-[4.25rem] md:pt-[4.75rem] ${isHome ? "" : "overflow-x-hidden"}`
           }`}
         >
           <Outlet />
