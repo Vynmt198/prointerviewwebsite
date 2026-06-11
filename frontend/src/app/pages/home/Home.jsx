@@ -377,58 +377,6 @@ function HeroAtmosphere() {
 
   return (
     <>
-      <div className="codex-mesh-bg" aria-hidden="true">
-        <div className="cloud-base-wash" />
-
-        {/* ── DEPTH 1: Far background haze (slowest parallax) ── */}
-        <div className="cloud-layer">
-          <div className="cb cb-far-1" />
-          <div className="cb cb-far-2" />
-          <div className="cb cb-far-3" />
-        </div>
-
-        {/* ── DEPTH 2: Deep mid-clouds ── */}
-        <div className="cloud-layer">
-          <div className="cb cb-deep-1" />
-          <div className="cb cb-deep-2" />
-          <div className="cb cb-deep-3" />
-          <div className="cb cb-deep-4" />
-        </div>
-
-        {/* ── DEPTH 3: Mid-layer cloud formations (main visible masses) ── */}
-        <div className="cloud-layer">
-          <div className="cb cb-mid-1" />
-          <div className="cb cb-mid-2" />
-          <div className="cb cb-mid-3" />
-          <div className="cb cb-mid-4" />
-          <div className="cb cb-mid-5" />
-        </div>
-
-        {/* ── DEPTH 4: Upper-right darker mass ── */}
-        <div className="cloud-layer">
-          <div className="cb cb-dark-1" />
-          <div className="cb cb-dark-2" />
-          <div className="cb cb-dark-3" />
-        </div>
-
-        {/* ── DEPTH 5: Near foreground wisps (strongest parallax) ── */}
-        <div className="cloud-layer">
-          <div className="cb cb-near-1" />
-          <div className="cb cb-near-2" />
-          <div className="cb cb-near-3" />
-          <div className="cb cb-near-4" />
-        </div>
-
-        {/* ── DEPTH 6: Illumination & glow ── */}
-        <div className="cloud-layer">
-          <div className="cb cb-glow-1" />
-          <div className="cb cb-glow-2" />
-          <div className="cb cb-glow-3" />
-        </div>
-
-        <div className="cloud-vignette" />
-      </div>
-
       {sparklePortalReady &&
         heroBounds &&
         createPortal(
