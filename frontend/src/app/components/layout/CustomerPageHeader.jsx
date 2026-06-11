@@ -41,6 +41,7 @@ export function CustomerPageHeader({
   title,
   subtitle,
   subtitleClassName = "mt-2 max-w-2xl text-sm font-medium leading-relaxed text-violet-600 sm:text-[0.9375rem]",
+  titleClassName,
   centered = false,
   badgePulse = true,
   className = "mb-6 w-full",
@@ -60,7 +61,7 @@ export function CustomerPageHeader({
           {actions ? <div className="flex shrink-0 items-center gap-2">{actions}</div> : null}
         </div>
       )}
-      <h1 className="font-headline text-[clamp(1.75rem,3.5vw,2.5rem)] font-extrabold leading-[1.12] tracking-tight text-[#1a1b23]">
+      <h1 className={titleClassName ?? "font-headline text-[clamp(1.75rem,3.5vw,2.5rem)] font-extrabold leading-[1.12] tracking-tight text-[#1a1b23]"}>
         {title}
       </h1>
       {subtitle ? (

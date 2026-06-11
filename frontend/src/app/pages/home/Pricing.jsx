@@ -220,6 +220,7 @@ export function Pricing() {
                 rest="mọi buổi phỏng vấn"
               />
             }
+            titleClassName="font-headline text-[clamp(1.5rem,3.5vw,3.25rem)] font-extrabold leading-[1.12] tracking-tight"
             subtitle={PRICING_SUBTITLE}
             subtitleClassName="mt-3 max-w-2xl text-base font-medium leading-relaxed text-violet-700/90"
           />
@@ -309,11 +310,11 @@ export function Pricing() {
 
                     <div className={`mt-3 flex flex-col justify-start space-y-1.5 ${priceBlockMin}`}>
                       {isFree ? (
-                        <p className="text-3xl font-black tracking-tight text-slate-900 sm:text-4xl">
+                        <p className="text-3xl font-black tracking-tight text-[#630ed4] sm:text-4xl">
                           0đ
                         </p>
                       ) : (
-                        <p className="text-3xl font-black tracking-tight text-slate-900 sm:text-4xl">
+                        <p className="text-3xl font-black tracking-tight text-[#630ed4] sm:text-4xl">
                           {fmtVnd(displayAmount)}
                           <span className="ml-1 text-base font-bold text-slate-500">
                             {isYearly ? "/tháng (quy đổi)" : "/tháng"}
@@ -321,10 +322,10 @@ export function Pricing() {
                         </p>
                       )}
                       {isYearly && !isFree && plan.yearlyTotal != null && (
-                        <p className="text-base font-bold leading-snug text-slate-900">
+                        <p className="text-base font-black leading-snug text-slate-900">
                           Thanh toán một lần:{" "}
-                          <span className="text-[#6d2fd6]">{fmtVnd(plan.yearlyTotal)}</span>
-                          <span className="font-semibold text-slate-600"> /năm</span>
+                          <span className="text-[#630ed4]">{fmtVnd(plan.yearlyTotal)}</span>
+                          <span className="font-semibold text-slate-500"> /năm</span>
                         </p>
                       )}
                       {isYearly && isFree && (
