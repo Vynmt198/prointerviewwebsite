@@ -99,7 +99,7 @@ export function AchievementDetail() {
               <img
                 src={item.imageUrl}
                 alt={item.title}
-                className="w-full h-auto max-h-[450px] object-cover"
+                className="w-full h-auto object-contain"
               />
             </div>
           )}
