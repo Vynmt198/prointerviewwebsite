@@ -1052,11 +1052,7 @@ export function Home() {
                 </span>
               </span>
               <span className="hero-title-line text-slate-900">qua mô phỏng hội thoại</span>
-              {/* Line 3: sparkle + accent */}
-              <span className="hero-title-line inline-flex items-center gap-[0.2em]">
-                <SparkleGlyph className="inline-block h-[0.7em] w-[0.7em] shrink-0" tone="violet" aria-hidden />
-                <span className="text-slate-900">thông minh</span>
-              </span>
+              <span className="hero-title-line text-slate-900">thông minh</span>
             </h1>
 
             <p className="mx-auto mb-8 max-w-xl text-base leading-relaxed text-slate-500 sm:text-lg">
