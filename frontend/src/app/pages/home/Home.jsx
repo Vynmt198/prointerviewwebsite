@@ -1022,7 +1022,6 @@ export function Home() {
           id="home-hero-sparkle-zone"
           className={`home-hero-sparkle-zone relative z-10 mx-auto flex w-full -translate-y-40 lg:-translate-y-8 flex-col items-center px-4 py-6 text-center sm:px-8 sm:py-10 ${HOME_SHELL_MAX}`}
         >
-          {/* Badge */}
           <div className="hero-intro-badge mb-6">
             <div className="inline-flex items-center gap-2 rounded-full border border-[#630ed4] bg-white/80 px-4 py-1.5 text-[11px] font-bold uppercase tracking-[0.03em] text-[#630ed4] shadow-[0_2px_12px_rgba(99,14,212,0.1)] backdrop-blur-sm sm:text-xs">
               <SparkleGlyph className="h-3.5 w-3.5 shrink-0" tone="violet" />
@@ -1030,10 +1029,9 @@ export function Home() {
             </div>
           </div>
 
-          {/* Headline */}
           <div className="hero-intro-copy max-w-5xl">
             <h1
-              className="home-hero-title hero-title-stack cute-heading mx-auto mb-4 text-slate-900"
+              className="home-hero-title hero-title-stack cute-heading mx-auto mb-5 text-slate-900"
               style={{ fontSize: HOME_HERO_TITLE_CLAMP }}
             >
               <span className="hero-title-line text-slate-900">
@@ -1059,13 +1057,11 @@ export function Home() {
               </span>
             </h1>
 
-            {/* Sub-copy */}
-            <p className="mx-auto mb-8 max-w-2xl text-lg leading-relaxed text-slate-500 sm:text-xl">
-              Luyện phỏng vấn thực chiến với AI, phân tích CV thông minh, kết nối Mentor 1:1 và học từ khóa học do chính Mentor biên soạn. Mọi thứ bạn cần để chinh phục công việc mơ ước.
+            <p className="mx-auto mb-8 max-w-xl text-base leading-relaxed text-slate-500 sm:text-lg">
+              Câu hỏi cá nhân hoá theo CV & JD, phản hồi chi tiết sau mỗi buổi.
             </p>
 
-            {/* CTA — button-in-button pattern */}
-            <div className="hero-intro-cta mb-10 flex flex-col items-center gap-3 sm:flex-row sm:justify-center sm:gap-4">
+            <div className="hero-intro-cta mb-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-center sm:gap-4">
               <button
                 type="button"
                 onClick={() => navigate("/interview")}
@@ -1081,7 +1077,23 @@ export function Home() {
                   <ArrowRight className="h-3.5 w-3.5" />
                 </span>
               </button>
+            </div>
 
+            <div className="flex flex-wrap items-center justify-center gap-2.5">
+              {[
+                "Phân tích CV thông minh",
+                "AI mô phỏng HR thật",
+                "Kết nối Mentor 1:1",
+                "Khóa học từ Mentor",
+              ].map((chip) => (
+                <span
+                  key={chip}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-slate-200/80 bg-white/70 px-3.5 py-1.5 text-xs font-medium text-slate-600 backdrop-blur-sm"
+                >
+                  <span className="h-1.5 w-1.5 rounded-full bg-[#630ed4]" />
+                  {chip}
+                </span>
+              ))}
             </div>
           </div>
         </div>
@@ -1109,13 +1121,13 @@ export function Home() {
               <div className="flex flex-col-reverse items-center gap-10 lg:flex-row lg:items-center lg:gap-2">
 
                 <div className="relative mx-auto w-full flex-1 lg:flex-[3.75] lg:-ml-16 lg:-translate-y-8">
-                  {/* Mascot floating over card */}
-                  <div className="pointer-events-none absolute -bottom-12 -right-[6rem] z-20 hidden lg:block">
+                  {/* Mascot peeking from bottom-right corner of card */}
+                  <div className="pointer-events-none absolute -bottom-[1.5rem] right-[-5.25rem] z-20 hidden lg:block">
                     <img
                       src="/mascot-features.png"
                       alt=""
                       aria-hidden
-                      className="h-[17.1rem] w-auto object-contain drop-shadow-xl"
+                      className="h-[15rem] w-auto object-contain drop-shadow-xl"
                     />
                   </div>
                   <HeroInterviewVideoCard overlap={true} />
@@ -1171,6 +1183,10 @@ export function Home() {
         <div className={`${HOME_SECTION_INNER} home-mobile-gutter relative z-10 flex h-full w-full flex-col justify-center py-4 sm:py-6 max-lg:h-auto max-lg:py-0`}>
           <div className="flex min-w-0 w-full flex-col items-start gap-8 overflow-visible lg:flex-row lg:items-center lg:gap-16">
             <div className="relative z-20 w-full shrink-0 lg:w-fit lg:max-w-[min(100%,40rem)] lg:-translate-x-[2rem]">
+              <div className={`${homeTy.badge} mb-4`}>
+                <SparkleGlyph className="size-3.5" />
+                {HOME_SECTION_COPY.testimonials.badge}
+              </div>
               <h2
                 className={`mb-0 flex w-full max-w-none flex-col items-start gap-0 ${homeTy.title}`}
                 style={{ fontSize: HOME_SECTION_TITLE_CLAMP }}
@@ -1224,12 +1240,6 @@ export function Home() {
             </div>
 
             <div className="relative z-10 flex min-h-0 min-w-0 w-full flex-1 flex-col overflow-visible py-[0.9rem] lg:min-h-[22rem] lg:min-w-0 lg:pl-0">
-              <div className="mb-3 shrink-0">
-                <div className={homeTy.badge}>
-                  <SparkleGlyph className="size-3.5" />
-                  {HOME_SECTION_COPY.testimonials.badge}
-                </div>
-              </div>
               <div
                 className="relative w-full overflow-hidden lg:-mx-[3rem] lg:w-[calc(100%+6rem)]"
                 style={{
