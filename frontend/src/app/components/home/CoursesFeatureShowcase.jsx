@@ -229,7 +229,7 @@ export function CoursesFeatureShowcase({ onCtaClick }) {
         }
       `}</style>
       <div
-        className={`home-mobile-gutter relative z-10 flex w-full items-center overflow-visible py-2 ${HOME_SECTION_INNER}`}
+        className={`home-mobile-gutter relative z-10 flex w-full items-center overflow-visible py-2 ${HOME_SECTION_INNER} lg:!px-6 xl:!px-8 2xl:!px-12`}
       >
         <div className="mx-auto grid w-full max-w-6xl grid-cols-1 items-center gap-8 overflow-visible max-lg:gap-6 lg:grid-cols-[minmax(0,1.08fr)_minmax(0,0.92fr)] lg:gap-4 xl:max-w-[68rem] xl:gap-5">
           <div className="relative z-10 flex w-full min-w-0 justify-center max-lg:order-last lg:justify-start lg:-translate-x-[5.9rem]">

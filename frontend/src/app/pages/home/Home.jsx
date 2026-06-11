@@ -1055,7 +1055,7 @@ export function Home() {
               {/* Line 3: sparkle + accent */}
               <span className="hero-title-line inline-flex items-center gap-[0.2em]">
                 <SparkleGlyph className="inline-block h-[0.7em] w-[0.7em] shrink-0" tone="violet" aria-hidden />
-                <span style={{ color: "#630ed4" }}>thông minh</span>
+                <span className="text-slate-900">thông minh</span>
               </span>
             </h1>
 
