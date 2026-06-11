@@ -3,7 +3,7 @@ import path from 'path'
 import tailwindcss from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react'
 
-const DEFAULT_DEV_BACKEND = 'http://localhost:5000'
+const DEFAULT_DEV_BACKEND = 'http://localhost:5001'
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')

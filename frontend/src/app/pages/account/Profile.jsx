@@ -902,23 +902,6 @@ export function Profile() {
                <h2 className="mb-1 text-2xl font-black tracking-tight sm:text-3xl">{form.name || "Người dùng"}</h2>
                <p className="profile-muted mb-6 text-[10px] font-bold uppercase tracking-wide">{planInfo.name}</p>
                
-               {!isMentor && (
-                 <div className="profile-divider pt-8 border-t">
-                    <button
-                      type="button"
-                      disabled={applying}
-                      onClick={handleSidebarMentorRegister}
-                      className="profile-btn-lime group flex w-full items-center justify-between rounded-2xl px-4 py-4 text-left transition-all hover:brightness-110 active:scale-[0.99] disabled:opacity-60"
-                    >
-                      <span className="text-[10px] font-black uppercase tracking-widest">
-                        Đăng ký làm Mentor
-                      </span>
-                      <span className="flex h-10 w-10 items-center justify-center rounded-full bg-white/80 text-[#2D1B69]">
-                        <CaretRight size={16} />
-                      </span>
-                    </button>
-                 </div>
-               )}
             </div>
 
           </div>

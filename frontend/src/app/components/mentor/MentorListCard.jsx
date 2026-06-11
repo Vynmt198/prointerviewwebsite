@@ -1,4 +1,4 @@
-import { Star, MapPin, Briefcase, Video, BadgeCheck } from "lucide-react";
+import { Star, Video, BadgeCheck } from "lucide-react";
 import { MENTOR_BOOKING_COPY } from "../../constants/brandVoice";
 
 const TZ_LOCATION = {
@@ -135,29 +135,12 @@ export function MentorListCard({ mentor, onOpenProfile, onBook }) {
           <StarRating rating={mentor.rating} reviewCount={mentor.reviews ?? 0} />
         </div>
 
-        <ul className="mt-1 space-y-0.5 text-[10px] text-slate-600 sm:text-[11px] md:mt-2.5 md:space-y-1 md:text-sm">
-          <li className="flex min-w-0 items-center gap-1 md:gap-2">
-            <MapPin className="size-3 shrink-0 text-slate-400 md:size-4" aria-hidden />
-            <span className="truncate">{locationLabel(mentor.timezone)}</span>
-          </li>
-          <li className="flex min-w-0 items-center gap-1 md:gap-2">
-            <Briefcase className="size-3 shrink-0 text-slate-400 md:size-4" aria-hidden />
-            <span className="truncate">{experienceLabel(mentor.experience)}</span>
-          </li>
-        </ul>
-
-        {bio ? (
-          <p className="mt-1 line-clamp-1 text-[10px] leading-snug text-slate-600 sm:text-[11px] md:mt-3 md:line-clamp-3 md:text-sm md:leading-relaxed">
-            {bio}
-          </p>
-        ) : null}
-
         {mentor.tags?.length ? (
-          <div className="mt-3 hidden flex-wrap gap-1.5 md:flex">
-            {mentor.tags.slice(0, 4).map((tag) => (
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            {mentor.tags.slice(0, 3).map((tag) => (
               <span
                 key={tag}
-                className="rounded-full bg-violet-50 px-2.5 py-0.5 text-xs font-medium text-violet-700"
+                className="rounded-full bg-violet-50 px-2.5 py-0.5 text-[10px] font-medium text-violet-700 sm:text-xs"
               >
                 {tag}
               </span>

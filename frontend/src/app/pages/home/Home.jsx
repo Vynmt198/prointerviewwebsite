@@ -544,12 +544,12 @@ export function Home() {
         .hero-title-stack {
           display: flex;
           flex-direction: column;
-          gap: 1.2rem;
-          line-height: 0.98;
+          gap: 0.5rem;
+          line-height: 1.08;
         }
         .hero-title-line {
           display: block;
-          line-height: 0.98;
+          line-height: 1.08;
           white-space: nowrap;
         }
         @media (max-width: 1023px) {
@@ -577,8 +577,8 @@ export function Home() {
           }
         }
         .cute-heading {
-          letter-spacing: -0.04em;
-          font-weight: 850;
+          letter-spacing: -0.03em;
+          font-weight: 750;
         }
         .sticker-badge {
           border-radius: 999px;
@@ -1020,11 +1020,11 @@ export function Home() {
 
         <div
           id="home-hero-sparkle-zone"
-          className={`home-hero-sparkle-zone relative z-10 mx-auto flex w-full -translate-y-48 lg:-translate-y-16 flex-col items-center px-4 py-6 text-center sm:px-8 sm:py-10 ${HOME_SHELL_MAX}`}
+          className={`home-hero-sparkle-zone relative z-10 mx-auto flex w-full -translate-y-40 lg:-translate-y-8 flex-col items-center px-4 py-6 text-center sm:px-8 sm:py-10 ${HOME_SHELL_MAX}`}
         >
           {/* Badge */}
           <div className="hero-intro-badge mb-6">
-            <div className="inline-flex items-center gap-2 rounded-full border border-violet-200/80 bg-white/80 px-4 py-1.5 text-[11px] font-bold uppercase tracking-[0.14em] text-[#630ed4] shadow-[0_2px_12px_rgba(99,14,212,0.1)] backdrop-blur-sm sm:text-xs">
+            <div className="inline-flex items-center gap-2 rounded-full border border-[#630ed4] bg-white/80 px-4 py-1.5 text-[11px] font-bold uppercase tracking-[0.03em] text-[#630ed4] shadow-[0_2px_12px_rgba(99,14,212,0.1)] backdrop-blur-sm sm:text-xs">
               <SparkleGlyph className="h-3.5 w-3.5 shrink-0" tone="violet" />
               {HOME_COPY.badge}
             </div>
@@ -1052,16 +1052,16 @@ export function Home() {
                 </span>
               </span>
               <span className="hero-title-line text-slate-900">
-                {HOME_COPY.titleLine2Suffix} {HOME_COPY.titleExtraLines?.[0] ?? ""}
+                qua mô phỏng hội thoại
               </span>
               <span className="hero-title-line text-slate-900">
-                {HOME_COPY.titleExtraLines?.[1] ?? ""} {HOME_COPY.titleExtraLines?.[2] ?? ""}
+                thông minh
               </span>
             </h1>
 
             {/* Sub-copy */}
-            <p className="mx-auto mb-8 max-w-xl text-sm leading-relaxed text-slate-500 sm:text-base">
-              Luyện phỏng vấn thực chiến với AI, kết nối Mentor HR/Manager thật — sẵn sàng tự tin chinh phục mọi cơ hội.
+            <p className="mx-auto mb-8 max-w-2xl text-lg leading-relaxed text-slate-500 sm:text-xl">
+              Luyện phỏng vấn thực chiến với AI, phân tích CV thông minh, kết nối Mentor 1:1 và học từ khóa học do chính Mentor biên soạn. Mọi thứ bạn cần để chinh phục công việc mơ ước.
             </p>
 
             {/* CTA — button-in-button pattern */}
@@ -1071,36 +1071,17 @@ export function Home() {
                 onClick={() => navigate("/interview")}
                 className="group inline-flex items-center gap-3 rounded-full py-3 pl-6 pr-3 text-sm font-black transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:scale-[1.03] hover:brightness-105 active:scale-[0.98] sm:text-base"
                 style={{
-                  background: "linear-gradient(135deg, #a3ff3d 0%, #88e614 100%)",
+                  background: "#a3ff3d",
                   color: "#0f172a",
-                  boxShadow: "0 12px 32px -8px rgba(147,247,43,0.55), 0 4px 12px -4px rgba(147,247,43,0.3)",
+                  boxShadow: "0 8px 24px -6px rgba(147,247,43,0.45)",
                 }}
               >
-                <Lightning className="h-4 w-4" />
                 {HOME_COPY.cta}
                 <span className="flex h-8 w-8 items-center justify-center rounded-full bg-black/10 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-px">
                   <ArrowRight className="h-3.5 w-3.5" />
                 </span>
               </button>
 
-              <button
-                type="button"
-                onClick={() => navigate("/mentors")}
-                className="inline-flex items-center gap-2 rounded-full border border-violet-200 bg-white/70 px-5 py-3 text-sm font-bold text-[#630ed4] backdrop-blur-sm transition-all duration-300 hover:border-violet-400 hover:bg-white hover:shadow-md active:scale-[0.98]"
-              >
-                <Users className="h-4 w-4" />
-                Tìm Mentor
-              </button>
-            </div>
-
-            {/* Stats row */}
-            <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-3 sm:gap-x-8">
-              {HOME_COPY.stats.map((s, i) => (
-                <div key={i} className="flex flex-col items-center gap-0.5">
-                  <span className="text-lg font-black tracking-tight text-slate-900 sm:text-xl">{s.value}</span>
-                  <span className="text-[11px] text-slate-500 sm:text-xs">{s.label}</span>
-                </div>
-              ))}
             </div>
           </div>
         </div>
@@ -1124,12 +1105,12 @@ export function Home() {
             aria-label="Luyện phỏng vấn với AI"
             className="relative z-10 flex min-h-screen flex-col justify-center overflow-x-hidden overflow-y-visible px-0 py-16 sm:px-10 lg:px-16 max-lg:min-h-0 max-lg:py-8 max-lg:px-0"
           >
-            <div className={`${HOME_SECTION_INNER} home-mobile-gutter relative z-10 py-2`}>
+            <div className={`${HOME_SECTION_INNER} home-mobile-gutter relative z-10 py-2 lg:!pr-6`}>
               <div className="flex flex-col-reverse items-center gap-10 lg:flex-row lg:items-center lg:gap-2">
 
-                <div className="relative mx-auto w-full flex-1 lg:flex-[1.8] max-w-[44rem] lg:max-w-[46.5rem] lg:-ml-16 lg:-translate-y-8">
+                <div className="relative mx-auto w-full flex-1 lg:flex-[3.75] lg:-ml-16 lg:-translate-y-8">
                   {/* Mascot floating over card */}
-                  <div className="pointer-events-none absolute -bottom-12 -right-[7.2rem] z-20 hidden lg:block">
+                  <div className="pointer-events-none absolute -bottom-12 -right-[6rem] z-20 hidden lg:block">
                     <img
                       src="/mascot-features.png"
                       alt=""
@@ -1140,19 +1121,20 @@ export function Home() {
                   <HeroInterviewVideoCard overlap={true} />
                 </div>
 
-                <div className="w-full flex-1 max-w-[32rem] xl:max-w-[36rem] flex flex-col items-start gap-3 sm:gap-3.5 lg:-translate-y-[6rem] lg:translate-x-[1.5rem] relative">
+                <div className="w-full flex-1 lg:flex-[2] flex flex-col items-start gap-3 sm:gap-3.5 lg:-translate-y-[6rem] lg:translate-x-[1.1rem] relative">
                   <span className={homeTy.cvShowcaseBadge}>
                     <Brain className="h-3.5 w-3.5 shrink-0" aria-hidden />
                     Luyện PV với AI
                   </span>
                   <h2
-                    className={`max-w-full ${homeTy.title} sm:max-w-none`}
+                    className={`max-w-full ${homeTy.title} sm:max-w-none max-lg:flex-row max-lg:flex-wrap`}
                     style={{ fontSize: HOME_SECTION_TITLE_CLAMP }}
                   >
-                    <span className="block text-slate-900 lg:whitespace-nowrap">Luyện phỏng vấn với AI</span>
-                    <span className="block text-[#630ed4] lg:whitespace-nowrap">sẵn sàng cho cơ hội thật</span>
+                    <span className="lg:block text-slate-900">Luyện phỏng vấn </span>
+                    <span className="lg:block text-slate-900">với AI sẵn sàng </span>
+                    <span className="lg:block text-[#630ed4]">cho cơ hội thật</span>
                   </h2>
-                  <p className={`mt-2 max-w-xl ${homeTy.body}`}>
+                  <p className={`mt-2 max-w-[22rem] ${homeTy.body}`}>
                     Thực chiến phỏng vấn 1-1 cùng AI với bộ câu hỏi được cá nhân hoá theo CV & JD.
                   </p>
                 </div>
@@ -1320,16 +1302,20 @@ export function Home() {
         <div className="pointer-events-none absolute bottom-0 right-1/4 -z-10 h-[300px] w-[400px] rounded-full bg-[#a3ff3d]/6 blur-[100px]" aria-hidden />
 
         {/* Section header */}
-        <div className="text-center mb-12 flex flex-col items-center gap-4">
-          <span className="inline-flex items-center gap-2 rounded-full border border-violet-200 bg-violet-50 px-4 py-1.5 text-[11px] font-bold uppercase tracking-[0.15em] text-violet-700">
+        <div className="mb-12 flex flex-col items-center gap-3 text-center">
+          <span className={homeTy.badge}>
             <Medal className="h-3.5 w-3.5 shrink-0" aria-hidden />
             Tin tức & Hoạt động
           </span>
-          <h2 className="text-center text-[clamp(2rem,4vw,3.25rem)] font-black leading-[1.05] tracking-[-0.03em] text-slate-900 max-w-none lg:whitespace-nowrap">
-            Thành tựu nổi bật{" "}
-            <span className="text-[#630ed4]">từ ProInterview</span>
+          <h2
+            className={`${homeTy.title} max-w-none`}
+            style={{ fontSize: HOME_SECTION_TITLE_CLAMP }}
+          >
+            <span className={homeTy.titleLineDark}>Thành tựu nổi bật{" "}
+              <span className="text-[#630ed4]">từ ProInterview</span>
+            </span>
           </h2>
-          <p className="mx-auto max-w-xl text-sm text-slate-500 sm:text-base leading-relaxed">
+          <p className={homeTy.body}>
             Cập nhật những tin tức, sự kiện và cột mốc phát triển mới nhất của chúng tôi.
           </p>
         </div>
@@ -1337,69 +1323,54 @@ export function Home() {
         {achievements.length > 0 && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 lg:gap-6 mx-auto max-w-[24rem] md:max-w-none">
             {achievements.slice(0, 3).map((item) => (
-              /* Outer shell — double-bezel */
-              <div
+              <article
                 key={item._id}
                 onClick={() => navigate(`/achievements/${item._id}`)}
-                className="group cursor-pointer rounded-[1.75rem] border border-violet-100/80 bg-violet-50/40 p-1.5 shadow-sm transition-all duration-[600ms] ease-[cubic-bezier(0.32,0.72,0,1)] hover:-translate-y-2 hover:border-violet-200 hover:shadow-[0_20px_60px_-15px_rgba(99,14,212,0.18),0_8px_20px_-8px_rgba(99,14,212,0.1)]"
+                className="group cursor-pointer overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm transition-all duration-500 hover:-translate-y-1.5 hover:shadow-[0_16px_40px_-8px_rgba(99,14,212,0.15)]"
               >
-                {/* Inner core */}
-                <article className="relative flex flex-col overflow-hidden rounded-[1.35rem] bg-white shadow-[inset_0_1px_1px_rgba(255,255,255,0.9)]">
-                  {/* Image */}
-                  {item.imageUrl && (
-                    <div className="relative aspect-[16/9] w-full shrink-0 overflow-hidden">
-                      <img
-                        src={item.imageUrl}
-                        alt={item.title}
-                        className="h-full w-full object-cover object-top transition-transform duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:scale-[1.04]"
-                      />
-                      {/* Gradient overlay on image */}
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
-                    </div>
+                {/* Image */}
+                <div className="relative aspect-[16/9] w-full overflow-hidden bg-slate-100">
+                  {item.imageUrl ? (
+                    <img
+                      src={item.imageUrl}
+                      alt={item.title}
+                      className="h-full w-full object-cover object-top transition-transform duration-700 group-hover:scale-[1.04]"
+                    />
+                  ) : (
+                    <div className="h-full w-full bg-gradient-to-br from-violet-100 to-violet-50" />
                   )}
+                </div>
 
-                  {/* Content */}
-                  <div className="flex flex-1 flex-col p-5 sm:p-6">
-                    {/* Date */}
-                    <span className="mb-2.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-violet-500">
-                      {new Date(item.date).toLocaleDateString("en-US", {
-                        month: "short",
-                        day: "numeric",
-                        year: "numeric",
-                      })}
-                    </span>
+                {/* Content */}
+                <div className="flex flex-col gap-3 p-5">
+                  <span className="text-[11px] font-semibold uppercase tracking-[0.1em] text-violet-500">
+                    {new Date(item.date).toLocaleDateString("en-US", {
+                      month: "short",
+                      day: "numeric",
+                      year: "numeric",
+                    })}
+                  </span>
 
-                    {/* Title */}
-                    <h3 className="text-base sm:text-lg font-black uppercase leading-snug tracking-[-0.01em] text-slate-900 line-clamp-3 transition-colors duration-300 group-hover:text-[#630ed4]">
-                      {item.title}
-                    </h3>
+                  <h3 className="text-base font-bold leading-snug tracking-[-0.02em] text-slate-900 line-clamp-2 transition-colors duration-300 group-hover:text-[#630ed4] sm:text-[1.05rem]">
+                    {item.title}
+                  </h3>
 
-                    {/* Excerpt */}
-                    {item.content && (
-                      <p className="mt-2.5 hidden text-sm text-slate-500 line-clamp-2 leading-relaxed sm:block">
-                        {item.content}
-                      </p>
-                    )}
-
-                    <div className="flex-1" />
-
-                    {/* Footer */}
-                    <div className="mt-5 flex items-center gap-3 border-t border-slate-100 pt-4">
-                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-violet-50 p-1.5 ring-1 ring-violet-100">
-                        <img
-                          src="/logo-mark.png?v=9"
-                          alt="ProInterview"
-                          className="h-full w-full object-contain"
-                        />
-                      </div>
-                      <span className="text-[13px] font-semibold text-slate-700">ProInterview Team</span>
-                      <div className="ml-auto flex h-7 w-7 items-center justify-center rounded-full bg-slate-50 ring-1 ring-slate-100 transition-all duration-300 group-hover:bg-[#630ed4] group-hover:ring-[#630ed4]">
-                        <ArrowRight className="h-3.5 w-3.5 text-slate-400 transition-colors duration-300 group-hover:translate-x-px group-hover:text-white" />
-                      </div>
+                  {/* Footer */}
+                  <div className="mt-1 flex items-center gap-2.5">
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white ring-1 ring-slate-200">
+                      <img
+                        src="/logo-mark-circle.png"
+                        alt="ProInterview"
+                        className="h-full w-full object-contain"
+                      />
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-[12px] font-bold leading-none text-slate-800">ProInterview Team</span>
+                      <span className="mt-0.5 text-[11px] text-slate-400">prointerview.vn</span>
                     </div>
                   </div>
-                </article>
-              </div>
+                </div>
+              </article>
             ))}
           </div>
         )}

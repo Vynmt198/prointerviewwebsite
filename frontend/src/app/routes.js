@@ -1,4 +1,4 @@
-import { createHashRouter, redirect } from "react-router";
+import { createBrowserRouter, redirect } from "react-router";
 import { AppLayout } from "./components/layout/AppLayout";
 import { Home } from "./pages/home/Home";
 import { Login } from "./pages/auth/Login";
@@ -86,7 +86,7 @@ function roleHomeLoader() {
   return null;
 }
 
-export const router = createHashRouter([
+export const router = createBrowserRouter([
   {
     path: "/",
     Component: AppLayout,

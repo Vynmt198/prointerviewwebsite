@@ -88,7 +88,7 @@ export function HeroInterviewVideoCard({ overlap = false, center = false }) {
           overlap ? "-mt-2" : "mt-[3.8rem]"
         }`}
       >
-        <div className="relative overflow-hidden rounded-[1rem] bg-white border border-slate-200 shadow-[0_20px_50px_rgba(99,14,212,0.14)] sm:rounded-[1.25rem]">
+        <div className="relative overflow-hidden rounded-[1rem] bg-white border-2 border-[#8037f4] shadow-[0_20px_50px_rgba(99,14,212,0.14)] sm:rounded-[1.25rem]">
           
           {/* Mac Window Header */}
           <div className="relative flex items-center justify-between bg-white px-3 py-2.5 border-b border-slate-200/60 sm:px-4 sm:py-3">
