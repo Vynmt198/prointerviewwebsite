@@ -470,9 +470,6 @@ export function Home() {
   const [achievements, setAchievements] = useState([]);
 
   useEffect(() => {
-    // Scroll to top
-    window.scrollTo({ top: 0, behavior: "smooth" });
-
     // Fetch achievements
     const fetchAchievements = async () => {
       try {
