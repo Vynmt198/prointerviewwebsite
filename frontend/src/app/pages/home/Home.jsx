@@ -1410,7 +1410,6 @@ export function Home() {
                     </div>
                     <div className="flex flex-col text-left">
                       <span className="text-[13px] sm:text-base font-bold text-[#4f0baf] leading-tight">ProInterview Team</span>
-                      <span className="text-[11px] sm:text-sm text-[#4f0baf] mt-0.5 leading-tight">contact@prointerview.vn</span>
                     </div>
                   </div>
                 </div>
