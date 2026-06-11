@@ -1351,7 +1351,7 @@ export function Home() {
 
         {achievements.length > 0 && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8 mx-auto max-w-[24rem] md:max-w-none">
-            {achievements.map((item) => (
+            {achievements.slice(0, 3).map((item) => (
               <article
                 key={item._id}
                 onClick={() => navigate(`/achievements/${item._id}`)}
