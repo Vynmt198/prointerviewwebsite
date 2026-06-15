@@ -36,12 +36,11 @@ export function AppLayout() {
   }, [isHome]);
 
   const shellClass =
-    `app-user-shell relative min-h-svh w-full text-slate-900 antialiased selection:bg-violet-100 selection:text-violet-900 ${
-      isLegalDoc
-        ? "overflow-x-hidden bg-slate-50"
-        : allowHorizontalScroll
-          ? "overflow-x-hidden bg-transparent"
-          : "overflow-x-hidden bg-[#f3f0f9]"
+    `app-user-shell relative min-h-svh w-full text-slate-900 antialiased selection:bg-violet-100 selection:text-violet-900 ${isLegalDoc
+      ? "overflow-x-hidden bg-slate-50"
+      : allowHorizontalScroll
+        ? "overflow-x-hidden bg-transparent"
+        : "overflow-x-hidden bg-[#f3f0f9]"
     }`;
 
   const shellStyle = {
@@ -83,17 +82,15 @@ export function AppLayout() {
         aria-hidden
       />
       <div
-        className={`relative z-[1] flex min-h-svh w-full flex-col ${
-          isHome ? "home-layout-fixed max-lg:min-w-0 max-lg:w-full" : ""
-        }`}
+        className={`relative z-[1] flex min-h-svh w-full flex-col ${isHome ? "home-layout-fixed max-lg:min-w-0 max-lg:w-full" : ""
+          }`}
       >
         {!hideNavbar && <Navbar variant="customer" />}
         <main
-          className={`relative z-[1] min-h-0 flex-1 ${
-            hideNavbar
-              ? "flex min-h-svh flex-col pt-0"
-              : `pt-[3.75rem] sm:pt-[4.25rem] md:pt-[4.75rem] ${isHome ? "" : "overflow-x-hidden"}`
-          }`}
+          className={`relative z-[1] min-h-0 flex-1 ${hideNavbar
+            ? "flex min-h-svh flex-col pt-0"
+            : `pt-[3.75rem] sm:pt-[4.25rem] md:pt-[4.75rem] ${isHome ? "" : "overflow-x-hidden"}`
+            }`}
         >
           <Outlet />
         </main>

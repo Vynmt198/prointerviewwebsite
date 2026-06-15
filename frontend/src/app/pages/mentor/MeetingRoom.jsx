@@ -194,7 +194,7 @@ export function MeetingRoom() {
   }
 
   return (
-    <div className="min-h-svh bg-[#07060E] flex flex-col relative overflow-hidden font-sans">
+    <div className="min-h-svh bg-[#fbfaff] flex flex-col relative overflow-hidden font-sans">
       {/* Knowledge Capture Modal — mentor chia sẻ insights sau buổi học */}
       {showKnowledgeModal && (
         <KnowledgeCaptureModal
@@ -205,50 +205,50 @@ export function MeetingRoom() {
           onDone={() => { setShowKnowledgeModal(false); navigate("/mentor/dashboard"); }}
         />
       )}
-      <motion.div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full pointer-events-none opacity-20">
-        <div className="absolute top-0 w-full h-[600px] bg-gradient-to-b from-violet-600/20 to-transparent blur-[100px]" />
+      <motion.div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full pointer-events-none opacity-30">
+        <div className="absolute top-0 w-full h-[600px] bg-gradient-to-b from-violet-200 to-transparent blur-[100px]" />
       </motion.div>
 
-      <header className="relative z-20 flex flex-wrap items-center justify-between gap-4 px-4 sm:px-8 py-3 sm:py-4 bg-black/50 backdrop-blur-md border-b border-white/5">
+      <header className="relative z-20 flex flex-wrap items-center justify-between gap-4 px-4 sm:px-8 py-3 sm:py-4 bg-white/80 backdrop-blur-md border-b border-[#8037f4]/20 shadow-sm">
         <div className="flex items-center gap-3">
           <button
             type="button"
             onClick={handleEndCall}
-            className="p-2.5 rounded-xl bg-white/5 text-white/70 hover:text-white hover:bg-white/10 transition-all"
+            className="p-2.5 rounded-xl bg-slate-100 text-slate-500 hover:text-slate-900 hover:bg-slate-200 transition-all border border-slate-200/60"
             title="Thoát phòng"
           >
             <ArrowLeft size={18} />
           </button>
-          <div className="w-10 h-10 rounded-xl bg-[#93f72b] flex items-center justify-center text-slate-900">
+          <div className="w-10 h-10 rounded-xl bg-[#93f72b] flex items-center justify-center text-[#070210] shadow-[0_4px_12px_rgba(147,247,43,0.3)] border border-[rgba(147,247,43,0.4)]">
             <VideoIcon size={20} />
           </div>
           <div>
-            <p className="text-[10px] font-black text-white/50 uppercase tracking-widest">Phòng ProInterview</p>
-            <p className="text-xs font-bold uppercase tracking-tighter text-violet-700">#{sessionId.slice(-8)}</p>
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Phòng ProInterview</p>
+            <p className="text-xs font-bold uppercase tracking-tighter text-[#8037f4]">#{sessionId.slice(-8)}</p>
           </div>
         </div>
 
         <div className="flex flex-wrap items-center gap-3 sm:gap-5">
           {counterpartName && (
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-white/5 rounded-xl border border-white/10">
-              <div className="w-8 h-8 rounded-full bg-violet-500/20 flex items-center justify-center border border-violet-500/30">
-                <span className="text-[10px] font-bold text-violet-300">{counterpartName.charAt(0)}</span>
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-violet-50 rounded-xl border border-violet-100">
+              <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center border border-violet-200 shadow-sm">
+                <span className="text-[10px] font-bold text-[#8037f4]">{counterpartName.charAt(0)}</span>
               </div>
               <div>
-                <p className="text-[9px] font-black text-white/40 uppercase tracking-widest leading-none mb-0.5">
+                <p className="text-[9px] font-black text-violet-400 uppercase tracking-widest leading-none mb-0.5">
                   {counterpartLabel}
                 </p>
-                <p className="text-[11px] font-bold text-white leading-none">{counterpartName}</p>
+                <p className="text-[11px] font-bold text-violet-950 leading-none">{counterpartName}</p>
               </div>
             </div>
           )}
 
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-red-500/10 text-red-400 rounded-xl border border-red-500/20">
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-red-50 text-red-600 rounded-xl border border-red-200 shadow-sm">
             <div className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
             <span className="text-[9px] font-black uppercase tracking-widest">Live</span>
           </div>
-          <div className="flex items-center gap-2 text-white font-mono text-sm font-black">
-            <Clock size={14} className="text-violet-400" />
+          <div className="flex items-center gap-2 text-slate-700 font-mono text-sm font-black bg-white px-3 py-1.5 rounded-xl border border-slate-200 shadow-sm">
+            <Clock size={14} className="text-[#8037f4]" />
             {formatTime(elapsedTime)}
           </div>
         </div>
@@ -259,14 +259,14 @@ export function MeetingRoom() {
               <button
                 type="button"
                 onClick={handleEndCall}
-                className="px-5 py-2.5 rounded-xl bg-white/10 text-white text-[10px] font-black uppercase tracking-widest hover:bg-white/20"
+                className="px-5 py-2.5 rounded-xl bg-white text-slate-600 text-[10px] font-black uppercase tracking-widest hover:bg-slate-50 border border-slate-200 shadow-sm"
               >
                 Rời phòng
               </button>
               <button
                 type="button"
                 onClick={handleCompleteSession}
-                className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#93f72b] text-slate-900 text-[10px] font-black uppercase tracking-widest shadow-lg shadow-[#93f72b]/20"
+                className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#93f72b] text-[#070210] text-[10px] font-black uppercase tracking-widest shadow-[0_4px_12px_rgba(147,247,43,0.3)] border border-[rgba(147,247,43,0.4)]"
               >
                 <ShieldCheck size={16} /> Kết thúc buổi
               </button>
@@ -275,7 +275,7 @@ export function MeetingRoom() {
             <button
               type="button"
               onClick={handleEndCall}
-              className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-rose-600 text-white text-[10px] font-black uppercase tracking-widest"
+              className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-rose-50 text-rose-600 border border-rose-200 text-[10px] font-black uppercase tracking-widest shadow-sm hover:bg-rose-100"
             >
               <LogOut size={16} /> Rời phòng
             </button>
@@ -289,18 +289,18 @@ export function MeetingRoom() {
         </div>
       ) : null}
 
-      <main className="relative z-10 flex-1 min-h-0 p-1 sm:p-2">
-        <div className="w-full h-full min-h-[min(70vh,720px)] rounded-xl overflow-hidden bg-black border border-white/5 shadow-2xl relative">
+      <main className="relative z-10 flex-1 min-h-0 p-3 sm:p-6 flex justify-center">
+        <div className="w-full max-w-[1400px] h-full min-h-[min(70vh,720px)] rounded-2xl overflow-hidden bg-white border border-[#8037f4]/20 shadow-[0_20px_60px_rgba(128,55,244,0.1)] relative">
           <iframe
             allow="camera; microphone; display-capture; autoplay; clipboard-write"
-            src={`${jitsiUrl}${jitsiUrl.includes("#") ? "&" : "#"}config.prejoinPageEnabled=false`}
+            src={`${jitsiUrl}${jitsiUrl.includes("#") ? "&" : "#"}config.prejoinPageEnabled=false&config.toolbarButtons=%5B%22microphone%22%2C%22camera%22%2C%22desktop%22%2C%22fullscreen%22%2C%22hangup%22%2C%22profile%22%2C%22chat%22%2C%22settings%22%2C%22videoquality%22%2C%22filmstrip%22%2C%22invite%22%2C%22tileview%22%5D&config.defaultTheme=%22light%22&config.backgroundColor=%22%23ffffff%22`}
             style={{ width: "100%", height: "100%", minHeight: "min(70vh, 720px)", border: "0" }}
             title="Phòng phỏng vấn ProInterview"
           />
           <div className="absolute top-4 left-4 pointer-events-none">
-            <div className="bg-black/60 backdrop-blur-md border border-white/10 rounded-lg px-3 py-1.5 flex items-center gap-2">
-              <div className="w-1.5 h-1.5 rounded-full bg-[#93f72b] shadow-[0_0_8px_#93f72b]" />
-              <span className="text-[9px] font-bold text-white uppercase tracking-widest opacity-80">
+            <div className="bg-white/80 backdrop-blur-md border border-[#8037f4]/20 rounded-lg px-3 py-1.5 flex items-center gap-2 shadow-sm">
+              <div className="w-1.5 h-1.5 rounded-full bg-[#8037f4]" />
+              <span className="text-[9px] font-bold text-[#8037f4] uppercase tracking-widest">
                 {isMentor ? "Mentor" : "Học viên"}
               </span>
             </div>

@@ -84,12 +84,11 @@ export function HeroInterviewVideoCard({ overlap = false, center = false }) {
       <div
         id="home-hero-video-card"
         ref={containerRef}
-        className={`relative w-full overflow-visible ${center ? "mx-auto max-w-[min(95vw,68rem)] lg:max-w-[min(95vw,69rem)]" : ""} ${
-          overlap ? "-mt-2" : "mt-[3.8rem]"
-        }`}
+        className={`relative w-full overflow-visible ${center ? "mx-auto max-w-[min(95vw,68rem)] lg:max-w-[min(95vw,69rem)]" : ""} ${overlap ? "-mt-2" : "mt-[3.8rem]"
+          }`}
       >
         <div className="relative overflow-hidden rounded-[1rem] bg-white border-2 border-[#8037f4] shadow-[0_20px_50px_rgba(99,14,212,0.14)] sm:rounded-[1.25rem]">
-          
+
           {/* Mac Window Header */}
           <div className="relative flex items-center justify-between bg-white px-3 py-2.5 border-b border-slate-200/60 sm:px-4 sm:py-3">
             <div className="flex items-center gap-1.5 z-10 w-12 sm:w-16">
@@ -106,7 +105,7 @@ export function HeroInterviewVideoCard({ overlap = false, center = false }) {
 
           {/* Interview Room Mockup */}
           <div className="flex flex-col h-[476px] sm:h-[532px] lg:h-[632px] bg-[#f3f0f9]">
-            
+
             {/* Top bar */}
             <div className="flex shrink-0 items-center justify-between border-b border-violet-200/80 bg-white/85 px-3 py-2 sm:px-4 sm:py-2.5 backdrop-blur-sm">
               <div className="flex items-center gap-2">
@@ -119,7 +118,7 @@ export function HeroInterviewVideoCard({ overlap = false, center = false }) {
                 </div>
               </div>
               <div className="flex items-center gap-3">
-                 <span className="text-[10px] sm:text-xs font-medium text-violet-600">Câu 2/5</span>
+                <span className="text-[10px] sm:text-xs font-medium text-violet-600">Câu 2/5</span>
               </div>
             </div>
 
@@ -139,7 +138,7 @@ export function HeroInterviewVideoCard({ overlap = false, center = false }) {
 
             {/* Main video panels */}
             <div className="grid min-h-0 flex-1 gap-2 px-3 pb-2 grid-cols-2 grid-rows-[minmax(0,1fr)_4.5rem]">
-              
+
               {/* HR panel */}
               <div className="relative overflow-hidden rounded-lg sm:rounded-xl border-2 border-violet-300/80 bg-[#0a0a18] shadow-[0_8px_32px_rgba(110,53,232,0.12)]">
                 <video autoPlay loop muted playsInline className="h-full w-full object-cover">
@@ -154,12 +153,12 @@ export function HeroInterviewVideoCard({ overlap = false, center = false }) {
               {/* User panel */}
               <div className="relative overflow-hidden rounded-lg sm:rounded-xl border-2 border-violet-400 bg-slate-900 shadow-[0_0_20px_rgba(110,53,232,0.15)]">
                 {/* Real User Video */}
-                <video 
+                <video
                   ref={videoRef}
-                  autoPlay 
-                  loop 
-                  muted 
-                  playsInline 
+                  autoPlay
+                  loop
+                  muted
+                  playsInline
                   className="h-full w-full object-cover"
                   style={{ transform: "scaleX(-1)" }}
                 />
@@ -172,7 +171,7 @@ export function HeroInterviewVideoCard({ overlap = false, center = false }) {
                     </span>
                   </div>
                 )}
-                
+
                 <div className="pointer-events-none absolute inset-0 rounded-lg sm:rounded-xl ring-2 ring-inset ring-violet-400/50" />
                 <div className="absolute bottom-2 left-2 sm:bottom-3 sm:left-3 flex items-center gap-1.5 px-2 py-1 sm:px-2.5 sm:py-1 rounded-lg backdrop-blur-sm" style={{ background: "rgba(0,0,0,0.6)" }}>
                   <span className="text-white text-[10px] sm:text-xs font-medium">Bạn</span>
@@ -186,7 +185,7 @@ export function HeroInterviewVideoCard({ overlap = false, center = false }) {
                   <div className="flex items-center gap-2">
                     <div className="h-2 w-2 animate-pulse rounded-full bg-[#b5e636]" />
                     <span className="text-xs font-semibold text-violet-800">Đang ghi âm...</span>
-                    
+
                     {/* Waveform */}
                     <div className="flex items-center gap-[2px] ml-2 h-3 sm:h-4">
                       {[40, 80, 50, 100, 60, 90, 40].map((h, i) => (
@@ -213,7 +212,7 @@ export function HeroInterviewVideoCard({ overlap = false, center = false }) {
             {/* Bottom Control Bar */}
             <div className="flex shrink-0 items-center justify-center gap-4 border-t border-violet-200/80 bg-white/90 px-4 py-2.5 backdrop-blur-sm select-none">
               {/* Hang Up Button (Static) */}
-              <div 
+              <div
                 className="flex h-10 w-10 items-center justify-center rounded-full border border-violet-200 bg-[#f3f0ff]"
               >
                 <svg className="h-5 w-5 text-violet-700" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5">
@@ -223,7 +222,7 @@ export function HeroInterviewVideoCard({ overlap = false, center = false }) {
 
               {/* Microphone Button (Static double ring) */}
               <div className="relative flex h-[3.5rem] w-[3.5rem] items-center justify-center rounded-full border border-violet-300 bg-white p-[3px] shadow-[0_0_15px_rgba(110,53,232,0.25)]">
-                <div 
+                <div
                   className="flex h-full w-full items-center justify-center rounded-full bg-gradient-to-br from-[#6E35E8] to-[#8B4DFF]"
                 >
                   <svg className="h-7 w-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
@@ -233,7 +232,7 @@ export function HeroInterviewVideoCard({ overlap = false, center = false }) {
               </div>
 
               {/* Next Question Button (Static) */}
-              <div 
+              <div
                 className="flex items-center gap-1.5 rounded-full bg-[#caff1a] px-6 py-2.5 text-sm font-black text-[#2e0066] shadow-[0_6px_20px_rgba(196,255,71,0.15)]"
               >
                 <span>Câu tiếp theo</span>
