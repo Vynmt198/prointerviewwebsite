@@ -96,16 +96,6 @@ const PLANS = [
   },
 ];
 
-/** % tiết kiệm khi trả năm (so với 12 × giá tháng). Pro & Elite đều = 20%. */
-function yearlySavePercent(monthlyPerMonth, yearlyPerMonth) {
-  if (!monthlyPerMonth) return 0;
-  return Math.round((1 - yearlyPerMonth / monthlyPerMonth) * 100);
-}
-
-const YEARLY_SAVE_PCT = yearlySavePercent(
-  PLANS[1].monthlyDisplay,
-  PLANS[1].yearlyDisplay,
-);
 
 function fmtVnd(amount) {
   return new Intl.NumberFormat("vi-VN").format(amount) + "đ";
@@ -139,37 +129,7 @@ function normalizePlanKey(plan) {
   return "free";
 }
 
-function BillingToggle({ billing, onChange, savePercent }) {
-  return (
-    <div className="mx-auto flex w-full max-w-md flex-nowrap items-stretch justify-center gap-0.5 rounded-full border border-violet-200/80 bg-white p-1 shadow-[0_8px_28px_rgba(99,14,212,0.1)] sm:max-w-lg lg:w-fit lg:max-w-full lg:flex-wrap lg:gap-1 lg:p-1.5">
-      <button
-        type="button"
-        onClick={() => onChange("monthly")}
-        className={`flex-1 rounded-full px-2 py-2 text-center text-xs font-bold transition-all sm:px-3 lg:flex-none lg:px-5 lg:py-2.5 lg:text-sm ${
-          billing === "monthly"
-            ? "bg-violet-100 text-violet-950 shadow-sm"
-            : "text-violet-600 hover:text-violet-900"
-        }`}
-      >
-        Hàng tháng
-      </button>
-      <button
-        type="button"
-        onClick={() => onChange("yearly")}
-        className={`inline-flex flex-1 items-center justify-center gap-1 rounded-full px-2 py-2 text-xs font-bold transition-all sm:gap-1.5 sm:px-3 lg:flex-none lg:gap-2 lg:px-5 lg:py-2.5 lg:text-sm ${
-          billing === "yearly"
-            ? "bg-violet-100 text-violet-950 shadow-sm"
-            : "text-violet-600 hover:text-violet-900"
-        }`}
-      >
-        <span className="whitespace-nowrap">Hàng năm</span>
-        <span className="shrink-0 whitespace-nowrap rounded-full bg-gradient-to-r from-[#93f72b] to-[#93f72b] px-1.5 py-px text-[9px] font-extrabold leading-tight text-violet-950 sm:px-2 sm:py-0.5 sm:text-[10px]">
-          Tiết kiệm {savePercent}%
-        </span>
-      </button>
-    </div>
-  );
-}
+
 
 export function Pricing() {
   const navigate = useNavigate();
@@ -222,7 +182,7 @@ export function Pricing() {
             subtitleClassName="mt-3 max-w-2xl text-base font-medium leading-relaxed text-violet-700/90"
           />
 
-          <BillingToggle billing={billing} onChange={setBilling} savePercent={YEARLY_SAVE_PCT} />
+
 
           <div className="mt-10 grid w-full grid-cols-1 items-stretch justify-items-stretch gap-6 md:grid-cols-3 lg:gap-8 [&>article]:min-w-0 [&>article]:w-full">
             {PLANS.map((plan) => {

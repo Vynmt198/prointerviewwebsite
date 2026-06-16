@@ -1,13 +1,10 @@
 import React from "react";
 import { LegalDocumentLayout, LegalSection, LegalDef } from "../../components/legal/LegalDocumentLayout";
 
-const PLATFORM_SUBTITLE = "CHÍNH SÁCH BẢO MẬT DỮ LIỆU CÁ NHÂN PROINTERVIEW";
-
 export function Privacy() {
   return (
     <LegalDocumentLayout
       title="Chính sách bảo mật"
-      subtitle={PLATFORM_SUBTITLE}
       intro="Chính sách Bảo mật Dữ liệu Cá nhân này (sau đây gọi là “Chính sách”) quy định việc thu thập, xử lý, lưu trữ, sử dụng, chia sẻ và bảo vệ dữ liệu cá nhân của người dùng khi truy cập, đăng ký hoặc sử dụng nền tảng Prolnterview. Chính sách này được xây dựng trên cơ sở Nghị định số 13/2023/NĐ-CP về Bảo vệ Dữ liệu Cá nhân và các quy định pháp luật Việt Nam có liên quan."
     >
       <LegalSection title="Điều 1. Đối tượng và phạm vi áp dụng">

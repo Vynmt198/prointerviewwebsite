@@ -14,6 +14,7 @@ export function AppLayout() {
   const isMentor = user?.role === "mentor";
   const isHome = location.pathname === "/" || location.pathname === "";
   const pathNorm = location.pathname.replace(/^\/+/, "");
+  const isAbout = pathNorm === "about";
   const isCvAnalysisHub = pathNorm === "cv-analysis";
   const allowHorizontalScroll = isHome || isCvAnalysisHub;
   const isLegalDoc = pathNorm === "terms" || pathNorm === "privacy";
@@ -28,6 +29,7 @@ export function AppLayout() {
 
   useEffect(() => {
     document.title = resolveDocumentTitle(location.pathname);
+    window.scrollTo(0, 0);
   }, [location.pathname]);
 
   useEffect(() => {
@@ -38,9 +40,11 @@ export function AppLayout() {
   const shellClass =
     `app-user-shell relative min-h-svh w-full text-slate-900 antialiased selection:bg-violet-100 selection:text-violet-900 ${isLegalDoc
       ? "overflow-x-hidden bg-slate-50"
-      : allowHorizontalScroll
-        ? "overflow-x-hidden bg-transparent"
-        : "overflow-x-hidden bg-[#f3f0f9]"
+      : isAbout
+        ? "bg-[#F9F6F0]"
+        : allowHorizontalScroll
+          ? "bg-transparent"
+          : "overflow-x-hidden bg-[#f3f0f9]"
     }`;
 
   const shellStyle = {
@@ -89,7 +93,7 @@ export function AppLayout() {
         <main
           className={`relative z-[1] min-h-0 flex-1 ${hideNavbar
             ? "flex min-h-svh flex-col pt-0"
-            : `pt-[3.75rem] sm:pt-[4.25rem] md:pt-[4.75rem] ${isHome ? "" : "overflow-x-hidden"}`
+            : `pt-[3.75rem] sm:pt-[4.25rem] md:pt-[4.75rem] ${isHome || isAbout ? "" : "overflow-x-hidden"}`
             }`}
         >
           <Outlet />
