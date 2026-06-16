@@ -82,6 +82,7 @@ html {
   scroll-behavior: smooth;
   -webkit-text-size-adjust: 100%;
   overflow-x: hidden;
+  overflow-y: overlay;
 }
 
 body {
@@ -114,6 +115,14 @@ body {
 ::-webkit-scrollbar-thumb {
   background: rgba(128, 55, 244, 0.25);
   border-radius: 999px;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
 ::-webkit-scrollbar-thumb:hover {
