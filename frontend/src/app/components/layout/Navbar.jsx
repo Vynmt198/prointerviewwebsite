@@ -537,7 +537,7 @@ function MentorNavbar() {
           {pageInfo.label}
         </h1>
         {pageInfo.sub ? (
-          <p className="hidden truncate text-xs text-slate-500 sm:block">{pageInfo.sub}</p>
+          <p className="hidden truncate text-xs text-slate-500 sm:block" style={{ fontWeight: 700 }}>{pageInfo.sub}</p>
         ) : null}
       </div>
       <div className="flex-1" />

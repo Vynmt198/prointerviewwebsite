@@ -141,6 +141,60 @@
     ══════════════════════════════════════════════════ */
     .rm-body { padding: 22px 24px 26px; }
 
+    /* Timeline */
+    .rm-timeline {
+      display: grid;
+      grid-template-columns: 152px 1fr 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .timeline-band {
+      grid-column: 2 / -1;
+      background: linear-gradient(135deg, #1b4fa8, #3b82f6);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .timeline-cols { display: grid; grid-template-columns: 1fr 1fr 1fr; }
+
+    .tl-col {
+      padding: 10px 10px 8px;
+      text-align: center;
+      color: #fff;
+      border-right: 2px solid rgba(255,255,255,0.25);
+    }
+
+    .tl-col:last-child { border-right: none; }
+    .tl-col.future { background: rgba(0,0,0,0.14); }
+
+    .tl-when   { font-size: 0.72rem; font-weight: 900; margin-bottom: 3px; }
+    .tl-goal   { font-size: 0.62rem; font-weight: 700; opacity: 0.92; line-height: 1.35; }
+    .tl-badge  {
+      display: inline-block;
+      margin-top: 5px;
+      font-size: 0.55rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      padding: 2px 8px;
+      border-radius: 20px;
+      background: rgba(255,255,255,0.2);
+    }
+
+    .tl-badge.now    { background: #fef3c7; color: #92400e; }
+    .tl-badge.next   { background: #dbeafe; color: #1e40af; }
+    .tl-badge.future { background: #e2e8f0; color: #475569; }
+
+    .rm-legend {
+      grid-column: 2 / -1;
+      font-size: 0.6rem;
+      color: #64748b;
+      text-align: center;
+      margin-bottom: 8px;
+      padding: 0 4px;
+    }
+
     /* Phase header row */
     .rm-header {
       display: grid;
@@ -159,10 +213,35 @@
 
     .ph-1 { background: linear-gradient(135deg, #047857, #059669); }
     .ph-2 { background: linear-gradient(135deg, #1d4ed8, #3b82f6); }
-    .ph-3 { background: linear-gradient(135deg, #6d28d9, #8b5cf6); }
+    .ph-3 {
+      background: linear-gradient(135deg, #64748b, #94a3b8);
+      border: 2px dashed rgba(255,255,255,0.5);
+    }
 
     .ph-name   { font-size: 0.82rem; margin-bottom: 2px; }
-    .ph-status { font-size: 0.62rem; opacity: 0.85; }
+    .ph-status { font-size: 0.62rem; opacity: 0.88; }
+
+    .lane-cell-future {
+      background: #f1f5f9;
+      border: 1.5px dashed #cbd5e1;
+    }
+
+    .lane-cell-future .chip { opacity: 0.75; }
+
+    .mock-box-future {
+      background: #f8fafc;
+      border: 1.5px dashed #cbd5e1;
+    }
+
+    .mock-box-future .mock-title { color: #94a3b8; }
+
+    .cell-goal {
+      font-size: 0.62rem;
+      font-weight: 700;
+      color: #475569;
+      margin-bottom: 6px;
+      line-height: 1.4;
+    }
 
     /* Product mockup row */
     .rm-mockups {
@@ -311,7 +390,7 @@
 <div class="card">
   <div class="card-header">
     <span class="hdr-title">The MVP</span>
-    <span class="hdr-sub">ProInterview — SaaS luyện phỏng vấn AI · Web Platform</span>
+    <span class="hdr-sub">ProInterview · Web Platform · Go-live trước 07/2026</span>
   </div>
 
   <div class="mvp-body">
@@ -369,25 +448,52 @@
 <div class="card">
   <div class="card-header">
     <span class="hdr-title">Product / Technology Road Map</span>
-    <span class="hdr-sub">AI-Powered · Multi-provider · Scalable</span>
+    <span class="hdr-sub">Kickoff 11/05/2026 → Go-live trước 07/2026</span>
   </div>
 
   <div class="rm-body">
 
+    <!-- TIMELINE -->
+    <div class="rm-timeline">
+      <div class="rm-row-label">Thời gian</div>
+      <div class="timeline-band">
+        <div class="timeline-cols">
+          <div class="tl-col">
+            <div class="tl-when">11/05 – 06/2026</div>
+            <div class="tl-goal">Xây &amp; go-live web<br><strong>trước tháng 7</strong></div>
+            <span class="tl-badge now">Ưu tiên · Đang làm</span>
+          </div>
+          <div class="tl-col">
+            <div class="tl-when">07 – 12/2026</div>
+            <div class="tl-goal">Nâng AI + monetization<br>sau khi đã chạy</div>
+            <span class="tl-badge next">Giai đoạn 2</span>
+          </div>
+          <div class="tl-col future">
+            <div class="tl-when">2027 trở đi</div>
+            <div class="tl-goal">Mở rộng quy mô<br>mobile &amp; doanh nghiệp</div>
+            <span class="tl-badge future">Tương lai</span>
+          </div>
+        </div>
+      </div>
+      <div class="rm-legend" style="grid-column:1/-1;margin-top:6px;">
+        <strong>Trái</strong> = go-live trước 07/2026 · <strong>Giữa</strong> = nâng cấp 07–12/2026 · <strong>Phải</strong> = tầm nhìn 2027
+      </div>
+    </div>
+
     <!-- PHASE HEADERS -->
     <div class="rm-header">
-      <div></div>
+      <div class="rm-row-label">Giai đoạn</div>
       <div class="ph-box ph-1">
         <div class="ph-name">Phase 1 — MVP</div>
-        <div class="ph-status">Launched ✓ · Core Platform</div>
+        <div class="ph-status">Go-live trước 07/2026 · Web chạy thật</div>
       </div>
       <div class="ph-box ph-2">
         <div class="ph-name">Phase 2 — Growth</div>
-        <div class="ph-status">In Progress · AI Enhancement</div>
+        <div class="ph-status">07 – 12/2026 · AI &amp; monetization</div>
       </div>
       <div class="ph-box ph-3">
         <div class="ph-name">Phase 3 — Scale</div>
-        <div class="ph-status">Planned · Enterprise &amp; Mobile</div>
+        <div class="ph-status">Future 2027 · Enterprise &amp; Mobile</div>
       </div>
     </div>
 
@@ -404,10 +510,10 @@
         <div class="mock-stand"></div>
         <div class="mock-title">AI Avatar + Scoring</div>
       </div>
-      <div class="mock-box">
-        <div class="mock-screen" style="background:#ddd6fe;"></div>
+      <div class="mock-box mock-box-future">
+        <div class="mock-screen" style="background:#e2e8f0;"></div>
         <div class="mock-stand"></div>
-        <div class="mock-title">Enterprise + Mobile App</div>
+        <div class="mock-title">Future · Enterprise + Mobile</div>
       </div>
     </div>
 
@@ -426,8 +532,8 @@
         <span class="api-pill api-blue">/api/ai/*</span>
         <span class="api-pill api-blue">Langfuse</span>
       </div>
-      <div class="api-pills">
-        <span class="api-pill api-purple">Full Suite</span>
+      <div class="api-pills" style="opacity:0.75;">
+        <span class="api-pill api-gray">Future 2027</span>
         <span class="api-pill api-purple">WebSocket</span>
         <span class="api-pill api-purple">GraphQL</span>
       </div>
@@ -440,34 +546,33 @@
         <div class="ll-sub">Express 5 · React 18 · FastAPI</div>
       </div>
       <div class="lane-cell">
+        <div class="cell-goal">→ Go-live 06/2026: user dùng web &amp; thanh toán được</div>
         <span class="chip c-g">Auth (JWT + Google)</span>
-        <span class="chip c-g">User Dashboard</span>
+        <span class="chip c-g">Dashboard</span>
         <span class="chip c-g">CV/JD Analysis</span>
         <span class="chip c-g">Interview Flow</span>
         <span class="chip c-g">Mentor Booking</span>
-        <span class="chip c-g">Payment (MoMo/ZaloPay)</span>
-        <span class="chip c-g">Course Enrollment</span>
-        <span class="chip c-g">Admin Dashboard</span>
-        <div class="cell-note">80+ REST endpoints — all implemented &amp; mounted</div>
+        <span class="chip c-g">Payment (CK / SePay)</span>
+        <span class="chip c-g">Courses</span>
+        <span class="chip c-g">Admin</span>
       </div>
       <div class="lane-cell">
-        <span class="chip c-b">AI Avatar (D-ID Express)</span>
+        <div class="cell-goal">→ Sau 07/2026: AI mượt hơn, chấm điểm ổn định</div>
+        <span class="chip c-b">AI Avatar (D-ID)</span>
         <span class="chip c-b">SHRM 4D Scoring</span>
         <span class="chip c-b">Redis Video Cache</span>
-        <span class="chip c-b">Video Pre-generation</span>
-        <span class="chip c-b">Mentor Finance / Analytics</span>
-        <span class="chip c-t">Langfuse Tracing</span>
-        <span class="chip c-t">Emotion Analysis (Hume)</span>
-        <div class="cell-note">AI layer complete — API keys pending activation</div>
+        <span class="chip c-b">Video Pre-gen</span>
+        <span class="chip c-b">Mentor Analytics</span>
+        <span class="chip c-t">Langfuse</span>
+        <span class="chip c-t">Emotion (Hume)</span>
       </div>
-      <div class="lane-cell">
-        <span class="chip c-p">Mobile App (Flutter / React Native)</span>
-        <span class="chip c-p">Real-time Emotion Coaching</span>
-        <span class="chip c-p">Enterprise Team Plans</span>
-        <span class="chip c-p">Interview Analytics Suite</span>
-        <span class="chip c-p">Live Video Interview Room</span>
-        <span class="chip c-p">Job Board Integration</span>
-        <div class="cell-note">Phase 3 — post Phase 2 market validation</div>
+      <div class="lane-cell lane-cell-future">
+        <div class="cell-goal">→ Sau khi web ổn định (2027+)</div>
+        <span class="chip c-p">Mobile App</span>
+        <span class="chip c-p">Enterprise Plans</span>
+        <span class="chip c-p">Live Video Room</span>
+        <span class="chip c-p">Job Board</span>
+        <span class="chip c-p">Analytics Suite</span>
       </div>
     </div>
 
@@ -478,30 +583,27 @@
         <div class="ll-sub">Multi-provider · Env-switch</div>
       </div>
       <div class="lane-cell">
-        <span class="chip c-o">Groq LLM (free tier)</span>
-        <span class="chip c-o">D-ID WebRTC Stream</span>
-        <span class="chip c-o">Web Speech API (STT)</span>
-        <span class="chip c-o">Azure TTS (via D-ID)</span>
-        <span class="chip c-o">spaCy NLP (CV)</span>
-        <div class="cell-note">Free / low-cost baseline — fully operational</div>
+        <div class="cell-goal">→ Trước 07/2026: AI cơ bản đủ demo &amp; dùng thật</div>
+        <span class="chip c-o">Groq LLM</span>
+        <span class="chip c-o">D-ID Stream</span>
+        <span class="chip c-o">Web Speech STT</span>
+        <span class="chip c-o">spaCy NLP</span>
       </div>
       <div class="lane-cell">
-        <span class="chip c-b">ElevenLabs TTS (vi-VN)</span>
-        <span class="chip c-b">D-ID Express API (MP4)</span>
-        <span class="chip c-b">Upstash Redis (180d cache)</span>
-        <span class="chip c-b">Cloudinary CDN</span>
-        <span class="chip c-i">Anthropic Claude</span>
-        <span class="chip c-i">Gemini / Groq LLM</span>
-        <span class="chip c-t">Langfuse Monitoring</span>
-        <div class="cell-note">Switchable via env vars — keys pending</div>
+        <div class="cell-goal">→ 07–12/2026: nâng giọng &amp; video chất lượng cao</div>
+        <span class="chip c-b">ElevenLabs TTS</span>
+        <span class="chip c-b">D-ID Express</span>
+        <span class="chip c-b">Upstash Redis</span>
+        <span class="chip c-b">Cloudinary</span>
+        <span class="chip c-i">Claude / Gemini</span>
+        <span class="chip c-t">Langfuse</span>
       </div>
-      <div class="lane-cell">
-        <span class="chip c-p">AssemblyAI STT (upgrade)</span>
-        <span class="chip c-p">Hume AI Emotion Analysis</span>
-        <span class="chip c-p">Tavus Conversational Avatar</span>
-        <span class="chip c-pk">Real-time Prosody Feedback</span>
-        <span class="chip c-pk">Multi-modal Interview AI</span>
-        <div class="cell-note">Advanced AI stack — Phase 3 activation</div>
+      <div class="lane-cell lane-cell-future">
+        <div class="cell-goal">→ AI nâng cao (2027+)</div>
+        <span class="chip c-p">AssemblyAI</span>
+        <span class="chip c-p">Tavus Avatar</span>
+        <span class="chip c-p">Hume Emotion</span>
+        <span class="chip c-pk">Multi-modal AI</span>
       </div>
     </div>
 
@@ -512,29 +614,25 @@
         <div class="ll-sub">Auth · Payment · Media · Cloud</div>
       </div>
       <div class="lane-cell">
-        <span class="chip c-g">Google Identity (OAuth 2.0)</span>
-        <span class="chip c-g">MoMo / ZaloPay (sandbox)</span>
-        <span class="chip c-g">Cloudinary CDN</span>
-        <span class="chip c-g">Supabase Edge (CV — temp)</span>
-        <span class="chip c-g">Render (BE) · Vercel (FE)</span>
-        <div class="cell-note">Stable integrations — production ready</div>
+        <div class="cell-goal">→ Trước 07/2026: deploy prod (Vercel · Render)</div>
+        <span class="chip c-g">Google OAuth</span>
+        <span class="chip c-g">Cloudinary</span>
+        <span class="chip c-g">Render · Vercel</span>
       </div>
       <div class="lane-cell">
-        <span class="chip c-b">D-ID API (Express/REST)</span>
-        <span class="chip c-b">ElevenLabs API</span>
-        <span class="chip c-b">Upstash Redis (REST)</span>
-        <span class="chip c-b">Hume AI API</span>
+        <div class="cell-goal">→ 07–12/2026: bật API trả phí (D-ID, ElevenLabs…)</div>
+        <span class="chip c-b">D-ID API</span>
+        <span class="chip c-b">ElevenLabs</span>
+        <span class="chip c-b">Upstash Redis</span>
+        <span class="chip c-b">Hume AI</span>
         <span class="chip c-t">Langfuse Cloud</span>
-        <div class="cell-note">Growth providers — upgrading free tier stack</div>
       </div>
-      <div class="lane-cell">
-        <span class="chip c-p">AssemblyAI</span>
-        <span class="chip c-p">Tavus (video avatar)</span>
-        <span class="chip c-p">AWS S3 / GCS (media)</span>
-        <span class="chip c-pk">MoMo / VNPay (production)</span>
-        <span class="chip c-s">SendGrid (email)</span>
-        <span class="chip c-s">Firebase FCM (push)</span>
-        <div class="cell-note">Scale infrastructure — to be confirmed</div>
+      <div class="lane-cell lane-cell-future">
+        <div class="cell-goal">→ Hạ tầng scale (2027+)</div>
+        <span class="chip c-p">AWS S3 / GCS</span>
+        <span class="chip c-pk">MoMo / VNPay prod</span>
+        <span class="chip c-s">SendGrid</span>
+        <span class="chip c-s">Firebase FCM</span>
       </div>
     </div>
 

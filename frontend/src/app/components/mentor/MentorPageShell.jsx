@@ -40,6 +40,84 @@ const MENTOR_LIGHT_STYLES = `
           letter-spacing: -0.045em;
           text-shadow: none;
         }
+        /* Nhãn section mentor — TỔNG BUỔI MENTOR style */
+        .mentor-label {
+          font-size: 10px;
+          font-weight: 900;
+          text-transform: uppercase;
+          letter-spacing: 0.18em;
+          color: #9494c1;
+          line-height: 1.35;
+        }
+        .mentor-label--on-dark {
+          color: #b8b8dc;
+        }
+        .mentor-label svg {
+          color: #9494c1;
+          flex-shrink: 0;
+        }
+        .mentor-label--on-dark svg {
+          color: #b8b8dc;
+        }
+        /* Eyebrow trang — HỆ THỐNG ĐÀO TẠO */
+        .mentor-eyebrow {
+          font-size: 11px;
+          font-weight: 900;
+          text-transform: uppercase;
+          letter-spacing: 0.14em;
+          color: #7c3aed;
+          line-height: 1.35;
+        }
+        .mentor-eyebrow svg {
+          color: #7c3aed;
+          flex-shrink: 0;
+        }
+        .mentor-eyebrow--on-dark {
+          color: #ddd6fe;
+        }
+        .mentor-eyebrow--on-dark svg {
+          color: #ddd6fe;
+        }
+        /* Số thống kê — cực đậm (Lexend Black) */
+        .mentor-stat-num {
+          font-family: var(--font-headline), "Lexend", "Plus Jakarta Sans", system-ui, sans-serif;
+          font-weight: 900;
+          font-variation-settings: "wght" 900;
+          line-height: 1;
+          letter-spacing: -0.06em;
+          font-variant-numeric: tabular-nums;
+          font-feature-settings: "tnum" 1;
+          color: #0f172a;
+          -webkit-font-smoothing: antialiased;
+          -moz-osx-font-smoothing: grayscale;
+          paint-order: stroke fill;
+          -webkit-text-stroke: 0.4px currentColor;
+        }
+        .mentor-stat-num--hero {
+          font-size: 1.75rem;
+        }
+        .mentor-stat-num--card {
+          font-size: 1.375rem;
+        }
+        .mentor-stat-num--on-dark {
+          color: #ffffff;
+          -webkit-text-stroke: 0.4px #ffffff;
+        }
+        @media (min-width: 640px) {
+          .mentor-stat-num--hero {
+            font-size: 2rem;
+          }
+        }
+        /* Số tiền trong bảng / danh sách — đậm vừa, không phóng to */
+        .mentor-money-num {
+          font-family: var(--font-headline), "Lexend", "Plus Jakarta Sans", system-ui, sans-serif;
+          font-weight: 900;
+          font-variation-settings: "wght" 900;
+          letter-spacing: -0.03em;
+          font-variant-numeric: tabular-nums;
+          font-feature-settings: "tnum" 1;
+          -webkit-text-stroke: 0.3px currentColor;
+        }
         /* Nhãn uppercase tiếng Việt, tracking utility mặc định thường quá rộng */
         .mentor-surface .tracking-widest,
         .mentor-surface .tracking-wider,

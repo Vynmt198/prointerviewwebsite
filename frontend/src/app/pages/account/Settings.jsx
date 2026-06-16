@@ -8,6 +8,16 @@ import {
   CheckCircle,
   ShieldCheck,
   ChevronRight,
+  CalendarPlus,
+  Clock,
+  Star,
+  ArrowLeftRight,
+  Wallet,
+  ClipboardCheck,
+  Fingerprint,
+  MonitorSmartphone,
+  KeyRound,
+  UserCheck,
 } from "lucide-react";
 import { toastApiError, toastApiSuccess } from "../../utils/apiToast";
 import { logout, getUser, updateUser, refreshUserProfile } from "../../utils/auth";
@@ -84,25 +94,18 @@ function ToggleSwitch({
   );
 }
 
-function SectionCard({
-  children,
-  className = "",
-  title,
-  icon: Icon
-}) {
+function SectionCard({ children, className = "", title, icon: Icon }) {
   return (
-    <div className={`glass-card p-8 ${className}`}>
+    <div className={`overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm ${className}`}>
       {title && (
-         <div className="relative z-10 mb-8 flex items-center gap-3 border-b border-slate-200 pb-4">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-[#8037f4]">
-               {Icon && <Icon size={18} strokeWidth={2} />}
-            </div>
-            <div>
-               <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-800">{title}</h3>
-            </div>
-         </div>
+        <div className="flex items-center gap-3 border-b border-slate-100 bg-slate-50/60 px-5 py-3.5">
+          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-violet-600 text-white">
+            {Icon && <Icon size={15} strokeWidth={2.2} />}
+          </div>
+          <p className="text-[11px] font-bold uppercase tracking-widest text-slate-500">{title}</p>
+        </div>
       )}
-      <div className="relative z-10">{children}</div>
+      <div className="p-5">{children}</div>
     </div>
   );
 }
@@ -161,18 +164,27 @@ const DEFAULT_CUSTOMER_NOTIFS = [
     label: "Nhắc lịch phỏng vấn",
     description: "Thông báo trước buổi hẹn khoảng 1 giờ.",
     value: true,
+    icon: Clock,
+    iconBg: "#ede9fe",
+    iconColor: "#8037f4",
   },
   {
     id: "mentor_feedback",
     label: "Phản hồi từ mentor",
     description: "Khi mentor gửi góp ý sau buổi hoặc nhận xét của bạn.",
     value: true,
+    icon: UserCheck,
+    iconBg: "#c4ff47",
+    iconColor: "#3a5c00",
   },
   {
     id: "streak_reminder",
     label: "Nhắc luyện tập đều đặn",
     description: "Nhắc luyện phỏng vấn AI và hoàn thành mục tiêu tuần.",
     value: true,
+    icon: Star,
+    iconBg: "#ede9fe",
+    iconColor: "#8037f4",
   },
 ];
 
@@ -182,36 +194,54 @@ const DEFAULT_MENTOR_NOTIFS = [
     label: "Yêu cầu đặt lịch mới",
     description: "Có lịch mới hoặc học viên đã thanh toán.",
     value: true,
+    icon: CalendarPlus,
+    iconBg: "#ede9fe",
+    iconColor: "#8037f4",
   },
   {
     id: "session_reminder",
     label: "Nhắc buổi mentor sắp tới",
     description: "Nhắc trước buổi khoảng 1 giờ.",
     value: true,
+    icon: Clock,
+    iconBg: "#c4ff47",
+    iconColor: "#3a5c00",
   },
   {
     id: "mentee_review",
     label: "Đánh giá từ học viên",
     description: "Học viên gửi nhận xét sau buổi.",
     value: true,
+    icon: Star,
+    iconBg: "#ede9fe",
+    iconColor: "#8037f4",
   },
   {
     id: "booking_change",
     label: "Đổi hoặc hủy lịch",
     description: "Hủy buổi, đổi lịch hoặc cập nhật hoàn tiền.",
     value: true,
+    icon: ArrowLeftRight,
+    iconBg: "#c4ff47",
+    iconColor: "#3a5c00",
   },
   {
     id: "payout_update",
     label: "Cập nhật tài chính",
     description: "Thu nhập, rút tiền và xác nhận từ admin.",
     value: true,
+    icon: Wallet,
+    iconBg: "#ede9fe",
+    iconColor: "#8037f4",
   },
   {
     id: "peer_review_course",
     label: "Đánh giá chéo khóa học",
     description: "Có khóa học cần bạn đánh giá chéo.",
     value: true,
+    icon: ClipboardCheck,
+    iconBg: "#c4ff47",
+    iconColor: "#3a5c00",
   },
 ];
 
@@ -280,16 +310,29 @@ function NotificationsTab({ isMentor, profileFromServer, onProfileSynced }) {
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
       <SectionCard title={sectionTitle} icon={Bell}>
-        <div className="space-y-4">
-          {push.map((item) => (
-            <div key={item.id} className="group flex items-center justify-between gap-6 rounded-2xl border border-slate-200 bg-white p-5">
-              <div>
-                <p className={`mb-0.5 ${SETTINGS_TITLE_CLS}`}>{item.label}</p>
-                <p className={ITEM_DESC_CLS}>{item.description}</p>
+        <div className="divide-y divide-slate-100">
+          {push.map((item) => {
+            const ItemIcon = item.icon;
+            return (
+              <div key={item.id} className="flex items-center justify-between gap-4 py-3.5 first:pt-0 last:pb-0">
+                <div className="flex items-center gap-3.5">
+                  {ItemIcon && (
+                    <div
+                      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl"
+                      style={{ background: item.iconBg }}
+                    >
+                      <ItemIcon size={16} strokeWidth={2} style={{ color: item.iconColor }} />
+                    </div>
+                  )}
+                  <div>
+                    <p className="text-sm font-semibold text-slate-800">{item.label}</p>
+                    <p className="mt-0.5 text-xs text-slate-400 leading-relaxed">{item.description}</p>
+                  </div>
+                </div>
+                <ToggleSwitch enabled={item.value} onChange={() => toggle(item.id)} colorClass="bg-[#7fe015]" />
               </div>
-              <ToggleSwitch enabled={item.value} onChange={() => toggle(item.id)} colorClass="bg-[#7fe015]" />
-            </div>
-          ))}
+            );
+          })}
         </div>
       </SectionCard>
       <SaveBar dirty={dirty} saving={saving} saved={false} onSave={handleSave} onReset={handleReset} />
@@ -305,12 +348,18 @@ const DEFAULT_SECURITY_PREFS = [
     label: "Xác thực 2 bước",
     description: "Tăng cường bảo vệ tài khoản khi đăng nhập.",
     value: false,
+    icon: Fingerprint,
+    iconBg: "#ede9fe",
+    iconColor: "#8037f4",
   },
   {
     id: "login_alert",
     label: "Thông báo đăng nhập mới",
     description: "Nhận thông báo khi tài khoản được đăng nhập từ thiết bị lạ.",
     value: true,
+    icon: MonitorSmartphone,
+    iconBg: "#c4ff47",
+    iconColor: "#3a5c00",
   },
 ];
 
@@ -382,76 +431,67 @@ function SecurityTab({ profileFromServer, onProfileSynced }) {
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
       <SectionCard title="Bảo mật đăng nhập" icon={ShieldCheck}>
-        <div className="space-y-6">
-          {securityPrefs.map((item) => (
-            <div key={item.id} className="group flex items-center justify-between gap-6 rounded-2xl border border-slate-200 bg-white p-5">
-              <div>
-                <p className={`mb-0.5 ${SETTINGS_TITLE_CLS}`}>{item.label}</p>
-                <p className={ITEM_DESC_CLS}>{item.description}</p>
+        <div className="divide-y divide-slate-100">
+          {securityPrefs.map((item) => {
+            const ItemIcon = item.icon;
+            return (
+              <div key={item.id} className="flex items-center justify-between gap-4 py-3.5 first:pt-0 last:pb-0">
+                <div className="flex items-center gap-3.5">
+                  {ItemIcon && (
+                    <div
+                      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl"
+                      style={{ background: item.iconBg }}
+                    >
+                      <ItemIcon size={16} strokeWidth={2} style={{ color: item.iconColor }} />
+                    </div>
+                  )}
+                  <div>
+                    <p className="text-sm font-semibold text-slate-800">{item.label}</p>
+                    <p className="mt-0.5 text-xs text-slate-400 leading-relaxed">{item.description}</p>
+                  </div>
+                </div>
+                <ToggleSwitch enabled={item.value} onChange={() => toggleSecurityPref(item.id)} colorClass="bg-[#7fe015]" />
               </div>
-              <ToggleSwitch
-                enabled={item.value}
-                onChange={() => toggleSecurityPref(item.id)}
-                colorClass="bg-[#7fe015]"
-              />
-            </div>
-          ))}
+            );
+          })}
         </div>
       </SectionCard>
 
-      <SectionCard title="Đổi mật khẩu" icon={ShieldCheck}>
-         <div className="grid md:grid-cols-2 gap-8 mb-6">
-            <div className="space-y-2 md:col-span-2">
-               <label className={SETTINGS_TITLE_CLS}>Mật khẩu hiện tại</label>
-               {!needsCurrentPassword && (
-                 <p className={ITEM_DESC_CLS}>
-                   Không bắt buộc nếu bạn đang đăng nhập bằng Google.
-                 </p>
-               )}
-               <input
-                 type="password"
-                 autoComplete="current-password"
-                 placeholder={
-                   needsCurrentPassword
-                     ? "Nhập mật khẩu hiện tại"
-                     : "Để trống hoặc nhập mật khẩu cũ nếu có"
-                 }
-                 className="input-glass w-full"
-                 value={currentPassword}
-                 onChange={(e) => setCurrentPassword(e.target.value)}
-               />
-            </div>
-            <div className="space-y-2">
-               <label className={SETTINGS_TITLE_CLS}>Mật khẩu mới</label>
-               <input
-                 type="password"
-                 autoComplete="new-password"
-                 placeholder="••••••••"
-                 className="input-glass w-full"
-                 value={newPassword}
-                 onChange={(e) => setNewPassword(e.target.value)}
-               />
-            </div>
-            <div className="space-y-2">
-               <label className={SETTINGS_TITLE_CLS}>Xác nhận mật khẩu mới</label>
-               <input
-                 type="password"
-                 autoComplete="new-password"
-                 placeholder="••••••••"
-                 className="input-glass w-full"
-                 value={confirmPassword}
-                 onChange={(e) => setConfirmPassword(e.target.value)}
-               />
-            </div>
-         </div>
-         <button
-           type="button"
-           disabled={saving}
-           onClick={handleUpdatePassword}
-           className={`px-8 py-4 rounded-xl bg-slate-100 border border-slate-300 text-slate-700 hover:bg-slate-200 transition-all disabled:opacity-50 ${SETTINGS_TITLE_CLS}`}
-         >
+      <SectionCard title="Đổi mật khẩu" icon={KeyRound}>
+        <div className="grid gap-4 md:grid-cols-2">
+          <div className="space-y-1.5 md:col-span-2">
+            <label className="text-xs font-semibold text-slate-600">Mật khẩu hiện tại</label>
+            {!needsCurrentPassword && (
+              <p className="text-xs text-slate-400">Không bắt buộc nếu bạn đang đăng nhập bằng Google.</p>
+            )}
+            <input
+              type="password"
+              autoComplete="current-password"
+              placeholder={needsCurrentPassword ? "Nhập mật khẩu hiện tại" : "Để trống hoặc nhập mật khẩu cũ nếu có"}
+              className="input-glass w-full"
+              value={currentPassword}
+              onChange={(e) => setCurrentPassword(e.target.value)}
+            />
+          </div>
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-slate-600">Mật khẩu mới</label>
+            <input type="password" autoComplete="new-password" placeholder="••••••••" className="input-glass w-full" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
+          </div>
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-slate-600">Xác nhận mật khẩu mới</label>
+            <input type="password" autoComplete="new-password" placeholder="••••••••" className="input-glass w-full" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
+          </div>
+        </div>
+        <div className="mt-5">
+          <button
+            type="button"
+            disabled={saving}
+            onClick={handleUpdatePassword}
+            className="rounded-xl bg-violet-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-violet-700 disabled:opacity-50"
+          >
             {saving ? "Đang lưu…" : "Cập nhật mật khẩu"}
-         </button>
+          </button>
+        </div>
       </SectionCard>
 
       <LoginSessionsSection SectionCard={SectionCard} />
@@ -546,70 +586,97 @@ export function Settings() {
         }
       `}</style>
 
-      <div className="relative z-10 mx-auto max-w-7xl px-6 pb-16 sm:px-8 sm:pb-20">
-        <div className="mb-10 flex flex-col gap-3 md:mb-12">
-          <h1 className={mentorPageTitle}>
-            <span>Cài đặt</span>{" "}
-            <span className={mentorAccentText}>tài khoản</span>
-          </h1>
-          <p className={mentorPageSubtitle}>
-            {isMentor
-              ? "Thông báo, bảo mật và phiên đăng nhập."
-              : "Thông báo và bảo mật tài khoản."}
-          </p>
+      <div className="relative z-10 mx-auto max-w-7xl px-6 pb-8">
+
+        {/* ── Header ── */}
+        <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="mb-1 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-widest text-violet-600">
+              <ShieldCheck size={12} /> Tài khoản
+            </p>
+            <h1 className="text-2xl font-black tracking-tight text-slate-900 sm:text-3xl">
+              Cài đặt <span className="text-violet-600">tài khoản</span>
+            </h1>
+            <p className="mt-1 text-sm text-slate-500">
+              {isMentor ? "Thông báo, bảo mật và phiên đăng nhập." : "Thông báo và bảo mật tài khoản."}
+            </p>
+          </div>
+          {/* quick stat chips */}
+          <div className="flex shrink-0 items-center gap-2">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-[#c4ff47] px-3 py-1.5 text-[11px] font-bold text-slate-800">
+              <CheckCircle size={12} /> Tài khoản hoạt động
+            </span>
+            {isMentor && (
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-violet-600 px-3 py-1.5 text-[11px] font-bold text-white">
+                <UserCheck size={12} /> Mentor
+              </span>
+            )}
+          </div>
         </div>
 
-         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
-            {/* Sidebar Navigation */}
-            <aside className="lg:col-span-3">
-               <div className="settings-glass-nav sticky top-24 rounded-[28px] p-2">
-                  {TABS.map((tab) => {
-                     const isActive = tab.id === activeTab;
-                     return (
-                        <button
-                           key={tab.id}
-                           type="button"
-                           onClick={() => setActiveTab(tab.id)}
-                           className={`group relative mb-1 flex w-full items-center justify-between rounded-[20px] px-5 py-4 text-left transition-all last:mb-0 ${
-                              isActive ? "bg-[#f7f1ff] text-[#1d1a26] shadow-lg shadow-violet-200/40" : "text-slate-500 hover:bg-slate-100 hover:text-slate-900"
-                           }`}
-                        >
-                           <div className="flex items-center gap-3">
-                              <tab.icon size={18} strokeWidth={2} className={`shrink-0 transition-transform duration-300 ${isActive ? "scale-105 text-black" : "group-hover:translate-x-0.5"}`} />
-                              <span className="text-sm font-semibold tracking-normal">{tab.label}</span>
-                           </div>
-                           {isActive && <ChevronRight size={14} className="shrink-0 text-black/35" strokeWidth={2} />}
-                        </button>
-                     );
-                  })}
-                  <div className="mt-2 border-t border-slate-200 pt-2">
-                     <button type="button" onClick={handleLogout} className="flex w-full items-center gap-3 rounded-[20px] px-5 py-4 text-left text-red-400 transition-colors hover:bg-red-500/10 hover:text-red-300">
-                        <LogOut size={18} strokeWidth={2} />
-                        <span className="text-sm font-semibold tracking-normal">Đăng xuất</span>
-                     </button>
-                  </div>
-               </div>
-            </aside>
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
 
-            {/* Dynamic Content Area */}
-            <main className="lg:col-span-9">
-               <div className="min-h-[400px]">
-                  {activeTab === "notifications" && (
-                    <NotificationsTab
-                      isMentor={isMentor}
-                      profileFromServer={profileFromServer}
-                      onProfileSynced={(u) => setProfileFromServer(u ?? getUser())}
-                    />
-                  )}
-                  {activeTab === "security" && (
-                    <SecurityTab
-                      profileFromServer={profileFromServer}
-                      onProfileSynced={(u) => setProfileFromServer(u)}
-                    />
-                  )}
-               </div>
-            </main>
-         </div>
+          {/* ── Sidebar ── */}
+          <aside className="lg:col-span-3">
+            <div className="sticky top-24 overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm">
+              <div className="border-b border-slate-100 px-4 py-3">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Menu</p>
+              </div>
+              <div className="p-2">
+                {TABS.map((tab) => {
+                  const isActive = tab.id === activeTab;
+                  return (
+                    <button
+                      key={tab.id}
+                      type="button"
+                      onClick={() => setActiveTab(tab.id)}
+                      className={`group mb-1 flex w-full items-center justify-between rounded-xl px-4 py-3 text-left transition-all last:mb-0 ${
+                        isActive
+                          ? "bg-violet-600 text-white shadow-sm"
+                          : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                      }`}
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <tab.icon size={16} strokeWidth={2} className="shrink-0" />
+                        <span className="text-sm font-semibold">{tab.label}</span>
+                      </div>
+                      {isActive && <ChevronRight size={13} className="shrink-0 opacity-60" />}
+                    </button>
+                  );
+                })}
+              </div>
+              <div className="border-t border-slate-100 p-2">
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  className="flex w-full items-center gap-2.5 rounded-xl px-4 py-3 text-left text-red-500 transition-colors hover:bg-red-50"
+                >
+                  <LogOut size={16} strokeWidth={2} />
+                  <span className="text-sm font-semibold">Đăng xuất</span>
+                </button>
+              </div>
+            </div>
+          </aside>
+
+          {/* ── Content ── */}
+          <main className="lg:col-span-9">
+            <div className="min-h-[400px]">
+              {activeTab === "notifications" && (
+                <NotificationsTab
+                  isMentor={isMentor}
+                  profileFromServer={profileFromServer}
+                  onProfileSynced={(u) => setProfileFromServer(u ?? getUser())}
+                />
+              )}
+              {activeTab === "security" && (
+                <SecurityTab
+                  profileFromServer={profileFromServer}
+                  onProfileSynced={(u) => setProfileFromServer(u)}
+                />
+              )}
+            </div>
+          </main>
+        </div>
       </div>
     </MentorPageShell>
   );

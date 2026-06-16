@@ -31,7 +31,7 @@ const MENTOR_FINANCE_EXTRA_CSS = `
            padding: 6px 12px;
            border-radius: 10px;
            font-size: 12px;
-           font-weight: 600;
+           font-weight: 800;
            letter-spacing: 0;
         }
         .withdraw-modal-card {
@@ -46,7 +46,7 @@ const MENTOR_FINANCE_EXTRA_CSS = `
 `;
 
 const withdrawFieldLabel =
-  "mb-1.5 block text-xs font-semibold text-slate-600";
+  "mb-1.5 block text-xs font-semibold text-slate-700";
 const withdrawFieldInput =
   "w-full rounded-lg border border-slate-200/90 bg-white px-3.5 py-2.5 text-sm font-medium text-slate-900 outline-none transition-all placeholder:text-slate-400 focus:border-[#8037f4] focus:bg-[#faf8ff] focus:ring-2 focus:ring-[#8037f4]/12";
 
@@ -225,7 +225,7 @@ function WithdrawalModal({
 
               <div className="space-y-5 p-5 sm:p-6">
                 <section className="rounded-xl border border-[#8037f4]/10 bg-[#faf8ff]/70 p-4">
-                  <p className="mb-3 text-xs font-semibold text-[#630ed4]">Tài khoản nhận tiền</p>
+                  <p className="mb-3 text-xs font-normal text-[#630ed4]">Tài khoản nhận tiền</p>
                   <div className="space-y-3">
                     <div>
                       <label className={withdrawFieldLabel}>Ngân hàng</label>
@@ -309,14 +309,14 @@ function WithdrawalModal({
                       onChange={(e) => setAmount(e.target.value.replace(/\D/g, ""))}
                       className={`${withdrawFieldInput} py-3 pr-12 text-lg font-bold text-[#630ed4] placeholder:font-medium placeholder:text-slate-400`}
                     />
-                    <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-sm font-semibold text-slate-400">
+                    <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-sm font-normal text-slate-400">
                       Đ
                     </span>
                   </div>
                   <p className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-slate-500">
                     <span>
                       Rút:{" "}
-                      <strong className="font-semibold text-slate-800">
+                      <strong className="font-normal text-slate-800">
                         {amountValue.toLocaleString("vi-VN")} Đ
                       </strong>
                     </span>
@@ -398,9 +398,9 @@ export function MentorFinance() {
   };
   const payoutStatusMeta = (status) => {
     const purpleTag =
-      "rounded-full border border-[#8037f4] bg-[#8037f4]/12 px-4 py-1.5 font-semibold text-[#8037f4]";
+      "rounded-full border border-[#8037f4] bg-[#8037f4]/12 px-4 py-1.5 font-bold text-[#8037f4]";
     const greenTag =
-      "rounded-full border border-[#93f72b] bg-[#93f72b]/12 px-4 py-1.5 font-semibold text-[#93f72b]";
+      "rounded-full border border-[#93f72b] bg-[#93f72b]/12 px-4 py-1.5 font-bold text-[#93f72b]";
     if (status === "paid") {
       return { text: "Đã chuyển khoản", className: greenTag };
     }
@@ -427,229 +427,228 @@ export function MentorFinance() {
   };
   return (
     <MentorPageShell bottomPad="pb-32" extraStyles={MENTOR_FINANCE_EXTRA_CSS}>
-      <div className="relative z-10 mx-auto max-w-7xl px-10 pb-10">
-        {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-10 mb-16">
-          <div>
-            <h1 className="mb-3 font-headline overflow-visible pb-0.5 text-2xl font-black uppercase leading-[1.2] tracking-tight text-slate-900 sm:text-3xl">
-               Quản lý <span className="text-secondary">tài chính</span>
-            </h1>
-            <p className="text-slate-600 text-sm font-medium">Theo dõi thu nhập, giao dịch và quản lý dòng tiền của bạn</p>
+      <div className="relative z-10 mx-auto max-w-7xl px-6 pb-8">
+
+        {/* ── Header ── */}
+        <div className="mb-7">
+          <p className="mentor-eyebrow mb-1 flex items-center gap-2">
+            <Wallet size={12} /> Ví Mentor
+          </p>
+          <h1 className="text-2xl font-black tracking-tight text-slate-900 sm:text-3xl">
+            Quản lý <span className="text-[#8037f4]">tài chính</span>
+          </h1>
+          <p className="mt-1 text-sm font-semibold text-slate-600">Theo dõi thu nhập, giao dịch và quản lý dòng tiền của bạn.</p>
+        </div>
+
+        {/* ── Wallet Cards ── */}
+        <div className="mb-6 grid grid-cols-1 gap-5 lg:grid-cols-12">
+
+          {/* Primary balance */}
+          <div className="relative lg:col-span-7 overflow-hidden rounded-2xl bg-gradient-to-br from-[#8037f4] to-[#630ed4] p-6 text-white shadow-lg shadow-[#8037f4]/20">
+            <div className="absolute -right-6 -top-6 opacity-10">
+              <Wallet size={120} />
+            </div>
+            <div className="relative z-10">
+              <p className="mentor-label mentor-label--on-dark mb-1">Số dư khả dụng</p>
+              <div className="mb-5 flex items-baseline gap-2">
+                <h2 className="mentor-stat-num mentor-stat-num--hero mentor-stat-num--on-dark">{availableBalance.toLocaleString("vi-VN")}</h2>
+                <span className="text-lg font-bold text-white/60">Đ</span>
+              </div>
+              <div className="mb-6 flex flex-wrap gap-3">
+                <button
+                  onClick={() => setShowWithdraw(true)}
+                  className="flex items-center gap-2 rounded-xl bg-[#93f72b] px-5 py-2.5 text-sm font-bold text-slate-900 shadow-[0_8px_20px_rgba(147,247,43,0.35)] transition hover:brightness-105 active:scale-95"
+                >
+                  <CreditCard size={15} /> Rút tiền ngay
+                </button>
+                <button
+                  onClick={openWithdrawHistory}
+                  className="flex items-center gap-2 rounded-xl border border-white/25 bg-white/10 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-white/20 active:scale-95"
+                >
+                  <History size={15} /> Xem lịch sử rút
+                </button>
+              </div>
+
+              {/* Breakdown sub-row */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="rounded-xl border border-white/15 bg-white/10 px-4 py-3">
+                  <div className="mb-2 flex items-center justify-between">
+                    <p className="mentor-label mentor-label--on-dark">Từ đặt lịch</p>
+                    <Calendar size={13} className="text-white/50" />
+                  </div>
+                  <p className="mentor-stat-num mentor-stat-num--card mentor-stat-num--on-dark">{bookingIncome.toLocaleString("vi-VN")} Đ</p>
+                </div>
+                <div className="rounded-xl border border-white/15 bg-white/10 px-4 py-3">
+                  <div className="mb-2 flex items-center justify-between">
+                    <p className="mentor-label mentor-label--on-dark">Từ khóa học</p>
+                    <BookOpen size={13} className="text-white/50" />
+                  </div>
+                  <p className="mentor-stat-num mentor-stat-num--card mentor-stat-num--on-dark">{courseIncome.toLocaleString("vi-VN")} Đ</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Right column */}
+          <div className="lg:col-span-5 grid grid-cols-1 gap-5">
+
+            {/* Chờ giải ngân — dark */}
+            <div className="flex items-center justify-between rounded-2xl bg-slate-900 px-6 py-5 shadow-sm">
+              <div>
+                <p className="mentor-label mentor-label--on-dark mb-1">Chờ giải ngân</p>
+                <p className="mentor-stat-num mentor-stat-num--hero mentor-stat-num--on-dark">{pendingBalance.toLocaleString("vi-VN")} Đ</p>
+                <p className="mt-1 text-xs font-semibold text-slate-400">Dự kiến sau 7 ngày</p>
+              </div>
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white/10">
+                <Clock size={22} className="text-[#93f72b]" />
+              </div>
+            </div>
+
+            {/* Tổng thu nhập — lime */}
+            <div className="flex items-center justify-between rounded-2xl bg-[#c4ff47] px-6 py-5 shadow-sm">
+              <div>
+                <p className="mentor-label mb-1">Tổng thu nhập</p>
+                <p className="mentor-stat-num mentor-stat-num--hero">{totalEarned.toLocaleString("vi-VN")} Đ</p>
+                <p className="mt-1 text-xs font-semibold text-slate-700">Tổng cộng từ đặt lịch và khóa học (sau phí nền tảng).</p>
+              </div>
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-black/10">
+                <ChartPie size={22} className="text-slate-800" />
+              </div>
+            </div>
+
+            {/* Commission policy */}
+            {commissionPolicy ? (
+              <div className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
+                <p className="mentor-label mb-3">Chính sách phí hiện tại</p>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between rounded-xl bg-slate-50 px-4 py-2.5">
+                    <div>
+                      <p className="text-sm font-bold text-slate-800">Booking</p>
+                      {commissionPolicy.bookingRateSource === "mentor_custom" && (
+                        <p className="text-[11px] font-semibold text-violet-600">Mức riêng theo hợp đồng</p>
+                      )}
+                    </div>
+                    <span className="rounded-lg bg-[#93f72b] px-3 py-1 text-xs font-bold text-slate-900">
+                      {percentLabel(commissionPolicy.bookingRate)}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between rounded-xl bg-slate-50 px-4 py-2.5">
+                    <div>
+                      <p className="text-sm font-bold text-slate-800">Khóa học</p>
+                      {commissionPolicy.courseRateSource === "mentor_custom" && (
+                        <p className="text-[11px] font-semibold text-violet-600">Mức riêng theo hợp đồng</p>
+                      )}
+                    </div>
+                    <span className="rounded-lg bg-[#93f72b] px-3 py-1 text-xs font-bold text-slate-900">
+                      {percentLabel(commissionPolicy.courseRate)}
+                    </span>
+                  </div>
+                </div>
+                <p className="mt-3 text-[11px] font-medium text-slate-500">
+                  {commissionPolicy.isEarlyMentorActive && commissionPolicy.earlyMentorExpiresAt
+                    ? `Ưu đãi Early Mentor đến ${new Date(commissionPolicy.earlyMentorExpiresAt).toLocaleDateString("vi-VN")}`
+                    : `Mức phí tiêu chuẩn${commissionPolicy.isEarlyMentor && commissionPolicy.earlyMentorExpiresAt ? ` (Early Mentor kết thúc ${new Date(commissionPolicy.earlyMentorExpiresAt).toLocaleDateString("vi-VN")})` : ""}`}
+                </p>
+              </div>
+            ) : null}
           </div>
         </div>
 
-        {/* Main Wallet Cards */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 mb-16">
-           {/* Primary Balance */}
-           <div className="lg:col-span-7 glass-card p-12 bg-gradient-to-br from-[#8037f4]/20 to-transparent overflow-hidden group">
-              <div className="absolute top-0 right-0 p-12 rotate-12 opacity-10 group-hover:rotate-0 transition-all duration-700">
-                 <Wallet size={160} className="text-[#8037f4]" />
+        {/* ── Transaction History ── */}
+        <div ref={transactionSectionRef} className="overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm">
+          {/* Table header */}
+          <div className="flex flex-col gap-4 border-b border-slate-100 px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#8037f4]/10">
+                <History size={18} className="text-[#8037f4]" />
               </div>
-              <div className="relative z-10">
-                 <p className="mb-2 text-sm font-semibold text-violet-700">Số dư khả dụng</p>
-                 <div className="mb-10 flex items-baseline gap-4">
-                    <h2 className="text-xl font-black tracking-tight text-slate-900 sm:text-4xl">{availableBalance.toLocaleString()}</h2>
-                    <p className="mb-1 text-lg font-black text-zinc-500">Đ</p>
-                 </div>
-                 <div className="flex flex-wrap gap-4">
-                    <button 
-                       onClick={() => setShowWithdraw(true)}
-                       className="px-10 py-5 rounded-3xl bg-primary-fixed text-black text-sm font-semibold hover:scale-105 transition-all shadow-[0_15px_40px_rgba(196, 255, 71,0.32)]">
-                       Rút tiền ngay
-                    </button>
-                    <button
-                       onClick={openWithdrawHistory}
-                       className="px-10 py-5 rounded-3xl bg-slate-50 border border-slate-200 text-sm font-semibold text-slate-700 hover:bg-slate-100 transition-all"
-                    >
-                       Xem lịch sử rút
-                    </button>
-                 </div>
-                 <div className="mt-6 grid grid-cols-1 gap-3">
-                    <div className="rounded-2xl border border-violet-200/70 bg-gradient-to-br from-white to-violet-50/40 px-4 py-3 shadow-sm">
-                      <div className="flex items-center justify-between gap-3">
-                        <p className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500">Từ đặt lịch</p>
-                        <span className="flex h-7 w-7 items-center justify-center rounded-full bg-violet-100 text-violet-700">
-                          <Calendar size={14} />
-                        </span>
-                      </div>
-                      <p className="mt-2 text-[28px] font-black leading-none tracking-tight text-slate-900">
-                        {bookingIncome.toLocaleString("vi-VN")} Đ
-                      </p>
-                    </div>
-                    <div className="rounded-2xl border border-violet-200/70 bg-gradient-to-br from-white to-violet-50/40 px-4 py-3 shadow-sm">
-                      <div className="flex items-center justify-between gap-3">
-                        <p className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500">Từ khóa học</p>
-                        <span className="flex h-7 w-7 items-center justify-center rounded-full bg-violet-100 text-violet-700">
-                          <BookOpen size={14} />
-                        </span>
-                      </div>
-                      <p className="mt-2 text-[28px] font-black leading-none tracking-tight text-slate-900">
-                        {courseIncome.toLocaleString("vi-VN")} Đ
-                      </p>
-                    </div>
-                 </div>
+              <div>
+                <p className="text-base font-black tracking-tight text-slate-900">Lịch sử giao dịch</p>
+                <p className="text-xs font-bold text-slate-700">Danh sách các khoản thu và lệnh rút tiền</p>
               </div>
-           </div>
+            </div>
+            <div className="flex gap-1.5">
+              {["all", "income", "withdraw"].map((t) => (
+                <button
+                  key={t}
+                  onClick={() => setActiveTab(t)}
+                  className={`rounded-lg px-3.5 py-1.5 text-xs transition-all ${
+                    activeTab === t
+                      ? "bg-[#8037f4] font-black text-white shadow-sm"
+                      : "border border-slate-200 bg-white font-bold text-slate-800 hover:border-[#8037f4]/40 hover:text-[#8037f4]"
+                  }`}
+                >
+                  {t === "all" ? "Tất cả" : t === "income" ? "Thu nhập" : "Rút tiền"}
+                </button>
+              ))}
+            </div>
+          </div>
 
-           {/* Secondary Stats Group */}
-           <div className="lg:col-span-5 grid grid-cols-1 gap-8">
-              <div className="glass-card p-10 flex items-center justify-between border-t border-t-secondary/20">
-                 <div>
-                    <p className="mb-1 text-sm font-semibold text-zinc-500">Chờ giải ngân</p>
-                    <h3 className="text-2xl font-black tracking-tight text-slate-900 sm:text-3xl">{pendingBalance.toLocaleString()} Đ</h3>
-                    <p className="mt-2 text-xs text-zinc-600">Dự kiến sau 7 ngày</p>
-                 </div>
-                 <div className="w-14 h-14 rounded-2xl bg-secondary/10 flex items-center justify-center text-secondary">
-                    <Clock size={28} />
-                 </div>
-              </div>
-
-              <div className="glass-card p-10 flex items-center justify-between">
-                 <div>
-                    <p className="mb-1 text-sm font-semibold text-zinc-500">Tổng thu nhập</p>
-                    <h3 className="text-2xl font-black tracking-tight text-slate-900 sm:text-3xl">{totalEarned.toLocaleString()} Đ</h3>
-                    <p className="mt-2 text-xs text-zinc-500">Tổng cộng từ đặt lịch và khóa học (sau phí nền tảng).</p>
-                 </div>
-                 <div className="w-14 h-14 rounded-2xl bg-primary-fixed/10 flex items-center justify-center text-violet-700">
-                    <ChartPie size={28} />
-                 </div>
-              </div>
-              {commissionPolicy ? (
-                <div className="glass-card p-6 border border-violet-200 bg-violet-50/60">
-                  <p className="text-sm font-bold text-violet-900">Chính sách phí hiện tại</p>
-                  <div className="mt-3 rounded-2xl border border-violet-200/70 bg-white p-2.5 text-sm">
-                    <div className="flex items-center justify-between gap-3 rounded-xl px-3 py-2">
-                      <div>
-                        <p className="font-semibold text-slate-800">Booking</p>
-                        {commissionPolicy.bookingRateSource === "mentor_custom" ? (
-                          <p className="text-[11px] text-violet-700">Mức riêng theo hợp đồng</p>
-                        ) : null}
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-slate-100 bg-slate-50/70 text-[10px] font-black uppercase tracking-widest text-slate-600">
+                  <th className="px-6 py-3 text-left">Giao dịch</th>
+                  <th className="px-6 py-3 text-left">Ngày tháng</th>
+                  <th className="px-6 py-3 text-left">Số tiền</th>
+                  <th className="px-6 py-3 text-left">Trạng thái</th>
+                  <th className="px-6 py-3 text-right">Chi tiết</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {filteredTransactions.map((tx) => (
+                  <tr key={tx.id} className="transition-colors hover:bg-slate-50/60">
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-3">
+                        <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${
+                          tx.type === "income"
+                            ? "bg-[#93f72b]/20 text-[#8037f4]"
+                            : "bg-[#8037f4]/10 text-[#8037f4]"
+                        }`}>
+                          {tx.type === "income"
+                            ? <ArrowUpRight size={16} strokeWidth={2.5} />
+                            : <ArrowDownRight size={16} strokeWidth={2.5} />}
+                        </div>
+                        <div>
+                          <p className="text-sm font-black text-slate-900">{txDisplayTitle(tx)}</p>
+                          <p className="text-[11px] font-semibold text-slate-600">Mã: {tx.id}</p>
+                        </div>
                       </div>
-                      <span className="rounded-full border border-violet-200 bg-violet-50 px-3 py-1 text-sm font-bold text-violet-800">
-                        {percentLabel(commissionPolicy.bookingRate)}
+                    </td>
+                    <td className="px-6 py-4">
+                      <p className="text-sm font-bold text-slate-800">{new Date(tx.date).toLocaleDateString("vi-VN")}</p>
+                    </td>
+                    <td className="px-6 py-4">
+                      <p className={`mentor-money-num text-base ${tx.type === "income" ? "text-[#8037f4]" : "text-slate-900"}`}>
+                        {tx.type === "income" ? "+" : "-"}{Number(tx.amount || 0).toLocaleString("vi-VN")} Đ
+                      </p>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className={`glass-tag ${payoutStatusMeta(tx.status).className}`}>
+                        {payoutStatusMeta(tx.status).text}
                       </span>
-                    </div>
-                    <div className="mx-3 h-px bg-violet-100" />
-                    <div className="flex items-center justify-between gap-3 rounded-xl px-3 py-2">
-                      <div>
-                        <p className="font-semibold text-slate-800">Khóa học</p>
-                        {commissionPolicy.courseRateSource === "mentor_custom" ? (
-                          <p className="text-[11px] text-violet-700">Mức riêng theo hợp đồng</p>
-                        ) : null}
-                      </div>
-                      <span className="rounded-full border border-violet-200 bg-violet-50 px-3 py-1 text-sm font-bold text-violet-800">
-                        {percentLabel(commissionPolicy.courseRate)}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="mt-2 text-xs text-violet-900">
-                    {commissionPolicy.isEarlyMentorActive && commissionPolicy.earlyMentorExpiresAt ? (
-                      <p>
-                        <span className="font-semibold">Ưu đãi Early Mentor</span>
-                        {" "}đến{" "}
-                        {new Date(commissionPolicy.earlyMentorExpiresAt).toLocaleDateString("vi-VN")}
-                      </p>
-                    ) : (
-                      <p>
-                        <span className="font-semibold">Mức phí tiêu chuẩn</span>
-                        {commissionPolicy.isEarlyMentor && commissionPolicy.earlyMentorExpiresAt
-                          ? ` (Early Mentor kết thúc ${new Date(commissionPolicy.earlyMentorExpiresAt).toLocaleDateString("vi-VN")})`
-                          : ""}
-                      </p>
-                    )}
-                  </div>
-                </div>
-              ) : null}
-           </div>
-        </div>
-
-        {/* Transaction History */}
-        <div ref={transactionSectionRef} className="glass-card overflow-hidden">
-           <div className="p-10 border-b border-slate-200 flex flex-col md:flex-row md:items-center justify-between gap-8 bg-white/[0.01]">
-              <div className="flex items-center gap-4">
-                 <div className="w-12 h-12 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-center text-secondary">
-                    <History size={22} />
-                 </div>
-                 <div>
-                    <h4 className="text-xl font-bold text-slate-900 tracking-tight">Lịch sử giao dịch</h4>
-                    <p className="text-sm text-zinc-600">Danh sách các khoản thu và lệnh rút tiền</p>
-                 </div>
-              </div>
-              <div className="flex gap-2">
-                 {["all", "income", "withdraw"].map(t => (
-                    <button key={t} className={`px-6 py-3 rounded-2xl text-sm font-semibold transition-all ${activeTab === t ? 'bg-white text-slate-900 shadow-sm' : 'bg-slate-50 text-zinc-500 hover:text-slate-900'}`} onClick={() => setActiveTab(t)}>
-                       {t === 'all' ? 'Tất cả' : t === 'income' ? 'Thu nhập' : 'Rút tiền'}
-                    </button>
-                 ))}
-              </div>
-           </div>
-
-           <div className="overflow-x-auto">
-              <table className="w-full">
-                 <thead>
-                    <tr className="border-b border-slate-200 text-xs font-semibold text-zinc-500">
-                       <th className="px-10 py-6 text-left">Giao dịch</th>
-                       <th className="px-10 py-6 text-left">Ngày tháng</th>
-                       <th className="px-10 py-6 text-left">Số tiền</th>
-                       <th className="px-10 py-6 text-left">Trạng thái</th>
-                       <th className="px-10 py-6 text-right">Chi tiết</th>
-                    </tr>
-                 </thead>
-                 <tbody className="divide-y divide-slate-100">
-                    {filteredTransactions.map((tx) => (
-                      <tr key={tx.id} className="transition-colors hover:bg-slate-50">
-                         <td className="px-10 py-8">
-                            <div className="flex items-center gap-4">
-                               <div
-                                 className={`flex h-10 w-10 items-center justify-center rounded-full ${
-                                   tx.type === "income"
-                                     ? "border border-[#93f72b]/40 bg-[#93f72b]/15 text-[#8037f4]"
-                                     : "border border-[#8037f4]/35 bg-[#8037f4]/12 text-[#8037f4]"
-                                 }`}
-                               >
-                                  {tx.type === "income" ? <ArrowUpRight size={18} strokeWidth={2.5} /> : <ArrowDownRight size={18} strokeWidth={2.5} />}
-                               </div>
-                               <div>
-                                  <p className="text-sm font-semibold text-slate-900">{txDisplayTitle(tx)}</p>
-                                  <p className="text-xs text-zinc-500">Mã: {tx.id}</p>
-                               </div>
-                            </div>
-                         </td>
-                         <td className="px-10 py-8">
-                            <p className="text-xs font-black text-slate-900">{new Date(tx.date).toLocaleDateString("vi-VN")}</p>
-                         </td>
-                         <td className="px-10 py-8">
-                            <p className={`text-sm font-black tracking-tight ${tx.type === "income" ? "text-violet-700" : "text-slate-700"}`}>
-                              {tx.type === "income" ? "+" : "-"}
-                              {Number(tx.amount || 0).toLocaleString("vi-VN")} Đ
-                            </p>
-                         </td>
-                         <td className="px-10 py-8">
-                            <span className={`glass-tag ${payoutStatusMeta(tx.status).className}`}>
-                              {payoutStatusMeta(tx.status).text}
-                            </span>
-                         </td>
-                         <td className="px-10 py-8 text-right">
-                            <button
-                               type="button"
-                               onClick={() => setSelectedTx(tx)}
-                               className="ml-auto flex h-10 w-10 items-center justify-center rounded-xl bg-slate-50 text-zinc-600 transition-all hover:text-slate-900"
-                            >
-                               <ArrowRight size={16} />
-                            </button>
-                         </td>
-                      </tr>
-                    ))}
-                    {!filteredTransactions.length && (
-                      <tr>
-                        <td colSpan={5} className="px-10 py-10 text-center text-sm text-zinc-500">
-                          Không có giao dịch phù hợp bộ lọc hiện tại.
-                        </td>
-                      </tr>
-                    )}
-                 </tbody>
-              </table>
-           </div>
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      <button
+                        type="button"
+                        onClick={() => setSelectedTx(tx)}
+                        className="ml-auto flex h-8 w-8 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-500 transition hover:border-[#8037f4]/30 hover:text-[#8037f4]"
+                      >
+                        <ArrowRight size={14} />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+                {!filteredTransactions.length && (
+                  <tr>
+                    <td colSpan={5} className="px-6 py-10 text-center text-sm font-semibold text-slate-500">
+                      Không có giao dịch phù hợp bộ lọc hiện tại.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
 
@@ -736,7 +735,7 @@ export function MentorFinance() {
               <div className="mb-5 rounded-2xl border border-[#8037f4]/20 bg-[#8037f4]/5 px-5 py-4">
                 <p className="mb-2 text-sm font-semibold text-[#8037f4]">Số tiền giao dịch</p>
                 <p
-                  className={`text-xl font-black tracking-tight sm:text-2xl ${
+                  className={`mentor-money-num text-xl sm:text-2xl ${
                     selectedTx.type === "income" ? "text-[#630ed4]" : "text-slate-900"
                   }`}
                 >
@@ -745,52 +744,52 @@ export function MentorFinance() {
                 </p>
               </div>
 
-              <div className="space-y-3 text-sm">
+              <div className="space-y-3 text-sm font-medium">
                 <p className="text-slate-900">
-                  <span className="font-semibold text-[#8037f4]">Mã giao dịch:</span> {selectedTx.id}
+                  <span className="font-bold text-[#8037f4]">Mã giao dịch:</span> {selectedTx.id}
                 </p>
                 <p className="text-slate-900">
-                  <span className="font-semibold text-[#8037f4]">Loại:</span>{" "}
+                  <span className="font-bold text-[#8037f4]">Loại:</span>{" "}
                   {selectedTx.type === "income" ? "Thu nhập" : "Rút tiền"}
                 </p>
                 <p className="text-slate-900">
-                  <span className="font-semibold text-[#8037f4]">Mô tả:</span> {txDisplayTitle(selectedTx)}
+                  <span className="font-bold text-[#8037f4]">Mô tả:</span> {txDisplayTitle(selectedTx)}
                 </p>
                 <p className="text-slate-900">
-                  <span className="font-semibold text-[#8037f4]">Thời gian:</span>{" "}
+                  <span className="font-bold text-[#8037f4]">Thời gian:</span>{" "}
                   {new Date(selectedTx.date).toLocaleString("vi-VN")}
                 </p>
                 {selectedTx.reviewedAt ? (
                   <p className="text-slate-900">
-                    <span className="font-semibold text-[#8037f4]">Thời gian xử lý:</span>{" "}
+                    <span className="font-bold text-[#8037f4]">Thời gian xử lý:</span>{" "}
                     {new Date(selectedTx.reviewedAt).toLocaleString("vi-VN")}
                   </p>
                 ) : null}
                 {selectedTx.paidAt ? (
                   <p className="text-slate-900">
-                    <span className="font-semibold text-[#8037f4]">Thời điểm đã chi:</span>{" "}
+                    <span className="font-bold text-[#8037f4]">Thời điểm đã chi:</span>{" "}
                     {new Date(selectedTx.paidAt).toLocaleString("vi-VN")}
                   </p>
                 ) : null}
                 {selectedTx.transferRef ? (
                   <p className="text-slate-900">
-                    <span className="font-semibold text-[#8037f4]">Tham chiếu chuyển khoản:</span> {selectedTx.transferRef}
+                    <span className="font-bold text-[#8037f4]">Tham chiếu chuyển khoản:</span> {selectedTx.transferRef}
                   </p>
                 ) : null}
                 {selectedTx.providerRef ? (
                   <p className="text-slate-900">
-                    <span className="font-semibold text-[#8037f4]">Mã tham chiếu:</span> {selectedTx.providerRef}
+                    <span className="font-bold text-[#8037f4]">Mã tham chiếu:</span> {selectedTx.providerRef}
                   </p>
                 ) : null}
                 {selectedTx.rejectReason ? (
                   <div className="rounded-xl border border-[#8037f4]/25 bg-[#8037f4]/8 p-3">
-                    <p className="text-sm font-semibold text-[#630ed4]">Lý do từ chối</p>
+                    <p className="text-sm font-bold text-[#630ed4]">Lý do từ chối</p>
                     <p className="mt-1 text-sm text-slate-800">{selectedTx.rejectReason}</p>
                   </div>
                 ) : null}
                 {selectedTx.note ? (
                   <div className="rounded-xl border border-[#93f72b]/35 bg-[#93f72b]/15 p-3">
-                    <p className="text-sm font-semibold text-[#630ed4]">Ghi chú xử lý</p>
+                    <p className="text-sm font-bold text-[#630ed4]">Ghi chú xử lý</p>
                     <p className="mt-1 text-sm text-slate-800">{selectedTx.note}</p>
                   </div>
                 ) : null}
