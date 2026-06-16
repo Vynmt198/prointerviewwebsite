@@ -14,7 +14,10 @@ import {
   Target,
   ArrowUpRight,
   Plus,
-  Zap as Lightning
+  Zap as Lightning,
+  Clock,
+  FileText,
+  Wallet,
 } from "lucide-react";
 import { getUser, getDisplayName } from "../../utils/auth";
 import { MentorPageShell } from "../../components/mentor/MentorPageShell";
@@ -356,6 +359,14 @@ export function MentorDashboard() {
   };
 
   const formatVnd = (amount) => `${Number(amount || 0).toLocaleString("vi-VN")} Đ`;
+  const displayName = getDisplayName(user, "Mentor");
+  const sessionBars = [40, 65, 45, 80, 55].map((h, i) => (
+    <div
+      key={i}
+      className="w-2 rounded-full bg-violet-400/80"
+      style={{ height: `${h}%` }}
+    />
+  ));
 
   return (
     <MentorPageShell bottomPad="pb-20">
@@ -364,176 +375,275 @@ export function MentorDashboard() {
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(148,163,184,0.5); border-radius: 10px; }
       `}</style>
-      <div className="relative z-10 mx-auto max-w-7xl px-6 pb-10 sm:px-8">
-        <div className="mb-8 flex flex-col justify-between gap-4 md:mb-10 md:flex-row md:items-end md:gap-6">
-          <div>
-            <h1 className="font-headline text-2xl font-black tracking-tight text-slate-900 sm:text-3xl break-words">
-               Xin chào,{" "}
-               <span className="text-violet-700">{getDisplayName(user, "Mentor")}!</span>
-            </h1>
-          </div>
-          <div className="flex flex-wrap gap-3">
-              <button type="button" onClick={() => navigate("/mentor/finance")} className="flex items-center gap-2 rounded-xl bg-white border border-slate-200 px-5 py-2.5 text-xs font-bold text-slate-700 shadow-sm transition-all hover:bg-slate-50">
-                 <CurrencyCircleDollar size={16} className="text-[#93f72b]" /> Tài chính
-              </button>
-              <button type="button" onClick={() => navigate("/mentor/schedule")} className="flex items-center gap-2 rounded-xl bg-[#8037f4] px-5 py-2.5 text-xs font-bold text-white shadow-[0_8px_24px_rgba(128,55,244,0.3)] transition-all hover:bg-violet-700 hover:brightness-105">
-                 <CalendarBlank size={16} /> Quản lý Lịch
-              </button>
-          </div>
-        </div>
+      <div className="relative z-10 mx-auto max-w-7xl px-4 pb-10 sm:px-6 lg:px-8">
 
-        {/* Vital Stats Grid */}
-        <div className="mb-8 grid grid-cols-1 gap-4 md:mb-10 md:grid-cols-3 md:gap-5">
-           {[
-             {
-               label: "Tổng buổi mentor",
-               value: stats.totalSessions,
-               sub:
-                 stats.thisMonthSessions > 0
-                   ? `+${stats.thisMonthSessions} buổi tháng này`
-                   : "Chưa có buổi mới tháng này",
-               icon: Users,
-               color: "#8037f4",
-             },
-             { label: "Lịch hẹn sắp tới", value: stats.upcomingMeetings, sub: "Trong 7 ngày tới", icon: CalendarBlank, color: "#f59e0b" },
-             { label: "Tổng thu nhập", value: formatVnd(stats.totalEarned), sub: `Khả dụng ${formatVnd(stats.availableBalance)}`, icon: CurrencyCircleDollar, color: "#93f72b" }
-           ].map((stat, i) => (
-             <div key={i} className="glass-card group relative overflow-hidden bg-gradient-to-br from-white to-slate-50 p-5 sm:p-6">
-                <div className="absolute right-0 top-0 h-24 w-24 translate-x-1/2 -translate-y-1/2 rounded-full bg-gradient-to-br from-violet-100/80 to-transparent" />
-                <div className="mb-4 flex items-center gap-3">
-                   <div className="flex h-10 w-10 items-center justify-center rounded-lg border-2 border-slate-200 bg-white shadow-sm transition-all group-hover:border-violet-200">
-                      <stat.icon size={18} style={{ color: stat.color }} />
-                   </div>
-                   <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500">{stat.label}</span>
+        {/* Hero banner */}
+        <section className="relative mb-6 overflow-hidden rounded-[28px] bg-gradient-to-br from-[#6d28d9] via-[#8037f4] to-[#7c3aed] px-6 py-7 sm:px-8 sm:py-8">
+          <div className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-white/10" aria-hidden />
+          <div className="pointer-events-none absolute bottom-0 right-24 h-28 w-28 rounded-full bg-white/5" aria-hidden />
+          <div className="pointer-events-none absolute -left-6 top-1/2 h-24 w-24 -translate-y-1/2 rounded-full bg-[#93f72b]/10" aria-hidden />
+          <div className="relative flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
+            <div>
+              <p className="mentor-eyebrow mentor-eyebrow--on-dark mb-2">
+                Bảng điều khiển mentor
+              </p>
+              <h1 className="font-headline text-2xl font-black tracking-tight text-white sm:text-3xl">
+                Xin chào,{" "}
+                <span className="text-[#93f72b]">{displayName}!</span>
+              </h1>
+              <p className="mt-2 text-sm font-medium text-violet-100">
+                Sẵn sàng cho một ngày cố vấn tuyệt vời chứ?
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => navigate("/mentor/schedule")}
+              className="inline-flex shrink-0 items-center justify-center gap-2 rounded-2xl bg-[#93f72b] px-6 py-3.5 text-sm font-black text-slate-900 shadow-[0_10px_28px_rgba(147,247,43,0.35)] transition hover:brightness-105"
+            >
+              <Plus size={18} strokeWidth={3} />
+              Tạo lịch mới
+            </button>
+          </div>
+        </section>
+
+        {/* Top grid: schedule + stat cards */}
+        <div className="mb-5 grid gap-5 lg:grid-cols-12">
+          {/* Upcoming schedule */}
+          <div className="glass-card bg-white p-5 sm:p-6 lg:col-span-7">
+            <div className="mb-5 flex items-center justify-between gap-3">
+              <h2 className="font-headline text-lg font-black text-slate-900 sm:text-xl">
+                Lịch phỏng vấn sắp tới
+              </h2>
+              <button
+                type="button"
+                onClick={() => navigate("/mentor/schedule")}
+                className="text-[10px] font-black uppercase tracking-widest text-violet-700 hover:underline"
+              >
+                Xem tất cả →
+              </button>
+            </div>
+
+            {upcomingMeetings.length === 0 ? (
+              <div className="flex min-h-[220px] flex-col items-center justify-center rounded-[24px] border-2 border-dashed border-violet-200/80 bg-violet-50/40 px-6 py-10 text-center">
+                <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-violet-100 text-violet-600">
+                  <CalendarBlank size={28} />
                 </div>
-                <h3 className="mb-1.5 text-2xl font-black tracking-tight text-slate-900 sm:text-3xl">{stat.value}</h3>
-                <p className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-slate-500">
-                   <ArrowUpRight size={14} className="text-violet-600" /> {stat.sub}
+                <p className="text-base font-black text-slate-800">Chưa có buổi phỏng vấn nào</p>
+                <p className="mt-2 max-w-sm text-sm text-slate-500">
+                  Tạo lịch mới để mentee có thể đặt buổi tư vấn với bạn.
                 </p>
-             </div>
-           ))}
+                <button
+                  type="button"
+                  onClick={() => navigate("/mentor/schedule")}
+                  className="mt-6 inline-flex items-center gap-2 rounded-2xl bg-[#8037f4] px-5 py-2.5 text-xs font-black uppercase tracking-wider text-white shadow-md transition hover:bg-violet-700"
+                >
+                  <Plus size={16} />
+                  Tạo lịch mới
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {upcomingMeetings.map((meeting) => (
+                  <div
+                    key={meeting.id}
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => navigate(`/mentor/meeting-detail/${meeting.id}`)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") navigate(`/mentor/meeting-detail/${meeting.id}`);
+                    }}
+                    className="group flex cursor-pointer items-center justify-between gap-4 rounded-[22px] border border-slate-200 bg-slate-50/80 p-4 transition hover:border-violet-300 hover:bg-violet-50/50"
+                  >
+                    <div className="flex min-w-0 items-center gap-4">
+                      <img
+                        src={meeting.mentee.avatar}
+                        alt=""
+                        className="h-12 w-12 shrink-0 rounded-2xl object-cover ring-2 ring-white"
+                      />
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-black text-slate-900">{meeting.mentee.name}</p>
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                          {meeting.sessionTypeLabel || meeting.position}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="shrink-0 text-right">
+                      <p className="text-sm font-black text-violet-700">{meeting.scheduledTime}</p>
+                      <p className="text-[10px] font-bold text-slate-500">
+                        {formatMeetingDate(meeting.scheduledDate, meeting.scheduledTime)}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Right stat grid 2x2 */}
+          <div className="grid grid-cols-2 gap-4 lg:col-span-5">
+            <div className="glass-card flex flex-col justify-between bg-white p-5">
+              <div className="mentor-label mb-3 flex items-center gap-2">
+                <Users size={14} />
+                Tổng buổi mentor
+              </div>
+              <p className="mentor-stat-num mentor-stat-num--hero">{stats.totalSessions}</p>
+              <div className="mt-4 flex h-10 items-end gap-1.5">{sessionBars}</div>
+            </div>
+
+            <div className="glass-card flex flex-col justify-between bg-white p-5">
+              <div className="mentor-label mb-3 flex items-center gap-2">
+                <Clock size={14} />
+                Lịch hẹn sắp tới
+              </div>
+              <p className="mentor-stat-num mentor-stat-num--hero">{stats.upcomingMeetings}</p>
+              <p className="mt-3 flex items-center gap-1.5 text-[10px] font-bold text-slate-500">
+                <Clock size={12} />
+                Trong 7 ngày tới
+              </p>
+            </div>
+
+            <div className="glass-card flex flex-col justify-between bg-white p-5">
+              <div className="mentor-label mb-3 flex items-center gap-2">
+                <CalendarBlank size={14} />
+                Lịch trình
+              </div>
+              <p className="text-xs font-medium text-slate-500">Quản lý meetings</p>
+              <div className="mt-4 flex items-center justify-between">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-50 text-violet-600">
+                  <CalendarBlank size={18} />
+                </div>
+                <button
+                  type="button"
+                  onClick={() => navigate("/mentor/courses")}
+                  className="inline-flex items-center gap-1.5 rounded-xl border border-violet-200 bg-violet-50 px-3 py-2 text-[10px] font-black uppercase tracking-wider text-violet-800 transition hover:bg-violet-100"
+                >
+                  <FileText size={12} />
+                  Tài liệu
+                </button>
+              </div>
+            </div>
+
+            <div className="glass-card flex flex-col justify-between bg-white p-5">
+              <div className="mentor-label mb-3 flex items-center gap-2">
+                <Wallet size={14} />
+                Tài chính
+              </div>
+              <p className="text-xs font-medium text-slate-500">Rút tiền về ví</p>
+              <div className="mt-4 flex items-center justify-between">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-lime-50 text-lime-700">
+                  <Wallet size={18} />
+                </div>
+                <button
+                  type="button"
+                  onClick={() => navigate("/mentor/finance")}
+                  className="inline-flex items-center gap-1.5 rounded-xl bg-[#93f72b] px-3 py-2 text-[10px] font-black uppercase tracking-wider text-slate-900 transition hover:brightness-105"
+                >
+                  Withdraw
+                  <ArrowUpRight size={12} />
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
 
-        <div className="grid lg:grid-cols-12 gap-10 items-start">
-           {/* Main Controls & Lists */}
-           <div className="lg:col-span-8 space-y-10">
+        {/* Bottom row */}
+        <div className="grid gap-5 lg:grid-cols-12">
+          {/* Total income */}
+          <div className="relative overflow-hidden rounded-[24px] bg-gradient-to-br from-[#1e1b4b] via-[#312e81] to-[#1e293b] p-6 text-white lg:col-span-3">
+            <div className="pointer-events-none absolute -right-6 -top-6 h-24 w-24 rounded-full bg-violet-500/20" aria-hidden />
+            <div className="mentor-label mentor-label--on-dark mb-3 flex items-center gap-2">
+              <CurrencyCircleDollar size={14} />
+              Tổng thu nhập
+            </div>
+            <p className="mentor-stat-num mentor-stat-num--hero mentor-stat-num--on-dark mt-3">{formatVnd(stats.totalEarned)}</p>
+            <p className="mt-2 text-xs text-violet-200">
+              Khả dụng để rút: <span className="font-bold text-white">{formatVnd(stats.availableBalance)}</span>
+            </p>
+            <button
+              type="button"
+              onClick={() => navigate("/mentor/finance")}
+              className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-[#93f72b] py-3 text-xs font-black uppercase tracking-wider text-slate-900 transition hover:brightness-105"
+            >
+              <CurrencyCircleDollar size={16} />
+              Rút tiền
+            </button>
+          </div>
 
-
-              {/* Upcoming Detailed Feed */}
-              <div className="glass-card bg-white p-5 sm:p-6 shadow-sm border border-violet-100">
-                 <div className="mb-6 flex items-center justify-between sm:mb-7">
-                    <h4 className="font-headline text-lg font-black tracking-tight text-slate-900 sm:text-xl">
-                      Lịch phỏng vấn sắp tới
-                    </h4>
-                    <button type="button" onClick={() => navigate("/mentor/schedule")} className="text-[10px] font-black uppercase tracking-widest text-violet-700 hover:underline">Xem tất cả lịch trình</button>
-                 </div>
-                 
-                 <div className="space-y-4">
-                    {upcomingMeetings.length === 0 && (
-                      <div className="py-8 text-center text-sm font-medium text-slate-500 bg-slate-50 rounded-2xl border border-slate-100">
-                        Chưa có lịch hẹn nào sắp tới.
-                      </div>
-                    )}
-                    {upcomingMeetings.map((meeting) => (
-                      <div key={meeting.id} 
-                           role="button"
-                           tabIndex={0}
-                           onClick={() => navigate(`/mentor/meeting-detail/${meeting.id}`)}
-                           onKeyDown={(e) => { if (e.key === "Enter") navigate(`/mentor/meeting-detail/${meeting.id}`); }}
-                           className="group flex cursor-pointer flex-col gap-4 rounded-[28px] border border-slate-200 bg-slate-50/80 p-5 transition-all hover:border-violet-300 hover:bg-violet-50/60 hover:shadow-md sm:rounded-[32px] sm:p-6">
-                         
-                         <div className="flex items-center justify-between">
-                           <div className="flex items-center gap-4 sm:gap-6">
-                              <img src={meeting.mentee.avatar} alt="" className="h-12 w-12 rounded-2xl object-cover ring-2 ring-white shadow-sm sm:h-14 sm:w-14" />
-                              <div>
-                                 <h5 className="text-base font-black text-slate-900 transition-colors group-hover:text-violet-800 sm:text-lg">{meeting.mentee.name}</h5>
-                                 <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">
-                                   {meeting.sessionTypeLabel || meeting.position}
-                                 </p>
-                              </div>
-                           </div>
-                           <div className="flex items-center gap-6 sm:gap-10">
-                              <div className="hidden text-right sm:block">
-                                 <p className="text-xs font-black text-violet-700">{meeting.scheduledTime}</p>
-                                 <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500">
-                                   {formatMeetingDate(meeting.scheduledDate, meeting.scheduledTime)}
-                                 </p>
-                              </div>
-                              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-600 text-white opacity-0 shadow-sm transition-all group-hover:opacity-100">
-                                 <ArrowRight size={18} />
-                              </div>
-                           </div>
-                         </div>
-
-                         {meeting.menteeNotes ? (
-                           <div className="mt-2 rounded-2xl bg-white p-4 border border-slate-100 shadow-sm">
-                             <p className="text-[10px] font-bold uppercase tracking-widest text-violet-700 mb-1">Lời nhắn từ Mentee</p>
-                             <p className="text-xs font-medium leading-relaxed text-slate-600 line-clamp-2">
-                               {meeting.menteeNotes}
-                             </p>
-                           </div>
-                         ) : null}
-                      </div>
-                    ))}
-                 </div>
+          {/* Recently completed */}
+          <div className="glass-card bg-white p-5 sm:p-6 lg:col-span-6">
+            <h3 className="mentor-label mb-5 flex items-center gap-2">
+              <CheckCircle size={14} />
+              Hoàn thành gần đây
+            </h3>
+            {recentCompleted.length === 0 ? (
+              <div className="flex min-h-[140px] items-center justify-center rounded-[20px] border border-dashed border-slate-200 bg-slate-50/80 px-4 text-sm text-slate-500">
+                Chưa có buổi hoàn thành gần đây.
               </div>
-           </div>
-
-           {/* Sidebar: Recent Activity & Peer Review */}
-           <div className="lg:col-span-4 space-y-10">
-              <div className="glass-card bg-white p-5 sm:p-6">
-                 <h4 className="mb-5 flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">
-                    <CheckCircle size={14} className="text-violet-600" /> Hoàn thành gần đây
-                 </h4>
-                 <div className="space-y-5">
-                    {recentCompleted.length === 0 && (
-                      <p className="text-xs font-medium text-slate-500">Chưa có buổi hoàn thành gần đây.</p>
-                    )}
-                    {recentCompleted.map((meeting) => (
-                      <div key={meeting.id} 
-                           role="button"
-                           tabIndex={0}
-                           onClick={() => setSelectedMeeting(meeting)}
-                           onKeyDown={(e) => { if (e.key === "Enter") setSelectedMeeting(meeting); }}
-                           className="group flex cursor-pointer items-center gap-4">
-                         <img src={meeting.mentee.avatar} alt="" className="h-10 w-10 rounded-xl object-cover grayscale transition-all group-hover:grayscale-0" />
-                         <div className="min-w-0 flex-1">
-                            <p className="mb-0.5 text-xs font-black tracking-tight text-slate-900">{meeting.mentee.name}</p>
-                            <p className="text-[9px] font-bold uppercase tracking-widest text-slate-500">
-                              {formatMeetingDate(meeting.scheduledDate, meeting.scheduledTime)}
-                            </p>
-                         </div>
-                         <div className="flex shrink-0 items-center gap-1.5 text-violet-700">
-                            <Star size={12} className="fill-current" />
-                            <span className="text-xs font-black">
-                              {meeting.overallScore > 0 ? meeting.overallScore.toFixed(1) : "—"}
-                            </span>
-                         </div>
-                      </div>
-                    ))}
-                 </div>
-                 <button type="button" onClick={() => navigate("/mentor/analytics")} className="mt-6 w-full rounded-lg border border-slate-200 bg-slate-50 py-3 text-[10px] font-black uppercase tracking-widest text-slate-700 transition-all hover:bg-slate-100">
-                    Xem toàn bộ lịch sử
-                 </button>
+            ) : (
+              <div className="space-y-4">
+                {recentCompleted.map((meeting) => (
+                  <div
+                    key={meeting.id}
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => setSelectedMeeting(meeting)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") setSelectedMeeting(meeting);
+                    }}
+                    className="group flex cursor-pointer items-center gap-4"
+                  >
+                    <img
+                      src={meeting.mentee.avatar}
+                      alt=""
+                      className="h-10 w-10 rounded-xl object-cover grayscale transition group-hover:grayscale-0"
+                    />
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-black text-slate-900">{meeting.mentee.name}</p>
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                        {formatMeetingDate(meeting.scheduledDate, meeting.scheduledTime)}
+                      </p>
+                    </div>
+                    <div className="flex shrink-0 items-center gap-1 text-violet-700">
+                      <Star size={12} className="fill-current" />
+                      <span className="text-xs font-black">
+                        {meeting.overallScore > 0 ? meeting.overallScore.toFixed(1) : "—"}
+                      </span>
+                    </div>
+                  </div>
+                ))}
               </div>
+            )}
+            <button
+              type="button"
+              onClick={() => navigate("/mentor/analytics")}
+              className="mt-5 w-full rounded-2xl border border-violet-200 bg-violet-50 py-3 text-[10px] font-black uppercase tracking-widest text-violet-800 transition hover:bg-violet-100"
+            >
+              Xem toàn bộ lịch sử →
+            </button>
+          </div>
 
-              {/* Peer Review Call-to-action */}
-              <div className="glass-card group relative overflow-hidden border-violet-200 bg-gradient-to-br from-violet-50 to-white p-5 sm:p-6">
-                 <div className="pointer-events-none absolute right-0 top-0 p-4 opacity-[0.12] transition-all duration-700 group-hover:rotate-0" style={{ transform: "rotate(12deg)" }}>
-                    <SealCheck size={80} className="text-violet-500" />
-                 </div>
-                 <p className="relative mb-2 text-[10px] font-black uppercase tracking-[0.25em] text-violet-700">Đánh giá chéo</p>
-                 <h4 className="relative mb-2 text-base font-black tracking-tight text-slate-900 sm:text-lg">
-                   Tham gia Đánh giá Khóa học
-                 </h4>
-                 <p className="relative mb-4 text-xs font-medium leading-relaxed text-slate-600">
-                   Góp ý nội dung cho đồng nghiệp và nhận điểm thưởng từ ProInterview.
-                 </p>
-                 <button type="button" onClick={() => navigate("/mentor/peer-review")} className="relative flex items-center gap-2 text-[11px] font-black text-violet-800 transition-all hover:gap-3">
-                    Bắt đầu ngay <ArrowRight size={16} className="text-violet-700" />
-                 </button>
-              </div>
-           </div>
+          {/* Peer review CTA */}
+          <div className="relative overflow-hidden rounded-[24px] bg-[#93f72b] p-6 lg:col-span-3">
+            <div className="pointer-events-none absolute -right-4 -top-4 opacity-20" aria-hidden>
+              <SealCheck size={72} className="text-slate-900" />
+            </div>
+            <div className="mentor-label mb-1 flex items-center gap-2">
+              <SealCheck size={14} />
+              Đánh giá khóa học
+            </div>
+            <h3 className="mt-2 text-xl font-black tracking-tight text-slate-900">Nhận điểm thưởng</h3>
+            <p className="mt-2 text-sm font-medium leading-relaxed text-slate-800/80">
+              Góp ý nội dung cho đồng nghiệp và nhận điểm thưởng từ ProInterview.
+            </p>
+            <button
+              type="button"
+              onClick={() => navigate("/mentor/peer-review")}
+              className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-slate-900 py-3 text-xs font-black uppercase tracking-wider text-white transition hover:bg-slate-800"
+            >
+              Bắt đầu ngay
+              <ArrowRight size={14} />
+            </button>
+          </div>
         </div>
       </div>
 

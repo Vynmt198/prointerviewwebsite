@@ -84,9 +84,9 @@ const MENTOR_MEETING_DETAIL_EXTRA_CSS = `
 `;
 
 const rescheduleFieldLabel =
-  "mb-1.5 block text-xs font-semibold text-slate-600";
+  "mb-1.5 block text-xs font-normal text-slate-600";
 const rescheduleFieldInput =
-  "w-full rounded-lg border border-slate-200/90 bg-white px-3.5 py-2.5 text-sm font-medium text-slate-900 outline-none transition-all placeholder:text-slate-400 focus:border-[#8037f4] focus:bg-[#faf8ff] focus:ring-2 focus:ring-[#8037f4]/12 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-500";
+  "w-full rounded-lg border border-slate-200/90 bg-white px-3.5 py-2.5 text-sm font-normal text-slate-900 outline-none transition-all placeholder:text-slate-400 focus:border-[#8037f4] focus:bg-[#faf8ff] focus:ring-2 focus:ring-[#8037f4]/12 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-500";
 
 export function MentorMeetingDetail() {
   const { sessionId } = useParams();
@@ -221,7 +221,7 @@ export function MentorMeetingDetail() {
   if (loading) {
     return (
       <MentorPageShell bottomPad="pb-32">
-        <div className="p-10 text-sm font-medium text-slate-500">Đang tải chi tiết buổi hẹn…</div>
+        <div className="p-10 text-sm font-normal text-slate-500">Đang tải chi tiết buổi hẹn…</div>
       </MentorPageShell>
     );
   }
@@ -249,7 +249,7 @@ export function MentorMeetingDetail() {
               <button
                 type="button"
                 onClick={() => navigate("/mentor/schedule")}
-                className="rounded-lg border border-slate-200 px-5 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                className="rounded-lg border border-slate-200 px-5 py-2.5 text-sm font-normal text-slate-700 hover:bg-slate-50"
               >
                 Về lịch họp
               </button>
@@ -476,10 +476,10 @@ export function MentorMeetingDetail() {
                  </div>
                  <div className="relative z-10">
                     <div className="flex items-center gap-4 mb-8">
-                       <span className={`rounded-full px-4 py-1.5 text-xs font-semibold ${isCompleted ? "border border-primary-fixed/20 bg-primary-fixed/20 text-violet-700" : "border border-orange-500/20 bg-orange-500/20 text-orange-600"}`}>
+                       <span className={`rounded-full px-4 py-1.5 text-xs font-normal ${isCompleted ? "border border-primary-fixed/20 bg-primary-fixed/20 text-violet-700" : "border border-orange-500/20 bg-orange-500/20 text-orange-600"}`}>
                           {isCompleted ? "Đã hoàn thành" : "Sắp diễn ra"}
                        </span>
-                       <span className="flex items-center gap-2 text-xs font-medium text-zinc-500">
+                       <span className="flex items-center gap-2 text-xs font-normal text-zinc-500">
                          <Layout size={14} /> {meetingTypeLabel}
                        </span>
                     </div>
@@ -489,19 +489,19 @@ export function MentorMeetingDetail() {
                     
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-10">
                        <div className="space-y-2">
-                          <p className="text-xs font-medium text-zinc-500">Thời gian bắt đầu</p>
+                          <p className="text-xs font-normal text-zinc-500">Thời gian bắt đầu</p>
                           <p className="text-xl font-black text-slate-900 flex items-center gap-3">
                              <Clock size={20} className="text-violet-700" /> {meeting.scheduledTime}
                           </p>
                        </div>
                        <div className="space-y-2">
-                          <p className="text-xs font-medium text-zinc-500">Ngày diễn ra</p>
+                          <p className="text-xs font-normal text-zinc-500">Ngày diễn ra</p>
                           <p className="text-xl font-black text-slate-900 flex items-center gap-3">
                             <Calendar size={20} className="text-violet-700" /> {formatMeetingDate(meeting.scheduledDate, meeting.scheduledTime)}
                           </p>
                        </div>
                        <div className="space-y-2">
-                          <p className="text-xs font-medium text-zinc-500">Thời lượng</p>
+                          <p className="text-xs font-normal text-zinc-500">Thời lượng</p>
                           <p className="text-xl font-black text-slate-900 flex items-center gap-3">
                              <ShieldCheck size={20} className="text-violet-700" /> {meeting.duration} phút
                           </p>
@@ -520,7 +520,7 @@ export function MentorMeetingDetail() {
                        <div className="flex items-center gap-3 px-6 py-3 rounded-2xl bg-slate-50 border border-slate-200">
                           <Star className="text-[#FFD600] fill-current" size={18} />
                           <span className="text-lg font-black text-slate-900">{meeting.overallScore?.toFixed(1)}</span>
-                          <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">/ 5.0</span>
+                          <span className="text-[10px] font-normal text-zinc-500 uppercase tracking-widest">/ 5.0</span>
                        </div>
                     </div>
 
@@ -539,7 +539,7 @@ export function MentorMeetingDetail() {
                                     <div className="w-10 h-10 rounded-2xl flex items-center justify-center text-white font-black text-sm" style={{ background: item.color }}>{item.label[0]}</div>
                                     <div>
                                        <p className="text-sm font-black text-slate-900 tracking-tight">{item.label}</p>
-                                       <p className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest">{item.desc}</p>
+                                       <p className="text-[10px] font-normal text-zinc-600 uppercase tracking-widest">{item.desc}</p>
                                     </div>
                                  </div>
                                  <span className="text-sm font-black text-slate-900">{score.toFixed(1)}/5.0</span>
@@ -567,14 +567,14 @@ export function MentorMeetingDetail() {
                   <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-indigo-50/50 to-violet-50/30 blur-3xl -z-10" />
                   
                   <div className="mb-12">
-                    <h5 className="mb-3 text-xs font-semibold text-indigo-500">Báo cáo phân tích</h5>
+                    <h5 className="mb-3 text-xs font-normal text-indigo-500">Báo cáo phân tích</h5>
                     <h2 className="text-xl font-black sm:text-2xl text-slate-900 tracking-tight">Đánh giá từ chuyên gia</h2>
                   </div>
                   
                   <div className="space-y-1">
                     {(() => {
                       const raw = meeting.feedback || "";
-                      if (!raw) return <p className="text-sm text-slate-400 font-medium">Đang chờ cập nhật nội dung đánh giá...</p>;
+                      if (!raw) return <p className="text-sm text-slate-400 font-normal">Đang chờ cập nhật nội dung đánh giá...</p>;
                       
                       const sections = raw.split(/\n/);
                       return sections.map((line, idx) => {
@@ -591,7 +591,7 @@ export function MentorMeetingDetail() {
                                <div className="flex items-baseline gap-6">
                                   <div className="w-1.5 h-1.5 rounded-full bg-indigo-400 group-hover:scale-150 transition-transform" />
                                   <div className="flex-1">
-                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">{title}</p>
+                                    <p className="text-[10px] font-normal text-slate-400 uppercase tracking-widest mb-3">{title}</p>
                                     <p className="text-lg font-semibold text-slate-800 leading-relaxed tracking-tight">{content}</p>
                                   </div>
                                </div>
@@ -601,7 +601,7 @@ export function MentorMeetingDetail() {
 
                         return (
                           <div key={idx} className="py-6 first:pt-0 last:pb-0">
-                            <p className="text-base font-medium text-slate-600 leading-relaxed">{cleanLine}</p>
+                            <p className="text-base font-normal text-slate-600 leading-relaxed">{cleanLine}</p>
                           </div>
                         );
                       });
@@ -614,8 +614,8 @@ export function MentorMeetingDetail() {
                   const DocRow = ({ label, name, url }) => (
                     <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-3">
                       <div className="min-w-0 flex-1">
-                        <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">{label}</p>
-                        <p className="truncate text-sm font-medium text-slate-800" title={name}>
+                        <p className="text-[10px] font-normal uppercase tracking-wide text-slate-500">{label}</p>
+                        <p className="truncate text-sm font-normal text-slate-800" title={name}>
                           {name || "—"}
                         </p>
                       </div>
@@ -635,7 +635,7 @@ export function MentorMeetingDetail() {
                   );
                   return (
                     <div className="glass-card p-8 sm:p-10">
-                      <h5 className="mb-6 text-xs font-semibold text-slate-500">Tài liệu & ghi chú học viên</h5>
+                      <h5 className="mb-6 text-xs font-normal text-slate-500">Tài liệu & ghi chú học viên</h5>
                       <div className="space-y-3">
                         {att.position ? (
                           <p className="text-sm text-slate-700">
@@ -666,38 +666,38 @@ export function MentorMeetingDetail() {
            {/* Mentee Profile Sidebar */}
            <div className="lg:col-span-4 space-y-10">
               <div className="glass-card p-10">
-                 <p className="mb-10 text-xs font-semibold text-zinc-500">Hồ sơ mentee</p>
+                 <p className="mb-10 text-xs font-normal text-zinc-500">Hồ sơ mentee</p>
                  <div className="flex flex-col items-center text-center mb-10">
                     <img src={meeting.mentee.avatar} className="w-32 h-32 rounded-[40px] object-cover ring-8 ring-white/5 shadow-2xl mb-6" />
                     <h3 className="text-xl font-black sm:text-2xl text-slate-900 tracking-tighter">{meeting.mentee.name}</h3>
-                    <p className="mt-2 text-sm font-medium text-violet-700">{meeting.mentee.level}</p>
+                    <p className="mt-2 text-sm font-normal text-violet-700">{meeting.mentee.level}</p>
                  </div>
                  
                  <div className="space-y-6 border-t border-slate-200">
                     <div className="flex items-center gap-4">
                        <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-zinc-500"><Briefcase size={18} /></div>
                        <div>
-                          <p className="text-xs font-medium text-zinc-600">Vị trí hiện tại</p>
+                          <p className="text-xs font-normal text-zinc-600">Vị trí hiện tại</p>
                           <p className="text-xs font-bold text-slate-900">{meeting.position} @ {meeting.company}</p>
                        </div>
                     </div>
                     <div className="flex items-center gap-4">
                        <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-zinc-500"><Star size={18} /></div>
                        <div>
-                          <p className="text-xs font-medium text-zinc-600">Các buổi đã tham gia</p>
+                          <p className="text-xs font-normal text-zinc-600">Các buổi đã tham gia</p>
                           <p className="text-xs font-bold text-slate-900">{menteeSessionCount || 1} buổi học tập</p>
                        </div>
                     </div>
                  </div>
 
-                 <button onClick={() => navigate("/mentor/analytics")} className="mt-10 flex w-full items-center justify-center gap-3 rounded-3xl border border-slate-200 bg-slate-50 py-4 text-sm font-semibold text-slate-700 transition-all hover:bg-slate-100 hover:text-slate-900">
+                 <button onClick={() => navigate("/mentor/analytics")} className="mt-10 flex w-full items-center justify-center gap-3 rounded-3xl border border-slate-200 bg-slate-50 py-4 text-sm font-normal text-slate-700 transition-all hover:bg-slate-100 hover:text-slate-900">
                     Xem toàn bộ tiến trình <ChevronRight size={14} />
                  </button>
               </div>
 
               {/* Action Toolbar */}
               <div className="glass-card p-10">
-                 <h4 className="mb-8 text-xs font-semibold text-zinc-500">Thao tác</h4>
+                 <h4 className="mb-8 text-xs font-normal text-zinc-500">Thao tác</h4>
                  <div className="space-y-4">
                     {!isCompleted ? (
                        <>
@@ -789,7 +789,7 @@ export function MentorMeetingDetail() {
 
               <div className="space-y-5 p-5 sm:p-6">
                 <section className="rounded-xl border border-slate-200 bg-slate-50/80 p-4">
-                  <p className="mb-3 text-xs font-semibold text-slate-500">Lịch hiện tại</p>
+                  <p className="mb-3 text-xs font-normal text-slate-500">Lịch hiện tại</p>
                   <div className="flex items-start gap-3">
                     <img
                       src={meeting.mentee.avatar}

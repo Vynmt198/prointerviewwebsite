@@ -163,7 +163,7 @@ export function MeetingRoom() {
             <VideoOff size={32} />
           </div>
           <h2 className="text-2xl font-black uppercase tracking-tighter mb-4">Không vào được phòng</h2>
-          <p className="text-white/60 font-medium mb-8 whitespace-pre-line">{error}</p>
+          <p className="text-white/60 font-normal mb-8 whitespace-pre-line">{error}</p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <button
               type="button"
@@ -185,7 +185,7 @@ export function MeetingRoom() {
           <motion.div animate={{ rotate: 360 }} transition={{ duration: 2, repeat: Infinity, ease: "linear" }}>
             <Sparkles size={48} className="text-violet-400 mb-6 opacity-60 mx-auto" />
           </motion.div>
-          <p className="text-white/50 font-black uppercase tracking-widest text-xs">
+          <p className="text-white/50 font-normal uppercase tracking-widest text-xs">
             Đang chuẩn bị phòng phỏng vấn ProInterview…
           </p>
         </div>
@@ -223,8 +223,8 @@ export function MeetingRoom() {
             <VideoIcon size={20} />
           </div>
           <div>
-            <p className="text-[10px] font-black text-white/50 uppercase tracking-widest">Phòng ProInterview</p>
-            <p className="text-xs font-bold uppercase tracking-tighter text-violet-700">#{sessionId.slice(-8)}</p>
+            <p className="text-[10px] font-normal text-white/50 uppercase tracking-widest">Phòng ProInterview</p>
+            <p className="text-xs font-normal uppercase tracking-tighter text-violet-700">#{sessionId.slice(-8)}</p>
           </div>
         </div>
 
@@ -235,19 +235,19 @@ export function MeetingRoom() {
                 <span className="text-[10px] font-bold text-violet-300">{counterpartName.charAt(0)}</span>
               </div>
               <div>
-                <p className="text-[9px] font-black text-white/40 uppercase tracking-widest leading-none mb-0.5">
+                <p className="text-[9px] font-normal text-white/40 uppercase tracking-widest leading-none mb-0.5">
                   {counterpartLabel}
                 </p>
-                <p className="text-[11px] font-bold text-white leading-none">{counterpartName}</p>
+                <p className="text-[11px] font-semibold text-white leading-none">{counterpartName}</p>
               </div>
             </div>
           )}
 
           <div className="flex items-center gap-2 px-3 py-1.5 bg-red-500/10 text-red-400 rounded-xl border border-red-500/20">
             <div className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
-            <span className="text-[9px] font-black uppercase tracking-widest">Live</span>
+            <span className="text-[9px] font-normal uppercase tracking-widest">Live</span>
           </div>
-          <div className="flex items-center gap-2 text-white font-mono text-sm font-black">
+          <div className="flex items-center gap-2 text-white font-mono text-sm font-semibold">
             <Clock size={14} className="text-violet-400" />
             {formatTime(elapsedTime)}
           </div>
@@ -300,7 +300,7 @@ export function MeetingRoom() {
           <div className="absolute top-4 left-4 pointer-events-none">
             <div className="bg-black/60 backdrop-blur-md border border-white/10 rounded-lg px-3 py-1.5 flex items-center gap-2">
               <div className="w-1.5 h-1.5 rounded-full bg-[#93f72b] shadow-[0_0_8px_#93f72b]" />
-              <span className="text-[9px] font-bold text-white uppercase tracking-widest opacity-80">
+              <span className="text-[9px] font-normal text-white uppercase tracking-widest opacity-80">
                 {isMentor ? "Mentor" : "Học viên"}
               </span>
             </div>

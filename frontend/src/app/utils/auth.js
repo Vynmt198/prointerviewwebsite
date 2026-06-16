@@ -36,7 +36,7 @@ function parseApiErrorBody(body) {
 function mapAuthHttpError(status, context = "auth") {
   if (status === 403) {
     return context === "google"
-      ? "Không gọi được API đăng nhập (403). Dev: khởi động backend và kiểm tra Vite proxy trỏ đúng cổng (thường 5001 trên macOS, không phải 5000)."
+      ? "Không gọi được API đăng nhập (403). Dev: khởi động backend cổng 5000 và kiểm tra Vite proxy (vite.config.js → localhost:5000)."
       : "Không có quyền truy cập (403).";
   }
   if (status === 401) {
@@ -48,7 +48,7 @@ function mapAuthHttpError(status, context = "auth") {
   if (status === 429) return "Quá nhiều lần thử. Bạn đợi vài phút rồi thử lại nhé.";
   if (status === 503) return "Dịch vụ tạm chưa sẵn sàng. Kiểm tra backend đang chạy và biến môi trường.";
   if (status >= 500) {
-    return "Backend chưa chạy hoặc đang lỗi. Trong thư mục backend chạy `npm install` rồi `npm run dev` (cổng 5001), sau đó thử lại.";
+    return "Backend chưa chạy hoặc đang lỗi. Trong thư mục backend chạy `npm install` rồi `npm run dev` (cổng 5000), sau đó thử lại.";
   }
   return "";
 }

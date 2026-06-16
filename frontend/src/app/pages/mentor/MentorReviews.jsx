@@ -138,75 +138,81 @@ export function MentorReviews() {
 
   return (
     <MentorPageShell bottomPad="pb-32">
-      <div className="relative z-10 mx-auto max-w-7xl px-6 pb-16 sm:px-8 sm:pb-20">
-        <div className="mb-10 flex flex-col gap-3 md:mb-12">
-          <h1 className={mentorPageTitle}>
-            <span>Đánh giá</span>{" "}
-            <span className={mentorAccentText}>từ học viên</span>
+      <div className="relative z-10 mx-auto max-w-7xl px-6 pb-8">
+
+        {/* ── Header ── */}
+        <div className="mb-7">
+          <p className="mentor-eyebrow mb-1 flex items-center gap-2">
+            <Star size={12} /> Phản hồi học viên
+          </p>
+          <h1 className="text-2xl font-black tracking-tight text-slate-900 sm:text-3xl">
+            Đánh giá <span className="text-violet-600">từ học viên</span>
           </h1>
-          <p className={mentorPageSubtitle}>Phản hồi sau buổi mentor — tìm kiếm và trả lời nhận xét</p>
+          <p className="mt-1 text-sm text-slate-500">Phản hồi sau buổi mentor — tìm kiếm và trả lời nhận xét.</p>
         </div>
 
-        <div className="mb-10 grid grid-cols-1 gap-5 md:mb-12 md:grid-cols-3 md:gap-6">
-          <div className="glass-card p-6 sm:p-7">
-            <p className="mb-3 text-xs font-semibold text-slate-500">Điểm trung bình</p>
-            <div className="mb-4 flex items-end gap-2">
-              <h3 className={mentorStatValue}>{avgRating.toFixed(1)}</h3>
-              <span className="mb-1 text-lg font-semibold text-slate-500">/ 5</span>
+        {/* ── Stat cards ── */}
+        <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
+
+          {/* Điểm trung bình — dark */}
+          <div className="flex items-center gap-4 rounded-2xl bg-slate-900 p-5 shadow-sm">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#FFD600]/15">
+              <Star size={20} className="text-[#FFD600]" />
             </div>
-            <div className="flex gap-1">
-              {[1, 2, 3, 4, 5].map((i) => (
-                <Star
-                  key={i}
-                  size={18}
-                  className={
-                    i <= Math.round(avgRating)
-                      ? "fill-[#FFD600] text-[#FFD600]"
-                      : "text-slate-200"
-                  }
-                />
-              ))}
+            <div className="min-w-0 flex-1">
+              <p className="text-[10px] font-normal uppercase tracking-widest text-slate-400">Điểm trung bình</p>
+              <p className="mentor-stat-num mentor-stat-num--hero mentor-stat-num--on-dark">
+                {avgRating.toFixed(1)} <span className="text-base font-bold text-slate-500">/ 5</span>
+              </p>
+              <div className="mt-1.5 flex gap-0.5">
+                {[1,2,3,4,5].map((i) => (
+                  <Star key={i} size={13} className={i <= Math.round(avgRating) ? "fill-[#FFD600] text-[#FFD600]" : "text-slate-700"} />
+                ))}
+              </div>
             </div>
           </div>
 
-          <div className="glass-card p-6 sm:p-7">
-            <p className="mb-3 text-xs font-semibold text-slate-500">Tổng nhận xét</p>
-            <h3 className={`mb-2 ${mentorStatValue}`}>
-              {summary.reviewCount || reviewedMeetings.length}
-            </h3>
-            <p className="flex items-center gap-2 text-xs font-medium text-violet-700">
-              <TrendingUp size={14} className="shrink-0" />
-              Hiển thị trên hồ sơ mentor
-            </p>
+          {/* Tổng nhận xét — white */}
+          <div className="flex items-center gap-4 rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-violet-100">
+              <MessageCircle size={20} className="text-violet-600" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-[10px] font-normal uppercase tracking-widest text-slate-400">Tổng nhận xét</p>
+              <p className="mentor-stat-num mentor-stat-num--hero">{summary.reviewCount || reviewedMeetings.length}</p>
+              <p className="mt-1 flex items-center gap-1 text-[11px] font-normal text-violet-600">
+                <TrendingUp size={11} /> Hiển thị trên hồ sơ mentor
+              </p>
+            </div>
           </div>
 
-          <div className="glass-card border-violet-200/80 p-6 sm:p-7">
-            <p className="mb-3 text-xs font-semibold text-slate-500">Tỷ lệ hài lòng</p>
-            <h3 className={`mb-2 ${mentorStatValue} text-violet-800`}>{satisfactionPct}%</h3>
-            <p className="text-xs font-medium text-slate-600">Đánh giá từ 4 sao trở lên</p>
+          {/* Tỷ lệ hài lòng — lime */}
+          <div className="flex items-center gap-4 rounded-2xl bg-[#c4ff47] p-5 shadow-sm">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-black/10">
+              <TrendingUp size={20} className="text-slate-800" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-[10px] font-normal uppercase tracking-widest text-slate-600">Tỷ lệ hài lòng</p>
+              <p className="mentor-stat-num mentor-stat-num--hero">{satisfactionPct}%</p>
+              <p className="mt-1 text-[11px] font-normal text-slate-600">Đánh giá từ 4 sao trở lên</p>
+            </div>
           </div>
         </div>
 
-        <div className="mb-8 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-          <div className="relative w-full lg:max-w-md">
-            <Search
-              className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-slate-400"
-              aria-hidden
-            />
+        {/* ── Toolbar ── */}
+        <div className="mb-6 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+          <div className="relative w-full lg:max-w-sm">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" aria-hidden />
             <input
               type="search"
               placeholder="Tìm theo tên hoặc nội dung…"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className={mentorSearchInput}
+              className="w-full rounded-xl border border-slate-200 bg-white py-2 pl-9 pr-4 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
               aria-label="Tìm theo tên hoặc nội dung nhận xét"
             />
           </div>
-          <div
-            className="flex flex-wrap gap-2"
-            role="group"
-            aria-label="Lọc theo số sao"
-          >
+          <div className="flex flex-wrap gap-1.5" role="group" aria-label="Lọc theo số sao">
             {STAR_FILTERS.map(({ value, stars }) => {
               const active = filter === value;
               return (
@@ -216,24 +222,16 @@ export function MentorReviews() {
                   onClick={() => setFilter(value)}
                   aria-label={filterAriaLabel(value, stars)}
                   aria-pressed={active}
-                  className={`inline-flex min-h-[42px] items-center justify-center rounded-xl border px-4 py-2.5 transition-all ${
-                    value === "all" ? "min-w-[5.5rem] text-sm font-semibold" : "min-w-[4.5rem] gap-0.5"
-                  } ${
+                  className={`inline-flex items-center justify-center rounded-lg border px-3.5 py-1.5 text-xs font-normal transition-all ${
                     active
                       ? "border-violet-600 bg-violet-600 text-white shadow-sm"
-                      : "border-slate-300 bg-white text-slate-700 shadow-sm hover:border-violet-300 hover:bg-violet-50"
+                      : "border-slate-200 bg-white text-slate-600 hover:border-violet-300 hover:text-violet-700"
                   }`}
                 >
-                  {stars === 0 ? (
-                    "Tất cả"
-                  ) : (
+                  {stars === 0 ? "Tất cả" : (
                     <span className="flex items-center gap-px" aria-hidden>
                       {Array.from({ length: stars }, (_, i) => (
-                        <Star
-                          key={i}
-                          size={15}
-                          className="fill-[#FFD600] text-[#FFD600]"
-                        />
+                        <Star key={i} size={13} className="fill-[#FFD600] text-[#FFD600]" />
                       ))}
                     </span>
                   )}
@@ -243,130 +241,104 @@ export function MentorReviews() {
           </div>
         </div>
 
-        <div className="space-y-5 pb-6">
+        {/* ── Review list ── */}
+        <div className="space-y-4 pb-6">
           {loading ? (
-            <div className="glass-card p-12 text-center text-sm font-medium text-slate-500">
+            <div className="rounded-2xl border border-slate-100 bg-white p-10 text-center text-sm text-slate-400 shadow-sm">
               Đang tải nhận xét…
             </div>
           ) : searched.length === 0 ? (
-            <div className="glass-card p-12 text-center sm:p-14">
-              <MessageCircle size={48} className="mx-auto mb-4 text-slate-300" />
-              <p className="text-base font-semibold text-slate-600">Chưa có nhận xét phù hợp</p>
-              <p className="mt-1 text-sm text-slate-500">
-                Thử đổi bộ lọc hoặc từ khóa tìm kiếm
-              </p>
+            <div className="rounded-2xl border border-slate-100 bg-white p-10 text-center shadow-sm">
+              <MessageCircle size={40} className="mx-auto mb-3 text-slate-300" />
+              <p className="text-sm font-normal text-slate-500">Chưa có nhận xét phù hợp</p>
+              <p className="mt-1 text-xs text-slate-400">Thử đổi bộ lọc hoặc từ khóa tìm kiếm</p>
             </div>
           ) : (
             searched.map((meeting) => (
-              <article
-                key={meeting.id}
-                className="glass-card overflow-visible p-6 sm:p-8"
-              >
-                <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
-                  <div className="flex gap-4 sm:gap-5">
+              <article key={meeting.id} className="overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm transition hover:shadow-md">
+                {/* Review header */}
+                <div className="flex items-start justify-between gap-4 border-b border-slate-100 px-5 py-4">
+                  <div className="flex items-center gap-3">
                     <img
                       src={meeting.mentee.avatar}
                       alt=""
-                      className="h-16 w-16 shrink-0 rounded-2xl object-cover ring-2 ring-slate-200 sm:h-20 sm:w-20"
-                      onError={(e) => {
-                        e.currentTarget.onerror = null;
-                        e.currentTarget.src = DEFAULT_AVATAR;
-                      }}
+                      className="h-11 w-11 shrink-0 rounded-xl object-cover"
+                      onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = DEFAULT_AVATAR; }}
                     />
-                    <div className="min-w-0">
-                      <h3 className="text-lg font-bold tracking-tight text-slate-900 sm:text-xl">
-                        {meeting.mentee.name}
-                      </h3>
-                      <p className="mt-0.5 text-sm font-medium text-slate-500">
-                        {meeting.position}
-                        {meeting.company ? ` · ${meeting.company}` : ""}
+                    <div>
+                      <p className="text-sm font-bold text-slate-900">{meeting.mentee.name}</p>
+                      <p className="text-xs text-slate-400">
+                        {meeting.position}{meeting.company ? ` · ${meeting.company}` : ""}
                       </p>
-                      <div className="mt-3 flex flex-wrap items-center gap-2">
-                        <div className="flex gap-0.5">
-                          {[1, 2, 3, 4, 5].map((i) => (
-                            <Star
-                              key={i}
-                              size={14}
-                              className={
-                                i <= meeting.menteeReview.rating
-                                  ? "fill-[#FFD600] text-[#FFD600]"
-                                  : "text-slate-200"
-                              }
-                            />
-                          ))}
-                        </div>
-                        <span className="text-sm font-semibold text-slate-800">
-                          {meeting.menteeReview.rating}/5
-                        </span>
-                      </div>
                     </div>
                   </div>
-                  <p className="flex shrink-0 items-center gap-2 text-sm font-medium text-slate-500">
-                    <Calendar size={14} className="text-slate-400" />
-                    {formatReviewDate(meeting.menteeReview.reviewDate)}
-                  </p>
+                  <div className="flex shrink-0 flex-col items-end gap-1.5">
+                    <div className="flex items-center gap-1.5 rounded-lg bg-[#c4ff47] px-3 py-1">
+                      <div className="flex gap-0.5">
+                        {[1,2,3,4,5].map((i) => (
+                          <Star key={i} size={11} className={i <= meeting.menteeReview.rating ? "fill-[#1a1a1a] text-[#1a1a1a]" : "text-slate-400"} />
+                        ))}
+                      </div>
+                      <span className="text-xs font-black text-slate-900">{meeting.menteeReview.rating}.0</span>
+                    </div>
+                    <p className="flex items-center gap-1 text-[11px] text-slate-400">
+                      <Calendar size={11} />
+                      {formatReviewDate(meeting.menteeReview.reviewDate)}
+                    </p>
+                  </div>
                 </div>
 
-                <div className="relative mt-6 rounded-2xl border border-slate-200 bg-slate-50/90 p-5 sm:p-6">
-                  <Quote
-                    size={56}
-                    className="pointer-events-none absolute -left-1 -top-2 text-violet-600/10"
-                    aria-hidden
-                  />
-                  <p className="relative text-base font-medium italic leading-relaxed text-slate-700 sm:text-lg">
-                    &ldquo;{meeting.menteeReview.comment}&rdquo;
-                  </p>
+                {/* Comment body */}
+                <div className="px-5 py-4">
+                  <div className="relative rounded-xl bg-slate-50 px-4 py-3">
+                    <Quote size={40} className="pointer-events-none absolute -left-1 -top-1.5 text-violet-500/10" aria-hidden />
+                    <p className="relative text-sm font-medium italic leading-relaxed text-slate-700">
+                      &ldquo;{meeting.menteeReview.comment}&rdquo;
+                    </p>
+                  </div>
 
+                  {/* Reply section */}
                   {meeting.menteeReview.reply?.content ? (
-                    <div className="relative mt-5 rounded-xl border border-violet-100 bg-violet-50/90 px-4 py-3.5">
-                      <p className="text-xs font-semibold text-violet-800">Phản hồi của bạn</p>
-                      <p className="mt-1.5 text-sm leading-relaxed text-slate-800">
-                        {meeting.menteeReview.reply.content}
-                      </p>
+                    <div className="mt-3 rounded-xl border border-violet-100 bg-violet-50 px-4 py-3">
+                      <p className="text-[11px] font-normal uppercase tracking-wider text-violet-500">Phản hồi của bạn</p>
+                      <p className="mt-1 text-sm leading-relaxed text-slate-800">{meeting.menteeReview.reply.content}</p>
                     </div>
                   ) : replyId === meeting.id ? (
-                    <div className="relative mt-5 space-y-3">
+                    <div className="mt-3 space-y-2.5">
                       <textarea
                         value={replyText}
                         onChange={(e) => setReplyText(e.target.value)}
                         rows={3}
                         placeholder="Viết phản hồi cho học viên…"
-                        className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-[#8037f4] focus:ring-2 focus:ring-[#8037f4]/15"
+                        className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
                       />
-                      <div className="flex flex-wrap gap-2">
+                      <div className="flex gap-2">
                         <button
                           type="button"
                           disabled={replyBusy}
                           onClick={() => void submitReply(meeting.id)}
-                          className="rounded-xl bg-violet-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-violet-700 disabled:opacity-50"
+                          className="rounded-xl bg-violet-600 px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-violet-700 disabled:opacity-50"
                         >
                           {replyBusy ? "Đang gửi…" : "Gửi phản hồi"}
                         </button>
                         <button
                           type="button"
                           disabled={replyBusy}
-                          onClick={() => {
-                            setReplyId("");
-                            setReplyText("");
-                          }}
-                          className="rounded-xl border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                          onClick={() => { setReplyId(""); setReplyText(""); }}
+                          className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-normal text-slate-600 transition hover:bg-slate-50"
                         >
                           Hủy
                         </button>
                       </div>
                     </div>
                   ) : (
-                    <div className="relative mt-5 flex justify-end">
+                    <div className="mt-3 flex justify-end">
                       <button
                         type="button"
-                        onClick={() => {
-                          setReplyId(meeting.id);
-                          setReplyText("");
-                        }}
-                        className="inline-flex items-center gap-2 rounded-xl border border-violet-200 bg-white px-4 py-2.5 text-sm font-semibold text-violet-700 shadow-sm transition hover:border-violet-300 hover:bg-violet-50"
+                        onClick={() => { setReplyId(meeting.id); setReplyText(""); }}
+                        className="inline-flex items-center gap-1.5 rounded-xl bg-violet-600 px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-violet-700 active:scale-95"
                       >
-                        <MessageCircle size={16} />
-                        Phản hồi nhận xét
+                        <MessageCircle size={13} /> Phản hồi nhận xét
                       </button>
                     </div>
                   )}
