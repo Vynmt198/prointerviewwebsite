@@ -82,7 +82,7 @@ const MAIN_GROUPS = [
     items: [
       { to: "/admin/content/courses", label: "Khóa học", icon: BookOpen },
       { to: "/admin/content/questions", label: "Phỏng vấn AI", icon: FileQuestion },
-      { to: "/admin/achievements", label: "Thành tựu", icon: Star },
+      { to: "/admin/achievements", label: "Tin tức & Hoạt động", icon: Star },
     ],
   },
   {

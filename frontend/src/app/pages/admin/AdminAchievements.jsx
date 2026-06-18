@@ -18,6 +18,7 @@ export function AdminAchievements() {
   const [formData, setFormData] = useState({
     title: "",
     content: "",
+    category: "Hoạt động",
     imageUrl: "",
     images: [],
     isPublished: true
@@ -44,6 +45,7 @@ export function AdminAchievements() {
       setFormData({
         title: item.title || "",
         content: item.content || "",
+        category: item.category || "Hoạt động",
         imageUrl: item.imageUrl || "",
         images: item.images || [],
         isPublished: item.isPublished ?? true
@@ -53,6 +55,7 @@ export function AdminAchievements() {
       setFormData({
         title: "",
         content: "",
+        category: "Hoạt động",
         imageUrl: "",
         images: [],
         isPublished: true
@@ -76,10 +79,10 @@ export function AdminAchievements() {
       setIsSubmitting(true);
       if (editingId) {
         await achievementsApi.update(editingId, formData);
-        toastApiSuccess("Đã cập nhật thành tựu.");
+        toastApiSuccess("Đã cập nhật tin tức.");
       } else {
         await achievementsApi.create(formData);
-        toastApiSuccess("Đã thêm thành tựu mới.");
+        toastApiSuccess("Đã thêm tin tức mới.");
       }
       
       loadData();
@@ -92,10 +95,10 @@ export function AdminAchievements() {
   };
 
   const handleDelete = async (id) => {
-    if (window.confirm("Bạn có chắc chắn muốn xóa thành tựu này?")) {
+    if (window.confirm("Bạn có chắc chắn muốn xóa tin tức này?")) {
       try {
         await achievementsApi.delete(id);
-        toastApiSuccess("Đã xóa thành tựu.");
+        toastApiSuccess("Đã xóa tin tức.");
         loadData();
       } catch (err) {
         toastApiError(err);
@@ -106,7 +109,7 @@ export function AdminAchievements() {
   const togglePublish = async (item) => {
     try {
       await achievementsApi.update(item._id, { isPublished: !item.isPublished });
-      toastApiSuccess(`Đã ${!item.isPublished ? "hiển thị" : "ẩn"} thành tựu.`);
+      toastApiSuccess(`Đã ${!item.isPublished ? "hiển thị" : "ẩn"} tin tức.`);
       loadData();
     } catch (err) {
       toastApiError(err);
@@ -151,7 +154,7 @@ export function AdminAchievements() {
 
   return (
     <AdminPanel 
-      title="Quản lý Thành tựu" 
+      title="Quản lý Tin tức" 
       description="Thêm, sửa, xóa các cột mốc và sự kiện nổi bật của ProInterview."
     >
       <div className="mb-6 flex justify-end">
@@ -160,7 +163,7 @@ export function AdminAchievements() {
           className="inline-flex items-center gap-2 rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-violet-700"
         >
           <Plus className="h-4 w-4" />
-          Thêm thành tựu
+          Thêm tin tức
         </button>
       </div>
 
@@ -172,6 +175,7 @@ export function AdminAchievements() {
                 <th className="p-4">Hình ảnh</th>
                 <th className="p-4">Tiêu đề</th>
                 <th className="p-4">Ngày tạo</th>
+                <th className="p-4 text-center">Phân loại</th>
                 <th className="p-4 text-center">Trạng thái</th>
                 <th className="p-4 text-right">Thao tác</th>
               </tr>
@@ -180,7 +184,7 @@ export function AdminAchievements() {
               {achievements.length === 0 ? (
                 <tr>
                   <td colSpan={5} className="p-8 text-center text-slate-500 italic">
-                    Chưa có thành tựu nào.
+                    Chưa có tin tức nào.
                   </td>
                 </tr>
               ) : (
@@ -209,6 +213,11 @@ export function AdminAchievements() {
                     </td>
                     <td className="p-4 text-slate-600">
                       {new Date(item.createdAt).toLocaleDateString("vi-VN")}
+                    </td>
+                    <td className="p-4 text-center">
+                      <span className="inline-flex items-center rounded-full bg-violet-100 px-2.5 py-0.5 text-xs font-semibold text-violet-800">
+                        {item.category || "Hoạt động"}
+                      </span>
                     </td>
                     <td className="p-4 text-center">
                       <button
@@ -261,7 +270,7 @@ export function AdminAchievements() {
           <div className="relative w-full max-w-2xl rounded-2xl bg-white p-6 shadow-2xl animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
             <div className="mb-6 flex items-center justify-between">
               <h3 className="text-xl font-black text-slate-900">
-                {editingId ? "Sửa thành tựu" : "Thêm thành tựu mới"}
+                {editingId ? "Sửa tin tức" : "Thêm tin tức mới"}
               </h3>
               <button 
                 onClick={handleCloseModal}
@@ -283,6 +292,21 @@ export function AdminAchievements() {
                   placeholder="Nhập tiêu đề..."
                   className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm font-semibold text-slate-900 outline-none transition focus:border-violet-400 focus:bg-white"
                 />
+              </div>
+
+              <div>
+                <label className="mb-1.5 block text-xs font-bold uppercase tracking-widest text-slate-500">
+                  Phân loại <span className="text-rose-500">*</span>
+                </label>
+                <select 
+                  value={formData.category}
+                  onChange={(e) => setFormData({...formData, category: e.target.value})}
+                  className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm font-semibold text-slate-900 outline-none transition focus:border-violet-400 focus:bg-white"
+                >
+                  <option value="Tin tức">Tin tức</option>
+                  <option value="Hoạt động">Hoạt động</option>
+                  <option value="Sự kiện">Sự kiện</option>
+                </select>
               </div>
 
               <div>
@@ -350,7 +374,7 @@ export function AdminAchievements() {
                   rows={4}
                   value={formData.content}
                   onChange={(e) => setFormData({...formData, content: e.target.value})}
-                  placeholder="Viết mô tả ngắn gọn về thành tựu này..."
+                  placeholder="Viết mô tả ngắn gọn về tin tức này..."
                   className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm font-medium text-slate-900 outline-none transition focus:border-violet-400 focus:bg-white"
                 />
               </div>

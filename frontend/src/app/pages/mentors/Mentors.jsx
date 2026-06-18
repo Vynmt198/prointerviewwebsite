@@ -20,6 +20,7 @@ import { CustomerPageHeader, CustomerPageSplitTitle } from "../../components/lay
 import { CUSTOMER_SHELL_GUTTER, CUSTOMER_SHELL_MAX } from "../../components/layout/customerShellLayout";
 
 import { ListPagination } from "../../components/shared/ListPagination";
+import { ExploreFilterSidebar, FilterSection, FilterRadio } from "../../components/shared/ExploreFilterSidebar";
 
 const EXPERIENCE_OPTIONS = [
   { label: "1-3 năm", value: "1-3" },
@@ -41,60 +42,83 @@ const RATING_OPTIONS = [
 
 const MENTORS_PAGE_SIZE = 8;
 
-function MentorsHorizontalFilter({
+function MentorsExploreSidebar({
   selectedField, onFieldChange,
   selectedExp, onExpChange,
   selectedPriceIndex, onPriceChange,
   selectedRating, onRatingChange,
   onClear, hasFilter
 }) {
+  const filterSectionsOpenOnDesktop = () =>
+    typeof window !== "undefined" && window.matchMedia("(min-width: 1024px)").matches;
+
+  const [openField, setOpenField] = useState(filterSectionsOpenOnDesktop);
+  const [openExp, setOpenExp] = useState(filterSectionsOpenOnDesktop);
+  const [openPrice, setOpenPrice] = useState(filterSectionsOpenOnDesktop);
+  const [openRating, setOpenRating] = useState(filterSectionsOpenOnDesktop);
+
+  const collapseFilterSections = () => {
+    setOpenField(false);
+    setOpenExp(false);
+    setOpenPrice(false);
+    setOpenRating(false);
+  };
+
   return (
-    <div className="flex flex-wrap items-center gap-3">
-      <select 
-        value={selectedField || ""} 
-        onChange={(e) => onFieldChange(e.target.value || null)}
-        className="cursor-pointer appearance-none rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm font-semibold text-slate-700 outline-none transition-all focus:border-violet-400 focus:bg-white focus:ring-4 focus:ring-violet-100 hover:border-slate-300"
-      >
-        <option value="">💼 Tất cả lĩnh vực</option>
-        {MENTOR_FILTER_FIELDS.map(f => <option key={f} value={f}>{f}</option>)}
-      </select>
+    <ExploreFilterSidebar
+      onClear={onClear}
+      hasFilter={hasFilter}
+      mobileCollapsible
+      onMobilePanelOpen={collapseFilterSections}
+    >
+      <FilterSection title="Lĩnh vực" open={openField} onToggle={() => setOpenField((v) => !v)}>
+        {MENTOR_FILTER_FIELDS.map((opt) => (
+          <FilterRadio
+            key={opt}
+            active={selectedField === opt}
+            onClick={() => onFieldChange(selectedField === opt ? null : opt)}
+          >
+            {opt}
+          </FilterRadio>
+        ))}
+      </FilterSection>
 
-      <select 
-        value={selectedExp || ""} 
-        onChange={(e) => onExpChange(e.target.value || null)}
-        className="cursor-pointer appearance-none rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm font-semibold text-slate-700 outline-none transition-all focus:border-violet-400 focus:bg-white focus:ring-4 focus:ring-violet-100 hover:border-slate-300"
-      >
-        <option value="">📈 Mọi kinh nghiệm</option>
-        {EXPERIENCE_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-      </select>
+      <FilterSection title="Kinh nghiệm" open={openExp} onToggle={() => setOpenExp((v) => !v)}>
+        {EXPERIENCE_OPTIONS.map((opt) => (
+          <FilterRadio
+            key={opt.value}
+            active={selectedExp === opt.value}
+            onClick={() => onExpChange(selectedExp === opt.value ? null : opt.value)}
+          >
+            {opt.label}
+          </FilterRadio>
+        ))}
+      </FilterSection>
 
-      <select 
-        value={selectedPriceIndex ?? ""} 
-        onChange={(e) => onPriceChange(e.target.value === "" ? null : Number(e.target.value))}
-        className="cursor-pointer appearance-none rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm font-semibold text-slate-700 outline-none transition-all focus:border-violet-400 focus:bg-white focus:ring-4 focus:ring-violet-100 hover:border-slate-300"
-      >
-        <option value="">💰 Mọi mức giá</option>
-        {PRICE_OPTIONS.map((o, i) => <option key={i} value={i}>{o.label}</option>)}
-      </select>
+      <FilterSection title="Mức giá" open={openPrice} onToggle={() => setOpenPrice((v) => !v)}>
+        {PRICE_OPTIONS.map((opt, i) => (
+          <FilterRadio
+            key={i}
+            active={selectedPriceIndex === i}
+            onClick={() => onPriceChange(selectedPriceIndex === i ? null : i)}
+          >
+            {opt.label}
+          </FilterRadio>
+        ))}
+      </FilterSection>
 
-      <select 
-        value={selectedRating || ""} 
-        onChange={(e) => onRatingChange(e.target.value || null)}
-        className="cursor-pointer appearance-none rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm font-semibold text-slate-700 outline-none transition-all focus:border-violet-400 focus:bg-white focus:ring-4 focus:ring-violet-100 hover:border-slate-300"
-      >
-        <option value="">⭐ Mọi đánh giá</option>
-        {RATING_OPTIONS.map(o => <option key={o.label} value={o.label}>Từ {o.label} sao</option>)}
-      </select>
-
-      {hasFilter && (
-        <button 
-          onClick={onClear}
-          className="rounded-xl px-4 py-2.5 text-sm font-bold text-violet-600 transition-colors hover:bg-violet-50 hover:text-violet-800"
-        >
-          Xóa lọc ✕
-        </button>
-      )}
-    </div>
+      <FilterSection title="Đánh giá" open={openRating} onToggle={() => setOpenRating((v) => !v)}>
+        {RATING_OPTIONS.map((opt) => (
+          <FilterRadio
+            key={opt.label}
+            active={selectedRating === opt.label}
+            onClick={() => onRatingChange(selectedRating === opt.label ? null : opt.label)}
+          >
+            Từ {opt.label} sao
+          </FilterRadio>
+        ))}
+      </FilterSection>
+    </ExploreFilterSidebar>
   );
 }
 
@@ -250,46 +274,46 @@ export function Mentors() {
           />
 
           <div className="rounded-3xl border border-violet-200/80 bg-white px-5 py-5 shadow-sm sm:px-7 sm:py-6">
-            <div className="flex flex-col gap-6">
-              {/* Search & Filters */}
-              <div className="flex flex-col gap-4">
-                <div className="relative">
-                  <MagnifyingGlass className="pointer-events-none absolute left-4 top-1/2 size-5 -translate-y-1/2 text-violet-400" />
-                  <input
-                    type="search"
-                    className="w-full rounded-2xl border-2 border-violet-100 bg-slate-50/50 py-3.5 pl-12 pr-12 text-base font-medium shadow-sm transition-all focus:border-violet-300 focus:bg-white focus:outline-none focus:ring-4 focus:ring-violet-500/10 hover:border-violet-200"
-                    placeholder="Tìm theo tên, ngành, kỹ năng hoặc công ty..."
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                  />
-                  {search ? (
-                    <button
-                      type="button"
-                      onClick={() => setSearch("")}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 rounded-full bg-slate-100 p-1.5 text-slate-400 transition-colors hover:bg-violet-100 hover:text-violet-600"
-                      aria-label="Xóa từ khóa"
-                    >
-                      <X className="size-4" />
-                    </button>
-                  ) : null}
+            <div className="flex flex-col gap-6 lg:flex-row lg:items-start">
+              <MentorsExploreSidebar
+                selectedField={selectedField}
+                onFieldChange={setSelectedField}
+                selectedExp={selectedExp}
+                onExpChange={setSelectedExp}
+                selectedPriceIndex={selectedPriceIndex}
+                onPriceChange={setSelectedPriceIndex}
+                selectedRating={selectedRating}
+                onRatingChange={setSelectedRating}
+                onClear={clearFilters}
+                hasFilter={hasFilter}
+              />
+
+              <div className="min-w-0 flex-1">
+                {/* Search & Filters */}
+                <div className="flex flex-col gap-4 mb-6">
+                  <div className="relative">
+                    <MagnifyingGlass className="pointer-events-none absolute left-4 top-1/2 size-5 -translate-y-1/2 text-violet-400" />
+                    <input
+                      type="search"
+                      className="w-full rounded-2xl border-2 border-violet-100 bg-slate-50/50 py-3.5 pl-12 pr-12 text-base font-medium shadow-sm transition-all focus:border-violet-300 focus:bg-white focus:outline-none focus:ring-4 focus:ring-violet-500/10 hover:border-violet-200"
+                      placeholder="Tìm theo tên, ngành, kỹ năng hoặc công ty..."
+                      value={search}
+                      onChange={(e) => setSearch(e.target.value)}
+                    />
+                    {search ? (
+                      <button
+                        type="button"
+                        onClick={() => setSearch("")}
+                        className="absolute right-4 top-1/2 -translate-y-1/2 rounded-full bg-slate-100 p-1.5 text-slate-400 transition-colors hover:bg-violet-100 hover:text-violet-600"
+                        aria-label="Xóa từ khóa"
+                      >
+                        <X className="size-4" />
+                      </button>
+                    ) : null}
+                  </div>
                 </div>
 
-                <MentorsHorizontalFilter
-                  selectedField={selectedField}
-                  onFieldChange={setSelectedField}
-                  selectedExp={selectedExp}
-                  onExpChange={setSelectedExp}
-                  selectedPriceIndex={selectedPriceIndex}
-                  onPriceChange={setSelectedPriceIndex}
-                  selectedRating={selectedRating}
-                  onRatingChange={setSelectedRating}
-                  onClear={clearFilters}
-                  hasFilter={hasFilter}
-                />
-              </div>
-
-              {/* Results Area */}
-              <div className="min-w-0 flex-1">
+                {/* Results Area */}
 
                 {hasFilter ? (
                   <div className="mb-4 rounded-xl bg-gradient-to-r from-violet-100/80 via-violet-50/50 to-slate-50 px-4 py-3">

@@ -44,7 +44,7 @@ const PLANS = [
     title: "Basic",
     subtitle: "Miễn phí mãi mãi",
     features: [
-      "Phân tích CV & JD không giới hạn",
+      "10 lượt phân tích CV & JD",
       "1 buổi AI Interview trải nghiệm (3 câu hỏi)",
     ],
     cta: "Bắt đầu ngay",
@@ -58,7 +58,7 @@ const PLANS = [
     title: "Pro",
     subtitle: "Dành cho ứng viên chủ động",
     features: [
-      "Phân tích CV & JD không giới hạn",
+      "30 lượt phân tích CV & JD",
       "4 phiên AI Interview thực chiến (5 câu hỏi)",
       "Nhận phản hồi chi tiết sau mỗi phiên",
     ],
