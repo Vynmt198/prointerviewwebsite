@@ -30,11 +30,11 @@ import {
   adminTdCell,
   adminThCell,
 } from "../../components/admin/AdminPageShell.jsx";
-import { adminApi } from "../../utils/adminApi.js";
-import { toastApiError, toastApiSuccess, tryApi } from "../../utils/apiToast.js";
-import { markAdminCoursePreviewReturn } from "../../utils/adminCoursePreview.js";
-import { mediaSrc, DEFAULT_COURSE_THUMB, avatarSrc } from "../../utils/mediaUrl.js";
-import { getInitials } from "../../utils/auth.js";
+import { adminApi } from "../../api/adminApi.js";
+import { toastApiError, toastApiSuccess, tryApi } from "../../utils/shared/apiToast.js";
+import { markAdminCoursePreviewReturn } from "../../utils/admin/adminCoursePreview.js";
+import { mediaSrc, DEFAULT_COURSE_THUMB, avatarSrc } from "../../utils/shared/mediaUrl.js";
+import { getInitials } from "../../utils/auth/auth.js";
 
 const LEVEL_LABELS = {
   basic: "Cơ bản",

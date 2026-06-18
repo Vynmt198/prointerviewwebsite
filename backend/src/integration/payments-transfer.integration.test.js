@@ -149,14 +149,15 @@ describe("Subscription bank transfer (CK)", () => {
       method: "POST",
       headers: bearer(customer._id),
       body: JSON.stringify({
-        amount: 299000,
         planKey: "starter_pro",
+        billing: "monthly",
         orderNum,
       }),
     });
     assert.equal(pendingRes.status, 201);
     const pendingBody = await pendingRes.json();
     assert.equal(pendingBody.success, true);
+    assert.equal(pendingBody.amount, 99000);
     assert.ok(pendingBody.paymentId);
 
     const paymentId = pendingBody.paymentId;
@@ -164,6 +165,7 @@ describe("Subscription bank transfer (CK)", () => {
     assert.equal(pendingRow.status, "pending");
     assert.equal(pendingRow.type, "subscription");
     assert.equal(pendingRow.provider, "transfer");
+    assert.equal(pendingRow.amount, 99000);
 
     const submitRes = await fetch(
       `${http.baseUrl}/api/payments/subscription/${paymentId}/submit-transfer`,
@@ -209,7 +211,7 @@ describe("Subscription bank transfer (CK)", () => {
     const pendingRes = await fetch(`${http.baseUrl}/api/payments/subscription/transfer-pending`, {
       method: "POST",
       headers: bearer(customer._id),
-      body: JSON.stringify({ amount: 199000, planKey: "starter_pro", orderNum }),
+      body: JSON.stringify({ planKey: "starter_pro", billing: "monthly", orderNum }),
     });
     const { paymentId } = await pendingRes.json();
 
@@ -234,9 +236,27 @@ describe("Subscription bank transfer (CK)", () => {
     const res = await fetch(`${http.baseUrl}/api/payments/subscription/transfer-pending`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ amount: 1, planKey: "starter_pro", orderNum: "X" }),
+      body: JSON.stringify({ planKey: "starter_pro", billing: "monthly", orderNum: "X" }),
     });
     assert.equal(res.status, 401);
+  });
+
+  it("400 khi amount client không khớp bảng giá", async () => {
+    const customer = await createCustomer();
+    const res = await fetch(`${http.baseUrl}/api/payments/subscription/transfer-pending`, {
+      method: "POST",
+      headers: bearer(customer._id),
+      body: JSON.stringify({
+        amount: 1000,
+        planKey: "starter_pro",
+        billing: "monthly",
+        orderNum: `PI-TAMPER-${Date.now()}`,
+      }),
+    });
+    assert.equal(res.status, 400);
+    const body = await res.json();
+    assert.equal(body.success, false);
+    assert.match(body.error, /bảng giá/i);
   });
 });
 
@@ -357,7 +377,7 @@ describe("CK — lỗi nghiệp vụ & phân quyền", () => {
     const res = await fetch(`${http.baseUrl}/api/payments/subscription/transfer-pending`, {
       method: "POST",
       headers: bearer(customer._id),
-      body: JSON.stringify({ amount: 299000, planKey: "starter_pro", orderNum: "" }),
+      body: JSON.stringify({ planKey: "starter_pro", billing: "monthly", orderNum: "" }),
     });
     assert.equal(res.status, 400);
     const body = await res.json();
@@ -371,7 +391,7 @@ describe("CK — lỗi nghiệp vụ & phân quyền", () => {
     const pendingRes = await fetch(`${http.baseUrl}/api/payments/subscription/transfer-pending`, {
       method: "POST",
       headers: bearer(customer._id),
-      body: JSON.stringify({ amount: 299000, planKey: "starter_pro", orderNum }),
+      body: JSON.stringify({ planKey: "starter_pro", billing: "monthly", orderNum }),
     });
     const { paymentId } = await pendingRes.json();
 

@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router";
 import { Users, Search, Filter, CheckCircle, XCircle, Eye, ShieldCheck, Star } from "lucide-react";
-import { adminApi } from "../../utils/adminApi";
-import { tryApi } from "../../utils/apiToast";
+import { adminApi } from "../../api/adminApi.js";
+import { tryApi } from "../../utils/shared/apiToast.js";
 
 export function AdminMentors() {
   const [mentors, setMentors] = useState([]);

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { AdminPanel } from "./AdminPanel.jsx";
 import { achievementsApi } from "../../api/achievementsApi.js";
 import { Plus, Edit2, Trash2, Check, X, Image as ImageIcon, UploadCloud, Loader2 } from "lucide-react";
-import { toastApiSuccess, toastApiError } from "../../utils/apiToast";
+import { toastApiSuccess, toastApiError } from "../../utils/shared/apiToast.js";
 
 export function AdminAchievements() {
   const [achievements, setAchievements] = useState([]);

@@ -21,13 +21,13 @@ import {
   MessageCircle as ChatCircle,
   Star,
 } from "lucide-react";
-import { getPlans, hasAuthCredentials } from "../../utils/auth";
-import { addInterviewRecord } from "../../utils/history";
+import { getPlans, hasAuthCredentials } from "../../utils/auth/auth.js";
+import { addInterviewRecord } from "../../utils/shared/history.js";
 import {
   saveAnswer,
   completeInterviewSession,
   analyzeFaceSnapshot,
-} from "../../utils/interviewsApi";
+} from "../../api/interviewsApi.js";
 import { useDIDStream } from "../../hooks/useDIDStream";
 import { useFaceAnalysis } from "../../hooks/useFaceAnalysis";
 // AILipSyncAvatar removed — portrait now renders as full-panel img in Nhánh 1/2

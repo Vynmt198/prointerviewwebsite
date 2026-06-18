@@ -38,14 +38,14 @@ import {
   submitLessonQuestion,
   fetchLessonNotes,
   saveLessonNotes,
-} from "../../utils/courseApi";
-import { enrollmentApi } from "../../utils/enrollmentApi";
-import { toastApiError, toastApiSuccess } from "../../utils/apiToast";
-import { avatarSrc, mediaSrc, DEFAULT_COURSE_THUMB } from "../../utils/mediaUrl";
-import { enrollmentAccessGranted } from "../../utils/enrollmentAccess.js";
-import { getUser } from "../../utils/auth";
+} from "../../api/courseApi.js";
+import { enrollmentApi } from "../../api/enrollmentApi.js";
+import { toastApiError, toastApiSuccess } from "../../utils/shared/apiToast.js";
+import { avatarSrc, mediaSrc, DEFAULT_COURSE_THUMB } from "../../utils/shared/mediaUrl.js";
+import { enrollmentAccessGranted } from "../../utils/course/enrollmentAccess.js";
+import { getUser } from "../../utils/auth/auth.js";
 import { landingPrimaryButtonClass } from "../../constants/landingTheme";
-import { readLearningDarkMode, writeLearningDarkMode } from "../../utils/learningDarkMode";
+import { readLearningDarkMode, writeLearningDarkMode } from "../../utils/shared/learningDarkMode.js";
 
 /* ── Helpers ────────────────────────────────────────────────── */
 const formatDuration = (minutes) => {

@@ -38,7 +38,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
-import { getUser, logout, getInitials, getDisplayName } from "../../utils/auth";
+import { getUser, logout, getInitials, getDisplayName } from "../../utils/auth/auth.js";
 import { SidebarBrandButton } from "./SidebarBrandButton";
 
 /** Thứ tự nhóm & mục: ưu tiên vận hành hàng ngày → tiền → người dùng → nội dung → báo cáo */

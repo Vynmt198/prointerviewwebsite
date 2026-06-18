@@ -1,13 +1,19 @@
 # Cấu trúc `src/app/`
 
-| Thư mục | Mô tả | Chi tiết |
-|:--|:--|:--|
-| **`pages/`** | Màn hình theo nhóm (auth, booking, mentor, …) | [`pages/README.md`](./pages/README.md) |
-| **`components/`** | UI tái sử dụng (layout, ui, interview, …) | [`components/README.md`](./components/README.md) |
-| **`data/`** | Mock / seed / khóa học tĩnh | [`data/README.md`](./data/README.md) |
-| **`utils/`** | API client, auth, mock booking, history | [`utils/README.md`](./utils/README.md) |
-| **`hooks/`** | Hook React (vd. D-ID) | — |
-| **`routes.js`** | Định tuyến HashRouter | — |
-| **`App.jsx`** | Root + providers | — |
+| Thư mục | Mô tả |
+|:--------|:------|
+| **`pages/`** | Màn hình theo route (auth, booking, mentor, …) |
+| **`components/`** | UI tái sử dụng theo domain + `ui/` (shadcn) |
+| **`api/`** | Client gọi `/api/*` — xem [`api/README.md`](./api/README.md) |
+| **`utils/`** | Auth, mapper, helper — xem [`utils/README.md`](./utils/README.md) |
+| **`hooks/`** | Hook React (`useAuthSession`, `useDIDStream`, …) |
+| **`constants/`** | Hằng số UI / copy |
+| **`data/`** | Mock / seed tĩnh |
+| **`routes.js`** | Browser Router |
+| **`App.jsx`** | Root + khôi phục phiên |
 
-File **`.jsx`**: thường là component có giao diện. File **`.js`**: logic không JSX hoặc module thuần — **đều thuộc FE**, không phải lỗi cấu trúc.
+**Quy ước import**
+
+- API: `from "../api/mentorApi.js"` hoặc `from "../../api/cvApi.js"`
+- Auth: `from "../utils/auth/auth.js"`
+- Helper: `from "../utils/booking/bookingMappers.js"`

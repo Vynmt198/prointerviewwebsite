@@ -158,6 +158,40 @@ describe("Security integration", () => {
     assert.equal(meNew.status, 200);
   });
 
+  it("logout bằng refreshToken khi không có Bearer", async () => {
+    const plain = "RefreshLogout#123";
+    const passwordHash = await bcrypt.hash(plain, 10);
+    const user = await User.create({
+      name: "Refresh Logout",
+      email: `refresh-logout-${Date.now()}@test.local`,
+      passwordHash,
+      role: "customer",
+    });
+
+    const loginRes = await fetch(`${http.baseUrl}/api/auth/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Accept: "application/json" },
+      body: JSON.stringify({ email: user.email, password: plain }),
+    });
+    const loginBody = await loginRes.json();
+    const refreshToken = loginBody.refreshToken;
+    assert.ok(refreshToken);
+
+    const logoutRes = await fetch(`${http.baseUrl}/api/auth/logout`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Accept: "application/json" },
+      body: JSON.stringify({ refreshToken }),
+    });
+    assert.equal(logoutRes.status, 200);
+
+    const refreshAgain = await fetch(`${http.baseUrl}/api/auth/refresh`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Accept: "application/json" },
+      body: JSON.stringify({ refreshToken }),
+    });
+    assert.equal(refreshAgain.status, 401);
+  });
+
   it("route admin/mentor từ chối user sai quyền", async () => {
     const customer = await User.create({
       name: "Customer Role",

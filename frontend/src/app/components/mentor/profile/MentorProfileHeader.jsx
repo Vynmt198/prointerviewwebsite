@@ -10,7 +10,7 @@ import {
   mentorDisplayTitle,
   mentorFieldTags,
   mentorLocationLabel,
-} from "../../../utils/mentorProfileHelpers";
+} from "../../../utils/mentor/mentorProfileHelpers.js";
 
 function InfoRow({ icon: Icon, label, value }) {
   if (!value) return null;

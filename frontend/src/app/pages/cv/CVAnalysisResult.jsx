@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useLocation, useParams } from "react-router";
 import { Loader2 } from "lucide-react";
-import { getPlans, isLoggedIn } from "../../utils/auth";
-import { buildLoginPath } from "../../utils/authGate";
-import { fetchCvAnalysisById } from "../../utils/cvApi";
+import { getPlans, isLoggedIn } from "../../utils/auth/auth.js";
+import { buildLoginPath } from "../../utils/auth/authGate.js";
+import { fetchCvAnalysisById } from "../../api/cvApi.js";
 import { CVAnalysisResultContent } from "../../components/cv/CVAnalysisResultContent";
 import { CvJdAnalysisPage } from "../../components/cv/CvJdAnalysisFrame";
 import {

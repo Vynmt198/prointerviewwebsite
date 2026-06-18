@@ -1,7 +1,7 @@
 import React from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router";
 import { AnimatePresence } from "motion/react";
-import { fetchMentor, fetchMentorPublicReviews } from "../../utils/mentorApi";
+import { fetchMentor, fetchMentorPublicReviews } from "../../api/mentorApi.js";
 import { ReportMentorModal } from "../../components/modals/ReportMentorModal";
 import { MentorPageShell } from "../../components/mentor/MentorPageShell";
 import { MentorProfileHeader } from "../../components/mentor/profile/MentorProfileHeader";
@@ -12,15 +12,15 @@ import {
   MentorSkillsSection,
   MentorReviewsSection,
 } from "../../components/mentor/profile/MentorProfileSections";
-import { toastApiError } from "../../utils/apiToast";
+import { toastApiError } from "../../utils/shared/apiToast.js";
 import {
   buildReviewRatingSummary,
   buildWorkEntriesForDisplay,
   formatRecurringScheduleRows,
   mentorFieldTags,
-} from "../../utils/mentorProfileHelpers";
+} from "../../utils/mentor/mentorProfileHelpers.js";
 import { CUSTOMER_SHELL_GUTTER, CUSTOMER_SHELL_MAX } from "../../components/layout/customerShellLayout";
-import { formatEducationDisplay } from "../../utils/profileEducationHistory";
+import { formatEducationDisplay } from "../../utils/profile/profileEducationHistory.js";
 
 const PROFILE_TABS = [
   { id: "intro", label: "Giới thiệu" },

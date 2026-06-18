@@ -17,7 +17,7 @@ import {
   RotateCcw as History,
 } from "lucide-react";
 import { CVDocumentPreview } from "./CVDocumentPreview";
-import { formatSuggestionDisplayReason } from "../../utils/cvMappers.js";
+import { formatSuggestionDisplayReason } from "../../utils/cv/cvMappers.js";
 import {
   CV_FIELD_ANALYSIS_PATH,
   CV_FIELD_HISTORY_PATH,

@@ -9,9 +9,9 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { MentorListCard } from "../../components/mentor/MentorListCard";
-import { fetchMentors } from "../../utils/mentorApi";
-import { fetchRebookCredit } from "../../utils/bookingsApi";
-import { toastApiError } from "../../utils/apiToast";
+import { fetchMentors } from "../../api/mentorApi.js";
+import { fetchRebookCredit } from "../../api/bookingsApi.js";
+import { toastApiError } from "../../utils/shared/apiToast.js";
 import {
   MENTOR_FILTER_FIELDS,
   mentorMatchesFilterField,

@@ -20,15 +20,15 @@ import {
   Clock3,
   Globe
 } from "lucide-react";
-import { getUser } from "../../utils/auth";
+import { getUser } from "../../utils/auth/auth.js";
 import { MentorPageShell } from "../../components/mentor/MentorPageShell";
-import { listMentorBookings } from "../../utils/bookingsApi";
-import { fetchMentorAvailability, updateMyMentorAvailability } from "../../utils/mentorApi";
-import { toastApiError, toastApiSuccess } from "../../utils/apiToast";
+import { listMentorBookings } from "../../api/bookingsApi.js";
+import { fetchMentorAvailability, updateMyMentorAvailability } from "../../api/mentorApi.js";
+import { toastApiError, toastApiSuccess } from "../../utils/shared/apiToast.js";
 import { AppSelect } from "../../components/ui/AppSelect";
 
-import { avatarSrc, DEFAULT_AVATAR } from "../../utils/mediaUrl";
-import { sessionTypeLabel } from "../../utils/sessionTypeLabels";
+import { avatarSrc, DEFAULT_AVATAR } from "../../utils/shared/mediaUrl.js";
+import { sessionTypeLabel } from "../../utils/booking/sessionTypeLabels.js";
 
 const BOOKING_STATUS_LABELS = {
   pending: "Chờ xác nhận",
@@ -462,9 +462,6 @@ export function MentorSchedule() {
         {/* Header — compact */}
         <div className="mb-4 flex shrink-0 flex-col gap-3 overflow-visible pt-1 sm:flex-row sm:items-center sm:justify-between">
           <div className="min-w-0 overflow-visible">
-            <p className="mentor-eyebrow mb-1 flex items-center gap-2">
-              <CalendarIcon size={12} /> Lịch mentor
-            </p>
             <h1 className="font-headline overflow-visible pb-0.5 text-2xl font-black leading-[1.2] tracking-tight text-slate-900 sm:text-3xl">
                <span>LỊCH TRÌNH</span>{" "}
                <span className="text-violet-700">HỆ THỐNG</span>

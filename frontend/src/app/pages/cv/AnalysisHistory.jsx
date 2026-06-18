@@ -16,9 +16,9 @@ import {
   ChevronDown,
   ChevronUp,
 } from "lucide-react";
-import { fetchCvAnalyses, fetchCvAnalysisById } from "../../utils/cvApi";
-import { hasAuthCredentials, isLoggedIn } from "../../utils/auth";
-import { buildLoginPath } from "../../utils/authGate";
+import { fetchCvAnalyses, fetchCvAnalysisById } from "../../api/cvApi.js";
+import { hasAuthCredentials, isLoggedIn } from "../../utils/auth/auth.js";
+import { buildLoginPath } from "../../utils/auth/authGate.js";
 import { CvJdAnalysisPage, cvAnalysisPageHeader } from "../../components/cv/CvJdAnalysisFrame";
 import {
   CV_JD_ANALYSIS_PATH,

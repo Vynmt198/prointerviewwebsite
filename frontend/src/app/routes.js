@@ -7,7 +7,7 @@ import { ForgotPassword } from "./pages/auth/ForgotPassword";
 import { ResetPassword } from "./pages/auth/ResetPassword";
 import { VerifyEmail } from "./pages/auth/VerifyEmail";
 import { Checkout } from "./pages/booking/Checkout";
-import { getUser } from "./utils/auth.js";
+import { getUser } from "./utils/auth/auth.js";
 import { CVAnalysisHub } from "./pages/cv/CVAnalysisHub";
 import { CVAnalysis } from "./pages/cv/CVAnalysis";
 import { CVAnalysisResult } from "./pages/cv/CVAnalysisResult";
@@ -61,7 +61,7 @@ import { AdminCoursePayments } from "./pages/admin/AdminCoursePayments.jsx";
 import { AdminSubscriptionPayments } from "./pages/admin/AdminSubscriptionPayments.jsx";
 import { AdminMentorsPending } from "./pages/admin/AdminMentorsPending.jsx";
 import { ProtectedOutlet } from "./components/auth/ProtectedOutlet.jsx";
-import { requireAuthLoader, customerOnlyLoader } from "./utils/requireAuthLoader.js";
+import { requireAuthLoader, requireCustomerAuthLoader } from "./utils/auth/requireAuthLoader.js";
 import {
   AdminUserDetail,
   AdminFinance,
@@ -122,10 +122,10 @@ export const router = createBrowserRouter([
           );
         },
       },
-      { path: "interview", loader: customerOnlyLoader, Component: Interview },
-      { path: "interview/gender", loader: customerOnlyLoader, Component: AIGenderSelection },
-      { path: "interview/room", loader: customerOnlyLoader, Component: InterviewRoom },
-      { path: "interview/feedback", loader: customerOnlyLoader, Component: InterviewFeedback },
+      { path: "interview", loader: requireCustomerAuthLoader, Component: Interview },
+      { path: "interview/gender", loader: requireCustomerAuthLoader, Component: AIGenderSelection },
+      { path: "interview/room", loader: requireCustomerAuthLoader, Component: InterviewRoom },
+      { path: "interview/feedback", loader: requireCustomerAuthLoader, Component: InterviewFeedback },
       {
         loader: requireAuthLoader,
         Component: ProtectedOutlet,

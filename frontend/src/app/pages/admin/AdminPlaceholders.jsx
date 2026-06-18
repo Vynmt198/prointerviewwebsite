@@ -36,8 +36,8 @@ import {
   adminTdCell,
   adminThCell,
 } from "../../components/admin/AdminPageShell.jsx";
-import { adminApi } from "../../utils/adminApi.js";
-import { toastApiError, toastApiSuccess, tryApi } from "../../utils/apiToast";
+import { adminApi } from "../../api/adminApi.js";
+import { toastApiError, toastApiSuccess, tryApi } from "../../utils/shared/apiToast.js";
 import { AnimatePresence, motion } from "motion/react";
 
 function vnd(amount) {

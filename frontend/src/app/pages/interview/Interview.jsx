@@ -20,11 +20,11 @@ import {
   ChevronDown,
   FileText,
 } from "lucide-react";
-import { getLatestCVAnalysisAsync, getUploadedCV, saveUploadedCV } from "../../utils/history";
-import { hasAuthCredentials, isLoggedIn } from "../../utils/auth";
-import { buildLoginPath } from "../../utils/authGate";
-import { generateInterviewQuestions, extractCvTextFromFile, createInterviewSession, pregenerateInterviewVideos } from "../../utils/interviewsApi";
-import { fetchCvAnalysisById } from "../../utils/cvApi";
+import { getLatestCVAnalysisAsync, getUploadedCV, saveUploadedCV } from "../../utils/shared/history.js";
+import { hasAuthCredentials, isLoggedIn } from "../../utils/auth/auth.js";
+import { buildLoginPath } from "../../utils/auth/authGate.js";
+import { generateInterviewQuestions, extractCvTextFromFile, createInterviewSession, pregenerateInterviewVideos } from "../../api/interviewsApi.js";
+import { fetchCvAnalysisById } from "../../api/cvApi.js";
 import { InterviewHistoryPanel } from "../../components/interview/InterviewHistoryPanel";
 import { InterviewPageTabs } from "../../components/interview/InterviewPageTabs";
 import { CV_JD_CARD_CLASS } from "../../components/cv/CvJdAnalysisFrame";

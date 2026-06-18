@@ -31,11 +31,12 @@ import {
   AreaChart,
   Area
 } from "recharts";
-import { getUser } from "../../utils/auth";
+import { getUser } from "../../utils/auth/auth.js";
 import { MentorPageShell } from "../../components/mentor/MentorPageShell";
-import { fetchMentorAnalytics } from "../../utils/mentorApi";
-import { toastApiError } from "../../utils/apiToast";
-import { avatarSrc } from "../../utils/mediaUrl";
+import { MentorStatMiniGrid, MentorStatFrame } from "../../components/mentor/MentorStatFrames";
+import { fetchMentorAnalytics } from "../../api/mentorApi.js";
+import { toastApiError } from "../../utils/shared/apiToast.js";
+import { avatarSrc } from "../../utils/shared/mediaUrl.js";
 
 const MENTEE_TREND_STYLES = {
   improving: {
@@ -175,43 +176,6 @@ export function MentorAnalytics() {
     return v != null && v !== "" ? v : fallback;
   };
 
-  const statCards = [
-    {
-      label: "Buổi mentor",
-      value: stats.totalSessions,
-      trend: trendOrDash("sessionsTrendLabel"),
-      trendTitle: "So với 7 ngày trước",
-      icon: ChartLineIcon,
-      color: "#8037f4",
-    },
-    {
-      label: "Tổng mentee",
-      value: stats.totalMentees,
-      trend: trendOrDash("menteesTrendLabel"),
-      trendTitle: "Mentee hoạt động: 30 ngày gần nhất so với 30 ngày trước",
-      icon: Users,
-      color: "#93f72b",
-    },
-    {
-      label: "Đang cải thiện",
-      value: stats.improvingCount,
-      trend: trendOrDash("improvingTrendLabel"),
-      trendTitle: "Số mentee đang cải thiện: so sánh 30 ngày",
-      icon: Target,
-      color: "#f59e0b",
-    },
-    {
-      label: "Điểm trung bình",
-      value: Number(stats.topAvgScore || 0).toFixed(1),
-      trend: trends.scoreTrendLabel || trends.scoreScaleLabel || "/ 5.0",
-      trendTitle: trends.scoreTrendLabel
-        ? "Điểm đánh giá trung bình: 30 ngày gần nhất so với 30 ngày trước"
-        : "Thang điểm tối đa",
-      icon: Star,
-      color: "#8037f4",
-    },
-  ];
-
   // Prepare chart data
   const weeklyChartData = (analytics?.weeklyStats || []).map((w) => ({
     week: w.week,
@@ -224,120 +188,141 @@ export function MentorAnalytics() {
     m.menteeName.toLowerCase().includes(search.toLowerCase())
   );
 
-  const cardSchemes = [
-    { cardCls: "bg-white border border-slate-100", iconBg: "#8037f418", iconColor: "#8037f4", onDark: false, trendCls: "text-slate-500" },
-    { cardCls: "bg-[#c4ff47]", iconBg: "#1a1a1a18", iconColor: "#1a1a1a", onDark: false, trendCls: "text-slate-700" },
-    { cardCls: "bg-violet-600", iconBg: "#ffffff20", iconColor: "#fff", onDark: true, trendCls: "text-violet-200" },
-    { cardCls: "bg-[#1a1a2e]", iconBg: "#f59e0b22", iconColor: "#f59e0b", onDark: true, trendCls: "text-slate-400" },
-  ];
-
   return (
-    <MentorPageShell bottomPad="pb-32">
-      <div className="relative z-10 mx-auto max-w-7xl px-6 pb-8">
+    <MentorPageShell bottomPad="pb-20" showAmbient={false} className="!bg-[#f8f9fc]">
+      <div className="relative z-10 mx-auto max-w-[1280px] px-4 pb-12 sm:px-6 lg:px-10">
+        <motion.header
+          initial={{ opacity: 0, y: -12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+          className="mb-6 pt-2 sm:mb-8"
+        >
+          <h1 className="font-headline text-[clamp(1.75rem,4vw,2.75rem)] font-black leading-tight tracking-tight text-slate-900">
+            Phân tích <span className="text-[#8037f4]">&amp; thống kê</span>
+          </h1>
+          <p className="mt-2 max-w-xl text-sm text-slate-500">
+            Theo dõi tiến bộ và hiệu suất của mentee.
+          </p>
+        </motion.header>
 
-        {/* ── Hero banner ── */}
-        <section className="relative mb-8 overflow-hidden rounded-[28px] bg-gradient-to-br from-[#6d28d9] via-[#8037f4] to-[#7c3aed] px-6 py-7 sm:px-8 sm:py-8">
-          <div className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-white/10" aria-hidden />
-          <div className="pointer-events-none absolute bottom-0 right-24 h-28 w-28 rounded-full bg-white/5" aria-hidden />
-          <div className="pointer-events-none absolute -left-6 top-1/2 h-24 w-24 -translate-y-1/2 rounded-full bg-[#93f72b]/10" aria-hidden />
-          <div className="pointer-events-none absolute right-8 top-1/2 hidden h-32 w-32 -translate-y-1/2 rounded-full border border-white/10 sm:block" aria-hidden />
-          <div className="relative max-w-3xl">
-            <p className="mentor-eyebrow mentor-eyebrow--on-dark mb-2 flex items-center gap-2">
-              <TrendUp size={12} /> Phân tích
-            </p>
-            <h1 className="font-headline text-2xl font-black tracking-tight text-white sm:text-3xl">
-              Phân tích{" "}
-              <span className="text-[#93f72b]">&amp; thống kê</span>
-            </h1>
-            <p className="mt-2 max-w-2xl text-sm font-medium leading-relaxed text-violet-100">
-              Theo dõi tiến bộ mentee của bạn — số liệu buổi mentor, kỹ năng STAR và xu hướng cải thiện theo thời gian.
-            </p>
-          </div>
-        </section>
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.45, delay: 0.06, ease: [0.22, 1, 0.36, 1] }}
+        >
+          <MentorStatMiniGrid>
+            <MentorStatFrame
+              index={1}
+              compact
+              accent="purple"
+              value={String(stats.totalSessions || 0)}
+              title="Buổi mentor"
+              cornerIcon={ChartLineIcon}
+            />
+            <MentorStatFrame
+              index={2}
+              compact
+              accent="lime"
+              value={String(stats.totalMentees || 0)}
+              title="Tổng mentee"
+              cornerIcon={Users}
+            />
+            <MentorStatFrame
+              index={3}
+              compact
+              accent="purple"
+              value={String(stats.improvingCount || 0)}
+              title="Đang cải thiện"
+              cornerIcon={Target}
+            />
+            <MentorStatFrame
+              index={4}
+              compact
+              accent="purple"
+              value={Number(stats.topAvgScore || 0).toFixed(1)}
+              title="Điểm trung bình"
+              cornerIcon={Star}
+            />
+          </MentorStatMiniGrid>
+        </motion.div>
 
-        {/* ── Stat cards ── */}
-        <div className="mb-8 grid grid-cols-2 gap-4 lg:grid-cols-4">
-          {statCards.map((stat, i) => {
-            const s = cardSchemes[i] || cardSchemes[0];
-            return (
-              <div key={i} className={`flex items-center gap-4 rounded-2xl p-5 shadow-[0_8px_24px_rgba(15,23,42,0.06)] ${s.cardCls}`}>
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full" style={{ backgroundColor: s.iconBg }}>
-                  <stat.icon size={22} style={{ color: s.iconColor }} />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className={`mentor-stat-num mentor-stat-num--hero ${s.onDark ? "mentor-stat-num--on-dark" : ""}`}>{stat.value}</p>
-                  <p className={`mentor-label mt-1 ${s.onDark ? "mentor-label--on-dark" : ""}`}>{stat.label}</p>
-                </div>
-                <span className={`shrink-0 text-[10px] font-bold ${s.trendCls}`} title={stat.trendTitle}>
-                  {stat.trend}
-                </span>
-              </div>
-            );
-          })}
-        </div>
-
-        {/* ── Charts grid ── */}
-        <div className="mb-6 grid gap-5 lg:grid-cols-12">
-
-          {/* Area chart — dark bg */}
-          <div className="lg:col-span-7 overflow-hidden rounded-2xl bg-[#1a1a2e] p-5 shadow-[0_8px_24px_rgba(15,23,42,0.06)]">
-            <div className="mb-4 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#93f72b]/20">
-                  <ChartLineIcon size={15} className="text-[#93f72b]" />
-                </div>
-                <span className="text-sm font-bold text-white">Hiệu suất đào tạo tuần</span>
-              </div>
-              <span className="rounded-lg bg-[#93f72b]/15 px-3 py-1 text-[11px] font-normal text-[#93f72b]">
-                6 tuần gần nhất
-              </span>
+        <div className="mb-6 grid gap-6 lg:grid-cols-12">
+          <motion.section
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.12, ease: [0.22, 1, 0.36, 1] }}
+            className="overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-[0_1px_3px_rgba(15,23,42,0.04)] lg:col-span-7"
+          >
+            <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4 sm:px-6">
+              <h2 className="font-headline text-sm font-black text-slate-900">
+                <span className="mr-2 text-[#8037f4]">01</span>
+                Hiệu suất đào tạo tuần
+              </h2>
+              <span className="text-xs font-medium text-slate-400">6 tuần gần nhất</span>
             </div>
-            <div className="h-[300px]">
+            <div className="h-[320px] p-4 sm:p-6">
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={weeklyChartData}>
                   <defs>
-                    <linearGradient id="limeGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#93f72b" stopOpacity={0.35} />
-                      <stop offset="95%" stopColor="#93f72b" stopOpacity={0} />
+                    <linearGradient id="mentorAnalyticsPurple" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#8037f4" stopOpacity={0.22} />
+                      <stop offset="95%" stopColor="#8037f4" stopOpacity={0} />
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
-                  <XAxis dataKey="week" axisLine={false} tickLine={false} tick={{ fill: "#94a3b8", fontSize: 10, fontWeight: 600 }} dy={8} />
-                  <YAxis axisLine={false} tickLine={false} tick={{ fill: "#94a3b8", fontSize: 10, fontWeight: 600 }} />
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(148,163,184,0.22)" />
+                  <XAxis dataKey="week" axisLine={false} tickLine={false} tick={{ fill: "#94a3b8", fontSize: 10, fontWeight: 700 }} dy={10} />
+                  <YAxis axisLine={false} tickLine={false} tick={{ fill: "#94a3b8", fontSize: 10, fontWeight: 700 }} />
                   <Tooltip
-                    contentStyle={{ background: "#1e293b", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "12px" }}
-                    itemStyle={{ color: "#fff", fontSize: "12px" }}
+                    contentStyle={{
+                      background: "#ffffff",
+                      border: "1px solid rgba(226,232,240,0.9)",
+                      borderRadius: "14px",
+                      fontWeight: 700,
+                    }}
+                    itemStyle={{ color: "#0f172a", fontSize: "12px" }}
                   />
-                  <Area type="monotone" dataKey="Số buổi" stroke="#93f72b" strokeWidth={3} fillOpacity={1} fill="url(#limeGradient)" />
+                  <Area type="monotone" dataKey="Số buổi" stroke="#8037f4" strokeWidth={3} fill="url(#mentorAnalyticsPurple)" />
                 </AreaChart>
               </ResponsiveContainer>
             </div>
-          </div>
+          </motion.section>
 
-          {/* Radar chart — white card */}
-          <div className="lg:col-span-5 flex flex-col overflow-hidden rounded-2xl border border-slate-100 bg-white p-5 shadow-[0_8px_24px_rgba(15,23,42,0.06)]">
-            <div className="mb-2 flex items-center gap-2">
-              <Star size={15} className="text-violet-600" />
-              <span className="text-sm font-bold text-slate-900">Kỹ năng tập trung</span>
+          <motion.section
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.16, ease: [0.22, 1, 0.36, 1] }}
+            className="flex flex-col overflow-hidden rounded-2xl border border-[#8037f4]/15 bg-[#8037f4]/[0.05] shadow-[0_1px_3px_rgba(15,23,42,0.04)] lg:col-span-5"
+          >
+            <div className="flex items-center justify-between border-b border-[#8037f4]/10 px-5 py-4 sm:px-6">
+              <h2 className="font-headline text-sm font-black text-slate-900">
+                <span className="mr-2 text-[#8037f4]">02</span>
+                Kỹ năng tập trung
+              </h2>
             </div>
-            <div className="flex-1" style={{ minHeight: 260 }}>
+            <div className="flex-1 p-4 sm:p-6" style={{ minHeight: 320 }}>
               {radarHasValues ? (
                 <ResponsiveContainer width="100%" height="100%">
-                  <RadarChart cx="50%" cy="50%" outerRadius="75%" margin={{ top: 24, right: 32, bottom: 24, left: 32 }} data={radarSkills}>
-                    <PolarGrid stroke="rgba(148,163,184,0.25)" />
+                  <RadarChart
+                    cx="50%"
+                    cy="50%"
+                    outerRadius="78%"
+                    margin={{ top: 18, right: 28, bottom: 18, left: 28 }}
+                    data={radarSkills}
+                  >
+                    <PolarGrid stroke="rgba(128,55,244,0.18)" />
                     <PolarAngleAxis dataKey="subject" tick={RadarSubjectTick} />
                     <PolarRadiusAxis domain={[0, 5]} tick={false} axisLine={false} />
-                    <Radar name="Skills" dataKey="value" stroke="#8037f4" fill="#8037f4" fillOpacity={0.15} strokeWidth={2} />
+                    <Radar name="Skills" dataKey="value" stroke="#8037f4" fill="#8037f4" fillOpacity={0.14} strokeWidth={2.5} />
                   </RadarChart>
                 </ResponsiveContainer>
               ) : (
                 <div className="flex h-full items-center justify-center text-sm text-slate-400">Chưa có dữ liệu</div>
               )}
             </div>
-            <div className="mt-3 flex items-center justify-between rounded-xl bg-[#c4ff47] px-4 py-2.5">
-              <span className="text-xs font-bold text-slate-700">Điểm TB</span>
+            <div className="flex items-center justify-between border-t border-[#8037f4]/10 bg-white/70 px-5 py-3 sm:px-6">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Điểm trung bình</span>
               <span
-                className="text-sm font-black text-slate-900"
+                className="font-headline text-sm font-black text-[#8037f4]"
                 title={
                   stats.radarScoreSource === "interview"
                     ? "Trung bình 5 trục STAR từ phỏng vấn AI"
@@ -349,30 +334,29 @@ export function MentorAnalytics() {
                 {formatScoreOfFive(overallAvg) ?? "Chưa có"}
               </span>
             </div>
-          </div>
+          </motion.section>
         </div>
 
-        {/* ── Mentee table ── */}
-        <div className="overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-[0_8px_24px_rgba(15,23,42,0.06)]">
-          <div className="flex flex-col gap-4 border-b border-slate-100 px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex items-center gap-3">
-              <div className="flex h-11 w-11 items-center justify-center rounded-full bg-[#8037f418]">
-                <Users size={18} className="text-violet-600" />
-              </div>
-              <div>
-                <p className="text-base font-black tracking-tight text-slate-900">Chi tiết mentee</p>
-                <p className="text-xs font-bold text-slate-700">Danh sách học viên đang được mentor</p>
-              </div>
-            </div>
+        <motion.section
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
+          className="overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-[0_1px_3px_rgba(15,23,42,0.04)]"
+        >
+          <div className="flex flex-col gap-4 border-b border-slate-100 px-4 py-5 sm:flex-row sm:items-end sm:justify-between sm:px-6">
+            <h2 className="font-headline text-lg font-black tracking-tight text-slate-900">
+              <span className="mr-2 text-[#8037f4]">03</span>
+              Chi tiết mentee
+            </h2>
             <div className="relative w-full sm:max-w-xs">
               <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" aria-hidden />
               <input
                 type="search"
-                placeholder="Tìm kiếm học viên…"
+                placeholder="Tìm học viên…"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-full rounded-full border border-slate-200 bg-white py-2.5 pl-10 pr-4 text-sm font-medium text-slate-900 outline-none placeholder:font-medium placeholder:text-slate-500 focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
-                aria-label="Tìm kiếm học viên"
+                className="w-full rounded-xl border border-slate-200 bg-slate-50/80 py-2.5 pl-10 pr-4 text-sm font-medium text-slate-900 outline-none placeholder:font-medium placeholder:text-slate-400 focus:border-[#8037f4]/40 focus:bg-white focus:ring-2 focus:ring-[#8037f4]/15"
+                aria-label="Tìm học viên"
               />
             </div>
           </div>
@@ -380,18 +364,18 @@ export function MentorAnalytics() {
           <div className="overflow-x-auto">
             <table className="w-full text-left">
               <thead>
-                <tr className="border-b border-slate-100 bg-slate-50/70 text-[10px] font-bold uppercase tracking-widest text-slate-500">
-                  <th className="px-6 py-3">Học viên</th>
-                  <th className="px-6 py-3">Số buổi</th>
-                  <th className="px-6 py-3" title="Đánh giá sao hoặc điểm phỏng vấn AI">Đánh giá</th>
-                  <th className="px-6 py-3">Xu hướng</th>
-                  <th className="px-6 py-3 text-right">Thao tác</th>
+                <tr className="border-b border-slate-100 bg-slate-50/70 text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                  <th className="px-4 py-3 sm:px-6">Học viên</th>
+                  <th className="px-4 py-3 sm:px-6">Số buổi</th>
+                  <th className="px-4 py-3 sm:px-6" title="Đánh giá sao hoặc điểm phỏng vấn AI">Đánh giá</th>
+                  <th className="px-4 py-3 sm:px-6">Xu hướng</th>
+                  <th className="px-4 py-3 text-right sm:px-6">Thao tác</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {filteredMentees.map((mentee) => (
                   <tr key={mentee.menteeId} className="transition-colors hover:bg-slate-50/60">
-                    <td className="px-6 py-4">
+                    <td className="px-4 py-4 sm:px-6">
                       <div className="flex items-center gap-3">
                         <img
                           src={avatarSrc(mentee.menteeAvatar)}
@@ -401,23 +385,25 @@ export function MentorAnalytics() {
                         />
                         <div>
                           <p className="text-sm font-bold text-slate-900">{mentee.menteeName}</p>
-                          <p className="text-xs font-semibold text-slate-500">Cập nhật: {new Date(mentee.lastSessionDate).toLocaleDateString("vi-VN")}</p>
+                          <p className="text-xs text-slate-500">Cập nhật: {new Date(mentee.lastSessionDate).toLocaleDateString("vi-VN")}</p>
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4">
-                      <span className="text-sm font-bold text-slate-900">{mentee.totalSessions} buổi</span>
+                    <td className="px-4 py-4 sm:px-6">
+                      <span className="text-sm font-bold text-slate-900">{mentee.totalSessions}</span>
+                      <span className="ml-1 text-xs text-slate-400">buổi</span>
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-4 py-4 sm:px-6">
                       <MenteeScoreCell mentee={mentee} />
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-4 py-4 sm:px-6">
                       <MenteeTrendBadge trend={mentee.progressTrend} />
                     </td>
-                    <td className="px-6 py-4 text-right">
+                    <td className="px-4 py-4 text-right sm:px-6">
                       <button
+                        type="button"
                         onClick={() => setSelectedMentee(mentee)}
-                        className="inline-flex items-center gap-1.5 rounded-xl bg-violet-600 px-4 py-2 text-xs font-bold text-white shadow-sm transition hover:bg-violet-700 active:scale-95"
+                        className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-bold text-slate-900 transition hover:border-[#8037f4]/30 hover:text-[#8037f4]"
                       >
                         Chi tiết <CaretRight size={13} />
                       </button>
@@ -426,7 +412,7 @@ export function MentorAnalytics() {
                 ))}
                 {!filteredMentees.length && (
                   <tr>
-                    <td colSpan={5} className="px-6 py-10 text-center text-sm font-medium text-slate-500">
+                    <td colSpan={5} className="px-6 py-12 text-center text-sm text-slate-500">
                       Không tìm thấy mentee phù hợp.
                     </td>
                   </tr>
@@ -434,7 +420,7 @@ export function MentorAnalytics() {
               </tbody>
             </table>
           </div>
-        </div>
+        </motion.section>
       </div>
 
       {/* ── Mentee detail modal ── */}

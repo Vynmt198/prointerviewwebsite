@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Brain, Plus, Trash2, X, ChevronRight } from "lucide-react";
-import { saveMentorKnowledge } from "../../utils/bookingsApi";
-import { toastApiError, toastApiSuccess } from "../../utils/apiToast";
+import { saveMentorKnowledge } from "../../api/bookingsApi.js";
+import { toastApiError, toastApiSuccess } from "../../utils/shared/apiToast.js";
 
 const IS = { strokeWidth: 1.75, strokeLinecap: "round", strokeLinejoin: "round" };
 

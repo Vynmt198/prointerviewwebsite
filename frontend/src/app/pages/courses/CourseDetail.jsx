@@ -1,22 +1,22 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router";
 import { BookOpen, Check } from "lucide-react";
-import { fetchCourseById, fetchAllReviewsForCourse } from "../../utils/courseApi";
-import { enrollmentApi } from "../../utils/enrollmentApi";
-import { getUser } from "../../utils/auth";
-import { toastApiError, toastApiSuccess } from "../../utils/apiToast";
-import { requireLoginNavigate } from "../../utils/authGate";
+import { fetchCourseById, fetchAllReviewsForCourse } from "../../api/courseApi.js";
+import { enrollmentApi } from "../../api/enrollmentApi.js";
+import { getUser } from "../../utils/auth/auth.js";
+import { toastApiError, toastApiSuccess } from "../../utils/shared/apiToast.js";
+import { requireLoginNavigate } from "../../utils/auth/authGate.js";
 import { MentorPageShell } from "../../components/mentor/MentorPageShell";
-import { normalizeCourseStats } from "../../utils/courseStats";
-import { enrollmentAccessGranted } from "../../utils/enrollmentAccess.js";
-import { mediaSrc, DEFAULT_COURSE_THUMB, avatarSrc } from "../../utils/mediaUrl";
+import { normalizeCourseStats } from "../../utils/course/courseStats.js";
+import { enrollmentAccessGranted } from "../../utils/course/enrollmentAccess.js";
+import { mediaSrc, DEFAULT_COURSE_THUMB, avatarSrc } from "../../utils/shared/mediaUrl.js";
 import {
   CUSTOMER_SHELL_GUTTER,
   COURSE_DETAIL_SHELL_MAX,
 } from "../../components/layout/customerShellLayout";
 import {
   isAdminCoursePreviewMode,
-} from "../../utils/adminCoursePreview.js";
+} from "../../utils/admin/adminCoursePreview.js";
 import {
   CoursePurchaseCard,
   CourseCurriculumAccordion,
@@ -71,7 +71,6 @@ function mapApiCourse(c) {
           lessonsCount: c.totalLessons || 0,
     modulesCount: modules.length,
           price: c.price || 0,
-    discountPrice: c.discountPrice || 0,
     learningOutcomes: c.whatYoullLearn?.length ? c.whatYoullLearn : [],
           requirements: c.requirements || [],
     modules,

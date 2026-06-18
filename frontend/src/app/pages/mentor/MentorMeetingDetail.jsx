@@ -23,21 +23,21 @@ import {
   ExternalLink,
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
-import { getUser } from "../../utils/auth";
+import { getUser } from "../../utils/auth/auth.js";
 import { MentorPageShell } from "../../components/mentor/MentorPageShell";
-import { toastApiError, toastApiSuccess } from "../../utils/apiToast";
+import { toastApiError, toastApiSuccess } from "../../utils/shared/apiToast.js";
 import { AppSelect } from "../../components/ui/AppSelect";
 import {
   fetchMentorBookingById,
   listMentorBookings,
   mentorRescheduleBooking,
   mentorCancelBooking,
-} from "../../utils/bookingsApi";
-import { loadMentorRescheduleSlotOptions } from "../../utils/bookingRescheduleSlots";
-import { isBookingSlotInFuture } from "../../utils/bookingSchedule";
-import { avatarSrc } from "../../utils/mediaUrl";
-import { sessionTypeLabel as sharedSessionTypeLabel } from "../../utils/sessionTypeLabels";
-import { getBookingAttachments } from "../../utils/bookingAttachments";
+} from "../../api/bookingsApi.js";
+import { loadMentorRescheduleSlotOptions } from "../../utils/booking/bookingRescheduleSlots.js";
+import { isBookingSlotInFuture } from "../../utils/booking/bookingSchedule.js";
+import { avatarSrc } from "../../utils/shared/mediaUrl.js";
+import { sessionTypeLabel as sharedSessionTypeLabel } from "../../utils/booking/sessionTypeLabels.js";
+import { getBookingAttachments } from "../../utils/booking/bookingAttachments.js";
 import {
   DropdownMenu,
   DropdownMenuContent,

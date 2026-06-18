@@ -19,9 +19,9 @@ import {
   RefreshCw,
   BadgeCheck,
 } from "lucide-react";
-import { getPlans, getCVRemaining, incrementCVCount, CV_FREE_LIMIT, isLoggedIn } from "../../utils/auth";
-import { buildLoginPath } from "../../utils/authGate";
-import { apiUrl as expressApiUrl, isExpressBackendConfigured } from "../../utils/api";
+import { getPlans, isLoggedIn, getUser, hasAuthCredentials, CV_FREE_LIMIT } from "../../utils/auth/auth.js";
+import { buildLoginPath } from "../../utils/auth/authGate.js";
+import { apiUrl as expressApiUrl, isExpressBackendConfigured } from "../../api/http.js";
 import { CvJdAnalysisPage, cvAnalysisPageHeader } from "../../components/cv/CvJdAnalysisFrame";
 import {
   CV_FIELD_ANALYSIS_PATH,
@@ -29,21 +29,23 @@ import {
   CV_JD_HISTORY_PATH,
   cvAnalysisResultPath,
 } from "../../components/cv/CvJdAnalysisTabs";
-import { addCVAnalysisRecord } from "../../utils/history";
+import { addCVAnalysisRecord } from "../../utils/shared/history.js";
 import {
   buildCvAnalysisSavePayload,
   deleteCvAnalysis,
   fetchCvAnalyses,
   fetchCvAnalysisById,
+  fetchCvQuota,
   formatCvSaveError,
   saveCvAnalysis,
-} from "../../utils/cvApi";
+} from "../../api/cvApi.js";
 import { buildFieldAnalysisMockPipeline } from "../../data/cvFieldAnalysisMock.js";
 import {
   formatSkillSuggestionReason,
   mapPythonCvPipelineToAnalysis,
-} from "../../utils/cvMappers.js";
-import { uploadCvJdFiles } from "../../utils/cvFileUpload.js";
+  computeCvRemainingFromQuota,
+} from "../../utils/cv/cvMappers.js";
+import { uploadCvJdFiles } from "../../utils/cv/cvFileUpload.js";
 import { projectId, publicAnonKey } from "/utils/supabase/info.js";
 
 // ─── API base ─────────────────────────────────────────────────────────────────
@@ -82,7 +84,7 @@ function supabaseApiUrl(path) {
  */
 async function getForceRefreshedToken() {
   try {
-    const { getFreshAccessToken } = await import("../../utils/auth");
+    const { getFreshAccessToken } = await import("../../utils/auth/auth.js");
     return await getFreshAccessToken();
   } catch {
     return "";
@@ -256,7 +258,26 @@ export function CVAnalysis() {
   const loginReturnPath = routeMode === "field" ? "/cv-analysis/field" : "/cv-analysis/jd";
   
   const [plans]            = useState(getPlans());
-  const [cvRemaining, setCvRemaining] = useState(getCVRemaining());
+  const [cvRemaining, setCvRemaining] = useState(0);
+  const [cvQuotaLimit, setCvQuotaLimit] = useState(CV_FREE_LIMIT);
+
+  const loadCvQuota = useCallback(async () => {
+    if (!hasAuthCredentials()) {
+      setCvRemaining(0);
+      setCvQuotaLimit(CV_FREE_LIMIT);
+      return;
+    }
+    const res = await fetchCvQuota();
+    if (!res.success || !res.quota) return;
+    const planKey = getUser()?.plan ?? "free";
+    const remaining = computeCvRemainingFromQuota(res.quota, planKey);
+    setCvRemaining(Number.isFinite(remaining) ? remaining : 999);
+    setCvQuotaLimit(Number(res.quota.cvAnalysisLimit) || CV_FREE_LIMIT);
+  }, []);
+
+  useEffect(() => {
+    loadCvQuota();
+  }, [loadCvQuota]);
 
   // Page-level view
   const [pageView, setPageView] = useState("analysis");
@@ -428,11 +449,6 @@ export function CVAnalysis() {
     if (!hasCVInput) return;
     if (needsJdForRoute && !Boolean(jdUploaded || reuseJD || jdFile)) return;
     if (!canAnalyze) return;
-
-    if (!plans.starterPro && !plans.elitePro) {
-      setCvRemaining(prev => Math.max(0, prev - 1));
-      incrementCVCount();
-    }
 
     setStep("loading"); setAnalyzeError(null); setProgress(0); setLoadingStage(0);
 
@@ -772,6 +788,7 @@ export function CVAnalysis() {
         applyResult(data);
 
         setProgress(100);
+        await loadCvQuota();
         await new Promise((r) => setTimeout(r, 350));
         goToResultPage(data);
         setStep("upload");
@@ -890,7 +907,7 @@ export function CVAnalysis() {
             }`}
           >
             {cvRemaining === 0 ? <Lock className="h-3 w-3" /> : <SealPercent className="h-3 w-3" />}
-            {cvRemaining}/{CV_FREE_LIMIT} lượt
+            {cvRemaining}/{cvQuotaLimit} lượt
           </span>
         ) : null
       }

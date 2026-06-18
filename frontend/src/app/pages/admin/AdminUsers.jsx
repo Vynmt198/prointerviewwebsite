@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router";
 import { Users, Search, ShieldAlert, ShieldCheck, Mail, Tag } from "lucide-react";
-import { adminApi } from "../../utils/adminApi";
-import { tryApi } from "../../utils/apiToast";
+import { adminApi } from "../../api/adminApi.js";
+import { tryApi } from "../../utils/shared/apiToast.js";
 
 export function AdminUsers() {
   const [users, setUsers] = useState([]);

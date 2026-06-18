@@ -1,5 +1,5 @@
-import { apiUrl } from "../utils/api.js";
-import { authFetch } from "../utils/auth.js";
+import { apiUrl } from "./http.js";
+import { authFetch } from "../utils/auth/auth.js";
 
 const jsonHeaders = {
   Accept: "application/json",

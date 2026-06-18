@@ -10,22 +10,22 @@ import {
   ArrowLeft,
 } from "lucide-react";
 import { motion } from "motion/react";
-import { getUser, hasAuthCredentials } from "../../utils/auth";
+import { getUser, hasAuthCredentials } from "../../utils/auth/auth.js";
 import {
   fetchBookingById,
   fetchMentorBookingById,
   completeMentorBooking,
   startBookingMeeting,
-} from "../../utils/bookingsApi";
+} from "../../api/bookingsApi.js";
 import { KnowledgeCaptureModal } from "../../components/mentor/KnowledgeCaptureModal";
 import {
   buildProInterviewMeetUrl,
   canEnterMeetingRoom,
   getMinutesUntilBookingStart,
   isBookingInLiveWindow,
-} from "../../utils/meetingLinks";
-import { toastApiError, toastApiSuccess } from "../../utils/apiToast";
-import { sessionTypeLabel } from "../../utils/sessionTypeLabels";
+} from "../../utils/shared/meetingLinks.js";
+import { toastApiError, toastApiSuccess } from "../../utils/shared/apiToast.js";
+import { sessionTypeLabel } from "../../utils/booking/sessionTypeLabels.js";
 
 export function MeetingRoom() {
   const { sessionId } = useParams();

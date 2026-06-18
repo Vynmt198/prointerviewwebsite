@@ -7,10 +7,10 @@ import {
   Trash2,
   Upload,
 } from "lucide-react";
-import { formatLessonDurationMinutes } from "../../../utils/videoDuration";
-import { uploadFile } from "../../../utils/uploadApi";
-import { mediaSrc } from "../../../utils/mediaUrl";
-import { toastApiError, toastApiSuccess } from "../../../utils/apiToast";
+import { formatLessonDurationMinutes } from "../../../utils/shared/videoDuration.js";
+import { uploadFile } from "../../../api/uploadApi.js";
+import { mediaSrc } from "../../../utils/shared/mediaUrl.js";
+import { toastApiError, toastApiSuccess } from "../../../utils/shared/apiToast.js";
 import { CourseCreateFooter } from "./CourseCreateStep1";
 import {
   mentorCheckboxClass,

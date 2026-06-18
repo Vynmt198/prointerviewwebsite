@@ -27,7 +27,7 @@ router.post("/refresh", refreshLimiter, asyncHandler(AuthController.refresh));
 router.get("/me", authJwt, asyncHandler(AuthController.me));
 router.patch("/me", authJwt, asyncHandler(AuthController.patchMe));
 router.delete("/me", authJwt, asyncHandler(AuthController.deleteMe));
-router.post("/logout", authJwt, asyncHandler(AuthController.logout));
+router.post("/logout", authWriteLimiter, asyncHandler(AuthController.logout));
 router.get("/sessions", authJwt, asyncHandler(AuthController.sessions));
 router.delete("/sessions/:sessionId", authJwt, asyncHandler(AuthController.revokeSession));
 
