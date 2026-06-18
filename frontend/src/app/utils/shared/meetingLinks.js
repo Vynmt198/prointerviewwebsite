@@ -41,7 +41,19 @@ export function buildJitsiMeetUrl(roomName, displayName) {
     .replace(/-+/g, "-")
     .slice(0, 80) || "ProInterview";
   const name = encodeURIComponent(displayName || "User");
-  return `https://meet.jit.si/${room}#config.prejoinPageEnabled=false&userInfo.displayName="${name}"`;
+  const config = [
+    "config.prejoinPageEnabled=false",
+    "config.enableWelcomePage=false",
+    "config.disableDeepLinking=true",
+    "config.startWithAudioMuted=false",
+    "config.startWithVideoMuted=false",
+    "config.hideConferenceSubject=true",
+    "interfaceConfig.SHOW_JITSI_WATERMARK=false",
+    "interfaceConfig.SHOW_WATERMARK_FOR_GUESTS=false",
+    "interfaceConfig.DEFAULT_BACKGROUND=#f8f9fc",
+    `userInfo.displayName="${name}"`,
+  ].join("&");
+  return `https://meet.jit.si/${room}#${config}`;
 }
 
 /** Tên phòng cố định theo booking — mentor & học viên vào cùng một phòng Jitsi. */
@@ -65,13 +77,23 @@ export function buildProInterviewMeetUrl(bookingId, displayName) {
 }
 
 /** Có được phép mở phòng Jitsi hay không (khớp backend `startBookingMeeting`). */
-/** Parse `date` (DD/MM/YYYY) + `timeSlot` (HH:mm) → timestamp ms. */
+/** Parse `date` (DD/MM/YYYY, YYYY-MM-DD) + `timeSlot` (HH:mm) → timestamp ms. */
 export function parseBookingStartMs(booking) {
   const date = String(booking?.date || "").trim();
   const time = String(booking?.timeSlot || booking?.time || "09:00").trim();
-  const parts = date.split("/").map((p) => parseInt(p, 10));
   const [h, min = 0] = time.split(":").map((p) => parseInt(p, 10));
+
+  const iso = date.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (iso) {
+    return new Date(Number(iso[1]), Number(iso[2]) - 1, Number(iso[3]), h, min, 0).getTime();
+  }
+
+  const parts = date.split("/").map((p) => parseInt(p, 10));
   if (parts.length >= 3) {
+    if (parts[0] > 1000) {
+      const [y, m, d] = parts;
+      return new Date(y, m - 1, d, h, min, 0).getTime();
+    }
     const [d, m, y] = parts;
     return new Date(y, m - 1, d, h, min, 0).getTime();
   }
@@ -80,6 +102,20 @@ export function parseBookingStartMs(booking) {
     return new Date(new Date().getFullYear(), m - 1, d, h, min, 0).getTime();
   }
   return NaN;
+}
+
+/** Hiển thị thời gian còn lại đến giờ hẹn (phút → ngày/giờ). */
+export function formatUntilStart(totalMinutes) {
+  const mins = Math.max(0, Math.ceil(Number(totalMinutes) || 0));
+  if (mins < 60) return `${mins} phút`;
+  if (mins < 24 * 60) {
+    const hours = Math.floor(mins / 60);
+    const rest = mins % 60;
+    return rest ? `${hours} giờ ${rest} phút` : `${hours} giờ`;
+  }
+  const days = Math.floor(mins / (24 * 60));
+  const hours = Math.floor((mins % (24 * 60)) / 60);
+  return hours ? `${days} ngày ${hours} giờ` : `${days} ngày`;
 }
 
 /** Cho phép đánh dấu in_progress / coi là đang live (mặc định 15 phút trước giờ hẹn). */
@@ -98,7 +134,14 @@ export function getMinutesUntilBookingStart(booking) {
   return Math.max(0, Math.ceil((start - Date.now()) / 60_000));
 }
 
-export function canEnterMeetingRoom(booking) {
+export function isBookingPastScheduledEnd(booking, { graceMinutes = 0 } = {}) {
+  const start = parseBookingStartMs(booking);
+  if (!Number.isFinite(start)) return false;
+  const dur = (Number(booking?.durationMinutes) || 60) * 60 * 1000;
+  return Date.now() >= start + dur + graceMinutes * 60 * 1000;
+}
+
+export function canEnterMeetingRoom(booking, { asMentor = false } = {}) {
   if (!booking) {
     return { ok: false, message: "Không tìm thấy buổi hẹn." };
   }
@@ -108,13 +151,36 @@ export function canEnterMeetingRoom(booking) {
     return { ok: false, message: "Buổi hẹn đã kết thúc hoặc đã bị hủy." };
   }
   if (!["confirmed", "in_progress"].includes(st)) {
+    if (asMentor && st === "pending" && pst === "paid") {
+      return { ok: true, message: "", mentorAutoConfirm: true };
+    }
+    if (asMentor && st === "pending") {
+      return {
+        ok: false,
+        message: "Học viên chưa hoàn tất thanh toán. Bạn có thể vào phòng sau khi đơn được thanh toán (admin xác nhận CK).",
+      };
+    }
+    if (asMentor) {
+      return {
+        ok: false,
+        message: "Buổi hẹn chưa sẵn sàng. Kiểm tra trạng thái trong Lịch mentor.",
+      };
+    }
     return {
       ok: false,
-      message: "Buổi hẹn chưa được xác nhận. Hoàn tất thanh toán hoặc chờ mentor xác nhận.",
+      message:
+        pst === "paid"
+          ? "Chờ mentor xác nhận buổi hẹn trước khi vào phòng."
+          : "Buổi hẹn chưa được xác nhận. Hoàn tất thanh toán hoặc chờ mentor xác nhận.",
     };
   }
   if (pst !== "paid") {
-    return { ok: false, message: "Buổi hẹn chưa được thanh toán." };
+    return {
+      ok: false,
+      message: asMentor
+        ? "Học viên chưa thanh toán buổi này."
+        : "Buổi hẹn chưa được thanh toán.",
+    };
   }
   return { ok: true, message: "" };
 }

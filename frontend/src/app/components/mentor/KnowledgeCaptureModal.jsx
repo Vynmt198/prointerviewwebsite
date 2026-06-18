@@ -56,8 +56,8 @@ function ArrayInput({ label, placeholder, items, onChange }) {
 }
 
 /**
- * Modal post-session, mentor chia sẻ insights để AI học.
- * Xuất hiện sau khi completeMentorBooking() thành công.
+ * Modal post-session (legacy) — ưu tiên ghi chú live trong MeetingRoom.
+ * Giữ lại nếu cần chỉnh sửa thủ công sau buổi.
  *
  * @param {{ bookingId, defaultRole, defaultField, onClose, onDone }} props
  *   onClose, bỏ qua (navigate ngay)

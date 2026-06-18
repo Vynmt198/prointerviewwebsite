@@ -7,12 +7,14 @@ import {
   FileText,
   Mail,
   Phone,
+  ShieldCheck,
   User,
   Users,
 } from "lucide-react";
 import { adminGlassTable, adminPageWrap } from "../../components/admin/AdminPageShell.jsx";
 import { AdminBookingStatusStack } from "../../components/admin/AdminStatusPill.jsx";
 import { AdminSepayOverrideAction } from "../../components/admin/AdminSepayOverrideAction.jsx";
+import { AdminMentorCheckInPanel } from "../../components/admin/AdminMentorCheckInPanel.jsx";
 import { adminApi } from "../../api/adminApi.js";
 import { formatTransferConfirmedAt } from "../../utils/admin/adminPaymentUi.js";
 import { tryApi } from "../../utils/shared/apiToast.js";
@@ -265,6 +267,14 @@ export function AdminBookingDetail() {
               </div>
             </motion.div>
           </div>
+
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className={`${adminGlassTable} p-5`}>
+            <h4 className="mb-4 flex items-center gap-2 text-xs font-black uppercase tracking-wider text-slate-500">
+              <ShieldCheck className="h-4 w-4" />
+              Xác minh check-in mentor
+            </h4>
+            <AdminMentorCheckInPanel booking={booking} mentorAvatar={mentor?.avatar} />
+          </motion.div>
 
           {(freeNote || parsed.cvFile || parsed.jdFile || booking.mentorNotes) && (
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className={`${adminGlassTable} p-5`}>

@@ -9,6 +9,46 @@ const SESSION_TYPE_LABELS = {
   custom: "Buổi mentor",
 };
 
+/** Tuỳ chọn loại buổi khi đặt lịch — khớp backend SESSION_TYPES. */
+export const BOOKING_SESSION_TYPE_OPTIONS = [
+  {
+    value: "mock_interview",
+    label: "Phỏng vấn giả lập",
+    hint: "Luyện phỏng vấn 1:1, nhận feedback thực chiến",
+  },
+  {
+    value: "cv_review",
+    label: "Xem xét CV",
+    hint: "Mentor review CV và gợi ý chỉnh sửa cụ thể",
+  },
+  {
+    value: "career_consulting",
+    label: "Tư vấn nghề nghiệp",
+    hint: "Định hướng lộ trình, chiến lược apply và đàm phán offer",
+  },
+  {
+    value: "custom",
+    label: "Buổi mentor",
+    hint: "Chủ đề linh hoạt theo thỏa thuận với mentor",
+  },
+];
+
+export function resolveMentorSessionTypeOptions(mentor) {
+  const fromApi = Array.isArray(mentor?.sessionTypes) ? mentor.sessionTypes : [];
+  if (!fromApi.length) return BOOKING_SESSION_TYPE_OPTIONS;
+  const allowed = new Set(fromApi.map((s) => s?.type).filter(Boolean));
+  const filtered = BOOKING_SESSION_TYPE_OPTIONS.filter((o) => allowed.has(o.value));
+  return filtered.length ? filtered : BOOKING_SESSION_TYPE_OPTIONS;
+}
+
+export function resolveSessionTypePrice(mentor, sessionType) {
+  const st = Array.isArray(mentor?.sessionTypes)
+    ? mentor.sessionTypes.find((s) => s?.type === sessionType)
+    : null;
+  if (st && Number(st.price) > 0) return Math.round(Number(st.price));
+  return Math.round(Number(mentor?.price ?? mentor?.pricePerHour ?? 0));
+}
+
 export function sessionTypeLabel(sessionType, fallback = "Buổi mentor") {
   const raw = String(sessionType || "").trim();
   if (!raw) return fallback;

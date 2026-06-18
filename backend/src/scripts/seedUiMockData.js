@@ -16,10 +16,10 @@ function daysAgoIso(days) {
 
 function ymd(date) {
   const d = new Date(date);
-  const yyyy = d.getFullYear();
-  const mm = String(d.getMonth() + 1).padStart(2, "0");
   const dd = String(d.getDate()).padStart(2, "0");
-  return `${yyyy}-${mm}-${dd}`;
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const yyyy = d.getFullYear();
+  return `${dd}/${mm}/${yyyy}`;
 }
 
 async function ensureDevUsers() {
@@ -75,7 +75,7 @@ async function seedBookings({ customerId, mentorId }) {
         price,
         platformFee,
         vat,
-        totalAmount: price + vat,
+        totalAmount: price,
         paymentStatus: row.paymentStatus,
         paymentMethod: "transfer",
         paymentRef: `UI-MOCK-BOOKING-${idx + 1}`,

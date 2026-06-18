@@ -3,6 +3,7 @@ import { sendMentorFeedbackEmail } from "./emailService.js";
 import fs from "fs";
 import { Booking } from "../models/Booking.js";
 import { Mentor } from "../models/Mentor.js";
+import { MentorKnowledge } from "../models/MentorKnowledge.js";
 import { Review } from "../models/Review.js";
 import { User } from "../models/User.js";
 import { Notification } from "../models/Notification.js";
@@ -13,7 +14,11 @@ import { tryCreditMentorForCompletedBooking } from "./mentorEarningsService.js";
 import { deliverNotification } from "./notificationDeliveryService.js";
 import { runInTransaction } from "../helpers/dbHelper.js";
 import { resolveStoredUploadUrl } from "../utils/resolveStoredUploadUrl.js";
-import { isBookingInLiveWindow, isBookingSlotInFuture } from "../utils/bookingSchedule.js";
+import {
+  isBookingInLiveWindow,
+  isBookingPastAutoCompleteGrace,
+  isBookingSlotInFuture,
+} from "../utils/bookingSchedule.js";
 import { newPaymentExpiresAt } from "../utils/transferPaymentExpiry.js";
 import { expireBookingTransferIfNeeded } from "./transferPaymentExpiryService.js";
 import { resolveBookingPlatformFeeRate } from "./mentorCommissionService.js";
@@ -958,6 +963,8 @@ export function toPublicBooking(doc, mentorLean) {
     refundReceiveAccountNumber: b.refundReceiveAccountNumber ?? "",
     refundReceiveAccountHolder: b.refundReceiveAccountHolder ?? "",
     refundCompletedAt: b.refundCompletedAt ?? null,
+    mentorCheckInAt: b.mentorCheckInAt ?? null,
+    mentorCheckInImageUrl: resolveStoredUploadUrl(b.mentorCheckInImageUrl ?? ""),
     createdAt: b.createdAt,
     updatedAt: b.updatedAt,
   };
@@ -1158,6 +1165,24 @@ export async function listMentorBookings(mentorUserId) {
   };
 }
 
+/** Tự đánh dấu completed nếu đã qua giờ buổi + grace và vẫn confirmed/in_progress. */
+async function maybeAutoCompleteStaleBooking(bookingDoc) {
+  if (!bookingDoc) return false;
+  if (!["confirmed", "in_progress"].includes(String(bookingDoc.status || ""))) return false;
+  if (String(bookingDoc.paymentStatus || "").toLowerCase() !== "paid") return false;
+  if (!isBookingPastAutoCompleteGrace(bookingDoc)) return false;
+
+  bookingDoc.status = "completed";
+  bookingDoc.completedAt = new Date();
+  await bookingDoc.save();
+
+  const credit = await tryCreditMentorForCompletedBooking(bookingDoc._id);
+  if (!credit.ok) {
+    console.error("[maybeAutoCompleteStaleBooking] mentor earnings:", credit.error || credit);
+  }
+  return true;
+}
+
 export async function getMyBooking(userId, rawId) {
   if (!isMongoReady()) return { ok: false, status: 503, error: MONGO_ERR };
   const uid = String(userId).trim();
@@ -1166,15 +1191,15 @@ export async function getMyBooking(userId, rawId) {
 
   const row = await Booking.findOne({ userId: uid, ...q })
     .populate({ path: "userId", select: "name email avatar" })
-    .populate({ 
-      path: "mentorId", 
+    .populate({
+      path: "mentorId",
       select: "name title company avatar publicId userId",
-      populate: { path: "userId", select: "email" }
-    })
-    .lean();
+      populate: { path: "userId", select: "email" },
+    });
 
   if (!row) return { ok: false, status: 404, error: "Không tìm thấy booking." };
-  return { ok: true, booking: toPublicBooking(row) };
+  await maybeAutoCompleteStaleBooking(row);
+  return { ok: true, booking: toPublicBooking(row.toObject()) };
 }
 
 export async function getMentorBooking(mentorUserId, rawId) {
@@ -1188,12 +1213,12 @@ export async function getMentorBooking(mentorUserId, rawId) {
     .populate({
       path: "mentorId",
       select: "name title company avatar publicId userId",
-      populate: { path: "userId", select: "email" }
-    })
-    .lean();
+      populate: { path: "userId", select: "email" },
+    });
 
   if (!row) return { ok: false, status: 404, error: "Không tìm thấy booking." };
-  const booking = toPublicBooking(row);
+  await maybeAutoCompleteStaleBooking(row);
+  const booking = toPublicBooking(row.toObject());
   const review = await Review.findOne({
     bookingId: row._id,
     targetType: "mentor",
@@ -1205,6 +1230,7 @@ export async function getMentorBooking(mentorUserId, rawId) {
     booking.menteeRating = Number(review.rating || 0);
     booking.reviewComment = String(review.comment || "").trim();
   }
+  booking.mentorSessionCapture = sanitizeSessionCapture(row.mentorSessionCapture);
   return { ok: true, booking };
 }
 
@@ -1430,6 +1456,8 @@ export async function completeMentorBooking(mentorUserId, rawId) {
   booking.completedAt = new Date();
   await booking.save();
 
+  await promoteSessionCaptureToKnowledge(booking, mentor._id, mentorUserId);
+
   const credit = await tryCreditMentorForCompletedBooking(booking._id);
   if (!credit.ok) {
     console.error("[completeMentorBooking] mentor earnings:", credit.error || credit);
@@ -1452,19 +1480,128 @@ export async function completeMentorBooking(mentorUserId, rawId) {
   return { ok: true, booking: toPublicBooking(booking) };
 }
 
-function meetingEntryBlockedReason(booking) {
+const SESSION_TYPE_LABELS = {
+  mock_interview: "Phỏng vấn giả định",
+  cv_review: "Review CV",
+  career_consulting: "Tư vấn nghề nghiệp",
+  custom: "Buổi coaching",
+};
+
+function cleanCaptureList(arr, max = 40) {
+  return Array.isArray(arr) ? arr.map((s) => String(s).trim()).filter(Boolean).slice(0, max) : [];
+}
+
+function sanitizeSessionCapture(raw) {
+  if (!raw || typeof raw !== "object") {
+    return { transcript: "", questionsAsked: [], commonMistakes: [], keyInsights: [], updatedAt: null };
+  }
+  return {
+    transcript: String(raw.transcript || "").trim().slice(0, 12000),
+    questionsAsked: cleanCaptureList(raw.questionsAsked),
+    commonMistakes: cleanCaptureList(raw.commonMistakes),
+    keyInsights: cleanCaptureList(raw.keyInsights),
+    updatedAt: raw.updatedAt ?? null,
+  };
+}
+
+function extractQuestionsFromTranscript(transcript) {
+  const text = String(transcript || "").trim();
+  if (!text) return [];
+  const sentences = text.split(/(?<=[.!?…])\s+|\n+/).map((s) => s.trim()).filter(Boolean);
+  const questions = sentences.filter((s) => s.includes("?") || /^(hãy|em|bạn|cho|kể|mô tả|nói|giải thích)/i.test(s));
+  return [...new Set(questions.map((s) => s.slice(0, 500)))].slice(0, 20);
+}
+
+async function promoteSessionCaptureToKnowledge(booking, mentorId, mentorUserId) {
+  const cap = sanitizeSessionCapture(booking.mentorSessionCapture);
+  const transcript = cap.transcript;
+  const questions = cap.questionsAsked.length ? cap.questionsAsked : extractQuestionsFromTranscript(transcript);
+  const hasContent =
+    transcript || questions.length || cap.commonMistakes.length || cap.keyInsights.length;
+  if (!hasContent) return;
+
+  await MentorKnowledge.findOneAndUpdate(
+    { bookingId: booking._id },
+    {
+      $set: {
+        bookingId: booking._id,
+        mentorId,
+        mentorUserId,
+        menteeRole: SESSION_TYPE_LABELS[booking.sessionType] || String(booking.sessionType || ""),
+        field: "",
+        questionsAsked: questions,
+        commonMistakes: cap.commonMistakes,
+        keyInsights: cap.keyInsights,
+        fullAdvice: transcript,
+      },
+    },
+    { upsert: true, new: true },
+  );
+}
+
+/** Lưu nháp ghi chú live trong buổi (không gửi email cho học viên). */
+export async function saveMentorSessionCapture(mentorUserId, rawId, body) {
+  if (!isMongoReady()) return { ok: false, status: 503, error: MONGO_ERR };
+  const mentor = await getMentorByUserId(mentorUserId);
+  if (!mentor?._id) return { ok: false, status: 404, error: "Không tìm thấy hồ sơ mentor." };
+  if (!mongoose.isValidObjectId(rawId)) return { ok: false, status: 400, error: "id booking không hợp lệ." };
+
+  const booking = await Booking.findOne({ _id: rawId, mentorId: mentor._id });
+  if (!booking) return { ok: false, status: 404, error: "Không tìm thấy booking." };
+  if (!["confirmed", "in_progress"].includes(booking.status)) {
+    return { ok: false, status: 400, error: "Chỉ lưu ghi chú khi buổi đang diễn ra." };
+  }
+
+  booking.mentorSessionCapture = {
+    ...sanitizeSessionCapture(body),
+    updatedAt: new Date(),
+  };
+  await booking.save();
+  return { ok: true, capture: sanitizeSessionCapture(booking.mentorSessionCapture) };
+}
+
+function meetingEntryBlockedReason(booking, { asMentor = false } = {}) {
   const st = String(booking?.status || "").toLowerCase();
   const pst = String(booking?.paymentStatus || "").toLowerCase();
   if (["cancelled", "completed", "no_show"].includes(st)) {
     return "Buổi hẹn đã kết thúc hoặc đã bị hủy.";
   }
   if (!["confirmed", "in_progress"].includes(st)) {
-    return "Buổi hẹn chưa được xác nhận. Hoàn tất thanh toán hoặc chờ mentor xác nhận.";
+    if (asMentor && st === "pending" && pst === "paid") return "";
+    if (asMentor && st === "pending") {
+      return "Học viên chưa hoàn tất thanh toán. Bạn có thể vào phòng sau khi đơn được thanh toán (admin xác nhận CK).";
+    }
+    if (asMentor) return "Buổi hẹn chưa sẵn sàng. Kiểm tra trạng thái trong Lịch mentor.";
+    return pst === "paid"
+      ? "Chờ mentor xác nhận buổi hẹn trước khi vào phòng."
+      : "Buổi hẹn chưa được xác nhận. Hoàn tất thanh toán hoặc chờ mentor xác nhận.";
   }
   if (pst !== "paid") {
-    return "Buổi hẹn chưa được thanh toán.";
+    return asMentor ? "Học viên chưa thanh toán buổi này." : "Buổi hẹn chưa được thanh toán.";
   }
   return "";
+}
+
+/** Mentor: tự xác nhận buổi pending (đã thanh toán) trước khi vào phòng / check-in. */
+async function prepareBookingForMeetingEntry(booking, { asMentor = false } = {}) {
+  if (!booking || !asMentor) return { ok: true };
+  const st = String(booking.status || "").toLowerCase();
+  if (["confirmed", "in_progress"].includes(st)) return { ok: true };
+  if (st !== "pending") {
+    const err = meetingEntryBlockedReason(booking, { asMentor: true });
+    return err ? { ok: false, status: 400, error: err } : { ok: true };
+  }
+  const payGate = assertBookingPaidBeforeActiveStatus(booking, "confirmed");
+  if (!payGate.ok) {
+    return {
+      ok: false,
+      status: payGate.status || 400,
+      error: "Học viên chưa hoàn tất thanh toán. Bạn có thể vào phòng sau khi đơn được thanh toán (admin xác nhận CK).",
+    };
+  }
+  booking.status = "confirmed";
+  await booking.save();
+  return { ok: true };
 }
 
 /** Vào phòng Jitsi — đánh dấu `in_progress` (idempotent). */
@@ -1483,8 +1620,19 @@ export async function startBookingMeeting(userId, rawId, { asMentor = false } = 
 
   if (!booking) return { ok: false, status: 404, error: "Không tìm thấy booking." };
 
-  const block = meetingEntryBlockedReason(booking);
+  const prepared = await prepareBookingForMeetingEntry(booking, { asMentor });
+  if (!prepared.ok) return prepared;
+
+  const block = meetingEntryBlockedReason(booking, { asMentor });
   if (block) return { ok: false, status: 400, error: block };
+
+  if (asMentor && !booking.mentorCheckInAt) {
+    return {
+      ok: false,
+      status: 403,
+      error: "Hoàn tất check-in webcam trước khi vào phòng họp.",
+    };
+  }
 
   let started = false;
   if (booking.status === "in_progress" && !isBookingInLiveWindow(booking)) {
@@ -1505,6 +1653,47 @@ export async function startBookingMeeting(userId, rawId, { asMentor = false } = 
     },
   ]);
   return { ok: true, booking: toPublicBooking(booking), started };
+}
+
+/** Mentor chụp webcam check-in trước khi vào phòng họp. */
+export async function recordMentorMeetingCheckIn(mentorUserId, rawId, body = {}) {
+  if (!isMongoReady()) return { ok: false, status: 503, error: MONGO_ERR };
+  const mentor = await getMentorByUserId(mentorUserId);
+  if (!mentor?._id) return { ok: false, status: 404, error: "Không tìm thấy hồ sơ mentor." };
+  if (!mongoose.isValidObjectId(rawId)) return { ok: false, status: 400, error: "id booking không hợp lệ." };
+
+  const imageUrl = String(body?.imageUrl ?? body?.checkInImageUrl ?? "").trim();
+  if (!imageUrl) {
+    return { ok: false, status: 400, error: "Thiếu ảnh check-in." };
+  }
+
+  const booking = await Booking.findOne({ _id: rawId, mentorId: mentor._id });
+  if (!booking) return { ok: false, status: 404, error: "Không tìm thấy booking." };
+
+  if (["cancelled", "completed", "no_show"].includes(String(booking.status || ""))) {
+    return { ok: false, status: 400, error: "Không thể check-in cho buổi đã kết thúc hoặc đã hủy." };
+  }
+
+  const prepared = await prepareBookingForMeetingEntry(booking, { asMentor: true });
+  if (!prepared.ok) return prepared;
+
+  const block = meetingEntryBlockedReason(booking, { asMentor: true });
+  if (block) return { ok: false, status: 400, error: block };
+
+  booking.mentorCheckInImageUrl = imageUrl.slice(0, 2048);
+  booking.mentorCheckInAt = new Date();
+  booking.mentorCheckInUserId = mentorUserId;
+  await booking.save();
+
+  await booking.populate([
+    { path: "userId", select: "name email avatar" },
+    {
+      path: "mentorId",
+      select: "name title company avatar publicId userId",
+      populate: { path: "userId", select: "email" },
+    },
+  ]);
+  return { ok: true, booking: toPublicBooking(booking) };
 }
 
 export async function updateMentorNotes(mentorUserId, rawId, body) {

@@ -29,6 +29,7 @@ import {
   getSubscriptionChargeAmount,
   resolveCheckoutPlan,
 } from "../../constants/planCatalog.js";
+import { sessionTypeLabel } from "../../utils/booking/sessionTypeLabels.js";
 
 /* ─── Plan meta (UI) — giá lấy từ planCatalog ───────────── */
 
@@ -594,7 +595,19 @@ function CheckoutPayPanel({ mode, fmt, rebookCreditVnd, bookingTotalEstimate, bo
   return null;
 }
 
-function OrderLineItem({ isBooking, isCourse, bookingMentor, courseInfo, plan, billing, bookingDate, bookingTime, baseTotal, fmt }) {
+function OrderLineItem({
+  isBooking,
+  isCourse,
+  bookingMentor,
+  courseInfo,
+  plan,
+  billing,
+  bookingDate,
+  bookingTime,
+  bookingSessionType,
+  baseTotal,
+  fmt,
+}) {
   if (isCourse) {
     return (
       <div className={`${checkoutCard} flex gap-4 p-4 sm:p-5`}>
@@ -632,7 +645,11 @@ function OrderLineItem({ isBooking, isCourse, bookingMentor, courseInfo, plan, b
             <p className="text-base font-semibold text-slate-900 sm:text-lg">
               {bookingMentor?.name || "Đang tải mentor…"}
             </p>
-            <p className={`mt-0.5 ${labelMuted}`}>{bookingMentor?.title || "Buổi phỏng vấn 1:1"}</p>
+            <p className={`mt-0.5 ${labelMuted}`}>
+              {isBooking && bookingSessionType
+                ? sessionTypeLabel(bookingSessionType)
+                : bookingMentor?.title || "Buổi phỏng vấn 1:1"}
+            </p>
             <div className={`mt-2 flex flex-wrap gap-3 ${textMuted} text-xs`}>
               {bookingDate && (
                 <span className="inline-flex items-center gap-1">
@@ -972,9 +989,12 @@ export function Checkout() {
     })();
   }, [isCourse, courseId]);
 
-  const bookingPrice = Number(bookingMentor?.price ?? searchParams.get("price") ?? 0);
+  const bookingPrice = Number(
+    isBooking ? searchParams.get("price") ?? bookingMentor?.price ?? 0 : bookingMentor?.price ?? searchParams.get("price") ?? 0,
+  );
   const bookingDate = searchParams.get("date") ?? "";
   const bookingTime = searchParams.get("time") ?? "";
+  const bookingSessionType = searchParams.get("sessionType") || "mock_interview";
 
   /* ── Plan mode ────────────────────────────────────────── */
   const planKey = searchParams.get("plan") ?? "starterPro";
@@ -1248,7 +1268,7 @@ export function Checkout() {
           mentorId: bookingMentor.id,
           date: bookingDate,
           timeSlot: bookingTime,
-          sessionType: "mock_interview",
+          sessionType: bookingSessionType,
           position: bookingPosition,
           note: bookingNote,
           cvFile: bookingCvFile || "",
@@ -1279,7 +1299,7 @@ export function Checkout() {
         date: bookingDate,
         time: bookingTime,
         timeSlot: bookingTime,
-        sessionType: "mock_interview",
+        sessionType: bookingSessionType,
         position: bookingPosition,
         note: bookingNote,
         cvFile: bookingCvFile || "",
@@ -1625,6 +1645,7 @@ export function Checkout() {
                     billing={billing}
                     bookingDate={bookingDate}
                     bookingTime={bookingTime}
+                    bookingSessionType={bookingSessionType}
                     baseTotal={baseTotal}
                     fmt={fmt}
                   />
