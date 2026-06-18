@@ -475,7 +475,7 @@ export function Home() {
             className={`${homeTy.title} max-w-none`}
             style={{ fontSize: HOME_SECTION_TITLE_CLAMP }}
           >
-            <span className={homeTy.titleLineDark}>Thành tựu nổi bật{" "}
+            <span className={homeTy.titleLineDark}>Tin tức và hoạt động{" "}
               <span className="text-[#630ed4]">từ ProInterview</span>
             </span>
           </h2>
@@ -507,13 +507,18 @@ export function Home() {
 
                 {/* Content */}
                 <div className="flex flex-col gap-3 p-5">
-                  <span className="text-[11px] font-semibold uppercase tracking-[0.1em] text-violet-500">
-                    {new Date(item.date).toLocaleDateString("en-US", {
-                      month: "short",
-                      day: "numeric",
-                      year: "numeric",
-                    })}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="rounded bg-violet-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest text-violet-700">
+                      {item.category || "Hoạt động"}
+                    </span>
+                    <span className="text-[11px] font-semibold uppercase tracking-[0.1em] text-slate-400">
+                      {new Date(item.date).toLocaleDateString("en-US", {
+                        month: "short",
+                        day: "numeric",
+                        year: "numeric",
+                      })}
+                    </span>
+                  </div>
 
                   <h3 className="text-base font-bold leading-snug tracking-[-0.02em] text-slate-900 line-clamp-2 transition-colors duration-300 group-hover:text-[#630ed4] sm:text-[1.05rem]">
                     {item.title}

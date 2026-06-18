@@ -20,7 +20,7 @@ const ADMIN_HEADER_RULES = [
   [/^\/admin\/finance$/, "Tài chính"],
   [/^\/admin\/content\/questions$/, "Phỏng vấn AI"],
   [/^\/admin\/content\/courses$/, "Khóa học"],
-  [/^\/admin\/achievements$/, "Quản lý Thành tựu"],
+  [/^\/admin\/achievements$/, "Quản lý Tin tức"],
   [/^\/admin\/analytics$/, "Phân tích"],
   [/^\/admin\/reviews$/, "Đánh giá"],
   [/^\/admin\/support$/, "Hỗ trợ"],

@@ -5,7 +5,10 @@ import { Medal } from "lucide-react";
 
 export function Achievements() {
   const [achievements, setAchievements] = useState([]);
+  const [activeTab, setActiveTab] = useState("Tất cả");
   const navigate = useNavigate();
+
+  const TABS = ["Tất cả", "Tin tức", "Hoạt động", "Sự kiện"];
 
   useEffect(() => {
     const fetchAchievements = async () => {
@@ -35,7 +38,7 @@ export function Achievements() {
             Tin tức & Hoạt động
           </span>
           <h1 className="text-balance text-4xl font-black leading-[1.05] tracking-[-0.03em] text-slate-900 sm:text-5xl lg:text-[3.5rem]">
-            Thành tựu nổi bật{" "}
+            Tin tức và hoạt động{" "}
             <span className="text-[#630ed4]">từ ProInterview</span>
           </h1>
           <p className="mx-auto mt-5 max-w-xl text-base leading-relaxed text-slate-500 sm:text-lg">
@@ -44,9 +47,26 @@ export function Achievements() {
         </div>
       </section>
 
+      {/* Tabs */}
+      <section className="mx-auto max-w-3xl px-6 pb-12 flex flex-wrap justify-center gap-2 sm:gap-3">
+        {TABS.map(tab => (
+          <button
+            key={tab}
+            onClick={() => setActiveTab(tab)}
+            className={`rounded-full px-5 py-2 text-sm font-bold transition-all duration-300 ${
+              activeTab === tab
+                ? "bg-[#630ed4] text-white shadow-md shadow-violet-500/20"
+                : "bg-white text-slate-600 border border-slate-200 hover:border-[#630ed4] hover:text-[#630ed4]"
+            }`}
+          >
+            {tab}
+          </button>
+        ))}
+      </section>
+
       {/* Grid */}
       <section className="mx-auto max-w-[84rem] px-6 pb-24 sm:px-8">
-        {achievements.length === 0 ? (
+        {achievements.filter(item => activeTab === "Tất cả" || item.category === activeTab).length === 0 ? (
           <div className="rounded-2xl border border-slate-200 bg-white py-24 text-center">
             <p className="text-sm font-semibold uppercase tracking-widest text-slate-400">
               Chưa có bài viết nào được đăng tải
@@ -54,7 +74,7 @@ export function Achievements() {
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 lg:gap-6">
-            {achievements.map((item) => (
+            {achievements.filter(item => activeTab === "Tất cả" || item.category === activeTab).map((item) => (
               <article
                 key={item._id}
                 onClick={() => navigate(`/achievements/${item._id}`)}
@@ -75,13 +95,18 @@ export function Achievements() {
 
                 {/* Content */}
                 <div className="flex flex-col gap-3 p-5">
-                  <span className="text-[11px] font-semibold uppercase tracking-[0.1em] text-violet-500">
-                    {new Date(item.date).toLocaleDateString("en-US", {
-                      month: "short",
-                      day: "numeric",
-                      year: "numeric",
-                    })}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="rounded bg-violet-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest text-violet-700">
+                      {item.category || "Hoạt động"}
+                    </span>
+                    <span className="text-[11px] font-semibold uppercase tracking-[0.1em] text-slate-400">
+                      {new Date(item.date).toLocaleDateString("en-US", {
+                        month: "short",
+                        day: "numeric",
+                        year: "numeric",
+                      })}
+                    </span>
+                  </div>
 
                   <h3 className="text-base font-bold leading-snug tracking-[-0.02em] text-slate-900 line-clamp-2 transition-colors duration-300 group-hover:text-[#630ed4] sm:text-[1.05rem]">
                     {item.title}
