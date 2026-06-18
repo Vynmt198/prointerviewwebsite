@@ -161,6 +161,36 @@ export async function logoutUser(userId, accessMeta = {}) {
   return { ok: true };
 }
 
+/** Đăng xuất khi client chỉ còn refresh token (access đã hết hạn). */
+export async function logoutByRefreshToken(rawRefresh, accessMeta = {}) {
+  const raw = typeof rawRefresh === "string" ? rawRefresh.trim() : "";
+  const idx = raw.indexOf(":");
+  if (idx <= 0) {
+    return { ok: false, status: 400, error: "Thiếu refresh token." };
+  }
+  const sidStr = raw.slice(0, idx);
+  const secret = raw.slice(idx + 1);
+  if (!mongoose.isValidObjectId(sidStr) || !secret) {
+    return { ok: false, status: 401, error: "Refresh token không hợp lệ." };
+  }
+  const sid = new mongoose.Types.ObjectId(sidStr);
+  const user = await User.findOne({ "authSessions._id": sid }).select("+authSessions");
+  if (!user) {
+    return { ok: false, status: 401, error: "Phiên không còn hợp lệ. Đăng nhập lại." };
+  }
+  const sub = user.authSessions?.find((s) => s._id.equals(sid));
+  if (!sub) {
+    return { ok: false, status: 401, error: "Phiên không còn hợp lệ. Đăng nhập lại." };
+  }
+  if (sub.expiresAt && sub.expiresAt.getTime() < Date.now()) {
+    return { ok: false, status: 401, error: "Phiên đã hết hạn. Đăng nhập lại." };
+  }
+  if (!safeEqualStrings(sub.tokenHash, hashRefreshSecret(secret))) {
+    return { ok: false, status: 401, error: "Refresh token không hợp lệ." };
+  }
+  return logoutUser(user._id.toString(), accessMeta);
+}
+
 /** Xóa tài khoản hiện tại + vô hiệu toàn bộ phiên. */
 export async function deleteMeUser(userId) {
   const uid = String(userId ?? "").trim();
@@ -363,7 +393,7 @@ export async function requestPasswordReset(emailRaw, req) {
 
   const isProd = String(process.env.NODE_ENV || "").toLowerCase() === "production";
   const origin = typeof process.env.CORS_ORIGIN === "string" ? process.env.CORS_ORIGIN.split(",")[0].trim() : "http://localhost:5173";
-  const resetUrl = `${origin.replace(/\/$/, "")}/#/reset-password?token=${encodeURIComponent(token)}`;
+  const resetUrl = `${origin.replace(/\/$/, "")}/reset-password?token=${encodeURIComponent(token)}`;
 
   // Gửi email thực tế
   await emailService.sendResetPasswordEmail(user.email, user.name, resetUrl);
@@ -475,7 +505,7 @@ export async function registerUser(body) {
 
     // Gửi email xác thực
     const origin = typeof process.env.CORS_ORIGIN === "string" ? process.env.CORS_ORIGIN.split(",")[0].trim() : "http://localhost:5173";
-    const verifyUrl = `${origin.replace(/\/$/, "")}/#/verify-email?token=${encodeURIComponent(verifyToken)}`;
+    const verifyUrl = `${origin.replace(/\/$/, "")}/verify-email?token=${encodeURIComponent(verifyToken)}`;
     
     await emailService.sendVerificationEmail(trimmedEmail, trimmedName, verifyUrl);
 
@@ -539,7 +569,7 @@ export async function requestEmailVerification(emailRaw) {
 
   // Gửi email
   const origin = typeof process.env.CORS_ORIGIN === "string" ? process.env.CORS_ORIGIN.split(",")[0].trim() : "http://localhost:5173";
-  const verifyUrl = `${origin.replace(/\/$/, "")}/#/verify-email?token=${encodeURIComponent(verifyToken)}`;
+  const verifyUrl = `${origin.replace(/\/$/, "")}/verify-email?token=${encodeURIComponent(verifyToken)}`;
   
   await emailService.sendVerificationEmail(user.email, user.name, verifyUrl);
 

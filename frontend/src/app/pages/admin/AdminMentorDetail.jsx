@@ -18,9 +18,9 @@ import {
   adminPageWrap,
   adminStatGrid4,
 } from "../../components/admin/AdminPageShell.jsx";
-import { adminApi } from "../../utils/adminApi.js";
-import { tryApi } from "../../utils/apiToast.js";
-import { avatarSrc } from "../../utils/mediaUrl.js";
+import { adminApi } from "../../api/adminApi.js";
+import { tryApi } from "../../utils/shared/apiToast.js";
+import { avatarSrc } from "../../utils/shared/mediaUrl.js";
 
 function vnd(amount) {
   return `${Number(amount || 0).toLocaleString("vi-VN")} đ`;

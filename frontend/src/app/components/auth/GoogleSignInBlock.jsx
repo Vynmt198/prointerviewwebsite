@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router";
-import { getUser, loginWithGoogleCredential, getPostLoginPath } from "../../utils/auth";
+import { getUser, loginWithGoogleCredential, getPostLoginPath } from "../../utils/auth/auth.js";
 
 const CLIENT_ID = String(import.meta.env.VITE_GOOGLE_CLIENT_ID || "").trim();
 

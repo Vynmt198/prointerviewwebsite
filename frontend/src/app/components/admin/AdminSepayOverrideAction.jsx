@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { AlertTriangle, ShieldCheck } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
-import { buildAdminTransferConfirmBody } from "../../utils/adminTransferConfirm.js";
+import { buildAdminTransferConfirmBody } from "../../utils/admin/adminTransferConfirm.js";
 
 /**
  * Admin xác nhận CK thủ công, không cần học viên bấm «đã chuyển khoản» trong app.

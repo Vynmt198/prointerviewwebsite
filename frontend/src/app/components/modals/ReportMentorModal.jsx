@@ -8,10 +8,11 @@ import {
   Loader2,
 } from "lucide-react";
 import { REPORT_CATEGORIES } from "../../constants/reportCategories";
-import { submitReport, REPORT_REASON_MAP } from "../../utils/reportsApi";
-import { toastApiError, tryApi } from "../../utils/apiToast";
-import { requireLoginNavigate } from "../../utils/authGate";
-import { isLoggedIn } from "../../utils/auth";
+import { submitReport, REPORT_REASON_MAP } from "../../api/reportsApi.js";
+import { toastApiError, tryApi } from "../../utils/shared/apiToast.js";
+import { requireLoginNavigate } from "../../utils/auth/authGate.js";
+import { isLoggedIn } from "../../utils/auth/auth.js";
+import { getCurrentAppPath } from "../../utils/auth/appPath.js";
 
 export function ReportMentorModal({
   mentorId,
@@ -29,7 +30,7 @@ export function ReportMentorModal({
     e.preventDefault();
 
     if (!isLoggedIn()) {
-      requireLoginNavigate(navigate, window.location.hash.replace(/^#/, "") || "/");
+      requireLoginNavigate(navigate, getCurrentAppPath());
       return;
     }
 

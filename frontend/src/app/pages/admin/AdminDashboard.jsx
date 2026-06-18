@@ -14,8 +14,8 @@ import {
   ArrowRight,
   BookOpen,
 } from "lucide-react";
-import { adminApi } from "../../utils/adminApi";
-import { toastApiError } from "../../utils/apiToast";
+import { adminApi } from "../../api/adminApi.js";
+import { toastApiError } from "../../utils/shared/apiToast.js";
 import { AppSelect } from "../../components/ui/AppSelect";
 
 /** Cùng thứ tự ưu tiên với sidebar admin */

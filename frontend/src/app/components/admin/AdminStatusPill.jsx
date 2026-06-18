@@ -1,5 +1,5 @@
 import { AlertCircle, CheckCircle, Clock, XCircle } from "lucide-react";
-import { labelPaymentStatus } from "../../utils/adminPaymentUi.js";
+import { labelPaymentStatus } from "../../utils/admin/adminPaymentUi.js";
 
 const PILL =
   "inline-flex w-fit max-w-full items-center justify-center gap-1.5 whitespace-nowrap rounded-full border px-3 py-1.5 text-xs font-semibold leading-none";

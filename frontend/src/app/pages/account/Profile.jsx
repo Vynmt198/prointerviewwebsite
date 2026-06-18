@@ -28,16 +28,16 @@ import {
   getInitials,
   restoreSession,
   PLANS_CHANGED_EVENT,
-} from "../../utils/auth";
-import { applyAsMentor, fetchMyMentorProfile, updateMyMentorProfile } from "../../utils/mentorApi";
-import { buildMentorApplyPayload } from "../../utils/mentorApplyPayload";
+} from "../../utils/auth/auth.js";
+import { applyAsMentor, fetchMyMentorProfile, updateMyMentorProfile } from "../../api/mentorApi.js";
+import { buildMentorApplyPayload } from "../../utils/mentor/mentorApplyPayload.js";
 import {
   getCvSectionKeysToExpand,
   getProfileCvMissing,
   mentorApplyBlockedMessage,
   MENTOR_APPLY_RESUBMIT_CONFIRM_BODY,
   MENTOR_APPLY_RESUBMIT_CONFIRM_TITLE,
-} from "../../utils/profileCvValidation";
+} from "../../utils/profile/profileCvValidation.js";
 import {
   ProfileCvAccordionSection,
   ProfileCvMentorHint,
@@ -46,8 +46,8 @@ import {
 } from "../../components/profile/ProfileCvSection";
 import { ProfileWorkHistoryEditor } from "../../components/profile/ProfileWorkHistoryEditor";
 import { ProfileEducationHistoryEditor } from "../../components/profile/ProfileEducationHistoryEditor";
-import { uploadFile } from "../../utils/uploadApi";
-import { normalizeStoredUploadUrl, resolveMediaUrl } from "../../utils/mediaUrl";
+import { uploadFile } from "../../api/uploadApi.js";
+import { normalizeStoredUploadUrl, resolveMediaUrl } from "../../utils/shared/mediaUrl.js";
 import {
   emptyWorkEntry,
   estimateExperienceYears,
@@ -57,13 +57,13 @@ import {
   parseWorkHistory,
   pickCurrentWorkEntry,
   serializeWorkHistory,
-} from "../../utils/profileWorkHistory";
+} from "../../utils/profile/profileWorkHistory.js";
 import {
   formatEducationHistoryLines,
   hasEducationHistoryContent,
   parseEducationHistory,
   serializeEducationHistory,
-} from "../../utils/profileEducationHistory";
+} from "../../utils/profile/profileEducationHistory.js";
 
 function buildCvProfileFromSources(u, mentor) {
   const skillsFromUser =

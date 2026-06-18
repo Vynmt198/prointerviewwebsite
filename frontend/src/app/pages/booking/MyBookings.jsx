@@ -5,11 +5,11 @@ import { Calendar, Video, Star, FileText } from "lucide-react";
 import { MentorPageShell } from "../../components/mentor/MentorPageShell";
 import { CustomerPageHeader, CustomerPageSplitTitle } from "../../components/layout/CustomerPageHeader";
 import { CUSTOMER_SHELL_GUTTER, CUSTOMER_SHELL_MAX } from "../../components/layout/customerShellLayout";
-import { listBookings } from "../../utils/bookingsApi";
-import { apiBookingToLocal } from "../../utils/bookingMappers";
-import { parseDateMs } from "../../utils/bookings";
-import { isLoggedIn } from "../../utils/auth";
-import { toastApiError } from "../../utils/apiToast";
+import { listBookings } from "../../api/bookingsApi.js";
+import { apiBookingToLocal } from "../../utils/booking/bookingMappers.js";
+import { parseDateMs } from "../../utils/booking/bookings.js";
+import { isLoggedIn } from "../../utils/auth/auth.js";
+import { toastApiError } from "../../utils/shared/apiToast.js";
 
 const TABS = [
   { id: "upcoming", label: "Sắp tới" },

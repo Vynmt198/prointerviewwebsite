@@ -1,5 +1,5 @@
 import { Plus, Trash2 } from "lucide-react";
-import { emptyWorkEntry, formatWorkEntryPeriod } from "../../utils/profileWorkHistory";
+import { emptyWorkEntry, formatWorkEntryPeriod } from "../../utils/profile/profileWorkHistory.js";
 
 const fieldClass =
   "w-full rounded-md border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-200/80 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-500";

@@ -13,11 +13,11 @@ import {
   MessageSquare
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
-import { toastApiError, toastApiSuccess } from "../../utils/apiToast";
+import { toastApiError, toastApiSuccess } from "../../utils/shared/apiToast.js";
 import { MentorPageShell } from "../../components/mentor/MentorPageShell";
-import { fetchMentorBookingById, updateMentorNotes } from "../../utils/bookingsApi";
-import { avatarSrc, DEFAULT_AVATAR } from "../../utils/mediaUrl";
-import { sessionTypeLabel } from "../../utils/sessionTypeLabels";
+import { fetchMentorBookingById, updateMentorNotes } from "../../api/bookingsApi.js";
+import { avatarSrc, DEFAULT_AVATAR } from "../../utils/shared/mediaUrl.js";
+import { sessionTypeLabel } from "../../utils/booking/sessionTypeLabels.js";
 
 export function MentorSessionFeedback() {
   const { sessionId } = useParams();

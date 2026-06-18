@@ -1,18 +1,18 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router";
 import { motion, AnimatePresence } from "motion/react";
-import { getUser, isLoggedIn, getDisplayName, getInitials, setLoggedIn } from "../../utils/auth";
-import { toastApiError, toastApiSuccess, tryApi } from "../../utils/apiToast";
-import { fetchCurrentPlan } from "../../utils/plansApi";
-import { parseDateMs } from "../../utils/bookings";
-import { listBookings, cancelBooking } from "../../utils/bookingsApi";
-import { fetchDashboardStats } from "../../utils/dashboardApi";
+import { getUser, isLoggedIn, getDisplayName, getInitials, setLoggedIn } from "../../utils/auth/auth.js";
+import { toastApiError, toastApiSuccess, tryApi } from "../../utils/shared/apiToast.js";
+import { fetchCurrentPlan } from "../../api/plansApi.js";
+import { parseDateMs } from "../../utils/booking/bookings.js";
+import { listBookings, cancelBooking } from "../../api/bookingsApi.js";
+import { fetchDashboardStats } from "../../api/dashboardApi.js";
 import {
   apiBookingToLocal,
   buildMentorIssueAlerts,
   buildRefundPendingAlerts,
   groupMentorIssueAlerts,
-} from "../../utils/bookingMappers";
+} from "../../utils/booking/bookingMappers.js";
 import { MentorPageShell } from "../../components/mentor/MentorPageShell";
 import { DASHBOARD_GREETING_SUB } from "../../constants/brandVoice";
 import {

@@ -8,12 +8,13 @@ import {
 } from "lucide-react";
 import { SparkleGlyph } from "../../components/decor/SparkleGlyph.jsx";
 import { MentorPageShell } from "../../components/mentor/MentorPageShell";
-import { requireLoginNavigate } from "../../utils/authGate";
-import { getUser, isLoggedIn } from "../../utils/auth";
-import { fetchCurrentPlan } from "../../utils/plansApi";
+import { requireLoginNavigate } from "../../utils/auth/authGate.js";
+import { getUser, isLoggedIn } from "../../utils/auth/auth.js";
+import { fetchCurrentPlan } from "../../api/plansApi.js";
 import { CUSTOMER_SHELL_GUTTER, CUSTOMER_SHELL_MAX } from "../../components/layout/customerShellLayout";
 import { CustomerPageHeader, CustomerPageSplitTitle } from "../../components/layout/CustomerPageHeader";
 import { PRICING_SUBTITLE, PRICING_FAQ } from "../../constants/brandVoice";
+import { buildPlanCheckoutPath, getPlanDisplayAmount } from "../../constants/planCatalog.js";
 
 function PricingFaqAnswer({ item }) {
   return (
@@ -42,10 +43,6 @@ const PLANS = [
     id: "free",
     title: "Basic",
     subtitle: "Miễn phí mãi mãi",
-    monthlyDisplay: 0,
-    yearlyDisplay: 0,
-    yearlyTotal: null,
-    yearlySave: null,
     features: [
       "Phân tích CV & JD không giới hạn",
       "1 buổi AI Interview trải nghiệm (3 câu hỏi)",
@@ -60,18 +57,12 @@ const PLANS = [
     id: "starter_pro",
     title: "Pro",
     subtitle: "Dành cho ứng viên chủ động",
-    monthlyDisplay: 99000,
-    yearlyDisplay: 79000,
-    yearlyTotal: 948000,
-    yearlySave: 240000,
     features: [
       "Phân tích CV & JD không giới hạn",
       "4 phiên AI Interview thực chiến (5 câu hỏi)",
       "Nhận phản hồi chi tiết sau mỗi phiên",
     ],
     cta: "Nâng cấp Pro",
-    checkoutMonthly: "/checkout?plan=starterPro&billing=monthly&planPrice=99000",
-    checkoutYearly: "/checkout?plan=starterPro&billing=yearly&planPrice=948000",
     popular: false,
     variant: "lime",
   },
@@ -79,18 +70,12 @@ const PLANS = [
     id: "elite_pro",
     title: "Elite",
     subtitle: "Chinh phục tập đoàn lớn",
-    monthlyDisplay: 199000,
-    yearlyDisplay: 159000,
-    yearlyTotal: 1908000,
-    yearlySave: 480000,
     features: [
       "Phân tích CV & JD không giới hạn",
       "10 phiên AI Interview nâng cao (5 câu hỏi)",
       "Phản hồi chuyên sâu & theo dõi tiến độ",
     ],
     cta: "Nâng cấp Elite",
-    checkoutMonthly: "/checkout?plan=elitePro&billing=monthly&planPrice=199000",
-    checkoutYearly: "/checkout?plan=elitePro&billing=yearly&planPrice=1908000",
     popular: true,
     variant: "elite",
   },
@@ -160,7 +145,7 @@ export function Pricing() {
       return;
     }
     if (currentPlan === plan.id) return;
-    const path = billing === "yearly" ? plan.checkoutYearly : plan.checkoutMonthly;
+    const path = buildPlanCheckoutPath(plan.id, billing);
     requireLoginNavigate(navigate, path);
   };
 
@@ -189,11 +174,11 @@ export function Pricing() {
               const isCurrent = currentPlan === plan.id;
               const isPopular = plan.popular;
               const isYearly = billing === "yearly";
-              const displayAmount = isYearly ? plan.yearlyDisplay : plan.monthlyDisplay;
               const isFree = plan.id === "free";
+              const displayAmount = isFree ? 0 : getPlanDisplayAmount(plan.id, billing);
               const variant = plan.variant;
               /** Cùng chiều cao khối giá → vạch ngăn & list thẳng hàng (Basic 0đ = Pro/Elite) */
-              const priceBlockMin = isYearly ? "min-h-[5.125rem]" : "min-h-[2.75rem]";
+              const priceBlockMin = "min-h-[2.75rem]";
               return (
                 <article
                   key={plan.id}
@@ -274,30 +259,8 @@ export function Pricing() {
                         <p className="text-3xl font-black tracking-tight text-[#630ed4] sm:text-4xl">
                           {fmtVnd(displayAmount)}
                           <span className="ml-1 text-base font-bold text-slate-500">
-                            {isYearly ? "/tháng (quy đổi)" : "/tháng"}
+                            {isYearly ? "/năm" : "/tháng"}
                           </span>
-                        </p>
-                      )}
-                      {isYearly && !isFree && plan.yearlyTotal != null && (
-                        <p className="text-base font-black leading-snug text-slate-900">
-                          Thanh toán một lần:{" "}
-                          <span className="text-[#630ed4]">{fmtVnd(plan.yearlyTotal)}</span>
-                          <span className="font-semibold text-slate-500"> /năm</span>
-                        </p>
-                      )}
-                      {isYearly && isFree && (
-                        <>
-                          <p className="text-base font-bold leading-snug text-transparent" aria-hidden>
-                            —
-                          </p>
-                          <p className="text-sm font-semibold leading-snug text-transparent" aria-hidden>
-                            —
-                          </p>
-                        </>
-                      )}
-                      {isYearly && plan.yearlySave != null && (
-                        <p className="text-sm font-semibold leading-snug text-[#6d2fd6]">
-                          Tiết kiệm {fmtVnd(plan.yearlySave)}/năm
                         </p>
                       )}
                     </div>

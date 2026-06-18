@@ -5,6 +5,7 @@ import { PlansController } from "../controllers/plansController.js";
 
 export const plansRouter = Router();
 
+plansRouter.get("/catalog", asyncHandler(PlansController.catalog));
 plansRouter.get("/current", authJwt, asyncHandler(PlansController.current));
 plansRouter.post("/activate", authJwt, asyncHandler(PlansController.activate));
 plansRouter.post("/cancel", authJwt, asyncHandler(PlansController.cancel));

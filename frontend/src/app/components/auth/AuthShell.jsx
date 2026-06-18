@@ -1,6 +1,6 @@
 import React from "react";
 import { useNavigate } from "react-router";
-import { getBrandClickPath } from "../../utils/auth";
+import { getBrandClickPath } from "../../utils/auth/auth.js";
 import { Zap as Lightning } from "lucide-react";
 
 /**

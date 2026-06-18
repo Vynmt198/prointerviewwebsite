@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Clock, User, BookOpen } from "lucide-react";
 import { motion } from "motion/react";
-import { tryApi } from "../../utils/apiToast";
-import { adminApi } from "../../utils/adminApi";
-import { formatTransferConfirmedAt } from "../../utils/adminPaymentUi.js";
+import { tryApi } from "../../utils/shared/apiToast.js";
+import { adminApi } from "../../api/adminApi.js";
+import { formatTransferConfirmedAt } from "../../utils/admin/adminPaymentUi.js";
 import { AdminSepayOverrideAction } from "../../components/admin/AdminSepayOverrideAction.jsx";
 import { PaymentStatusPill } from "../../components/admin/AdminStatusPill.jsx";
 import { AdminFilterSelect, AdminListFilterBar } from "../../components/admin/AdminListFilters.jsx";

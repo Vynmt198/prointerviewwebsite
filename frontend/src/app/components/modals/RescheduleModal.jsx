@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { toastApiError, toastApiSuccess } from "../../utils/apiToast";
+import { toastApiError, toastApiSuccess } from "../../utils/shared/apiToast.js";
 import {
   CalendarOff as CalendarX,
   Clock,

@@ -7,6 +7,7 @@ import { User } from "../models/User.js";
 import { Enrollment } from "../models/Enrollment.js";
 import { runInTransaction } from "../helpers/dbHelper.js";
 import { planKeyFromSubscriptionMeta } from "../utils/planKeys.js";
+import { normalizeBillingCycle, resolveSubscriptionAmount } from "../constants/planCatalog.js";
 import { newPaymentExpiresAt } from "../utils/transferPaymentExpiry.js";
 import {
   expireSubscriptionTransferIfNeeded,
@@ -57,15 +58,17 @@ export async function initiatePayment(userId, body) {
     amount = Number.isFinite(amount) && amount > 0 ? Math.round(amount) : Math.round(b.totalAmount ?? b.price ?? 0);
     referenceId = b._id;
   } else if (type === "subscription") {
-    if (!Number.isFinite(amount) || amount <= 0) {
-      return { ok: false, status: 400, error: "amount bắt buộc khi type=subscription." };
+    const rawPlan = body?.planKey ?? body?.plan ?? "starter_pro";
+    const billing = normalizeBillingCycle(body?.billing);
+    const catalogAmount = resolveSubscriptionAmount(rawPlan, billing);
+    if (!catalogAmount) {
+      return { ok: false, status: 400, error: "planKey hoặc billing không hợp lệ." };
     }
-    amount = Math.round(amount);
+    amount = catalogAmount;
     referenceId = new mongoose.Types.ObjectId(String(userId));
     referenceModel = "Subscription";
-    const rawPlan = String(body?.planKey ?? body?.plan ?? "starter_pro").toLowerCase();
-    const subscriptionPlan = rawPlan.includes("elite") ? "elite_pro" : "starter_pro";
-    providerResponse = { plan: subscriptionPlan };
+    const subscriptionPlan = planKeyFromSubscriptionMeta(rawPlan) || "starter_pro";
+    providerResponse = { plan: subscriptionPlan, billing };
   } else {
     return { ok: false, status: 400, error: "type phải là booking hoặc subscription." };
   }
@@ -87,7 +90,7 @@ export async function initiatePayment(userId, body) {
   });
 
   const base = process.env.FRONTEND_URL?.replace(/\/$/, "") || "http://localhost:5173";
-  let payUrl = `${base}/#/checkout?paymentId=${pay._id.toString()}&mock=1`;
+  let payUrl = `${base}/checkout?paymentId=${pay._id.toString()}&mock=1`;
   let isMock = true;
 
   // Xử lý VNPay thật (Sandbox)
@@ -444,6 +447,16 @@ export async function createSubscriptionTransferPending(userId, { amount, planKe
   const ref = String(orderNum || "").trim().slice(0, 100);
   if (!ref) return { ok: false, status: 400, error: "orderNum (mã đơn) bắt buộc." };
   const plan = normalizeSubscriptionPlanKey(planKey);
+  const billingCycle = normalizeBillingCycle(billing);
+  const catalogAmount = resolveSubscriptionAmount(plan, billingCycle);
+  if (!catalogAmount) {
+    return { ok: false, status: 400, error: "planKey hoặc billing không hợp lệ." };
+  }
+  const clientAmount = Math.round(Number(amount) || 0);
+  if (clientAmount > 0 && clientAmount !== catalogAmount) {
+    return { ok: false, status: 400, error: "Số tiền không khớp bảng giá. Vui lòng tải lại trang checkout." };
+  }
+  const resolvedAmount = catalogAmount;
   const expiresAt = newPaymentExpiresAt();
 
   let pendingRow = await Payment.findOne({
@@ -451,7 +464,7 @@ export async function createSubscriptionTransferPending(userId, { amount, planKe
     type: "subscription",
     provider: "transfer",
     status: "pending",
-  }).select("_id referenceId providerRef paymentExpiresAt createdAt");
+  }).select("_id referenceId providerRef paymentExpiresAt createdAt amount");
 
   if (pendingRow && forceNew) {
     pendingRow.status = "cancelled";
@@ -469,6 +482,7 @@ export async function createSubscriptionTransferPending(userId, { amount, planKe
         providerRef: pendingRow.providerRef || ref,
         idempotent: true,
         paymentExpiresAt: pendingRow.paymentExpiresAt,
+        amount: Math.round(Number(pendingRow.amount) || resolvedAmount),
       };
     }
     pendingRow = null;
@@ -482,10 +496,10 @@ export async function createSubscriptionTransferPending(userId, { amount, planKe
     type: "subscription",
     referenceModel: "Subscription",
     referenceId,
-    amount,
+    amount: resolvedAmount,
     providerRef: ref,
     planKey: plan,
-    billing,
+    billing: billingCycle,
     paymentExpiresAt: expiresAt,
   });
   if (!ledger.ok) return { ok: false, status: 500, error: ledger.error || "Không tạo được giao dịch chờ CK." };
@@ -495,6 +509,7 @@ export async function createSubscriptionTransferPending(userId, { amount, planKe
     providerRef: ledger.providerRef || ref,
     idempotent: Boolean(ledger.idempotent),
     paymentExpiresAt: ledger.paymentExpiresAt || expiresAt,
+    amount: resolvedAmount,
   };
 }
 

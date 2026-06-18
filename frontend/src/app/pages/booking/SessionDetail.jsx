@@ -28,18 +28,18 @@ import {
   Eye,
   Target,
 } from "lucide-react";
-import { toastApiError, toastApiSuccess } from "../../utils/apiToast";
-import { isLoggedIn } from "../../utils/auth";
+import { toastApiError, toastApiSuccess } from "../../utils/shared/apiToast.js";
+import { isLoggedIn } from "../../utils/auth/auth.js";
 import {
   cancelBooking,
   fetchBookingById,
   reportBookingNoShow,
   resolveMentorCancelBooking,
   updateBookingRefundDestination,
-} from "../../utils/bookingsApi";
-import { loadMentorRescheduleSlotOptions } from "../../utils/bookingRescheduleSlots";
-import { isBookingSlotInFuture } from "../../utils/bookingSchedule";
-import { apiBookingToLocal } from "../../utils/bookingMappers";
+} from "../../api/bookingsApi.js";
+import { loadMentorRescheduleSlotOptions } from "../../utils/booking/bookingRescheduleSlots.js";
+import { isBookingSlotInFuture } from "../../utils/booking/bookingSchedule.js";
+import { apiBookingToLocal } from "../../utils/booking/bookingMappers.js";
 import {
   buildGoogleCalendarEventUrl,
   canEnterMeetingRoom,
@@ -47,7 +47,7 @@ import {
   getMinutesUntilBookingStart,
   isBookingInLiveWindow,
   MEETING_PROVIDER_LABELS,
-} from "../../utils/meetingLinks";
+} from "../../utils/shared/meetingLinks.js";
 import { MentorCancelSessionPanel } from "./MentorCancelSessionPanel";
 import {
   BRAND_LIME,

@@ -285,15 +285,15 @@ export const PRICING_FAQ = [
     note: "Nếu quá 15 phút chưa thấy gói được kích hoạt, kiểm tra lại số tiền và nội dung CK, hoặc liên hệ hỗ trợ kèm ảnh biên lai.",
   },
   {
-    q: "Trả Hàng năm có lợi hơn Hàng tháng không?",
+    q: "Trả Hàng năm khác gì Hàng tháng?",
     paragraphs: [
-      "Có. Khi chọn Hàng năm, bạn thanh toán một lần cho cả 12 tháng và tiết kiệm khoảng 20% so với trả từng tháng.",
+      "Chỉ khác cách thanh toán: Hàng năm bạn trả một lần cho 12 tháng; Hàng tháng bạn trả từng tháng. Mức giá tháng giữ nguyên, không giảm khi trả năm.",
     ],
     bullets: [
-      "Pro: 756.000đ/năm (quy đổi ~63.000đ/tháng) thay vì 79.000đ × 12 = 948.000đ.",
-      "Elite: 948.000đ/năm (quy đổi ~79.000đ/tháng) thay vì 99.000đ × 12 = 1.188.000đ.",
+      "Pro: 99.000đ/tháng hoặc 1.188.000đ/năm (99.000đ × 12).",
+      "Elite: 199.000đ/tháng hoặc 2.388.000đ/năm (199.000đ × 12).",
     ],
-    note: "Quyền lợi Pro và Elite giống nhau dù bạn chọn trả tháng hay trả năm — chỉ khác cách thanh toán và mức tiết kiệm.",
+    note: "Quyền lợi Pro và Elite giống nhau dù bạn chọn trả tháng hay trả năm.",
   },
   {
     q: "Tôi có thể hủy hoặc không gia hạn gói không?",

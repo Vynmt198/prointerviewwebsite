@@ -1,10 +1,9 @@
 import { MentorPageShell } from "../../components/mentor/MentorPageShell";
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { motion } from "motion/react";
 import {
   Bell,
-  LogOut,
   CheckCircle,
   ShieldCheck,
   ChevronRight,
@@ -18,16 +17,13 @@ import {
   MonitorSmartphone,
   KeyRound,
   UserCheck,
+  ImageIcon,
 } from "lucide-react";
-import { toastApiError, toastApiSuccess } from "../../utils/apiToast";
-import { logout, getUser, updateUser, refreshUserProfile } from "../../utils/auth";
+import { toastApiError, toastApiSuccess } from "../../utils/shared/apiToast.js";
+import { logout, getUser, getDisplayName, updateUser, refreshUserProfile } from "../../utils/auth/auth.js";
+import { avatarSrc, DEFAULT_AVATAR } from "../../utils/shared/mediaUrl.js";
 import { LoginSessionsSection } from "../../components/account/LoginSessionsSection";
 import { AccountDangerZone } from "../../components/account/AccountDangerZone";
-import {
-  mentorPageTitle,
-  mentorPageSubtitle,
-  mentorAccentText,
-} from "../../components/mentor/mentorTypography";
 
 const NOTIF_PREFS_KEY_CUSTOMER = "prointerview_notif_prefs";
 const NOTIF_PREFS_KEY_MENTOR = "prointerview_notif_prefs_mentor";
@@ -75,7 +71,7 @@ function mergeNotifFromServer(defaults, serverPrefs, isMentor) {
 function ToggleSwitch({
   enabled,
   onChange,
-  colorClass = "bg-primary-fixed",
+  colorClass = "bg-emerald-500",
 }) {
   return (
     <button
@@ -94,18 +90,23 @@ function ToggleSwitch({
   );
 }
 
-function SectionCard({ children, className = "", title, icon: Icon }) {
+function SectionCard({ children, className = "", title, subtitle, icon: Icon }) {
   return (
-    <div className={`overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm ${className}`}>
+    <div className={`overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-[0_1px_3px_rgba(15,23,42,0.04)] ${className}`}>
       {title && (
-        <div className="flex items-center gap-3 border-b border-slate-100 bg-slate-50/60 px-5 py-3.5">
-          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-violet-600 text-white">
-            {Icon && <Icon size={15} strokeWidth={2.2} />}
+        <div className="flex flex-col gap-2 border-b border-slate-100 px-5 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+          <div className="flex items-center gap-3">
+            {Icon && (
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-50 text-[#8037f4]">
+                <Icon size={18} strokeWidth={2.2} />
+              </div>
+            )}
+            <h2 className="font-headline text-lg font-bold text-slate-900">{title}</h2>
           </div>
-          <p className="text-[11px] font-bold uppercase tracking-widest text-slate-500">{title}</p>
+          {subtitle ? <p className="text-sm text-slate-500">{subtitle}</p> : null}
         </div>
       )}
-      <div className="p-5">{children}</div>
+      <div className="p-5 sm:p-6">{children}</div>
     </div>
   );
 }
@@ -122,33 +123,33 @@ function SaveBar({
     <motion.div
       initial={{ opacity: 0, y: 50 }}
       animate={{ opacity: 1, y: 0 }}
-      className={`fixed bottom-10 right-10 left-auto z-50 flex items-center gap-6 px-10 py-5 rounded-[32px] shadow-[0_20px_50px_rgba(0,0,0,0.5)] border backdrop-blur-3xl transition-all ${
+      className={`fixed bottom-8 right-8 left-auto z-50 flex items-center gap-5 rounded-2xl border px-6 py-4 shadow-[0_12px_40px_rgba(15,23,42,0.12)] backdrop-blur-md transition-all ${
         saved
-          ? "bg-emerald-600 border-emerald-400 text-white"
-          : "bg-[#1a0d35]/95 border-white/10"
+          ? "border-emerald-200 bg-emerald-50 text-emerald-800"
+          : "border-slate-200 bg-white/95"
       }`}
     >
       {saved ? (
         <div className="flex items-center gap-3">
           <CheckCircle className="w-5 h-5" />
-          <span className="text-[10px] font-black uppercase tracking-widest text-white">Đã đồng bộ thành công</span>
+          <span className="text-xs font-bold text-emerald-800">Đã đồng bộ thành công</span>
         </div>
       ) : (
         <>
-          <span className="text-[10px] font-bold uppercase tracking-widest text-white/45">Hệ thống có thay đổi</span>
-          <div className="flex items-center gap-4">
+          <span className="text-xs font-semibold text-slate-500">Có thay đổi chưa lưu</span>
+          <div className="flex items-center gap-3">
             <button
               onClick={onReset}
-              className="px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-white/50 transition-colors hover:text-white"
+              className="rounded-full px-4 py-2 text-xs font-semibold text-slate-500 transition hover:text-slate-800"
             >
               Hủy
             </button>
             <button
               onClick={onSave}
               disabled={saving}
-              className="px-8 py-3 rounded-2xl bg-primary-fixed text-black text-[10px] font-black uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-lg disabled:opacity-50"
+              className="rounded-full bg-slate-900 px-5 py-2.5 text-xs font-bold text-white transition hover:bg-[#8037f4] disabled:opacity-50"
             >
-              {saving ? "..." : "Lưu thay đổi"}
+              {saving ? "Đang lưu…" : "Lưu thay đổi"}
             </button>
           </div>
         </>
@@ -308,33 +309,40 @@ function NotificationsTab({ isMentor, profileFromServer, onProfileSynced }) {
   };
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500">
-      <SectionCard title={sectionTitle} icon={Bell}>
-        <div className="divide-y divide-slate-100">
+    <div className="animate-in fade-in space-y-6 duration-500">
+      <div className="overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-[0_1px_3px_rgba(15,23,42,0.04)]">
+        <div className="flex flex-col gap-2 border-b border-slate-100 px-5 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+          <h2 className="font-headline text-xl font-bold text-slate-900">{sectionTitle}</h2>
+          <p className="text-sm text-slate-500">Chọn loại thông báo bạn muốn nhận</p>
+        </div>
+        <div>
           {push.map((item) => {
             const ItemIcon = item.icon;
             return (
-              <div key={item.id} className="flex items-center justify-between gap-4 py-3.5 first:pt-0 last:pb-0">
-                <div className="flex items-center gap-3.5">
+              <div
+                key={item.id}
+                className="flex items-center justify-between gap-4 border-b border-slate-100 px-5 py-5 last:border-b-0 sm:px-6"
+              >
+                <div className="flex min-w-0 items-center gap-3.5">
                   {ItemIcon && (
                     <div
-                      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl"
-                      style={{ background: item.iconBg }}
+                      className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl"
+                      style={{ backgroundColor: item.iconBg || "#ede9fe" }}
                     >
-                      <ItemIcon size={16} strokeWidth={2} style={{ color: item.iconColor }} />
+                      <ItemIcon size={18} strokeWidth={2.2} style={{ color: item.iconColor || "#8037f4" }} />
                     </div>
                   )}
-                  <div>
-                    <p className="text-sm font-semibold text-slate-800">{item.label}</p>
-                    <p className="mt-0.5 text-xs text-slate-400 leading-relaxed">{item.description}</p>
+                  <div className="min-w-0">
+                    <p className="text-sm font-bold text-slate-900">{item.label}</p>
+                    <p className="mt-0.5 text-xs leading-relaxed text-slate-500">{item.description}</p>
                   </div>
                 </div>
-                <ToggleSwitch enabled={item.value} onChange={() => toggle(item.id)} colorClass="bg-[#7fe015]" />
+                <ToggleSwitch enabled={item.value} onChange={() => toggle(item.id)} />
               </div>
             );
           })}
         </div>
-      </SectionCard>
+      </div>
       <SaveBar dirty={dirty} saving={saving} saved={false} onSave={handleSave} onReset={handleReset} />
     </div>
   );
@@ -429,35 +437,35 @@ function SecurityTab({ profileFromServer, onProfileSynced }) {
   };
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500">
-      <SectionCard title="Bảo mật đăng nhập" icon={ShieldCheck}>
-        <div className="divide-y divide-slate-100">
+    <div className="space-y-6 animate-in fade-in duration-500">
+      <SectionCard title="Bảo mật đăng nhập" subtitle="Tùy chọn bảo vệ tài khoản khi đăng nhập." icon={ShieldCheck}>
+        <div className="space-y-3">
           {securityPrefs.map((item) => {
             const ItemIcon = item.icon;
             return (
-              <div key={item.id} className="flex items-center justify-between gap-4 py-3.5 first:pt-0 last:pb-0">
+              <div
+                key={item.id}
+                className="flex items-center justify-between gap-4 rounded-2xl border border-slate-100 bg-slate-50/90 px-4 py-4 sm:px-5"
+              >
                 <div className="flex items-center gap-3.5">
                   {ItemIcon && (
-                    <div
-                      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl"
-                      style={{ background: item.iconBg }}
-                    >
-                      <ItemIcon size={16} strokeWidth={2} style={{ color: item.iconColor }} />
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white shadow-sm">
+                      <ItemIcon size={18} strokeWidth={2} style={{ color: item.iconColor || "#8037f4" }} />
                     </div>
                   )}
                   <div>
-                    <p className="text-sm font-semibold text-slate-800">{item.label}</p>
-                    <p className="mt-0.5 text-xs text-slate-400 leading-relaxed">{item.description}</p>
+                    <p className="text-sm font-bold text-slate-900">{item.label}</p>
+                    <p className="mt-0.5 text-xs font-semibold leading-relaxed text-slate-500">{item.description}</p>
                   </div>
                 </div>
-                <ToggleSwitch enabled={item.value} onChange={() => toggleSecurityPref(item.id)} colorClass="bg-[#7fe015]" />
+                <ToggleSwitch enabled={item.value} onChange={() => toggleSecurityPref(item.id)} />
               </div>
             );
           })}
         </div>
       </SectionCard>
 
-      <SectionCard title="Đổi mật khẩu" icon={KeyRound}>
+      <SectionCard title="Đổi mật khẩu" subtitle="Cập nhật mật khẩu đăng nhập của bạn." icon={KeyRound}>
         <div className="grid gap-4 md:grid-cols-2">
           <div className="space-y-1.5 md:col-span-2">
             <label className="text-xs font-semibold text-slate-600">Mật khẩu hiện tại</label>
@@ -529,38 +537,14 @@ export function Settings() {
   };
 
   const isMentor = profileFromServer?.role === "mentor";
+  const displayName = getDisplayName(profileFromServer) || "Thành viên";
+  const userEmail = profileFromServer?.email || "";
+  const userAvatar = avatarSrc(profileFromServer?.avatar);
+  const hasAvatar = userAvatar && userAvatar !== DEFAULT_AVATAR;
 
   return (
-    <MentorPageShell bottomPad="pb-32">
+    <MentorPageShell bottomPad="pb-24" showAmbient={false} className="!bg-[#f8f9fc]">
       <style>{`
-        .glass-card {
-           background: #ffffff;
-           backdrop-filter: none;
-           border-radius: 28px;
-           border: 1px solid rgba(148, 163, 184, 0.28);
-           transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.35s ease, box-shadow 0.45s ease;
-           position: relative;
-           overflow: hidden;
-           box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
-        }
-        .glass-card::before {
-           content: none;
-        }
-        .glass-card:hover {
-           border-color: rgba(122, 35, 229, 0.28);
-           transform: translateY(-2px);
-           box-shadow: 0 16px 32px rgba(15, 23, 42, 0.08);
-        }
-        .settings-glass-nav {
-           background: #ffffff;
-           backdrop-filter: none;
-           border: 1px solid rgba(148, 163, 184, 0.28);
-        }
-        .settings-glass-nav:hover { border-color: rgba(122, 35, 229, 0.22); }
-        .font-headline {
-          letter-spacing: -0.045em;
-          text-shadow: none;
-        }
         .input-glass {
            background: #ffffff;
            border: 1px solid #e2e8f0;
@@ -579,88 +563,99 @@ export function Settings() {
            box-shadow: 0 0 0 2px rgba(122, 35, 229, 0.12);
         }
         .input-glass::placeholder { color: #94a3b8; }
-        @keyframes settings-shimmer {
-          0% { opacity: 0.4; transform: translate(0,0) scale(1); }
-          50% { opacity: 0.7; transform: translate(2%, -2%) scale(1.05); }
-          100% { opacity: 0.4; transform: translate(0,0) scale(1); }
-        }
       `}</style>
 
-      <div className="relative z-10 mx-auto max-w-7xl px-6 pb-8">
-
-        {/* ── Header ── */}
-        <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <p className="mb-1 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-widest text-violet-600">
-              <ShieldCheck size={12} /> Tài khoản
-            </p>
-            <h1 className="text-2xl font-black tracking-tight text-slate-900 sm:text-3xl">
-              Cài đặt <span className="text-violet-600">tài khoản</span>
-            </h1>
-            <p className="mt-1 text-sm text-slate-500">
-              {isMentor ? "Thông báo, bảo mật và phiên đăng nhập." : "Thông báo và bảo mật tài khoản."}
-            </p>
-          </div>
-          {/* quick stat chips */}
-          <div className="flex shrink-0 items-center gap-2">
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-[#c4ff47] px-3 py-1.5 text-[11px] font-bold text-slate-800">
-              <CheckCircle size={12} /> Tài khoản hoạt động
-            </span>
-            {isMentor && (
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-violet-600 px-3 py-1.5 text-[11px] font-bold text-white">
-                <UserCheck size={12} /> Mentor
-              </span>
-            )}
-          </div>
-        </div>
+      <div className="relative z-10 mx-auto max-w-[1280px] px-4 pb-12 sm:px-6 lg:px-10">
+        <motion.header
+          initial={{ opacity: 0, y: -12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+          className="mb-6 pt-2 sm:mb-8"
+        >
+          <h1 className="font-headline text-[clamp(1.75rem,4vw,2.75rem)] font-black leading-tight tracking-tight text-slate-900">
+            Cài đặt <span className="text-[#8037f4]">tài khoản</span>
+          </h1>
+          <p className="mt-2 max-w-xl text-sm text-slate-500">
+            {isMentor ? "Thông báo, bảo mật và phiên đăng nhập." : "Thông báo và bảo mật tài khoản."}
+          </p>
+        </motion.header>
 
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
-
-          {/* ── Sidebar ── */}
-          <aside className="lg:col-span-3">
-            <div className="sticky top-24 overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm">
-              <div className="border-b border-slate-100 px-4 py-3">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Menu</p>
+          <aside className="lg:col-span-4 xl:col-span-3">
+            <div className="sticky top-24 space-y-3">
+              <div className="rounded-2xl border border-slate-200/90 bg-white p-5 shadow-[0_1px_3px_rgba(15,23,42,0.04)]">
+                <div className="flex flex-col items-center text-center">
+                  {hasAvatar ? (
+                    <img
+                      src={userAvatar}
+                      alt=""
+                      className="h-20 w-20 rounded-full object-cover ring-2 ring-slate-100"
+                      onError={(e) => {
+                        e.currentTarget.onerror = null;
+                        e.currentTarget.src = DEFAULT_AVATAR;
+                      }}
+                    />
+                  ) : (
+                    <div className="flex h-20 w-20 items-center justify-center rounded-full border-2 border-dashed border-slate-200 bg-slate-50">
+                      <ImageIcon size={28} className="text-slate-300" strokeWidth={1.5} />
+                    </div>
+                  )}
+                  <p className="mt-4 text-base font-bold text-slate-900">{displayName}</p>
+                  <p className="mt-0.5 truncate text-xs text-slate-500">{userEmail}</p>
+                  <Link
+                    to="/profile"
+                    className="mt-4 inline-flex w-full items-center justify-center rounded-full border border-slate-200 bg-slate-50 px-4 py-2.5 text-xs font-bold text-slate-700 transition hover:border-[#8037f4]/30 hover:bg-violet-50/50 hover:text-[#8037f4]"
+                  >
+                    Chỉnh sửa hồ sơ
+                  </Link>
+                </div>
               </div>
-              <div className="p-2">
-                {TABS.map((tab) => {
+
+              <nav className="space-y-1.5" aria-label="Cài đặt tài khoản">
+                {TABS.map((tab, index) => {
                   const isActive = tab.id === activeTab;
+                  const order = String(index + 1).padStart(2, "0");
                   return (
                     <button
                       key={tab.id}
                       type="button"
                       onClick={() => setActiveTab(tab.id)}
-                      className={`group mb-1 flex w-full items-center justify-between rounded-xl px-4 py-3 text-left transition-all last:mb-0 ${
+                      className={`group flex w-full items-center justify-between rounded-xl px-4 py-3.5 text-left transition ${
                         isActive
-                          ? "bg-violet-600 text-white shadow-sm"
-                          : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                          ? "bg-violet-50 text-[#8037f4]"
+                          : "text-slate-600 hover:bg-white hover:text-slate-900"
                       }`}
                     >
-                      <div className="flex items-center gap-2.5">
-                        <tab.icon size={16} strokeWidth={2} className="shrink-0" />
-                        <span className="text-sm font-semibold">{tab.label}</span>
+                      <div className="flex items-center gap-3">
+                        <span className={`text-xs font-bold tabular-nums ${isActive ? "text-[#8037f4]/70" : "text-slate-400"}`}>
+                          {order}
+                        </span>
+                        <span className="text-sm font-bold">{tab.label}</span>
                       </div>
-                      {isActive && <ChevronRight size={13} className="shrink-0 opacity-60" />}
+                      {isActive && <ChevronRight size={16} className="shrink-0 text-[#8037f4]" />}
                     </button>
                   );
                 })}
-              </div>
-              <div className="border-t border-slate-100 p-2">
                 <button
                   type="button"
                   onClick={handleLogout}
-                  className="flex w-full items-center gap-2.5 rounded-xl px-4 py-3 text-left text-red-500 transition-colors hover:bg-red-50"
+                  className="flex w-full items-center gap-3 rounded-xl px-4 py-3.5 text-left text-red-600 transition hover:bg-red-50"
                 >
-                  <LogOut size={16} strokeWidth={2} />
-                  <span className="text-sm font-semibold">Đăng xuất</span>
+                  <span className="text-xs font-bold tabular-nums text-red-400">03</span>
+                  <span className="text-sm font-bold">Đăng xuất</span>
                 </button>
-              </div>
+              </nav>
             </div>
           </aside>
 
-          {/* ── Content ── */}
-          <main className="lg:col-span-9">
-            <div className="min-h-[400px]">
+          <main className="lg:col-span-8 xl:col-span-9">
+            <motion.div
+              key={activeTab}
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+              className="min-h-[400px]"
+            >
               {activeTab === "notifications" && (
                 <NotificationsTab
                   isMentor={isMentor}
@@ -674,7 +669,7 @@ export function Settings() {
                   onProfileSynced={(u) => setProfileFromServer(u)}
                 />
               )}
-            </div>
+            </motion.div>
           </main>
         </div>
       </div>

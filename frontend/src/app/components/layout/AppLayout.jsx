@@ -4,9 +4,8 @@ import { SidebarProvider, SidebarInset } from "../ui/sidebar";
 import { AppSidebar } from "./Sidebar";
 import { Navbar } from "./Navbar";
 import { Footer } from "./Footer";
-import { resolveDocumentTitle } from "../../utils/documentTitle";
-import { getUser } from "../../utils/auth";
-import { MENTOR_MAIN_TOP_PAD } from "./customerShellLayout";
+import { resolveDocumentTitle } from "../../utils/shared/documentTitle.js";
+import { getUser } from "../../utils/auth/auth.js";
 
 export function AppLayout() {
   const location = useLocation();
@@ -53,28 +52,14 @@ export function AppLayout() {
 
   if (isMentor) {
     return (
-      <div className={shellClass} style={shellStyle}>
-        <div
-          className={`app-shell-ambient${ambientModifier}`}
-          aria-hidden
-        />
-        <SidebarProvider
-          className="relative z-[1] flex min-h-svh w-full bg-transparent"
-          style={{
-            "--sidebar-width": "228px",
-            "--sidebar-width-icon": "56px",
-          }}
-        >
-          <AppSidebar />
-          <SidebarInset className="relative z-[1] flex h-svh max-h-svh min-h-0 flex-1 flex-col overflow-hidden bg-transparent shadow-none md:peer-data-[variant=inset]:shadow-none md:peer-data-[variant=inset]:m-0 md:peer-data-[variant=inset]:rounded-none">
-            <Navbar variant="mentor" />
-            <div
-              className={`relative z-[1] min-h-0 flex-1 overflow-x-hidden overflow-y-auto ${MENTOR_MAIN_TOP_PAD}`}
-            >
-              <Outlet />
-            </div>
-          </SidebarInset>
-        </SidebarProvider>
+      <div
+        className="relative min-h-svh w-full bg-[#f8f9fc] text-slate-900 antialiased selection:bg-violet-100 selection:text-violet-900"
+        style={{ fontFamily: "'Lexend', 'Plus Jakarta Sans', system-ui, sans-serif" }}
+      >
+        <Navbar variant="mentor" />
+        <main className="relative z-[1] min-h-0 flex-1">
+          <Outlet />
+        </main>
       </div>
     );
   }

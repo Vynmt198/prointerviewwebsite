@@ -14,50 +14,23 @@ import {
 } from "lucide-react";
 import { Navbar } from "../../components/layout/Navbar";
 import { CUSTOMER_SHELL_GUTTER, CUSTOMER_SHELL_MAX } from "../../components/layout/customerShellLayout";
-import { getUser, isLoggedIn, setLoggedIn } from "../../utils/auth";
-import { fetchCurrentPlan } from "../../utils/plansApi";
+import { getUser, isLoggedIn, setLoggedIn } from "../../utils/auth/auth.js";
+import { fetchCurrentPlan } from "../../api/plansApi.js";
 import { BRAND_LIME, BRAND_PURPLE } from "../../constants/brandColors";
 import { landingPrimaryButtonClass } from "../../constants/landingTheme";
-import { fetchMentor } from "../../utils/mentorApi";
-import { createBooking, fetchRebookCredit } from "../../utils/bookingsApi";
-import { isBookingSlotInFuture } from "../../utils/bookingSchedule";
-import { fetchCourseById } from "../../utils/courseApi";
-import { enrollmentApi } from "../../utils/enrollmentApi";
-import { createSubscriptionTransferPending, fetchTransferStatus } from "../../utils/paymentsApi";
-import { toastApiError, toastApiSuccess } from "../../utils/apiToast";
+import { fetchMentor } from "../../api/mentorApi.js";
+import { createBooking, fetchRebookCredit } from "../../api/bookingsApi.js";
+import { isBookingSlotInFuture } from "../../utils/booking/bookingSchedule.js";
+import { fetchCourseById } from "../../api/courseApi.js";
+import { enrollmentApi } from "../../api/enrollmentApi.js";
+import { createSubscriptionTransferPending, fetchTransferStatus } from "../../api/paymentsApi.js";
+import { toastApiError, toastApiSuccess } from "../../utils/shared/apiToast.js";
+import {
+  getSubscriptionChargeAmount,
+  resolveCheckoutPlan,
+} from "../../constants/planCatalog.js";
 
-/* ─── Plan meta ─────────────────────────────────────────── */
-
-const PLANS = {
-  starterPro: {
-    name: "Pro",
-    tagline: "Luyện tập nghiêm túc",
-    monthlyPrice: 79000,
-    yearlyPrice: 63000,
-    badge: "PHỔ BIẾN",
-    accentColor: "#8037f4",
-    features: [
-      "10 buổi AI Interview / tháng",
-      "Nhận diện giọng nói tiếng Việt",
-      "20 lượt phân tích CV/JD / tháng",
-      "Phản hồi & đánh giá chi tiết",
-    ],
-  },
-  elitePro: {
-    name: "Elite",
-    tagline: "Chinh phục mọi vòng phỏng vấn",
-    monthlyPrice: 99000,
-    yearlyPrice: 79000,
-    badge: "TỐT NHẤT",
-    accentColor: "#93f72b",
-    features: [
-      "AI Interview KHÔNG GIỚI HẠN",
-      "CV/JD phân tích KHÔNG GIỚI HẠN",
-      "Nhận diện giọng nói tiếng Việt",
-      "Hỗ trợ ưu tiên 24/7",
-    ],
-  },
-};
+/* ─── Plan meta (UI) — giá lấy từ planCatalog ───────────── */
 
 function fmt(n) {
   return new Intl.NumberFormat("vi-VN").format(n) + "đ";
@@ -1006,17 +979,11 @@ export function Checkout() {
   /* ── Plan mode ────────────────────────────────────────── */
   const planKey = searchParams.get("plan") ?? "starterPro";
   const billing = (searchParams.get("billing") ?? "yearly");
-  const plan = PLANS[planKey] ?? PLANS.starterPro;
-  // Read the exact price shown on the Pricing page (passed via URL); fall back to PLANS data
-  const urlPlanPrice = Number(searchParams.get("planPrice") ?? "0");
-  const price = urlPlanPrice > 0
-    ? urlPlanPrice
-    : (billing === "yearly" ? plan.yearlyPrice : plan.monthlyPrice);
+  const plan = resolveCheckoutPlan(planKey);
+  const price = getSubscriptionChargeAmount(planKey, billing);
   const courseUrlPrice = Number(searchParams.get("price") ?? "0");
   const coursePriceNum = isCourse ? Number((courseInfo?.price ?? courseUrlPrice) || 0) : 0;
-  const planListPrice =
-    billing === "yearly" ? plan.monthlyPrice * 12 : plan.monthlyPrice;
-  const baseTotal = isBooking ? bookingPrice : isCourse ? coursePriceNum : planListPrice;
+  const baseTotal = isBooking ? bookingPrice : isCourse ? coursePriceNum : price;
   const total = isBooking ? bookingPrice : isCourse ? coursePriceNum : price;
 
   const [transferOrderNum, setTransferOrderNum] = useState(() => {
@@ -1156,7 +1123,7 @@ export function Checkout() {
 
     if (isPlanCheckout) {
       setCardError("");
-      const apiPlanKey = planKey === "elitePro" ? "elite_pro" : "starter_pro";
+      const apiPlanKey = plan.planKey;
       try {
         const apiRes = await createSubscriptionTransferPending({
           amount: payAmount,
@@ -1358,9 +1325,7 @@ export function Checkout() {
   const orderCreated = appStep === "awaiting_transfer";
   const paymentConfirmed = appStep === "paid";
   const stepCurrent = paymentConfirmed || orderCreated ? 2 : 1;
-  const showPriceBreakdown =
-    (billing === "yearly" && !isCourse && !isBooking && baseTotal > total) ||
-    (couponApplied && !isCourse);
+  const showPriceBreakdown = couponApplied && !isCourse;
 
   const resolvePaidRedirect = (apiRedirect) => {
     if (apiRedirect) return apiRedirect;
@@ -1758,12 +1723,6 @@ export function Checkout() {
 
                   {showPriceBreakdown ? (
                     <div className="space-y-2 px-5 py-4 sm:px-6">
-                      {billing === "yearly" && !isCourse && !isBooking && baseTotal > total && (
-                        <div className="flex justify-between text-sm">
-                          <span className={labelMuted}>Giảm gói năm</span>
-                          <span className="font-medium text-emerald-600">−{fmt(baseTotal - total)}</span>
-                        </div>
-                      )}
                       {couponApplied && !isCourse && (
                         <div className="flex justify-between text-sm">
                           <span className={labelMuted}>Mã giảm (10%)</span>

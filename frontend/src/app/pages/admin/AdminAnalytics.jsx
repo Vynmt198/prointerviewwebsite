@@ -13,8 +13,8 @@ import {
   adminThCell,
   adminToolbar,
 } from "../../components/admin/AdminPageShell.jsx";
-import { adminApi } from "../../utils/adminApi.js";
-import { tryApi } from "../../utils/apiToast.js";
+import { adminApi } from "../../api/adminApi.js";
+import { tryApi } from "../../utils/shared/apiToast.js";
 
 function vnd(n) {
   return `${Number(n || 0).toLocaleString("vi-VN")} đ`;

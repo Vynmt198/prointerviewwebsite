@@ -10,10 +10,10 @@ import {
   PaginationEllipsis,
 } from "../../components/ui/pagination";
 
-import { fetchCourses } from "../../utils/courseApi";
-import { toastApiError } from "../../utils/apiToast";
-import { normalizeCourseStats } from "../../utils/courseStats";
-import { mediaSrc, DEFAULT_COURSE_THUMB, avatarSrc } from "../../utils/mediaUrl";
+import { fetchCourses } from "../../api/courseApi.js";
+import { toastApiError } from "../../utils/shared/apiToast.js";
+import { normalizeCourseStats } from "../../utils/course/courseStats.js";
+import { mediaSrc, DEFAULT_COURSE_THUMB, avatarSrc } from "../../utils/shared/mediaUrl.js";
 import { ImageWithFallback } from "../../components/figma/ImageWithFallback";
 import { CUSTOMER_SHELL_GUTTER, CUSTOMER_SHELL_MAX } from "../../components/layout/customerShellLayout";
 import { AppSelect } from "../../components/ui/AppSelect";

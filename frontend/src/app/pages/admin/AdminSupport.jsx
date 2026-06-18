@@ -20,8 +20,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "../../components/ui/dialog";
-import { adminApi } from "../../utils/adminApi.js";
-import { tryApi } from "../../utils/apiToast.js";
+import { adminApi } from "../../api/adminApi.js";
+import { tryApi } from "../../utils/shared/apiToast.js";
 
 const STATUS_TABS = [
   { id: "open", label: "Cần xử lý" },

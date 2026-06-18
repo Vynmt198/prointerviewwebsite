@@ -2,7 +2,13 @@ import { useEffect, useState } from "react";
 import { RouterProvider } from "react-router";
 import { Toaster } from "./components/ui/sonner";
 import { router } from "./routes";
-import { restoreSession, hasAuthCredentials, isProtectedAppPath } from "./utils/auth";
+import {
+  restoreSession,
+  hasAuthCredentials,
+  isProtectedAppPath,
+  AUTH_CHANGED_EVENT,
+} from "./utils/auth/auth.js";
+import { getCurrentAppPath } from "./utils/auth/appPath.js";
 
 const AUTH_STORAGE_KEYS = new Set([
   "prointerview_auth",
@@ -11,14 +17,12 @@ const AUTH_STORAGE_KEYS = new Set([
 ]);
 
 export default function App() {
-  // Khôi phục phiên JWT (/api/auth/me) sau khi refresh trang
   const [sessionChecked, setSessionChecked] = useState(false);
 
   useEffect(() => {
-    // VNPay FIX: Nếu thấy tham số vnp_ ở URL gốc (trước dấu #), chuyển hướng vào router nội bộ
     if (window.location.search.includes("vnp_ResponseCode")) {
       const search = window.location.search;
-      window.location.href = window.location.origin + window.location.pathname + "#/payment-return" + search;
+      window.location.href = `${window.location.origin}/payment-return${search}`;
       return;
     }
 
@@ -27,20 +31,29 @@ export default function App() {
       .finally(() => setSessionChecked(true));
   }, []);
 
-  // Tab khác đăng xuất → tab này cũng về login nếu đang ở trang cần auth
   useEffect(() => {
     if (!sessionChecked) return undefined;
-    const onStorage = (event) => {
-      if (!AUTH_STORAGE_KEYS.has(event.key) || event.newValue != null) return;
+
+    const redirectToLoginIfNeeded = () => {
       if (hasAuthCredentials()) return;
-      const hash = window.location.hash.replace(/^#/, "") || "/";
-      const path = hash.split("?")[0] || "/";
-      if (isProtectedAppPath(path)) {
-        window.location.hash = `#/login?redirect=${encodeURIComponent(path)}`;
+      const path = getCurrentAppPath();
+      const bare = path.split("?")[0] || "/";
+      if (isProtectedAppPath(bare)) {
+        window.location.assign(`/login?redirect=${encodeURIComponent(path)}`);
       }
     };
+
+    const onStorage = (event) => {
+      if (!AUTH_STORAGE_KEYS.has(event.key) || event.newValue != null) return;
+      redirectToLoginIfNeeded();
+    };
+
     window.addEventListener("storage", onStorage);
-    return () => window.removeEventListener("storage", onStorage);
+    window.addEventListener(AUTH_CHANGED_EVENT, redirectToLoginIfNeeded);
+    return () => {
+      window.removeEventListener("storage", onStorage);
+      window.removeEventListener(AUTH_CHANGED_EVENT, redirectToLoginIfNeeded);
+    };
   }, [sessionChecked]);
 
   if (!sessionChecked) {

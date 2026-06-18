@@ -181,10 +181,23 @@ export class AuthController {
 
   static async logout(req, res, next) {
     try {
-      const result = await authService.logoutUser(req.userId, {
-        jti: req.tokenJti,
-        exp: req.tokenExp,
-      });
+      const accessMeta = authService.parseOptionalBearerAccessMeta(req);
+      let result;
+      if (accessMeta?.sub) {
+        result = await authService.logoutUser(accessMeta.sub, {
+          jti: accessMeta.jti,
+          exp: accessMeta.exp,
+        });
+      } else {
+        const refreshToken = req.body?.refreshToken;
+        if (!refreshToken) {
+          return res.status(401).json({ success: false, error: "Chưa đăng nhập." });
+        }
+        result = await authService.logoutByRefreshToken(refreshToken, {
+          jti: accessMeta?.jti,
+          exp: accessMeta?.exp,
+        });
+      }
       if (!result.ok) {
         return res.status(result.status).json({ success: false, error: result.error });
       }

@@ -1,5 +1,5 @@
 import { ExternalLink } from "lucide-react";
-import { mediaSrc } from "../../utils/mediaUrl.js";
+import { mediaSrc } from "../../utils/shared/mediaUrl.js";
 
 export function youtubeEmbedUrl(url) {
   if (!url) return null;

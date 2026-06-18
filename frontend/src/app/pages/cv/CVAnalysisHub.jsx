@@ -2,7 +2,7 @@ import React from "react";
 import { useNavigate } from "react-router";
 import { CvAnalysisHubHero } from "../../components/cv/CvAnalysisHubSections";
 import { CUSTOMER_SHELL_GUTTER, CUSTOMER_SHELL_MAX } from "../../components/layout/customerShellLayout";
-import { requireLoginNavigate } from "../../utils/authGate";
+import { requireLoginNavigate } from "../../utils/auth/authGate.js";
 
 const HUB_VIEWPORT_STYLES = `
   @media (min-width: 1024px) {

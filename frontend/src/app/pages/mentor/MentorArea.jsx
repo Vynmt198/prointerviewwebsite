@@ -1,6 +1,6 @@
 import React from "react";
 import { Outlet, useNavigate } from "react-router";
-import { getUser, hasAuthCredentials } from "../../utils/auth";
+import { getUser, hasAuthCredentials } from "../../utils/auth/auth.js";
 
 /**
  * Chỉ user đã được cấp role `mentor` (sau khi admin phê duyệt) mới vào được các route /mentor/*.

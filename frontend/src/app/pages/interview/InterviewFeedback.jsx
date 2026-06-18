@@ -27,8 +27,8 @@ import {
 } from "lucide-react";
 import { CourseRecommendations } from "../../components/courses/CourseRecommendations";
 import { BehavioralRadarChart, behaviorScoreColor, emotionLabel } from "../../components/interview/BehavioralRadarChart";
-import { getPlans } from "../../utils/auth";
-import { evaluateInterviewSession } from "../../utils/interviewsApi";
+import { getPlans } from "../../utils/auth/auth.js";
+import { evaluateInterviewSession } from "../../api/interviewsApi.js";
 import { CUSTOMER_SHELL_GUTTER } from "../../components/layout/customerShellLayout";
 
 const IS = { strokeWidth: 1.75, strokeLinecap: "round", strokeLinejoin: "round" };

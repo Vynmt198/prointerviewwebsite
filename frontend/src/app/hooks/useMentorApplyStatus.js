@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { getUser, isLoggedIn } from "../utils/auth";
-import { fetchMyMentorProfile } from "../utils/mentorApi";
+import { getUser, isLoggedIn } from "../utils/auth/auth.js";
+import { fetchMyMentorProfile } from "../api/mentorApi.js";
 
 /** Trạng thái đăng ký mentor (customer chưa có role mentor). */
 export function useMentorApplyStatus() {

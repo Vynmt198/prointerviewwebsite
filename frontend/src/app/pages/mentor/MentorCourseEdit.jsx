@@ -56,10 +56,10 @@ import {
    answerCourseMentorQA,
    fetchCourseMentorReviews,
    fetchCourseMentorAnalytics,
-} from "../../utils/courseApi";
+} from "../../api/courseApi.js";
 import { ArchiveCourseDialog } from "../../components/courses/ArchiveCourseDialog";
-import { mapCourseAdminModerationNote } from "../../utils/courseAdminReview";
-import { uploadFile } from "../../utils/uploadApi";
+import { mapCourseAdminModerationNote } from "../../utils/admin/courseAdminReview.js";
+import { uploadFile } from "../../api/uploadApi.js";
 import { MentorPageShell } from "../../components/mentor/MentorPageShell";
 import { CourseCreateStepper } from "../../components/mentor/course-create/CourseCreateStepper";
 import { CourseCreateStep1, CourseCreateFooter } from "../../components/mentor/course-create/CourseCreateStep1";
@@ -72,9 +72,9 @@ import {
   mentorValidationKeyframes,
 } from "../../components/mentor/course-create/mentorCourseCreateTheme";
 import { toast } from "sonner";
-import { toastApiError, toastApiSuccess } from "../../utils/apiToast";
-import { mediaSrc, DEFAULT_COURSE_THUMB, avatarSrc, normalizeStoredUploadUrl } from "../../utils/mediaUrl";
-import { getVideoDurationMinutes } from "../../utils/videoDuration";
+import { toastApiError, toastApiSuccess } from "../../utils/shared/apiToast.js";
+import { mediaSrc, DEFAULT_COURSE_THUMB, avatarSrc, normalizeStoredUploadUrl } from "../../utils/shared/mediaUrl.js";
+import { getVideoDurationMinutes } from "../../utils/shared/videoDuration.js";
 
 const COURSE_STATUS_META = {
    published: { label: "Đã đăng", className: "bg-emerald-50 text-emerald-700 border-emerald-200" },
@@ -779,8 +779,7 @@ function CreateCourseForm({ navigate }) {
          <style>{mentorValidationKeyframes}</style>
          <div className="relative z-10 mx-auto max-w-4xl px-4 pb-8 pt-8 sm:px-6 sm:pt-12">
             <header className="mb-8">
-               <p className="mentor-eyebrow mb-1">Mentor · Khóa học</p>
-               <h1 className="mt-1 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">Tạo khóa học mới</h1>
+               <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">Tạo khóa học mới</h1>
                <p className="mt-2 max-w-xl text-sm text-slate-500">
                   Điền thông tin, thêm nội dung video, sau đó gửi admin duyệt trước khi hiển thị công khai.
                </p>

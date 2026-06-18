@@ -275,7 +275,7 @@ export async function sendMentorFeedbackEmail(to, studentName, mentorName, sessi
   const safeNotes = escapeHtml(notes);
   const sessionLabel =
     sessionType === "mock_interview" ? "Phỏng vấn giả định" : "Tư vấn lộ trình";
-  const dashboardUrl = `${process.env.FRONTEND_URL || "http://localhost:5173"}/#/dashboard`;
+  const dashboardUrl = `${process.env.FRONTEND_URL || "http://localhost:5173"}/`;
 
   const mailOptions = createBrandedMailOptions({
     to,

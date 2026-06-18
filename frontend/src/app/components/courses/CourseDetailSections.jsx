@@ -25,11 +25,11 @@ import {
   DialogTitle,
   DialogDescription,
 } from "../ui/dialog";
-import { submitReview } from "../../utils/courseApi";
-import { fetchMyReviewForTarget } from "../../utils/reviewsApi";
+import { submitReview } from "../../api/courseApi.js";
+import { fetchMyReviewForTarget } from "../../api/reviewsApi.js";
 import { ReviewReplyBlock } from "../reviews/ReviewReplyBlock";
-import { toastApiError, toastApiSuccess } from "../../utils/apiToast";
-import { avatarSrc, mediaSrc } from "../../utils/mediaUrl";
+import { toastApiError, toastApiSuccess } from "../../utils/shared/apiToast.js";
+import { avatarSrc, mediaSrc } from "../../utils/shared/mediaUrl.js";
 
 export const formatCoursePrice = (price) => {
   if (price === 0) return "Miễn phí";
@@ -104,10 +104,7 @@ export function CoursePurchaseCard({
   onContinuePayment,
 }) {
   const price = Number(course.price) || 0;
-  const discountPrice = Number(course.discountPrice) || 0;
-  const hasDiscount = discountPrice > 0 && discountPrice < price;
-  const displayPrice = hasDiscount ? discountPrice : price;
-  const discountPct = hasDiscount ? Math.round((1 - discountPrice / price) * 100) : 0;
+  const displayPrice = price;
   const previewUrl = course.previewVideoUrl || "";
   const embed = youtubeEmbedUrl(previewUrl);
   const directPreview = !embed && isDirectVideoUrl(previewUrl) ? mediaSrc(previewUrl) : null;
@@ -149,14 +146,6 @@ export function CoursePurchaseCard({
             <span className="text-2xl font-black text-[#8037f4] sm:text-3xl lg:font-bold lg:text-slate-900">
               {formatCoursePrice(displayPrice)}
             </span>
-            {hasDiscount ? (
-              <>
-                <span className="text-sm text-slate-400 line-through">{formatCoursePrice(price)}</span>
-                <span className="rounded-full bg-sky-50 px-2 py-0.5 text-xs font-bold text-sky-700">
-                  Giảm {discountPct}%
-                </span>
-              </>
-            ) : null}
           </div>
         </div>
 

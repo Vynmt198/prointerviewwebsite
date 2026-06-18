@@ -1,11 +1,16 @@
 import mongoose from "mongoose";
 import { User } from "../models/User.js";
 import { normalizePlanKey } from "../utils/planKeys.js";
+import { listSubscriptionCatalog } from "../constants/planCatalog.js";
 
 const MONGO_ERR = "MongoDB chưa kết nối. Kiểm tra MONGO_URI trong .env.";
 
 function isMongoReady() {
   return mongoose.connection.readyState === 1;
+}
+
+export function getSubscriptionCatalog() {
+  return { ok: true, plans: listSubscriptionCatalog() };
 }
 
 export async function getCurrentPlan(userId) {

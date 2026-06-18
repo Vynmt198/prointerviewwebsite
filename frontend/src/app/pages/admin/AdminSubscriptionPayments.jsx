@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Crown, RefreshCw, Search, User } from "lucide-react";
 import { motion } from "motion/react";
-import { tryApi } from "../../utils/apiToast";
-import { adminApi } from "../../utils/adminApi";
+import { tryApi } from "../../utils/shared/apiToast.js";
+import { adminApi } from "../../api/adminApi.js";
 import { AdminSepayOverrideAction } from "../../components/admin/AdminSepayOverrideAction.jsx";
 import { StatusPill } from "../../components/admin/AdminStatusPill.jsx";
 

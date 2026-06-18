@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router";
 import { BookOpen, PlayCircle } from "lucide-react";
-import { enrollmentApi } from "../../utils/enrollmentApi";
-import { toastApiError } from "../../utils/apiToast";
-import { normalizeCourseStats } from "../../utils/courseStats";
-import { enrollmentAccessGranted } from "../../utils/enrollmentAccess.js";
-import { mediaSrc, DEFAULT_COURSE_THUMB, avatarSrc } from "../../utils/mediaUrl";
+import { enrollmentApi } from "../../api/enrollmentApi.js";
+import { toastApiError } from "../../utils/shared/apiToast.js";
+import { normalizeCourseStats } from "../../utils/course/courseStats.js";
+import { enrollmentAccessGranted } from "../../utils/course/enrollmentAccess.js";
+import { mediaSrc, DEFAULT_COURSE_THUMB, avatarSrc } from "../../utils/shared/mediaUrl.js";
 import { ImageWithFallback } from "../../components/figma/ImageWithFallback";
 import { MentorPageShell } from "../../components/mentor/MentorPageShell";
 import { CustomerPageHeader, CustomerPageSplitTitle } from "../../components/layout/CustomerPageHeader";

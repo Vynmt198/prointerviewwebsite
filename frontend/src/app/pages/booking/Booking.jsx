@@ -19,18 +19,18 @@ import {
   Sparkles as Sparkle,
   X,
 } from "lucide-react";
-import { fetchMentor, fetchMentorAvailability } from "../../utils/mentorApi";
-import { isBookingSlotInFuture } from "../../utils/bookingSchedule";
-import { fetchBookedSlots, fetchRebookCredit } from "../../utils/bookingsApi";
-import { toastApiError, toastApiSuccess } from "../../utils/apiToast";
-import { uploadFile } from "../../utils/uploadApi";
-import { getSuggestedBookingDataAsync, saveUploadedCV, saveUploadedJD } from "../../utils/history";
+import { fetchMentor, fetchMentorAvailability } from "../../api/mentorApi.js";
+import { isBookingSlotInFuture } from "../../utils/booking/bookingSchedule.js";
+import { fetchBookedSlots, fetchRebookCredit } from "../../api/bookingsApi.js";
+import { toastApiError, toastApiSuccess } from "../../utils/shared/apiToast.js";
+import { uploadFile } from "../../api/uploadApi.js";
+import { getSuggestedBookingDataAsync, saveUploadedCV, saveUploadedJD } from "../../utils/shared/history.js";
 import { MentorPageShell } from "../../components/mentor/MentorPageShell";
 import { BookingStepBar } from "../../components/booking/BookingStepBar";
 import { CUSTOMER_SHELL_GUTTER, CUSTOMER_SHELL_MAX } from "../../components/layout/customerShellLayout";
 import { BookingPolicySummary } from "../../components/booking/BookingPolicySummary";
 import { BRAND_CTA_LIME_STYLE } from "../../constants/brandColors";
-import { avatarSrc } from "../../utils/mediaUrl";
+import { avatarSrc } from "../../utils/shared/mediaUrl.js";
 
 const VI_DAY_SHORT = ["CN", "T2", "T3", "T4", "T5", "T6", "T7"];
 const VI_DAY_FULL = ["Chủ nhật", "Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5", "Thứ 6", "Thứ 7"];
