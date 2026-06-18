@@ -94,6 +94,22 @@ export class BookingsController {
     }
   }
 
+  static async checkInForMentor(req, res, next) {
+    try {
+      const result = await bookingsService.recordMentorMeetingCheckIn(
+        req.userId,
+        req.params.id,
+        req.body ?? {},
+      );
+      if (!result.ok) {
+        return res.status(result.status).json({ success: false, error: result.error });
+      }
+      res.json({ success: true, booking: result.booking });
+    } catch (err) {
+      next(err);
+    }
+  }
+
   static async updateNotesForMentor(req, res, next) {
     try {
       const result = await bookingsService.updateMentorNotes(req.userId, req.params.id, req.body ?? {});
@@ -101,6 +117,19 @@ export class BookingsController {
         return res.status(result.status).json({ success: false, error: result.error });
       }
       res.json({ success: true, booking: result.booking });
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  /** PATCH /api/bookings/mentor/:id/session-capture — nháp ghi chú live trong buổi. */
+  static async saveSessionCaptureForMentor(req, res, next) {
+    try {
+      const result = await bookingsService.saveMentorSessionCapture(req.userId, req.params.id, req.body ?? {});
+      if (!result.ok) {
+        return res.status(result.status).json({ success: false, error: result.error });
+      }
+      res.json({ success: true, capture: result.capture });
     } catch (err) {
       next(err);
     }

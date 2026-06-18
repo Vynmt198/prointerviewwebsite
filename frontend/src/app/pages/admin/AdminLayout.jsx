@@ -11,6 +11,7 @@ const ADMIN_HEADER_RULES = [
   [/^\/admin\/mentors\/pending$/, "Duyệt cố vấn"],
   [/^\/admin\/mentors\/[^/]+$/, "Cố vấn"],
   [/^\/admin\/mentors$/, "Cố vấn"],
+  [/^\/admin\/bookings\/check-ins$/, "Check-in mentor"],
   [/^\/admin\/bookings\/[^/]+$/, "Lịch hẹn & thanh toán"],
   [/^\/admin\/bookings$/, "Lịch hẹn & thanh toán"],
   [/^\/admin\/course-payments$/, "Theo dõi học phí khóa"],

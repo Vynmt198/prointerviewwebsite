@@ -8,6 +8,7 @@ import {
   Wallet,
   ArrowLeftRight,
   Banknote,
+  Camera,
   Calendar,
   FileQuestion,
   BookOpen,
@@ -51,6 +52,7 @@ const MAIN_GROUPS = [
     title: "Vận hành",
     items: [
       { to: "/admin/bookings", label: "Lịch hẹn & thanh toán", icon: Calendar },
+      { to: "/admin/bookings/check-ins", label: "Check-in mentor", icon: Camera },
       { to: "/admin/support", label: "Hỗ trợ", icon: LifeBuoy },
       { to: "/admin/mentors/pending", label: "Duyệt cố vấn", icon: UserPlus },
     ],

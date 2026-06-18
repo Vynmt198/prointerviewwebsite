@@ -32,9 +32,11 @@ import {
   listMentorBookings,
   mentorRescheduleBooking,
   mentorCancelBooking,
+  completeMentorBooking,
 } from "../../api/bookingsApi.js";
 import { loadMentorRescheduleSlotOptions } from "../../utils/booking/bookingRescheduleSlots.js";
 import { isBookingSlotInFuture } from "../../utils/booking/bookingSchedule.js";
+import { isBookingPastScheduledEnd } from "../../utils/shared/meetingLinks.js";
 import { avatarSrc } from "../../utils/shared/mediaUrl.js";
 import { sessionTypeLabel as sharedSessionTypeLabel } from "../../utils/booking/sessionTypeLabels.js";
 import { getBookingAttachments } from "../../utils/booking/bookingAttachments.js";
@@ -263,6 +265,14 @@ export function MentorMeetingDetail() {
   const isCompleted = meeting.status === "completed" || meeting.overallScore > 0;
   const canReschedule = Number(meeting.rescheduleCount || 0) < 1;
   const meetingTypeLabel = sessionTypeLabel(meeting.meetingType);
+  const showCompleteReminder =
+    !isCompleted &&
+    ["confirmed", "in_progress"].includes(String(meeting.status || "")) &&
+    isBookingPastScheduledEnd({
+      date: meeting.scheduledDate,
+      timeSlot: meeting.scheduledTime,
+      durationMinutes: meeting.duration,
+    });
 
   const handleMentorReschedule = async () => {
     if (!canReschedule) {
@@ -404,6 +414,25 @@ export function MentorMeetingDetail() {
     setActionModal("cancel");
   };
 
+  const handleCompleteSession = async () => {
+    if (!meeting?.id) return;
+    if (!window.confirm("Kết thúc buổi học? Học viên sẽ có thể đánh giá sau khi hoàn thành.")) return;
+    setBusyAction("complete");
+    try {
+      const res = await completeMentorBooking(meeting.id);
+      if (res.success) {
+        toastApiSuccess("Đã kết thúc buổi học.");
+        setMeeting((prev) => (prev ? { ...prev, status: "completed" } : prev));
+      } else {
+        toastApiError(res.error, "Không thể kết thúc buổi học.");
+      }
+    } catch {
+      toastApiError("Lỗi kết nối khi kết thúc buổi học.");
+    } finally {
+      setBusyAction("");
+    }
+  };
+
   return (
     <MentorPageShell bottomPad="pb-32" extraStyles={MENTOR_MEETING_DETAIL_EXTRA_CSS}>
       <div className="relative z-10 mx-auto max-w-7xl px-10 pb-10">
@@ -465,6 +494,28 @@ export function MentorMeetingDetail() {
               </DropdownMenuContent>
            </DropdownMenu>
         </div>
+
+        {showCompleteReminder ? (
+          <div className="mb-8 flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-orange-200 bg-orange-50 px-5 py-4">
+            <div className="flex min-w-0 items-start gap-3">
+              <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-orange-600" />
+              <div>
+                <p className="text-sm font-bold text-orange-900">Buổi đã qua giờ kết thúc</p>
+                <p className="mt-1 text-xs leading-relaxed text-orange-800/90">
+                  Hãy bấm <strong>Kết thúc buổi</strong> để học viên đánh giá và thu nhập được ghi nhận. Nếu quên, hệ thống tự hoàn thành sau 30 phút.
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={handleCompleteSession}
+              disabled={busyAction !== ""}
+              className="shrink-0 rounded-xl bg-[#93f72b] px-5 py-2.5 text-[10px] font-black uppercase tracking-widest text-slate-900 disabled:opacity-60"
+            >
+              {busyAction === "complete" ? "Đang xử lý…" : "Kết thúc buổi"}
+            </button>
+          </div>
+        ) : null}
 
         <div className="grid lg:grid-cols-12 gap-10">
            {/* Main Session Content */}
@@ -708,6 +759,15 @@ export function MentorMeetingDetail() {
                          >
                              Vào phòng họp ngay
                           </button>
+                         <button
+                            type="button"
+                            onClick={handleCompleteSession}
+                            disabled={busyAction !== ""}
+                            className="flex w-full items-center justify-center gap-2 py-5 rounded-3xl border border-[#93f72b]/40 bg-[#93f72b]/10 text-[10px] font-black uppercase tracking-widest text-[#2f4200] hover:bg-[#93f72b]/20 transition-all disabled:opacity-60"
+                         >
+                            <ShieldCheck size={16} />
+                            {busyAction === "complete" ? "Đang kết thúc…" : "Kết thúc buổi"}
+                         </button>
                          <button
                             onClick={openRescheduleModal}
                             disabled={busyAction !== ""}

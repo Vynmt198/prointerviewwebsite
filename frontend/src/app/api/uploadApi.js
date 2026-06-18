@@ -3,7 +3,7 @@ import { authFetch } from "../utils/auth/auth.js";
 /**
  * Upload một file lên backend.
  * @param {File} file - Đối tượng File từ input.
- * @param {'avatar' | 'cv' | 'jd' | 'course-thumbnail' | 'course-video'} type - Loại upload.
+ * @param {'avatar' | 'cv' | 'jd' | 'course-thumbnail' | 'course-video' | 'meeting-checkin'} type - Loại upload.
  */
 export async function uploadFile(file, type) {
   const formData = new FormData();

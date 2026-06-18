@@ -30,3 +30,17 @@ export function isBookingSlotInFuture(dateStr, timeSlot, nowMs = Date.now()) {
   if (!Number.isFinite(ms)) return false;
   return ms > nowMs;
 }
+
+/** Timestamp kết thúc buổi (start + durationMinutes). */
+export function parseBookingEndMs(booking, { graceMinutesAfterEnd = 0 } = {}) {
+  const start = parseBookingStartMs(booking?.date, booking?.timeSlot);
+  if (!Number.isFinite(start)) return NaN;
+  const dur = (Number(booking?.durationMinutes) || 60) * 60 * 1000;
+  return start + dur + graceMinutesAfterEnd * 60 * 1000;
+}
+
+/** Đã qua giờ kết thúc + grace → đủ điều kiện auto-complete nếu mentor chưa bấm kết thúc. */
+export function isBookingPastAutoCompleteGrace(booking, { graceMinutesAfterEnd = 30 } = {}) {
+  const cutoff = parseBookingEndMs(booking, { graceMinutesAfterEnd });
+  return Number.isFinite(cutoff) && Date.now() >= cutoff;
+}
