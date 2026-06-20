@@ -24,6 +24,7 @@ import { useMeetingLiveCapture } from "../../hooks/useMeetingLiveCapture.js";
 import {
   buildProInterviewMeetUrl,
   canEnterMeetingRoom,
+  canMentorCompleteBooking,
   formatUntilStart,
   getMinutesUntilBookingStart,
   isBookingInLiveWindow,
@@ -182,6 +183,15 @@ export function MeetingRoom() {
   };
 
   const handleOpenEndSessionPanel = () => {
+    if (bookingSchedule && !canMentorCompleteBooking(bookingSchedule)) {
+      const mins = getMinutesUntilBookingStart(bookingSchedule);
+      toastApiError(
+        mins > 0
+          ? `Chưa tới giờ bắt đầu (còn ${formatUntilStart(mins)}). Bạn có thể ở trong phòng nhưng chưa thể kết thúc buổi.`
+          : "Chưa tới giờ bắt đầu buổi học. Bạn có thể ở trong phòng nhưng chưa thể kết thúc buổi.",
+      );
+      return;
+    }
     setShowEndSessionPanel(true);
   };
 
@@ -232,6 +242,7 @@ export function MeetingRoom() {
     bookingSchedule &&
     ["confirmed", "in_progress"].includes(String(meeting?.status || "")) &&
     isBookingPastScheduledEnd(bookingSchedule);
+  const canCompleteSession = !bookingSchedule || canMentorCompleteBooking(bookingSchedule);
 
   if (phase === "checkin" && checkInContext) {
     return (
@@ -286,7 +297,7 @@ export function MeetingRoom() {
   }
 
   return (
-    <div className="h-dvh min-h-0 bg-[#f8f9fc] flex flex-col relative overflow-hidden font-sans">
+    <div className="mentor-role-shell h-dvh min-h-0 bg-[#f8f9fc] flex flex-col relative overflow-hidden font-sans">
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         <div className="absolute -top-32 left-1/2 h-96 w-[120%] -translate-x-1/2 rounded-full bg-[#8037f4]/8 blur-3xl" />
         <div className="absolute bottom-0 right-0 h-64 w-64 rounded-full bg-[#93f72b]/10 blur-3xl" />
@@ -302,6 +313,14 @@ export function MeetingRoom() {
         counterpartLabel={counterpartLabel}
         sessionLabel={bookingMeta.role}
         hasLiveNotes={liveCapture.hasContent}
+        canConfirm={canCompleteSession}
+        blockReason={
+          canCompleteSession
+            ? ""
+            : bookingSchedule
+              ? `Chưa tới giờ bắt đầu buổi (còn ${formatUntilStart(getMinutesUntilBookingStart(bookingSchedule))}).`
+              : "Chưa tới giờ bắt đầu buổi."
+        }
       />
 
       <header className="relative z-20 shrink-0 px-3 pt-3 sm:px-5 sm:pt-4">
@@ -394,8 +413,18 @@ export function MeetingRoom() {
                   <button
                     type="button"
                     onClick={handleOpenEndSessionPanel}
-                    style={BRAND_CTA_LIME_STYLE}
-                    className="inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-[10px] font-black uppercase tracking-wider shadow-[0_6px_20px_rgba(147,247,43,0.35)] transition hover:brightness-105"
+                    disabled={!canCompleteSession}
+                    style={canCompleteSession ? BRAND_CTA_LIME_STYLE : undefined}
+                    className={`inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-[10px] font-black uppercase tracking-wider transition ${
+                      canCompleteSession
+                        ? "shadow-[0_6px_20px_rgba(147,247,43,0.35)] hover:brightness-105"
+                        : "cursor-not-allowed border border-slate-200 bg-slate-100 text-slate-400"
+                    }`}
+                    title={
+                      canCompleteSession
+                        ? "Kết thúc buổi học"
+                        : "Chưa tới giờ bắt đầu — không thể kết thúc sớm"
+                    }
                   >
                     <ShieldCheck size={15} strokeWidth={2.25} /> Kết thúc buổi
                   </button>

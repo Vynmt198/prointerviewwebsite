@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate, useSearchParams, useLocation } from "react-router";
 import {
   FileText,
-  ChevronDown,
   ChevronRight,
   Check,
   X,
@@ -21,8 +20,10 @@ import {
 } from "lucide-react";
 import { getPlans, isLoggedIn, getUser, hasAuthCredentials, CV_FREE_LIMIT } from "../../utils/auth/auth.js";
 import { buildLoginPath } from "../../utils/auth/authGate.js";
+import { trackAction } from "../../utils/analytics/analyticsApi.js";
 import { apiUrl as expressApiUrl, isExpressBackendConfigured } from "../../api/http.js";
 import { CvJdAnalysisPage, cvAnalysisPageHeader } from "../../components/cv/CvJdAnalysisFrame";
+import { AppSelect } from "../../components/ui/AppSelect";
 import {
   CV_FIELD_ANALYSIS_PATH,
   CV_FIELD_HISTORY_PATH,
@@ -289,7 +290,6 @@ export function CVAnalysis() {
   const [selectedField, setSelectedField] = useState(() =>
     routeMode === "field" ? DEFAULT_FIELD : ""
   );
-  const [fieldOpen, setFieldOpen] = useState(false);
 
   useEffect(() => {
     if (routeMode === "field") {
@@ -367,6 +367,13 @@ export function CVAnalysis() {
   const goToResultPage = useCallback(
     (payload, { replay = false } = {}) => {
       const mode = routeMode === "field" ? "field" : "jd";
+      if (!replay && payload?.analysis) {
+        trackAction("cv_analyze_done", location.pathname, {
+          mode,
+          analysisId: payload.analysisId ?? null,
+          matchScore: payload.analysis?.matchScore ?? null,
+        });
+      }
       navigate(cvAnalysisResultPath(mode, payload.analysisId), {
         state: {
           analysis: payload.analysis,
@@ -384,7 +391,7 @@ export function CVAnalysis() {
         },
       });
     },
-    [navigate, routeMode, cvFile, jdFile, reuseCV, reuseJD],
+    [navigate, routeMode, cvFile, jdFile, reuseCV, reuseJD, location.pathname],
   );
 
   const resetForm = () => {
@@ -450,6 +457,7 @@ export function CVAnalysis() {
     if (needsJdForRoute && !Boolean(jdUploaded || reuseJD || jdFile)) return;
     if (!canAnalyze) return;
 
+    trackAction("cv_analyze_start", location.pathname, { mode: routeMode });
     setStep("loading"); setAnalyzeError(null); setProgress(0); setLoadingStage(0);
 
     const hasJdInput = jdUploaded || !!reuseJD || !!jdFile;
@@ -1115,61 +1123,19 @@ export function CVAnalysis() {
               {routeMode === "field" && enableField && (
                 <div className="border-t border-violet-100 px-4 py-4 pb-6 sm:px-5 sm:pb-8">
                   <p className="mb-2 text-xs font-bold uppercase tracking-wide text-violet-700">Ngành nghề</p>
-                  <div className="relative z-20">
-                    <button
-                      type="button"
-                      onClick={() => setFieldOpen(!fieldOpen)}
-                      className="group flex w-full items-center justify-between rounded-sm border border-violet-200 bg-white px-4 py-3 text-sm transition-colors hover:border-violet-300"
-                    >
-                      <span className={selectedField ? "font-semibold text-violet-950" : "text-violet-500"}>
-                        {selectedField || "Chọn ngành nghề..."}
-                      </span>
-                      <ChevronDown className={`h-4 w-4 text-violet-500 transition-transform ${fieldOpen ? "rotate-180" : ""}`} />
-                    </button>
-                    {fieldOpen && (
-                      <div className="mt-2 max-h-64 overflow-y-auto rounded-sm border border-violet-200/90 bg-white shadow-lg ring-1 ring-violet-100/80">
-                        {FIELD_OPTIONS.map((opt) => {
-                          const isSelected = opt.available && selectedField === opt.label;
-                          return (
-                            <button
-                              key={opt.label}
-                              type="button"
-                              disabled={!opt.available}
-                              onClick={() => {
-                                if (!opt.available) return;
-                                setSelectedField(opt.label);
-                                setFieldOpen(false);
-                              }}
-                              className={`flex w-full items-center justify-between gap-3 border-b border-violet-100/90 px-4 py-3 text-left text-sm transition-colors last:border-0 ${
-                                opt.available
-                                  ? isSelected
-                                    ? "bg-violet-50/90 hover:bg-violet-50"
-                                    : "hover:bg-violet-50/60"
-                                  : "cursor-not-allowed bg-gradient-to-r from-slate-50 via-white to-violet-50/40 opacity-95"
-                              }`}
-                            >
-                              <span
-                                className={
-                                  opt.available
-                                    ? isSelected
-                                      ? "font-semibold text-violet-950"
-                                      : "font-medium text-violet-800"
-                                    : "font-medium text-slate-500"
-                                }
-                              >
-                                {opt.label}
-                              </span>
-                              {!opt.available && (
-                                <span className="inline-flex shrink-0 items-center rounded-sm border border-violet-200/70 bg-gradient-to-r from-violet-50 to-indigo-50 px-2 py-1 text-[10px] font-bold tracking-wide text-violet-700 shadow-sm">
-                                  Sắp ra mắt
-                                </span>
-                              )}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
+                  <AppSelect
+                    size="md"
+                    value={selectedField || undefined}
+                    onValueChange={setSelectedField}
+                    placeholder="Chọn ngành nghề..."
+                    aria-label="Ngành nghề"
+                    triggerClassName="rounded-2xl border-violet-200 bg-white focus:border-[#8037f4]"
+                    options={FIELD_OPTIONS.map((opt) => ({
+                      value: opt.label,
+                      label: opt.available ? opt.label : `${opt.label} · Sắp ra mắt`,
+                      disabled: !opt.available,
+                    }))}
+                  />
                 </div>
               )}
 

@@ -11,6 +11,7 @@ import { MentorPageShell } from "../../components/mentor/MentorPageShell";
 import { requireLoginNavigate } from "../../utils/auth/authGate.js";
 import { getUser, isLoggedIn } from "../../utils/auth/auth.js";
 import { fetchCurrentPlan } from "../../api/plansApi.js";
+import { trackAction } from "../../utils/analytics/analyticsApi.js";
 import { CUSTOMER_SHELL_GUTTER, CUSTOMER_SHELL_MAX } from "../../components/layout/customerShellLayout";
 import { CustomerPageHeader, CustomerPageSplitTitle } from "../../components/layout/CustomerPageHeader";
 import { PRICING_SUBTITLE, PRICING_FAQ } from "../../constants/brandVoice";
@@ -146,6 +147,7 @@ export function Pricing() {
     }
     if (currentPlan === plan.id) return;
     const path = buildPlanCheckoutPath(plan.id, billing);
+    trackAction("plan_checkout_start", "/pricing", { planId: plan.id, billing });
     requireLoginNavigate(navigate, path);
   };
 

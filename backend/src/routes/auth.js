@@ -25,6 +25,7 @@ router.post("/forgot-password", authWriteLimiter, asyncHandler(AuthController.fo
 router.post("/reset-password", authWriteLimiter, asyncHandler(AuthController.resetPassword));
 router.post("/refresh", refreshLimiter, asyncHandler(AuthController.refresh));
 router.get("/me", authJwt, asyncHandler(AuthController.me));
+router.post("/presence", authJwt, asyncHandler(AuthController.presence));
 router.patch("/me", authJwt, asyncHandler(AuthController.patchMe));
 router.delete("/me", authJwt, asyncHandler(AuthController.deleteMe));
 router.post("/logout", authWriteLimiter, asyncHandler(AuthController.logout));

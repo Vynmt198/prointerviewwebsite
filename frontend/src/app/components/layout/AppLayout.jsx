@@ -6,10 +6,14 @@ import { Navbar } from "./Navbar";
 import { Footer } from "./Footer";
 import { resolveDocumentTitle } from "../../utils/shared/documentTitle.js";
 import { getUser } from "../../utils/auth/auth.js";
+import { useUserPresence } from "../../hooks/useUserPresence.js";
+import { usePageAnalytics } from "../../hooks/usePageAnalytics.js";
 
 export function AppLayout() {
   const location = useLocation();
   const user = getUser();
+  useUserPresence();
+  usePageAnalytics();
   const isMentor = user?.role === "mentor";
   const isHome = location.pathname === "/" || location.pathname === "";
   const pathNorm = location.pathname.replace(/^\/+/, "");
@@ -57,7 +61,7 @@ export function AppLayout() {
         style={{ fontFamily: "'Lexend', 'Plus Jakarta Sans', system-ui, sans-serif" }}
       >
         <Navbar variant="mentor" />
-        <main className="relative z-[1] min-h-0 flex-1">
+        <main className="relative z-[1] min-h-0 flex-1 pt-[3.75rem] sm:pt-[4.25rem] md:pt-[4.75rem]">
           <Outlet />
         </main>
       </div>

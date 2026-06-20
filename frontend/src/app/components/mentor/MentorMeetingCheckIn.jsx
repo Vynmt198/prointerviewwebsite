@@ -142,7 +142,7 @@ export function MentorMeetingCheckIn({
   const profileAvatar = avatarSrc(mentorAvatar);
 
   return (
-    <div className="min-h-svh bg-[#f8f9fc] relative overflow-hidden font-sans text-slate-900">
+    <div className="mentor-role-shell min-h-svh bg-[#f8f9fc] relative overflow-hidden font-sans text-slate-900">
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         <div className="absolute -top-24 left-1/2 h-80 w-[90%] -translate-x-1/2 rounded-full bg-[#8037f4]/10 blur-3xl" />
         <div className="absolute bottom-0 right-0 h-56 w-56 rounded-full bg-[#93f72b]/12 blur-3xl" />

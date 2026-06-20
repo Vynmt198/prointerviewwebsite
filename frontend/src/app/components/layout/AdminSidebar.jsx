@@ -111,6 +111,12 @@ function pathActive(pathname, to, end) {
       return false;
     }
   }
+  // /admin/bookings/check-ins thuộc menu "Check-in mentor", không tô "Lịch hẹn & thanh toán"
+  if (t === "/admin/bookings") {
+    if (p === "/admin/bookings/check-ins" || p.startsWith("/admin/bookings/check-ins/")) {
+      return false;
+    }
+  }
   return true;
 }
 
@@ -202,8 +208,10 @@ export function AdminSidebar() {
                                 className={`size-[18px] shrink-0 ${active ? "text-white" : "text-sidebar-foreground/70"}`}
                               />
                               <span
-                                className="truncate text-[0.8125rem] group-data-[collapsible=icon]:hidden"
-                                style={{ fontWeight: active ? 600 : 400 }}
+                                className="truncate text-[0.8125rem] font-semibold group-data-[collapsible=icon]:hidden"
+                                data-admin-nav-label
+                                data-active={active ? "true" : "false"}
+                                style={{ fontWeight: active ? 700 : 600 }}
                               >
                                 {label}
                               </span>

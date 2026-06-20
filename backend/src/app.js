@@ -32,6 +32,7 @@ import { uploadRouter } from "./routes/upload.js";
 import { mockCoursesRouter } from "./routes/mockCourses.js";
 import { aiProvidersRouter } from "./routes/aiProviders.js";
 import { achievementsRouter } from "./routes/achievements.js";
+import { analyticsRouter } from "./routes/analytics.js";
 import { notFoundHandler, globalErrorHandler } from "./middleware/errorHandler.js";
 
 export function createApp() {
@@ -197,6 +198,7 @@ export function createApp() {
   app.use("/api/mock", mockCoursesRouter);
   app.use("/api/ai", aiProvidersRouter);
   app.use("/api/achievements", achievementsRouter);
+  app.use("/api/analytics", analyticsRouter);
 
   app.use(notFoundHandler);
   app.use(globalErrorHandler);

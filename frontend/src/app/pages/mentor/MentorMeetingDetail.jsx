@@ -36,7 +36,12 @@ import {
 } from "../../api/bookingsApi.js";
 import { loadMentorRescheduleSlotOptions } from "../../utils/booking/bookingRescheduleSlots.js";
 import { isBookingSlotInFuture } from "../../utils/booking/bookingSchedule.js";
-import { isBookingPastScheduledEnd } from "../../utils/shared/meetingLinks.js";
+import {
+  canMentorCompleteBooking,
+  formatUntilStart,
+  getMinutesUntilBookingStart,
+  isBookingPastScheduledEnd,
+} from "../../utils/shared/meetingLinks.js";
 import { avatarSrc } from "../../utils/shared/mediaUrl.js";
 import { sessionTypeLabel as sharedSessionTypeLabel } from "../../utils/booking/sessionTypeLabels.js";
 import { getBookingAttachments } from "../../utils/booking/bookingAttachments.js";
@@ -273,6 +278,20 @@ export function MentorMeetingDetail() {
       timeSlot: meeting.scheduledTime,
       durationMinutes: meeting.duration,
     });
+  const canCompleteSession = canMentorCompleteBooking({
+    date: meeting.scheduledDate,
+    timeSlot: meeting.scheduledTime,
+    durationMinutes: meeting.duration,
+  });
+  const completeBlockedHint =
+    !canCompleteSession && !isCompleted
+      ? `Chưa tới giờ bắt đầu (còn ${formatUntilStart(
+          getMinutesUntilBookingStart({
+            date: meeting.scheduledDate,
+            timeSlot: meeting.scheduledTime,
+          }),
+        )}). Có thể vào phòng trước, kết thúc sau khi buổi bắt đầu.`
+      : "";
 
   const handleMentorReschedule = async () => {
     if (!canReschedule) {
@@ -416,6 +435,20 @@ export function MentorMeetingDetail() {
 
   const handleCompleteSession = async () => {
     if (!meeting?.id) return;
+    const schedule = {
+      date: meeting.scheduledDate,
+      timeSlot: meeting.scheduledTime,
+      durationMinutes: meeting.duration,
+    };
+    if (!canMentorCompleteBooking(schedule)) {
+      const mins = getMinutesUntilBookingStart(schedule);
+      toastApiError(
+        mins > 0
+          ? `Chưa tới giờ bắt đầu (còn ${formatUntilStart(mins)}). Bạn có thể vào phòng trước nhưng chưa thể kết thúc buổi.`
+          : "Chưa tới giờ bắt đầu buổi học.",
+      );
+      return;
+    }
     if (!window.confirm("Kết thúc buổi học? Học viên sẽ có thể đánh giá sau khi hoàn thành.")) return;
     setBusyAction("complete");
     try {
@@ -509,8 +542,8 @@ export function MentorMeetingDetail() {
             <button
               type="button"
               onClick={handleCompleteSession}
-              disabled={busyAction !== ""}
-              className="shrink-0 rounded-xl bg-[#93f72b] px-5 py-2.5 text-[10px] font-black uppercase tracking-widest text-slate-900 disabled:opacity-60"
+              disabled={busyAction !== "" || !canCompleteSession}
+              className="shrink-0 rounded-xl bg-[#93f72b] px-5 py-2.5 text-[10px] font-black uppercase tracking-widest text-slate-900 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {busyAction === "complete" ? "Đang xử lý…" : "Kết thúc buổi"}
             </button>
@@ -762,12 +795,15 @@ export function MentorMeetingDetail() {
                          <button
                             type="button"
                             onClick={handleCompleteSession}
-                            disabled={busyAction !== ""}
-                            className="flex w-full items-center justify-center gap-2 py-5 rounded-3xl border border-[#93f72b]/40 bg-[#93f72b]/10 text-[10px] font-black uppercase tracking-widest text-[#2f4200] hover:bg-[#93f72b]/20 transition-all disabled:opacity-60"
+                            disabled={busyAction !== "" || !canCompleteSession}
+                            className="flex w-full items-center justify-center gap-2 py-5 rounded-3xl border border-[#93f72b]/40 bg-[#93f72b]/10 text-[10px] font-black uppercase tracking-widest text-[#2f4200] hover:bg-[#93f72b]/20 transition-all disabled:cursor-not-allowed disabled:opacity-50"
                          >
                             <ShieldCheck size={16} />
                             {busyAction === "complete" ? "Đang kết thúc…" : "Kết thúc buổi"}
                          </button>
+                         {completeBlockedHint ? (
+                           <p className="text-center text-[11px] leading-relaxed text-amber-800">{completeBlockedHint}</p>
+                         ) : null}
                          <button
                             onClick={openRescheduleModal}
                             disabled={busyAction !== ""}

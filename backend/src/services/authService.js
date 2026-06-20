@@ -224,7 +224,7 @@ export async function refreshAccessToken(rawRefresh, req, options = {}) {
     return { ok: false, status: 401, error: "Refresh token không hợp lệ." };
   }
   const sid = new mongoose.Types.ObjectId(sidStr);
-  const user = await User.findOne({ "authSessions._id": sid }).select("+authSessions");
+  let user = await User.findOne({ "authSessions._id": sid }).select("+authSessions");
   if (!user) {
     return { ok: false, status: 401, error: "Phiên không còn hợp lệ. Đăng nhập lại." };
   }
@@ -626,7 +626,9 @@ export async function loginUser(body, req) {
 
   user.failedLoginAttempts = 0;
   user.lockUntil = null;
-  user.lastLoginAt = new Date();
+  const loginNow = new Date();
+  user.lastLoginAt = loginNow;
+  user.lastSeenAt = loginNow;
   const { refreshToken } = pushNewSession(user, req);
   await user.save();
 
@@ -750,7 +752,9 @@ export async function loginWithGoogle(body, req) {
 
   user.failedLoginAttempts = 0;
   user.lockUntil = null;
-  user.lastLoginAt = new Date();
+  const loginNow = new Date();
+  user.lastLoginAt = loginNow;
+  user.lastSeenAt = loginNow;
   const { refreshToken } = pushNewSession(user, req);
   await user.save();
 

@@ -192,8 +192,8 @@ const DEFAULT_CUSTOMER_NOTIFS = [
 const DEFAULT_MENTOR_NOTIFS = [
   {
     id: "booking_request",
-    label: "Yêu cầu đặt lịch mới",
-    description: "Có lịch mới hoặc học viên đã thanh toán.",
+    label: "Buổi mentor đã thanh toán",
+    description: "Thông báo khi học viên đã xác nhận thanh toán (CK/SePay).",
     value: true,
     icon: CalendarPlus,
     iconBg: "#ede9fe",

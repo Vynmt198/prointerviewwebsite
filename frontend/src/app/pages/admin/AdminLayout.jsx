@@ -3,6 +3,7 @@ import { Outlet, useLocation } from "react-router";
 import { SidebarProvider, SidebarInset, SidebarTrigger } from "../../components/ui/sidebar";
 import { AdminSidebar } from "../../components/layout/AdminSidebar";
 import { MentorPageShell } from "../../components/mentor/MentorPageShell";
+import { useUserPresence } from "../../hooks/useUserPresence.js";
 
 /** Tiêu đề header, thứ tự từ cụ thể → tổng quan (regex). */
 const ADMIN_HEADER_RULES = [
@@ -50,8 +51,7 @@ function AdminTopBar() {
       <div className="h-6 w-px shrink-0 bg-[#6E35E8]/20" />
       <div className="min-w-0">
         <h1
-          className="truncate text-[#6E35E8]"
-          style={{ fontSize: "0.9375rem", fontWeight: 700, lineHeight: 1.2, letterSpacing: "-0.015em" }}
+          className="truncate font-headline text-[0.9375rem] font-extrabold tracking-tight text-[#6E35E8]"
         >
           {label}
         </h1>
@@ -68,10 +68,11 @@ function AdminTopBar() {
 }
 
 export function AdminLayout() {
+  useUserPresence();
+
   return (
     <div
-      className="app-user-shell relative h-svh w-full overflow-hidden bg-[#f3f0f9] text-slate-900 antialiased selection:bg-violet-100 selection:text-violet-900"
-      style={{ fontFamily: "'Lexend', 'Plus Jakarta Sans', system-ui, sans-serif" }}
+      className="admin-shell app-user-shell relative h-svh w-full overflow-hidden bg-[#f3f0f9] text-slate-900 antialiased selection:bg-violet-100 selection:text-violet-900"
     >
       <div className="app-shell-ambient" aria-hidden />
       <SidebarProvider
@@ -86,7 +87,7 @@ export function AdminLayout() {
           <AdminTopBar />
           <div className="relative z-10 flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
             <MentorPageShell fillHeight bottomPad="pb-8">
-              <div className="relative z-10 mx-auto w-full min-w-0 max-w-7xl px-4 pb-10 pt-6 sm:px-6 lg:px-8">
+              <div className="relative z-10 mx-auto w-full min-w-0 max-w-7xl px-4 pb-10 pt-6 sm:px-6 lg:px-8" data-admin-content>
                 <Outlet />
               </div>
             </MentorPageShell>

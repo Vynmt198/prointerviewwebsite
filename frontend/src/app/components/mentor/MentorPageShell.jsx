@@ -101,7 +101,18 @@ const MENTOR_LIGHT_STYLES = `
         }
         .mentor-stat-num--on-dark {
           color: #ffffff;
-          -webkit-text-stroke: 0.4px #ffffff;
+          -webkit-text-stroke: 0;
+        }
+        /* Số tiền lớn — không siết letter-spacing / stroke để dấu chấm nghìn vẫn thấy */
+        .mentor-stat-num--money {
+          letter-spacing: -0.015em;
+          -webkit-text-stroke: 0;
+          line-height: 1.12;
+        }
+        .mentor-stat-num--money .money-thousands-sep {
+          display: inline-block;
+          margin-inline: 0.06em;
+          opacity: 0.95;
         }
         @media (min-width: 640px) {
           .mentor-stat-num--hero {
@@ -113,10 +124,15 @@ const MENTOR_LIGHT_STYLES = `
           font-family: var(--font-headline), "Lexend", "Plus Jakarta Sans", system-ui, sans-serif;
           font-weight: 900;
           font-variation-settings: "wght" 900;
-          letter-spacing: -0.03em;
+          letter-spacing: -0.015em;
           font-variant-numeric: tabular-nums;
           font-feature-settings: "tnum" 1;
-          -webkit-text-stroke: 0.3px currentColor;
+          -webkit-text-stroke: 0;
+        }
+        .mentor-money-num .money-thousands-sep {
+          display: inline-block;
+          margin-inline: 0.05em;
+          opacity: 0.95;
         }
         /* Nhãn uppercase tiếng Việt, tracking utility mặc định thường quá rộng */
         .mentor-surface .tracking-widest,
@@ -135,13 +151,15 @@ export function MentorPageShell({
   fillHeight = false,
   /** false = chỉ dùng app-shell-ambient, không thêm blob/shimmer (tránh nền chia mảng) */
   showAmbient = true,
+  /** true = áp typography mentor (phòng họp, feedback ngoài MentorArea) */
+  mentorRole = false,
 }) {
   const heightBlock = fillHeight
     ? "min-h-0 flex-1 h-full overflow-y-auto overflow-x-clip"
     : "min-h-screen overflow-x-clip";
   return (
     <div
-      className={`mentor-surface relative antialiased ${heightBlock} font-sans text-slate-900 selection:bg-violet-100 selection:text-violet-900 bg-transparent ${bottomPad} ${className}`.trim()}
+      className={`mentor-surface relative antialiased ${heightBlock} font-sans text-slate-900 selection:bg-violet-100 selection:text-violet-900 bg-transparent ${bottomPad} ${mentorRole ? "mentor-role-shell " : ""}${className}`.trim()}
     >
       <style>{`${MENTOR_LIGHT_STYLES}${extraStyles || ""}`}</style>
       {showAmbient && (

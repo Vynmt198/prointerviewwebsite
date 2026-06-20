@@ -2,6 +2,8 @@
 @import './tailwind.css';
 @import './theme.css';
 @import './brand.css';
+@import './admin-typography.css';
+@import './mentor-typography.css';
 
 @theme {
   /* Lime chủ đạo — dùng với nền #120B2E + chữ sáng */
