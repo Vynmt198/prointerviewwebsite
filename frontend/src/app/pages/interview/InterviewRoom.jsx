@@ -22,7 +22,6 @@ import {
   Star,
 } from "lucide-react";
 import { getPlans, hasAuthCredentials } from "../../utils/auth/auth.js";
-import { addInterviewRecord } from "../../utils/shared/history.js";
 import {
   saveAnswer,
   completeInterviewSession,
@@ -1042,20 +1041,6 @@ export default function InterviewRoom() {
         });
       } catch { /* still navigate on fail */ }
     }
-
-    const { position, company } = interviewMetaFromLocationState(location.state);
-    addInterviewRecord({
-      id:       `ai-${Date.now()}`,
-      type:     "ai",
-      date:     new Date().toISOString().slice(0, 10),
-      position,
-      company,
-      scores:   { clarity: 0, structure: 0, relevance: 0, credibility: 0 },
-      overall:  0,
-      duration: Math.max(1, Math.round(timerSeconds / 60)),
-      sessionId,
-      pending:  true,
-    });
 
     navigate("/interview/feedback", { state: { sessionId } });
   };

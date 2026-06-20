@@ -22,6 +22,7 @@ import { Booking } from "./pages/booking/Booking";
 import { SessionDetail } from "./pages/booking/SessionDetail";
 import { MyBookings } from "./pages/booking/MyBookings";
 import { Profile } from "./pages/account/Profile";
+import { Dashboard } from "./pages/account/Dashboard";
 import { Settings } from "./pages/account/Settings";
 import { PaymentReturn } from "./pages/payment/PaymentReturn";
 import { SuccessPage } from "./pages/payment/SuccessPage";
@@ -137,8 +138,9 @@ export const router = createBrowserRouter([
               const user = getUser();
               if (user?.role === "admin") throw redirect("/admin");
               if (user?.role === "mentor") throw redirect("/mentor/dashboard");
-              throw redirect("/");
+              return null;
             },
+            Component: Dashboard,
           },
           { path: "my-bookings", Component: MyBookings },
           { path: "my-courses", Component: MyCourses },

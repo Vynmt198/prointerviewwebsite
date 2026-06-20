@@ -15,3 +15,7 @@ pnpm-debug.log*
 # runtime
 dist/
 coverage/
+
+# JaaS private keys (never commit)
+keys/
+*.pk

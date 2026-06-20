@@ -64,10 +64,17 @@ Khi merge xong một route: cập nhật **Phần A** trong `API_INDEX`, đổi 
 | PATCH | `/api/admin/reports/:id` | `[ADMIN]` — cập nhật trạng thái báo cáo |
 | PATCH | `/api/admin/users/:id/status` | `[ADMIN]` |
 | PATCH | `/api/admin/mentors/:id/status` | `[ADMIN]` |
+| POST | `/api/auth/presence` | `[AUTH]` — heartbeat trạng thái online |
+| POST | `/api/analytics/events` | `[AUTH]` — ghi page view / hành động |
+| GET | `/api/achievements`, `/api/achievements/:id` | Public — tin tức & hoạt động |
+| GET | `/api/admin/analytics/user-behavior` | `[ADMIN]` — funnel / hành vi nền tảng |
+| GET | `/api/admin/analytics/users/:id/journey` | `[ADMIN]` — hành trình từng user |
+| PATCH | `/api/bookings/mentor/:id/check-in` | `[AUTH][MENTOR]` — webcam trước phòng họp |
+| POST | `/api/upload/achievement-image` | `[AUTH][ADMIN]` |
 
 Các nhóm endpoint theo phase (bookings, payments, plans, courses, enrollments, mentor, reviews, reports, notifications, …): xem **bảng Phase 1–4** bên dưới — cột **Trạng thái (BE)** đã đồng bộ với code hiện tại.
 
-**Mở rộng sau Phase 4:** auth email, booking/payment CK, admin finance, `/api/ai/*` — xem [Phase 5 — Mở rộng](#phase-5--mở-rộng-đã-có-trong-code).
+**Mở rộng sau Phase 4:** auth email, booking/payment CK, admin finance, `/api/ai/*`, **user presence**, **platform analytics**, **achievements** — xem [Phase 5 — Mở rộng](#phase-5--mở-rộng-đã-có-trong-code).
 
 **Ngoài Express:** Avatar — D-ID qua FE (`useDIDStream`) và/hoặc proxy `/api/ai/*` (`API_INDEX.md` phần B). **CV:** Express `/api/cv/analyses` + proxy `/api/cv/analyze*` → Python `cv_jd_matching` (FE: `cvApi.js`, `CVAnalysis.jsx`).
 
@@ -196,7 +203,7 @@ Các nhóm endpoint theo phase (bookings, payments, plans, courses, enrollments,
 
 *Ghi chú:* `change-password` không dùng — đã gộp `PATCH /api/auth/me` (xem Phần A trong `API_INDEX.md`).
 
-**Auth bổ sung (có route, chưa liệt kê ở bảng trên):** `GET /api/auth/verify-email`, `POST /api/auth/resend-verification`, `POST /api/auth/forgot-password`, `POST /api/auth/reset-password`.
+**Auth bổ sung (có route, chưa liệt kê ở bảng trên):** `GET /api/auth/verify-email`, `POST /api/auth/resend-verification`, `POST /api/auth/forgot-password`, `POST /api/auth/reset-password`, `POST /api/auth/presence`.
 
 ---
 
@@ -212,6 +219,7 @@ Các endpoint triển khai sau Phase 1–4 gốc. Chi tiết contract: [`API_IND
 | ✅ | POST | `/api/auth/resend-verification` | — |
 | ✅ | POST | `/api/auth/forgot-password` | — |
 | ✅ | POST | `/api/auth/reset-password` | — |
+| ✅ | POST | `/api/auth/presence` | `[AUTH]` |
 | ✅ | POST | `/api/mentors/apply` | `[AUTH]` |
 | ✅ | GET | `/api/mentors/me` | `[AUTH]` |
 
@@ -241,12 +249,45 @@ Các endpoint triển khai sau Phase 1–4 gốc. Chi tiết contract: [`API_IND
 | ✅ | PATCH | `/api/bookings/:id/submit-transfer` | `[AUTH]` |
 | ✅ | PATCH | `/api/bookings/:id/start` | `[AUTH]` |
 | ✅ | PATCH | `/api/bookings/mentor/:id/start` | `[AUTH][MENTOR]` |
+| ✅ | PATCH | `/api/bookings/mentor/:id/check-in` | `[AUTH][MENTOR]` — body `{ imageUrl }` |
+| ✅ | PATCH | `/api/bookings/mentor/:id/session-capture` | `[AUTH][MENTOR]` |
+| ✅ | GET | `/api/bookings/mentor/:id` | `[AUTH][MENTOR]` |
+| ✅ | GET | `/api/bookings/mentor/:id/booked-slots` | Public / mentor |
+| ✅ | PATCH | `/api/bookings/mentor/:id/reschedule` | `[AUTH][MENTOR]` |
+| ✅ | PATCH | `/api/bookings/mentor/:id/cancel` | `[AUTH][MENTOR]` |
 | ✅ | PATCH | `/api/bookings/:id/refund-destination` | `[AUTH]` |
+| ✅ | PATCH | `/api/bookings/:id/mentor-cancel-resolution` | `[AUTH]` |
 | ✅ | POST | `/api/bookings/:id/report-no-show` | `[AUTH]` |
 | ✅ | GET | `/api/bookings/:id/rebook-credit` | `[AUTH]` |
 | ✅ | POST | `/api/bookings/:id/mentor-knowledge` | `[AUTH][MENTOR]` |
 
 *Xem đầy đủ:* `backend/src/routes/bookings.js`.
+
+### User presence & platform analytics
+
+| BE | Method | Endpoint | Auth |
+|:---|:-------|:---------|:-----|
+| ✅ | POST | `/api/auth/presence` | `[AUTH]` — heartbeat; cập nhật `User.lastSeenAt` |
+| ✅ | POST | `/api/analytics/events` | `[AUTH]` — batch `{ events: [{ type, route, action?, durationMs?, metadata? }] }` |
+| ✅ | GET | `/api/admin/analytics/user-behavior` | `[ADMIN]` — query `?days=` funnel / top routes / actions |
+| ✅ | GET | `/api/admin/analytics/users/:id/journey` | `[ADMIN]` — timeline hành trình user |
+
+**Model:** `UserEvent.js` · **Service:** `analyticsService.js` · **FE:** `usePageAnalytics`, `useUserPresence`, `trackAction`, `AdminAnalytics`, `UserJourneyPanel`.
+
+Admin list user/mentor trả thêm `isOnline`, `lastSeenAt` (cửa sổ 3 phút qua `userPresence.js`).
+
+### Achievements (tin tức & hoạt động)
+
+| BE | Method | Endpoint | Auth |
+|:---|:-------|:---------|:-----|
+| ✅ | GET | `/api/achievements` | Public — query `?all=true` (admin xem cả bản nháp) |
+| ✅ | GET | `/api/achievements/:id` | Public |
+| ✅ | POST | `/api/achievements` | `[AUTH][ADMIN]` |
+| ✅ | PUT | `/api/achievements/:id` | `[AUTH][ADMIN]` |
+| ✅ | DELETE | `/api/achievements/:id` | `[AUTH][ADMIN]` |
+| ✅ | POST | `/api/upload/achievement-image` | `[AUTH][ADMIN]` |
+
+**FE:** `/achievements`, `/achievements/:id` (public) · `/admin/achievements` (CMS).
 
 ### Interviews & AI providers
 
@@ -268,10 +309,18 @@ Các endpoint triển khai sau Phase 1–4 gốc. Chi tiết contract: [`API_IND
 |:---|:-------|:---------|:-----|
 | ✅ | POST | `/api/upload/jd` | `[AUTH]` |
 | ✅ | POST | `/api/upload/course-video` | `[AUTH][MENTOR]` |
+| ✅ | POST | `/api/upload/achievement-image` | `[AUTH][ADMIN]` |
 | ✅ | GET | `/api/mentor/payouts`, `PATCH /api/mentor/payout-account` | `[AUTH][MENTOR]` |
 | ✅ | GET/POST | `/api/mentor/peer-reviews`, `/api/mentor/peer-reviews/:courseId` | `[AUTH][MENTOR]` |
 | ✅ | GET | `/api/courses/me`, mentor QA routes | `[AUTH][MENTOR]` |
-| ✅ | *Nhiều route* | `/api/admin/*` (finance, payouts, enrollments CK, course approve/reject, interview-metrics, …) | `[ADMIN]` |
+| ✅ | PATCH | `/api/admin/mentors/:id/reject` | `[ADMIN]` — từ chối hồ sơ mentor |
+| ✅ | PATCH | `/api/admin/mentors/:id/commission` | `[ADMIN]` |
+| ✅ | GET | `/api/admin/system/overview`, `/api/admin/system/transaction-support` | `[ADMIN]` |
+| ✅ | GET | `/api/admin/content/stats`, `/api/admin/content/interview-sessions`, `/api/admin/content/course-media` | `[ADMIN]` |
+| ✅ | GET | `/api/admin/finance/courses`, `/api/admin/finance/platform-summary` | `[ADMIN]` |
+| ✅ | GET | `/api/admin/interview-metrics` | `[ADMIN]` |
+| ✅ | GET | `/api/admin/analytics/user-behavior`, `/api/admin/analytics/users/:id/journey` | `[ADMIN]` |
+| ✅ | *Nhiều route* | `/api/admin/*` (finance CK, payouts, enrollments CK, course approve/reject/archive, …) | `[ADMIN]` |
 
 *Admin đầy đủ:* `backend/src/routes/admin.js`, [`API_INDEX.md`](./API_INDEX.md) A.10.
 
@@ -283,20 +332,34 @@ Các endpoint triển khai sau Phase 1–4 gốc. Chi tiết contract: [`API_IND
 
 | Domain | FE | Ghi chú |
 |:-------|:---|:--------|
-| Auth (login/register/Google/reset/verify) | ✅ FE | `auth.js`, Settings xóa tài khoản → `DELETE /api/auth/me` |
-| Dashboard | ✅ FE | `dashboardApi.js` |
+| Auth (login/register/Google/reset/verify) | ✅ FE | `auth.js`; Settings gửi lại xác minh email + xóa tài khoản + phiên đăng nhập |
+| Dashboard | ✅ FE | Route `/dashboard` → `Dashboard.jsx` + `dashboardApi.js` |
 | Mentors + booking + checkout CK | ✅ FE | SePay/transfer; ưu tiên CK thật |
+| My bookings (`/my-bookings`) | ✅ FE | `MyBookings.jsx` + `bookingsApi.js` |
 | Session detail | 🔧 FE | Chủ yếu `GET /api/bookings/:id`; một số UI demo |
-| CV Analysis | 🔧 FE | Phân tích: Express `/api/cv/analyze*`; lịch sử: `cvApi.js`. Supabase Edge **chỉ khi** có `VITE_SUPABASE_PROJECT_ID` |
+| CV Analysis | 🔧 FE | Phân tích: Express `/api/cv/analyze*`; lịch sử: `cvApi.js` (không còn demo/localStorage) |
 | Analysis history | ✅ FE | `/api/cv/analyses` |
-| Interview AI | 🔧 FE | Session CRUD + `/api/ai/*`; avatar D-ID |
+| Interview AI | 🔧 FE | Session CRUD + `/api/ai/*`; lịch sử qua API (không localStorage) |
 | Courses + enrollment | ✅ FE | |
+| Achievements (tin tức) | ✅ FE | `/achievements`, `/achievements/:id` + admin CMS |
 | Mentor dashboard/schedule/finance | ✅ FE | |
-| Mentor meeting room | 🔧 FE | Một phần state local |
+| Mentor meeting room | 🔧 FE | Check-in webcam API + phòng họp; một phần state local |
+| User presence (online) | ✅ FE | `useUserPresence` heartbeat; admin cột **Trực tuyến** (users/mentors) |
+| Platform analytics (tracking) | ✅ FE | `usePageAnalytics`, `trackAction` (CV, interview, checkout, courses, pricing) |
 | Admin list (users/mentors/bookings/content) | ✅ FE | `adminApi.js` |
-| Admin detail placeholders | 📋 FE | Routes `/admin/finance`, `/admin/users/:id`, … — UI placeholder |
-| Notifications | 🔧 FE | API có; kiểm tra badge/read-all trên prod |
-| Upload | 🔧 FE | BE: Cloudinary + fallback `/uploads`; FE cần gọi `POST /api/upload/*` |
+| Admin detail & vận hành | ✅ FE | User/mentor/booking detail, finance, transactions, payouts, CK khóa/gói, support, reviews — trong `AdminPlaceholders.jsx` (tên file legacy) + các trang riêng |
+| Admin analytics | ✅ FE | `/admin/analytics` — stats + funnel `getUserBehavior` |
+| Admin user journey | ✅ FE | `UserJourneyPanel` trên `/admin/users/:id` |
+| Admin mentor pending | ✅ FE | `/admin/mentors/pending` — duyệt/từ chối hồ sơ |
+| Admin booking check-ins | ✅ FE | `/admin/bookings/check-ins` — ảnh webcam mentor |
+| Admin achievements CMS | ✅ FE | `/admin/achievements` |
+| Admin content (courses/questions) | ✅ FE | `/admin/content/courses`, `/admin/content/questions` (interview sessions) |
+| Admin system settings | ✅ FE | `/admin/settings` — `getSystemOverview` (read-only) |
+| Notifications | ✅ FE | `GET /api/notifications/unread-count` + danh sách khi mở dropdown |
+| Upload | ✅ FE | `uploadApi.js` — avatar, CV/JD, course media, check-in, achievement image |
+| Static pages (Terms/Privacy/About) | ✅ FE | Không cần API |
+
+**Còn thiếu / mỏng:** một số luồng Session detail demo, avatar D-ID prod hardening, vài màn admin chỉ read-only (settings).
 
 ---
 
@@ -349,6 +412,7 @@ Chi tiết response lỗi / thành công: tham chiếu `API_INDEX.md` (phần đ
 | `GET /api/courses` | Danh sách khóa học |
 | `GET /api/courses/:id` | Chi tiết khóa học |
 | `GET /api/reviews` | Danh sách review *(query nếu API hỗ trợ)* |
+| `GET /api/achievements` | Tin tức & hoạt động |
 | `POST /api/payments/webhook/momo` | Webhook MoMo *(gateway/server gọi, không phải JWT user)* |
 | `POST /api/payments/webhook/zalopay` | Webhook ZaloPay |
 
@@ -379,8 +443,11 @@ Chi tiết response lỗi / thành công: tham chiếu `API_INDEX.md` (phần đ
 | `DELETE /api/reviews/:id` | Xóa review *(theo policy API)* |
 | `POST /api/reports` | Gửi báo cáo |
 | `GET /api/notifications` | Thông báo |
+| `GET /api/notifications/unread-count` | Badge chưa đọc |
 | `PATCH /api/notifications/:id/read` | Đánh dấu đã đọc |
 | `POST /api/notifications/read-all` | Đọc hết |
+| `POST /api/auth/presence` | Heartbeat online |
+| `POST /api/analytics/events` | Ghi page view / action |
 | `GET /api/enrollments/my` | Khóa đã ghi danh |
 | `PATCH /api/enrollments/:id/progress` | Cập nhật tiến độ bài học |
 
@@ -395,6 +462,7 @@ Chi tiết response lỗi / thành công: tham chiếu `API_INDEX.md` (phần đ
 | `PATCH /api/bookings/:id/confirm` | Xác nhận booking |
 | `PATCH /api/bookings/:id/complete` | Hoàn thành session |
 | `PATCH /api/bookings/:id/notes` | Ghi chú booking |
+| `PATCH /api/bookings/mentor/:id/check-in` | Check-in webcam trước phòng họp |
 | `PATCH /api/reviews/:id/reply` | Trả lời review |
 | `GET /api/mentor/dashboard` | Dashboard mentor |
 | `GET /api/mentor/finance` | Tài chính |
@@ -417,6 +485,13 @@ Chi tiết response lỗi / thành công: tham chiếu `API_INDEX.md` (phần đ
 | `GET /api/admin/bookings/:id` | Chi tiết booking (user + mentor populate) |
 | `GET /api/admin/reports` | Danh sách báo cáo mentor |
 | `PATCH /api/admin/reports/:id` | Cập nhật trạng thái (`reviewing` / `resolved` / `dismissed`) |
+| `GET /api/admin/analytics/user-behavior` | Funnel / hành vi nền tảng (`?days=`) |
+| `GET /api/admin/analytics/users/:id/journey` | Hành trình user |
+| `GET /api/admin/finance/platform-summary` | Tài chính nền tảng |
+| `GET /api/admin/payouts` | Yêu cầu rút tiền mentor |
+| `PATCH /api/admin/mentors/:id/reject` | Từ chối hồ sơ mentor |
+| `POST /api/achievements` | Tạo tin tức (admin) |
+| `POST /api/upload/achievement-image` | Ảnh bài viết achievements |
 
 ---
 
@@ -429,4 +504,4 @@ Chi tiết response lỗi / thành công: tham chiếu `API_INDEX.md` (phần đ
 
 ---
 
-*Cập nhật lần cuối: đồng bộ BE Phase 1–5 + trạng thái FE. Đánh dấu 📋 → ✅ khi đã có route Express; cập nhật cột FE khi nối xong màn.*
+*Cập nhật lần cuối: đồng bộ BE Phase 1–5 (presence, analytics, achievements, check-in) + trạng thái FE admin/analytics. Đánh dấu 📋 → ✅ khi đã có route Express; cập nhật cột FE khi nối xong màn.*

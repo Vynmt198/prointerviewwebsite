@@ -30,6 +30,16 @@ services:
         sync: false
       - key: FRONTEND_URL
         sync: false
+      - key: BACKEND_URL
+        sync: false
+      - key: CV_ANALYZER_URL
+        sync: false
+      - key: JAAS_APP_ID
+        sync: false
+      - key: JAAS_API_KEY_ID
+        sync: false
+      - key: JAAS_PRIVATE_KEY
+        sync: false
       - key: JWT_ACCESS_EXPIRES_IN
         value: 15m
       - key: REFRESH_TOKEN_DAYS

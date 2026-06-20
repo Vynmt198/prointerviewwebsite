@@ -5,6 +5,27 @@ const jsonHeaders = {
   "Content-Type": "application/json",
 };
 
+export async function fetchUnreadNotificationCount() {
+  if (!hasAuthCredentials()) return { success: false, count: 0 };
+  try {
+    const res = await authFetch("/api/notifications/unread-count", {
+      method: "GET",
+      headers: { Accept: "application/json" },
+    });
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      return {
+        success: false,
+        count: 0,
+        error: body.error || `Lỗi ${res.status}`,
+      };
+    }
+    return { success: true, count: body.count ?? 0 };
+  } catch {
+    return { success: false, count: 0, error: "Lỗi kết nối khi đếm thông báo." };
+  }
+}
+
 export async function fetchNotifications() {
   if (!hasAuthCredentials()) return { success: false, notifications: [] };
   try {

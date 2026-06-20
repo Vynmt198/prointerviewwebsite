@@ -30,7 +30,6 @@ import {
   CV_JD_HISTORY_PATH,
   cvAnalysisResultPath,
 } from "../../components/cv/CvJdAnalysisTabs";
-import { addCVAnalysisRecord } from "../../utils/shared/history.js";
 import {
   buildCvAnalysisSavePayload,
   deleteCvAnalysis,
@@ -483,20 +482,6 @@ export function CVAnalysis() {
         let jdStoragePath = null;
 
         // ── Helpers ────────────────────────────────────────────────────────
-        const applyResult = (d) => {
-          addCVAnalysisRecord({
-            id: `cv-${Date.now()}`, date: new Date().toLocaleDateString("vi-VN"),
-            mode: analyzeMode , cvFile: cvFile?.name ?? reuseCV?.name ?? "cv",
-            jdFile: jdFile?.name ?? reuseJD?.name ?? null,
-            field: analyzeMode === "field" ? (selectedField || "IT / Công nghệ") : null,
-            company: d.analysis.company ?? null, position: d.analysis.position ?? null,
-            matchScore: d.analysis.matchScore, totalKeywords: d.analysis.totalKeywords,
-            matchedKeywords: d.analysis.matchedKeywords, missingKeywords: d.analysis.missingKeywords,
-            scores: d.analysis.scores, strengths: d.analysis.strengths,
-            weaknesses: d.analysis.weaknesses, suggestions: d.analysis.suggestions,
-          } );
-        };
-
         // Force-refresh the session BEFORE sending so we always have the
         // freshest JWT, avoids the "Invalid JWT" 401 caused by stale tokens.
         // We deliberately do NOT send "apikey" as a header because this server's
@@ -793,8 +778,6 @@ export function CVAnalysis() {
           throw new Error("Chọn chế độ phân tích CV + JD hoặc theo ngành nghề từ trang hub.");
         }
 
-        applyResult(data);
-
         setProgress(100);
         await loadCvQuota();
         await new Promise((r) => setTimeout(r, 350));
@@ -807,23 +790,8 @@ export function CVAnalysis() {
         setStep("upload");
       }
     } else {
-      // ── Demo path ──────────────────────────────────────────────────────
-      let p = 0;
-      const iv = setInterval(() => {
-        p += Math.random() * 15;
-        if (p >= 100) {
-          p = 100;
-          clearInterval(iv);
-          setTimeout(() => {
-            goToResultPage({ analysis: null, analysisId: null });
-            setStep("upload");
-          }, 400);
-        }
-        setProgress(Math.min(p, 100));
-        if (p > 20) setLoadingStage(1);
-        if (p > 50) setLoadingStage(2);
-        if (p > 75) setLoadingStage(3);
-      }, 400);
+      setStep("upload");
+      setAnalyzeError("Không tìm thấy file CV. Vui lòng tải lên lại.");
     }
   };
 
