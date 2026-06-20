@@ -31,6 +31,8 @@ import {
   Sun,
 } from "lucide-react";
 import { useParams, useNavigate, useSearchParams } from "react-router";
+import { usePageAnalytics } from "../../hooks/usePageAnalytics.js";
+import { trackAction } from "../../utils/analytics/analyticsApi.js";
 import {
   fetchCourseById,
   fetchLessonContent,
@@ -879,6 +881,7 @@ function QASection({
 export function CourseLearning() {
   const { id } = useParams();
   const navigate = useNavigate();
+  usePageAnalytics();
   const [searchParams] = useSearchParams();
   const peerPreviewMode =
     searchParams.get("peerReview") === "1" && getUser()?.role === "mentor";
@@ -1101,6 +1104,11 @@ export function CourseLearning() {
       if (res.success) {
         setJustCompleted(true);
         if (updated.length === lessons.length) {
+          trackAction("course_complete", `/courses/${id}/learn`, {
+            courseId: id,
+            enrollmentId: enrollment._id,
+            lessonCount: lessons.length,
+          });
           setTimeout(() => setShowCertificate(true), 600);
         }
         setTimeout(() => setJustCompleted(false), 2800);

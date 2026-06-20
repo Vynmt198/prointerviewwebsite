@@ -3,16 +3,18 @@ import { Link } from "react-router";
 import { Users, Search, Filter, CheckCircle, XCircle, Eye, ShieldCheck, Star } from "lucide-react";
 import { adminApi } from "../../api/adminApi.js";
 import { tryApi } from "../../utils/shared/apiToast.js";
+import { UserOnlineStatus } from "../../components/admin/UserOnlineStatus.jsx";
 
 export function AdminMentors() {
   const [mentors, setMentors] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
 
-  const loadMentors = async () => {
-    setLoading(true);
+  const loadMentors = async (silent = false) => {
+    if (!silent) setLoading(true);
     const res = await tryApi(() => adminApi.getMentors(), {
       fallback: "Không thể tải danh sách cố vấn.",
+      silent: true,
     });
     if (res.success) {
       const active = res.mentors.filter(
@@ -20,11 +22,13 @@ export function AdminMentors() {
       );
       setMentors(active);
     }
-    setLoading(false);
+    if (!silent) setLoading(false);
   };
 
   useEffect(() => {
     void loadMentors();
+    const timer = window.setInterval(() => void loadMentors(true), 45_000);
+    return () => window.clearInterval(timer);
   }, []);
 
   const handleToggleActive = async (mentor) => {
@@ -90,7 +94,10 @@ export function AdminMentors() {
                 <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-slate-500">Cố vấn</th>
                 <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-slate-500">Chuyên môn</th>
                 <th className="px-8 py-6 text-center text-[10px] font-black uppercase tracking-widest text-slate-500">
-                  Trạng thái
+                  Hồ sơ
+                </th>
+                <th className="px-8 py-6 text-center text-[10px] font-black uppercase tracking-widest text-slate-500">
+                  Trực tuyến
                 </th>
                 <th className="px-8 py-6 text-center text-[10px] font-black uppercase tracking-widest text-slate-500">
                   Đánh giá
@@ -106,13 +113,13 @@ export function AdminMentors() {
             <tbody className="divide-y divide-slate-100 text-sm">
               {loading ? (
                 <tr>
-                  <td colSpan="6" className="px-8 py-20 text-center italic text-slate-500">
+                  <td colSpan="7" className="px-8 py-20 text-center italic text-slate-500">
                     Đang tải dữ liệu...
                   </td>
                 </tr>
               ) : filtered.length === 0 ? (
                 <tr>
-                  <td colSpan="6" className="px-8 py-20 text-center italic text-slate-500">
+                  <td colSpan="7" className="px-8 py-20 text-center italic text-slate-500">
                     Không tìm thấy cố vấn nào.
                   </td>
                 </tr>
@@ -152,6 +159,13 @@ export function AdminMentors() {
                           </span>
                         )}
                       </div>
+                    </td>
+                    <td className="px-8 py-6">
+                      <UserOnlineStatus
+                        isOnline={Boolean(mentor.isOnline)}
+                        lastSeenAt={mentor.lastSeenAt}
+                        isActive={mentor.isActive !== false && mentor.userId?.isActive !== false}
+                      />
                     </td>
                     <td className="px-8 py-6">
                       <div className="flex items-center justify-center gap-1 text-amber-500">

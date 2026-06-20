@@ -23,6 +23,8 @@ import { createBooking, fetchRebookCredit } from "../../api/bookingsApi.js";
 import { isBookingSlotInFuture } from "../../utils/booking/bookingSchedule.js";
 import { fetchCourseById } from "../../api/courseApi.js";
 import { enrollmentApi } from "../../api/enrollmentApi.js";
+import { trackAction } from "../../utils/analytics/analyticsApi.js";
+import { usePageAnalytics } from "../../hooks/usePageAnalytics.js";
 import { createSubscriptionTransferPending, fetchTransferStatus } from "../../api/paymentsApi.js";
 import { toastApiError, toastApiSuccess } from "../../utils/shared/apiToast.js";
 import {
@@ -944,6 +946,7 @@ function BankTransferBlock({
 export function Checkout() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  usePageAnalytics();
 
   /* ── Booking / Course / Plan mode ─────────────────────────────── */
   const isBooking = searchParams.get("type") === "booking";
@@ -954,6 +957,13 @@ export function Checkout() {
   const mentorId = searchParams.get("mentorId") ?? "";
   const [bookingMentor, setBookingMentor] = React.useState(null);
   const [courseInfo, setCourseInfo] = React.useState(null);
+
+  React.useEffect(() => {
+    trackAction("checkout_open", "/checkout", {
+      type: searchParams.get("type") || "plan",
+      plan: searchParams.get("plan") || "",
+    });
+  }, []);
 
   React.useEffect(() => {
     if (!isBooking || !mentorId) {
@@ -1212,6 +1222,11 @@ export function Checkout() {
         const apiRes = await enrollmentApi.enroll(courseId, { paymentMethod: "transfer", orderNum });
         const eid = apiRes.enrollment?._id || apiRes.enrollment?.id;
         if (apiRes.success && eid) {
+          trackAction("course_enroll", "/checkout", {
+            courseId,
+            paid: true,
+            enrollmentId: String(eid),
+          });
           const serverOrder = extractOrderPart(apiRes.orderNum || apiRes.enrollment?.paymentRef);
           if (serverOrder) setTransferOrderNum(serverOrder);
           setBankEnrollmentId(String(eid));
@@ -1280,6 +1295,11 @@ export function Checkout() {
           applyRebookCreditFromBookingId: rebookFrom,
         });
         if (apiRes.success && apiRes.booking?.id) {
+          trackAction("booking_submit", "/checkout", {
+            mentorId: bookingMentor.id,
+            bookingId: apiRes.booking.id,
+            rebookCredit: true,
+          });
           try {
             sessionStorage.removeItem("prointerview_rebook_from");
           } catch {
@@ -1313,6 +1333,11 @@ export function Checkout() {
         paymentMethod: "transfer",
       });
       if (apiRes.success && apiRes.booking?.id) {
+        trackAction("booking_submit", "/checkout", {
+          mentorId: bookingMentor.id,
+          bookingId: apiRes.booking.id,
+          paymentMethod: "transfer",
+        });
         const serverOrder = extractOrderPart(apiRes.booking?.paymentRef);
         if (serverOrder) setTransferOrderNum(serverOrder);
         setBankBookingId(apiRes.booking.id);
@@ -1363,6 +1388,11 @@ export function Checkout() {
     setAppStep("paid");
 
     if (isPlanCheckout) {
+      trackAction("plan_upgrade", "/checkout", {
+        plan: plan?.planKey || searchParams.get("plan") || "",
+        billing,
+        sepayAuto: Boolean(pollResult?.sepayAuto),
+      });
       try {
         const pr = await fetchCurrentPlan();
         if (pr.success) {

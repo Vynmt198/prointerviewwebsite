@@ -15,6 +15,7 @@ import { deliverNotification } from "./notificationDeliveryService.js";
 import { runInTransaction } from "../helpers/dbHelper.js";
 import { resolveStoredUploadUrl } from "../utils/resolveStoredUploadUrl.js";
 import {
+  isBookingAtOrPastStart,
   isBookingInLiveWindow,
   isBookingPastAutoCompleteGrace,
   isBookingSlotInFuture,
@@ -148,6 +149,23 @@ async function notifyMentorBooking(mentorUserId, mentorPrefKey, payload) {
     title: payload.title || "Cập nhật lịch mentor",
     body: payload.body || "",
     metadata: payload.metadata || {},
+  });
+}
+
+/** Mentor chỉ nhận thông báo buổi mới khi học viên đã thanh toán (CK/SePay/admin). */
+async function notifyMentorPaidBooking(mentorUserId, { studentName, date, timeSlot, bookingId }) {
+  if (!mongoose.isValidObjectId(String(mentorUserId || ""))) return;
+  if (!mongoose.isValidObjectId(String(bookingId || ""))) return;
+  const name = studentName || "Học viên";
+  const when = [date, timeSlot].filter(Boolean).join(" ").trim() || "—";
+  await notifyMentorBooking(mentorUserId, "booking_request", {
+    type: "booking_confirmed",
+    title: "Buổi mentor đã được thanh toán",
+    body: `${name} — buổi ${when} đã xác nhận thanh toán.`,
+    metadata: {
+      bookingId,
+      actionUrl: `/mentor/meeting-detail/${bookingId}`,
+    },
   });
 }
 
@@ -829,6 +847,13 @@ export async function createBooking(userId, body) {
       });
     }
 
+    await notifyMentorPaidBooking(mentor.userId, {
+      studentName: user?.name || user?.email || "Học viên",
+      date: dateNormalized,
+      timeSlot: timeNormalized,
+      bookingId: doc._id,
+    });
+
     return {
       ok: true,
       booking: toPublicBooking(doc, mentor),
@@ -858,19 +883,14 @@ export async function createBooking(userId, body) {
     }
   }
 
-  const customerName = user?.name || "Học viên";
-  const payLabel =
-    doc.paymentStatus === "paid" ? "đã thanh toán" : "đang chờ thanh toán";
-  await notifyMentorBooking(mentor.userId, "booking_request", {
-    type: "new_booking_request",
-    title: "Yêu cầu đặt lịch mới",
-    body: `${customerName} đặt buổi ${dateNormalized} lúc ${timeNormalized} (${payLabel}).`,
-    metadata: {
+  if (doc.paymentStatus === "paid") {
+    await notifyMentorPaidBooking(mentor.userId, {
+      studentName: user?.name || user?.email || "Học viên",
+      date: dateNormalized,
+      timeSlot: timeNormalized,
       bookingId: doc._id,
-      mentorId: mentor._id,
-      actionUrl: `/mentor/meeting-detail/${doc._id}`,
-    },
-  });
+    });
+  }
 
   return {
     ok: true,
@@ -1381,14 +1401,11 @@ export async function confirmBankTransferPaymentByAdmin(bookingId, options = {})
   const studentName =
     booking.userId?.name || booking.userId?.email || "Học viên";
   if (mentorUid) {
-    await notifyMentorBooking(mentorUid, "booking_request", {
-      type: "booking_confirmed",
-      title: "Buổi mentor đã được thanh toán",
-      body: `${studentName} — buổi ${booking.date} ${booking.timeSlot} đã xác nhận thanh toán.`,
-      metadata: {
-        bookingId: booking._id,
-        actionUrl: `/mentor/meeting-detail/${booking._id}`,
-      },
+    await notifyMentorPaidBooking(mentorUid, {
+      studentName,
+      date: booking.date,
+      timeSlot: booking.timeSlot,
+      bookingId: booking._id,
     });
   }
 
@@ -1449,6 +1466,13 @@ export async function completeMentorBooking(mentorUserId, rawId) {
       ok: false,
       status: 400,
       error: "Chỉ đánh dấu hoàn thành khi booking đã xác nhận hoặc đang diễn ra.",
+    };
+  }
+  if (!isBookingAtOrPastStart(booking)) {
+    return {
+      ok: false,
+      status: 400,
+      error: "Chưa tới giờ bắt đầu buổi học. Bạn có thể vào phòng trước nhưng chỉ kết thúc sau khi buổi đã bắt đầu.",
     };
   }
 

@@ -23,6 +23,7 @@ import {
 import { getLatestCVAnalysisAsync, getUploadedCV, saveUploadedCV } from "../../utils/shared/history.js";
 import { hasAuthCredentials, isLoggedIn } from "../../utils/auth/auth.js";
 import { buildLoginPath } from "../../utils/auth/authGate.js";
+import { trackAction } from "../../utils/analytics/analyticsApi.js";
 import { generateInterviewQuestions, extractCvTextFromFile, createInterviewSession, pregenerateInterviewVideos } from "../../api/interviewsApi.js";
 import { fetchCvAnalysisById } from "../../api/cvApi.js";
 import { InterviewHistoryPanel } from "../../components/interview/InterviewHistoryPanel";
@@ -350,6 +351,7 @@ export function Interview() {
     }
     setExtractWarning("");
 
+    trackAction("interview_start", "/interview");
     // Clear stale session data from previous interview before starting new one
     sessionStorage.removeItem("prointerview_questions");
     sessionStorage.removeItem("prointerview_sessionId");

@@ -28,6 +28,7 @@ import {
   completeInterviewSession,
   analyzeFaceSnapshot,
 } from "../../api/interviewsApi.js";
+import { trackAction } from "../../utils/analytics/analyticsApi.js";
 import { useDIDStream } from "../../hooks/useDIDStream";
 import { useFaceAnalysis } from "../../hooks/useFaceAnalysis";
 // AILipSyncAvatar removed — portrait now renders as full-panel img in Nhánh 1/2
@@ -1033,6 +1034,11 @@ export default function InterviewRoom() {
           answers:              backupAnswers,
           totalDurationSeconds: timerSeconds,
           behavioralSummary:    behavioralSummary ?? undefined,
+        });
+        trackAction("interview_complete", "/interview/room", {
+          sessionId,
+          questionCount: backupAnswers.length,
+          durationSeconds: timerSeconds,
         });
       } catch { /* still navigate on fail */ }
     }

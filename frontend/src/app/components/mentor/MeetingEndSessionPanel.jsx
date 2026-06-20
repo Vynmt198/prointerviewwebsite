@@ -12,6 +12,8 @@ export function MeetingEndSessionPanel({
   counterpartLabel,
   sessionLabel,
   hasLiveNotes = false,
+  canConfirm = true,
+  blockReason = "",
 }) {
   if (!open) return null;
 
@@ -89,6 +91,12 @@ export function MeetingEndSessionPanel({
                 : "Nếu chưa ghi chú, bạn vẫn có thể quay lại buổi và gõ nhanh trước khi xác nhận."}
             </li>
           </ul>
+
+          {!canConfirm && blockReason ? (
+            <p className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5 text-xs leading-relaxed text-amber-900">
+              {blockReason}
+            </p>
+          ) : null}
         </div>
 
         <div className="flex flex-col-reverse gap-2 border-t border-slate-100 bg-slate-50/50 px-5 py-4 sm:flex-row sm:justify-end sm:px-6">
@@ -103,9 +111,11 @@ export function MeetingEndSessionPanel({
           <button
             type="button"
             onClick={onConfirm}
-            disabled={confirming}
-            style={BRAND_CTA_LIME_STYLE}
-            className="inline-flex items-center justify-center gap-2 rounded-xl px-5 py-2.5 text-xs font-black uppercase tracking-widest shadow-[0_8px_24px_rgba(147,247,43,0.35)] disabled:opacity-60"
+            disabled={confirming || !canConfirm}
+            style={canConfirm ? BRAND_CTA_LIME_STYLE : undefined}
+            className={`inline-flex items-center justify-center gap-2 rounded-xl px-5 py-2.5 text-xs font-black uppercase tracking-widest ${
+              canConfirm ? "shadow-[0_8px_24px_rgba(147,247,43,0.35)]" : "cursor-not-allowed bg-slate-200 text-slate-500"
+            } disabled:opacity-60`}
           >
             <ShieldCheck className="h-4 w-4" />
             {confirming ? "Đang xử lý…" : "Xác nhận kết thúc buổi"}

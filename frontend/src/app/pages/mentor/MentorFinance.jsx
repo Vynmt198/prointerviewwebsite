@@ -18,6 +18,7 @@ import {
 import { getUser, getDisplayName } from "../../utils/auth/auth.js";
 import { MentorPageShell } from "../../components/mentor/MentorPageShell";
 import { MentorStatPanel, MentorStatFrame } from "../../components/mentor/MentorStatFrames";
+import { MentorMoneyText } from "../../utils/shared/moneyDisplay.jsx";
 import { fetchMentorFinance, requestMentorPayout, updateMentorPayoutAccount } from "../../api/mentorApi.js";
 import { toastApiError, toastApiSuccess } from "../../utils/shared/apiToast.js";
 import { AppSelect } from "../../components/ui/AppSelect";
@@ -86,7 +87,7 @@ const TX_FILTER_TABS = [
 ];
 
 function formatMoney(amount) {
-  return `${Number(amount || 0).toLocaleString("vi-VN")} ₫`;
+  return `${Number(amount || 0).toLocaleString("vi-VN")} Đ`;
 }
 
 function commissionPolicyNote(policy) {
@@ -103,7 +104,7 @@ function commissionPolicyNote(policy) {
 const withdrawFieldLabel =
   "mb-1.5 block text-xs font-semibold text-slate-700";
 const withdrawFieldInput =
-  "w-full rounded-lg border border-slate-200/90 bg-white px-3.5 py-2.5 text-sm font-medium text-slate-900 outline-none transition-all placeholder:text-slate-400 focus:border-[#8037f4] focus:bg-[#faf8ff] focus:ring-2 focus:ring-[#8037f4]/12";
+  "w-full rounded-lg border border-slate-200/90 bg-white px-3.5 py-2.5 text-sm font-semibold text-slate-900 outline-none transition-all placeholder:text-slate-400 focus:border-[#8037f4] focus:bg-[#faf8ff] focus:ring-2 focus:ring-[#8037f4]/12";
 
 const SUPPORTED_BANKS = [
   "Vietcombank",
@@ -537,8 +538,8 @@ export function MentorFinance() {
                   Ví mentor
                 </span>
               </div>
-              <p className="font-headline mt-4 text-[clamp(2rem,5vw,3.25rem)] font-black leading-none tracking-tight text-white">
-                {formatMoney(availableBalance)}
+              <p className="mentor-stat-num mentor-stat-num--hero mentor-stat-num--on-dark mentor-stat-num--money mt-4 text-[clamp(2rem,5vw,3.25rem)]">
+                <MentorMoneyText amount={availableBalance} />
               </p>
               <p className="mt-2 text-sm text-violet-200/90">Số dư khả dụng — rút về tài khoản ngân hàng</p>
               {payoutAccountMasked ? (
@@ -642,7 +643,7 @@ export function MentorFinance() {
               index={1}
               accent="lime"
               cornerIcon={Wallet}
-              value={formatMoney(availableBalance)}
+              moneyAmount={availableBalance}
               title="Số dư khả dụng"
               footer={
                 <button
@@ -659,7 +660,7 @@ export function MentorFinance() {
               index={2}
               accent="lime"
               cornerIcon={Clock}
-              value={formatMoney(pendingBalance)}
+              moneyAmount={pendingBalance}
               title="Chờ giải ngân"
               footer={
                 <p className="mt-3 flex items-center gap-1.5 text-xs text-slate-500">
@@ -672,7 +673,7 @@ export function MentorFinance() {
               index={3}
               accent="purple"
               cornerIcon={TrendingUp}
-              value={formatMoney(totalEarned)}
+              moneyAmount={totalEarned}
               title="Tổng thu nhập"
               footer={
                 <p className="mt-3 flex items-center gap-1.5 text-xs text-violet-500/80">

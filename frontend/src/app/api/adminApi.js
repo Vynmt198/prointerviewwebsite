@@ -172,4 +172,15 @@ export const adminApi = {
       method: "PATCH",
       body: JSON.stringify({ isVisible }),
     }),
+  getUserBehavior: (days = 7) =>
+    authedFetch(`/api/admin/analytics/user-behavior?days=${encodeURIComponent(days)}`),
+  getUserJourney: (userId, params = {}) => {
+    const q = new URLSearchParams();
+    if (params.days) q.set("days", String(params.days));
+    if (params.limit) q.set("limit", String(params.limit));
+    const qs = q.toString();
+    return authedFetch(
+      `/api/admin/analytics/users/${encodeURIComponent(userId)}/journey${qs ? `?${qs}` : ""}`,
+    );
+  },
 };

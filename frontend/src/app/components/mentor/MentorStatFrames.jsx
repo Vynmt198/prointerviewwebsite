@@ -1,4 +1,5 @@
 import { motion } from "motion/react";
+import { MentorMoneyText } from "../../utils/shared/moneyDisplay.jsx";
 
 const ACCENT = {
   purple: {
@@ -48,6 +49,7 @@ export function MentorStatMiniGrid({ children, className = "" }) {
 export function MentorStatFrame({
   index,
   value,
+  moneyAmount,
   title,
   subtitle,
   footer,
@@ -105,9 +107,9 @@ export function MentorStatFrame({
         </span>
       ) : null}
       <p
-        className={`mentor-stat-num font-headline leading-[0.9] tracking-tight ${valueCls} ${theme.value}`}
+        className={`mentor-stat-num font-headline ${moneyAmount != null ? "mentor-stat-num--money leading-[1.05]" : "leading-[0.9] tracking-tight"} ${valueCls} ${theme.value}`}
       >
-        {value}
+        {moneyAmount != null ? <MentorMoneyText amount={moneyAmount} /> : value}
       </p>
       <p className={`mt-2 text-sm font-bold ${theme.title}`}>{title}</p>
       {subtitle ? (

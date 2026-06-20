@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router";
 import { motion } from "motion/react";
 import { Camera, ExternalLink, RefreshCw, Search, ShieldCheck, X } from "lucide-react";
-import { adminGlassTable, adminPageWrap } from "../../components/admin/AdminPageShell.jsx";
+import { adminGlassTable, adminPageWrap, AdminPageHeader } from "../../components/admin/AdminPageShell.jsx";
 import { AdminListFilterBar } from "../../components/admin/AdminListFilters.jsx";
 import { adminApi } from "../../api/adminApi.js";
 import { tryApi } from "../../utils/shared/apiToast.js";
@@ -82,13 +82,11 @@ export function AdminBookingCheckIns() {
   return (
     <div className={adminPageWrap}>
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <p className="text-[10px] font-black uppercase tracking-widest text-violet-700">Xác minh mentor</p>
-          <h2 className="font-headline text-2xl font-black text-slate-900">Ảnh check-in webcam</h2>
-          <p className="mt-1 max-w-2xl text-sm text-slate-600">
-            Danh sách buổi mentor đã chụp ảnh qua webcam trước khi vào phòng họp. Dùng để đối chiếu danh tính.
-          </p>
-        </div>
+        <AdminPageHeader
+          kicker="Xác minh mentor"
+          title="Ảnh check-in webcam"
+          subtitle="Danh sách buổi mentor đã chụp ảnh qua webcam trước khi vào phòng họp. Dùng để đối chiếu danh tính."
+        />
         <button
           type="button"
           onClick={() => void load()}

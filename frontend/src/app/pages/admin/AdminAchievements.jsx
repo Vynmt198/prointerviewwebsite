@@ -3,6 +3,7 @@ import { AdminPanel } from "./AdminPanel.jsx";
 import { achievementsApi } from "../../api/achievementsApi.js";
 import { Plus, Edit2, Trash2, Check, X, Image as ImageIcon, UploadCloud, Loader2 } from "lucide-react";
 import { toastApiSuccess, toastApiError } from "../../utils/shared/apiToast.js";
+import { AppSelect } from "../../components/ui/AppSelect";
 
 export function AdminAchievements() {
   const [achievements, setAchievements] = useState([]);
@@ -298,15 +299,17 @@ export function AdminAchievements() {
                 <label className="mb-1.5 block text-xs font-bold uppercase tracking-widest text-slate-500">
                   Phân loại <span className="text-rose-500">*</span>
                 </label>
-                <select 
+                <AppSelect
+                  size="md"
                   value={formData.category}
-                  onChange={(e) => setFormData({...formData, category: e.target.value})}
-                  className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm font-semibold text-slate-900 outline-none transition focus:border-violet-400 focus:bg-white"
-                >
-                  <option value="Tin tức">Tin tức</option>
-                  <option value="Hoạt động">Hoạt động</option>
-                  <option value="Sự kiện">Sự kiện</option>
-                </select>
+                  onValueChange={(v) => setFormData({ ...formData, category: v })}
+                  triggerClassName="rounded-xl border-slate-200 bg-slate-50"
+                  options={[
+                    { value: "Tin tức", label: "Tin tức" },
+                    { value: "Hoạt động", label: "Hoạt động" },
+                    { value: "Sự kiện", label: "Sự kiện" },
+                  ]}
+                />
               </div>
 
               <div>

@@ -141,6 +141,17 @@ export function isBookingPastScheduledEnd(booking, { graceMinutes = 0 } = {}) {
   return Date.now() >= start + dur + graceMinutes * 60 * 1000;
 }
 
+/** Đã tới hoặc qua giờ bắt đầu — mentor được phép đánh dấu hoàn thành. */
+export function isBookingAtOrPastStart(booking) {
+  const start = parseBookingStartMs(booking);
+  if (!Number.isFinite(start)) return false;
+  return Date.now() >= start;
+}
+
+export function canMentorCompleteBooking(booking) {
+  return isBookingAtOrPastStart(booking);
+}
+
 export function canEnterMeetingRoom(booking, { asMentor = false } = {}) {
   if (!booking) {
     return { ok: false, message: "Không tìm thấy buổi hẹn." };

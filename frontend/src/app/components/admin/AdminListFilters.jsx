@@ -44,7 +44,7 @@ export function AdminListFilterBar({ children, countText, onReset, showReset = f
             </div>
           ) : null}
         </div>
-        {countText ? <p className="shrink-0 text-xs font-medium text-slate-500 sm:pb-1">{countText}</p> : null}
+        {countText ? <p className="shrink-0 text-xs font-semibold text-slate-500 sm:pb-1">{countText}</p> : null}
       </div>
     </div>
   );

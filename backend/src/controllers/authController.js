@@ -152,6 +152,17 @@ export class AuthController {
     }
   }
 
+  /** Heartbeat — client gọi định kỳ khi tab đang mở. */
+  static async presence(req, res, next) {
+    try {
+      const { touchUserPresence } = await import("../utils/userPresence.js");
+      const at = await touchUserPresence(req.userId, { force: true });
+      res.json({ success: true, lastSeenAt: at ?? new Date() });
+    } catch (err) {
+      next(err);
+    }
+  }
+
   static async patchMe(req, res, next) {
     try {
       const result = await authService.patchMeUser(req.userId, req.body ?? {}, req, {

@@ -1,25 +1,29 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router";
-import { Users, Search, ShieldAlert, ShieldCheck, Mail, Tag } from "lucide-react";
+import { Users, Search, Mail, Tag } from "lucide-react";
 import { adminApi } from "../../api/adminApi.js";
 import { tryApi } from "../../utils/shared/apiToast.js";
+import { UserOnlineStatus } from "../../components/admin/UserOnlineStatus.jsx";
 
 export function AdminUsers() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
 
-  const loadUsers = async () => {
-    setLoading(true);
+  const loadUsers = async (silent = false) => {
+    if (!silent) setLoading(true);
     const res = await tryApi(() => adminApi.getUsers(), {
       fallback: "Không thể tải danh sách người dùng.",
+      silent: true,
     });
     if (res.success) setUsers(res.users);
-    setLoading(false);
+    if (!silent) setLoading(false);
   };
 
   useEffect(() => {
     void loadUsers();
+    const timer = window.setInterval(() => void loadUsers(true), 45_000);
+    return () => window.clearInterval(timer);
   }, []);
 
   const handleToggleActive = async (id, currentStatus) => {
@@ -76,7 +80,7 @@ export function AdminUsers() {
                   Gói cước
                 </th>
                 <th className="px-8 py-6 text-center text-[10px] font-black uppercase tracking-widest text-slate-500">
-                  Trạng thái
+                  Trực tuyến
                 </th>
                 <th className="px-8 py-6 text-right text-[10px] font-black uppercase tracking-widest text-slate-500">
                   Thao tác
@@ -139,17 +143,11 @@ export function AdminUsers() {
                       </span>
                     </td>
                     <td className="px-8 py-6">
-                      <div className="flex justify-center">
-                        {user.isActive !== false ? (
-                          <span className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-emerald-600">
-                            <ShieldCheck size={12} /> Hoạt động
-                          </span>
-                        ) : (
-                          <span className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-red-600">
-                            <ShieldAlert size={12} /> Đã khóa
-                          </span>
-                        )}
-                      </div>
+                      <UserOnlineStatus
+                        isOnline={Boolean(user.isOnline)}
+                        lastSeenAt={user.lastSeenAt}
+                        isActive={user.isActive !== false}
+                      />
                     </td>
                     <td className="px-8 py-6 text-right">
                       <button

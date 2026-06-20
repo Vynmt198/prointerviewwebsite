@@ -1,6 +1,7 @@
 import React from "react";
 import { useParams, Link } from "react-router";
 import { AdminPanel } from "./AdminPanel.jsx";
+import { UserJourneyPanel } from "../../components/admin/UserJourneyPanel.jsx";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ArrowRight,
@@ -110,7 +111,7 @@ export function AdminUserDetail() {
   };
 
   return (
-    <AdminPanel title="Chi tiết người dùng" description="Thông tin tài khoản và quota.">
+    <AdminPanel title="Chi tiết người dùng" description="Thông tin tài khoản, quota và hành trình trên nền tảng.">
       {loading && <p className="text-sm text-slate-500">Đang tải…</p>}
       {error && !loading && <p className="text-sm text-red-600">{error}</p>}
       {user && (
@@ -124,7 +125,14 @@ export function AdminUserDetail() {
             <p><span className="font-semibold">Phỏng vấn AI:</span> {user.quota?.interviewUsed ?? 0} / {user.quota?.interviewLimit ?? user.quota?.interviewQuestionsAllowed ?? 1}</p>
             <p><span className="font-semibold">Lịch hẹn:</span> {user.stats?.bookingsCount ?? 0}</p>
             <p><span className="font-semibold">Khóa học:</span> {user.stats?.enrollmentsCount ?? 0}</p>
-            <p><span className="font-semibold">Trạng thái:</span> {user.isActive === false ? "Đã khóa" : "Hoạt động"}</p>
+            <p><span className="font-semibold">Trực tuyến:</span>{" "}
+              {user.isActive === false
+                ? "— (tài khoản khóa)"
+                : user.isOnline
+                  ? "Đang online"
+                  : `Không online · ${user.lastSeenAt ? new Date(user.lastSeenAt).toLocaleString("vi-VN") : "chưa từng"}`}
+            </p>
+            <p><span className="font-semibold">Tài khoản:</span> {user.isActive === false ? "Đã khóa" : "Đang mở"}</p>
             <p><span className="font-semibold">Đăng ký:</span> {user.createdAt ? new Date(user.createdAt).toLocaleString("vi-VN") : "—"}</p>
           </div>
           <button
@@ -134,6 +142,16 @@ export function AdminUserDetail() {
           >
             {user.isActive === false ? "Mở khóa" : "Khóa tài khoản"}
           </button>
+        </motion.div>
+      )}
+      {user && (
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="rounded-2xl border border-slate-200 bg-white p-6"
+        >
+          <h3 className="mb-4 text-lg font-black text-slate-900">Hành trình người dùng</h3>
+          <UserJourneyPanel userId={user._id} />
         </motion.div>
       )}
     </AdminPanel>

@@ -89,14 +89,14 @@ ${generalNotes || "Không có ghi chú thêm."}
 
   if (loading) {
     return (
-      <MentorPageShell>
-        <div className="p-20 text-center font-normal text-slate-400">Đang tải thông tin...</div>
+      <MentorPageShell mentorRole>
+        <div className="p-20 text-center font-semibold text-slate-400">Đang tải thông tin...</div>
       </MentorPageShell>
     );
   }
 
   return (
-    <MentorPageShell bottomPad="pb-32">
+    <MentorPageShell bottomPad="pb-32" mentorRole>
       <div className="relative z-10 mx-auto max-w-4xl px-10 pb-10">
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
@@ -105,14 +105,14 @@ ${generalNotes || "Không có ghi chú thêm."}
         >
           {/* Header Section */}
           <div className="mb-16 flex items-center justify-end">
-            <span className="text-[10px] font-normal uppercase tracking-[0.3em] text-slate-400">Session Feedback</span>
+            <span className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Session Feedback</span>
           </div>
 
           <div className="text-center space-y-4 mb-20">
-            <h1 className="text-2xl font-black leading-tight tracking-tight text-slate-900 sm:text-3xl">
+            <h1 className="font-headline text-2xl font-black leading-tight tracking-tight text-slate-900 sm:text-3xl">
               Đánh giá <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-violet-600">chuyên sâu</span>
             </h1>
-            <p className="text-slate-500 font-normal text-lg">Ghi nhận tiến trình và định hướng cho học viên</p>
+            <p className="text-lg font-semibold text-slate-500">Ghi nhận tiến trình và định hướng cho học viên</p>
           </div>
 
           <div className="space-y-12">

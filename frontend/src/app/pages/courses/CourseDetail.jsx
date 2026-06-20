@@ -6,6 +6,7 @@ import { enrollmentApi } from "../../api/enrollmentApi.js";
 import { getUser } from "../../utils/auth/auth.js";
 import { toastApiError, toastApiSuccess } from "../../utils/shared/apiToast.js";
 import { requireLoginNavigate } from "../../utils/auth/authGate.js";
+import { trackAction } from "../../utils/analytics/analyticsApi.js";
 import { MentorPageShell } from "../../components/mentor/MentorPageShell";
 import { normalizeCourseStats } from "../../utils/course/courseStats.js";
 import { enrollmentAccessGranted } from "../../utils/course/enrollmentAccess.js";
@@ -158,6 +159,7 @@ export function CourseDetail() {
     try {
     const res = await enrollmentApi.enroll(id);
     if (res.success) {
+      trackAction("course_enroll", `/courses/${id}`, { courseId: id, paid: false });
       setEnrollmentRow(res.enrollment || enrollmentRow);
         toastApiSuccess("Đăng ký khóa học thành công!");
     } else {

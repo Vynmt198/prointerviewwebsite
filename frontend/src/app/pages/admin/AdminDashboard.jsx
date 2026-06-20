@@ -114,13 +114,13 @@ export function AdminDashboard() {
   return (
     <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
       <div className="glass-card px-8 py-8">
-        <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.22em] text-[#8037f4]">
+        <p className="mb-2 text-[10px] font-black uppercase tracking-[0.22em] text-[#8037f4]">
           ProInterview Command Center
         </p>
         <h1 className="font-headline text-5xl font-black tracking-tighter text-slate-900 sm:text-6xl">
           Xin chào, <span className="text-violet-700">Admin!</span>
         </h1>
-        <p className="mt-3 text-sm font-medium text-slate-600">
+        <p className="mt-3 text-sm font-semibold text-slate-600">
           Trung tâm điều hành toàn bộ hệ thống ProInterview.
         </p>
       </div>
@@ -149,7 +149,7 @@ export function AdminDashboard() {
       <div className="glass-card space-y-6 p-5 sm:p-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500">Doanh thu theo thời gian</p>
+            <p className="text-[11px] font-black uppercase tracking-[0.18em] text-slate-500">Doanh thu theo thời gian</p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
             {!isAllTime && (
@@ -235,7 +235,7 @@ export function AdminDashboard() {
               {label}{" "}
               <ArrowRight size={14} className="opacity-0 transition-all group-hover:opacity-100" />
             </h2>
-            <p className="mt-2 text-[11px] font-medium leading-relaxed text-slate-500">{desc}</p>
+            <p className="mt-2 text-[11px] font-semibold leading-relaxed text-slate-500">{desc}</p>
           </Link>
         ))}
       </div>

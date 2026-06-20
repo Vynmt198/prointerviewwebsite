@@ -1,0 +1,81 @@
+/**
+ * Typography admin — Lexend headline stack, chữ đậm hơn customer/mentor mặc định.
+ * Bọc bởi `.admin-shell` trong AdminLayout.
+ */
+
+.admin-shell {
+  font-family: var(--font-headline), "Plus Jakarta Sans", system-ui, sans-serif;
+  font-weight: 500;
+  letter-spacing: -0.012em;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.admin-shell .font-headline {
+  font-family: var(--font-headline), "Plus Jakarta Sans", system-ui, sans-serif;
+}
+
+.admin-shell [data-admin-content] {
+  font-weight: 500;
+}
+
+.admin-shell [data-admin-content] h1,
+.admin-shell [data-admin-content] h2,
+.admin-shell [data-admin-content] h3,
+.admin-shell [data-admin-content] h4 {
+  font-family: var(--font-headline), "Plus Jakarta Sans", system-ui, sans-serif;
+  letter-spacing: -0.022em;
+}
+
+/* Bảng & ô dữ liệu */
+.admin-shell [data-admin-content] table tbody td {
+  font-weight: 600;
+  font-size: 0.875rem;
+  line-height: 1.45;
+}
+
+.admin-shell [data-admin-content] table thead th {
+  font-weight: 900;
+}
+
+/* Form trong admin */
+.admin-shell [data-admin-content] input:not([type="checkbox"]):not([type="radio"]),
+.admin-shell [data-admin-content] textarea {
+  font-weight: 600;
+}
+
+/* Nâng một bậc các utility Tailwind phổ biến trong admin */
+.admin-shell [data-admin-content] .font-normal {
+  font-weight: 500;
+}
+
+.admin-shell [data-admin-content] .font-medium {
+  font-weight: 600;
+}
+
+.admin-shell [data-admin-content] .font-semibold {
+  font-weight: 700;
+}
+
+.admin-shell [data-admin-content] .font-bold {
+  font-weight: 800;
+}
+
+.admin-shell [data-admin-content] .font-extrabold {
+  font-weight: 900;
+}
+
+.admin-shell [data-admin-content] .font-black {
+  font-weight: 900;
+}
+
+/* Sidebar — nhãn nhóm menu */
+.admin-shell [data-sidebar="group-label"] {
+  font-weight: 900;
+}
+
+/* Thẻ stat / glass-card — mô tả phụ trực tiếp */
+.admin-shell [data-admin-content] .glass-card > p.text-sm,
+.admin-shell [data-admin-content] .glass-card > p.text-xs {
+  font-weight: 600;
+}

@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { getUser, getDisplayName } from "../../utils/auth/auth.js";
 import { MentorPageShell } from "../../components/mentor/MentorPageShell";
+import { MentorMoneyText } from "../../utils/shared/moneyDisplay.jsx";
 import {
   MentorStatPanel,
   MentorStatFrame,
@@ -512,7 +513,6 @@ export function MentorDashboard() {
     availableBalance,
   };
 
-  const formatVndDisplay = formatVnd;
   const displayName = getDisplayName(user, "Mentor");
   const mentorAvatar = avatarSrc(user?.avatar) || "";
   const featuredReview = pickFeaturedTestimonial(mentorBookings);
@@ -622,9 +622,9 @@ export function MentorDashboard() {
             <MentorStatFrame
               index={3}
               accent="purple"
-              value={`${formatVndCompact(stats.totalEarned)}Đ`}
+              value={formatVndCompact(stats.totalEarned)}
               title="Tổng thu nhập"
-              subtitle={`Khả dụng để rút: ${formatVndShort(stats.availableBalance)}đ`}
+              subtitle={`Khả dụng để rút: ${formatVndShort(stats.availableBalance)}Đ`}
               cornerIcon={Landmark}
             />
           </MentorStatPanel>
@@ -793,11 +793,12 @@ export function MentorDashboard() {
               <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-violet-200/90">
                 Tổng thu nhập
               </p>
-              <p className="mentor-stat-num mentor-stat-num--hero mentor-stat-num--on-dark mt-3">
-                {formatVndDisplay(stats.totalEarned)}
+              <p className="mentor-stat-num mentor-stat-num--hero mentor-stat-num--on-dark mentor-stat-num--money mt-3">
+                <MentorMoneyText amount={stats.totalEarned} />
               </p>
               <p className="mt-2 text-xs text-violet-200/90">
-                Khả dụng để rút - {formatVndDisplay(stats.availableBalance)}
+                Khả dụng để rút -{" "}
+                <MentorMoneyText amount={stats.availableBalance} className="font-semibold" />
               </p>
               <motion.button
                 type="button"
