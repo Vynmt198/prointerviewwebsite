@@ -1,6 +1,7 @@
 import express from "express";
 import cors from "cors";
 import mongoose from "mongoose";
+import { getJaasPublicStatus } from "./services/jaasService.js";
 import dns from "node:dns";
 import helmet from "helmet";
 import hpp from "hpp";
@@ -173,6 +174,7 @@ export function createApp() {
       sepayWebhookConfigured: Boolean(
         String(process.env.SEPAY_WEBHOOK_API_KEY || process.env.SEPAY_API_KEY || "").trim(),
       ),
+      jaas: getJaasPublicStatus(),
       timestamp: new Date().toISOString(),
     });
   });

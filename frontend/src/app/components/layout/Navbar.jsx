@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router";
 import {
   Bell,
@@ -14,11 +14,7 @@ import {
   X,
 } from "lucide-react";
 import { TopNavShell } from "./TopNavShell";
-import {
-  fetchNotifications,
-  markAllNotificationsRead,
-  markNotificationAsRead,
-} from "../../api/notificationApi.js";
+import { useNavbarNotifications } from "../../hooks/useNavbarNotifications.js";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -123,9 +119,19 @@ function CustomerNavbar() {
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
-  const [notifications, setNotifications] = useState([]);
 
   const { loggedIn, user } = useAuthSession();
+  const {
+    notifications,
+    unreadCount,
+    loadNotifications,
+    handleMarkAllRead,
+    handleMarkOneRead,
+  } = useNavbarNotifications(loggedIn);
+
+  useEffect(() => {
+    if (notifOpen && loggedIn) loadNotifications();
+  }, [notifOpen, loggedIn, loadNotifications]);
   const displayName = getDisplayName(user);
   const initials = getInitials(displayName);
   const loginHref = buildLoginPath(`${location.pathname}${location.search}`);
@@ -136,37 +142,9 @@ function CustomerNavbar() {
     setMobileOpen(false);
   }, [location.pathname]);
 
-  React.useEffect(() => {
-    if (!loggedIn) {
-      setNotifications([]);
-      return;
-    }
-    fetchNotifications().then((res) => {
-      if (res.success) setNotifications(res.notifications);
-    });
-    const interval = setInterval(() => {
-      fetchNotifications().then((res) => {
-        if (res.success) setNotifications(res.notifications);
-      });
-    }, 60000);
-    return () => clearInterval(interval);
-  }, [loggedIn]);
-
-  const handleMarkAllRead = () => {
-    markAllNotificationsRead().then((res) => {
-      if (res.success) {
-        setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
-      }
-    });
-  };
-
   const handleRead = (notif) => {
     const id = notif._id;
-    markNotificationAsRead(id).then((res) => {
-      if (res.success) {
-        setNotifications((prev) => prev.map((n) => (n._id === id ? { ...n, isRead: true } : n)));
-      }
-    });
+    handleMarkOneRead(id);
     setNotifOpen(false);
 
     const actionUrl = notif.metadata?.actionUrl || notif.actionUrl;
@@ -211,8 +189,6 @@ function CustomerNavbar() {
     await logout();
     navigate("/");
   };
-
-  const unreadCount = notifications.filter((n) => !n.isRead).length;
 
   return (
     <>
@@ -463,9 +439,20 @@ function MentorNavbar() {
   const location = useLocation();
   const [notifOpen, setNotifOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [notifications, setNotifications] = useState([]);
 
   const { user } = useAuthSession();
+  const {
+    notifications,
+    unreadCount,
+    loadNotifications,
+    handleMarkAllRead,
+    handleMarkOneRead,
+  } = useNavbarNotifications(Boolean(user));
+
+  useEffect(() => {
+    if (notifOpen && user) loadNotifications();
+  }, [notifOpen, user, loadNotifications]);
+
   const displayName = getDisplayName(user);
   const initials = getInitials(displayName);
 
@@ -473,33 +460,8 @@ function MentorNavbar() {
     setMobileOpen(false);
   }, [location.pathname]);
 
-  React.useEffect(() => {
-    fetchNotifications().then((res) => {
-      if (res.success) setNotifications(res.notifications);
-    });
-    const interval = setInterval(() => {
-      fetchNotifications().then((res) => {
-        if (res.success) setNotifications(res.notifications);
-      });
-    }, 60000);
-    return () => clearInterval(interval);
-  }, []);
-
-  const handleMarkAllRead = () => {
-    markAllNotificationsRead().then((res) => {
-      if (res.success) {
-        setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
-      }
-    });
-  };
-
   const handleRead = (notif) => {
-    const id = notif._id;
-    markNotificationAsRead(id).then((res) => {
-      if (res.success) {
-        setNotifications((prev) => prev.map((n) => (n._id === id ? { ...n, isRead: true } : n)));
-      }
-    });
+    handleMarkOneRead(notif._id);
     setNotifOpen(false);
 
     const actionUrl = notif.metadata?.actionUrl || notif.actionUrl;
@@ -523,8 +485,6 @@ function MentorNavbar() {
     await logout();
     navigate("/");
   };
-
-  const unreadCount = notifications.filter((n) => !n.isRead).length;
 
   return (
     <>

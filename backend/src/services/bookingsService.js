@@ -23,6 +23,7 @@ import {
 import { newPaymentExpiresAt } from "../utils/transferPaymentExpiry.js";
 import { expireBookingTransferIfNeeded } from "./transferPaymentExpiryService.js";
 import { resolveBookingPlatformFeeRate } from "./mentorCommissionService.js";
+import { buildJaasMeetingLaunch } from "./jaasService.js";
 
 /**
  * Chính sách hủy (User) — đồng bộ `frontend/src/app/constants/bookingPolicy.js`:
@@ -1676,7 +1677,23 @@ export async function startBookingMeeting(userId, rawId, { asMentor = false } = 
       populate: { path: "userId", select: "email" },
     },
   ]);
-  return { ok: true, booking: toPublicBooking(booking), started };
+
+  const actor = await User.findById(userId).select("name email avatar role").lean();
+  let meeting = { provider: "jitsi_public" };
+  try {
+    meeting =
+      buildJaasMeetingLaunch({
+        bookingId: booking._id,
+        user: actor
+          ? { id: actor._id, name: actor.name, email: actor.email, avatar: actor.avatar }
+          : null,
+        asMentor,
+      }) || meeting;
+  } catch (err) {
+    console.error("[jaas] Không ký được JWT phòng họp:", err?.message || err);
+  }
+
+  return { ok: true, booking: toPublicBooking(booking), started, meeting };
 }
 
 /** Mentor chụp webcam check-in trước khi vào phòng họp. */

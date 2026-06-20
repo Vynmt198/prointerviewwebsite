@@ -10,6 +10,8 @@
   "scripts": {
     "dev": "nodemon --config nodemon.json src/server.js",
     "start": "node src/server.js",
+    "verify:jaas": "node src/scripts/verifyJaas.js",
+    "encode:jaas-key": "node src/scripts/encodeJaasPrivateKey.js",
     "seed": "node src/scripts/seedUsers.js",
     "seed:users": "node src/scripts/seedUsers.js",
     "seed:invite-users": "node src/scripts/seedInviteUsers.js",

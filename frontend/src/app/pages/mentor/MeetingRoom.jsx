@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useParams, useNavigate } from "react-router";
 import {
   VideoOff,
@@ -30,6 +30,7 @@ import {
   isBookingInLiveWindow,
   isBookingPastScheduledEnd,
 } from "../../utils/shared/meetingLinks.js";
+import { mountJaasMeeting } from "../../utils/shared/jaasMeeting.js";
 import { BrandLogo } from "../../components/brand/BrandLogo.jsx";
 import { toastApiError, toastApiSuccess } from "../../utils/shared/apiToast.js";
 import { sessionTypeLabel } from "../../utils/booking/sessionTypeLabels.js";
@@ -47,6 +48,7 @@ export function MeetingRoom() {
   const [error, setError] = useState("");
   const [elapsedTime, setElapsedTime] = useState(0);
   const [jitsiUrl, setJitsiUrl] = useState("");
+  const [meetingLaunch, setMeetingLaunch] = useState(null);
   const [earlyNotice, setEarlyNotice] = useState("");
   const [showEndSessionPanel, setShowEndSessionPanel] = useState(false);
   const [completingSession, setCompletingSession] = useState(false);
@@ -55,6 +57,8 @@ export function MeetingRoom() {
   const [bookingMeta, setBookingMeta] = useState({ role: "", field: "" });
   const [bookingSchedule, setBookingSchedule] = useState(null);
   const [checkInContext, setCheckInContext] = useState(null);
+  const jitsiContainerRef = useRef(null);
+  const jitsiApiRef = useRef(null);
 
   const liveCapture = useMeetingLiveCapture(sessionId, {
     enabled: phase === "live" && isMentorUser,
@@ -101,7 +105,15 @@ export function MeetingRoom() {
         role: sessionTypeLabel(b.sessionType, ""),
         field: "",
       });
-      setJitsiUrl(buildProInterviewMeetUrl(sessionId, u?.name || u?.email || "User"));
+
+      const launch = startRes.meeting;
+      if (launch?.provider === "jaas" && launch.jwt) {
+        setMeetingLaunch(launch);
+        setJitsiUrl("");
+      } else {
+        setMeetingLaunch(null);
+        setJitsiUrl(buildProInterviewMeetUrl(sessionId, u?.name || u?.email || "User"));
+      }
       setPhase("live");
     },
     [sessionId],
@@ -177,6 +189,39 @@ export function MeetingRoom() {
     const timer = setInterval(() => setElapsedTime((prev) => prev + 1), 1000);
     return () => clearInterval(timer);
   }, [phase]);
+
+  useEffect(() => {
+    if (phase !== "live" || meetingLaunch?.provider !== "jaas" || !jitsiContainerRef.current) {
+      return undefined;
+    }
+
+    let active = true;
+    const u = getUser();
+
+    mountJaasMeeting(jitsiContainerRef.current, meetingLaunch, {
+      displayName: u?.name || u?.email || "User",
+    })
+      .then((api) => {
+        if (!active) {
+          api.dispose();
+          return;
+        }
+        jitsiApiRef.current = api;
+      })
+      .catch((err) => {
+        if (!active) return;
+        const msg = err?.message || "Không thể tải phòng JaaS.";
+        setError(msg);
+        setPhase("error");
+        toastApiError(msg);
+      });
+
+    return () => {
+      active = false;
+      jitsiApiRef.current?.dispose();
+      jitsiApiRef.current = null;
+    };
+  }, [phase, meetingLaunch]);
 
   const handleLeaveRoom = () => {
     navigate(user?.role === "mentor" ? "/mentor/dashboard" : "/");
@@ -472,7 +517,9 @@ export function MeetingRoom() {
             showEndSessionPanel ? "opacity-0 pointer-events-none" : "opacity-100"
           }`}
         >
-          {jitsiUrl ? (
+          {meetingLaunch?.provider === "jaas" ? (
+            <div ref={jitsiContainerRef} className="absolute inset-0 h-full w-full" />
+          ) : jitsiUrl ? (
             <iframe
               allow="camera; microphone; display-capture; autoplay; clipboard-write"
               src={jitsiUrl}

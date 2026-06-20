@@ -203,6 +203,7 @@ export function toPublicUser(doc) {
       (typeof googleId === "string" && googleId.trim()) ||
         (typeof googleSub === "string" && googleSub.trim())
     ),
+    isEmailVerified: Boolean(plain.isEmailVerified),
     notificationPrefs: publicNotificationPrefsForRole(
       plain.role,
       plain.settings?.notificationPrefs,

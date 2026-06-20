@@ -75,7 +75,7 @@ File trong repo: `API_INDEX.md`. Cập nhật khi thêm route, đổi FE hoặc 
 ## Phần A — Backend Express (đã có trong repo)
 
 **Entrypoint:** `backend/src/server.js`  
-`app.use("/api/auth", authRouter)` · `app.use("/api/mentors", mentorsRouter)`
+Routers mount: `/api/auth`, `/api/mentors`, `/api/bookings`, `/api/plans`, `/api/payments`, `/api/users`, `/api/courses`, `/api/reviews`, `/api/reports`, `/api/mentor`, `/api/notifications`, `/api/admin`, `/api/enrollments`, `/api/cv`, `/api/interviews`, `/api/upload`, `/api/ai`, `/api/achievements`, `/api/analytics`, `/api/mock`.
 
 ### A.1. `GET /`
 
@@ -125,6 +125,7 @@ File trong repo: `API_INDEX.md`. Cập nhật khi thêm route, đổi FE hoặc 
 | POST | `/api/auth/resend-verification` | — | Gửi lại email xác thực |
 | POST | `/api/auth/forgot-password` | — | Yêu cầu reset mật khẩu |
 | POST | `/api/auth/reset-password` | — | Đặt mật khẩu mới (`token` + `password`) |
+| POST | `/api/auth/presence` | Bearer | Heartbeat online — cập nhật `User.lastSeenAt` → `{ success, lastSeenAt }` |
 
 #### Chi tiết từng endpoint
 
@@ -164,6 +165,8 @@ File trong repo: `API_INDEX.md`. Cập nhật khi thêm route, đổi FE hoặc 
 | `hourlyRate`, `bio` | |
 | `plan`, `planExpiresAt` | |
 | `hasGoogleLogin` | `true` nếu có `googleId` / `googleSub` (không rỗng) |
+| `isEmailVerified` | Trạng thái xác minh email (tài khoản email/password) |
+| `notificationPrefs` | Tuỳ chọn thông báo theo role |
 
 **FE:** `frontend/src/app/utils/auth.js`, `Settings.jsx`, …
 
@@ -277,6 +280,7 @@ File trong repo: `API_INDEX.md`. Cập nhật khi thêm route, đổi FE hoặc 
 | POST | `/api/upload/jd` | Bearer | JD (PDF) |
 | POST | `/api/upload/course-thumbnail` | Bearer + Mentor | Ảnh bìa khóa |
 | POST | `/api/upload/course-video` | Bearer + Mentor | Video bài học |
+| POST | `/api/upload/achievement-image` | Bearer + Admin | Ảnh tin tức / hoạt động (CMS achievements) |
 
 ### A.10. Module Admin — `/api/admin`
 
@@ -285,13 +289,14 @@ File trong repo: `API_INDEX.md`. Cập nhật khi thêm route, đổi FE hoặc 
 | Method | Path | Mô tả |
 |:-------|:-----|:------|
 | GET | `/api/admin/stats` | Thống kê tổng quan: users, mentors, bookings, `plans`, `enrollmentsPaid`, `courses`, `reportsOpen`, `bookingsByStatus`, `recentBookings` |
-| GET | `/api/admin/users` | Danh sách user |
-| GET | `/api/admin/users/:id` | Chi tiết user + `stats.bookingsCount`, `stats.enrollmentsCount` |
+| GET | `/api/admin/users` | Danh sách user — mỗi item có `isOnline`, `lastSeenAt` |
+| GET | `/api/admin/users/:id` | Chi tiết user + `stats.bookingsCount`, `stats.enrollmentsCount`, `isOnline`, `lastSeenAt` |
 | PATCH | `/api/admin/users/:id/status` | Khóa / mở — body `{ isActive: boolean }` |
-| GET | `/api/admin/mentors` | Danh sách mentor |
-| GET | `/api/admin/mentors/:id` | Chi tiết mentor + `stats.sessionsCount` |
+| GET | `/api/admin/mentors` | Danh sách mentor — `isOnline`, `lastSeenAt` (từ `userId`) |
+| GET | `/api/admin/mentors/:id` | Chi tiết mentor + `stats.sessionsCount`, `isOnline`, `lastSeenAt` |
 | PATCH | `/api/admin/mentors/:id/status` | Bật / tắt mentor |
-| PATCH | `/api/admin/mentors/:id/reject` | Từ chối đơn đăng ký mentor |
+| PATCH | `/api/admin/mentors/:id/reject` | Từ chối đơn đăng ký mentor — body `{ reason? }` |
+| PATCH | `/api/admin/mentors/:id/commission` | Cập nhật hoa hồng mentor |
 | GET | `/api/admin/bookings` | Tất cả booking |
 | GET | `/api/admin/bookings/:id` | Chi tiết booking (populate user/mentor) |
 | GET | `/api/admin/reports` | Danh sách báo cáo (`?status`, `?targetType`, `?page`, `?limit`) → `counts`, `pagination` |
@@ -319,13 +324,18 @@ File trong repo: `API_INDEX.md`. Cập nhật khi thêm route, đổi FE hoặc 
 | PATCH | `/api/admin/payments/:id/confirm-subscription-transfer` | Xác nhận CK gói |
 | POST | `/api/admin/payments/normalize-transfer-refs` | Chuẩn hóa mã tham chiếu CK |
 | GET | `/api/admin/finance/courses` | Tổng hợp doanh thu khóa |
+| GET | `/api/admin/finance/platform-summary` | Tài chính nền tảng — query `?month=YYYY-MM` (tuỳ chọn) |
 | GET | `/api/admin/payouts` | Yêu cầu rút tiền mentor |
 | PATCH | `/api/admin/payouts/:id/approve` | Duyệt payout |
 | PATCH | `/api/admin/payouts/:id/mark-paid` | Đánh dấu đã chi |
 | PATCH | `/api/admin/payouts/:id/reject` | Từ chối payout |
 | GET | `/api/admin/interview-metrics` | Metric phỏng vấn AI |
+| GET | `/api/admin/analytics/user-behavior` | Hành vi nền tảng — query `?days=` (1–90, mặc định 7) → `{ behavior }` |
+| GET | `/api/admin/analytics/users/:id/journey` | Hành trình user — query `?days=`, `?limit=` → `{ journey }` |
 
-**FE:** `adminApi.js` — list pages ✅; detail routes (`/admin/users/:id`, `/admin/finance`, …) một phần placeholder.
+**Online presence:** `isOnline` = `lastSeenAt` trong cửa sổ **3 phút** (`backend/src/utils/userPresence.js`). Heartbeat FE: `POST /api/auth/presence` + `authJwt` tự touch mỗi request.
+
+**FE:** `adminApi.js` — list + detail + finance + analytics ✅; `UserJourneyPanel` trên `/admin/users/:id`; `AdminAnalytics.jsx`.
 
 ---
 
@@ -354,8 +364,72 @@ File trong repo: `API_INDEX.md`. Cập nhật khi thêm route, đổi FE hoặc 
 
 **File:** `backend/src/routes/bookings.js`, `payments.js` — ngoài contract Phase 1 trong `ROADMAP.md`:
 
-- Booking CK: `PATCH .../submit-transfer`, refund, no-show, rebook-credit, mentor meeting routes.
-- Payment: `POST /api/payments/subscription/transfer-pending`, `PATCH .../submit-transfer`, VNPay return/IPN.
+| Method | Path | Auth | Ghi chú |
+|:-------|:-----|:-----|:--------|
+| PATCH | `/api/bookings/:id/submit-transfer` | Bearer | Gửi mã CK booking |
+| PATCH | `/api/bookings/:id/start` | Bearer | Học viên bắt đầu buổi |
+| PATCH | `/api/bookings/mentor/:id/start` | Bearer + Mentor | Mentor bắt đầu buổi |
+| PATCH | `/api/bookings/mentor/:id/check-in` | Bearer + Mentor | Check-in webcam — body `{ imageUrl }` |
+| PATCH | `/api/bookings/mentor/:id/session-capture` | Bearer + Mentor | Lưu ảnh/chụp phiên |
+| GET | `/api/bookings/mentor/:id` | Bearer + Mentor | Chi tiết booking phía mentor |
+| GET | `/api/bookings/mentor/:id/booked-slots` | — / Mentor | Slot đã đặt |
+| PATCH | `/api/bookings/mentor/:id/reschedule` | Bearer + Mentor | Dời lịch (mentor) |
+| PATCH | `/api/bookings/mentor/:id/cancel` | Bearer + Mentor | Hủy (mentor) |
+| PATCH | `/api/bookings/:id/refund-destination` | Bearer | Cập nhật tài khoản hoàn tiền |
+| PATCH | `/api/bookings/:id/mentor-cancel-resolution` | Bearer | Xử lý hủy từ mentor |
+| POST | `/api/bookings/:id/report-no-show` | Bearer | Báo no-show |
+| GET | `/api/bookings/:id/rebook-credit` | Bearer | Credit đặt lại |
+| POST | `/api/bookings/:id/mentor-knowledge` | Bearer + Mentor | Ghi chú kiến thức sau buổi |
+
+**Payments:** `POST /api/payments/subscription/transfer-pending`, `PATCH .../submit-transfer`, VNPay return/IPN, webhook SePay.
+
+**FE check-in:** `MentorMeetingCheckIn.jsx` → `uploadApi` + `submitMentorMeetingCheckIn` · Admin: `/admin/bookings/check-ins`.
+
+---
+
+### A.13. Module Analytics — `/api/analytics`
+
+**File:** `backend/src/routes/analytics.js` · **Model:** `UserEvent` · **Service:** `analyticsService.js`
+
+| Method | Path | Auth | Mô tả |
+|:-------|:-----|:-----|:------|
+| POST | `/api/analytics/events` | Bearer | Ghi sự kiện hành vi user |
+
+**Body:** `{ events: [{ type, route, action?, durationMs?, metadata?, clientSessionId? }] }` — tối đa **30** sự kiện/request.
+
+| `type` | Bắt buộc thêm | Ghi chú |
+|:-------|:--------------|:--------|
+| `page_view` | `route` | Thời gian trên trang qua `durationMs` |
+| `action` | `route`, `action` | VD: `cv_analyze_start`, `interview_complete`, `checkout_start` |
+
+**Response:** `{ success: true, inserted: number }`
+
+**Admin read** (mount dưới `/api/admin`, xem A.10):
+
+| Method | Path | Response key |
+|:-------|:-----|:-------------|
+| GET | `/api/admin/analytics/user-behavior` | `behavior` — funnel, top routes, recent actions |
+| GET | `/api/admin/analytics/users/:id/journey` | `journey` — timeline, `topRoutes`, `lastStop`, `lastAction` |
+
+**FE:** `usePageAnalytics.js`, `analyticsApi.js`, `trackAction`, `AdminAnalytics.jsx`, `UserJourneyPanel.jsx`.
+
+---
+
+### A.14. Module Achievements — `/api/achievements`
+
+**File:** `backend/src/routes/achievements.js` · **Model:** `Achievement`
+
+| Method | Path | Auth | Mô tả |
+|:-------|:-----|:-----|:------|
+| GET | `/api/achievements` | — | Tin tức & hoạt động đã publish; query `?all=true` + Bearer admin → gồm bản nháp |
+| GET | `/api/achievements/:id` | — | Chi tiết bài viết |
+| POST | `/api/achievements` | Bearer + Admin | Tạo — body: `title`, `content`, `category?`, `imageUrl?`, `images?`, `isPublished?`, `date?` |
+| PUT | `/api/achievements/:id` | Bearer + Admin | Cập nhật |
+| DELETE | `/api/achievements/:id` | Bearer + Admin | Xóa |
+
+**`category`:** `Tin tức` \| `Hoạt động` \| `Sự kiện`
+
+**FE:** `/achievements`, `/achievements/:id` (`Achievements.jsx`, `AchievementDetail.jsx`) · Admin CMS: `/admin/achievements` · Upload ảnh: `POST /api/upload/achievement-image`.
 
 ---
 
@@ -391,7 +465,7 @@ File trong repo: `API_INDEX.md`. Cập nhật khi thêm route, đổi FE hoặc 
 
 ## Phần C — Roadmap API (tham chiếu)
 
-Danh sách phẳng method/path (C.1–C.13) để tra cứu nhanh. **Đã có route Express hay chưa:** xem cột **Trạng thái** trong [`ROADMAP.md`](./ROADMAP.md) (Phase 1–4). Entrypoint: `backend/src/server.js`.
+Danh sách phẳng method/path (C.1–C.17) để tra cứu nhanh. **Đã có route Express hay chưa:** xem cột **Trạng thái** trong [`ROADMAP.md`](./ROADMAP.md) (Phase 1–5). Entrypoint: `backend/src/server.js`.
 
 **Đồng bộ với [`ROADMAP.md`](./ROADMAP.md):** cùng method + path; `ROADMAP.md` gom theo **phase** (1–4) + mục *Bổ sung auth*. Khi đổi contract, sửa **cả hai** file.
 
@@ -409,6 +483,7 @@ Danh sách phẳng method/path (C.1–C.13) để tra cứu nhanh. **Đã có ro
 | POST | `/api/auth/resend-verification` | Gửi lại email xác thực |
 | POST | `/api/auth/forgot-password` | Quên mật khẩu |
 | POST | `/api/auth/reset-password` | Reset mật khẩu |
+| POST | `/api/auth/presence` | Heartbeat online (`lastSeenAt`) |
 
 ### C.2. Mentors mở rộng
 
@@ -450,6 +525,20 @@ Danh sách phẳng method/path (C.1–C.13) để tra cứu nhanh. **Đã có ro
 | PATCH | `/api/bookings/:id/confirm` |
 | PATCH | `/api/bookings/:id/complete` |
 | PATCH | `/api/bookings/:id/notes` |
+| PATCH | `/api/bookings/:id/submit-transfer` |
+| PATCH | `/api/bookings/:id/start` |
+| PATCH | `/api/bookings/mentor/:id/start` |
+| PATCH | `/api/bookings/mentor/:id/check-in` |
+| PATCH | `/api/bookings/mentor/:id/session-capture` |
+| GET | `/api/bookings/mentor/:id` |
+| GET | `/api/bookings/mentor/:id/booked-slots` |
+| PATCH | `/api/bookings/mentor/:id/reschedule` |
+| PATCH | `/api/bookings/mentor/:id/cancel` |
+| PATCH | `/api/bookings/:id/refund-destination` |
+| PATCH | `/api/bookings/:id/mentor-cancel-resolution` |
+| POST | `/api/bookings/:id/report-no-show` |
+| GET | `/api/bookings/:id/rebook-credit` |
+| POST | `/api/bookings/:id/mentor-knowledge` |
 
 *Hủy booking:* chỉ dùng **`DELETE /api/bookings/:id`** (cập nhật trạng thái, vd. `cancelled` — không dùng `PATCH .../cancel` để tránh trùng contract).
 
@@ -573,6 +662,7 @@ Danh sách phẳng method/path (C.1–C.13) để tra cứu nhanh. **Đã có ro
 | POST | `/api/upload/jd` |
 | POST | `/api/upload/course-thumbnail` |
 | POST | `/api/upload/course-video` |
+| POST | `/api/upload/achievement-image` |
 
 ### C.14. Admin — `/api/admin`
 
@@ -591,8 +681,31 @@ Danh sách phẳng method/path (C.1–C.13) để tra cứu nhanh. **Đã có ro
 | PATCH | `/api/admin/bookings/:id/confirm-transfer-payment` |
 | PATCH | `/api/admin/bookings/:id/confirm-refund` |
 | PATCH | `/api/admin/mentors/:id/reject` |
+| PATCH | `/api/admin/mentors/:id/commission` |
 | GET | `/api/admin/payouts` |
+| GET | `/api/admin/finance/platform-summary` |
+| GET | `/api/admin/finance/courses` |
+| GET | `/api/admin/enrollments/pending-transfer` |
+| GET | `/api/admin/enrollments/course-payments` |
+| PATCH | `/api/admin/enrollments/:id/confirm-transfer-payment` |
+| GET | `/api/admin/payments/subscription-pending` |
+| PATCH | `/api/admin/payments/:id/confirm-subscription-transfer` |
+| POST | `/api/admin/payments/normalize-transfer-refs` |
+| GET | `/api/admin/courses/pending` |
+| GET | `/api/admin/courses/published` |
+| PATCH | `/api/admin/courses/:id/approve` |
+| PATCH | `/api/admin/courses/:id/reject` |
+| PATCH | `/api/admin/courses/:id/archive` |
+| GET | `/api/admin/content/stats` |
+| GET | `/api/admin/content/interview-sessions` |
+| GET | `/api/admin/content/course-media` |
+| GET | `/api/admin/system/overview` |
+| GET | `/api/admin/system/transaction-support` |
+| GET | `/api/admin/reviews` |
+| PATCH | `/api/admin/reviews/:id/visibility` |
 | GET | `/api/admin/interview-metrics` |
+| GET | `/api/admin/analytics/user-behavior` |
+| GET | `/api/admin/analytics/users/:id/journey` |
 
 ### C.15. AI providers — `/api/ai`
 
@@ -608,6 +721,24 @@ Danh sách phẳng method/path (C.1–C.13) để tra cứu nhanh. **Đã có ro
 | POST | `/api/ai/interview/pregenerate` |
 | POST | `/api/ai/interview/pregen/start` |
 | GET | `/api/ai/interview/pregen/:jobId` |
+
+### C.16. Analytics — `/api/analytics` & admin read
+
+| Method | Path | Auth |
+|:-------|:-----|:-----|
+| POST | `/api/analytics/events` | Bearer |
+| GET | `/api/admin/analytics/user-behavior` | Admin — `?days=` |
+| GET | `/api/admin/analytics/users/:id/journey` | Admin — `?days=`, `?limit=` |
+
+### C.17. Achievements — `/api/achievements`
+
+| Method | Path | Auth |
+|:-------|:-----|:-----|
+| GET | `/api/achievements` | Public — `?all=true` (admin) |
+| GET | `/api/achievements/:id` | Public |
+| POST | `/api/achievements` | Admin |
+| PUT | `/api/achievements/:id` | Admin |
+| DELETE | `/api/achievements/:id` | Admin |
 
 ---
 
@@ -700,6 +831,15 @@ Chi tiết endpoint theo phase và màn FE: **[`ROADMAP.md`](./ROADMAP.md)** (Ph
 
 Chi tiết collection và field: [`backend/DATABASE.md`](./backend/DATABASE.md).
 
+**Bổ sung (ngoài 17 schema gốc):**
+
+| Collection | Model | Ghi chú |
+|:-----------|:------|:--------|
+| `user_events` | `UserEvent.js` | Page view / action tracking — analytics |
+| `achievements` | `Achievement.js` | Tin tức & hoạt động công khai + CMS admin |
+
+Field presence trên `User`: `lastSeenAt` (heartbeat `/api/auth/presence` + `authJwt`).
+
 ---
 
 ## Bản đồ file trong repo
@@ -707,11 +847,21 @@ Chi tiết collection và field: [`backend/DATABASE.md`](./backend/DATABASE.md).
 | Nội dung | Đường dẫn |
 |:---------|:----------|
 | `apiUrl`, proxy dev | `frontend/src/app/utils/api.js` |
-| Auth client | `frontend/src/app/utils/auth.js` |
+| Auth client | `frontend/src/app/utils/auth/auth.js` |
+| Admin client | `frontend/src/app/api/adminApi.js` |
+| Analytics client | `frontend/src/app/utils/analytics/analyticsApi.js`, `hooks/usePageAnalytics.js` |
+| Presence heartbeat | `frontend/src/app/hooks/useUserPresence.js` |
+| Achievements client | `frontend/src/app/api/achievementsApi.js` |
+| Notifications client | `frontend/src/app/api/notificationApi.js` |
+| Upload client | `frontend/src/app/api/uploadApi.js` |
 | Mentor client | `frontend/src/app/utils/mentorApi.js` |
-| CV (Express + Python) | `frontend/src/app/utils/cvApi.js`, `pages/cv/CVAnalysis.jsx` |
+| CV (Express + Python) | `frontend/src/app/utils/cv/cvApi.js`, `pages/cv/CVAnalysis.jsx` |
 | D-ID stream | `frontend/src/app/hooks/useDIDStream.js` |
 | AI proxy routes | `backend/src/routes/aiProviders.js` |
+| Analytics routes | `backend/src/routes/analytics.js` |
+| Achievements routes | `backend/src/routes/achievements.js` |
+| User presence util | `backend/src/utils/userPresence.js` |
+| Analytics service | `backend/src/services/analyticsService.js` |
 | Entry server | `backend/src/server.js` |
 | Auth controller | `backend/src/controllers/authController.js` |
 | Mentors controller | `backend/src/controllers/mentorsController.js` |
@@ -724,4 +874,4 @@ Chi tiết collection và field: [`backend/DATABASE.md`](./backend/DATABASE.md).
 
 ---
 
-*Tài liệu gồm: (1) API Express đang chạy, (2) Supabase & D-ID mà FE dùng, (3) roadmap endpoint.*
+*Tài liệu gồm: (1) API Express đang chạy (A.1–A.14), (2) Supabase & D-ID mà FE dùng, (3) roadmap endpoint Phần C (C.1–C.17). Cập nhật lần cuối: đồng bộ presence, analytics, achievements, admin analytics, booking check-in.*

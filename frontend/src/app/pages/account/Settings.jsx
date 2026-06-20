@@ -20,7 +20,7 @@ import {
   ImageIcon,
 } from "lucide-react";
 import { toastApiError, toastApiSuccess } from "../../utils/shared/apiToast.js";
-import { logout, getUser, getDisplayName, updateUser, refreshUserProfile } from "../../utils/auth/auth.js";
+import { logout, getUser, getDisplayName, updateUser, refreshUserProfile, resendVerification } from "../../utils/auth/auth.js";
 import { avatarSrc, DEFAULT_AVATAR } from "../../utils/shared/mediaUrl.js";
 import { LoginSessionsSection } from "../../components/account/LoginSessionsSection";
 import { AccountDangerZone } from "../../components/account/AccountDangerZone";
@@ -376,6 +376,7 @@ function SecurityTab({ profileFromServer, onProfileSynced }) {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [saving, setSaving] = useState(false);
+  const [resendingVerify, setResendingVerify] = useState(false);
   const [securityPrefs, setSecurityPrefs] = useState(DEFAULT_SECURITY_PREFS);
   /** Profile có `hasGoogleLogin` từ server (đồng bộ từ trang Settings + sau đổi MK) */
   const [sessionUser, setSessionUser] = useState(
@@ -387,6 +388,7 @@ function SecurityTab({ profileFromServer, onProfileSynced }) {
   }, [profileFromServer]);
 
   const hasGoogleLogin = Boolean(sessionUser?.hasGoogleLogin);
+  const needsEmailVerification = !hasGoogleLogin && !sessionUser?.isEmailVerified;
   /** Chỉ bắt buộc MK hiện tại khi server báo không có Google */
   const needsCurrentPassword = !hasGoogleLogin;
   const toggleSecurityPref = (id) => {
@@ -436,8 +438,52 @@ function SecurityTab({ profileFromServer, onProfileSynced }) {
     }
   };
 
+  const handleResendVerification = async () => {
+    const email = sessionUser?.email?.trim();
+    if (!email) {
+      toastApiError("Không tìm thấy email tài khoản.");
+      return;
+    }
+    setResendingVerify(true);
+    try {
+      const result = await resendVerification(email);
+      if (result?.success) {
+        toastApiSuccess(result.message || "Đã gửi email xác minh. Kiểm tra hộp thư của bạn.");
+      } else {
+        toastApiError(result?.error, "Không gửi được email xác minh.");
+      }
+    } catch {
+      toastApiError("Lỗi kết nối khi gửi email xác minh.");
+    } finally {
+      setResendingVerify(false);
+    }
+  };
+
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
+      {needsEmailVerification ? (
+        <SectionCard
+          title="Xác minh email"
+          subtitle="Tài khoản chưa xác minh email. Một số tính năng có thể bị giới hạn."
+          icon={UserCheck}
+        >
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-sm font-medium text-slate-600">
+              Email đăng ký:{" "}
+              <span className="font-bold text-slate-900">{sessionUser?.email}</span>
+            </p>
+            <button
+              type="button"
+              className="btn-primary shrink-0 px-5 py-2.5 text-sm"
+              disabled={resendingVerify}
+              onClick={handleResendVerification}
+            >
+              {resendingVerify ? "Đang gửi…" : "Gửi lại email xác minh"}
+            </button>
+          </div>
+        </SectionCard>
+      ) : null}
+
       <SectionCard title="Bảo mật đăng nhập" subtitle="Tùy chọn bảo vệ tài khoản khi đăng nhập." icon={ShieldCheck}>
         <div className="space-y-3">
           {securityPrefs.map((item) => {
