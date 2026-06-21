@@ -4,6 +4,7 @@
 @import './brand.css';
 @import './admin-typography.css';
 @import './mentor-typography.css';
+@import './customer-typography.css';
 
 @theme {
   /* Lime chủ đạo — dùng với nền #120B2E + chữ sáng */
@@ -59,9 +60,10 @@
   --radius-lg: 2rem;
   --radius-xl: 3rem;
 
-  --font-headline: "Lexend", "Plus Jakarta Sans";
-  --font-body: "Lexend", "Manrope";
-  --font-label: "Lexend", "Manrope";
+  --font-headline: "Lexend", "Plus Jakarta Sans", system-ui, sans-serif;
+  --font-body: "Lexend", "Plus Jakarta Sans", system-ui, sans-serif;
+  --font-label: "Lexend", "Plus Jakarta Sans", system-ui, sans-serif;
+  --font-sans: "Lexend", "Plus Jakarta Sans", system-ui, sans-serif;
 }
 
 /* Lime hệ — dùng trong style inline / shadow */
@@ -88,7 +90,9 @@ html {
 }
 
 body {
-  font-family: 'Lexend', 'Plus Jakarta Sans', 'Inter', system-ui, sans-serif;
+  font-family: var(--font-body);
+  font-weight: 500;
+  font-variation-settings: "wght" 520;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
@@ -97,6 +101,11 @@ body {
   color: var(--foreground);
   overflow-x: hidden;
   position: relative;
+}
+
+.font-headline {
+  font-family: var(--font-headline);
+  letter-spacing: -0.028em;
 }
 
 ::selection {
@@ -206,7 +215,7 @@ textarea {
   background: #8037f4;
   color: white;
   border-radius: var(--radius-lg);
-  font-weight: 600;
+  font-weight: 700;
   transition: all 0.3s ease;
   position: relative;
   overflow: hidden;
@@ -301,12 +310,15 @@ textarea {
 
 /* ── Global heading weight ─────────────────────────── */
 h1, h2, h3, h4, h5, h6 {
-  font-weight: 750;
+  font-family: var(--font-headline);
+  font-weight: 800;
+  font-variation-settings: "wght" 800;
   letter-spacing: -0.03em;
 }
 
 p {
-  font-weight: 400;
+  font-weight: 500;
+  font-variation-settings: "wght" 520;
   line-height: 1.7;
 }
 

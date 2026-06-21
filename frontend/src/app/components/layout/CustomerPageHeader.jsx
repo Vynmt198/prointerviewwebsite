@@ -1,9 +1,9 @@
 import React from "react";
 
 /** Phần đầu tiêu đề H1: tím brand */
-export const CUSTOMER_TITLE_ACCENT = "font-extrabold text-[#6d2fd6]";
+export const CUSTOMER_TITLE_ACCENT = "font-black text-[#6d2fd6]";
 /** Phần sau tiêu đề H1: đen */
-export const CUSTOMER_TITLE_REST = "font-extrabold text-[#1a1b23]";
+export const CUSTOMER_TITLE_REST = "font-black text-[#1a1b23]";
 
 /** Tiêu đề 2 tông: tím → đen (đồng bộ Mentors, Courses, Pricing, …) */
 export function CustomerPageSplitTitle({ accent, rest }) {
@@ -25,7 +25,7 @@ export function CustomerPageBadge({ children, pulse = true, className = "" }) {
         className={`h-1.5 w-1.5 shrink-0 rounded-full bg-[#6d2fd6] ${pulse ? "animate-pulse" : ""}`}
         aria-hidden
       />
-      <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#5b598c] sm:text-[11px]">
+      <span className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-[#5b598c] sm:text-[11px]">
         {children}
       </span>
     </div>
@@ -40,7 +40,7 @@ export function CustomerPageHeader({
   badge,
   title,
   subtitle,
-  subtitleClassName = "mt-2 max-w-2xl text-sm font-medium leading-relaxed text-violet-600 sm:text-[0.9375rem]",
+  subtitleClassName = "mt-2 max-w-2xl text-sm font-semibold leading-relaxed text-violet-600 sm:text-[0.9375rem]",
   titleClassName,
   centered = false,
   badgePulse = true,
@@ -61,7 +61,7 @@ export function CustomerPageHeader({
           {actions ? <div className="flex shrink-0 items-center gap-2">{actions}</div> : null}
         </div>
       )}
-      <h1 className={titleClassName ?? "font-headline text-[clamp(1.75rem,3.5vw,2.5rem)] font-extrabold leading-[1.12] tracking-tight text-[#1a1b23]"}>
+      <h1 className={titleClassName ?? "font-headline text-[clamp(1.75rem,3.5vw,2.5rem)] font-black leading-[1.12] tracking-tight text-[#1a1b23]"}>
         {title}
       </h1>
       {subtitle ? (

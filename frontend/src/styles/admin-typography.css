@@ -6,6 +6,7 @@
 .admin-shell {
   font-family: var(--font-headline), "Plus Jakarta Sans", system-ui, sans-serif;
   font-weight: 500;
+  font-variation-settings: "wght" 530;
   letter-spacing: -0.012em;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;

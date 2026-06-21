@@ -41,7 +41,7 @@ export function AppLayout() {
   }, [isHome]);
 
   const shellClass =
-    `app-user-shell relative min-h-svh w-full text-slate-900 antialiased selection:bg-violet-100 selection:text-violet-900 ${isLegalDoc
+    `pi-typography-shell app-user-shell relative min-h-svh w-full text-slate-900 antialiased selection:bg-violet-100 selection:text-violet-900 ${isLegalDoc
       ? "overflow-x-hidden bg-slate-50"
       : isAbout
         ? "bg-[#F9F6F0]"
@@ -57,7 +57,7 @@ export function AppLayout() {
   if (isMentor) {
     return (
       <div
-        className="relative min-h-svh w-full bg-[#f8f9fc] text-slate-900 antialiased selection:bg-violet-100 selection:text-violet-900"
+        className="pi-typography-shell relative min-h-svh w-full bg-[#f8f9fc] text-slate-900 antialiased selection:bg-violet-100 selection:text-violet-900"
         style={{ fontFamily: "'Lexend', 'Plus Jakarta Sans', system-ui, sans-serif" }}
       >
         <Navbar variant="mentor" />
