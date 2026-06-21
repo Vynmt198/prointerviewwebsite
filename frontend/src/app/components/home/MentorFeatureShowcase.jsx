@@ -63,7 +63,7 @@ function MentorCard({ mentor }) {
   return (
     <Link
       to={href}
-      className="group flex h-[300px] w-[260px] shrink-0 flex-col justify-between gap-2 rounded-2xl border-2 border-violet-400 bg-violet-600 p-5 shadow-[0_4px_24px_rgba(124,58,237,0.45)] transition-all duration-200 hover:-translate-y-2 hover:border-violet-300 hover:bg-violet-500 hover:shadow-[0_12px_48px_rgba(124,58,237,0.75)] sm:w-[280px] lg:w-[300px]"
+      className="group flex h-[300px] w-[260px] shrink-0 flex-col justify-between gap-2 rounded-2xl border-2 border-violet-400 bg-violet-600 p-5 shadow-[0_4px_24px_rgba(124,58,237,0.45)] transition-all duration-200 hover:-translate-y-2 hover:border-violet-300 hover:bg-violet-500 sm:w-[280px] lg:w-[300px]"
     >
       {/* Avatar + tên */}
       <div className="flex flex-col items-center gap-2 text-center">
@@ -76,7 +76,7 @@ function MentorCard({ mentor }) {
             <p className="text-[11px] text-violet-200 line-clamp-1">{mentor.title}</p>
           )}
           {mentor.company && (
-            <p className="text-[11px] font-semibold text-lime-300 line-clamp-1">{mentor.company}</p>
+            <p className="text-[11px] font-bold text-lime-300 line-clamp-1">{mentor.company}</p>
           )}
         </div>
       </div>
@@ -84,7 +84,7 @@ function MentorCard({ mentor }) {
       {/* Rating + price */}
       <div className="flex items-center justify-between border-t border-white/20 pt-2">
         <span className="flex items-center gap-1">
-          <Star className={`h-3.5 w-3.5 ${rating ? "fill-amber-400 text-amber-400" : "fill-violet-400 text-violet-400"}`} />
+          <Star className={`h-3.5 w-3.5 ${rating ? "fill-lime-400 text-lime-400" : "fill-violet-400 text-violet-400"}`} />
           <span className="text-[12px] font-bold text-white">{rating ?? "—"}</span>
           <span className="text-[11px] text-violet-300">({reviewCount})</span>
         </span>
@@ -97,11 +97,11 @@ function MentorCard({ mentor }) {
 
       {/* Tags */}
       {tags.length > 0 && (
-        <div className="flex flex-wrap gap-1.5">
+        <div className="flex items-center gap-1.5 overflow-hidden">
           {tags.map((tag) => (
             <span
               key={tag}
-              className="rounded-full border border-white/30 bg-white/15 px-2 py-0.5 text-[10px] font-medium text-white"
+              className="min-w-0 max-w-full truncate rounded-full border border-white/30 bg-white/15 px-2 py-0.5 text-[10px] font-medium text-white"
             >
               {tag}
             </span>
@@ -157,7 +157,7 @@ export function MentorFeatureShowcase() {
             <span className="block lg:whitespace-nowrap">
               {MENTOR_SHOWCASE_COPY.titleLine1}
             </span>
-            <span className="block text-lime-600 lg:whitespace-nowrap">
+            <span className="block text-[#8037f4] lg:whitespace-nowrap">
               {MENTOR_SHOWCASE_COPY.titleLine2}
             </span>
           </h2>
@@ -184,7 +184,7 @@ export function MentorFeatureShowcase() {
           {/* Scrollable list */}
           <div
             ref={scrollRef}
-            className="no-scrollbar flex items-start gap-4 overflow-x-auto scroll-smooth pb-3 pl-1 pr-1 [scroll-snap-type:x_mandatory]"
+            className="no-scrollbar flex items-start gap-4 overflow-x-auto scroll-smooth pt-6 pb-8 pl-4 pr-4 -mx-4 [scroll-snap-type:x_mandatory]"
           >
             {displayMentors.map((m) => (
               <div key={m.publicId ?? m.id} className="[scroll-snap-align:start]">
