@@ -46,15 +46,9 @@ import {
   computeCvRemainingFromQuota,
 } from "../../utils/cv/cvMappers.js";
 import { uploadCvJdFiles } from "../../utils/cv/cvFileUpload.js";
-import { projectId, publicAnonKey } from "/utils/supabase/info.js";
 
 // ─── API base ─────────────────────────────────────────────────────────────────
-const EDGE_FN = "make-server-64a0c849";
 const USE_EXPRESS_CV = isExpressBackendConfigured();
-const SUPABASE_CONFIGURED = Boolean(String(import.meta.env.VITE_SUPABASE_PROJECT_ID ?? "").trim());
-const API_BASE = SUPABASE_CONFIGURED
-  ? `https://${projectId}.supabase.co/functions/v1/${EDGE_FN}`
-  : "";
 
 function getSessionId() {
   const key = "prointerview_session_id";
@@ -63,24 +57,8 @@ function getSessionId() {
   return id;
 }
 
-// This server does NOT list "apikey" in Access-Control-Allow-Headers,
-// so sending it as a header causes CORS preflight to fail with
-// "Failed to fetch". Only Authorization is safe to include.
-function apiHeaders(userToken) {
-  const t = userToken ?? "";
-  const hasToken = !!(t && t !== "null" && t !== "undefined" && t.length > 20);
-  if (!hasToken) return {};
-  return { "Authorization": `Bearer ${t}` };
-}
-
-function supabaseApiUrl(path) {
-  if (!SUPABASE_CONFIGURED) return "";
-  return `${API_BASE}/${path}`;
-}
-
 /**
- * JWT từ backend (/api/auth). Edge function Supabase có thể không chấp nhận token này —
- * khi đó CV vẫn chạy ở chế độ demo (không gửi Bearer).
+ * Force-refresh JWT trước khi gửi request để tránh token stale.
  */
 async function getForceRefreshedToken() {
   try {
@@ -109,16 +87,21 @@ function buildFd(
 
 /** FastAPI trả `detail` (string hoặc mảng validation); Express dùng `error`. */
 function formatCvAnalyzerHttpError(status, body) {
+  if (status === 429) return "Hệ thống đang bận, vui lòng thử lại sau 1–2 phút.";
+  if (status === 503 || status === 502) return "Dịch vụ phân tích tạm thời không khả dụng, thử lại sau ít phút.";
+  if (status === 504) return "Phân tích mất quá nhiều thời gian, thử lại sau.";
+
   const e = body ?? {};
-  if (typeof e.detail === "string" && e.detail.trim()) return e.detail.trim();
-  if (Array.isArray(e.detail)) {
-    const parts = e.detail
-      .map((d) => (d && typeof d === "object" && d.msg ? String(d.msg) : typeof d === "string" ? d : ""))
-      .filter(Boolean);
-    if (parts.length) return parts.join(" · ");
-  }
-  if (typeof e.error === "string" && e.error.trim()) return e.error.trim();
-  return `CV Analyzer lỗi ${status}`;
+  const raw =
+    (typeof e.detail === "string" && e.detail.trim()) ||
+    (Array.isArray(e.detail) && e.detail.map((d) => d?.msg ?? d).filter(Boolean).join(" · ")) ||
+    (typeof e.error === "string" && e.error.trim()) ||
+    "";
+
+  const isTechnical = /\.env|LLM_?|API.?KEY|localhost|127\.|uvicorn|cv_jd_matching|ollama|googleapis|generativelanguage|Cloud LLM/i.test(raw);
+  if (isTechnical || !raw) return "Phân tích thất bại, vui lòng thử lại sau.";
+
+  return raw;
 }
 
 // ─── Constants ────────────────────────────────────────────────────────────────

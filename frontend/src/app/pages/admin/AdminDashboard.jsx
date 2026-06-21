@@ -117,7 +117,7 @@ export function AdminDashboard() {
         <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.22em] text-[#8037f4]">
           ProInterview Command Center
         </p>
-        <h1 className="font-headline text-5xl font-black tracking-tighter text-slate-900 sm:text-6xl">
+        <h1 className="font-headline text-[clamp(1.75rem,3.5vw,2.5rem)] font-extrabold leading-[1.12] tracking-tight text-slate-900">
           Xin chào, <span className="text-violet-700">Admin!</span>
         </h1>
         <p className="mt-3 text-sm font-medium text-slate-600">

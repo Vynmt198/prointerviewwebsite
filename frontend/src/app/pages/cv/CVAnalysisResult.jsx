@@ -131,6 +131,7 @@ export function CVAnalysisResult() {
           lockResultForFreePlan={lockResultForFreePlan}
           analysisPath={analysisPath}
           historyPath={historyPath}
+          analysisId={savedFileInfo?.analysisId ?? paramId ?? null}
         />
       )}
     </CvJdAnalysisPage>

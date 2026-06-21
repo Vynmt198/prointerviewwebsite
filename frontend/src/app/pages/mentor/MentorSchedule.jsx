@@ -462,7 +462,7 @@ export function MentorSchedule() {
         {/* Header — compact */}
         <div className="mb-4 flex shrink-0 flex-col gap-3 overflow-visible pt-1 sm:flex-row sm:items-center sm:justify-between">
           <div className="min-w-0 overflow-visible">
-            <h1 className="font-headline overflow-visible pb-0.5 text-2xl font-black leading-[1.2] tracking-tight text-slate-900 sm:text-3xl">
+            <h1 className="font-headline text-[clamp(1.75rem,3.5vw,2.5rem)] font-extrabold leading-[1.12] tracking-tight text-slate-900">
                <span>LỊCH TRÌNH</span>{" "}
                <span className="text-violet-700">HỆ THỐNG</span>
             </h1>

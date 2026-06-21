@@ -1,19 +1,15 @@
-import React from "react";
-import { Users, Star, Search, CircleCheck } from "lucide-react";
+import React, { useEffect, useRef, useState } from "react";
+import { Link } from "react-router";
+import { Users, Star, ChevronLeft, ChevronRight, ArrowRight } from "lucide-react";
 import { HOME_SECTION_INNER } from "../layout/customerShellLayout";
-import { SparkleGlyph } from "../decor/SparkleGlyph.jsx";
-import { HOME_DEMO_MENTORS } from "../../data/homeLandingDemo";
 import { MENTOR_SHOWCASE_COPY } from "../../constants/brandVoice";
 import {
   HOME_SECTION_TITLE_CLAMP,
   homeSectionClasses as ty,
 } from "../../constants/homeTypography";
+import { fetchMentors } from "../../api/mentorApi";
+import { HOME_DEMO_MENTORS } from "../../data/homeLandingDemo";
 
-const HOME_MENTORS = HOME_DEMO_MENTORS;
-const FEATURED = HOME_MENTORS[0];
-const FEATURED_ALT = HOME_MENTORS[1];
-
-/** Linh vật mentor, 3 pose riêng, chia nhau các ô trên Home */
 export const HOME_MENTOR_MASCOTS = {
   cv: "/mascot-mentor-avatar-cv.png?v=2",
   headset: "/mascot-mentor-avatar-headset.png?v=2",
@@ -22,400 +18,188 @@ export const HOME_MENTOR_MASCOTS = {
   fallback: "/mascot-courses-ready.png?v=8",
 };
 
-const MENTOR_CARD_MASCOTS = {
-  primary: HOME_MENTOR_MASCOTS.headset,
-  secondary: HOME_MENTOR_MASCOTS.celebrate,
-  fallback: HOME_MENTOR_MASCOTS.fallback,
-};
-
-/** Mỗi ô một con, composite gốc (không đổi khi chỉ swap avatar thẻ) */
-const PANEL_MASCOTS = [
-  {
-    src: "/mascot-mentor-find.png?v=4",
-    fallback: HOME_MENTOR_MASCOTS.fallback,
-    className:
-      "mentor-sticker-glow max-h-[10.25rem] w-auto max-w-[88%] translate-x-[6rem] translate-y-[0.6rem] object-contain object-bottom sm:max-h-[11.25rem]",
-  },
-  {
-    src: "/mascot-mentor-booking.png?v=4",
-    fallback: HOME_MENTOR_MASCOTS.fallback,
-    className:
-      "mentor-sticker-glow max-h-[12.95rem] w-auto max-w-[92%] -translate-y-[7.8rem] object-contain object-bottom sm:max-h-[13.95rem] sm:-translate-y-[8.3rem]",
-  },
-  {
-    src: "/mascot-mentor-feedback.png?v=5",
-    fallback: HOME_MENTOR_MASCOTS.fallback,
-    className:
-      "mentor-sticker-glow max-h-[10.3rem] w-auto max-w-[98%] -translate-x-[3.3rem] translate-y-[1.55rem] object-contain object-bottom sm:max-h-[12.55rem] sm:-translate-x-[3.8rem] sm:translate-y-[1.95rem]",
-  },
-];
-
-const UPZI_STEPS = MENTOR_SHOWCASE_COPY.steps.map((step, i) => ({
-  step: String(i + 1).padStart(2, "0"),
-  ...step,
-}));
-
-function PanelMascot({ panelIndex }) {
-  const asset = PANEL_MASCOTS[panelIndex];
-  if (!asset) return null;
-
-  const slotClass =
-    panelIndex === 0
-      ? "h-[52%] min-h-[10.5rem] max-h-none items-end justify-center overflow-visible"
-      : "h-[40%] max-h-[7.75rem] items-end justify-center overflow-hidden";
-  const slotZ = "z-[3]";
-  return (
-    <div
-      className={`pointer-events-none absolute inset-x-0 bottom-0 ${slotZ} flex ${slotClass}`}
-      aria-hidden
-    >
-      <img
-        src={asset.src}
-        alt=""
-        className={asset.className}
-        onError={(e) => {
-          if (e.currentTarget.src !== asset.fallback) {
-            e.currentTarget.src = asset.fallback;
-          }
-        }}
-      />
-    </div>
-  );
+function formatPrice(price) {
+  if (!price) return null;
+  if (price >= 1000) return `${Math.round(price / 1000)}k/h`;
+  return `${price}đ/h`;
 }
 
-function MentorMascotAvatar({ src, className = "h-8 w-8" }) {
+function MentorAvatar({ src, name, size = "lg" }) {
+  const [failed, setFailed] = useState(false);
+  const initials = (name || "?")
+    .split(" ")
+    .slice(-2)
+    .map((w) => w[0])
+    .join("")
+    .toUpperCase();
+  const dim = size === "xl" ? "h-20 w-20" : size === "lg" ? "h-16 w-16" : "h-10 w-10";
+  const textSize = size === "xl" ? "text-xl" : size === "lg" ? "text-lg" : "text-sm";
+
   return (
     <span
-      className={`${className} flex shrink-0 items-center justify-center overflow-hidden rounded-lg border border-violet-200/80 bg-violet-50/90`}
-      aria-hidden
+      className={`${dim} flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-white/20 ring-2 ring-white/60`}
     >
-      <img
-        src={src}
-        alt=""
-        className="h-[88%] w-[88%] object-contain object-bottom"
-        onError={(e) => {
-          if (e.currentTarget.src !== MENTOR_CARD_MASCOTS.fallback) {
-            e.currentTarget.src = MENTOR_CARD_MASCOTS.fallback;
-          }
-        }}
-      />
+      {src && !failed ? (
+        <img
+          src={src}
+          alt={name}
+          className="h-full w-full object-cover"
+          onError={() => setFailed(true)}
+        />
+      ) : (
+        <span className={`${textSize} font-bold text-white`}>{initials}</span>
+      )}
     </span>
   );
 }
 
-function MentorMiniCard({ mentor, mascotSrc, className }) {
-  return (
-    <div className={className}>
-      <div className="flex items-center gap-2">
-        <MentorMascotAvatar src={mascotSrc} />
-        <div className="min-w-0 flex-1">
-          <p className="truncate text-[10px] font-bold text-slate-900">{mentor.name}</p>
-          <p className="text-[8px] text-slate-500">{mentor.company}</p>
-        </div>
-        <span className="flex shrink-0 items-center gap-0.5 text-[9px] font-bold text-[#630ed4]">
-          <Star className="h-3 w-3 fill-[#a66ff8] text-[#630ed4]" />
-          {mentor.rating}
-        </span>
-      </div>
-    </div>
-  );
-}
-
-/** Ô 1, thẻ xếp chồng (kiểu Upzi trái) */
-function FindMentorVisual() {
-  if (!FEATURED) return null;
-  return (
-    <div className="relative z-[1] flex h-full flex-col px-3 pb-2 pt-8 sm:px-3.5 sm:pt-9">
-      <div className="relative mx-auto w-[88%] flex-1 -translate-y-[1.15rem] pb-[5.75rem] sm:pb-[6.5rem] origin-top scale-105">
-        <div className="absolute left-0 right-4 top-0 z-[1] rotate-[-2deg] rounded-2xl bg-white p-2 shadow-lg">
-          <div className="flex items-center gap-1.5 rounded-lg bg-violet-50 px-2 py-1">
-            <Search className="h-3 w-3 text-[#630ed4]" />
-            <span className="text-[8px] font-semibold text-slate-600">IT · 4.5+ · dưới 400k</span>
-          </div>
-        </div>
-        <div className="absolute left-2 right-1 top-8 z-[2]">
-          <MentorMiniCard
-            mentor={FEATURED}
-            mascotSrc={MENTOR_CARD_MASCOTS.primary}
-            className="rotate-[1deg] rounded-2xl border border-violet-100 bg-white p-2 shadow-xl"
-          />
-        </div>
-        <div className="absolute right-0 top-[4.5rem] z-[10] rounded-xl bg-white px-2.5 py-1.5 shadow-md ring-1 ring-violet-100">
-          <p className="whitespace-nowrap text-[8px] font-bold leading-none text-[#630ed4]">
-            {FEATURED.reviews} review
-          </p>
-        </div>
-        {FEATURED_ALT ? (
-          <>
-            <div className="absolute left-4 right-0 top-[5.2rem] z-[3]">
-              <MentorMiniCard
-                mentor={FEATURED_ALT}
-                mascotSrc={MENTOR_CARD_MASCOTS.secondary}
-                className="rotate-[-1.5deg] rounded-2xl border border-violet-100/80 bg-white p-2 shadow-lg"
-              />
-            </div>
-            <div className="absolute right-0 top-[7.75rem] z-[10] rounded-xl bg-white px-2.5 py-1.5 shadow-md ring-1 ring-violet-100">
-              <p className="whitespace-nowrap text-[8px] font-bold leading-none text-[#630ed4]">
-                {FEATURED_ALT.reviews} review
-              </p>
-            </div>
-          </>
-        ) : null}
-      </div>
-      <PanelMascot panelIndex={0} />
-    </div>
-  );
-}
-
-/** Ô 2, mock đặt lịch thành công + gấu giữa */
-function BookingVisual() {
-  if (!FEATURED) return null;
-  return (
-    <div className="relative z-[1] flex h-full flex-col items-center px-3 pb-8 pt-4 sm:px-4 sm:pb-10">
-      <SparkleGlyph className="absolute right-3 top-8 z-[2] h-8 w-8 opacity-80" />
-      <SparkleGlyph className="absolute left-2 top-14 z-[2] h-7 w-7 opacity-60" />
-      <div className="relative mt-auto flex min-h-[11rem] w-[86%] flex-col justify-end translate-y-[2rem] sm:min-h-[12rem]">
-        <div
-          className="pointer-events-none absolute inset-x-0 bottom-0 z-[1] flex items-end justify-center"
-          aria-hidden
-        >
-          <img
-            src={PANEL_MASCOTS[1].src}
-            alt=""
-            className={PANEL_MASCOTS[1].className}
-            onError={(e) => {
-              const fb = PANEL_MASCOTS[1].fallback;
-              if (e.currentTarget.src !== fb) e.currentTarget.src = fb;
-            }}
-          />
-        </div>
-        <div className="relative z-[5] mb-1 w-full rounded-md bg-white p-2.5 shadow-xl sm:p-3 origin-bottom sm:mb-2">
-        <div className="flex flex-col items-center text-center">
-          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-violet-100">
-            <CircleCheck className="h-5 w-5 text-[#630ed4]" strokeWidth={2.5} />
-          </div>
-          <p className="mt-1.5 text-[10px] font-extrabold leading-snug text-[#630ed4]">
-            Đặt lịch thành công!
-          </p>
-          <span className="mt-1 rounded bg-violet-50 px-2.5 py-0.5 text-[7px] font-bold text-[#630ed4]">
-            Mã BK-2847
-          </span>
-        </div>
-
-        <div className="mt-2.5 space-y-1.5 rounded-md border border-violet-200 bg-violet-50/90 p-2">
-          <div className="flex items-center justify-between gap-2">
-            <span className="text-[7px] font-semibold text-slate-500">Thời gian</span>
-            <span className="text-[8px] font-bold text-slate-900">Thứ 5, 22/05 · 19:00</span>
-          </div>
-          <div className="flex items-center justify-between gap-2">
-            <span className="text-[7px] font-semibold text-slate-500">Mentor</span>
-            <span className="truncate text-[8px] font-bold text-slate-900">{FEATURED.name}</span>
-          </div>
-          <div className="flex items-center justify-between gap-2">
-            <span className="text-[7px] font-semibold text-slate-500">Buổi học</span>
-            <span className="text-[8px] font-bold text-slate-900">Mock online · 60 phút</span>
-          </div>
-          <div className="flex items-center justify-between gap-2 border-t border-violet-200/80 pt-1">
-            <span className="text-[7px] font-semibold text-slate-500">Trạng thái</span>
-            <span className="rounded bg-[#630ed4] px-2 py-0.5 text-[7px] font-bold text-white">
-              Đã đặt
-            </span>
-          </div>
-        </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-const AFTER_MOCK_POINTS = MENTOR_SHOWCASE_COPY.afterMockPoints;
-
-/** Ô 3, gấu đè lên khung trắng (z cao hơn card) */
-function FeedbackVisual() {
-  const mascot = PANEL_MASCOTS[2];
+function MentorCard({ mentor }) {
+  const href = mentor.publicId ? `/mentors/${mentor.publicId}` : "/mentors";
+  const price = formatPrice(mentor.price ?? mentor.pricePerHour);
+  const tags = (mentor.tags ?? mentor.specialties ?? []).slice(0, 2);
+  const rating = mentor.rating ? mentor.rating.toFixed(1) : null;
+  const reviewCount = mentor.reviews ?? mentor.reviewCount ?? 0;
 
   return (
-    <div className="relative z-[1] flex h-full flex-col px-2 pb-4 pt-6 sm:px-2.5 sm:pb-5 sm:pt-7">
-      <div className="relative flex h-full min-h-0 flex-1 translate-x-[0.4rem] flex-col overflow-visible">
-        <div className="relative z-[1] ml-auto flex h-full min-h-0 w-[74%] min-w-0 max-w-[12.25rem] flex-1 -translate-x-[0.4rem] flex-col pb-0.5 pr-0.5 sm:w-[70%] sm:max-w-[13.5rem] sm:-translate-x-[0.9rem] origin-right scale-105">
-          <p className="mb-1.5 shrink-0 text-[11px] font-bold leading-snug text-[#630ed4] sm:text-[12px]">
-            {MENTOR_SHOWCASE_COPY.afterMockLead}
-          </p>
-          <div className="flex min-h-0 flex-1 flex-col rounded-lg bg-white p-3 shadow-xl sm:p-3.5">
-            <ul className="flex flex-1 flex-col justify-center gap-2.5 py-0.5 sm:gap-3">
-              {AFTER_MOCK_POINTS.map((item) => (
-                <li key={item.title} className="flex items-start gap-2">
-                  <CircleCheck
-                    className="mt-0.5 h-4 w-4 shrink-0 text-[#630ed4] sm:h-[1.125rem] sm:w-[1.125rem]"
-                    strokeWidth={2.5}
-                  />
-                  <div className="min-w-0">
-                    <p className="text-[10px] font-bold leading-snug text-slate-900 sm:text-[11px]">
-                      {item.title}
-                    </p>
-                    <p className="text-[9px] font-medium leading-snug text-slate-600 sm:text-[10px]">
-                      {item.detail}
-                    </p>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>
-        <div
-          className="pointer-events-none absolute inset-x-0 bottom-0 z-[5] flex items-end justify-start overflow-visible pl-1 sm:pl-0.5"
-          aria-hidden
-        >
-          <img
-            src={mascot.src}
-            alt=""
-            className={mascot.className}
-            onError={(e) => {
-              if (e.currentTarget.src !== mascot.fallback) {
-                e.currentTarget.src = mascot.fallback;
-              }
-            }}
-          />
-        </div>
-      </div>
-    </div>
-  );
-}
-
-const VISUALS = [FindMentorVisual, BookingVisual, FeedbackVisual];
-
-function UpziStepCard({ step, index }) {
-  const Visual = VISUALS[index];
-
-  return (
-    <div
-      className="mentor-upzi-step flex min-w-0 flex-1 flex-col"
-      style={{ animationDelay: `${index * 90}ms` }}
+    <Link
+      to={href}
+      className="group flex h-[300px] w-[260px] shrink-0 flex-col justify-between gap-2 rounded-2xl border-2 border-violet-400 bg-violet-600 p-5 shadow-[0_4px_24px_rgba(124,58,237,0.45)] transition-all duration-200 hover:-translate-y-2 hover:border-violet-300 hover:bg-violet-500 hover:shadow-[0_12px_48px_rgba(124,58,237,0.75)] sm:w-[280px] lg:w-[300px]"
     >
-      <div
-        className={`mentor-upzi-panel relative w-full rounded-2xl shadow-[0_12px_32px_rgba(99,14,212,0.1)] sm:rounded-[1.35rem] ${
-          index === 0 || index === 1 || index === 2 ? "overflow-visible" : "overflow-hidden"
-        }`}
-      >
-        <Visual />
+      {/* Avatar + tên */}
+      <div className="flex flex-col items-center gap-2 text-center">
+        <MentorAvatar src={mentor.avatar} name={mentor.name} size="xl" />
+        <div>
+          <p className="text-[13px] font-bold leading-snug text-white line-clamp-1">
+            {mentor.name}
+          </p>
+          {mentor.title && (
+            <p className="text-[11px] text-violet-200 line-clamp-1">{mentor.title}</p>
+          )}
+          {mentor.company && (
+            <p className="text-[11px] font-semibold text-lime-300 line-clamp-1">{mentor.company}</p>
+          )}
+        </div>
       </div>
-      <h3 className={`mt-[0.825rem] text-center ${ty.stepCardTitle}`}>{step.title}</h3>
-      <p className={`mt-[0.45rem] text-center ${ty.stepCardBody}`}>{step.description}</p>
-    </div>
+
+      {/* Rating + price */}
+      <div className="flex items-center justify-between border-t border-white/20 pt-2">
+        <span className="flex items-center gap-1">
+          <Star className={`h-3.5 w-3.5 ${rating ? "fill-amber-400 text-amber-400" : "fill-violet-400 text-violet-400"}`} />
+          <span className="text-[12px] font-bold text-white">{rating ?? "—"}</span>
+          <span className="text-[11px] text-violet-300">({reviewCount})</span>
+        </span>
+        {price && (
+          <span className="rounded-full bg-lime-400 px-2 py-0.5 text-[11px] font-bold text-slate-900">
+            {price}
+          </span>
+        )}
+      </div>
+
+      {/* Tags */}
+      {tags.length > 0 && (
+        <div className="flex flex-wrap gap-1.5">
+          {tags.map((tag) => (
+            <span
+              key={tag}
+              className="rounded-full border border-white/30 bg-white/15 px-2 py-0.5 text-[10px] font-medium text-white"
+            >
+              {tag}
+            </span>
+          ))}
+        </div>
+      )}
+
+      {/* Hover CTA */}
+      <span className="flex items-center justify-center gap-1 rounded-lg bg-lime-400 py-1.5 text-[11px] font-bold text-slate-900 transition-all group-hover:bg-lime-300">
+        Đặt lịch <ArrowRight className="h-3 w-3" />
+      </span>
+    </Link>
   );
 }
 
-/** Showcase mentor, Upzi layout, nền tím nhạt, CTA lime. */
-export function MentorFeatureShowcase({ onCtaClick }) {
+export function MentorFeatureShowcase() {
+  const [mentors, setMentors] = useState([]);
+  const scrollRef = useRef(null);
+
+  useEffect(() => {
+    fetchMentors().then(({ success, mentors: list }) => {
+      if (!success || !list?.length) return;
+      const sorted = [...list].sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0));
+      setMentors(sorted.slice(0, 10));
+    });
+  }, []);
+
+  const displayMentors = mentors.length ? mentors : HOME_DEMO_MENTORS;
+
+  function scroll(dir) {
+    const el = scrollRef.current;
+    if (!el) return;
+    el.scrollBy({ left: dir * 280, behavior: "smooth" });
+  }
+
   return (
     <section
       id="find-mentor"
-      className="relative z-10 flex lg:h-screen lg:max-h-screen flex-col justify-center overflow-x-hidden overflow-y-visible px-0 py-4 sm:py-6 max-lg:py-8"
+      className="relative z-10 overflow-hidden px-0 py-14 sm:py-18 lg:py-24"
     >
-      <style>{`
-        .mentor-upzi-panel {
-          background: linear-gradient(165deg, #f0ebf8 0%, #ebe4f6 50%, #e6ddf3 100%);
-          border: 2px solid #8037f4;
-          height: 19.0rem;
-        }
-        @media (min-width: 640px) {
-          .mentor-upzi-panel {
-            height: 18.5rem;
-          }
-        }
-        @media (min-width: 1024px) {
-          .mentor-upzi-panel {
-            height: 20.5rem;
-          }
-        }
-        @keyframes mentor-upzi-rise {
-          0% {
-            opacity: 0;
-            transform: translateY(12px);
-          }
-          100% {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-        .mentor-upzi-step {
-          animation: mentor-upzi-rise 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
-        }
-        .mentor-sticker-glow {
-          filter: drop-shadow(0 14px 28px rgba(99, 14, 212, 0.22));
-        }
-        .mentor-showcase-cards-scale {
-          --mentor-scale: 1.05;
-          width: calc(100% / var(--mentor-scale));
-          max-width: calc(81.7rem / var(--mentor-scale));
-          margin-inline: auto;
-          transform: scale(var(--mentor-scale));
-          transform-origin: center center;
-        }
-        @media (min-width: 640px) {
-          .mentor-showcase-cards-scale {
-            --mentor-scale: 1.06;
-          }
-        }
-        @media (min-width: 1024px) {
-          .mentor-showcase-cards-scale {
-            --mentor-scale: 1.065;
-          }
-        }
-        /* Chỉ thụt tiêu đề, khớp mép trái ô 1 khi hàng card scale giữa */
-        .mentor-showcase-heading-align {
-          padding-left: calc(0.75rem - 0.6rem);
-        }
-        @media (min-width: 640px) {
-          .mentor-showcase-heading-align {
-            --mentor-scale: 1.06;
-            padding-left: calc((100% - (100% / var(--mentor-scale))) / 2 - 0.6rem);
-          }
-        }
-        @media (min-width: 1024px) {
-          .mentor-showcase-heading-align {
-            --mentor-scale: 1.065;
-          }
-        }
-        @media (prefers-reduced-motion: reduce) {
-          .mentor-upzi-step {
-            animation: none;
-          }
-        }
-      `}</style>
 
-      <div className={`home-mobile-gutter relative z-10 w-full overflow-visible py-2 ${HOME_SECTION_INNER} lg:!px-6 xl:!px-8 2xl:!px-12`}>
-        <div className="flex w-full flex-col gap-[1.2rem] sm:gap-[1.45rem]">
-          <article className="mentor-showcase-heading-align flex flex-col items-start gap-[0.7rem] sm:gap-[0.825rem]">
-            <span className={ty.badge}>
-              <Users className="h-3.5 w-3.5 shrink-0" aria-hidden />
-              {MENTOR_SHOWCASE_COPY.badge}
+      <div className={`relative z-10 w-full ${HOME_SECTION_INNER} lg:!px-6 xl:!px-8 2xl:!px-12`}>
+        {/* Heading */}
+        <div className="mb-10 flex flex-col items-start gap-3 sm:mb-12 sm:gap-4">
+          <span className={ty.badge}>
+            <Users className="h-3.5 w-3.5 shrink-0" aria-hidden />
+            {MENTOR_SHOWCASE_COPY.badge}
+          </span>
+          <h2
+            className={`${ty.title} max-w-full`}
+            style={{ fontSize: HOME_SECTION_TITLE_CLAMP }}
+          >
+            <span className="block lg:whitespace-nowrap">
+              {MENTOR_SHOWCASE_COPY.titleLine1}
             </span>
-            <h2
-              className={`${ty.title} max-w-full sm:max-w-none`}
-              style={{ fontSize: HOME_SECTION_TITLE_CLAMP }}
-            >
-              <span
-                className={`${ty.titleLineSecond} ${ty.titleLineDark} block lg:whitespace-nowrap`}
-              >
-                {MENTOR_SHOWCASE_COPY.titleLine1}
-              </span>
-              <span
-                className={`${ty.titleLineSecond} ${ty.titleLineAccent} block lg:whitespace-nowrap`}
-              >
-                {MENTOR_SHOWCASE_COPY.titleLine2}
-              </span>
-            </h2>
-          </article>
+            <span className="block text-lime-600 lg:whitespace-nowrap">
+              {MENTOR_SHOWCASE_COPY.titleLine2}
+            </span>
+          </h2>
+        </div>
 
-          <div className="mentor-showcase-cards-scale mt-[1.5rem] sm:mt-4 grid w-full grid-cols-1 gap-[1.2rem] px-3 sm:px-0 sm:grid-cols-3 sm:gap-[1.75rem]">
-            {UPZI_STEPS.map((step, idx) => (
-              <UpziStepCard key={step.title} step={step} index={idx} />
+        {/* Carousel */}
+        <div className="relative">
+          {/* Prev/Next arrows */}
+          <button
+            onClick={() => scroll(-1)}
+            aria-label="Cuộn trái"
+            className="absolute -left-4 top-1/2 z-10 hidden -translate-y-1/2 items-center justify-center rounded-full border border-violet-200 bg-white p-2 shadow-md transition hover:bg-violet-50 lg:flex"
+          >
+            <ChevronLeft className="h-5 w-5 text-violet-600" />
+          </button>
+          <button
+            onClick={() => scroll(1)}
+            aria-label="Cuộn phải"
+            className="absolute -right-4 top-1/2 z-10 hidden -translate-y-1/2 items-center justify-center rounded-full border border-violet-200 bg-white p-2 shadow-md transition hover:bg-violet-50 lg:flex"
+          >
+            <ChevronRight className="h-5 w-5 text-violet-600" />
+          </button>
+
+          {/* Scrollable list */}
+          <div
+            ref={scrollRef}
+            className="no-scrollbar flex items-start gap-4 overflow-x-auto scroll-smooth pb-3 pl-1 pr-1 [scroll-snap-type:x_mandatory]"
+          >
+            {displayMentors.map((m) => (
+              <div key={m.publicId ?? m.id} className="[scroll-snap-align:start]">
+                <MentorCard mentor={m} />
+              </div>
             ))}
           </div>
-
         </div>
+
       </div>
+
+      <style>{`
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+      `}</style>
     </section>
   );
 }

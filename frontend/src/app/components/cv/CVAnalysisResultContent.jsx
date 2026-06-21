@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import { useNavigate } from "react-router";
 import {
   FileText,
@@ -15,7 +15,10 @@ import {
   BarChart3,
   Lightbulb,
   RotateCcw as History,
+  ThumbsUp,
+  ThumbsDown,
 } from "lucide-react";
+import { submitCvFeedback } from "../../api/cvApi.js";
 import { CVDocumentPreview } from "./CVDocumentPreview";
 import { formatSuggestionDisplayReason } from "../../utils/cv/cvMappers.js";
 import {
@@ -50,8 +53,17 @@ export function CVAnalysisResultContent({
   lockResultForFreePlan = false,
   analysisPath,
   historyPath,
+  analysisId = null,
 }) {
   const navigate = useNavigate();
+  const [feedbackState, setFeedbackState] = useState(null); // null | "helpful" | "not_helpful"
+  const [feedbackSent, setFeedbackSent] = useState(false);
+
+  const handleFeedback = async (rating) => {
+    setFeedbackState(rating);
+    setFeedbackSent(true);
+    if (analysisId) await submitCvFeedback(analysisId, rating);
+  };
   const R = analysisResult;
   const derivedMode = routeMode === "field" ? "field" : routeMode === "jd" ? "jd" : "cv-only";
   const matchScore = R?.matchScore ?? 72;
@@ -546,6 +558,35 @@ export function CVAnalysisResultContent({
                   <Mic className="h-4 w-4 shrink-0" aria-hidden />
                   Phỏng vấn với AI
                 </button>
+                {/* Feedback widget */}
+                <div className="flex w-full flex-col items-center gap-2 rounded-2xl border border-violet-100 bg-violet-50/60 px-5 py-4">
+                  {feedbackSent ? (
+                    <p className="text-sm font-semibold text-violet-700">
+                      {feedbackState === "helpful" ? "Cảm ơn bạn! 🎉" : "Cảm ơn, chúng tôi sẽ cải thiện."}
+                    </p>
+                  ) : (
+                    <>
+                      <p className="text-xs font-semibold text-slate-500">Kết quả phân tích này có hữu ích không?</p>
+                      <div className="flex gap-3">
+                        <button
+                          type="button"
+                          onClick={() => handleFeedback("helpful")}
+                          className="flex items-center gap-1.5 rounded-xl border border-emerald-200 bg-white px-4 py-2 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-50"
+                        >
+                          <ThumbsUp className="h-4 w-4" /> Hữu ích
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleFeedback("not_helpful")}
+                          className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-500 transition hover:bg-slate-50"
+                        >
+                          <ThumbsDown className="h-4 w-4" /> Chưa tốt
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </div>
+
                 <button
                   type="button"
                   onClick={() => navigate("/mentors")}

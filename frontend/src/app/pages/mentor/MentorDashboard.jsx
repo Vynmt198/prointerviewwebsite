@@ -541,7 +541,7 @@ export function MentorDashboard() {
           className="mb-8 flex flex-col gap-8 pt-2 lg:flex-row lg:items-start lg:justify-between"
         >
           <div className="max-w-2xl flex-1">
-            <h1 className="font-headline text-[clamp(1.85rem,4.5vw,3rem)] font-black leading-tight tracking-tight text-slate-900">
+            <h1 className="font-headline text-[clamp(1.75rem,3.5vw,2.5rem)] font-extrabold leading-[1.12] tracking-tight text-slate-900">
               Xin chào,{" "}
               <span className="text-[#8037f4]">{displayName}</span>
             </h1>
