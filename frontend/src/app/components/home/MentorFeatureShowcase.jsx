@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Link } from "react-router";
-import { Users, Star, ChevronLeft, ChevronRight, ArrowRight } from "lucide-react";
+import { Users, Star, ChevronLeft, ChevronRight, ArrowRight, BadgeCheck, Sparkles } from "lucide-react";
+import { SparkleGlyph } from "../decor/SparkleGlyph.jsx";
 import { HOME_SECTION_INNER } from "../layout/customerShellLayout";
 import { MENTOR_SHOWCASE_COPY } from "../../constants/brandVoice";
 import {
@@ -54,23 +55,36 @@ function MentorAvatar({ src, name, size = "lg" }) {
 }
 
 function MentorCard({ mentor }) {
-  const href = mentor.publicId ? `/mentors/${mentor.publicId}` : "/mentors";
+  const mentorId = mentor.publicId || mentor._id || mentor.id;
+  const href = mentorId ? `/mentors/${mentorId}` : "/mentors";
   const price = formatPrice(mentor.price ?? mentor.pricePerHour);
   const tags = (mentor.tags ?? mentor.specialties ?? []).slice(0, 2);
   const rating = mentor.rating ? mentor.rating.toFixed(1) : null;
   const reviewCount = mentor.reviews ?? mentor.reviewCount ?? 0;
+  
+  // Logic: cập nhật all thông tin -> có tick xanh
+  const hasAllInfo = Boolean(mentor.name && mentor.title && mentor.company && mentor.avatar);
 
   return (
     <Link
       to={href}
-      className="group flex h-[300px] w-[260px] shrink-0 flex-col justify-between gap-2 rounded-2xl border-2 border-violet-400 bg-violet-600 p-5 shadow-[0_4px_24px_rgba(124,58,237,0.45)] transition-all duration-200 hover:-translate-y-2 hover:border-violet-300 hover:bg-violet-500 sm:w-[280px] lg:w-[300px]"
+      className="group relative flex h-[340px] w-[260px] shrink-0 flex-col justify-between gap-2 rounded-2xl border-2 border-violet-400 bg-violet-600 p-5 shadow-[0_4px_24px_rgba(124,58,237,0.45)] transition-all duration-200 hover:-translate-y-2 hover:border-violet-300 hover:bg-violet-500 sm:w-[280px] lg:w-[300px]"
     >
+      {/* Tag Mentor Đề xuất */}
+      <div className="absolute -right-2 -top-2 z-10 flex items-center gap-1 rounded-full bg-lime-400 px-3 py-1.5 text-[11px] font-bold tracking-wide text-slate-900 shadow-lg">
+        <SparkleGlyph className="h-4 w-4 shrink-0" tone="brand" />
+        ĐỀ XUẤT
+      </div>
+
       {/* Avatar + tên */}
       <div className="flex flex-col items-center gap-2 text-center">
         <MentorAvatar src={mentor.avatar} name={mentor.name} size="xl" />
         <div>
-          <p className="text-[13px] font-bold leading-snug text-white line-clamp-1">
+          <p className="flex items-center justify-center gap-1 text-[13px] font-bold leading-snug text-white line-clamp-1">
             {mentor.name}
+            {hasAllInfo && (
+              <BadgeCheck className="h-4 w-4 shrink-0 fill-amber-400 text-white" />
+            )}
           </p>
           {mentor.title && (
             <p className="text-[11px] text-violet-200 line-clamp-1">{mentor.title}</p>
@@ -143,9 +157,9 @@ export function MentorFeatureShowcase() {
       className="relative z-10 overflow-hidden px-0 py-14 sm:py-18 lg:py-24"
     >
 
-      <div className={`relative z-10 w-full ${HOME_SECTION_INNER} lg:!px-6 xl:!px-8 2xl:!px-12`}>
+      <div className={`relative z-10 w-full ${HOME_SECTION_INNER} !px-6 sm:!px-12 lg:!px-20`}>
         {/* Heading */}
-        <div className="mb-10 flex flex-col items-start gap-3 sm:mb-12 sm:gap-4">
+        <div className="mb-10 flex flex-col items-start gap-3 sm:mb-12 sm:gap-4 lg:-translate-x-4">
           <span className={ty.badge}>
             <Users className="h-3.5 w-3.5 shrink-0" aria-hidden />
             {MENTOR_SHOWCASE_COPY.badge}

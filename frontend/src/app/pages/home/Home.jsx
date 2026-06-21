@@ -296,11 +296,11 @@ export function Home() {
                     className={`max-w-full ${homeTy.title} sm:max-w-none max-lg:flex-row max-lg:flex-wrap`}
                     style={{ fontSize: HOME_SECTION_TITLE_CLAMP }}
                   >
-                    <span className="lg:block text-slate-900">Luyện phỏng vấn </span>
-                    <span className="lg:block text-slate-900">với AI sẵn sàng </span>
-                    <span className="lg:block text-[#630ed4]">cho cơ hội thật</span>
+                    <span className="lg:block text-slate-900 lg:whitespace-nowrap">Luyện phỏng vấn </span>
+                    <span className="lg:block text-slate-900 lg:whitespace-nowrap">với AI sẵn sàng </span>
+                    <span className="lg:block text-[#630ed4] lg:whitespace-nowrap">cho cơ hội thật</span>
                   </h2>
-                  <p className={`mt-2 max-w-[22rem] ${homeTy.body}`}>
+                  <p className={`mt-2 max-w-[22rem] ${homeTy.body} !font-normal`}>
                     Thực chiến phỏng vấn 1-1 cùng AI với bộ câu hỏi được cá nhân hoá theo CV & JD.
                   </p>
                 </div>
