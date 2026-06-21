@@ -1,0 +1,112 @@
+/**
+ * Typography customer — Lexend, chữ đậm hơn mặc định trình duyệt.
+ * Bọc bởi `.pi-typography-shell` (AppLayout) và `.mentor-surface` trang user.
+ */
+
+.pi-typography-shell,
+.app-user-shell,
+.mentor-surface:not(.mentor-role-shell) {
+  font-family: var(--font-headline), "Plus Jakarta Sans", system-ui, sans-serif;
+  font-weight: 500;
+  font-variation-settings: "wght" 520;
+  letter-spacing: -0.012em;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.pi-typography-shell .font-headline,
+.app-user-shell .font-headline,
+.mentor-surface:not(.mentor-role-shell) .font-headline {
+  font-family: var(--font-headline), "Plus Jakarta Sans", system-ui, sans-serif;
+  letter-spacing: -0.028em;
+}
+
+.pi-typography-shell h1,
+.pi-typography-shell h2,
+.pi-typography-shell h3,
+.pi-typography-shell h4,
+.app-user-shell h1,
+.app-user-shell h2,
+.app-user-shell h3,
+.app-user-shell h4,
+.mentor-surface:not(.mentor-role-shell) h1,
+.mentor-surface:not(.mentor-role-shell) h2,
+.mentor-surface:not(.mentor-role-shell) h3,
+.mentor-surface:not(.mentor-role-shell) h4 {
+  font-family: var(--font-headline), "Plus Jakarta Sans", system-ui, sans-serif;
+  letter-spacing: -0.022em;
+}
+
+.pi-typography-shell p,
+.app-user-shell p,
+.mentor-surface:not(.mentor-role-shell) p {
+  font-weight: 500;
+}
+
+.pi-typography-shell input:not([type="checkbox"]):not([type="radio"]),
+.pi-typography-shell textarea,
+.pi-typography-shell select,
+.app-user-shell input:not([type="checkbox"]):not([type="radio"]),
+.app-user-shell textarea,
+.app-user-shell select,
+.mentor-surface:not(.mentor-role-shell) input:not([type="checkbox"]):not([type="radio"]),
+.mentor-surface:not(.mentor-role-shell) textarea,
+.mentor-surface:not(.mentor-role-shell) select {
+  font-weight: 500;
+  font-variation-settings: "wght" 540;
+}
+
+.pi-typography-shell table tbody td,
+.app-user-shell table tbody td,
+.mentor-surface:not(.mentor-role-shell) table tbody td {
+  font-weight: 600;
+}
+
+.pi-typography-shell table thead th,
+.app-user-shell table thead th,
+.mentor-surface:not(.mentor-role-shell) table thead th {
+  font-weight: 800;
+}
+
+/* Nâng một bậc utility Tailwind phổ biến */
+.pi-typography-shell .font-normal,
+.app-user-shell .font-normal,
+.mentor-surface:not(.mentor-role-shell) .font-normal {
+  font-weight: 500;
+  font-variation-settings: "wght" 520;
+}
+
+.pi-typography-shell .font-medium,
+.app-user-shell .font-medium,
+.mentor-surface:not(.mentor-role-shell) .font-medium {
+  font-weight: 600;
+  font-variation-settings: "wght" 600;
+}
+
+.pi-typography-shell .font-semibold,
+.app-user-shell .font-semibold,
+.mentor-surface:not(.mentor-role-shell) .font-semibold {
+  font-weight: 700;
+  font-variation-settings: "wght" 700;
+}
+
+.pi-typography-shell .font-bold,
+.app-user-shell .font-bold,
+.mentor-surface:not(.mentor-role-shell) .font-bold {
+  font-weight: 800;
+  font-variation-settings: "wght" 800;
+}
+
+.pi-typography-shell .font-extrabold,
+.app-user-shell .font-extrabold,
+.mentor-surface:not(.mentor-role-shell) .font-extrabold {
+  font-weight: 900;
+  font-variation-settings: "wght" 900;
+}
+
+.pi-typography-shell .font-black,
+.app-user-shell .font-black,
+.mentor-surface:not(.mentor-role-shell) .font-black {
+  font-weight: 900;
+  font-variation-settings: "wght" 900;
+}
