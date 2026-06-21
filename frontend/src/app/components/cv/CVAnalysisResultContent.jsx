@@ -550,14 +550,6 @@ export function CVAnalysisResultContent({
 
               {/* CTAs, nền sáng trong card trắng: chữ tối + viền rõ */}
               <div className="flex gap-3 flex-wrap pt-1">
-                <button
-                  type="button"
-                  onClick={() => navigate("/interview")}
-                  className="flex items-center gap-2 rounded-xl bg-[#8037f4] px-6 py-3 text-sm font-semibold text-white shadow-md transition-colors hover:bg-[#5C28D9]"
-                >
-                  <Mic className="h-4 w-4 shrink-0" aria-hidden />
-                  Phỏng vấn với AI
-                </button>
                 {/* Feedback widget */}
                 <div className="flex w-full flex-col items-center gap-2 rounded-2xl border border-violet-100 bg-violet-50/60 px-5 py-4">
                   {feedbackSent ? (
@@ -587,6 +579,14 @@ export function CVAnalysisResultContent({
                   )}
                 </div>
 
+                <button
+                  type="button"
+                  onClick={() => navigate("/interview")}
+                  className="flex items-center gap-2 rounded-xl bg-[#8037f4] px-6 py-3 text-sm font-semibold text-white shadow-md transition-colors hover:bg-[#5C28D9]"
+                >
+                  <Mic className="h-4 w-4 shrink-0" aria-hidden />
+                  Phỏng vấn với AI
+                </button>
                 <button
                   type="button"
                   onClick={() => navigate("/mentors")}

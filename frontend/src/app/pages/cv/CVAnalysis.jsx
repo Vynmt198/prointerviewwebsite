@@ -88,9 +88,7 @@ function buildFd(
 /** FastAPI trả `detail` (string hoặc mảng validation); Express dùng `error`. */
 function formatCvAnalyzerHttpError(status, body) {
   if (status === 429) return "Hệ thống đang bận, vui lòng thử lại sau 1–2 phút.";
-  if (status === 503 || status === 502) return "Dịch vụ phân tích tạm thời không khả dụng, thử lại sau ít phút.";
-  if (status === 504) return "Phân tích mất quá nhiều thời gian, thử lại sau.";
-
+  
   const e = body ?? {};
   const raw =
     (typeof e.detail === "string" && e.detail.trim()) ||
@@ -98,7 +96,13 @@ function formatCvAnalyzerHttpError(status, body) {
     (typeof e.error === "string" && e.error.trim()) ||
     "";
 
+  if (status === 503 || status === 502) {
+    return raw || "Dịch vụ phân tích tạm thời không khả dụng, thử lại sau ít phút.";
+  }
+  if (status === 504) return raw || "Phân tích mất quá nhiều thời gian, thử lại sau.";
+
   const isTechnical = /\.env|LLM_?|API.?KEY|localhost|127\.|uvicorn|cv_jd_matching|ollama|googleapis|generativelanguage|Cloud LLM/i.test(raw);
+  // Hide technical errors for normal bad requests, but we already returned raw for 502/503/504
   if (isTechnical || !raw) return "Phân tích thất bại, vui lòng thử lại sau.";
 
   return raw;
