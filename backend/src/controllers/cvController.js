@@ -184,4 +184,22 @@ export const CVController = {
       res.status(500).json({ success: false, error: error.message });
     }
   },
+
+  submitFeedback: async (req, res) => {
+    try {
+      const { rating } = req.body;
+      if (!["helpful", "not_helpful"].includes(rating)) {
+        return res.status(400).json({ success: false, error: "rating phải là helpful hoặc not_helpful" });
+      }
+      const doc = await CVAnalysis.findOneAndUpdate(
+        { _id: req.params.id, userId: req.userId },
+        { "feedback.rating": rating, "feedback.submittedAt": new Date() },
+        { new: true, select: "feedback" }
+      );
+      if (!doc) return res.status(404).json({ success: false, error: "Không tìm thấy" });
+      res.json({ success: true, feedback: doc.feedback });
+    } catch (error) {
+      res.status(500).json({ success: false, error: error.message });
+    }
+  },
 };

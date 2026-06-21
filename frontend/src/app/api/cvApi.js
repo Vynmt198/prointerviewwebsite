@@ -127,6 +127,21 @@ export function formatCvSaveError(saveRes) {
   return `Kết quả hiển thị nhưng chưa lưu lịch sử${saveRes.message ? `: ${saveRes.message}` : ""}.`;
 }
 
+export async function submitCvFeedback(id, rating) {
+  if (!hasAuthCredentials()) return { success: false };
+  try {
+    const res = await authFetch(`/api/cv/analyses/${encodeURIComponent(id)}/feedback`, {
+      method: "PATCH",
+      headers: jsonHeaders,
+      body: JSON.stringify({ rating }),
+    });
+    const body = await res.json().catch(() => ({}));
+    return res.ok ? { success: true } : { success: false, error: body.error };
+  } catch {
+    return { success: false };
+  }
+}
+
 export async function deleteCvAnalysis(id) {
   if (!hasAuthCredentials()) {
     return { success: false, error: "Chưa đăng nhập." };

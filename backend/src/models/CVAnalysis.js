@@ -171,6 +171,12 @@ const CVAnalysisSchema = new mongoose.Schema(
     },
     meta: { type: MetaSchema, default: () => ({}) },
 
+    // ----- User feedback (dùng để lọc training data sau này) -----
+    feedback: {
+      rating:      { type: String, enum: ["helpful", "not_helpful"], default: null },
+      submittedAt: { type: Date },
+    },
+
     // ----- Timestamps -----
     completedAt: { type: Date },
   },
