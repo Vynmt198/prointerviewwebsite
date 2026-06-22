@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { useNavigate } from "react-router";
 import { Trash2 as Trash } from "lucide-react";
-import { toastApiError, toastApiSuccess, tryApi } from "../../utils/apiToast";
-import { deleteAccount, getUser } from "../../utils/auth";
+import { toastApiError, toastApiSuccess, tryApi } from "../../utils/shared/apiToast.js";
+import { deleteAccount, getUser } from "../../utils/auth/auth.js";
 
 export function AccountDangerZone({ SectionCard }) {
   const navigate = useNavigate();

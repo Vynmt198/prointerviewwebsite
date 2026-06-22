@@ -9,21 +9,18 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { MentorListCard } from "../../components/mentor/MentorListCard";
-import { fetchMentors } from "../../utils/mentorApi";
-import { fetchRebookCredit } from "../../utils/bookingsApi";
-import { toastApiError } from "../../utils/apiToast";
+import { fetchMentors } from "../../api/mentorApi.js";
+import { fetchRebookCredit } from "../../api/bookingsApi.js";
+import { toastApiError } from "../../utils/shared/apiToast.js";
 import {
   MENTOR_FILTER_FIELDS,
   mentorMatchesFilterField,
 } from "../../constants/mentorFilterFields";
 import { CustomerPageHeader, CustomerPageSplitTitle } from "../../components/layout/CustomerPageHeader";
 import { CUSTOMER_SHELL_GUTTER, CUSTOMER_SHELL_MAX } from "../../components/layout/customerShellLayout";
-import {
-  ExploreFilterSidebar,
-  FilterRadio,
-  FilterSection,
-} from "../../components/shared/ExploreFilterSidebar";
+
 import { ListPagination } from "../../components/shared/ListPagination";
+import { ExploreFilterSidebar, FilterSection, FilterRadio } from "../../components/shared/ExploreFilterSidebar";
 
 const EXPERIENCE_OPTIONS = [
   { label: "1-3 năm", value: "1-3" },
@@ -45,17 +42,12 @@ const RATING_OPTIONS = [
 
 const MENTORS_PAGE_SIZE = 8;
 
-function MentorsSidebar({
-  selectedField,
-  onFieldChange,
-  selectedExp,
-  onExpChange,
-  selectedPriceIndex,
-  onPriceChange,
-  selectedRating,
-  onRatingChange,
-  onClear,
-  hasFilter,
+function MentorsExploreSidebar({
+  selectedField, onFieldChange,
+  selectedExp, onExpChange,
+  selectedPriceIndex, onPriceChange,
+  selectedRating, onRatingChange,
+  onClear, hasFilter
 }) {
   const filterSectionsOpenOnDesktop = () =>
     typeof window !== "undefined" && window.matchMedia("(min-width: 1024px)").matches;
@@ -80,13 +72,13 @@ function MentorsSidebar({
       onMobilePanelOpen={collapseFilterSections}
     >
       <FilterSection title="Lĩnh vực" open={openField} onToggle={() => setOpenField((v) => !v)}>
-        {MENTOR_FILTER_FIELDS.map((field) => (
+        {MENTOR_FILTER_FIELDS.map((opt) => (
           <FilterRadio
-            key={field}
-            active={selectedField === field}
-            onClick={() => onFieldChange(selectedField === field ? null : field)}
+            key={opt}
+            active={selectedField === opt}
+            onClick={() => onFieldChange(selectedField === opt ? null : opt)}
           >
-            {field}
+            {opt}
           </FilterRadio>
         ))}
       </FilterSection>
@@ -103,14 +95,12 @@ function MentorsSidebar({
         ))}
       </FilterSection>
 
-      <FilterSection title="Giá / giờ" open={openPrice} onToggle={() => setOpenPrice((v) => !v)}>
-        {PRICE_OPTIONS.map((opt, index) => (
+      <FilterSection title="Mức giá" open={openPrice} onToggle={() => setOpenPrice((v) => !v)}>
+        {PRICE_OPTIONS.map((opt, i) => (
           <FilterRadio
-            key={opt.label}
-            active={selectedPriceIndex === index}
-            onClick={() =>
-              onPriceChange(selectedPriceIndex === index ? null : index)
-            }
+            key={i}
+            active={selectedPriceIndex === i}
+            onClick={() => onPriceChange(selectedPriceIndex === i ? null : i)}
           >
             {opt.label}
           </FilterRadio>
@@ -122,14 +112,9 @@ function MentorsSidebar({
           <FilterRadio
             key={opt.label}
             active={selectedRating === opt.label}
-            onClick={() =>
-              onRatingChange(selectedRating === opt.label ? null : opt.label)
-            }
+            onClick={() => onRatingChange(selectedRating === opt.label ? null : opt.label)}
           >
-            <span className="inline-flex items-center gap-1">
-              <Star className="size-3.5 fill-amber-400 text-amber-400" />
-              {opt.label}
-            </span>
+            Từ {opt.label} sao
           </FilterRadio>
         ))}
       </FilterSection>
@@ -282,14 +267,15 @@ export function Mentors() {
 
           <CustomerPageHeader
             title={<CustomerPageSplitTitle accent="Kết nối Mentor" rest="phù hợp" />}
+            titleClassName="font-headline text-[clamp(1.5rem,3.5vw,3.25rem)] font-extrabold leading-[1.12] tracking-tight"
             subtitle="Kết nối với Mentor để có thêm góc nhìn thực tế từ ngành, hiểu kỳ vọng của nhà tuyển dụng và chuẩn bị tự tin hơn cho buổi phỏng vấn thật."
-            subtitleClassName="mt-3 max-w-2xl text-base font-medium leading-relaxed text-violet-700/90"
+            subtitleClassName="mt-3 max-w-none text-base font-medium leading-relaxed text-violet-700/90 lg:whitespace-nowrap"
             className="mb-6"
           />
 
           <div className="rounded-3xl border border-violet-200/80 bg-white px-5 py-5 shadow-sm sm:px-7 sm:py-6">
             <div className="flex flex-col gap-6 lg:flex-row lg:items-start">
-              <MentorsSidebar
+              <MentorsExploreSidebar
                 selectedField={selectedField}
                 onFieldChange={setSelectedField}
                 selectedExp={selectedExp}
@@ -303,26 +289,31 @@ export function Mentors() {
               />
 
               <div className="min-w-0 flex-1">
-                <div className="relative mb-4">
-                  <MagnifyingGlass className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-violet-400" />
-                  <input
-                    type="search"
-                    className="w-full rounded-2xl border border-violet-200/70 bg-white py-2.5 pl-10 pr-10 text-sm shadow-sm focus:border-violet-300 focus:outline-none focus:ring-2 focus:ring-[#8037f4]/15"
-                    placeholder="Tìm theo tên, ngành, kỹ năng..."
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                  />
-                  {search ? (
-                    <button
-                      type="button"
-                      onClick={() => setSearch("")}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-1 text-slate-400 hover:bg-violet-50"
-                      aria-label="Xóa từ khóa"
-                    >
-                      <X className="size-3.5" />
-                    </button>
-                  ) : null}
+                {/* Search & Filters */}
+                <div className="flex flex-col gap-4 mb-6">
+                  <div className="relative">
+                    <MagnifyingGlass className="pointer-events-none absolute left-4 top-1/2 size-5 -translate-y-1/2 text-violet-400" />
+                    <input
+                      type="search"
+                      className="w-full rounded-2xl border-2 border-violet-100 bg-slate-50/50 py-3.5 pl-12 pr-12 text-base font-medium shadow-sm transition-all focus:border-violet-300 focus:bg-white focus:outline-none focus:ring-4 focus:ring-violet-500/10 hover:border-violet-200"
+                      placeholder="Tìm theo tên, ngành, kỹ năng hoặc công ty..."
+                      value={search}
+                      onChange={(e) => setSearch(e.target.value)}
+                    />
+                    {search ? (
+                      <button
+                        type="button"
+                        onClick={() => setSearch("")}
+                        className="absolute right-4 top-1/2 -translate-y-1/2 rounded-full bg-slate-100 p-1.5 text-slate-400 transition-colors hover:bg-violet-100 hover:text-violet-600"
+                        aria-label="Xóa từ khóa"
+                      >
+                        <X className="size-4" />
+                      </button>
+                    ) : null}
+                  </div>
                 </div>
+
+                {/* Results Area */}
 
                 {hasFilter ? (
                   <div className="mb-4 rounded-xl bg-gradient-to-r from-violet-100/80 via-violet-50/50 to-slate-50 px-4 py-3">

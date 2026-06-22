@@ -21,13 +21,13 @@ import {
   MessageCircle as ChatCircle,
   Star,
 } from "lucide-react";
-import { getPlans, hasAuthCredentials } from "../../utils/auth";
-import { addInterviewRecord } from "../../utils/history";
+import { getPlans, hasAuthCredentials } from "../../utils/auth/auth.js";
 import {
   saveAnswer,
   completeInterviewSession,
   analyzeFaceSnapshot,
-} from "../../utils/interviewsApi";
+} from "../../api/interviewsApi.js";
+import { trackAction } from "../../utils/analytics/analyticsApi.js";
 import { useDIDStream } from "../../hooks/useDIDStream";
 import { useFaceAnalysis } from "../../hooks/useFaceAnalysis";
 // AILipSyncAvatar removed — portrait now renders as full-panel img in Nhánh 1/2
@@ -194,15 +194,6 @@ function computeBehavioralSummary(perQ) {
     overallConfidenceScore,
     dominantEmotion,
   };
-}
-
-/* ── Location state helpers ─────────────────────────────── */
-function interviewMetaFromLocationState(state) {
-  if (!state || typeof state !== "object") return { position: "Phỏng vấn AI", company: "—" };
-  if (state.form?.position)        return { position: String(state.form.position), company: state.form.company ? String(state.form.company) : "—" };
-  if (state.latestCV?.position)    return { position: String(state.latestCV.position), company: state.latestCV.company ? String(state.latestCV.company) : "—" };
-  if (state.storedCV?.position)    return { position: String(state.storedCV.position), company: state.storedCV.company ? String(state.storedCV.company) : "—" };
-  return { position: "Phỏng vấn AI", company: "—" };
 }
 
 /* ── Helpers ─────────────────────────────────────────────── */
@@ -1041,6 +1032,11 @@ export default function InterviewRoom() {
           totalDurationSeconds: timerSeconds,
           behavioralSummary:    behavioralSummary ?? undefined,
         });
+        trackAction("interview_complete", "/interview/room", {
+          sessionId,
+          questionCount: backupAnswers.length,
+          durationSeconds: timerSeconds,
+        });
       } catch { /* still navigate on fail */ }
     }
 
@@ -1049,20 +1045,6 @@ export default function InterviewRoom() {
       navigate("/interview/trial/done", { state: { transcripts: backupAnswers } });
       return;
     }
-
-    const { position, company } = interviewMetaFromLocationState(location.state);
-    addInterviewRecord({
-      id:       `ai-${Date.now()}`,
-      type:     "ai",
-      date:     new Date().toISOString().slice(0, 10),
-      position,
-      company,
-      scores:   { clarity: 0, structure: 0, relevance: 0, credibility: 0 },
-      overall:  0,
-      duration: Math.max(1, Math.round(timerSeconds / 60)),
-      sessionId,
-      pending:  true,
-    });
 
     navigate("/interview/feedback", { state: { sessionId } });
   };

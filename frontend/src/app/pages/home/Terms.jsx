@@ -1,13 +1,10 @@
 import React from "react";
 import { LegalDocumentLayout, LegalSection, LegalDef } from "../../components/legal/LegalDocumentLayout";
 
-const PLATFORM_SUBTITLE = "ĐIỀU KHOẢN SỬ DỤNG DỊCH VỤ";
-
 export function Terms() {
   return (
     <LegalDocumentLayout
       title="Điều khoản sử dụng dịch vụ"
-      subtitle={PLATFORM_SUBTITLE}
     >
       <LegalSection title="Giới thiệu và Chấp thuận điều khoản">
         <p>
@@ -26,15 +23,15 @@ export function Terms() {
         </ul>
       </LegalSection>
 
-      <LegalSection title="Điều 10. Nghĩa vụ của người dùng">
+      <LegalSection title="Điều 1. Nghĩa vụ của người dùng">
         <p>Người dùng có trách nhiệm:</p>
         <ul className="list-none space-y-2 my-4">
-          <li><strong>10.1.</strong> Cung cấp thông tin trung thực, chính xác và đầy đủ.</li>
-          <li><strong>10.2.</strong> Cập nhật thông tin khi có thay đổi.</li>
-          <li><strong>10.3.</strong> Bảo mật tài khoản và mật khẩu truy cập.</li>
-          <li><strong>10.4.</strong> Không chia sẻ tài khoản cho người khác sử dụng.</li>
+          <li><strong>1.1.</strong> Cung cấp thông tin trung thực, chính xác và đầy đủ.</li>
+          <li><strong>1.2.</strong> Cập nhật thông tin khi có thay đổi.</li>
+          <li><strong>1.3.</strong> Bảo mật tài khoản và mật khẩu truy cập.</li>
+          <li><strong>1.4.</strong> Không chia sẻ tài khoản cho người khác sử dụng.</li>
           <li>
-            <strong>10.5. Không tải lên nội dung:</strong>
+            <strong>1.5. Không tải lên nội dung:</strong>
             <ul className="list-disc pl-5 mt-1 space-y-1">
               <li>a) Vi phạm pháp luật;</li>
               <li>b) Xâm phạm quyền sở hữu trí tuệ;</li>
@@ -43,7 +40,7 @@ export function Terms() {
             </ul>
           </li>
           <li>
-            <strong>10.6. Không sử dụng nền tảng cho mục đích:</strong>
+            <strong>1.6. Không sử dụng nền tảng cho mục đích:</strong>
             <ul className="list-disc pl-5 mt-1 space-y-1">
               <li>a) Gian lận;</li>
               <li>b) Lừa đảo;</li>
@@ -51,31 +48,31 @@ export function Terms() {
               <li>d) Thu thập dữ liệu trái phép.</li>
             </ul>
           </li>
-          <li><strong>10.7.</strong> Tự chịu trách nhiệm đối với các nội dung do mình tải lên hoặc cung cấp cho hệ thống.</li>
+          <li><strong>1.7.</strong> Tự chịu trách nhiệm đối với các nội dung do mình tải lên hoặc cung cấp cho hệ thống.</li>
         </ul>
       </LegalSection>
 
-      <LegalSection title="Điều 12. Rủi ro và hậu quả không mong muốn">
+      <LegalSection title="Điều 2. Rủi ro và hậu quả không mong muốn">
         <p>Mặc dù ProInterview áp dụng các biện pháp bảo mật phù hợp, người dùng hiểu rằng vẫn có thể tổn tại các rủi ro như:</p>
         
-        <h4 className="font-semibold text-slate-900 mt-4 mb-2">12.1. Rò rỉ dữ liệu do lỗi từ phía người dùng</h4>
+        <h4 className="font-semibold text-slate-900 mt-4 mb-2">2.1. Rò rỉ dữ liệu do lỗi từ phía người dùng</h4>
         <p>a) Để lộ mật khẩu; b) Chia sẻ tài khoản; c) Truy cập các website độc hại; d) Bị lừa đảo trực tuyến.</p>
 
-        <h4 className="font-semibold text-slate-900 mt-4 mb-2">12.2. Rủi ro kỹ thuật ngoài khả năng kiểm soát</h4>
+        <h4 className="font-semibold text-slate-900 mt-4 mb-2">2.2. Rủi ro kỹ thuật ngoài khả năng kiểm soát</h4>
         <p>a) Tấn công mạng; b) Virus hoặc mã độc; c) Sự cố phần cứng; d) Sự cố đường truyền; e) Thiên tai hoặc sự kiện bất khả kháng.</p>
 
-        <h4 className="font-semibold text-slate-900 mt-4 mb-2">12.3. Sai lệch kết quả đánh giá AI</h4>
+        <h4 className="font-semibold text-slate-900 mt-4 mb-2">2.3. Sai lệch kết quả đánh giá AI</h4>
         <p>Người dùng hiểu rằng hệ thống AI có thể: a) Đưa ra khuyến nghị chưa hoàn toàn chính xác; b) Chưa phản ánh đầy đủ bối cảnh cá nhân; c) Có sai số trong việc đánh giá kỹ năng. Do đó, kết quả từ ProInterview chỉ được xem là công cụ hỗ trợ tham khảo.</p>
       </LegalSection>
 
-      <LegalSection title="Điều 13. Điều khoản chung">
+      <LegalSection title="Điều 3. Điều khoản chung">
         <ul className="list-none space-y-2 my-4">
-          <li><strong>13.1.</strong> Chính sách này có hiệu lực kể từ ngày được công bố trên nền tảng ProInterview.</li>
-          <li><strong>13.2.</strong> Prolnterview có quyền sửa đổi hoặc bổ sung Chính sách này khi cần thiết.</li>
-          <li><strong>13.3.</strong> Các thay đổi sẽ được thông báo trên website, ứng dụng hoặc qua email đã đăng ký.</li>
-          <li><strong>13.4.</strong> Việc tiếp tục sử dụng dịch vụ sau khi Chính sách được cập nhật đồng nghĩa với việc người dùng chấp nhận các nội dung sửa đổi.</li>
-          <li><strong>13.5.</strong> Trường hợp bất kỳ điều khoản nào của Chính sách này bị tuyên vô hiệu bởi cơ quan có thẩm quyền, các điều khoản còn lại vẫn giữ nguyên hiệu lực.</li>
-          <li><strong>13.6.</strong> Mọi tranh chấp phát sinh liên quan đến Chính sách này sẽ được ưu tiên giải quyết thông qua thương lượng và hòa giải. Trường hợp không đạt được thỏa thuận, tranh chấp sẽ được giải quyết theo quy định của pháp luật Việt Nam.</li>
+          <li><strong>3.1.</strong> Chính sách này có hiệu lực kể từ ngày được công bố trên nền tảng ProInterview.</li>
+          <li><strong>3.2.</strong> Prolnterview có quyền sửa đổi hoặc bổ sung Chính sách này khi cần thiết.</li>
+          <li><strong>3.3.</strong> Các thay đổi sẽ được thông báo trên website, ứng dụng hoặc qua email đã đăng ký.</li>
+          <li><strong>3.4.</strong> Việc tiếp tục sử dụng dịch vụ sau khi Chính sách được cập nhật đồng nghĩa với việc người dùng chấp nhận các nội dung sửa đổi.</li>
+          <li><strong>3.5.</strong> Trường hợp bất kỳ điều khoản nào của Chính sách này bị tuyên vô hiệu bởi cơ quan có thẩm quyền, các điều khoản còn lại vẫn giữ nguyên hiệu lực.</li>
+          <li><strong>3.6.</strong> Mọi tranh chấp phát sinh liên quan đến Chính sách này sẽ được ưu tiên giải quyết thông qua thương lượng và hòa giải. Trường hợp không đạt được thỏa thuận, tranh chấp sẽ được giải quyết theo quy định của pháp luật Việt Nam.</li>
         </ul>
       </LegalSection>
     </LegalDocumentLayout>

@@ -1,10 +1,20 @@
-/** Parse booking.date (DD/MM/YYYY) + timeSlot (HH:mm). */
+/** Parse booking.date (DD/MM/YYYY, YYYY-MM-DD) + timeSlot (HH:mm). */
 export function parseBookingStartMs(dateStr, timeSlot) {
   const date = String(dateStr || "").trim();
   const time = String(timeSlot || "09:00").trim();
-  const parts = date.split("/").map((p) => parseInt(p, 10));
   const [h, min = 0] = time.split(":").map((p) => parseInt(p, 10));
+
+  const iso = date.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (iso) {
+    return new Date(Number(iso[1]), Number(iso[2]) - 1, Number(iso[3]), h, min, 0).getTime();
+  }
+
+  const parts = date.split("/").map((p) => parseInt(p, 10));
   if (parts.length >= 3) {
+    if (parts[0] > 1000) {
+      const [y, m, d] = parts;
+      return new Date(y, m - 1, d, h, min, 0).getTime();
+    }
     const [d, m, y] = parts;
     return new Date(y, m - 1, d, h, min, 0).getTime();
   }
@@ -13,6 +23,17 @@ export function parseBookingStartMs(dateStr, timeSlot) {
     return new Date(new Date().getFullYear(), m - 1, d, h, min, 0).getTime();
   }
   return NaN;
+}
+
+/** Đã tới hoặc qua giờ bắt đầu buổi (mentor được phép đánh dấu hoàn thành). */
+export function isBookingAtOrPastStart(bookingOrDate, timeSlot) {
+  const booking =
+    bookingOrDate && typeof bookingOrDate === "object" && !Array.isArray(bookingOrDate)
+      ? bookingOrDate
+      : { date: bookingOrDate, timeSlot };
+  const start = parseBookingStartMs(booking?.date, booking?.timeSlot || booking?.time);
+  if (!Number.isFinite(start)) return false;
+  return Date.now() >= start;
 }
 
 export function isBookingInLiveWindow(booking, { earlyMinutes = 15, lateMinutesAfterEnd = 60 } = {}) {
@@ -29,4 +50,18 @@ export function isBookingSlotInFuture(dateStr, timeSlot, nowMs = Date.now()) {
   const ms = parseBookingStartMs(dateStr, timeSlot);
   if (!Number.isFinite(ms)) return false;
   return ms > nowMs;
+}
+
+/** Timestamp kết thúc buổi (start + durationMinutes). */
+export function parseBookingEndMs(booking, { graceMinutesAfterEnd = 0 } = {}) {
+  const start = parseBookingStartMs(booking?.date, booking?.timeSlot);
+  if (!Number.isFinite(start)) return NaN;
+  const dur = (Number(booking?.durationMinutes) || 60) * 60 * 1000;
+  return start + dur + graceMinutesAfterEnd * 60 * 1000;
+}
+
+/** Đã qua giờ kết thúc + grace → đủ điều kiện auto-complete nếu mentor chưa bấm kết thúc. */
+export function isBookingPastAutoCompleteGrace(booking, { graceMinutesAfterEnd = 30 } = {}) {
+  const cutoff = parseBookingEndMs(booking, { graceMinutesAfterEnd });
+  return Number.isFinite(cutoff) && Date.now() >= cutoff;
 }

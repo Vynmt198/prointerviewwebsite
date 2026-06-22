@@ -8,12 +8,14 @@ import {
 } from "lucide-react";
 import { SparkleGlyph } from "../../components/decor/SparkleGlyph.jsx";
 import { MentorPageShell } from "../../components/mentor/MentorPageShell";
-import { requireLoginNavigate } from "../../utils/authGate";
-import { getUser, isLoggedIn } from "../../utils/auth";
-import { fetchCurrentPlan } from "../../utils/plansApi";
+import { requireLoginNavigate } from "../../utils/auth/authGate.js";
+import { getUser, isLoggedIn } from "../../utils/auth/auth.js";
+import { fetchCurrentPlan } from "../../api/plansApi.js";
+import { trackAction } from "../../utils/analytics/analyticsApi.js";
 import { CUSTOMER_SHELL_GUTTER, CUSTOMER_SHELL_MAX } from "../../components/layout/customerShellLayout";
 import { CustomerPageHeader, CustomerPageSplitTitle } from "../../components/layout/CustomerPageHeader";
 import { PRICING_SUBTITLE, PRICING_FAQ } from "../../constants/brandVoice";
+import { buildPlanCheckoutPath, getPlanDisplayAmount } from "../../constants/planCatalog.js";
 
 function PricingFaqAnswer({ item }) {
   return (
@@ -42,14 +44,9 @@ const PLANS = [
     id: "free",
     title: "Basic",
     subtitle: "Miễn phí mãi mãi",
-    monthlyDisplay: 0,
-    yearlyDisplay: 0,
-    yearlyTotal: null,
-    yearlySave: null,
     features: [
-      "Phỏng vấn thử AI (giới hạn câu hỏi)",
-      "1 lần phân tích CV/JD",
-      "Bộ câu hỏi phỏng vấn theo ngành nghề",
+      "10 lượt phân tích CV & JD",
+      "1 buổi AI Interview trải nghiệm (3 câu hỏi)",
     ],
     cta: "Bắt đầu ngay",
     checkoutMonthly: "/",
@@ -61,19 +58,12 @@ const PLANS = [
     id: "starter_pro",
     title: "Pro",
     subtitle: "Dành cho ứng viên chủ động",
-    monthlyDisplay: 79000,
-    yearlyDisplay: 63000,
-    yearlyTotal: 756000,
-    yearlySave: 192000,
     features: [
-      "10 buổi AI Interview / tháng",
-      "Nhận diện giọng nói tiếng Việt",
-      "20 lượt phân tích CV/JD / tháng",
-      "Phản hồi & đánh giá chi tiết",
+      "30 lượt phân tích CV & JD",
+      "4 phiên AI Interview thực chiến (5 câu hỏi)",
+      "Nhận phản hồi chi tiết sau mỗi phiên",
     ],
     cta: "Nâng cấp Pro",
-    checkoutMonthly: "/checkout?plan=starterPro&billing=monthly&planPrice=79000",
-    checkoutYearly: "/checkout?plan=starterPro&billing=yearly&planPrice=756000",
     popular: false,
     variant: "lime",
   },
@@ -81,34 +71,17 @@ const PLANS = [
     id: "elite_pro",
     title: "Elite",
     subtitle: "Chinh phục tập đoàn lớn",
-    monthlyDisplay: 99000,
-    yearlyDisplay: 79000,
-    yearlyTotal: 948000,
-    yearlySave: 240000,
     features: [
-      "AI Interview KHÔNG GIỚI HẠN",
-      "CV/JD phân tích KHÔNG GIỚI HẠN",
-      "Nhận diện giọng nói tiếng Việt",
-      "Hỗ trợ ưu tiên 24/7",
+      "Phân tích CV & JD không giới hạn",
+      "10 phiên AI Interview nâng cao (5 câu hỏi)",
+      "Phản hồi chuyên sâu & theo dõi tiến độ",
     ],
     cta: "Nâng cấp Elite",
-    checkoutMonthly: "/checkout?plan=elitePro&billing=monthly&planPrice=99000",
-    checkoutYearly: "/checkout?plan=elitePro&billing=yearly&planPrice=948000",
     popular: true,
     variant: "elite",
   },
 ];
 
-/** % tiết kiệm khi trả năm (so với 12 × giá tháng). Pro & Elite đều = 20%. */
-function yearlySavePercent(monthlyPerMonth, yearlyPerMonth) {
-  if (!monthlyPerMonth) return 0;
-  return Math.round((1 - yearlyPerMonth / monthlyPerMonth) * 100);
-}
-
-const YEARLY_SAVE_PCT = yearlySavePercent(
-  PLANS[1].monthlyDisplay,
-  PLANS[1].yearlyDisplay,
-);
 
 function fmtVnd(amount) {
   return new Intl.NumberFormat("vi-VN").format(amount) + "đ";
@@ -142,37 +115,7 @@ function normalizePlanKey(plan) {
   return "free";
 }
 
-function BillingToggle({ billing, onChange, savePercent }) {
-  return (
-    <div className="mx-auto flex w-full max-w-md flex-nowrap items-stretch justify-center gap-0.5 rounded-full border border-violet-200/80 bg-white p-1 shadow-[0_8px_28px_rgba(99,14,212,0.1)] sm:max-w-lg lg:w-fit lg:max-w-full lg:flex-wrap lg:gap-1 lg:p-1.5">
-      <button
-        type="button"
-        onClick={() => onChange("monthly")}
-        className={`flex-1 rounded-full px-2 py-2 text-center text-xs font-bold transition-all sm:px-3 lg:flex-none lg:px-5 lg:py-2.5 lg:text-sm ${
-          billing === "monthly"
-            ? "bg-violet-100 text-violet-950 shadow-sm"
-            : "text-violet-600 hover:text-violet-900"
-        }`}
-      >
-        Hàng tháng
-      </button>
-      <button
-        type="button"
-        onClick={() => onChange("yearly")}
-        className={`inline-flex flex-1 items-center justify-center gap-1 rounded-full px-2 py-2 text-xs font-bold transition-all sm:gap-1.5 sm:px-3 lg:flex-none lg:gap-2 lg:px-5 lg:py-2.5 lg:text-sm ${
-          billing === "yearly"
-            ? "bg-violet-100 text-violet-950 shadow-sm"
-            : "text-violet-600 hover:text-violet-900"
-        }`}
-      >
-        <span className="whitespace-nowrap">Hàng năm</span>
-        <span className="shrink-0 whitespace-nowrap rounded-full bg-gradient-to-r from-[#93f72b] to-[#93f72b] px-1.5 py-px text-[9px] font-extrabold leading-tight text-violet-950 sm:px-2 sm:py-0.5 sm:text-[10px]">
-          Tiết kiệm {savePercent}%
-        </span>
-      </button>
-    </div>
-  );
-}
+
 
 export function Pricing() {
   const navigate = useNavigate();
@@ -203,7 +146,8 @@ export function Pricing() {
       return;
     }
     if (currentPlan === plan.id) return;
-    const path = billing === "yearly" ? plan.checkoutYearly : plan.checkoutMonthly;
+    const path = buildPlanCheckoutPath(plan.id, billing);
+    trackAction("plan_checkout_start", "/pricing", { planId: plan.id, billing });
     requireLoginNavigate(navigate, path);
   };
 
@@ -220,22 +164,23 @@ export function Pricing() {
                 rest="mọi buổi phỏng vấn"
               />
             }
+            titleClassName="font-headline text-[clamp(1.5rem,3.5vw,3.25rem)] font-extrabold leading-[1.12] tracking-tight"
             subtitle={PRICING_SUBTITLE}
             subtitleClassName="mt-3 max-w-2xl text-base font-medium leading-relaxed text-violet-700/90"
           />
 
-          <BillingToggle billing={billing} onChange={setBilling} savePercent={YEARLY_SAVE_PCT} />
+
 
           <div className="mt-10 grid w-full grid-cols-1 items-stretch justify-items-stretch gap-6 md:grid-cols-3 lg:gap-8 [&>article]:min-w-0 [&>article]:w-full">
             {PLANS.map((plan) => {
               const isCurrent = currentPlan === plan.id;
               const isPopular = plan.popular;
               const isYearly = billing === "yearly";
-              const displayAmount = isYearly ? plan.yearlyDisplay : plan.monthlyDisplay;
               const isFree = plan.id === "free";
+              const displayAmount = isFree ? 0 : getPlanDisplayAmount(plan.id, billing);
               const variant = plan.variant;
               /** Cùng chiều cao khối giá → vạch ngăn & list thẳng hàng (Basic 0đ = Pro/Elite) */
-              const priceBlockMin = isYearly ? "min-h-[5.125rem]" : "min-h-[2.75rem]";
+              const priceBlockMin = "min-h-[2.75rem]";
               return (
                 <article
                   key={plan.id}
@@ -309,37 +254,15 @@ export function Pricing() {
 
                     <div className={`mt-3 flex flex-col justify-start space-y-1.5 ${priceBlockMin}`}>
                       {isFree ? (
-                        <p className="text-3xl font-black tracking-tight text-slate-900 sm:text-4xl">
+                        <p className="text-3xl font-black tracking-tight text-[#630ed4] sm:text-4xl">
                           0đ
                         </p>
                       ) : (
-                        <p className="text-3xl font-black tracking-tight text-slate-900 sm:text-4xl">
+                        <p className="text-3xl font-black tracking-tight text-[#630ed4] sm:text-4xl">
                           {fmtVnd(displayAmount)}
                           <span className="ml-1 text-base font-bold text-slate-500">
-                            {isYearly ? "/tháng (quy đổi)" : "/tháng"}
+                            {isYearly ? "/năm" : "/tháng"}
                           </span>
-                        </p>
-                      )}
-                      {isYearly && !isFree && plan.yearlyTotal != null && (
-                        <p className="text-base font-bold leading-snug text-slate-900">
-                          Thanh toán một lần:{" "}
-                          <span className="text-[#6d2fd6]">{fmtVnd(plan.yearlyTotal)}</span>
-                          <span className="font-semibold text-slate-600"> /năm</span>
-                        </p>
-                      )}
-                      {isYearly && isFree && (
-                        <>
-                          <p className="text-base font-bold leading-snug text-transparent" aria-hidden>
-                            —
-                          </p>
-                          <p className="text-sm font-semibold leading-snug text-transparent" aria-hidden>
-                            —
-                          </p>
-                        </>
-                      )}
-                      {isYearly && plan.yearlySave != null && (
-                        <p className="text-sm font-semibold leading-snug text-[#6d2fd6]">
-                          Tiết kiệm {fmtVnd(plan.yearlySave)}/năm
                         </p>
                       )}
                     </div>

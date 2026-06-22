@@ -11,11 +11,11 @@ import {
   User,
   AlertCircle
 } from "lucide-react";
-import { toastApiError, tryApi } from "../../utils/apiToast";
-import { isLoggedIn } from "../../utils/auth";
-import { submitReview } from "../../utils/reviewsApi";
-import { fetchBookingById } from "../../utils/bookingsApi";
-import { apiBookingToLocal } from "../../utils/bookingMappers";
+import { toastApiError, tryApi } from "../../utils/shared/apiToast.js";
+import { isLoggedIn } from "../../utils/auth/auth.js";
+import { submitReview } from "../../api/reviewsApi.js";
+import { fetchBookingById } from "../../api/bookingsApi.js";
+import { apiBookingToLocal } from "../../utils/booking/bookingMappers.js";
 
 function isMongoObjectId(value) {
   return typeof value === "string" && /^[a-f\d]{24}$/i.test(value.trim());

@@ -83,6 +83,8 @@ const userSchema = new Schema(
     isEmailVerified: { type: Boolean, default: false },
     isActive: { type: Boolean, default: true },
     lastLoginAt: { type: Date },
+    /** Lần cuối có request/presence từ client — admin dùng để hiển thị online. */
+    lastSeenAt: { type: Date, default: null },
 
     /** Tăng khi logout / đổi mật khẩu — JWT phải khớp `tv` trong payload (vô hiệu token cũ phía server). */
     tokenVersion: { type: Number, default: 0 },
@@ -201,6 +203,7 @@ export function toPublicUser(doc) {
       (typeof googleId === "string" && googleId.trim()) ||
         (typeof googleSub === "string" && googleSub.trim())
     ),
+    isEmailVerified: Boolean(plain.isEmailVerified),
     notificationPrefs: publicNotificationPrefsForRole(
       plain.role,
       plain.settings?.notificationPrefs,

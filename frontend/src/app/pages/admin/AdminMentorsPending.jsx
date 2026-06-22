@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { CheckCircle, XCircle, FileText, Briefcase } from "lucide-react";
-import { adminApi } from "../../utils/adminApi";
-import { getInitials } from "../../utils/auth";
-import { formatEducationDisplay } from "../../utils/profileEducationHistory";
-import { formatWorkHistoryLines, parseWorkHistory } from "../../utils/profileWorkHistory";
+import { adminApi } from "../../api/adminApi.js";
+import { getInitials } from "../../utils/auth/auth.js";
+import { formatEducationDisplay } from "../../utils/profile/profileEducationHistory.js";
+import { formatWorkHistoryLines, parseWorkHistory } from "../../utils/profile/profileWorkHistory.js";
 import { toast } from "sonner";
 
 function formatVnd(n) {

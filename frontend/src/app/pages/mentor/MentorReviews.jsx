@@ -1,19 +1,23 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef, useLayoutEffect } from "react";
 import { useNavigate } from "react-router";
-import { Star, Calendar, Quote, Search, MessageCircle, TrendingUp } from "lucide-react";
-import { getUser } from "../../utils/auth";
-import { MentorPageShell } from "../../components/mentor/MentorPageShell";
-import { fetchMentorReviews } from "../../utils/mentorApi";
-import { replyToReview } from "../../utils/reviewsApi";
-import { toastApiError, tryApi } from "../../utils/apiToast";
-import { avatarSrc, DEFAULT_AVATAR } from "../../utils/mediaUrl";
+import { motion } from "motion/react";
 import {
-  mentorPageTitle,
-  mentorPageSubtitle,
-  mentorStatValue,
-  mentorAccentText,
-  mentorSearchInput,
-} from "../../components/mentor/mentorTypography";
+  Star,
+  Quote,
+  Search,
+  MessageCircle,
+  Heart,
+  Reply,
+  ArrowRight,
+  ImageIcon,
+} from "lucide-react";
+import { getUser } from "../../utils/auth/auth.js";
+import { MentorPageShell } from "../../components/mentor/MentorPageShell";
+import { MentorStatPanel, MentorStatFrame } from "../../components/mentor/MentorStatFrames";
+import { fetchMentorReviews } from "../../api/mentorApi.js";
+import { replyToReview } from "../../api/reviewsApi.js";
+import { toastApiError, tryApi } from "../../utils/shared/apiToast.js";
+import { avatarSrc, DEFAULT_AVATAR } from "../../utils/shared/mediaUrl.js";
 
 const STAR_FILTERS = [
   { value: "all", stars: 0 },
@@ -27,11 +31,148 @@ function filterAriaLabel(value, stars) {
   return `Lọc đánh giá ${stars} sao`;
 }
 
-
 function formatReviewDate(value) {
   if (!value) return "—";
   const d = new Date(value);
   return Number.isNaN(d.getTime()) ? "—" : d.toLocaleDateString("vi-VN");
+}
+
+function StarRow({ count, max = 5, size = 13, filledClass = "fill-amber-400 text-amber-400" }) {
+  return (
+    <div className="flex gap-0.5">
+      {Array.from({ length: max }, (_, i) => (
+        <Star
+          key={i}
+          size={size}
+          className={i < count ? filledClass : "text-slate-300"}
+          strokeWidth={i < count ? 0 : 2}
+        />
+      ))}
+    </div>
+  );
+}
+
+function AutoGrowTextarea({ value, onChange, className = "", placeholder }) {
+  const ref = useRef(null);
+
+  const syncHeight = useCallback(() => {
+    const el = ref.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${el.scrollHeight}px`;
+  }, []);
+
+  useLayoutEffect(() => {
+    syncHeight();
+  }, [value, syncHeight]);
+
+  return (
+    <textarea
+      ref={ref}
+      value={value}
+      onChange={(e) => {
+        onChange(e.target.value);
+        requestAnimationFrame(syncHeight);
+      }}
+      rows={1}
+      placeholder={placeholder}
+      className={`resize-none overflow-hidden ${className}`}
+    />
+  );
+}
+
+function ReviewCard({ meeting, replyId, replyText, replyBusy, onReplyOpen, onReplyCancel, onReplyChange, onReplySubmit }) {
+  const review = meeting.menteeReview;
+  const hasAvatar = meeting.mentee.avatar && meeting.mentee.avatar !== DEFAULT_AVATAR;
+
+  return (
+    <article className="border-b border-slate-100 px-4 py-6 last:border-b-0 sm:px-6 sm:py-7">
+      <div className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="flex min-w-0 items-center gap-3">
+          {hasAvatar ? (
+            <img
+              src={meeting.mentee.avatar}
+              alt=""
+              className="h-14 w-14 shrink-0 rounded-xl object-cover ring-1 ring-slate-200"
+              onError={(e) => {
+                e.currentTarget.onerror = null;
+                e.currentTarget.src = DEFAULT_AVATAR;
+              }}
+            />
+          ) : (
+            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl border-2 border-dashed border-slate-200 bg-slate-50">
+              <ImageIcon size={22} className="text-slate-300" strokeWidth={1.5} />
+            </div>
+          )}
+          <div className="min-w-0">
+            <p className="truncate text-sm font-bold text-slate-900">{meeting.mentee.name}</p>
+            <p className="truncate text-xs text-slate-500">
+              {meeting.position}
+              {meeting.company ? ` · ${meeting.company}` : ""}
+            </p>
+          </div>
+        </div>
+        <div className="flex shrink-0 flex-col items-start gap-1 sm:items-end">
+          <StarRow count={review.rating} size={14} />
+          <p className="text-xs text-slate-400">{formatReviewDate(review.reviewDate)}</p>
+        </div>
+      </div>
+
+      <blockquote className="font-headline text-lg font-medium italic leading-relaxed text-slate-700 sm:text-xl">
+        &ldquo;{review.comment || "Không có nội dung nhận xét."}&rdquo;
+      </blockquote>
+
+      {review.reply?.content ? (
+        <div className="mt-5 rounded-xl border border-[#8037f4]/15 bg-[#8037f4]/5 px-4 py-3">
+          <p className="text-[11px] font-bold uppercase tracking-wider text-[#8037f4]">Phản hồi của bạn</p>
+          <p className="mt-1 text-sm leading-relaxed text-slate-700">{review.reply.content}</p>
+        </div>
+      ) : replyId === meeting.id ? (
+        <div className="mt-5 space-y-2.5">
+          <AutoGrowTextarea
+            value={replyText}
+            onChange={onReplyChange}
+            placeholder="Viết phản hồi cho học viên…"
+            className="min-h-[2.75rem] w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-relaxed text-slate-900 outline-none placeholder:text-slate-400 focus:border-[#8037f4]/40 focus:bg-white focus:ring-2 focus:ring-[#8037f4]/15"
+          />
+          <div className="flex gap-2">
+            <button
+              type="button"
+              disabled={replyBusy}
+              onClick={() => void onReplySubmit(meeting.id)}
+              className="rounded-full bg-slate-900 px-4 py-2 text-xs font-bold text-white transition hover:bg-[#8037f4] disabled:opacity-50"
+            >
+              {replyBusy ? "Đang gửi…" : "Gửi phản hồi"}
+            </button>
+            <button
+              type="button"
+              disabled={replyBusy}
+              onClick={onReplyCancel}
+              className="rounded-full border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-600 transition hover:bg-slate-50"
+            >
+              Hủy
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
+          <button
+            type="button"
+            onClick={() => onReplyOpen(meeting.id)}
+            className="inline-flex items-center gap-2 rounded-full bg-slate-900 px-5 py-2.5 text-sm font-bold text-white transition hover:bg-[#8037f4]"
+          >
+            <Reply size={15} />
+            Phản hồi nhận xét
+          </button>
+          <div className="flex items-center gap-1.5 text-sm text-slate-500">
+            <Star size={14} className="fill-amber-400 text-amber-400" />
+            <span className="font-bold text-slate-800">{review.rating}</span>
+            <span>/5 sao</span>
+          </div>
+        </div>
+      )}
+    </article>
+  );
 }
 
 export function MentorReviews() {
@@ -137,244 +278,155 @@ export function MentorReviews() {
       : 0;
 
   return (
-    <MentorPageShell bottomPad="pb-32">
-      <div className="relative z-10 mx-auto max-w-7xl px-6 pb-16 sm:px-8 sm:pb-20">
-        <div className="mb-10 flex flex-col gap-3 md:mb-12">
-          <h1 className={mentorPageTitle}>
-            <span>Đánh giá</span>{" "}
-            <span className={mentorAccentText}>từ học viên</span>
+    <MentorPageShell bottomPad="pb-20" showAmbient={false} className="!bg-[#f8f9fc]">
+      <div className="relative z-10 mx-auto max-w-[1280px] px-4 pb-12 sm:px-6 lg:px-10">
+        <motion.header
+          initial={{ opacity: 0, y: -12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+          className="mb-6 pt-2 sm:mb-8"
+        >
+          <h1 className="font-headline text-[clamp(1.75rem,4vw,2.75rem)] font-black leading-tight tracking-tight text-slate-900">
+            Đánh giá <span className="text-[#8037f4]">từ học viên</span>
           </h1>
-          <p className={mentorPageSubtitle}>Phản hồi sau buổi mentor — tìm kiếm và trả lời nhận xét</p>
-        </div>
+          <p className="mt-2 max-w-xl text-sm text-slate-500">
+            Phản hồi sau buổi mentor — tìm kiếm và trả lời.
+          </p>
+        </motion.header>
 
-        <div className="mb-10 grid grid-cols-1 gap-5 md:mb-12 md:grid-cols-3 md:gap-6">
-          <div className="glass-card p-6 sm:p-7">
-            <p className="mb-3 text-xs font-semibold text-slate-500">Điểm trung bình</p>
-            <div className="mb-4 flex items-end gap-2">
-              <h3 className={mentorStatValue}>{avgRating.toFixed(1)}</h3>
-              <span className="mb-1 text-lg font-semibold text-slate-500">/ 5</span>
-            </div>
-            <div className="flex gap-1">
-              {[1, 2, 3, 4, 5].map((i) => (
-                <Star
-                  key={i}
-                  size={18}
-                  className={
-                    i <= Math.round(avgRating)
-                      ? "fill-[#FFD600] text-[#FFD600]"
-                      : "text-slate-200"
-                  }
-                />
-              ))}
-            </div>
-          </div>
-
-          <div className="glass-card p-6 sm:p-7">
-            <p className="mb-3 text-xs font-semibold text-slate-500">Tổng nhận xét</p>
-            <h3 className={`mb-2 ${mentorStatValue}`}>
-              {summary.reviewCount || reviewedMeetings.length}
-            </h3>
-            <p className="flex items-center gap-2 text-xs font-medium text-violet-700">
-              <TrendingUp size={14} className="shrink-0" />
-              Hiển thị trên hồ sơ mentor
-            </p>
-          </div>
-
-          <div className="glass-card border-violet-200/80 p-6 sm:p-7">
-            <p className="mb-3 text-xs font-semibold text-slate-500">Tỷ lệ hài lòng</p>
-            <h3 className={`mb-2 ${mentorStatValue} text-violet-800`}>{satisfactionPct}%</h3>
-            <p className="text-xs font-medium text-slate-600">Đánh giá từ 4 sao trở lên</p>
-          </div>
-        </div>
-
-        <div className="mb-8 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-          <div className="relative w-full lg:max-w-md">
-            <Search
-              className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-slate-400"
-              aria-hidden
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.45, delay: 0.06, ease: [0.22, 1, 0.36, 1] }}
+        >
+          <MentorStatPanel>
+            <MentorStatFrame
+              index={1}
+              accent="lime"
+              value={`${avgRating.toFixed(1)}/5`}
+              title="Điểm trung bình"
+              cornerIcon={Star}
+              footer={
+                <div className="mt-3">
+                  <StarRow count={Math.round(avgRating)} size={12} />
+                </div>
+              }
             />
-            <input
-              type="search"
-              placeholder="Tìm theo tên hoặc nội dung…"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className={mentorSearchInput}
-              aria-label="Tìm theo tên hoặc nội dung nhận xét"
+            <MentorStatFrame
+              index={2}
+              accent="purple"
+              value={String(summary.reviewCount || reviewedMeetings.length)}
+              title="Tổng nhận xét"
+              cornerIcon={Quote}
+              footer={
+                <p className="mt-3 flex items-center gap-1 text-xs font-semibold text-[#8037f4]">
+                  Hiển thị trên hồ sơ
+                  <ArrowRight size={12} />
+                </p>
+              }
             />
-          </div>
-          <div
-            className="flex flex-wrap gap-2"
-            role="group"
-            aria-label="Lọc theo số sao"
-          >
-            {STAR_FILTERS.map(({ value, stars }) => {
-              const active = filter === value;
-              return (
-                <button
-                  key={value}
-                  type="button"
-                  onClick={() => setFilter(value)}
-                  aria-label={filterAriaLabel(value, stars)}
-                  aria-pressed={active}
-                  className={`inline-flex min-h-[42px] items-center justify-center rounded-xl border px-4 py-2.5 transition-all ${
-                    value === "all" ? "min-w-[5.5rem] text-sm font-semibold" : "min-w-[4.5rem] gap-0.5"
-                  } ${
-                    active
-                      ? "border-violet-600 bg-violet-600 text-white shadow-sm"
-                      : "border-slate-300 bg-white text-slate-700 shadow-sm hover:border-violet-300 hover:bg-violet-50"
-                  }`}
-                >
-                  {stars === 0 ? (
-                    "Tất cả"
-                  ) : (
-                    <span className="flex items-center gap-px" aria-hidden>
-                      {Array.from({ length: stars }, (_, i) => (
-                        <Star
-                          key={i}
-                          size={15}
-                          className="fill-[#FFD600] text-[#FFD600]"
-                        />
-                      ))}
-                    </span>
-                  )}
-                </button>
-              );
-            })}
-          </div>
-        </div>
+            <MentorStatFrame
+              index={3}
+              accent="purple"
+              value={`${satisfactionPct}%`}
+              title="Tỷ lệ hài lòng"
+              cornerIcon={Heart}
+              footer={
+                <p className="mt-3 text-xs text-violet-500/80">Đánh giá từ 4 sao trở lên</p>
+              }
+            />
+          </MentorStatPanel>
+        </motion.div>
 
-        <div className="space-y-5 pb-6">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
+          className="overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-[0_1px_3px_rgba(15,23,42,0.04)]"
+        >
+          <div className="flex flex-col gap-4 border-b border-slate-100 px-4 py-4 sm:px-6 lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex gap-1 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" role="group" aria-label="Lọc theo số sao">
+              {STAR_FILTERS.map(({ value, stars }) => {
+                const active = filter === value;
+                return (
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() => setFilter(value)}
+                    aria-label={filterAriaLabel(value, stars)}
+                    aria-pressed={active}
+                    className={`relative shrink-0 whitespace-nowrap px-3 py-2 text-xs sm:px-4 sm:text-sm ${
+                      active
+                        ? "font-bold text-slate-900"
+                        : "font-medium text-slate-500 hover:text-slate-700"
+                    }`}
+                  >
+                    {stars === 0 ? (
+                      "Tất cả"
+                    ) : (
+                      <span className="flex items-center gap-px" aria-hidden>
+                        {Array.from({ length: stars }, (_, i) => (
+                          <Star key={i} size={13} className="fill-amber-400 text-amber-400" strokeWidth={0} />
+                        ))}
+                      </span>
+                    )}
+                    {active && (
+                      <motion.span
+                        layoutId="mentorReviewTabUnderline"
+                        className="absolute bottom-0 left-2 right-2 h-0.5 rounded-full bg-[#8037f4]"
+                        transition={{ type: "spring", stiffness: 420, damping: 32 }}
+                      />
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+            <div className="relative w-full shrink-0 lg:w-72">
+              <Search
+                className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
+                aria-hidden
+              />
+              <input
+                type="search"
+                placeholder="Tìm theo tên hoặc nội dung…"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full rounded-xl border border-slate-200 bg-slate-50/80 py-2.5 pl-9 pr-4 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-[#8037f4]/40 focus:bg-white focus:ring-2 focus:ring-[#8037f4]/15"
+                aria-label="Tìm theo tên hoặc nội dung nhận xét"
+              />
+            </div>
+          </div>
+
           {loading ? (
-            <div className="glass-card p-12 text-center text-sm font-medium text-slate-500">
-              Đang tải nhận xét…
-            </div>
+            <div className="px-6 py-14 text-center text-sm text-slate-500">Đang tải nhận xét…</div>
           ) : searched.length === 0 ? (
-            <div className="glass-card p-12 text-center sm:p-14">
-              <MessageCircle size={48} className="mx-auto mb-4 text-slate-300" />
-              <p className="text-base font-semibold text-slate-600">Chưa có nhận xét phù hợp</p>
-              <p className="mt-1 text-sm text-slate-500">
-                Thử đổi bộ lọc hoặc từ khóa tìm kiếm
-              </p>
+            <div className="px-6 py-14 text-center">
+              <MessageCircle size={36} className="mx-auto mb-3 text-slate-300" />
+              <p className="text-sm font-medium text-slate-600">Chưa có nhận xét phù hợp</p>
+              <p className="mt-1 text-xs text-slate-400">Thử đổi bộ lọc hoặc từ khóa tìm kiếm</p>
             </div>
           ) : (
             searched.map((meeting) => (
-              <article
+              <ReviewCard
                 key={meeting.id}
-                className="glass-card overflow-visible p-6 sm:p-8"
-              >
-                <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
-                  <div className="flex gap-4 sm:gap-5">
-                    <img
-                      src={meeting.mentee.avatar}
-                      alt=""
-                      className="h-16 w-16 shrink-0 rounded-2xl object-cover ring-2 ring-slate-200 sm:h-20 sm:w-20"
-                      onError={(e) => {
-                        e.currentTarget.onerror = null;
-                        e.currentTarget.src = DEFAULT_AVATAR;
-                      }}
-                    />
-                    <div className="min-w-0">
-                      <h3 className="text-lg font-bold tracking-tight text-slate-900 sm:text-xl">
-                        {meeting.mentee.name}
-                      </h3>
-                      <p className="mt-0.5 text-sm font-medium text-slate-500">
-                        {meeting.position}
-                        {meeting.company ? ` · ${meeting.company}` : ""}
-                      </p>
-                      <div className="mt-3 flex flex-wrap items-center gap-2">
-                        <div className="flex gap-0.5">
-                          {[1, 2, 3, 4, 5].map((i) => (
-                            <Star
-                              key={i}
-                              size={14}
-                              className={
-                                i <= meeting.menteeReview.rating
-                                  ? "fill-[#FFD600] text-[#FFD600]"
-                                  : "text-slate-200"
-                              }
-                            />
-                          ))}
-                        </div>
-                        <span className="text-sm font-semibold text-slate-800">
-                          {meeting.menteeReview.rating}/5
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                  <p className="flex shrink-0 items-center gap-2 text-sm font-medium text-slate-500">
-                    <Calendar size={14} className="text-slate-400" />
-                    {formatReviewDate(meeting.menteeReview.reviewDate)}
-                  </p>
-                </div>
-
-                <div className="relative mt-6 rounded-2xl border border-slate-200 bg-slate-50/90 p-5 sm:p-6">
-                  <Quote
-                    size={56}
-                    className="pointer-events-none absolute -left-1 -top-2 text-violet-600/10"
-                    aria-hidden
-                  />
-                  <p className="relative text-base font-medium italic leading-relaxed text-slate-700 sm:text-lg">
-                    &ldquo;{meeting.menteeReview.comment}&rdquo;
-                  </p>
-
-                  {meeting.menteeReview.reply?.content ? (
-                    <div className="relative mt-5 rounded-xl border border-violet-100 bg-violet-50/90 px-4 py-3.5">
-                      <p className="text-xs font-semibold text-violet-800">Phản hồi của bạn</p>
-                      <p className="mt-1.5 text-sm leading-relaxed text-slate-800">
-                        {meeting.menteeReview.reply.content}
-                      </p>
-                    </div>
-                  ) : replyId === meeting.id ? (
-                    <div className="relative mt-5 space-y-3">
-                      <textarea
-                        value={replyText}
-                        onChange={(e) => setReplyText(e.target.value)}
-                        rows={3}
-                        placeholder="Viết phản hồi cho học viên…"
-                        className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-[#8037f4] focus:ring-2 focus:ring-[#8037f4]/15"
-                      />
-                      <div className="flex flex-wrap gap-2">
-                        <button
-                          type="button"
-                          disabled={replyBusy}
-                          onClick={() => void submitReply(meeting.id)}
-                          className="rounded-xl bg-violet-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-violet-700 disabled:opacity-50"
-                        >
-                          {replyBusy ? "Đang gửi…" : "Gửi phản hồi"}
-                        </button>
-                        <button
-                          type="button"
-                          disabled={replyBusy}
-                          onClick={() => {
-                            setReplyId("");
-                            setReplyText("");
-                          }}
-                          className="rounded-xl border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50"
-                        >
-                          Hủy
-                        </button>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="relative mt-5 flex justify-end">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setReplyId(meeting.id);
-                          setReplyText("");
-                        }}
-                        className="inline-flex items-center gap-2 rounded-xl border border-violet-200 bg-white px-4 py-2.5 text-sm font-semibold text-violet-700 shadow-sm transition hover:border-violet-300 hover:bg-violet-50"
-                      >
-                        <MessageCircle size={16} />
-                        Phản hồi nhận xét
-                      </button>
-                    </div>
-                  )}
-                </div>
-              </article>
+                meeting={meeting}
+                replyId={replyId}
+                replyText={replyText}
+                replyBusy={replyBusy}
+                onReplyOpen={(id) => {
+                  setReplyId(id);
+                  setReplyText("");
+                }}
+                onReplyCancel={() => {
+                  setReplyId("");
+                  setReplyText("");
+                }}
+                onReplyChange={setReplyText}
+                onReplySubmit={submitReply}
+              />
             ))
           )}
-        </div>
+        </motion.div>
       </div>
     </MentorPageShell>
   );

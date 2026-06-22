@@ -2,8 +2,8 @@ import React, { useEffect, useState, useMemo } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router";
 import { CheckCircle2, AlertCircle, Loader2, Mail } from "lucide-react";
 import { BrandLogo } from "../../components/brand/BrandLogo";
-import { verifyEmail } from "../../utils/auth";
-import { toastApiError, toastApiSuccess } from "../../utils/apiToast";
+import { verifyEmail } from "../../utils/auth/auth.js";
+import { toastApiError, toastApiSuccess } from "../../utils/shared/apiToast.js";
 
 export function VerifyEmail() {
   const navigate = useNavigate();

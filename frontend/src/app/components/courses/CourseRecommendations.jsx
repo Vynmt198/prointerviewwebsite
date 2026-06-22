@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router";
 import { ArrowRight, GraduationCap, Star, Users, BadgeCheck, PlayCircle } from "lucide-react";
 
-import { fetchCourses, mapApiCourseToCard } from "../../utils/courseApi";
+import { fetchCourses, mapApiCourseToCard } from "../../api/courseApi.js";
 
 export function CourseRecommendations({
   courses: propCourses,

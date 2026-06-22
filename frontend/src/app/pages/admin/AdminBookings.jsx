@@ -10,10 +10,11 @@ import {
   Eye,
   MoreHorizontal,
   Banknote,
+  Camera,
 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
-import { adminApi } from "../../utils/adminApi";
-import { toastApiError, toastApiSuccess, tryApi } from "../../utils/apiToast";
+import { adminApi } from "../../api/adminApi.js";
+import { toastApiError, toastApiSuccess, tryApi } from "../../utils/shared/apiToast.js";
 import { AdminSepayOverrideAction } from "../../components/admin/AdminSepayOverrideAction.jsx";
 import { AdminBookingStatusStack } from "../../components/admin/AdminStatusPill.jsx";
 import { AdminFilterSelect, AdminListFilterBar } from "../../components/admin/AdminListFilters.jsx";
@@ -245,6 +246,13 @@ export function AdminBookings() {
           </h2>
         </div>
         <div className="flex w-full min-w-0 flex-wrap items-center gap-3 sm:w-auto sm:justify-end">
+          <Link
+            to="/admin/bookings/check-ins"
+            className="inline-flex shrink-0 items-center gap-2 rounded-2xl border border-emerald-200 bg-emerald-50 px-3 py-2.5 text-[10px] font-black uppercase tracking-wider text-emerald-900 hover:bg-emerald-100 sm:px-4 sm:py-3"
+          >
+            <Camera className="h-4 w-4" />
+            Check-in mentor
+          </Link>
           <button
             type="button"
             onClick={() => void loadBookings()}

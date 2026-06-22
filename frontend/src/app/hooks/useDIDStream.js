@@ -17,7 +17,7 @@
  */
 
 import { useRef, useState, useCallback } from "react";
-import { synthesizeSpeech, createAudioBlobUrl } from "../utils/interviewsApi.js";
+import { synthesizeSpeech, createAudioBlobUrl } from "../api/interviewsApi.js";
 
 export const DID_API = "https://api.d-id.com";
 

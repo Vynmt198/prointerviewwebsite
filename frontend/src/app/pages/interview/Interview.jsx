@@ -20,11 +20,12 @@ import {
   ChevronDown,
   FileText,
 } from "lucide-react";
-import { getLatestCVAnalysisAsync, getUploadedCV, saveUploadedCV } from "../../utils/history";
-import { hasAuthCredentials, isLoggedIn } from "../../utils/auth";
-import { buildLoginPath } from "../../utils/authGate";
-import { generateInterviewQuestions, extractCvTextFromFile, createInterviewSession, pregenerateInterviewVideos } from "../../utils/interviewsApi";
-import { fetchCvAnalysisById } from "../../utils/cvApi";
+import { getLatestCVAnalysisAsync, getUploadedCV, saveUploadedCV } from "../../utils/shared/history.js";
+import { hasAuthCredentials, isLoggedIn } from "../../utils/auth/auth.js";
+import { buildLoginPath } from "../../utils/auth/authGate.js";
+import { trackAction } from "../../utils/analytics/analyticsApi.js";
+import { generateInterviewQuestions, extractCvTextFromFile, createInterviewSession, pregenerateInterviewVideos } from "../../api/interviewsApi.js";
+import { fetchCvAnalysisById } from "../../api/cvApi.js";
 import { InterviewHistoryPanel } from "../../components/interview/InterviewHistoryPanel";
 import { InterviewPageTabs } from "../../components/interview/InterviewPageTabs";
 import { CV_JD_CARD_CLASS } from "../../components/cv/CvJdAnalysisFrame";
@@ -350,6 +351,7 @@ export function Interview() {
     }
     setExtractWarning("");
 
+    trackAction("interview_start", "/interview");
     // Clear stale session data from previous interview before starting new one
     sessionStorage.removeItem("prointerview_questions");
     sessionStorage.removeItem("prointerview_sessionId");
@@ -561,8 +563,9 @@ export function Interview() {
                 <span className="font-extrabold text-[#1a1b23]">từ CV của bạn</span>
               </>
             }
+            titleClassName="font-headline text-[clamp(1.5rem,3.5vw,3.25rem)] font-extrabold leading-[1.12] tracking-tight"
             subtitle="Từ CV của bạn, ProInterview tạo buổi phỏng vấn thử với HR AI và góp ý sau từng câu trả lời để bạn tự tin hơn trước buổi thật."
-            subtitleClassName="mt-3 max-w-full text-sm font-medium leading-relaxed text-slate-600 sm:text-base"
+            subtitleClassName="mt-3 max-w-none text-base font-medium leading-relaxed text-violet-700/90 lg:whitespace-nowrap"
           />
 
         <div className={CV_JD_CARD_CLASS}>

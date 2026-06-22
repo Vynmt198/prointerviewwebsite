@@ -4,8 +4,8 @@ import { CheckCircle2, AlertCircle, Info, Eye, EyeOff as EyeSlash } from "lucide
 import { BrandLogo } from "../../components/brand/BrandLogo";
 import { SparkleGlyph } from "../../components/decor/SparkleGlyph.jsx";
 import { AuthPurpleBackdrop } from "../../components/auth/AuthPurpleBackdrop";
-import { getBrandClickPath, resetPassword } from "../../utils/auth";
-import { toastApiError } from "../../utils/apiToast";
+import { getBrandClickPath, resetPassword } from "../../utils/auth/auth.js";
+import { toastApiError } from "../../utils/shared/apiToast.js";
 import { AUTH_COPY } from "../../constants/brandVoice";
 
 const INPUT_CLS =

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import "../../../styles/home.css";
 import { createPortal } from "react-dom";
 import { useNavigate, Link } from "react-router";
 import {
@@ -116,301 +117,6 @@ const TESTIMONIALS = HOME_SECTION_COPY.testimonials.items.map((t, i) => ({
   stars: 5,
 }));
 
-const HERO_SPARKLE_MIN_MOVE_PX = 18;
-const HERO_SPARKLE_MAX_ON_SCREEN = 55;
-const HERO_SPARKLE_FADE_DURATION_S = 4.0;
-/** Bán kính bung sao quanh đầu chuột khi di chuyển */
-const HERO_SPARKLE_MOVE_SPREAD_PX = 42;
-/** Phần chiều cao video (từ mép trên) được tính vào vùng bling */
-const HERO_VIDEO_SPARKLE_FRACTION = 1 / 3;
-
-function getSparkleZoneTopBound(fallbackTop) {
-  const candidates = [fallbackTop];
-  const heroSection = document.getElementById("home-hero-section");
-  const navShell = document.querySelector(".top-nav-shell-outer");
-  if (heroSection) candidates.push(heroSection.getBoundingClientRect().top);
-  if (navShell) candidates.push(navShell.getBoundingClientRect().top);
-  return Math.min(...candidates);
-}
-
-function getSparkleZoneHorizontalBounds(...rects) {
-  const valid = rects.filter(Boolean);
-  if (!valid.length) return { left: 0, width: 0 };
-  const left = Math.min(...valid.map((r) => r.left));
-  const right = Math.max(...valid.map((r) => r.right));
-  return { left, width: right - left };
-}
-
-function getHeroSparkleZoneBounds() {
-  const heroSection = document.getElementById("home-hero-section");
-  if (!heroSection) return null;
-  return heroSection.getBoundingClientRect();
-}
-
-/** Cả mockup video (title bar + viền + ô phát), không spawn / không giữ sao */
-function isPointOverHeroVideoCard(clientX, clientY) {
-  const card = document.getElementById("home-hero-video-card");
-  if (!card) return false;
-  const rect = card.getBoundingClientRect();
-  return (
-    clientX >= rect.left &&
-    clientX <= rect.right &&
-    clientY >= rect.top &&
-    clientY <= rect.bottom
-  );
-}
-
-function isPointOverNavPill(clientX, clientY) {
-  const pill = document.querySelector(".top-nav-pill");
-  if (!pill) return false;
-  const rect = pill.getBoundingClientRect();
-  return (
-    clientX >= rect.left &&
-    clientX <= rect.right &&
-    clientY >= rect.top &&
-    clientY <= rect.bottom
-  );
-}
-
-function isPointOverHeroIntroBadge(clientX, clientY) {
-  const badge = document.querySelector(".hero-intro-badge");
-  if (!badge) return false;
-  const rect = badge.getBoundingClientRect();
-  return (
-    clientX >= rect.left &&
-    clientX <= rect.right &&
-    clientY >= rect.top &&
-    clientY <= rect.bottom
-  );
-}
-
-function isPointOverHeroIntroCta(clientX, clientY) {
-  const cta = document.querySelector(".hero-intro-cta");
-  if (!cta) return false;
-  const rect = cta.getBoundingClientRect();
-  return (
-    clientX >= rect.left &&
-    clientX <= rect.right &&
-    clientY >= rect.top &&
-    clientY <= rect.bottom
-  );
-}
-
-function shouldSkipSparkleTarget(target, clientX, clientY) {
-  if (target.closest(".top-nav-pill, #home-hero-video-card, video")) return true;
-  if (isPointOverNavPill(clientX, clientY)) return true;
-  if (isPointOverHeroVideoCard(clientX, clientY)) return true;
-  if (target.closest(".hero-intro-badge") || isPointOverHeroIntroBadge(clientX, clientY)) return true;
-  if (target.closest(".hero-intro-cta") || isPointOverHeroIntroCta(clientX, clientY)) return true;
-  if (target.closest("a, h1, p, .aspect-video")) return true;
-  return false;
-}
-
-function isPointInSparkleZone(clientX, clientY, bounds) {
-  if (isPointOverNavPill(clientX, clientY)) return false;
-  if (isPointOverHeroVideoCard(clientX, clientY)) return false;
-  if (isPointOverHeroIntroBadge(clientX, clientY)) return false;
-  if (isPointOverHeroIntroCta(clientX, clientY)) return false;
-  return (
-    clientX >= bounds.left &&
-    clientX <= bounds.left + bounds.width &&
-    clientY >= bounds.top &&
-    clientY <= bounds.top + bounds.height
-  );
-}
-
-function filterSparklesOutsideBlockedAreas(items, bounds) {
-  return items.filter((item) => {
-    const clientX = bounds.left + item.x;
-    const clientY = bounds.top + item.y;
-    return (
-      !isPointOverNavPill(clientX, clientY) &&
-      !isPointOverHeroVideoCard(clientX, clientY) &&
-      !isPointOverHeroIntroBadge(clientX, clientY) &&
-      !isPointOverHeroIntroCta(clientX, clientY)
-    );
-  });
-}
-
-function isSparkleZoneOnScreen(bounds) {
-  return bounds.bottom > 0 && bounds.top < window.innerHeight;
-}
-
-function sparklesAtCursor(localX, localY, vx = 0, vy = 0) {
-  const count = Math.random() > 0.35 ? 3 : 2;
-  const stamp = Date.now();
-  return Array.from({ length: count }, (_, i) => {
-    const angle = Math.random() * Math.PI * 2;
-    const r = Math.random() * HERO_SPARKLE_MOVE_SPREAD_PX;
-    const driftAngle = angle + (Math.random() - 0.5);
-    const driftSpeed = Math.random() * 20 + 10;
-    
-    // Add strong momentum based on mouse velocity
-    const momentumX = vx * 2.5; 
-    const momentumY = vy * 2.5;
-    
-    return {
-      id: `${stamp}-${i}-${Math.random().toString(36).slice(2, 7)}`,
-      x: localX + Math.cos(angle) * r,
-      y: localY + Math.sin(angle) * r,
-      dx: momentumX + Math.cos(driftAngle) * driftSpeed,
-      dy: momentumY + Math.sin(driftAngle) * driftSpeed,
-      rotate: Math.random() * 60 - 30,
-    };
-  });
-}
-
-function HeroAtmosphere() {
-  // Use a fallback for SSR/initial render
-  const initX = typeof window !== 'undefined' ? window.innerWidth / 2 : 1000;
-  const initY = typeof window !== 'undefined' ? window.innerHeight / 2 : 500;
-  
-  const mouseX = useMotionValue(initX);
-  const mouseY = useMotionValue(initY);
-  
-  const pX1 = useTransform(mouseX, [0, 2000], [50, -50]);
-  const pY1 = useTransform(mouseY, [0, 1000], [50, -50]);
-  
-  const pX2 = useTransform(mouseX, [0, 2000], [-35, 35]);
-  const pY2 = useTransform(mouseY, [0, 1000], [-35, 35]);
-  
-  const pX3 = useTransform(mouseX, [0, 2000], [25, -25]);
-  const pY3 = useTransform(mouseY, [0, 1000], [25, -25]);
-
-  const [arrows, setArrows] = useState([]);
-  const [sparklePortalReady, setSparklePortalReady] = useState(false);
-  const [heroBounds, setHeroBounds] = useState(null);
-
-  const pushSparkles = (items) => {
-    if (!items.length) return;
-    setArrows((prev) => {
-      const next = [...prev, ...items];
-      return next.length > HERO_SPARKLE_MAX_ON_SCREEN
-        ? next.slice(next.length - HERO_SPARKLE_MAX_ON_SCREEN)
-        : next;
-    });
-  };
-
-  useEffect(() => {
-    setSparklePortalReady(true);
-  }, []);
-
-  useEffect(() => {
-    let lastX = -1000;
-    let lastY = -1000;
-
-    const syncHeroBounds = () => {
-      const bounds = getHeroSparkleZoneBounds();
-      if (!bounds || !isSparkleZoneOnScreen(bounds)) {
-        setHeroBounds(null);
-        setArrows([]);
-        return;
-      }
-      setHeroBounds(bounds);
-    };
-
-    syncHeroBounds();
-    window.addEventListener("scroll", syncHeroBounds, { passive: true });
-    window.addEventListener("resize", syncHeroBounds);
-
-    const handleMouseMove = (e) => {
-      mouseX.set(e.clientX);
-      mouseY.set(e.clientY);
-
-      const bounds = getHeroSparkleZoneBounds();
-      if (!bounds || !isSparkleZoneOnScreen(bounds)) {
-        setArrows([]);
-        return;
-      }
-      if (!isPointInSparkleZone(e.clientX, e.clientY, bounds)) {
-        return;
-      }
-      if (shouldSkipSparkleTarget(e.target, e.clientX, e.clientY)) return;
-
-      const dist = Math.hypot(e.clientX - lastX, e.clientY - lastY);
-      if (dist >= HERO_SPARKLE_MIN_MOVE_PX) {
-        const localX = e.clientX - bounds.left;
-        const localY = e.clientY - bounds.top;
-        const vx = e.clientX - lastX;
-        const vy = e.clientY - lastY;
-        pushSparkles(filterSparklesOutsideBlockedAreas(sparklesAtCursor(localX, localY, vx, vy), bounds));
-        lastX = e.clientX;
-        lastY = e.clientY;
-      }
-    };
-
-    const handleMouseClick = (e) => {
-      const bounds = getHeroSparkleZoneBounds();
-      if (!bounds || !isPointInSparkleZone(e.clientX, e.clientY, bounds)) return;
-      if (shouldSkipSparkleTarget(e.target, e.clientX, e.clientY)) return;
-
-      const burstCount = 14;
-      const burstRadius = 130;
-      const localX = e.clientX - bounds.left;
-      const localY = e.clientY - bounds.top;
-      const now = Date.now();
-      const burst = Array.from({ length: burstCount }, (_, i) => {
-        const angle = Math.random() * Math.PI * 2;
-        const r = Math.random() * burstRadius;
-        const driftSpeed = Math.random() * 60 + 30;
-        return {
-          id: `${now}-${i}`,
-          x: localX + Math.cos(angle) * r,
-          y: localY + Math.sin(angle) * r,
-          dx: Math.cos(angle) * driftSpeed,
-          dy: Math.sin(angle) * driftSpeed,
-          rotate: Math.random() * 360,
-        };
-      });
-      pushSparkles(filterSparklesOutsideBlockedAreas(burst, bounds));
-    };
-
-    document.addEventListener("mousemove", handleMouseMove);
-    document.addEventListener("mousedown", handleMouseClick);
-    return () => {
-      document.removeEventListener("mousemove", handleMouseMove);
-      document.removeEventListener("mousedown", handleMouseClick);
-      window.removeEventListener("scroll", syncHeroBounds);
-      window.removeEventListener("resize", syncHeroBounds);
-    };
-  }, [mouseX, mouseY]);
-
-  return (
-    <>
-      {sparklePortalReady &&
-        heroBounds &&
-        createPortal(
-          <div
-            className="pointer-events-none fixed z-[60] overflow-hidden"
-            style={{
-              top: heroBounds.top,
-              left: heroBounds.left,
-              width: heroBounds.width,
-              height: heroBounds.height,
-            }}
-          >
-            {arrows.map((arrow) => (
-              <motion.div
-                key={arrow.id}
-                className="pointer-events-none absolute will-change-transform"
-                style={{ left: arrow.x, top: arrow.y }}
-                initial={{ x: "-50%", y: "-50%", opacity: 0.92, scale: 0.86, rotate: arrow.rotate }}
-                animate={{ x: `calc(-50% + ${arrow.dx || 0}px)`, y: `calc(-50% + ${arrow.dy || 0}px)`, opacity: 0, scale: 0.38, rotate: arrow.rotate + 18 }}
-                transition={{ duration: HERO_SPARKLE_FADE_DURATION_S, ease: [0.22, 1, 0.36, 1] }}
-                onAnimationComplete={() =>
-                  setArrows((prev) => prev.filter((a) => a.id !== arrow.id))
-                }
-              >
-                <SparkleGlyph className="h-6 w-6" />
-              </motion.div>
-            ))}
-          </div>,
-          document.body
-        )}
-    </>
-  );
-}
-
 import { achievementsApi } from "../../api/achievementsApi.js";
 
 export function Home() {
@@ -473,548 +179,14 @@ export function Home() {
     <div
       className="min-h-screen selection:bg-[rgba(147,247,43,0.42)] selection:text-slate-900 font-sans relative bg-transparent text-slate-900 -mt-[12rem] pt-[12rem]"
     >
-      <HeroAtmosphere />
 
-      <style>{`
-        .cute-glass {
-          background: linear-gradient(180deg, rgba(0,0,0,0.03), rgba(0,0,0,0.03));
-          border: 1px solid rgba(255,255,255,0.1);
-          backdrop-filter: blur(14px);
-          box-shadow: 0 12px 40px rgba(0,0,0,0.28);
-        }
-        .cute-pill {
-          border-radius: 999px;
-          border: 1px solid rgba(255,255,255,0.12);
-          background: rgba(0,0,0,0.03);
-        }
-        .cute-card {
-          position: relative;
-          border-radius: 24px;
-          border: 1px solid rgba(0,0,0,0.03);
-          background: linear-gradient(180deg, rgba(0,0,0,0.03), rgba(255,255,255,0.025));
-          transform-style: preserve-3d;
-          transition: transform .28s ease, border-color .25s ease, box-shadow .25s ease;
-        }
-        .cute-card:hover {
-          transform: perspective(1000px) translateY(-7px) rotateX(2.5deg) rotateY(-2.5deg);
-          border-color: rgba(196, 255, 71,0.42);
-          box-shadow:
-            0 16px 40px rgba(0,0,0,0.4),
-            0 0 36px -8px rgba(196, 255, 71, 0.22),
-            0 0 0 1px rgba(196, 255, 71, 0.1) inset;
-        }
-        .parallax-layer {
-          transform: translateZ(18px);
-        }
-        .card-glow {
-          position: absolute;
-          inset: -30% -20% auto auto;
-          width: 160px;
-          height: 160px;
-          border-radius: 999px;
-          background: radial-gradient(circle, rgba(110,53,232,0.22), transparent 70%);
-          opacity: 0;
-          transition: opacity .25s ease;
-          pointer-events: none;
-        }
-        .cute-card:hover .card-glow {
-          opacity: 1;
-        }
-        .card-shine {
-          position: absolute;
-          inset: 0;
-          pointer-events: none;
-          overflow: hidden;
-          border-radius: inherit;
-        }
-        .card-shine::after {
-          content: "";
-          position: absolute;
-          top: -120%;
-          left: -45%;
-          width: 35%;
-          height: 300%;
-          background: linear-gradient(90deg, transparent, rgba(255,255,255,0.14), transparent);
-          transform: rotate(18deg) translateX(-180%);
-          transition: transform .65s ease;
-        }
-        .cute-card:hover .card-shine::after {
-          transform: rotate(18deg) translateX(480%);
-        }
-        .hero-title-stack {
-          display: flex;
-          flex-direction: column;
-          gap: 0.5rem;
-          line-height: 1.08;
-        }
-        .hero-title-line {
-          display: block;
-          line-height: 1.08;
-          white-space: nowrap;
-        }
-        @media (max-width: 1023px) {
-          .hero-title-line {
-            white-space: normal;
-            overflow-wrap: break-word;
-          }
-          .home-how-title {
-            font-size: clamp(1.35rem, 5vw, 1.65rem) !important;
-            line-height: 1.15 !important;
-          }
-          .home-hero-section .hero-title-stack {
-            gap: 0;
-          }
-          .home-mobile-gutter {
-            padding-left: 0.875rem;
-            padding-right: 0.875rem;
-          }
-          .glass-card {
-            border-radius: 14px;
-            border-width: 1px;
-          }
-          .home-mobile-tight .cv-analysis-glass-card {
-            border-radius: 12px;
-          }
-        }
-        .cute-heading {
-          letter-spacing: -0.03em;
-          font-weight: 750;
-        }
-        .sticker-badge {
-          border-radius: 999px;
-          border: 1px solid rgba(255,255,255,0.24);
-          background: rgba(255,255,255,0.8);
-          backdrop-filter: blur(10px);
-          box-shadow: 0 10px 24px rgba(0,0,0,0.25);
-        }
-        .float-icon {
-          animation: cuteFloat 3.1s ease-in-out infinite;
-        }
-        .float-icon-delay {
-          animation: cuteFloat 3.1s ease-in-out infinite;
-          animation-delay: .4s;
-        }
-        .float-icon-slow {
-          animation: cuteFloat 4.2s ease-in-out infinite;
-          animation-delay: .2s;
-        }
-        .hero-badge-animated {
-          animation: heroGlowPulse 2.8s ease-in-out infinite;
-        }
-        .hero-title-animated {
-          background-size: 200% 200%;
-          animation: heroGradientFlow 5s ease-in-out infinite;
-        }
-        @keyframes heroWiggle {
-          0% { transform: translate3d(0,0,0) rotate(0deg) scale(1); }
-          18% { transform: translate3d(0.5px,-0.8px,0) rotate(-1deg) scale(1.01); }
-          36% { transform: translate3d(-0.6px,0.6px,0) rotate(1.2deg) scale(1.02); }
-          54% { transform: translate3d(0.4px,-0.4px,0) rotate(-0.8deg) scale(1.01); }
-          72% { transform: translate3d(-0.4px,0.4px,0) rotate(0.8deg) scale(1.01); }
-          100% { transform: translate3d(0,0,0) rotate(0deg) scale(1); }
-        }
-        .hero-title-highlight {
-          display: inline-block;
-          transform-origin: 40% 70%;
-        }
-        @media (prefers-reduced-motion: reduce) {
-          .hero-title-highlight { animation: none; }
-        }
-        .hero-orbit-text {
-          display: inline-block;
-          animation: heroOrbitPop 4.8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
-          transform-origin: center;
-          will-change: transform, opacity, filter;
-        }
-        @keyframes cuteFloat {
-          0%, 100% { transform: translateY(0px); }
-          50% { transform: translateY(-5px); }
-        }
-        @keyframes heroGlowPulse {
-          0%, 100% {
-            box-shadow: 0 0 0 rgba(110,53,232,0.0), 0 0 0 rgba(196, 255, 71,0.0);
-            transform: translateY(0px);
-          }
-          50% {
-            box-shadow: 0 8px 28px rgba(110,53,232,0.2), 0 0 20px rgba(196, 255, 71,0.12);
-            transform: translateY(-1px);
-          }
-        }
-        @keyframes heroGradientFlow {
-          0% { background-position: 0% 50%; }
-          50% { background-position: 100% 50%; }
-          100% { background-position: 0% 50%; }
-        }
-        @keyframes heroOrbitPop {
-          0% {
-            opacity: 1;
-            transform: translate(0px, 0px) scale(1) rotate(0deg);
-            filter: blur(0px);
-          }
-          25% {
-            opacity: 1;
-            transform: translate(5px, -3px) scale(1.02) rotate(2deg);
-            filter: blur(0px);
-          }
-          50% {
-            opacity: 1;
-            transform: translate(-4px, 2px) scale(0.99) rotate(-2deg);
-            filter: blur(0px);
-          }
-          75% {
-            opacity: 1;
-            transform: translate(3px, -2px) scale(1.01) rotate(1deg);
-            filter: blur(0px);
-          }
-          100% {
-            opacity: 1;
-            transform: translate(0px, 0px) scale(1) rotate(0deg);
-            filter: blur(0px);
-          }
-        }
-        @keyframes shimmer-bg {
-          0% { opacity: 0.4; transform: translate(0,0) scale(1); }
-          50% { opacity: 0.7; transform: translate(2%, -2%) scale(1.05); }
-          100% { opacity: 0.4; transform: translate(0,0) scale(1); }
-        }
-        .landing-section-flow {
-          position: relative;
-        }
-        @media (max-width: 639px) {
-        }
-        @media (prefers-reduced-motion: reduce) {
-          .hero-orbit-text { animation: none !important; }
-          .float-icon, .float-icon-delay, .float-icon-slow { animation: none !important; }
-        }
-        .font-headline {
-          letter-spacing: -0.045em;
-          text-shadow: none;
-        }
-        .glass-card {
-          background: #ffffff;
-          backdrop-filter: none;
-          border-radius: 28px;
-          border: 2px solid #8037f4;
-          transition: transform 0.35s ease, border-color 0.25s ease, box-shadow 0.35s ease;
-          position: relative;
-          overflow: hidden;
-          box-shadow: 0 4px 18px rgba(15, 23, 42, 0.06);
-        }
-        .glass-card::before {
-          content: '';
-          position: absolute;
-          inset: 0;
-          background: transparent;
-          pointer-events: none;
-          opacity: 0;
-        }
-        .glass-card:hover {
-          border-color: #630ed4;
-          transform: translateY(-2px);
-          box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
-        }
-        /* 4 ô How it works, trắng ngà sáng, không #fff tinh / không đục */
-        .home-how-step-card {
-          background: linear-gradient(180deg, #fefeff 0%, #faf8fc 100%) !important;
-          border: 2px solid #8037f4 !important;
-          box-shadow: 0 8px 22px rgba(15, 23, 42, 0.05);
-        }
-        .home-how-step-card:hover {
-          border-color: #630ed4 !important;
-          box-shadow: 0 10px 26px rgba(15, 23, 42, 0.07);
-        }
-        /* Bước Nổi bật, giữ nhãn lime */
-        .home-step-featured-dots {
-          background: linear-gradient(180deg, #f0ebf8 0%, #ebe4f6 100%);
-          border-color: rgba(128, 55, 244, 0.42) !important;
-          box-shadow: 0 2px 12px rgba(15, 23, 42, 0.08), 0 0 0 1px rgba(128, 55, 244, 0.14) inset;
-        }
-        .courses-glass-card {
-          background: rgba(255, 255, 255, 0.78);
-          backdrop-filter: blur(20px);
-          -webkit-backdrop-filter: blur(20px);
-          border: 1px solid rgba(255, 255, 255, 0.55);
-          border-radius: 24px;
-          box-shadow: 0 8px 32px rgba(124, 58, 237, 0.08);
-          transition: border-color 0.25s ease, box-shadow 0.3s ease, transform 0.3s ease;
-        }
-        .courses-glass-card:hover {
-          border-color: rgba(124, 58, 237, 0.22);
-          box-shadow: 0 12px 40px rgba(124, 58, 237, 0.14);
-          transform: translateY(-2px);
-        }
-        .courses-cta-primary {
-          background: #bff365;
-          color: #131f00;
-          box-shadow: 0 10px 24px rgba(164, 214, 76, 0.35);
-        }
-        .courses-cta-primary:hover {
-          box-shadow: 0 14px 32px rgba(164, 214, 76, 0.45);
-        }
-        .courses-mascot-lean {
-          object-fit: contain;
-          object-position: left bottom;
-        }
-        @keyframes testimonial-marquee {
-          0% {
-            transform: translateX(0);
-          }
-          100% {
-            transform: translateX(-50%);
-          }
-        }
-        @keyframes testimonial-marquee-rev {
-          0% {
-            transform: translateX(-50%);
-          }
-          100% {
-            transform: translateX(0);
-          }
-        }
-        .testimonial-marquee-row {
-          overflow: hidden;
-          width: 100%;
-        }
-        .testimonial-marquee-row:hover .testimonial-marquee-track {
-          animation-play-state: paused;
-        }
-        .testimonial-marquee-track {
-          display: flex;
-          width: max-content;
-          gap: 1.5rem;
-          animation: testimonial-marquee 44s linear infinite;
-        }
-        .testimonial-marquee-track--alt {
-          animation: testimonial-marquee-rev 56s linear infinite;
-        }
-        @media (prefers-reduced-motion: reduce) {
-          .testimonial-marquee-track,
-          .testimonial-marquee-track--alt {
-            animation: none !important;
-          }
-        }
-
-        /* ── ATMOSPHERIC CLOUD BACKGROUND (Hero Only) ── */
-        .codex-mesh-bg {
-          position: absolute;
-          top: 0; left: 0; right: 0;
-          height: 130vh;
-          z-index: 0;
-          overflow: hidden;
-          pointer-events: none;
-          background-color: transparent;
-          mask-image: linear-gradient(to bottom, black 55%, transparent 100%);
-          -webkit-mask-image: linear-gradient(to bottom, black 55%, transparent 100%);
-        }
-
-        /* Soft lavender-white base */
-        .cloud-base-wash {
-          position: absolute; inset: 0; z-index: 0;
-          background: linear-gradient(155deg, #efe6fa 0%, #e8ddf5 18%, #f5f0fc 40%, #faf8fe 58%, #f0e9f8 78%, #e5dbf3 100%);
-        }
-
-        .cloud-layer { position: absolute; inset: 0; will-change: transform; }
-        .cb { position: absolute; border-radius: 50%; }
-
-        /* ═══════ DEPTH 1: FAR HAZE (most blur, lowest opacity) ═══════ */
-        .cb-far-1 {
-          width: 80vw; height: 65vh; top: -20%; left: -15%;
-          background: radial-gradient(ellipse at 40% 40%, rgba(128,55,244,0.45) 0%, rgba(128,55,244,0) 70%);
-          filter: blur(55px);
-          animation: fog-a 14s ease-in-out infinite;
-        }
-        .cb-far-2 {
-          width: 65vw; height: 55vh; bottom: -15%; right: -10%;
-          background: radial-gradient(ellipse at 55% 60%, rgba(147,87,245,0.4) 0%, rgba(147,87,245,0) 70%);
-          filter: blur(60px);
-          animation: fog-b 16s ease-in-out infinite;
-        }
-        .cb-far-3 {
-          width: 50vw; height: 45vh; top: 10%; right: 20%;
-          background: radial-gradient(ellipse at center, rgba(183,148,255,0.35) 0%, rgba(183,148,255,0) 65%);
-          filter: blur(50px);
-          animation: fog-c 12s ease-in-out infinite;
-        }
-
-        /* ═══════ DEPTH 2: DEEP MID-CLOUDS ═══════ */
-        .cb-deep-1 {
-          width: 50vw; height: 40vh; top: -5%; left: 5%;
-          background: radial-gradient(ellipse at 35% 45%, rgba(110,53,232,0.5) 0%, rgba(110,53,232,0) 65%);
-          filter: blur(40px);
-          animation: fog-d 11s ease-in-out infinite;
-        }
-        .cb-deep-2 {
-          width: 40vw; height: 35vh; top: 30%; right: -5%;
-          background: radial-gradient(ellipse at 60% 40%, rgba(128,55,244,0.45) 0%, rgba(128,55,244,0) 60%);
-          filter: blur(35px);
-          animation: fog-a 12s ease-in-out infinite reverse;
-        }
-        .cb-deep-3 {
-          width: 45vw; height: 38vh; bottom: 5%; left: 15%;
-          background: radial-gradient(ellipse at 40% 55%, rgba(163,112,247,0.42) 0%, rgba(163,112,247,0) 65%);
-          filter: blur(45px);
-          animation: fog-b 15s ease-in-out infinite;
-        }
-        .cb-deep-4 {
-          width: 30vw; height: 28vh; top: 15%; left: 35%;
-          background: radial-gradient(ellipse at center, rgba(99,14,212,0.38) 0%, rgba(99,14,212,0) 60%);
-          filter: blur(32px);
-          animation: fog-c 10s ease-in-out infinite;
-        }
-
-        /* ═══════ DEPTH 3: MID FORMATIONS (main visible masses) ═══════ */
-        .cb-mid-1 {
-          width: 38vw; height: 32vh; top: 8%; left: 0%;
-          background: radial-gradient(ellipse at 45% 50%, rgba(128,55,244,0.55) 0%, rgba(128,55,244,0) 60%);
-          filter: blur(25px);
-          animation: fog-d 9s ease-in-out infinite;
-        }
-        .cb-mid-2 {
-          width: 32vw; height: 28vh; top: 25%; left: 28%;
-          background: radial-gradient(ellipse at 50% 45%, rgba(110,53,232,0.52) 0%, rgba(110,53,232,0) 58%);
-          filter: blur(20px);
-          animation: fog-a 11s ease-in-out infinite;
-        }
-        .cb-mid-3 {
-          width: 35vw; height: 30vh; top: 5%; right: 10%;
-          background: radial-gradient(ellipse at 55% 40%, rgba(147,87,245,0.48) 0%, rgba(147,87,245,0) 62%);
-          filter: blur(22px);
-          animation: fog-b 12s ease-in-out infinite reverse;
-        }
-        .cb-mid-4 {
-          width: 28vw; height: 25vh; bottom: 18%; right: 20%;
-          background: radial-gradient(ellipse at center, rgba(163,112,247,0.45) 0%, rgba(163,112,247,0) 58%);
-          filter: blur(18px);
-          animation: fog-c 8s ease-in-out infinite;
-        }
-        .cb-mid-5 {
-          width: 25vw; height: 22vh; bottom: 30%; left: 10%;
-          background: radial-gradient(ellipse at 40% 55%, rgba(128,55,244,0.42) 0%, rgba(128,55,244,0) 55%);
-          filter: blur(15px);
-          animation: fog-d 11s ease-in-out infinite reverse;
-        }
-
-        /* ═══════ DEPTH 4: UPPER-RIGHT DARKER MASS ═══════ */
-        .cb-dark-1 {
-          width: 45vw; height: 40vh; top: -10%; right: -5%;
-          background: radial-gradient(ellipse at 60% 35%, rgba(79,20,180,0.6) 0%, rgba(79,20,180,0) 65%);
-          filter: blur(30px);
-          animation: fog-b 14s ease-in-out infinite;
-        }
-        .cb-dark-2 {
-          width: 30vw; height: 28vh; top: 5%; right: 8%;
-          background: radial-gradient(ellipse at 55% 40%, rgba(99,14,212,0.55) 0%, rgba(99,14,212,0) 60%);
-          filter: blur(22px);
-          animation: fog-c 12s ease-in-out infinite;
-        }
-        .cb-dark-3 {
-          width: 22vw; height: 20vh; top: 18%; right: 18%;
-          background: radial-gradient(ellipse at center, rgba(67,10,160,0.5) 0%, rgba(67,10,160,0) 55%);
-          filter: blur(15px);
-          animation: fog-d 10s ease-in-out infinite reverse;
-        }
-
-        /* ═══════ DEPTH 5: NEAR FOREGROUND WISPS (least blur) ═══════ */
-        .cb-near-1 {
-          width: 30vw; height: 25vh; bottom: 10%; left: 0%;
-          background: radial-gradient(ellipse at 35% 55%, rgba(163,112,247,0.48) 0%, rgba(163,112,247,0) 55%);
-          filter: blur(15px);
-          animation: fog-a 7s ease-in-out infinite;
-        }
-        .cb-near-2 {
-          width: 25vw; height: 20vh; top: 40%; left: 50%;
-          background: radial-gradient(ellipse at center, rgba(183,148,255,0.45) 0%, rgba(183,148,255,0) 50%);
-          filter: blur(12px);
-          animation: fog-b 8s ease-in-out infinite;
-        }
-        .cb-near-3 {
-          width: 20vw; height: 18vh; top: 15%; left: 55%;
-          background: radial-gradient(ellipse at 45% 45%, rgba(128,55,244,0.4) 0%, rgba(128,55,244,0) 50%);
-          filter: blur(10px);
-          animation: fog-c 6s ease-in-out infinite reverse;
-        }
-        .cb-near-4 {
-          width: 22vw; height: 20vh; bottom: 25%; right: 5%;
-          background: radial-gradient(ellipse at 50% 50%, rgba(147,87,245,0.42) 0%, rgba(147,87,245,0) 52%);
-          filter: blur(12px);
-          animation: fog-d 8s ease-in-out infinite;
-        }
-
-        /* ═══════ DEPTH 6: ILLUMINATION & GLOW ═══════ */
-        .cb-glow-1 {
-          width: 50vw; height: 45vh; top: 12%; left: 18%;
-          background: radial-gradient(ellipse at 45% 45%, rgba(255,255,255,0.75) 0%, rgba(255,255,255,0) 55%);
-          filter: blur(45px);
-          animation: fog-glow 11s ease-in-out infinite;
-        }
-        .cb-glow-2 {
-          width: 35vw; height: 30vh; top: 30%; left: 35%;
-          background: radial-gradient(ellipse at center, rgba(248,244,253,0.65) 0%, rgba(248,244,253,0) 50%);
-          filter: blur(35px);
-          animation: fog-glow 14s ease-in-out infinite reverse;
-        }
-        .cb-glow-3 {
-          width: 28vw; height: 24vh; bottom: 20%; left: 25%;
-          background: radial-gradient(ellipse at 40% 50%, rgba(255,255,255,0.55) 0%, rgba(255,255,255,0) 55%);
-          filter: blur(30px);
-          animation: fog-glow 10s ease-in-out infinite;
-        }
-
-        /* Vignette */
-        .cloud-vignette {
-          position: absolute; inset: 0; z-index: 6;
-          background: radial-gradient(
-            ellipse 70% 60% at 45% 45%,
-            transparent 0%, transparent 35%,
-            rgba(110,53,232,0.06) 65%,
-            rgba(79,20,180,0.13) 100%
-          );
-          pointer-events: none;
-        }
-
-        /* Breathing, slow, subtle autonomous movement */
-        @keyframes fog-a {
-          0% { opacity: 1; transform: scale(1) translate(0, 0); }
-          33% { transform: scale(1.05) translate(6%, 8%); }
-          66% { opacity: 0.8; transform: scale(1.1) translate(-4%, 5%); }
-          100% { opacity: 1; transform: scale(1) translate(0, 0); }
-        }
-        @keyframes fog-b {
-          0% { opacity: 1; transform: scale(1) translate(0, 0); }
-          33% { transform: scale(1.08) translate(-8%, 5%); }
-          66% { opacity: 0.82; transform: scale(1.15) translate(5%, -6%); }
-          100% { opacity: 1; transform: scale(1) translate(0, 0); }
-        }
-        @keyframes fog-c {
-          0% { opacity: 1; transform: scale(1) translate(0, 0); }
-          33% { transform: scale(0.95) translate(9%, -8%); }
-          66% { opacity: 0.75; transform: scale(0.9) translate(-6%, -3%); }
-          100% { opacity: 1; transform: scale(1) translate(0, 0); }
-        }
-        @keyframes fog-d {
-          0% { opacity: 1; transform: scale(1) translate(0, 0); }
-          33% { transform: scale(1.05) translate(-6%, -9%); }
-          66% { opacity: 0.85; transform: scale(1.1) translate(8%, 5%); }
-          100% { opacity: 1; transform: scale(1) translate(0, 0); }
-        }
-        @keyframes fog-glow {
-          0% { opacity: 1; transform: scale(1) translate(0, 0); }
-          33% { transform: scale(1.1) translate(5%, 5%); }
-          66% { opacity: 0.7; transform: scale(1.15) translate(-3%, -3%); }
-          100% { opacity: 1; transform: scale(1) translate(0, 0); }
-        }
-
-        @media (prefers-reduced-motion: reduce) {
-          .cb { animation: none !important; }
-        }
-      `}</style>
 
       {/* ═══ HERO (chỉ copy + CTA, clip bling ~1 màn; video section riêng bên dưới) ═══ */}
       <section
         id="home-hero-section"
         className="home-hero-section relative z-10 flex min-h-[100svh] flex-col justify-center px-6 pb-8 pt-24 sm:px-10 sm:pt-28 lg:px-16 lg:pb-10 lg:pt-32 -mb-[17rem] lg:mb-0"
       >
-        
+
         {/* Interactive Mouse Particles */}
         {/* Note: HeroAtmosphere now handles both the background mesh and the mouse particles */}
 
@@ -1034,27 +206,25 @@ export function Home() {
               className="home-hero-title hero-title-stack cute-heading mx-auto mb-5 text-slate-900"
               style={{ fontSize: HOME_HERO_TITLE_CLAMP }}
             >
-              <span className="hero-title-line text-slate-900">
+              {/* Line 1: "Phỏng vấn" + chip */}
+              <span className="hero-title-line inline-flex flex-wrap items-center gap-x-[0.28em] gap-y-1 text-slate-900">
                 {HOME_COPY.titleLine1}{" "}
                 <span
                   className="hero-title-highlight"
                   style={{
-                    background: "linear-gradient(135deg, #630ed4 0%, #9b4ff0 50%, #630ed4 100%)",
-                    backgroundSize: "200% 200%",
-                    WebkitBackgroundClip: "text",
-                    WebkitTextFillColor: "transparent",
-                    backgroundClip: "text",
+                    display: "inline-block",
+                    background: "linear-gradient(135deg, #630ed4 0%, #8037f4 100%)",
+                    color: "#ffffff",
+                    borderRadius: "6px",
+                    padding: "0.02em 0.4em 0.1em",
+                    fontWeight: 800,
                   }}
                 >
                   {HOME_COPY.titleHighlight}
                 </span>
               </span>
-              <span className="hero-title-line text-slate-900">
-                qua mô phỏng hội thoại
-              </span>
-              <span className="hero-title-line text-slate-900">
-                thông minh
-              </span>
+              <span className="hero-title-line text-slate-900">qua mô phỏng hội thoại</span>
+              <span className="hero-title-line text-slate-900">thông minh</span>
             </h1>
 
             <p className="mx-auto mb-8 max-w-xl text-base leading-relaxed text-slate-500 sm:text-lg">
@@ -1090,22 +260,6 @@ export function Home() {
               </button>
             </div>
 
-            <div className="flex flex-wrap items-center justify-center gap-2.5">
-              {[
-                "Phân tích CV thông minh",
-                "AI mô phỏng HR thật",
-                "Kết nối Mentor 1:1",
-                "Khóa học từ Mentor",
-              ].map((chip) => (
-                <span
-                  key={chip}
-                  className="inline-flex items-center gap-1.5 rounded-full border border-slate-200/80 bg-white/70 px-3.5 py-1.5 text-xs font-medium text-slate-600 backdrop-blur-sm"
-                >
-                  <span className="h-1.5 w-1.5 rounded-full bg-[#630ed4]" />
-                  {chip}
-                </span>
-              ))}
-            </div>
           </div>
         </div>
       </section>
@@ -1116,7 +270,7 @@ export function Home() {
       {/* ═══ CV ANALYSIS (navbar #features) ═══ */}
       <div className="landing-section-flow">
         <SectionReveal variant="cv">
-          <CvAnalysisFeatureShowcase/>
+          <CvAnalysisFeatureShowcase />
         </SectionReveal>
       </div>
 
@@ -1153,11 +307,11 @@ export function Home() {
                     className={`max-w-full ${homeTy.title} sm:max-w-none max-lg:flex-row max-lg:flex-wrap`}
                     style={{ fontSize: HOME_SECTION_TITLE_CLAMP }}
                   >
-                    <span className="lg:block text-slate-900">Luyện phỏng vấn </span>
-                    <span className="lg:block text-slate-900">với AI sẵn sàng </span>
-                    <span className="lg:block text-[#630ed4]">cho cơ hội thật</span>
+                    <span className="lg:block text-slate-900 lg:whitespace-nowrap">Luyện phỏng vấn </span>
+                    <span className="lg:block text-slate-900 lg:whitespace-nowrap">với AI sẵn sàng </span>
+                    <span className="lg:block text-[#630ed4] lg:whitespace-nowrap">cho cơ hội thật</span>
                   </h2>
-                  <p className={`mt-2 max-w-[22rem] ${homeTy.body}`}>
+                  <p className={`mt-2 max-w-[22rem] ${homeTy.body} !font-normal`}>
                     Thực chiến phỏng vấn 1-1 cùng AI với bộ câu hỏi được cá nhân hoá theo CV & JD.
                   </p>
                 </div>
@@ -1169,13 +323,13 @@ export function Home() {
 
       <div className="landing-section-flow" style={{ perspective: "1400px" }}>
         <SectionReveal variant="mentor">
-          <MentorFeatureShowcase/>
+          <MentorFeatureShowcase />
         </SectionReveal>
       </div>
 
       <div className="landing-section-flow">
         <SectionReveal variant="courses" delay={0.05}>
-          <CoursesFeatureShowcase/>
+          <CoursesFeatureShowcase />
         </SectionReveal>
       </div>
 
@@ -1332,7 +486,7 @@ export function Home() {
             className={`${homeTy.title} max-w-none`}
             style={{ fontSize: HOME_SECTION_TITLE_CLAMP }}
           >
-            <span className={homeTy.titleLineDark}>Thành tựu nổi bật{" "}
+            <span className={homeTy.titleLineDark}>Tin tức và hoạt động{" "}
               <span className="text-[#630ed4]">từ ProInterview</span>
             </span>
           </h2>
@@ -1364,13 +518,18 @@ export function Home() {
 
                 {/* Content */}
                 <div className="flex flex-col gap-3 p-5">
-                  <span className="text-[11px] font-semibold uppercase tracking-[0.1em] text-violet-500">
-                    {new Date(item.date).toLocaleDateString("en-US", {
-                      month: "short",
-                      day: "numeric",
-                      year: "numeric",
-                    })}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="rounded bg-violet-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest text-violet-700">
+                      {item.category || "Hoạt động"}
+                    </span>
+                    <span className="text-[11px] font-semibold uppercase tracking-[0.1em] text-slate-400">
+                      {new Date(item.date).toLocaleDateString("en-US", {
+                        month: "short",
+                        day: "numeric",
+                        year: "numeric",
+                      })}
+                    </span>
+                  </div>
 
                   <h3 className="text-base font-bold leading-snug tracking-[-0.02em] text-slate-900 line-clamp-2 transition-colors duration-300 group-hover:text-[#630ed4] sm:text-[1.05rem]">
                     {item.title}

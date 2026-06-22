@@ -10,10 +10,10 @@ import {
   PaginationEllipsis,
 } from "../../components/ui/pagination";
 
-import { fetchCourses } from "../../utils/courseApi";
-import { toastApiError } from "../../utils/apiToast";
-import { normalizeCourseStats } from "../../utils/courseStats";
-import { mediaSrc, DEFAULT_COURSE_THUMB, avatarSrc } from "../../utils/mediaUrl";
+import { fetchCourses } from "../../api/courseApi.js";
+import { toastApiError } from "../../utils/shared/apiToast.js";
+import { normalizeCourseStats } from "../../utils/course/courseStats.js";
+import { mediaSrc, DEFAULT_COURSE_THUMB, avatarSrc } from "../../utils/shared/mediaUrl.js";
 import { ImageWithFallback } from "../../components/figma/ImageWithFallback";
 import { CUSTOMER_SHELL_GUTTER, CUSTOMER_SHELL_MAX } from "../../components/layout/customerShellLayout";
 import { AppSelect } from "../../components/ui/AppSelect";
@@ -475,8 +475,9 @@ export function Courses() {
                 rest="tự tin hơn khi ứng tuyển"
               />
             }
+            titleClassName="font-headline text-[clamp(1.5rem,3.5vw,3.25rem)] font-extrabold leading-[1.12] tracking-tight"
             subtitle="Các khóa học do Mentor xây dựng, giúp bạn bổ sung kỹ năng cần thiết cho hành trình ứng tuyển."
-            subtitleClassName="mt-3 max-w-2xl text-base font-medium leading-relaxed text-violet-700/90"
+            subtitleClassName="mt-3 max-w-none text-base font-medium leading-relaxed text-violet-700/90 lg:whitespace-nowrap"
           />
 
           <div className="w-full rounded-3xl border border-violet-200/80 bg-white px-5 py-5 shadow-sm sm:px-7 sm:py-6">

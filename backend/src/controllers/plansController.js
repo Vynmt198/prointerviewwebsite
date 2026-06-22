@@ -1,6 +1,15 @@
 import * as plansService from "../services/plansService.js";
 
 export class PlansController {
+  static async catalog(req, res, next) {
+    try {
+      const result = plansService.getSubscriptionCatalog();
+      res.json({ success: true, plans: result.plans });
+    } catch (err) {
+      next(err);
+    }
+  }
+
   static async current(req, res, next) {
     try {
       const result = await plansService.getCurrentPlan(req.userId);

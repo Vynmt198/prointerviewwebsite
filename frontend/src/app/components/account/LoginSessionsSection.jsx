@@ -1,12 +1,12 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router";
 import { Smartphone, Laptop, ChevronRight, ShieldAlert, Key } from "lucide-react";
-import { toastApiError, toastApiSuccess, tryApi } from "../../utils/apiToast";
+import { toastApiError, toastApiSuccess, tryApi } from "../../utils/shared/apiToast.js";
 import {
   fetchAuthSessions,
   revokeAuthSession,
   getCurrentAuthSessionId,
-} from "../../utils/auth";
+} from "../../utils/auth/auth.js";
 
 const ITEM_DESC_CLS = "text-sm text-slate-500 leading-relaxed tracking-normal";
 

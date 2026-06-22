@@ -1,6 +1,11 @@
 @import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&display=swap');
 
 @custom-variant dark (&:is(.dark *));
+
+@utility font-serif-intel {
+  font-family: 'Instrument Serif', serif;
+}
 
 :root {
   /* ─── Background / Foreground ─────────────────────────── */
@@ -74,7 +79,7 @@
   --shadow-lg: 0px 10px 24px 0px rgba(0, 0, 0, 0.10), 0px 4px 6px -1px rgba(0, 0, 0, 0.07);
   --shadow-xl: 0px 16px 40px 0px rgba(0, 0, 0, 0.12), 0px 8px 10px -1px rgba(0, 0, 0, 0.07);
   --shadow-2xl: 0px 24px 60px 0px rgba(0, 0, 0, 0.15);
-  
+
   --tracking-normal: -0.01em;
   --spacing: 0.25rem;
 }
@@ -108,16 +113,23 @@ body:has(.app-user-shell) {
     radial-gradient(ellipse 105% 90% at -8% 100%, rgba(128, 55, 244, 0.095), transparent 54%),
     radial-gradient(ellipse 100% 85% at 38% 38%, rgba(155, 109, 255, 0.072), transparent 60%),
     radial-gradient(ellipse 90% 75% at 85% 95%, rgba(128, 55, 244, 0.058), transparent 55%),
-    linear-gradient(
-      180deg,
+    linear-gradient(180deg,
       rgba(243, 240, 249, 0.92) 0%,
       rgba(237, 232, 248, 0.85) 22%,
       rgba(210, 200, 232, 0.22) 42%,
       rgba(225, 216, 242, 0.14) 56%,
       rgba(198, 186, 222, 0.2) 72%,
-      rgba(243, 240, 249, 0.95) 100%
-    );
+      rgba(243, 240, 249, 0.95) 100%);
   background-size: auto;
+}
+
+.app-shell-ambient--home {
+  background-color: #090314;
+  background-image:
+    radial-gradient(ellipse 120% 70% at 50% -20%, rgba(128, 55, 244, 0.15), transparent 60%),
+    radial-gradient(ellipse 80% 60% at 90% 20%, rgba(128, 55, 244, 0.12), transparent 50%),
+    radial-gradient(ellipse 70% 50% at 10% 80%, rgba(147, 247, 43, 0.05), transparent 60%),
+    radial-gradient(ellipse 100% 100% at 50% 100%, rgba(128, 55, 244, 0.1), transparent 70%);
 }
 
 /* Terms / Privacy — nền xám trung tính, khớp navbar & thẻ trắng */
@@ -362,6 +374,7 @@ html.app-route-home body {
 }
 
 @media (max-width: 1023px) {
+
   /* Navbar fixed — không clip shadow/bo góc pill */
   .app-user-shell {
     overflow-x: visible;
@@ -397,6 +410,7 @@ html.app-route-home body {
   .app-user-shell--home {
     overflow-x: auto;
   }
+
   .home-layout-fixed {
     width: max(100%, 90rem);
     min-width: 90rem;
@@ -407,7 +421,7 @@ html.app-route-home body {
     min-width: 64rem;
   }
 
-  html.app-route-home .top-nav-pill > * {
+  html.app-route-home .top-nav-pill>* {
     flex-shrink: 0;
   }
 
@@ -479,38 +493,13 @@ html.app-route-home body {
   }
 }
 
-/* Home — giống mock: giữa sáng loang, mép lavender nhẹ */
+/* Home — chung nền sáng, không dải tím nhạt hai đầu */
 .app-shell-ambient--home {
-  background-color: #dcd2eb;
+  background-color: #f6f4fc;
   background-image:
-    linear-gradient(
-      180deg,
-      #d4c8e8 0%,
-      #ddd2ef 6%,
-      #ebe4f6 14%,
-      #f0ebf8 24%,
-      #f6f4fc 38%,
-      #faf9fe 50%,
-      #f6f4fc 62%,
-      #f0ebf8 76%,
-      #ebe4f6 88%,
-      #d4c8e8 100%
-    ),
-    linear-gradient(
-      90deg,
-      #d4c8e8 0%,
-      #ddd2ef 10%,
-      #ebe4f6 22%,
-      #f6f4fc 42%,
-      #faf9fe 50%,
-      #f6f4fc 58%,
-      #ebe4f6 78%,
-      #ddd2ef 90%,
-      #d4c8e8 100%
-    ),
-    radial-gradient(ellipse 100% 92% at -10% 45%, rgba(128, 55, 244, 0.22), transparent 62%),
-    radial-gradient(ellipse 100% 92% at 110% 55%, rgba(128, 55, 244, 0.2), transparent 62%),
-    radial-gradient(ellipse 200% 80% at 50% 0%, rgba(235, 228, 246, 0.95), transparent 55%),
-    radial-gradient(ellipse 240% 110% at 50% 112%, rgba(99, 14, 212, 0.1), transparent 70%),
-    radial-gradient(ellipse 58% 54% at 50% 52%, rgba(255, 255, 255, 0.55), transparent 68%);
+    radial-gradient(ellipse 100% 92% at -10% 45%, rgba(128, 55, 244, 0.12), transparent 62%),
+    radial-gradient(ellipse 100% 92% at 110% 55%, rgba(128, 55, 244, 0.1), transparent 62%),
+    radial-gradient(ellipse 200% 80% at 50% 0%, rgba(235, 228, 246, 0.5), transparent 55%),
+    radial-gradient(ellipse 240% 110% at 50% 112%, rgba(99, 14, 212, 0.05), transparent 70%),
+    radial-gradient(ellipse 58% 54% at 50% 52%, rgba(255, 255, 255, 0.8), transparent 68%);
 }

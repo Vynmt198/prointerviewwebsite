@@ -28,3 +28,4 @@ scratch/
 # misc
 *.local
 coverage/
+.venv-img/

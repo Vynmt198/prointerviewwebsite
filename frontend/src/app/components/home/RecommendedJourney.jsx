@@ -1,6 +1,6 @@
 import React from "react";
 import { useNavigate } from "react-router";
-import { navigateToInterview } from "../../utils/authGate";
+import { navigateToInterview } from "../../utils/auth/authGate.js";
 import {
   Zap as Lightning,
   Brain,

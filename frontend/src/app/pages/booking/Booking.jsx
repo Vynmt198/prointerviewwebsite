@@ -18,19 +18,33 @@ import {
   RotateCcw as ArrowsClockwise,
   Sparkles as Sparkle,
   X,
+  Briefcase,
+  Target,
 } from "lucide-react";
-import { fetchMentor, fetchMentorAvailability } from "../../utils/mentorApi";
-import { isBookingSlotInFuture } from "../../utils/bookingSchedule";
-import { fetchBookedSlots, fetchRebookCredit } from "../../utils/bookingsApi";
-import { toastApiError, toastApiSuccess } from "../../utils/apiToast";
-import { uploadFile } from "../../utils/uploadApi";
-import { getSuggestedBookingDataAsync, saveUploadedCV, saveUploadedJD } from "../../utils/history";
+import { fetchMentor, fetchMentorAvailability } from "../../api/mentorApi.js";
+import { isBookingSlotInFuture } from "../../utils/booking/bookingSchedule.js";
+import { fetchBookedSlots, fetchRebookCredit } from "../../api/bookingsApi.js";
+import { toastApiError, toastApiSuccess } from "../../utils/shared/apiToast.js";
+import { uploadFile } from "../../api/uploadApi.js";
+import { getSuggestedBookingDataAsync, saveUploadedCV, saveUploadedJD } from "../../utils/shared/history.js";
 import { MentorPageShell } from "../../components/mentor/MentorPageShell";
 import { BookingStepBar } from "../../components/booking/BookingStepBar";
 import { CUSTOMER_SHELL_GUTTER, CUSTOMER_SHELL_MAX } from "../../components/layout/customerShellLayout";
 import { BookingPolicySummary } from "../../components/booking/BookingPolicySummary";
 import { BRAND_CTA_LIME_STYLE } from "../../constants/brandColors";
-import { avatarSrc } from "../../utils/mediaUrl";
+import { avatarSrc } from "../../utils/shared/mediaUrl.js";
+import {
+  resolveMentorSessionTypeOptions,
+  resolveSessionTypePrice,
+  sessionTypeLabel,
+} from "../../utils/booking/sessionTypeLabels.js";
+
+const SESSION_TYPE_ICONS = {
+  mock_interview: VideoCamera,
+  cv_review: FileText,
+  career_consulting: Briefcase,
+  custom: Target,
+};
 
 const VI_DAY_SHORT = ["CN", "T2", "T3", "T4", "T5", "T6", "T7"];
 const VI_DAY_FULL = ["Chủ nhật", "Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5", "Thứ 6", "Thứ 7"];
@@ -143,6 +157,24 @@ export function Booking() {
   const [selectedDayFull, setSelectedDayFull] = useState(null);
   const [selectedTime, setSelectedTime]   = useState(null);
   const [form, setForm] = useState({ position: "", note: "", jd: false, cv: false });
+  const [sessionType, setSessionType] = useState("mock_interview");
+
+  const sessionTypeOptions = useMemo(
+    () => (mentor ? resolveMentorSessionTypeOptions(mentor) : []),
+    [mentor],
+  );
+
+  const sessionPrice = useMemo(() => {
+    if (!mentor) return 0;
+    return resolveSessionTypePrice(mentor, sessionType);
+  }, [mentor, sessionType]);
+
+  useEffect(() => {
+    if (!sessionTypeOptions.length) return;
+    if (!sessionTypeOptions.some((o) => o.value === sessionType)) {
+      setSessionType(sessionTypeOptions[0].value);
+    }
+  }, [sessionTypeOptions, sessionType]);
 
   const [suggestedData, setSuggestedData] = useState(null);
   const [showSmartBanner, setShowSmartBanner] = useState(false);
@@ -246,7 +278,8 @@ export function Booking() {
     const params = new URLSearchParams({
       type: "booking",
       mentorId: mentor.id,
-      price: String(mentor.price),
+      price: String(sessionPrice),
+      sessionType,
       date: selectedDay ?? "",
       time: selectedTime ?? "",
       position: form.position,
@@ -641,6 +674,44 @@ export function Booking() {
             <div className="grid grid-cols-1 gap-5 lg:grid-cols-12">
               <div className="glass-card space-y-5 p-5 lg:col-span-7 xl:col-span-8">
                 <div>
+                  <label className="mb-3 block text-[10px] font-black uppercase tracking-wide text-slate-500">
+                    Loại buổi <span className="text-[#4d6600]">*</span>
+                  </label>
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    {sessionTypeOptions.map((opt) => {
+                      const Icon = SESSION_TYPE_ICONS[opt.value] || VideoCamera;
+                      const selected = sessionType === opt.value;
+                      return (
+                        <button
+                          key={opt.value}
+                          type="button"
+                          onClick={() => setSessionType(opt.value)}
+                          className={`rounded-xl border p-4 text-left transition-all ${
+                            selected
+                              ? "border-[#8037f4] bg-violet-50 shadow-[0_4px_16px_rgba(128,55,244,0.12)]"
+                              : "border-slate-200 bg-white hover:border-violet-200 hover:bg-slate-50"
+                          }`}
+                        >
+                          <div className="flex items-start gap-3">
+                            <div
+                              className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${
+                                selected ? "bg-[#8037f4] text-white" : "bg-slate-100 text-slate-600"
+                              }`}
+                            >
+                              <Icon className="h-4 w-4" strokeWidth={2} />
+                            </div>
+                            <div className="min-w-0">
+                              <p className="text-sm font-bold text-slate-900">{opt.label}</p>
+                              <p className="mt-0.5 text-xs leading-relaxed text-slate-500">{opt.hint}</p>
+                            </div>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div>
                   <label className="mb-2 block text-[10px] font-black uppercase tracking-wide text-slate-500">
                     Vị trí đang ứng tuyển <span className="text-[#4d6600]">*</span>
                   </label>
@@ -786,13 +857,22 @@ export function Booking() {
                     <div className="flex justify-between gap-2">
                       <span className="flex items-center gap-2 text-slate-500">
                         <VideoCamera className="h-3.5 w-3.5 text-slate-400" />
+                        Loại buổi
+                      </span>
+                      <span className="max-w-[55%] text-right font-semibold text-slate-900">
+                        {sessionTypeLabel(sessionType)}
+                      </span>
+                    </div>
+                    <div className="flex justify-between gap-2">
+                      <span className="flex items-center gap-2 text-slate-500">
+                        <VideoCamera className="h-3.5 w-3.5 text-slate-400" />
                         Hình thức
                       </span>
                       <span className="font-semibold text-slate-900">Google Meet</span>
                     </div>
                     <div className="flex justify-between border-t border-slate-200 pt-3">
                       <span className="font-bold text-slate-900">Tổng tiền</span>
-                      <span className="text-lg font-black text-[#3d5200]">{mentor.price.toLocaleString("vi")}đ</span>
+                      <span className="text-lg font-black text-[#3d5200]">{sessionPrice.toLocaleString("vi")}đ</span>
                     </div>
                   </div>
                 </div>
@@ -830,7 +910,7 @@ export function Booking() {
                     : undefined
                 }
               >
-                Tiếp tục thanh toán, {mentor.price.toLocaleString("vi")}đ
+                Tiếp tục thanh toán, {sessionPrice.toLocaleString("vi")}đ
                 <CaretRight className="h-4 w-4" />
               </button>
             </div>

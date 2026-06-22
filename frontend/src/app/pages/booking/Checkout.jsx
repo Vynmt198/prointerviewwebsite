@@ -14,50 +14,26 @@ import {
 } from "lucide-react";
 import { Navbar } from "../../components/layout/Navbar";
 import { CUSTOMER_SHELL_GUTTER, CUSTOMER_SHELL_MAX } from "../../components/layout/customerShellLayout";
-import { getUser, isLoggedIn, setLoggedIn } from "../../utils/auth";
-import { fetchCurrentPlan } from "../../utils/plansApi";
+import { getUser, isLoggedIn, setLoggedIn } from "../../utils/auth/auth.js";
+import { fetchCurrentPlan } from "../../api/plansApi.js";
 import { BRAND_LIME, BRAND_PURPLE } from "../../constants/brandColors";
 import { landingPrimaryButtonClass } from "../../constants/landingTheme";
-import { fetchMentor } from "../../utils/mentorApi";
-import { createBooking, fetchRebookCredit } from "../../utils/bookingsApi";
-import { isBookingSlotInFuture } from "../../utils/bookingSchedule";
-import { fetchCourseById } from "../../utils/courseApi";
-import { enrollmentApi } from "../../utils/enrollmentApi";
-import { createSubscriptionTransferPending, fetchTransferStatus } from "../../utils/paymentsApi";
-import { toastApiError, toastApiSuccess } from "../../utils/apiToast";
+import { fetchMentor } from "../../api/mentorApi.js";
+import { createBooking, fetchRebookCredit } from "../../api/bookingsApi.js";
+import { isBookingSlotInFuture } from "../../utils/booking/bookingSchedule.js";
+import { fetchCourseById } from "../../api/courseApi.js";
+import { enrollmentApi } from "../../api/enrollmentApi.js";
+import { trackAction } from "../../utils/analytics/analyticsApi.js";
+import { usePageAnalytics } from "../../hooks/usePageAnalytics.js";
+import { createSubscriptionTransferPending, fetchTransferStatus } from "../../api/paymentsApi.js";
+import { toastApiError, toastApiSuccess } from "../../utils/shared/apiToast.js";
+import {
+  getSubscriptionChargeAmount,
+  resolveCheckoutPlan,
+} from "../../constants/planCatalog.js";
+import { sessionTypeLabel } from "../../utils/booking/sessionTypeLabels.js";
 
-/* ─── Plan meta ─────────────────────────────────────────── */
-
-const PLANS = {
-  starterPro: {
-    name: "Pro",
-    tagline: "Luyện tập nghiêm túc",
-    monthlyPrice: 79000,
-    yearlyPrice: 63000,
-    badge: "PHỔ BIẾN",
-    accentColor: "#8037f4",
-    features: [
-      "10 buổi AI Interview / tháng",
-      "Nhận diện giọng nói tiếng Việt",
-      "20 lượt phân tích CV/JD / tháng",
-      "Phản hồi & đánh giá chi tiết",
-    ],
-  },
-  elitePro: {
-    name: "Elite",
-    tagline: "Chinh phục mọi vòng phỏng vấn",
-    monthlyPrice: 99000,
-    yearlyPrice: 79000,
-    badge: "TỐT NHẤT",
-    accentColor: "#93f72b",
-    features: [
-      "AI Interview KHÔNG GIỚI HẠN",
-      "CV/JD phân tích KHÔNG GIỚI HẠN",
-      "Nhận diện giọng nói tiếng Việt",
-      "Hỗ trợ ưu tiên 24/7",
-    ],
-  },
-};
+/* ─── Plan meta (UI) — giá lấy từ planCatalog ───────────── */
 
 function fmt(n) {
   return new Intl.NumberFormat("vi-VN").format(n) + "đ";
@@ -621,7 +597,19 @@ function CheckoutPayPanel({ mode, fmt, rebookCreditVnd, bookingTotalEstimate, bo
   return null;
 }
 
-function OrderLineItem({ isBooking, isCourse, bookingMentor, courseInfo, plan, billing, bookingDate, bookingTime, baseTotal, fmt }) {
+function OrderLineItem({
+  isBooking,
+  isCourse,
+  bookingMentor,
+  courseInfo,
+  plan,
+  billing,
+  bookingDate,
+  bookingTime,
+  bookingSessionType,
+  baseTotal,
+  fmt,
+}) {
   if (isCourse) {
     return (
       <div className={`${checkoutCard} flex gap-4 p-4 sm:p-5`}>
@@ -659,7 +647,11 @@ function OrderLineItem({ isBooking, isCourse, bookingMentor, courseInfo, plan, b
             <p className="text-base font-semibold text-slate-900 sm:text-lg">
               {bookingMentor?.name || "Đang tải mentor…"}
             </p>
-            <p className={`mt-0.5 ${labelMuted}`}>{bookingMentor?.title || "Buổi phỏng vấn 1:1"}</p>
+            <p className={`mt-0.5 ${labelMuted}`}>
+              {isBooking && bookingSessionType
+                ? sessionTypeLabel(bookingSessionType)
+                : bookingMentor?.title || "Buổi phỏng vấn 1:1"}
+            </p>
             <div className={`mt-2 flex flex-wrap gap-3 ${textMuted} text-xs`}>
               {bookingDate && (
                 <span className="inline-flex items-center gap-1">
@@ -954,6 +946,7 @@ function BankTransferBlock({
 export function Checkout() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  usePageAnalytics();
 
   /* ── Booking / Course / Plan mode ─────────────────────────────── */
   const isBooking = searchParams.get("type") === "booking";
@@ -964,6 +957,13 @@ export function Checkout() {
   const mentorId = searchParams.get("mentorId") ?? "";
   const [bookingMentor, setBookingMentor] = React.useState(null);
   const [courseInfo, setCourseInfo] = React.useState(null);
+
+  React.useEffect(() => {
+    trackAction("checkout_open", "/checkout", {
+      type: searchParams.get("type") || "plan",
+      plan: searchParams.get("plan") || "",
+    });
+  }, []);
 
   React.useEffect(() => {
     if (!isBooking || !mentorId) {
@@ -999,24 +999,21 @@ export function Checkout() {
     })();
   }, [isCourse, courseId]);
 
-  const bookingPrice = Number(bookingMentor?.price ?? searchParams.get("price") ?? 0);
+  const bookingPrice = Number(
+    isBooking ? searchParams.get("price") ?? bookingMentor?.price ?? 0 : bookingMentor?.price ?? searchParams.get("price") ?? 0,
+  );
   const bookingDate = searchParams.get("date") ?? "";
   const bookingTime = searchParams.get("time") ?? "";
+  const bookingSessionType = searchParams.get("sessionType") || "mock_interview";
 
   /* ── Plan mode ────────────────────────────────────────── */
   const planKey = searchParams.get("plan") ?? "starterPro";
   const billing = (searchParams.get("billing") ?? "yearly");
-  const plan = PLANS[planKey] ?? PLANS.starterPro;
-  // Read the exact price shown on the Pricing page (passed via URL); fall back to PLANS data
-  const urlPlanPrice = Number(searchParams.get("planPrice") ?? "0");
-  const price = urlPlanPrice > 0
-    ? urlPlanPrice
-    : (billing === "yearly" ? plan.yearlyPrice : plan.monthlyPrice);
+  const plan = resolveCheckoutPlan(planKey);
+  const price = getSubscriptionChargeAmount(planKey, billing);
   const courseUrlPrice = Number(searchParams.get("price") ?? "0");
   const coursePriceNum = isCourse ? Number((courseInfo?.price ?? courseUrlPrice) || 0) : 0;
-  const planListPrice =
-    billing === "yearly" ? plan.monthlyPrice * 12 : plan.monthlyPrice;
-  const baseTotal = isBooking ? bookingPrice : isCourse ? coursePriceNum : planListPrice;
+  const baseTotal = isBooking ? bookingPrice : isCourse ? coursePriceNum : price;
   const total = isBooking ? bookingPrice : isCourse ? coursePriceNum : price;
 
   const [transferOrderNum, setTransferOrderNum] = useState(() => {
@@ -1156,7 +1153,7 @@ export function Checkout() {
 
     if (isPlanCheckout) {
       setCardError("");
-      const apiPlanKey = planKey === "elitePro" ? "elite_pro" : "starter_pro";
+      const apiPlanKey = plan.planKey;
       try {
         const apiRes = await createSubscriptionTransferPending({
           amount: payAmount,
@@ -1225,6 +1222,11 @@ export function Checkout() {
         const apiRes = await enrollmentApi.enroll(courseId, { paymentMethod: "transfer", orderNum });
         const eid = apiRes.enrollment?._id || apiRes.enrollment?.id;
         if (apiRes.success && eid) {
+          trackAction("course_enroll", "/checkout", {
+            courseId,
+            paid: true,
+            enrollmentId: String(eid),
+          });
           const serverOrder = extractOrderPart(apiRes.orderNum || apiRes.enrollment?.paymentRef);
           if (serverOrder) setTransferOrderNum(serverOrder);
           setBankEnrollmentId(String(eid));
@@ -1281,7 +1283,7 @@ export function Checkout() {
           mentorId: bookingMentor.id,
           date: bookingDate,
           timeSlot: bookingTime,
-          sessionType: "mock_interview",
+          sessionType: bookingSessionType,
           position: bookingPosition,
           note: bookingNote,
           cvFile: bookingCvFile || "",
@@ -1293,6 +1295,11 @@ export function Checkout() {
           applyRebookCreditFromBookingId: rebookFrom,
         });
         if (apiRes.success && apiRes.booking?.id) {
+          trackAction("booking_submit", "/checkout", {
+            mentorId: bookingMentor.id,
+            bookingId: apiRes.booking.id,
+            rebookCredit: true,
+          });
           try {
             sessionStorage.removeItem("prointerview_rebook_from");
           } catch {
@@ -1312,7 +1319,7 @@ export function Checkout() {
         date: bookingDate,
         time: bookingTime,
         timeSlot: bookingTime,
-        sessionType: "mock_interview",
+        sessionType: bookingSessionType,
         position: bookingPosition,
         note: bookingNote,
         cvFile: bookingCvFile || "",
@@ -1326,6 +1333,11 @@ export function Checkout() {
         paymentMethod: "transfer",
       });
       if (apiRes.success && apiRes.booking?.id) {
+        trackAction("booking_submit", "/checkout", {
+          mentorId: bookingMentor.id,
+          bookingId: apiRes.booking.id,
+          paymentMethod: "transfer",
+        });
         const serverOrder = extractOrderPart(apiRes.booking?.paymentRef);
         if (serverOrder) setTransferOrderNum(serverOrder);
         setBankBookingId(apiRes.booking.id);
@@ -1358,9 +1370,7 @@ export function Checkout() {
   const orderCreated = appStep === "awaiting_transfer";
   const paymentConfirmed = appStep === "paid";
   const stepCurrent = paymentConfirmed || orderCreated ? 2 : 1;
-  const showPriceBreakdown =
-    (billing === "yearly" && !isCourse && !isBooking && baseTotal > total) ||
-    (couponApplied && !isCourse);
+  const showPriceBreakdown = couponApplied && !isCourse;
 
   const resolvePaidRedirect = (apiRedirect) => {
     if (apiRedirect) return apiRedirect;
@@ -1378,6 +1388,11 @@ export function Checkout() {
     setAppStep("paid");
 
     if (isPlanCheckout) {
+      trackAction("plan_upgrade", "/checkout", {
+        plan: plan?.planKey || searchParams.get("plan") || "",
+        billing,
+        sepayAuto: Boolean(pollResult?.sepayAuto),
+      });
       try {
         const pr = await fetchCurrentPlan();
         if (pr.success) {
@@ -1660,6 +1675,7 @@ export function Checkout() {
                     billing={billing}
                     bookingDate={bookingDate}
                     bookingTime={bookingTime}
+                    bookingSessionType={bookingSessionType}
                     baseTotal={baseTotal}
                     fmt={fmt}
                   />
@@ -1758,12 +1774,6 @@ export function Checkout() {
 
                   {showPriceBreakdown ? (
                     <div className="space-y-2 px-5 py-4 sm:px-6">
-                      {billing === "yearly" && !isCourse && !isBooking && baseTotal > total && (
-                        <div className="flex justify-between text-sm">
-                          <span className={labelMuted}>Giảm gói năm</span>
-                          <span className="font-medium text-emerald-600">−{fmt(baseTotal - total)}</span>
-                        </div>
-                      )}
                       {couponApplied && !isCourse && (
                         <div className="flex justify-between text-sm">
                           <span className={labelMuted}>Mã giảm (10%)</span>

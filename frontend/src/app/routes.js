@@ -7,7 +7,7 @@ import { ForgotPassword } from "./pages/auth/ForgotPassword";
 import { ResetPassword } from "./pages/auth/ResetPassword";
 import { VerifyEmail } from "./pages/auth/VerifyEmail";
 import { Checkout } from "./pages/booking/Checkout";
-import { getUser } from "./utils/auth.js";
+import { getUser } from "./utils/auth/auth.js";
 import { CVAnalysisHub } from "./pages/cv/CVAnalysisHub";
 import { CVAnalysis } from "./pages/cv/CVAnalysis";
 import { CVAnalysisResult } from "./pages/cv/CVAnalysisResult";
@@ -24,6 +24,7 @@ import { Booking } from "./pages/booking/Booking";
 import { SessionDetail } from "./pages/booking/SessionDetail";
 import { MyBookings } from "./pages/booking/MyBookings";
 import { Profile } from "./pages/account/Profile";
+import { Dashboard } from "./pages/account/Dashboard";
 import { Settings } from "./pages/account/Settings";
 import { PaymentReturn } from "./pages/payment/PaymentReturn";
 import { SuccessPage } from "./pages/payment/SuccessPage";
@@ -63,7 +64,7 @@ import { AdminCoursePayments } from "./pages/admin/AdminCoursePayments.jsx";
 import { AdminSubscriptionPayments } from "./pages/admin/AdminSubscriptionPayments.jsx";
 import { AdminMentorsPending } from "./pages/admin/AdminMentorsPending.jsx";
 import { ProtectedOutlet } from "./components/auth/ProtectedOutlet.jsx";
-import { requireAuthLoader, customerOnlyLoader } from "./utils/requireAuthLoader.js";
+import { requireAuthLoader, requireCustomerAuthLoader } from "./utils/auth/requireAuthLoader.js";
 import {
   AdminUserDetail,
   AdminFinance,
@@ -78,6 +79,7 @@ import { AdminReviews } from "./pages/admin/AdminReviews.jsx";
 import { AdminSupport } from "./pages/admin/AdminSupport.jsx";
 import { AdminMentorDetail } from "./pages/admin/AdminMentorDetail.jsx";
 import { AdminBookingDetail } from "./pages/admin/AdminBookingDetail.jsx";
+import { AdminBookingCheckIns } from "./pages/admin/AdminBookingCheckIns.jsx";
 import { AdminAchievements } from "./pages/admin/AdminAchievements.jsx";
 
 /** Đã đăng nhập mentor/admin → hub riêng, không xem landing customer. */
@@ -124,12 +126,12 @@ export const router = createBrowserRouter([
           );
         },
       },
-      { path: "interview", loader: customerOnlyLoader, Component: Interview },
-      { path: "interview/gender", loader: customerOnlyLoader, Component: AIGenderSelection },
-      { path: "interview/room", loader: customerOnlyLoader, Component: InterviewRoom },
-      { path: "interview/feedback", loader: customerOnlyLoader, Component: InterviewFeedback },
-      { path: "interview/trial", loader: customerOnlyLoader, Component: InterviewTrial },
-      { path: "interview/trial/done", loader: customerOnlyLoader, Component: InterviewTrialDone },
+      { path: "interview", loader: requireCustomerAuthLoader, Component: Interview },
+      { path: "interview/gender", loader: requireCustomerAuthLoader, Component: AIGenderSelection },
+      { path: "interview/room", loader: requireCustomerAuthLoader, Component: InterviewRoom },
+      { path: "interview/feedback", loader: requireCustomerAuthLoader, Component: InterviewFeedback },
+      { path: "interview/trial", loader: requireCustomerAuthLoader, Component: InterviewTrial },
+      { path: "interview/trial/done", loader: requireCustomerAuthLoader, Component: InterviewTrialDone },
       {
         loader: requireAuthLoader,
         Component: ProtectedOutlet,
@@ -140,8 +142,9 @@ export const router = createBrowserRouter([
               const user = getUser();
               if (user?.role === "admin") throw redirect("/admin");
               if (user?.role === "mentor") throw redirect("/mentor/dashboard");
-              throw redirect("/");
+              return null;
             },
+            Component: Dashboard,
           },
           { path: "my-bookings", Component: MyBookings },
           { path: "my-courses", Component: MyCourses },
@@ -200,9 +203,10 @@ export const router = createBrowserRouter([
       { path: "transactions", Component: AdminTransactions },
       { path: "payouts", Component: AdminPayouts },
       { path: "bookings", Component: AdminBookings },
+      { path: "bookings/check-ins", Component: AdminBookingCheckIns },
+      { path: "bookings/:id", Component: AdminBookingDetail },
       { path: "course-payments", Component: AdminCoursePayments },
       { path: "subscription-payments", Component: AdminSubscriptionPayments },
-      { path: "bookings/:id", Component: AdminBookingDetail },
       { path: "content/questions", Component: AdminContentQuestions },
       {
         path: "content/videos",

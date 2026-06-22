@@ -16,6 +16,8 @@ import {
   applyPaidEnrollmentCountsToAdminCourses,
   countPaidEnrollmentsByCourseIds,
 } from "../services/courseStatsService.js";
+import { isUserOnline } from "../utils/userPresence.js";
+import { getPlatformBehavior, getUserJourney } from "../services/analyticsService.js";
 const User = mongoose.model("User");
 const Mentor = mongoose.model("Mentor");
 const Booking = mongoose.model("Booking");
@@ -121,13 +123,19 @@ export const AdminController = {
       const mentors = await Mentor.find()
         .populate(
           "userId",
-          "name email avatar role isActive profileWorkExperience profileEducation profileExtracurricular profileAwards desiredPosition currentCompany experience school",
+          "name email avatar role isActive lastSeenAt profileWorkExperience profileEducation profileExtracurricular profileAwards desiredPosition currentCompany experience school",
         )
         .sort({ createdAt: -1 })
         .lean();
       
       // Có userId: gồm cố vấn đã duyệt (role mentor) và ứng viên đang chờ (role customer).
-      const filtered = mentors.filter((m) => m.userId);
+      const filtered = mentors
+        .filter((m) => m.userId)
+        .map((m) => ({
+          ...m,
+          lastSeenAt: m.userId?.lastSeenAt ?? null,
+          isOnline: isUserOnline(m.userId?.lastSeenAt),
+        }));
       
       res.json({ success: true, mentors: filtered });
     } catch (error) {
@@ -142,7 +150,7 @@ export const AdminController = {
         return res.status(400).json({ success: false, error: "mentorId không hợp lệ." });
       }
       const mentor = await Mentor.findById(id)
-        .populate("userId", "name email avatar role isActive plan")
+        .populate("userId", "name email avatar role isActive plan lastSeenAt")
         .lean();
       if (!mentor) return res.status(404).json({ success: false, error: "Không tìm thấy cố vấn." });
 
@@ -151,6 +159,8 @@ export const AdminController = {
         success: true,
         mentor: {
           ...mentor,
+          lastSeenAt: mentor.userId?.lastSeenAt ?? null,
+          isOnline: isUserOnline(mentor.userId?.lastSeenAt),
           stats: { ...(mentor.stats || {}), sessionsCount },
         },
       });
@@ -321,8 +331,15 @@ export const AdminController = {
   // Lấy danh sách toàn bộ User
   getAllUsers: async (req, res, next) => {
     try {
-      const users = await User.find().sort({ createdAt: -1 });
-      res.json({ success: true, users });
+      const users = await User.find()
+        .select("name email avatar role plan isActive lastSeenAt lastLoginAt createdAt")
+        .sort({ createdAt: -1 })
+        .lean();
+      const rows = users.map((u) => ({
+        ...u,
+        isOnline: isUserOnline(u.lastSeenAt),
+      }));
+      res.json({ success: true, users: rows });
     } catch (error) {
       next(error);
     }
@@ -346,6 +363,7 @@ export const AdminController = {
         success: true,
         user: {
           ...user,
+          isOnline: isUserOnline(user.lastSeenAt),
           stats: { bookingsCount, enrollmentsCount },
         },
       });
@@ -1508,6 +1526,33 @@ export const AdminController = {
       });
     } catch (error) {
       res.status(500).json({ success: false, error: error.message });
+    }
+  },
+
+  getUserJourney: async (req, res, next) => {
+    try {
+      const { id } = req.params;
+      const days = req.query.days;
+      const limit = req.query.limit;
+      const result = await getUserJourney(id, { days, limit });
+      if (!result.ok) {
+        return res.status(result.status).json({ success: false, error: result.error });
+      }
+      res.json({ success: true, journey: result.journey });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  getPlatformBehavior: async (req, res, next) => {
+    try {
+      const result = await getPlatformBehavior({ days: req.query.days });
+      if (!result.ok) {
+        return res.status(result.status).json({ success: false, error: result.error });
+      }
+      res.json({ success: true, behavior: result.behavior });
+    } catch (error) {
+      next(error);
     }
   },
 };

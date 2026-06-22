@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Calendar, ChevronDown, ChevronUp, MessageCircle, Sparkles as Sparkle } from "lucide-react";
-import { fetchInterviewSessions, getInterviewSession } from "../../utils/interviewsApi";
+import { fetchInterviewSessions, getInterviewSession } from "../../api/interviewsApi.js";
 
 function formatDate(value) {
   if (!value) return "";

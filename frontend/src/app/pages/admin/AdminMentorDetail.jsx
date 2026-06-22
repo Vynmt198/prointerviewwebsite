@@ -18,9 +18,10 @@ import {
   adminPageWrap,
   adminStatGrid4,
 } from "../../components/admin/AdminPageShell.jsx";
-import { adminApi } from "../../utils/adminApi.js";
-import { tryApi } from "../../utils/apiToast.js";
-import { avatarSrc } from "../../utils/mediaUrl.js";
+import { adminApi } from "../../api/adminApi.js";
+import { tryApi } from "../../utils/shared/apiToast.js";
+import { avatarSrc } from "../../utils/shared/mediaUrl.js";
+import { UserOnlineStatus } from "../../components/admin/UserOnlineStatus.jsx";
 
 function vnd(amount) {
   return `${Number(amount || 0).toLocaleString("vi-VN")} đ`;
@@ -203,6 +204,11 @@ export function AdminMentorDetail() {
                 <div className="flex flex-wrap items-center gap-2">
                   <StatusPill ok={mentor.isVerified} labelOk="Đã duyệt" labelNo="Chưa duyệt" />
                   <StatusPill ok={mentor.isActive} labelOk="Đang hoạt động" labelNo="Đã khóa" />
+                  <UserOnlineStatus
+                    isOnline={Boolean(mentor.isOnline)}
+                    lastSeenAt={mentor.lastSeenAt}
+                    isActive={mentor.isActive !== false && mentor.userId?.isActive !== false}
+                  />
                 </div>
                 <h3 className="mt-2 font-headline text-2xl font-black text-slate-900">{displayName}</h3>
                 <p className="mt-0.5 text-sm font-medium text-violet-800">{mentor.title || "—"}</p>

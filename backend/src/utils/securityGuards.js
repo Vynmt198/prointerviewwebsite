@@ -44,9 +44,9 @@ export function deviceLabelFromUserAgent(userAgent) {
   return ua.length > 42 ? `${ua.slice(0, 42)}…` : ua;
 }
 
+/** Chỉ bật khi set AUTH_STRICT_SESSION_FINGERPRINT=true (tránh refresh fail khi IP/UA đổi sau proxy). */
 export function shouldEnforceSessionFingerprint() {
-  if (String(process.env.AUTH_STRICT_SESSION_FINGERPRINT || "").toLowerCase() === "true") return true;
-  return String(process.env.NODE_ENV || "").toLowerCase() === "production";
+  return String(process.env.AUTH_STRICT_SESSION_FINGERPRINT || "").toLowerCase() === "true";
 }
 
 export function isUploadSizeAllowed(bytes, maxBytes) {

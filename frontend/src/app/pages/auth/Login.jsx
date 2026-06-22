@@ -13,8 +13,8 @@ import {
   isLoggedIn,
   getPostLoginPath,
   getBrandClickPath,
-} from "../../utils/auth";
-import { toastApiError } from "../../utils/apiToast";
+} from "../../utils/auth/auth.js";
+import { toastApiError } from "../../utils/shared/apiToast.js";
 import { GoogleSignInBlock } from "../../components/auth/GoogleSignInBlock";
 import { BrandLogo } from "../../components/brand/BrandLogo";
 import { SparkleGlyph } from "../../components/decor/SparkleGlyph.jsx";
@@ -191,7 +191,7 @@ export function Login() {
                     <p className="mt-1.5 text-xs leading-relaxed text-amber-900/80">
                       Chạy <code className="rounded bg-amber-100 px-1">npm run dev:full</code> trong thư mục{" "}
                       <code className="rounded bg-amber-100 px-1">frontend</code>. Backend mặc định cổng{" "}
-                      <strong>5001</strong> (macOS thường chiếm 5000).
+                      <strong>5000</strong> (Vite proxy trỏ <code className="rounded bg-amber-100 px-1">localhost:5000</code>).
                     </p>
                   )}
                 </div>

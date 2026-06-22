@@ -5,8 +5,8 @@ import { CustomerPageHeader } from "../../components/layout/CustomerPageHeader";
 import { CUSTOMER_SHELL_GUTTER, CUSTOMER_SHELL_MAX } from "../../components/layout/customerShellLayout";
 import { CV_JD_CARD_CLASS } from "../../components/cv/CvJdAnalysisFrame";
 import { Check, Mars, Venus, Mic, AlertCircle } from "lucide-react";
-import { apiUrl } from "../../utils/api";
-import { getBaselineQuestions, pregenerateBaselineVideos } from "../../utils/interviewsApi";
+import { apiUrl } from "../../api/http";
+import { getBaselineQuestions, pregenerateBaselineVideos } from "../../api/interviewsApi";
 
 const CTA_LIME =
   "bg-gradient-to-r from-[#93f72b] to-[#93f72b] text-violet-950 shadow-[0_8px_28px_rgba(196,255,71,0.25)] hover:brightness-110";

@@ -1,7 +1,6 @@
 import React from "react";
 import { Link, useLocation, useNavigate } from "react-router";
 import {
-  LayoutGrid,
   FileText,
   Mic,
   Users,
@@ -11,13 +10,10 @@ import {
   Zap,
   ChevronsUpDown,
   Calendar,
-  TrendingUp,
   Star,
-  CircleDollarSign,
   GraduationCap,
   BookOpen,
   BookText,
-  ClipboardList,
   Shield,
   Home,
   LogIn,
@@ -44,17 +40,16 @@ import {
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
 import {
-  getUser,
   logout,
   getInitials,
   getBrandClickPath,
   getPlans,
   getDisplayName,
-  hasAuthCredentials,
   PLANS_CHANGED_EVENT,
-} from "../../utils/auth";
+} from "../../utils/auth/auth.js";
+import { useAuthSession } from "../../hooks/useAuthSession";
 import { SidebarBrandButton } from "./SidebarBrandButton";
-import { requireLoginNavigate } from "../../utils/authGate";
+import { requireLoginNavigate } from "../../utils/auth/authGate.js";
 
 /* ── Nav data ─────────────────────────────────────────────── */
 const customerMainItems = [
@@ -65,15 +60,7 @@ const customerMainItems = [
   { title: "Tìm Mentor", url: "/mentors", icon: Users, public: true },
 ];
 
-const mentorMainItems = [
-  { title: "Bảng điều khiển", url: "/mentor/dashboard", icon: LayoutGrid },
-  { title: "Lịch họp", url: "/mentor/schedule", icon: Calendar },
-  { title: "Khóa học", url: "/mentor/courses", icon: GraduationCap },
-  { title: "Đánh giá chéo", url: "/mentor/peer-review", icon: ClipboardList },
-  { title: "Tài chính", url: "/mentor/finance", icon: CircleDollarSign },
-  { title: "Phân tích", url: "/mentor/analytics", icon: TrendingUp },
-  { title: "Đánh giá", url: "/mentor/reviews", icon: Star },
-];
+import { MENTOR_MAIN_NAV, MENTOR_SECONDARY_NAV } from "./mentorNav.js";
 
 const secondaryItems = [
   { title: "Hồ sơ", url: "/profile", icon: User, requiresAuth: true },
@@ -102,8 +89,7 @@ export function AppSidebar() {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const user = getUser();
-  const loggedIn = hasAuthCredentials();
+  const { loggedIn, user } = useAuthSession();
   const [plans, setPlans] = React.useState(getPlans);
   React.useEffect(() => {
     const refresh = () => setPlans(getPlans());
@@ -125,7 +111,7 @@ export function AppSidebar() {
   const mainNavItems = !loggedIn
     ? guestMainItems
     : isMentor
-      ? mentorMainItems
+      ? MENTOR_MAIN_NAV
       : customerMainItems;
   const secondaryNav = !loggedIn
     ? guestSecondaryItems

@@ -9,8 +9,8 @@ import {
   ShieldCheck,
   Mail,
 } from "lucide-react";
-import { registerUser, getBrandClickPath } from "../../utils/auth";
-import { toastApiError } from "../../utils/apiToast";
+import { registerUser, getBrandClickPath } from "../../utils/auth/auth.js";
+import { toastApiError } from "../../utils/shared/apiToast.js";
 import { GoogleSignInBlock } from "../../components/auth/GoogleSignInBlock";
 import { BrandLogo } from "../../components/brand/BrandLogo";
 import { SparkleGlyph } from "../../components/decor/SparkleGlyph.jsx";

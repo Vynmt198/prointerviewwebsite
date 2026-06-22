@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate, useSearchParams, useLocation } from "react-router";
 import {
   FileText,
-  ChevronDown,
   ChevronRight,
   Check,
   X,
@@ -19,40 +18,37 @@ import {
   RefreshCw,
   BadgeCheck,
 } from "lucide-react";
-import { getPlans, getCVRemaining, incrementCVCount, CV_FREE_LIMIT, isLoggedIn } from "../../utils/auth";
-import { buildLoginPath } from "../../utils/authGate";
-import { apiUrl as expressApiUrl, isExpressBackendConfigured } from "../../utils/api";
+import { getPlans, isLoggedIn, getUser, hasAuthCredentials, CV_FREE_LIMIT } from "../../utils/auth/auth.js";
+import { buildLoginPath } from "../../utils/auth/authGate.js";
+import { trackAction } from "../../utils/analytics/analyticsApi.js";
+import { apiUrl as expressApiUrl, isExpressBackendConfigured } from "../../api/http.js";
 import { CvJdAnalysisPage, cvAnalysisPageHeader } from "../../components/cv/CvJdAnalysisFrame";
+import { AppSelect } from "../../components/ui/AppSelect";
 import {
   CV_FIELD_ANALYSIS_PATH,
   CV_FIELD_HISTORY_PATH,
   CV_JD_HISTORY_PATH,
   cvAnalysisResultPath,
 } from "../../components/cv/CvJdAnalysisTabs";
-import { addCVAnalysisRecord } from "../../utils/history";
 import {
   buildCvAnalysisSavePayload,
   deleteCvAnalysis,
   fetchCvAnalyses,
   fetchCvAnalysisById,
+  fetchCvQuota,
   formatCvSaveError,
   saveCvAnalysis,
-} from "../../utils/cvApi";
+} from "../../api/cvApi.js";
 import { buildFieldAnalysisMockPipeline } from "../../data/cvFieldAnalysisMock.js";
 import {
   formatSkillSuggestionReason,
   mapPythonCvPipelineToAnalysis,
-} from "../../utils/cvMappers.js";
-import { uploadCvJdFiles } from "../../utils/cvFileUpload.js";
-import { projectId, publicAnonKey } from "/utils/supabase/info.js";
+  computeCvRemainingFromQuota,
+} from "../../utils/cv/cvMappers.js";
+import { uploadCvJdFiles } from "../../utils/cv/cvFileUpload.js";
 
 // ─── API base ─────────────────────────────────────────────────────────────────
-const EDGE_FN = "make-server-64a0c849";
 const USE_EXPRESS_CV = isExpressBackendConfigured();
-const SUPABASE_CONFIGURED = Boolean(String(import.meta.env.VITE_SUPABASE_PROJECT_ID ?? "").trim());
-const API_BASE = SUPABASE_CONFIGURED
-  ? `https://${projectId}.supabase.co/functions/v1/${EDGE_FN}`
-  : "";
 
 function getSessionId() {
   const key = "prointerview_session_id";
@@ -61,28 +57,12 @@ function getSessionId() {
   return id;
 }
 
-// This server does NOT list "apikey" in Access-Control-Allow-Headers,
-// so sending it as a header causes CORS preflight to fail with
-// "Failed to fetch". Only Authorization is safe to include.
-function apiHeaders(userToken) {
-  const t = userToken ?? "";
-  const hasToken = !!(t && t !== "null" && t !== "undefined" && t.length > 20);
-  if (!hasToken) return {};
-  return { "Authorization": `Bearer ${t}` };
-}
-
-function supabaseApiUrl(path) {
-  if (!SUPABASE_CONFIGURED) return "";
-  return `${API_BASE}/${path}`;
-}
-
 /**
- * JWT từ backend (/api/auth). Edge function Supabase có thể không chấp nhận token này —
- * khi đó CV vẫn chạy ở chế độ demo (không gửi Bearer).
+ * Force-refresh JWT trước khi gửi request để tránh token stale.
  */
 async function getForceRefreshedToken() {
   try {
-    const { getFreshAccessToken } = await import("../../utils/auth");
+    const { getFreshAccessToken } = await import("../../utils/auth/auth.js");
     return await getFreshAccessToken();
   } catch {
     return "";
@@ -107,16 +87,25 @@ function buildFd(
 
 /** FastAPI trả `detail` (string hoặc mảng validation); Express dùng `error`. */
 function formatCvAnalyzerHttpError(status, body) {
+  if (status === 429) return "Hệ thống đang bận, vui lòng thử lại sau 1–2 phút.";
+  
   const e = body ?? {};
-  if (typeof e.detail === "string" && e.detail.trim()) return e.detail.trim();
-  if (Array.isArray(e.detail)) {
-    const parts = e.detail
-      .map((d) => (d && typeof d === "object" && d.msg ? String(d.msg) : typeof d === "string" ? d : ""))
-      .filter(Boolean);
-    if (parts.length) return parts.join(" · ");
+  const raw =
+    (typeof e.detail === "string" && e.detail.trim()) ||
+    (Array.isArray(e.detail) && e.detail.map((d) => d?.msg ?? d).filter(Boolean).join(" · ")) ||
+    (typeof e.error === "string" && e.error.trim()) ||
+    "";
+
+  if (status === 503 || status === 502) {
+    return raw || "Dịch vụ phân tích tạm thời không khả dụng, thử lại sau ít phút.";
   }
-  if (typeof e.error === "string" && e.error.trim()) return e.error.trim();
-  return `CV Analyzer lỗi ${status}`;
+  if (status === 504) return raw || "Phân tích mất quá nhiều thời gian, thử lại sau.";
+
+  const isTechnical = /\.env|LLM_?|API.?KEY|localhost|127\.|uvicorn|cv_jd_matching|ollama|googleapis|generativelanguage|Cloud LLM/i.test(raw);
+  // Hide technical errors for normal bad requests, but we already returned raw for 502/503/504
+  if (isTechnical || !raw) return "Phân tích thất bại, vui lòng thử lại sau.";
+
+  return raw;
 }
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -256,7 +245,26 @@ export function CVAnalysis() {
   const loginReturnPath = routeMode === "field" ? "/cv-analysis/field" : "/cv-analysis/jd";
   
   const [plans]            = useState(getPlans());
-  const [cvRemaining, setCvRemaining] = useState(getCVRemaining());
+  const [cvRemaining, setCvRemaining] = useState(0);
+  const [cvQuotaLimit, setCvQuotaLimit] = useState(CV_FREE_LIMIT);
+
+  const loadCvQuota = useCallback(async () => {
+    if (!hasAuthCredentials()) {
+      setCvRemaining(0);
+      setCvQuotaLimit(CV_FREE_LIMIT);
+      return;
+    }
+    const res = await fetchCvQuota();
+    if (!res.success || !res.quota) return;
+    const planKey = getUser()?.plan ?? "free";
+    const remaining = computeCvRemainingFromQuota(res.quota, planKey);
+    setCvRemaining(Number.isFinite(remaining) ? remaining : 999);
+    setCvQuotaLimit(Number(res.quota.cvAnalysisLimit) || CV_FREE_LIMIT);
+  }, []);
+
+  useEffect(() => {
+    loadCvQuota();
+  }, [loadCvQuota]);
 
   // Page-level view
   const [pageView, setPageView] = useState("analysis");
@@ -268,7 +276,6 @@ export function CVAnalysis() {
   const [selectedField, setSelectedField] = useState(() =>
     routeMode === "field" ? DEFAULT_FIELD : ""
   );
-  const [fieldOpen, setFieldOpen] = useState(false);
 
   useEffect(() => {
     if (routeMode === "field") {
@@ -346,6 +353,13 @@ export function CVAnalysis() {
   const goToResultPage = useCallback(
     (payload, { replay = false } = {}) => {
       const mode = routeMode === "field" ? "field" : "jd";
+      if (!replay && payload?.analysis) {
+        trackAction("cv_analyze_done", location.pathname, {
+          mode,
+          analysisId: payload.analysisId ?? null,
+          matchScore: payload.analysis?.matchScore ?? null,
+        });
+      }
       navigate(cvAnalysisResultPath(mode, payload.analysisId), {
         state: {
           analysis: payload.analysis,
@@ -363,7 +377,7 @@ export function CVAnalysis() {
         },
       });
     },
-    [navigate, routeMode, cvFile, jdFile, reuseCV, reuseJD],
+    [navigate, routeMode, cvFile, jdFile, reuseCV, reuseJD, location.pathname],
   );
 
   const resetForm = () => {
@@ -429,11 +443,7 @@ export function CVAnalysis() {
     if (needsJdForRoute && !Boolean(jdUploaded || reuseJD || jdFile)) return;
     if (!canAnalyze) return;
 
-    if (!plans.starterPro && !plans.elitePro) {
-      setCvRemaining(prev => Math.max(0, prev - 1));
-      incrementCVCount();
-    }
-
+    trackAction("cv_analyze_start", location.pathname, { mode: routeMode });
     setStep("loading"); setAnalyzeError(null); setProgress(0); setLoadingStage(0);
 
     const hasJdInput = jdUploaded || !!reuseJD || !!jdFile;
@@ -459,20 +469,6 @@ export function CVAnalysis() {
         let jdStoragePath = null;
 
         // ── Helpers ────────────────────────────────────────────────────────
-        const applyResult = (d) => {
-          addCVAnalysisRecord({
-            id: `cv-${Date.now()}`, date: new Date().toLocaleDateString("vi-VN"),
-            mode: analyzeMode , cvFile: cvFile?.name ?? reuseCV?.name ?? "cv",
-            jdFile: jdFile?.name ?? reuseJD?.name ?? null,
-            field: analyzeMode === "field" ? (selectedField || "IT / Công nghệ") : null,
-            company: d.analysis.company ?? null, position: d.analysis.position ?? null,
-            matchScore: d.analysis.matchScore, totalKeywords: d.analysis.totalKeywords,
-            matchedKeywords: d.analysis.matchedKeywords, missingKeywords: d.analysis.missingKeywords,
-            scores: d.analysis.scores, strengths: d.analysis.strengths,
-            weaknesses: d.analysis.weaknesses, suggestions: d.analysis.suggestions,
-          } );
-        };
-
         // Force-refresh the session BEFORE sending so we always have the
         // freshest JWT, avoids the "Invalid JWT" 401 caused by stale tokens.
         // We deliberately do NOT send "apikey" as a header because this server's
@@ -769,9 +765,8 @@ export function CVAnalysis() {
           throw new Error("Chọn chế độ phân tích CV + JD hoặc theo ngành nghề từ trang hub.");
         }
 
-        applyResult(data);
-
         setProgress(100);
+        await loadCvQuota();
         await new Promise((r) => setTimeout(r, 350));
         goToResultPage(data);
         setStep("upload");
@@ -782,23 +777,8 @@ export function CVAnalysis() {
         setStep("upload");
       }
     } else {
-      // ── Demo path ──────────────────────────────────────────────────────
-      let p = 0;
-      const iv = setInterval(() => {
-        p += Math.random() * 15;
-        if (p >= 100) {
-          p = 100;
-          clearInterval(iv);
-          setTimeout(() => {
-            goToResultPage({ analysis: null, analysisId: null });
-            setStep("upload");
-          }, 400);
-        }
-        setProgress(Math.min(p, 100));
-        if (p > 20) setLoadingStage(1);
-        if (p > 50) setLoadingStage(2);
-        if (p > 75) setLoadingStage(3);
-      }, 400);
+      setStep("upload");
+      setAnalyzeError("Không tìm thấy file CV. Vui lòng tải lên lại.");
     }
   };
 
@@ -890,7 +870,7 @@ export function CVAnalysis() {
             }`}
           >
             {cvRemaining === 0 ? <Lock className="h-3 w-3" /> : <SealPercent className="h-3 w-3" />}
-            {cvRemaining}/{CV_FREE_LIMIT} lượt
+            {cvRemaining}/{cvQuotaLimit} lượt
           </span>
         ) : null
       }
@@ -1098,61 +1078,19 @@ export function CVAnalysis() {
               {routeMode === "field" && enableField && (
                 <div className="border-t border-violet-100 px-4 py-4 pb-6 sm:px-5 sm:pb-8">
                   <p className="mb-2 text-xs font-bold uppercase tracking-wide text-violet-700">Ngành nghề</p>
-                  <div className="relative z-20">
-                    <button
-                      type="button"
-                      onClick={() => setFieldOpen(!fieldOpen)}
-                      className="group flex w-full items-center justify-between rounded-sm border border-violet-200 bg-white px-4 py-3 text-sm transition-colors hover:border-violet-300"
-                    >
-                      <span className={selectedField ? "font-semibold text-violet-950" : "text-violet-500"}>
-                        {selectedField || "Chọn ngành nghề..."}
-                      </span>
-                      <ChevronDown className={`h-4 w-4 text-violet-500 transition-transform ${fieldOpen ? "rotate-180" : ""}`} />
-                    </button>
-                    {fieldOpen && (
-                      <div className="mt-2 max-h-64 overflow-y-auto rounded-sm border border-violet-200/90 bg-white shadow-lg ring-1 ring-violet-100/80">
-                        {FIELD_OPTIONS.map((opt) => {
-                          const isSelected = opt.available && selectedField === opt.label;
-                          return (
-                            <button
-                              key={opt.label}
-                              type="button"
-                              disabled={!opt.available}
-                              onClick={() => {
-                                if (!opt.available) return;
-                                setSelectedField(opt.label);
-                                setFieldOpen(false);
-                              }}
-                              className={`flex w-full items-center justify-between gap-3 border-b border-violet-100/90 px-4 py-3 text-left text-sm transition-colors last:border-0 ${
-                                opt.available
-                                  ? isSelected
-                                    ? "bg-violet-50/90 hover:bg-violet-50"
-                                    : "hover:bg-violet-50/60"
-                                  : "cursor-not-allowed bg-gradient-to-r from-slate-50 via-white to-violet-50/40 opacity-95"
-                              }`}
-                            >
-                              <span
-                                className={
-                                  opt.available
-                                    ? isSelected
-                                      ? "font-semibold text-violet-950"
-                                      : "font-medium text-violet-800"
-                                    : "font-medium text-slate-500"
-                                }
-                              >
-                                {opt.label}
-                              </span>
-                              {!opt.available && (
-                                <span className="inline-flex shrink-0 items-center rounded-sm border border-violet-200/70 bg-gradient-to-r from-violet-50 to-indigo-50 px-2 py-1 text-[10px] font-bold tracking-wide text-violet-700 shadow-sm">
-                                  Sắp ra mắt
-                                </span>
-                              )}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
+                  <AppSelect
+                    size="md"
+                    value={selectedField || undefined}
+                    onValueChange={setSelectedField}
+                    placeholder="Chọn ngành nghề..."
+                    aria-label="Ngành nghề"
+                    triggerClassName="rounded-2xl border-violet-200 bg-white focus:border-[#8037f4]"
+                    options={FIELD_OPTIONS.map((opt) => ({
+                      value: opt.label,
+                      label: opt.available ? opt.label : `${opt.label} · Sắp ra mắt`,
+                      disabled: !opt.available,
+                    }))}
+                  />
                 </div>
               )}
 

@@ -63,3 +63,5 @@ adminRouter.patch("/courses/:id/approve", asyncHandler(AdminController.approveCo
 adminRouter.patch("/courses/:id/reject", asyncHandler(AdminController.rejectCourse));
 adminRouter.patch("/courses/:id/archive", asyncHandler(AdminController.archiveCourse));
 adminRouter.get("/interview-metrics", asyncHandler(AdminController.getInterviewMetrics));
+adminRouter.get("/analytics/user-behavior", asyncHandler(AdminController.getPlatformBehavior));
+adminRouter.get("/analytics/users/:id/journey", asyncHandler(AdminController.getUserJourney));

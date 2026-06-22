@@ -12,9 +12,9 @@ import {
   AlertTriangle
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
-import { refreshUserProfile } from "../../utils/auth";
-import { apiUrl } from "../../utils/api.js";
-import { toastApiError } from "../../utils/apiToast";
+import { refreshUserProfile } from "../../utils/auth/auth.js";
+import { apiUrl } from "../../api/http.js";
+import { toastApiError } from "../../utils/shared/apiToast.js";
 
 export function PaymentReturn() {
   const [searchParams] = useSearchParams();

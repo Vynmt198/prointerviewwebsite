@@ -40,3 +40,7 @@ __pycache__/
 
 # Local upload files (served from disk, not committed)
 backend/public/uploads/*
+
+# JaaS private keys (never commit)
+backend/keys/
+*.pk

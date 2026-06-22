@@ -8,6 +8,7 @@ import {
   Wallet,
   ArrowLeftRight,
   Banknote,
+  Camera,
   Calendar,
   FileQuestion,
   BookOpen,
@@ -38,7 +39,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
-import { getUser, logout, getInitials, getDisplayName } from "../../utils/auth";
+import { getUser, logout, getInitials, getDisplayName } from "../../utils/auth/auth.js";
 import { SidebarBrandButton } from "./SidebarBrandButton";
 
 /** Thứ tự nhóm & mục: ưu tiên vận hành hàng ngày → tiền → người dùng → nội dung → báo cáo */
@@ -51,6 +52,7 @@ const MAIN_GROUPS = [
     title: "Vận hành",
     items: [
       { to: "/admin/bookings", label: "Lịch hẹn & thanh toán", icon: Calendar },
+      { to: "/admin/bookings/check-ins", label: "Check-in mentor", icon: Camera },
       { to: "/admin/support", label: "Hỗ trợ", icon: LifeBuoy },
       { to: "/admin/mentors/pending", label: "Duyệt cố vấn", icon: UserPlus },
     ],
@@ -82,7 +84,7 @@ const MAIN_GROUPS = [
     items: [
       { to: "/admin/content/courses", label: "Khóa học", icon: BookOpen },
       { to: "/admin/content/questions", label: "Phỏng vấn AI", icon: FileQuestion },
-      { to: "/admin/achievements", label: "Thành tựu", icon: Star },
+      { to: "/admin/achievements", label: "Tin tức & Hoạt động", icon: Star },
     ],
   },
   {
@@ -106,6 +108,12 @@ function pathActive(pathname, to, end) {
   // /admin/mentors/pending thuộc menu "Duyệt cố vấn", không tô "Cố vấn"
   if (t === "/admin/mentors") {
     if (p === "/admin/mentors/pending" || p.startsWith("/admin/mentors/pending/")) {
+      return false;
+    }
+  }
+  // /admin/bookings/check-ins thuộc menu "Check-in mentor", không tô "Lịch hẹn & thanh toán"
+  if (t === "/admin/bookings") {
+    if (p === "/admin/bookings/check-ins" || p.startsWith("/admin/bookings/check-ins/")) {
       return false;
     }
   }
@@ -200,8 +208,10 @@ export function AdminSidebar() {
                                 className={`size-[18px] shrink-0 ${active ? "text-white" : "text-sidebar-foreground/70"}`}
                               />
                               <span
-                                className="truncate text-[0.8125rem] group-data-[collapsible=icon]:hidden"
-                                style={{ fontWeight: active ? 600 : 400 }}
+                                className="truncate text-[0.8125rem] font-semibold group-data-[collapsible=icon]:hidden"
+                                data-admin-nav-label
+                                data-active={active ? "true" : "false"}
+                                style={{ fontWeight: active ? 700 : 600 }}
                               >
                                 {label}
                               </span>

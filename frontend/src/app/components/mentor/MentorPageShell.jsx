@@ -40,6 +40,100 @@ const MENTOR_LIGHT_STYLES = `
           letter-spacing: -0.045em;
           text-shadow: none;
         }
+        /* Nhãn section mentor — TỔNG BUỔI MENTOR style */
+        .mentor-label {
+          font-size: 10px;
+          font-weight: 900;
+          text-transform: uppercase;
+          letter-spacing: 0.18em;
+          color: #9494c1;
+          line-height: 1.35;
+        }
+        .mentor-label--on-dark {
+          color: #b8b8dc;
+        }
+        .mentor-label svg {
+          color: #9494c1;
+          flex-shrink: 0;
+        }
+        .mentor-label--on-dark svg {
+          color: #b8b8dc;
+        }
+        /* Eyebrow trang — HỆ THỐNG ĐÀO TẠO */
+        .mentor-eyebrow {
+          font-size: 11px;
+          font-weight: 900;
+          text-transform: uppercase;
+          letter-spacing: 0.14em;
+          color: #7c3aed;
+          line-height: 1.35;
+        }
+        .mentor-eyebrow svg {
+          color: #7c3aed;
+          flex-shrink: 0;
+        }
+        .mentor-eyebrow--on-dark {
+          color: #ddd6fe;
+        }
+        .mentor-eyebrow--on-dark svg {
+          color: #ddd6fe;
+        }
+        /* Số thống kê — cực đậm (Lexend Black) */
+        .mentor-stat-num {
+          font-family: var(--font-headline), "Lexend", "Plus Jakarta Sans", system-ui, sans-serif;
+          font-weight: 900;
+          font-variation-settings: "wght" 900;
+          line-height: 1;
+          letter-spacing: -0.06em;
+          font-variant-numeric: tabular-nums;
+          font-feature-settings: "tnum" 1;
+          color: #0f172a;
+          -webkit-font-smoothing: antialiased;
+          -moz-osx-font-smoothing: grayscale;
+          paint-order: stroke fill;
+          -webkit-text-stroke: 0.4px currentColor;
+        }
+        .mentor-stat-num--hero {
+          font-size: 1.75rem;
+        }
+        .mentor-stat-num--card {
+          font-size: 1.375rem;
+        }
+        .mentor-stat-num--on-dark {
+          color: #ffffff;
+          -webkit-text-stroke: 0;
+        }
+        /* Số tiền lớn — không siết letter-spacing / stroke để dấu chấm nghìn vẫn thấy */
+        .mentor-stat-num--money {
+          letter-spacing: -0.015em;
+          -webkit-text-stroke: 0;
+          line-height: 1.12;
+        }
+        .mentor-stat-num--money .money-thousands-sep {
+          display: inline-block;
+          margin-inline: 0.06em;
+          opacity: 0.95;
+        }
+        @media (min-width: 640px) {
+          .mentor-stat-num--hero {
+            font-size: 2rem;
+          }
+        }
+        /* Số tiền trong bảng / danh sách — đậm vừa, không phóng to */
+        .mentor-money-num {
+          font-family: var(--font-headline), "Lexend", "Plus Jakarta Sans", system-ui, sans-serif;
+          font-weight: 900;
+          font-variation-settings: "wght" 900;
+          letter-spacing: -0.015em;
+          font-variant-numeric: tabular-nums;
+          font-feature-settings: "tnum" 1;
+          -webkit-text-stroke: 0;
+        }
+        .mentor-money-num .money-thousands-sep {
+          display: inline-block;
+          margin-inline: 0.05em;
+          opacity: 0.95;
+        }
         /* Nhãn uppercase tiếng Việt, tracking utility mặc định thường quá rộng */
         .mentor-surface .tracking-widest,
         .mentor-surface .tracking-wider,
@@ -57,13 +151,15 @@ export function MentorPageShell({
   fillHeight = false,
   /** false = chỉ dùng app-shell-ambient, không thêm blob/shimmer (tránh nền chia mảng) */
   showAmbient = true,
+  /** true = áp typography mentor (phòng họp, feedback ngoài MentorArea) */
+  mentorRole = false,
 }) {
   const heightBlock = fillHeight
     ? "min-h-0 flex-1 h-full overflow-y-auto overflow-x-clip"
     : "min-h-screen overflow-x-clip";
   return (
     <div
-      className={`mentor-surface relative antialiased ${heightBlock} font-sans text-slate-900 selection:bg-violet-100 selection:text-violet-900 bg-transparent ${bottomPad} ${className}`.trim()}
+      className={`mentor-surface relative antialiased ${heightBlock} font-sans text-slate-900 selection:bg-violet-100 selection:text-violet-900 bg-transparent ${bottomPad} ${mentorRole ? "mentor-role-shell " : ""}${className}`.trim()}
     >
       <style>{`${MENTOR_LIGHT_STYLES}${extraStyles || ""}`}</style>
       {showAmbient && (

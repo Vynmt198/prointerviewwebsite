@@ -1,13 +1,13 @@
 import { AlertCircle, CheckCircle, Clock, XCircle } from "lucide-react";
-import { labelPaymentStatus } from "../../utils/adminPaymentUi.js";
+import { labelPaymentStatus } from "../../utils/admin/adminPaymentUi.js";
 
 const PILL =
-  "inline-flex w-fit max-w-full items-center justify-center gap-1.5 whitespace-nowrap rounded-full border px-3 py-1.5 text-xs font-semibold leading-none";
+  "inline-flex w-fit max-w-full items-center justify-center gap-1.5 whitespace-nowrap rounded-full border px-3 py-1.5 text-xs font-bold leading-none";
 
 function StatusRow({ caption, children }) {
   return (
     <div className="flex w-full flex-col items-center gap-1">
-      <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">{caption}</p>
+      <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">{caption}</p>
       {children}
     </div>
   );
