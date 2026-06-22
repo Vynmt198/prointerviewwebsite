@@ -1,4 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&display=swap');
 
 .cute-glass {
   background: linear-gradient(180deg, rgba(0, 0, 0, 0.03), rgba(0, 0, 0, 0.03));
@@ -239,4 +238,65 @@
   -webkit-mask-composite: xor;
   mask-composite: exclude;
   pointer-events: none;
+}
+/* ── CODEX MESH BACKGROUND (Hero Only, Layered & Faded) ── */
+.codex-mesh-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 130vh;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+  background-color: transparent;
+  
+  /* Fade out smoothly at the bottom to blend with the rest of the page */
+  mask-image: none; /* linear-gradient(to bottom, black 50%, transparent 100%);
+  -webkit-mask-image: none; /* linear-gradient(to bottom, black 50%, transparent 100%);
+}
+
+.codex-organic-blob {
+  width: 100%;
+  height: 100%;
+  will-change: transform;
+  /* Removed mix-blend-mode: multiply to fix GPU rendering border artifacts */
+}
+
+@keyframes organic-float-1 {
+  0% { transform: scale(1) translate(0, 0); }
+  33% { transform: scale(1.3) translate(15%, 25%); }
+  66% { transform: scale(0.8) translate(-10%, 15%); }
+  100% { transform: scale(1.1) translate(25%, 5%); }
+}
+
+@keyframes organic-float-2 {
+  0% { transform: scale(1) translate(0, 0); }
+  33% { transform: scale(1.4) translate(-25%, 15%); }
+  66% { transform: scale(0.9) translate(15%, -20%); }
+  100% { transform: scale(1.2) translate(-20%, 30%); }
+}
+
+@keyframes organic-float-3 {
+  0% { transform: scale(1) translate(0, 0); }
+  33% { transform: scale(1.2) translate(30%, -20%); }
+  66% { transform: scale(0.85) translate(-15%, -10%); }
+  100% { transform: scale(1.3) translate(20%, -30%); }
+}
+
+@keyframes organic-float-4 {
+  0% { transform: scale(1) translate(0, 0); }
+  50% { transform: scale(1.5) translate(30%, 30%); }
+  100% { transform: scale(0.8) translate(-20%, 15%); }
+}
+
+/* Noise texture for realistic cloud feel */
+.codex-mesh-noise {
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.008' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+  mix-blend-mode: overlay;
+  opacity: 0.3;
+  pointer-events: none;
+  z-index: 10;
 }

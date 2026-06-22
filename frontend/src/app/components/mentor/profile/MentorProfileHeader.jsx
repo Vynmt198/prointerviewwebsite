@@ -83,9 +83,9 @@ export function MentorProfileHeader({ mentor, ratingDisplay, reviewCount, experi
               {fieldTags.map((tag) => (
                 <span
                   key={tag}
-                  className="rounded-md bg-violet-100 px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide text-violet-800"
+                  className="inline-block max-w-full rounded-lg border border-violet-200/60 bg-violet-50 px-3 py-1 text-xs font-medium text-violet-800 shadow-sm"
                 >
-                  {tag}
+                  <span className="line-clamp-2 text-left">{tag}</span>
                 </span>
               ))}
             </div>

@@ -140,7 +140,7 @@ export function MentorListCard({ mentor, onOpenProfile, onBook }) {
             {mentor.tags.slice(0, 3).map((tag) => (
               <span
                 key={tag}
-                className="rounded-full bg-violet-50 px-2.5 py-0.5 text-[10px] font-medium text-violet-700 sm:text-xs"
+                className="max-w-full truncate rounded-full bg-violet-50 px-2.5 py-0.5 text-[10px] font-medium text-violet-700 sm:text-xs"
               >
                 {tag}
               </span>

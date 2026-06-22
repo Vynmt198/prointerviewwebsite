@@ -47,7 +47,7 @@ function TabBar({ activeTab, onChange }) {
             onClick={() => onChange(tab.id)}
             className={`shrink-0 border-b-2 px-4 py-3 text-sm font-semibold transition-colors ${
               active
-                ? "border-[#8037f4] text-[#8037f4]"
+                ? "border-lime-400 text-[#8037f4]"
                 : "border-transparent text-slate-500 hover:text-slate-800"
             }`}
           >
@@ -149,16 +149,6 @@ export function MentorProfile() {
         bioText={bioText}
         education={education}
         awards={awards}
-      />
-      <SectionDivider />
-      <MentorWorkSection mentor={mentor} workEntries={workEntries} compactTitle />
-      <SectionDivider />
-      <MentorSkillsSection skillTags={skillTags} compactTitle />
-      <SectionDivider />
-      <MentorReviewsSection
-        realReviews={realReviews}
-        reviewSummary={reviewSummary}
-        compactTitle
       />
     </div>
   );

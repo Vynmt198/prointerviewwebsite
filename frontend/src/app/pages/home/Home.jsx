@@ -21,10 +21,15 @@ import {
 import { motion, useMotionValue, useSpring, useTransform } from "motion/react";
 import { RecommendedJourney } from "../../components/home/RecommendedJourney";
 import { CvAnalysisFeatureShowcase } from "../../components/home/CvAnalysisFeatureShowcase";
-import {
-  MentorFeatureShowcase,
-  HOME_MENTOR_MASCOTS,
-} from "../../components/home/MentorFeatureShowcase";
+import { MentorFeatureShowcase } from "../../components/home/MentorFeatureShowcase";
+
+const HOME_MENTOR_MASCOTS = {
+  cv: "/mascot-mentor-avatar-cv.png?v=2",
+  headset: "/mascot-mentor-avatar-headset.png?v=2",
+  pro: "/mascot-mentor-avatar-pro.png?v=2",
+  celebrate: "/mascot-home-avatar-celebrate.png?v=1",
+  fallback: "/mascot-courses-ready.png?v=8",
+};
 import { CoursesFeatureShowcase } from "../../components/home/CoursesFeatureShowcase";
 import { HeroInterviewVideoCard } from "../../components/home/HeroInterviewVideoCard";
 import { SparkleGlyph } from "../../components/decor/SparkleGlyph.jsx";
@@ -119,6 +124,9 @@ const TESTIMONIALS = HOME_SECTION_COPY.testimonials.items.map((t, i) => ({
 
 import { achievementsApi } from "../../api/achievementsApi.js";
 
+
+
+
 export function Home() {
   const navigate = useNavigate();
   const [achievements, setAchievements] = useState([]);
@@ -187,7 +195,7 @@ export function Home() {
         className="home-hero-section relative z-10 flex min-h-[100svh] flex-col justify-center px-6 pb-8 pt-24 sm:px-10 sm:pt-28 lg:px-16 lg:pb-10 lg:pt-32 -mb-[17rem] lg:mb-0"
       >
 
-        {/* Interactive Mouse Particles */}
+
         {/* Note: HeroAtmosphere now handles both the background mesh and the mouse particles */}
 
         <div
@@ -409,10 +417,10 @@ export function Home() {
                       {[...TESTIMONIALS, ...TESTIMONIALS].map((t, i) => (
                         <div
                           key={`marq1-${i}-${t.name}`}
-                          className="shrink-0 w-[min(100%,17.5rem)] sm:w-[17.5rem] lg:w-[18.5rem] bg-white border border-slate-200 rounded-2xl p-5 shadow-sm sm:p-6 max-lg:rounded-lg max-lg:p-4"
+                          className="shrink-0 w-[min(100%,17.5rem)] sm:w-[17.5rem] lg:w-[18.5rem] bg-violet-600 border border-violet-400 rounded-2xl p-5 shadow-sm sm:p-6 max-lg:rounded-lg max-lg:p-4"
                         >
                           <div className="flex items-center gap-2.5 mb-3">
-                            <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-violet-100 bg-violet-50">
+                            <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-violet-800 bg-violet-900/50">
                               <img
                                 src={t.mascot}
                                 alt=""
@@ -424,9 +432,9 @@ export function Home() {
                                 }}
                               />
                             </div>
-                            <p className="text-[10px] uppercase tracking-widest text-[#8037f4] font-black leading-tight sm:text-xs lg:text-[0.8rem]">{t.tag}</p>
+                            <p className="text-[10px] uppercase tracking-widest text-lime-400 font-black leading-tight sm:text-xs lg:text-[0.8rem]">{t.tag}</p>
                           </div>
-                          <p className="text-xs text-slate-700 leading-snug line-clamp-2 sm:text-sm lg:text-base">"<em className="not-italic">{t.text}</em>"</p>
+                          <p className="text-xs text-white/90 leading-snug line-clamp-2 sm:text-sm lg:text-base">"<em className="not-italic">{t.text}</em>"</p>
                         </div>
                       ))}
                     </div>
@@ -437,15 +445,15 @@ export function Home() {
                       {[...TESTIMONIALS, ...TESTIMONIALS].map((t, i) => (
                         <div
                           key={`marq2-${i}-${t.name}`}
-                          className="shrink-0 w-[min(100%,17.5rem)] sm:w-[17.5rem] lg:w-[18.5rem] bg-white border border-slate-200 rounded-2xl p-5 shadow-sm sm:p-6 max-lg:rounded-lg max-lg:p-4"
+                          className="shrink-0 w-[min(100%,17.5rem)] sm:w-[17.5rem] lg:w-[18.5rem] bg-violet-600 border border-violet-400 rounded-2xl p-5 shadow-sm sm:p-6 max-lg:rounded-lg max-lg:p-4"
                         >
                           <div className="flex gap-1 mb-3">
                             {[...Array(t.stars)].map((_, j) => (
-                              <Star key={`${t.name}-s-${i}-${j}`} className="size-4 text-yellow-400 fill-yellow-400" />
+                              <Star key={`${t.name}-s-${i}-${j}`} className="size-4 text-lime-400 fill-lime-400" />
                             ))}
                           </div>
-                          <p className="mb-2.5 text-xs leading-snug text-slate-700 line-clamp-2 sm:text-sm lg:text-base">"<em className="not-italic">{t.text}</em>"</p>
-                          <p className="text-[10px] font-bold text-slate-900 sm:text-xs lg:text-sm">{t.name}</p>
+                          <p className="mb-2.5 text-xs leading-snug text-white/90 line-clamp-2 sm:text-sm lg:text-base">"<em className="not-italic">{t.text}</em>"</p>
+                          <p className="text-[10px] font-bold text-white sm:text-xs lg:text-sm">{t.name}</p>
                         </div>
                       ))}
                     </div>

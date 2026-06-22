@@ -1,5 +1,4 @@
 @import "tailwindcss";
-@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&display=swap');
 
 @custom-variant dark (&:is(.dark *));
 
@@ -366,7 +365,7 @@ body:has(.app-user-shell) {
 
 html.app-route-home,
 html.app-route-home body {
-  background-color: #d6c9e8;
+  background-color: #ebe4f6;
 }
 
 .app-user-shell--home {
@@ -396,7 +395,7 @@ html.app-route-home body {
   }
 
   .home-hero-section {
-    overflow-x: hidden;
+    overflow-x: clip;
   }
 
   html.app-route-home .home-layout-fixed {
@@ -426,7 +425,7 @@ html.app-route-home body {
   }
 
   .home-hero-section {
-    overflow-x: auto;
+    overflow-x: clip;
     overflow-y: visible;
   }
 
