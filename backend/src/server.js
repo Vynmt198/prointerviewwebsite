@@ -1,4 +1,9 @@
 import "./config/loadEnv.js";
+import { initSentry, Sentry } from "./config/sentry.js";
+
+// Init càng sớm càng tốt — trước khi import app.js/models để bắt được lỗi từ lúc khởi động.
+const sentryEnabled = initSentry();
+
 import mongoose from "mongoose";
 import { connectDatabase } from "./db/connect.js";
 import "./models/index.js";
@@ -8,6 +13,18 @@ import { isJaasConfigured, getJaasPublicStatus } from "./services/jaasService.js
 const PORT = process.env.PORT || 5000;
 const MONGO_URI = process.env.MONGO_URI;
 const isProd = process.env.NODE_ENV === "production";
+
+if (sentryEnabled) {
+  console.log("✅ Sentry error tracking enabled");
+  process.on("uncaughtException", (err) => {
+    Sentry.captureException(err);
+    console.error("[uncaughtException]", err);
+  });
+  process.on("unhandledRejection", (reason) => {
+    Sentry.captureException(reason instanceof Error ? reason : new Error(String(reason)));
+    console.error("[unhandledRejection]", reason);
+  });
+}
 
 // ── Env validation ────────────────────────────────────────────────────────────
 const REQUIRED_ENV = {
@@ -42,7 +59,29 @@ function validateEnv() {
   console.log("✅ Environment validated");
 }
 
+/**
+ * Redis (Upstash) là bắt buộc ở production — cacheService.js fail-fast (throw) khi Redis lỗi
+ * thay vì fallback im lặng sang in-memory Map (mỗi Render instance có Map riêng, mất khi
+ * restart → cache hit rate tụt không ai biết, tốn credit D-ID/LLM lãng phí). Chặn sớm ở đây
+ * để server không khởi động được với cấu hình thiếu, thay vì lỗi rải rác ở runtime.
+ */
+function validateRedisProd() {
+  if (!isProd) return;
+  const hasRedis = Boolean(
+    process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN,
+  );
+  if (!hasRedis) {
+    console.error(
+      "❌ CRITICAL: UPSTASH_REDIS_REST_URL/UPSTASH_REDIS_REST_TOKEN chưa cấu hình ở production.\n" +
+        "   Cache bắt buộc dùng Redis ở production (fail-fast, không fallback in-memory Map) —\n" +
+        "   xem backend/src/services/cacheService.js. Đăng ký free tier tại upstash.com.",
+    );
+    process.exit(1);
+  }
+}
+
 validateEnv();
+validateRedisProd();
 
 const app = createApp();
 
@@ -69,6 +108,10 @@ export async function startServer() {
     } else {
       console.warn("MONGO_URI is missing. Một số route sẽ trả 503 cho đến khi MongoDB được cấu hình.");
     }
+
+    // Không phụ thuộc MongoDB — chỉ cần Cloudinary (tự skip nếu chưa cấu hình).
+    const { startTtsCleanupJob } = await import("./jobs/ttsCleanupJob.js");
+    startTtsCleanupJob();
 
     if (!process.env.JWT_SECRET) {
       console.warn("JWT_SECRET is missing. Đăng nhập /api/auth sẽ lỗi cho đến khi bạn set trong .env");

@@ -22,3 +22,4 @@ export { MentorPeerReview } from "./MentorPeerReview.js";
 export { MentorKnowledge } from "./MentorKnowledge.js";
 export { SecurityLog } from "./SecurityLog.js";
 export { SepayWebhookEvent } from "./SepayWebhookEvent.js";
+export { CostEvent } from "./CostEvent.js";

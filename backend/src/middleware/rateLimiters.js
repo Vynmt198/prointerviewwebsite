@@ -33,3 +33,16 @@ export const analyzeFaceLimiter = rateLimit({
   handler: (_req, res) =>
     res.status(429).json({ success: true, emotion: null, reason: "rate_limited" }),
 });
+
+/**
+ * Pregen video baseline (free trial, public) — giới hạn theo IP.
+ * Cache key cố định (3 câu × gender) nên sau lần đầu luôn cache-hit; limiter chỉ
+ * để chặn flood request, không liên quan chi phí D-ID.
+ */
+export const baselineTrialLimiter = rateLimit({
+  windowMs: 5 * 60 * 1000,
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, error: "Quá nhiều yêu cầu. Thử lại sau ít phút." },
+});

@@ -3,12 +3,15 @@ import { authJwt } from "../middleware/authJwt.js";
 import { requireAdmin } from "../middleware/requireAdmin.js";
 import { asyncHandler } from "../middleware/asyncHandler.js";
 import { AdminController } from "../controllers/adminController.js";
+import { AdminCostDashboardController } from "../controllers/adminCostDashboardController.js";
 
 export const adminRouter = Router();
 
 adminRouter.use(authJwt, requireAdmin);
 
 adminRouter.get("/stats", asyncHandler(AdminController.getStats));
+adminRouter.get("/cost-dashboard", asyncHandler(AdminCostDashboardController.getCostDashboard));
+adminRouter.get("/cost-dashboard/cache-metrics", asyncHandler(AdminCostDashboardController.getCacheMetrics));
 adminRouter.get("/reports", asyncHandler(AdminController.getReports));
 adminRouter.patch("/reports/:id", asyncHandler(AdminController.updateReport));
 adminRouter.get("/reviews", asyncHandler(AdminController.getReviews));

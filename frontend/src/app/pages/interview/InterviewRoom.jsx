@@ -196,15 +196,6 @@ function computeBehavioralSummary(perQ) {
   };
 }
 
-/* ── Location state helpers ─────────────────────────────── */
-function interviewMetaFromLocationState(state) {
-  if (!state || typeof state !== "object") return { position: "Phỏng vấn AI", company: "—" };
-  if (state.form?.position)        return { position: String(state.form.position), company: state.form.company ? String(state.form.company) : "—" };
-  if (state.latestCV?.position)    return { position: String(state.latestCV.position), company: state.latestCV.company ? String(state.latestCV.company) : "—" };
-  if (state.storedCV?.position)    return { position: String(state.storedCV.position), company: state.storedCV.company ? String(state.storedCV.company) : "—" };
-  return { position: "Phỏng vấn AI", company: "—" };
-}
-
 /* ── Helpers ─────────────────────────────────────────────── */
 function formatTimer(s) {
   return `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
@@ -541,6 +532,10 @@ export default function InterviewRoom() {
   })();
   const hasPregenVideos = Array.isArray(videoUrls) && videoUrls.some(Boolean);
 
+  // Free trial (anonymous, không CV/login) — 3 câu baseline, không lưu DB, kết thúc ở /interview/trial/done
+  const trialMode = location.state?.trialMode === true
+    || sessionStorage.getItem("prointerview_trial_mode") === "true";
+
   /* ── UI state ─────────────────────────────────────────── */
   const [phase,             setPhase]             = useState("ready");
   const [currentQ,          setCurrentQ]          = useState(0);
@@ -619,6 +614,9 @@ export default function InterviewRoom() {
     // stream is attempted instead of the already-rendered videos (wasting credits).
     if (location.state?.videoUrls) {
       sessionStorage.setItem("prointerview_video_urls", JSON.stringify(location.state.videoUrls));
+    }
+    if (location.state?.trialMode) {
+      sessionStorage.setItem("prointerview_trial_mode", "true");
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -1042,6 +1040,12 @@ export default function InterviewRoom() {
       } catch { /* still navigate on fail */ }
     }
 
+    // Free trial: không lưu lịch sử local, dẫn sang trang "đăng ký để mở khoá" thay vì feedback thật
+    if (trialMode) {
+      navigate("/interview/trial/done", { state: { transcripts: backupAnswers } });
+      return;
+    }
+
     navigate("/interview/feedback", { state: { sessionId } });
   };
 
@@ -1131,7 +1135,7 @@ export default function InterviewRoom() {
                     <p className="mt-1.5 text-sm leading-relaxed text-violet-600">
                       Buổi phỏng vấn gồm{" "}
                       <span className="font-semibold text-violet-900">{QUESTIONS.length} câu hỏi</span>
-                      {!isPro && <span className="text-violet-700"> · 3 câu miễn phí, 2 câu sau cần Pro</span>}.
+                      {!isPro && !trialMode && <span className="text-violet-700"> · 3 câu miễn phí, 2 câu sau cần Pro</span>}.
                       AI sẽ phân tích giọng nói, ánh mắt và ngôn ngữ cơ thể.
                     </p>
                   </div>

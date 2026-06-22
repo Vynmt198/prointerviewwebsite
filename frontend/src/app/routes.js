@@ -16,6 +16,8 @@ import { Interview } from "./pages/interview/Interview";
 import { AIGenderSelection } from "./pages/interview/__archived__/AIGenderSelection";
 import InterviewRoom from "./pages/interview/InterviewRoom";
 import { InterviewFeedback } from "./pages/interview/InterviewFeedback";
+import { InterviewTrial } from "./pages/interview/InterviewTrial";
+import { InterviewTrialDone } from "./pages/interview/InterviewTrialDone";
 import { Mentors } from "./pages/mentors/Mentors";
 import { MentorProfile } from "./pages/mentors/MentorProfile";
 import { Booking } from "./pages/booking/Booking";
@@ -128,6 +130,8 @@ export const router = createBrowserRouter([
       { path: "interview/gender", loader: requireCustomerAuthLoader, Component: AIGenderSelection },
       { path: "interview/room", loader: requireCustomerAuthLoader, Component: InterviewRoom },
       { path: "interview/feedback", loader: requireCustomerAuthLoader, Component: InterviewFeedback },
+      { path: "interview/trial", loader: requireCustomerAuthLoader, Component: InterviewTrial },
+      { path: "interview/trial/done", loader: requireCustomerAuthLoader, Component: InterviewTrialDone },
       {
         loader: requireAuthLoader,
         Component: ProtectedOutlet,
