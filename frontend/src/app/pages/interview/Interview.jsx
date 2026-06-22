@@ -544,11 +544,14 @@ export function Interview() {
       {/* ── Loading step overlay ───────────────────────────────── */}
       {loadingStep && (
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-violet-950/40 backdrop-blur-sm">
-          <div className="mx-4 w-full max-w-sm rounded-md bg-white p-8 shadow-2xl">
-            <p className="mb-6 text-center text-base font-bold text-violet-800">
-              Đang chuẩn bị phỏng vấn...
+          <div className="mx-4 w-full max-w-md rounded-md bg-white p-6 shadow-2xl sm:p-8">
+            <p className="mb-5 text-center text-base font-bold text-violet-800">
+              Quá trình này có thể diễn ra trong ít phút
             </p>
             <InterviewLoadingState currentStep={loadingStep} />
+            <p className="mt-4 text-center text-[11px] text-slate-400">
+              Vui lòng không tắt hoặc tải lại trang trong lúc chuẩn bị, để tránh mất lượt sử dụng của bạn.
+            </p>
           </div>
         </div>
       )}
