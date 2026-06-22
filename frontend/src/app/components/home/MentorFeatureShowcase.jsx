@@ -11,13 +11,6 @@ import {
 import { fetchMentors } from "../../api/mentorApi";
 import { HOME_DEMO_MENTORS } from "../../data/homeLandingDemo";
 
-export const HOME_MENTOR_MASCOTS = {
-  cv: "/mascot-mentor-avatar-cv.png?v=2",
-  headset: "/mascot-mentor-avatar-headset.png?v=2",
-  pro: "/mascot-mentor-avatar-pro.png?v=2",
-  celebrate: "/mascot-home-avatar-celebrate.png?v=1",
-  fallback: "/mascot-courses-ready.png?v=8",
-};
 
 function formatPrice(price) {
   if (!price) return null;
@@ -68,10 +61,10 @@ function MentorCard({ mentor }) {
   return (
     <Link
       to={href}
-      className="group relative flex h-[340px] w-[260px] shrink-0 flex-col justify-between gap-2 rounded-2xl border-2 border-violet-400 bg-violet-600 p-5 shadow-[0_4px_24px_rgba(124,58,237,0.45)] transition-all duration-200 hover:-translate-y-2 hover:border-violet-300 hover:bg-violet-500 sm:w-[280px] lg:w-[300px]"
+      className="group relative flex h-[380px] w-[280px] shrink-0 flex-col justify-between gap-3 rounded-2xl border-2 border-violet-400 bg-violet-600 p-6 transition-all duration-200 hover:-translate-y-2 hover:border-violet-300 hover:bg-violet-500 sm:w-[300px] lg:w-[320px]"
     >
       {/* Tag Mentor Đề xuất */}
-      <div className="absolute -right-2 -top-2 z-10 flex items-center gap-1 rounded-full bg-lime-400 px-3 py-1.5 text-[11px] font-bold tracking-wide text-slate-900 shadow-lg">
+      <div className="absolute -right-2 -top-2 z-10 flex items-center gap-1 rounded-full bg-lime-400 px-3 py-1.5 text-[11px] font-bold tracking-wide text-violet-950 shadow-lg">
         <SparkleGlyph className="h-4 w-4 shrink-0" tone="brand" />
         ĐỀ XUẤT
       </div>
@@ -103,7 +96,7 @@ function MentorCard({ mentor }) {
           <span className="text-[11px] text-violet-300">({reviewCount})</span>
         </span>
         {price && (
-          <span className="rounded-full bg-lime-400 px-2 py-0.5 text-[11px] font-bold text-slate-900">
+          <span className="rounded-full bg-lime-400 px-2 py-0.5 text-[11px] font-bold text-violet-950">
             {price}
           </span>
         )}
@@ -124,7 +117,7 @@ function MentorCard({ mentor }) {
       )}
 
       {/* Hover CTA */}
-      <span className="flex items-center justify-center gap-1 rounded-lg bg-lime-400 py-1.5 text-[11px] font-bold text-slate-900 transition-all group-hover:bg-lime-300">
+      <span className="flex items-center justify-center gap-1 rounded-lg bg-lime-400 py-1.5 text-[11px] font-bold text-violet-950 transition-all group-hover:bg-lime-300">
         Đặt lịch <ArrowRight className="h-3 w-3" />
       </span>
     </Link>

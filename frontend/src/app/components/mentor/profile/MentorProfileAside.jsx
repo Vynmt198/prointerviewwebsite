@@ -32,7 +32,7 @@ export function MentorProfileAside({
   ];
 
   return (
-    <aside className="space-y-4 lg:sticky lg:top-20 lg:self-start">
+    <aside className="m-0 space-y-4 lg:mt-0 lg:sticky lg:top-6 lg:self-start">
       <div className="glass-card overflow-hidden border-violet-200/60 p-5 shadow-[0_12px_40px_rgba(128,55,244,0.08)] sm:p-6">
         <div className="border-b border-violet-100 pb-4">
           <p className="text-xs font-bold uppercase tracking-wider text-slate-500">
@@ -56,7 +56,7 @@ export function MentorProfileAside({
         <button
           type="button"
           onClick={onBook}
-          className="mb-2 flex w-full items-center justify-center gap-2 rounded-xl bg-[#8037f4] py-3.5 text-sm font-bold text-white shadow-md transition hover:bg-violet-700 active:scale-[0.99]"
+          className="mb-2 flex w-full items-center justify-center gap-2 rounded-xl bg-lime-400 py-3.5 text-sm font-bold text-violet-950 shadow-md transition hover:bg-lime-500 active:scale-[0.99]"
         >
           Đặt lịch ngay
           <ArrowRight size={18} aria-hidden />
