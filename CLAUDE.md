@@ -403,6 +403,15 @@ Có `Procfile` + `runtime.txt` — deploy được lên Heroku/Render. Sau deplo
 
 ---
 
+## Quyết định kiến trúc đang triển khai (V5 plan — 2026-06-21)
+
+Plan tối ưu hóa 8 sprint / 16 tuần, 4 quyết định đã chốt (chi tiết: memory `project_v5_roadmap`):
+
+1. **Trial flow có scoring nhẹ** — 3 câu baseline ở free trial hiển thị điểm + nhận xét ngắn (không phải feedback đầy đủ như session thật).
+2. **Bank transfer cho MVP launch** — không tích hợp VNPay/MoMo/Stripe trong giai đoạn này. Flow chuyển khoản + admin xác nhận + auto-confirm qua SePay webhook (`sepayWebhookService.js`) đã có sẵn cho booking/enrollment/subscription — khi thêm gói mới (câu hỏi/phân tích sâu), tái dùng rail này, không build lại từ đầu.
+3. **Refactor sinh câu hỏi: 5 câu liền → 3 baseline cố định (free) + 2 personalized (paid)** — baseline tĩnh tại `backend/src/config/baselineQuestions.js`; phần personalized vẫn qua `interviewQuestionService.js` nhưng chỉ sinh sau khi có CV/JD.
+4. **Cache/observability fail-fast, không trì hoãn rủi ro vận hành** — Redis bắt buộc ở production (`cacheService.js` throw khi Redis lỗi, không fallback im lặng sang Map, server fail-fast lúc start nếu thiếu cấu hình); Sentry + Slack alert (cost spike, error rate, baseline render bất thường) tích hợp từ Sprint 1 (`config/sentry.js`, `services/alertService.js`, `services/costLedgerService.js`).
+
 ## Quy tắc phát triển
 
 ### Khi thêm API mới

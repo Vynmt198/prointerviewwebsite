@@ -6,6 +6,7 @@ import helmet from "helmet";
 import hpp from "hpp";
 import rateLimit from "express-rate-limit";
 import { sanitizeObjectKeys } from "./utils/securityGuards.js";
+import { isRedisEnabled, getCacheMode } from "./services/cacheService.js";
 
 // TUYỆT CHIÊU CUỐI: Ép Node.js ưu tiên IPv4 trên toàn hệ thống để fix lỗi Render ENETUNREACH IPv6
 if (dns.setDefaultResultOrder) {
@@ -169,6 +170,11 @@ export function createApp() {
             host: mongoose.connection.host || null,
           }
         : null,
+      /** Phase 0 (2B.1.c): redis bắt buộc ở production — cache_mode="memory" ở prod là dấu hiệu bất thường. */
+      cache: {
+        redisConfigured: isRedisEnabled(),
+        mode: getCacheMode(),
+      },
       sepayWebhookConfigured: Boolean(
         String(process.env.SEPAY_WEBHOOK_API_KEY || process.env.SEPAY_API_KEY || "").trim(),
       ),

@@ -1077,6 +1077,17 @@ export function Home() {
                   <ArrowRight className="h-3.5 w-3.5" />
                 </span>
               </button>
+
+              <button
+                type="button"
+                onClick={() => navigate("/interview/trial")}
+                className="group inline-flex items-center gap-3 rounded-full border border-[#630ed4]/30 bg-white/80 py-3 pl-6 pr-3 text-sm font-bold text-[#630ed4] backdrop-blur-sm transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:scale-[1.03] hover:bg-white hover:brightness-105 active:scale-[0.98] sm:text-base"
+              >
+                Thử ngay 3 câu hỏi, miễn phí, không cần đăng ký
+                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#630ed4]/10 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-px">
+                  <ArrowRight className="h-3.5 w-3.5" />
+                </span>
+              </button>
             </div>
 
             <div className="flex flex-wrap items-center justify-center gap-2.5">

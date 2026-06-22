@@ -59,7 +59,31 @@ function getLLMProvider() {
   return "openai_compat"; // Groq, Gemini, OpenAI, Ollama, OpenRouter — tất cả OpenAI-compat
 }
 
+// ── System prompt helpers (prompt caching) ───────────────────────────────────
+// `system` đến từ caller dưới 2 dạng:
+//   - string                      → prompt nhỏ, dùng 1 lần (vd: repair prompt) — không cache
+//   - { static, dynamic }         → static = phần khung lặp lại mỗi lần gọi (đánh dấu cache_control
+//                                    cho Anthropic prompt caching), dynamic = phần thay đổi theo request
+
+/** Chuyển `system` thành payload cho Anthropic `system` field (string | content blocks[]). */
+function buildAnthropicSystem(system) {
+  if (typeof system === "string") return system; // prompt nhỏ, không đáng cache
+  const blocks = [{ type: "text", text: system.static, cache_control: { type: "ephemeral" } }];
+  if (system.dynamic) blocks.push({ type: "text", text: system.dynamic });
+  return blocks;
+}
+
+/** Chuyển `system` thành 1 string duy nhất — dùng cho OpenAI-compat system message + Langfuse logging. */
+function systemToText(system) {
+  if (typeof system === "string") return system;
+  return [system.static, system.dynamic].filter(Boolean).join("\n\n");
+}
+
 // ── Anthropic native API call ─────────────────────────────────────────────────
+/**
+ * @param {string|{static: string, dynamic: string}} system
+ * @returns {Promise<{text: string, usage: {inputTokens: number, outputTokens: number, cacheWriteTokens: number, cacheReadTokens: number}}>}
+ */
 async function callAnthropicLLM(system, user, { maxTokens = 4000, temp = 0.6, model = null } = {}) {
   const { anthropicKey, anthropicQgen } = cfg();
   const useModel = model ?? anthropicQgen;
@@ -75,7 +99,7 @@ async function callAnthropicLLM(system, user, { maxTokens = 4000, temp = 0.6, mo
       model:       useModel,
       max_tokens:  maxTokens,
       temperature: temp,
-      system,
+      system:      buildAnthropicSystem(system),
       messages: [{ role: "user", content: user }],
     }),
     signal: AbortSignal.timeout(120_000),
@@ -87,7 +111,15 @@ async function callAnthropicLLM(system, user, { maxTokens = 4000, temp = 0.6, mo
   }
 
   const data = await res.json();
-  return data.content?.[0]?.text ?? "";
+  return {
+    text: data.content?.[0]?.text ?? "",
+    usage: {
+      inputTokens:      data.usage?.input_tokens               ?? 0,
+      outputTokens:     data.usage?.output_tokens              ?? 0,
+      cacheWriteTokens: data.usage?.cache_creation_input_tokens ?? 0,
+      cacheReadTokens:  data.usage?.cache_read_input_tokens     ?? 0,
+    },
+  };
 }
 
 // ── Fuzzy match (tiếng Việt) ──────────────────────────────────────────────────
@@ -110,7 +142,8 @@ function containsFuzzy(a, b) {
 
 // ── LLM helper ────────────────────────────────────────────────────────────────
 /**
- * @param {string} system
+ * @param {string|{static: string, dynamic: string}} system - string = prompt nhỏ dùng 1 lần;
+ *   {static, dynamic} = static được đánh dấu cache_control (Anthropic prompt caching)
  * @param {string} user
  * @param {object} [opts]
  * @param {number} [opts.maxTokens=4000]
@@ -129,15 +162,22 @@ async function callLLM(system, user, { maxTokens = 4000, temp = 0.6, retries = 2
     let lastErr;
     for (let attempt = 0; attempt <= retries; attempt++) {
       try {
-        const output = await callAnthropicLLM(system, user, { maxTokens, temp, model: anthropicModel });
+        const { text: output, usage } = await callAnthropicLLM(system, user, { maxTokens, temp, model: anthropicModel });
         logGeneration({
           traceId,
           name:         traceName ?? "llm_call",
           model:        anthropicModel ?? cfg().anthropicQgen,
-          systemPrompt: system,
+          systemPrompt: systemToText(system),
           userPrompt:   user,
           output,
           latencyMs:    Date.now() - startMs,
+          usage: {
+            inputTokens:      usage.inputTokens,
+            outputTokens:     usage.outputTokens,
+            totalTokens:      usage.inputTokens + usage.outputTokens + usage.cacheWriteTokens + usage.cacheReadTokens,
+            cacheWriteTokens: usage.cacheWriteTokens,
+            cacheReadTokens:  usage.cacheReadTokens,
+          },
         });
         return output;
       } catch (err) {
@@ -165,7 +205,7 @@ async function callLLM(system, user, { maxTokens = 4000, temp = 0.6, retries = 2
         body: JSON.stringify({
           model,
           messages: [
-            { role: "system", content: system },
+            { role: "system", content: systemToText(system) },
             { role: "user",   content: user },
           ],
           temperature: temp,
@@ -193,7 +233,7 @@ async function callLLM(system, user, { maxTokens = 4000, temp = 0.6, retries = 2
         traceId,
         name:         traceName ?? "llm_call",
         model,
-        systemPrompt: system,
+        systemPrompt: systemToText(system),
         userPrompt:   user,
         output,
         latencyMs:    Date.now() - startMs,
@@ -273,27 +313,15 @@ function validateGeneratedQuestions(questions) {
   return warnings;
 }
 
-function buildDynamicSystemPrompt(competencyIds, fewShotExamples = []) {
-  const competencyBlock = buildCompetencyPromptBlock(competencyIds);
-  const distributionGuide = buildDistributionGuide(competencyIds);
-
-  const fewShotBlock = fewShotExamples.length > 0
-    ? `\n## Ví dụ câu hỏi chất lượng cao từ phỏng vấn thực tế (cùng role/competency — học từ dữ liệu tích lũy)\n${fewShotExamples.map(e => `  - ${e}`).join("\n")}\nĐây là ngưỡng chất lượng tối thiểu. Câu hỏi của bạn phải có độ sâu TƯƠNG ĐƯƠNG hoặc HƠN.\n`
-    : "";
-
-  return `Bạn là chuyên gia phỏng vấn tuyển dụng kỹ thuật người Việt với 15 năm kinh nghiệm, được đào tạo theo chuẩn SHRM (Society for Human Resource Management) và DDI (Development Dimensions International) Targeted Selection®.
+// ── Question-gen system prompt — split để bật Anthropic prompt caching ───────
+// `QUESTION_GEN_STATIC_PROMPT` giống hệt nhau ở MỌI lần gọi (không phụ thuộc CV/JD/competency)
+// → đánh dấu cache_control, Anthropic chỉ tính phí input đầy đủ ở lần gọi đầu, các lần sau
+//   đọc từ cache với giá ~10% (xem costCalculator.js). Phần thay đổi theo request (competency
+//   framework detect được, few-shot, phân phối câu hỏi) nằm trong `buildQuestionGenDynamicPrompt`.
+const QUESTION_GEN_STATIC_PROMPT = `Bạn là chuyên gia phỏng vấn tuyển dụng kỹ thuật người Việt với 15 năm kinh nghiệm, được đào tạo theo chuẩn SHRM (Society for Human Resource Management) và DDI (Development Dimensions International) Targeted Selection®.
 
 ## NHIỆM VỤ CHÍNH XÁC
-Phân tích kỹ CV và JD được cung cấp, sau đó sinh đúng 5 câu hỏi phỏng vấn cá nhân hóa — mỗi câu PHẢI reference trực tiếp đến nội dung trong CV hoặc yêu cầu trong JD.
-
-## COMPETENCY FRAMEWORK ĐÃ PHÁT HIỆN TỪ CV/JD
-Câu hỏi PHẢI nhắm vào các competency sau (được xác định bằng SHRM & DDI từ thông tin thực tế của ứng viên):
-
-${competencyBlock}
-${fewShotBlock}
-## PHÂN PHỐI BẮT BUỘC (5 câu)
-${distributionGuide}
-Đảm bảo: ít nhất 2 câu behavior (STAR), ít nhất 1 câu theory chuyên sâu, ít nhất 1 câu project từ dự án CÓ THẬT trong CV.
+Phân tích kỹ CV và JD được cung cấp, sau đó sinh đúng 5 câu hỏi phỏng vấn cá nhân hóa — mỗi câu PHẢI reference trực tiếp đến nội dung trong CV hoặc yêu cầu trong JD. Danh sách competency mục tiêu, ví dụ tham khảo chất lượng cao, và yêu cầu phân phối 5 câu sẽ được cung cấp ở phần tiếp theo của system prompt.
 
 ## QUY TẮC CHẤT LƯỢNG BẮT BUỘC
 1. **Cá nhân hóa tuyệt đối**: Mỗi câu PHẢI gọi tên cụ thể project, công nghệ, hoặc trách nhiệm trong CV. KHÔNG có câu nào có thể hỏi cho bất kỳ ứng viên nào khác.
@@ -345,6 +373,27 @@ Trả về JSON hợp lệ (không markdown, không giải thích thêm):
     }
   ]
 }`;
+
+/**
+ * Phần system prompt thay đổi theo request — KHÔNG cache.
+ * Đặt SAU static prompt để static prompt luôn là prefix giống hệt nhau giữa các lần gọi.
+ */
+function buildQuestionGenDynamicPrompt(competencyIds, fewShotExamples = []) {
+  const competencyBlock = buildCompetencyPromptBlock(competencyIds);
+  const distributionGuide = buildDistributionGuide(competencyIds);
+
+  const fewShotBlock = fewShotExamples.length > 0
+    ? `\n## Ví dụ câu hỏi chất lượng cao từ phỏng vấn thực tế (cùng role/competency — học từ dữ liệu tích lũy)\n${fewShotExamples.map(e => `  - ${e}`).join("\n")}\nĐây là ngưỡng chất lượng tối thiểu. Câu hỏi của bạn phải có độ sâu TƯƠNG ĐƯƠNG hoặc HƠN.\n`
+    : "";
+
+  return `## COMPETENCY FRAMEWORK ĐÃ PHÁT HIỆN TỪ CV/JD
+Câu hỏi PHẢI nhắm vào các competency sau (được xác định bằng SHRM & DDI từ thông tin thực tế của ứng viên):
+
+${competencyBlock}
+${fewShotBlock}
+## PHÂN PHỐI BẮT BUỘC (5 câu)
+${distributionGuide}
+Đảm bảo: ít nhất 2 câu behavior (STAR), ít nhất 1 câu theory chuyên sâu, ít nhất 1 câu project từ dự án CÓ THẬT trong CV.`;
 }
 
 // ── XML-delimited user prompt (delimiter defense) ────────────────────────────
@@ -406,6 +455,7 @@ export async function generateQuestionsFromText({
     userId,
     sessionId,
     metadata:  { position, field, cvTextLen: cvText.length, jdTextLen: jdText.length },
+    tags:      ["question_generation", "personalized"],
   });
 
   // Sanitize user-supplied text before injecting into LLM prompts
@@ -436,8 +486,11 @@ export async function generateQuestionsFromText({
     4,
   );
 
-  // Step 2: Build dynamic prompt grounded in detected competencies
-  const systemPrompt = buildDynamicSystemPrompt(competencyIds, fewShotExamples);
+  // Step 2: Build system prompt — static phần khung (cacheable) + dynamic phần competency/few-shot
+  const systemPrompt = {
+    static:  QUESTION_GEN_STATIC_PROMPT,
+    dynamic: buildQuestionGenDynamicPrompt(competencyIds, fewShotExamples),
+  };
 
   const ctxCV = cleanCV;
   const ctxJD = cleanJD ||
@@ -552,6 +605,7 @@ export async function evaluateTranscripts({ questions, answers, userId, sessionI
     userId,
     sessionId,
     metadata:  { questionCount: questions.length, answerCount: answers.length },
+    tags:      ["evaluation"],
   });
 
   // Build Q&A blocks — inject SHRM rubric per question
@@ -624,8 +678,9 @@ Trả về JSON hợp lệ (không markdown, không giải thích thêm):
 }`;
 
   // Dùng Anthropic Opus cho evaluation nếu enabled (chất lượng đánh giá cao hơn)
+  // systemPrompt hoàn toàn static (không phụ thuộc questions/answers) → cache toàn bộ.
   const evalAnthropicModel = anthropicKey ? anthropicEval : undefined;
-  const rawContent = await callLLM(systemPrompt, qaBlocks, {
+  const rawContent = await callLLM({ static: systemPrompt, dynamic: "" }, qaBlocks, {
     maxTokens: 3500, temp: 0.2, retries: 2,
     traceId, traceName: "evaluation",
     anthropicModel: evalAnthropicModel,

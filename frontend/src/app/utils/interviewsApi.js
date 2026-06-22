@@ -89,6 +89,21 @@ export async function extractCvTextFromFile(file) {
 }
 
 /**
+ * Lấy 3 câu hỏi "baseline" cố định cho free trial — PUBLIC, không cần đăng nhập.
+ * @returns {{ success, questions: object[] }}
+ */
+export async function getBaselineQuestions() {
+  try {
+    const res = await fetch(apiUrl("/api/interviews/baseline-questions"));
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok || !body.success) return { success: false, error: body.error ?? `Lỗi ${res.status}` };
+    return { success: true, questions: body.questions ?? [] };
+  } catch {
+    return { success: false, error: "Không kết nối được backend." };
+  }
+}
+
+/**
  * Gửi transcripts lên backend để LLM đánh giá theo chuẩn SHRM/DDI.
  * @param {string} sessionId
  * @param {{ questionIndex: number, transcript: string, questionText?: string }[]} answers
@@ -366,6 +381,33 @@ export async function pregenerateInterviewVideos(questions, opts = {}) {
       method:  "POST",
       headers: { ...jsonHeaders },
       body:    JSON.stringify({ questions, ...opts }),
+    });
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok || !body.success) return { success: false, error: body.error ?? `Lỗi ${res.status}` };
+    return {
+      success:    true,
+      videoUrls:  body.videoUrls  ?? [],
+      errors:     body.errors     ?? [],
+      durationMs: body.durationMs ?? 0,
+      cacheHits:  body.cacheHits  ?? 0,
+    };
+  } catch {
+    return { success: false, error: "Không kết nối được backend." };
+  }
+}
+
+/**
+ * Pre-generate video cho 3 câu hỏi baseline (free trial) — PUBLIC, không cần đăng nhập.
+ * Text câu hỏi cố định → cache key giống nhau cho mọi user/gender → cache-hit sau lần đầu.
+ * @param {"male"|"female"} [gender="male"]
+ * @returns {{ success, videoUrls: string[], errors, durationMs, cacheHits }}
+ */
+export async function pregenerateBaselineVideos(gender = "male") {
+  try {
+    const res = await fetch(apiUrl("/api/ai/interview/pregen-baseline"), {
+      method:  "POST",
+      headers: { ...jsonHeaders },
+      body:    JSON.stringify({ gender }),
     });
     const body = await res.json().catch(() => ({}));
     if (!res.ok || !body.success) return { success: false, error: body.error ?? `Lỗi ${res.status}` };

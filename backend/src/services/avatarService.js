@@ -8,7 +8,8 @@
  *   3. Upload audio buffer → Cloudinary → public audio URL
  *   4. POST /talks → D-ID job ID
  *   5. Poll GET /talks/:id until status=done
- *   6. Save result_url → Redis (180 ngày)
+ *   6. Nếu opts.persistVideo: mirror result_url → Cloudinary, cache vĩnh viễn (không TTL)
+ *      Ngược lại: cache result_url (D-ID CDN) → Redis (180 ngày)
  *
  * Env vars:
  *   D_ID_API_KEY=<raw key>          — format: Basic base64(key:)
@@ -20,6 +21,8 @@ import crypto from "crypto";
 import { uploadToCloudinary } from "../utils/cloudinaryUpload.js";
 import { synthesizeSpeech, getElevenLabsVoiceId, isElevenLabsEnabled } from "./ttsService.js";
 import { cacheGet, cacheSet } from "./cacheService.js";
+import { logEvent } from "./langfuseService.js";
+import { calcTTSCost, calcAvatarVideoCost } from "./costCalculator.js";
 import { logger } from "../config/logger.js";
 
 const DID_BASE = "https://api.d-id.com";
@@ -105,9 +108,15 @@ export function isCircuitOpen() { return didCircuit.isOpen(); }
 
 // ── Cache key ─────────────────────────────────────────────────────────────────
 
+// Đặt AVATAR_PIPELINE_VERSION (vd: "v2") khi đổi pipeline render (audio format, D-ID config,
+// avatar ảnh mới...) để vô hiệu hóa TOÀN BỘ cache video cùng lúc — tránh video cũ lẫn pipeline mới.
+// Để trống (mặc định) → không đổi cache key hiện có.
+const AVATAR_PIPELINE_VERSION = process.env.AVATAR_PIPELINE_VERSION ?? "";
+
 function buildCacheKey(questionText, avatarImageUrl, azureVoiceId, elevenLabsVoiceId) {
   // Include both voice IDs so changing ElevenLabs clone invalidates stale cached videos.
-  const raw = `${questionText.trim()}::${avatarImageUrl}::${azureVoiceId ?? "default"}::${elevenLabsVoiceId ?? "azure"}`;
+  const versionPrefix = AVATAR_PIPELINE_VERSION ? `${AVATAR_PIPELINE_VERSION}::` : "";
+  const raw = `${versionPrefix}${questionText.trim()}::${avatarImageUrl}::${azureVoiceId ?? "default"}::${elevenLabsVoiceId ?? "azure"}`;
   return `did:v3:${crypto.createHash("md5").update(raw).digest("hex")}`;
 }
 
@@ -122,6 +131,7 @@ function buildCacheKey(questionText, avatarImageUrl, azureVoiceId, elevenLabsVoi
  * @param {object} [opts]
  * @param {"male"|"female"} [opts.gender="female"] - Dùng để chọn ElevenLabs voice đúng giới tính
  * @param {string} [opts.voiceId] - Override ElevenLabs voice ID (nếu không set, dùng gender)
+ * @param {string} [opts.traceId] - Langfuse trace ID để log chi phí TTS (Phase 0 cost tracking)
  */
 async function generateAndUploadAudio(text, opts = {}) {
   if (!isElevenLabsEnabled()) {
@@ -132,7 +142,7 @@ async function generateAndUploadAudio(text, opts = {}) {
   }
 
   try {
-    const { gender = "female", voiceId } = opts;
+    const { gender = "female", voiceId, traceId } = opts;
     // Resolve ElevenLabs voice ID from gender — NOT the Azure voice ID (vi-VN-NamMinhNeural).
     // Azure voice IDs are for D-ID text-script fallback only; ElevenLabs uses its own ID format.
     const elevenLabsVoiceId = voiceId || getElevenLabsVoiceId(gender);
@@ -149,9 +159,49 @@ async function generateAndUploadAudio(text, opts = {}) {
 
     if (!cdn) return null; // Cloudinary not configured
     logger.info("avatar_tts_provider", { provider: "elevenlabs", gender, voiceId: elevenLabsVoiceId });
+
+    // Phase 0 cost tracking: ElevenLabs tính phí theo ký tự
+    const ttsCost = calcTTSCost(text.length);
+    logEvent({
+      traceId,
+      name: "tts_elevenlabs",
+      input: { characters: text.length, gender, voiceId: elevenLabsVoiceId },
+      output: { audioUrl: cdn.url },
+      metadata: { costUsd: ttsCost.usd, costVnd: Math.round(ttsCost.vnd) },
+    });
+
     return cdn.url;
   } catch (err) {
     logger.warn("avatar_audio_upload_failed", { error: err.message });
+    return null;
+  }
+}
+
+// ── Video: mirror D-ID result sang Cloudinary ────────────────────────────────
+
+/**
+ * Tải MP4 từ D-ID CDN về và upload lên Cloudinary của mình.
+ * Tránh rủi ro D-ID xoá CDN file (downgrade plan, hết hạn account, đổi chính sách...)
+ * làm video cache lâu dài (vd: baseline questions) bị hỏng link.
+ *
+ * @param {string} resultUrl - D-ID `result_url` (MP4)
+ * @returns {Promise<string|null>} URL Cloudinary, hoặc null nếu fetch/upload lỗi (fallback dùng resultUrl gốc)
+ */
+async function mirrorVideoToCloudinary(resultUrl) {
+  try {
+    const res = await fetch(resultUrl, { signal: AbortSignal.timeout(30_000) });
+    if (!res.ok) return null;
+    const buffer = Buffer.from(await res.arrayBuffer());
+
+    const cdn = await uploadToCloudinary(buffer, {
+      folder:        "prointerview/avatar-videos",
+      resource_type: "video",
+      format:        "mp4",
+      overwrite:     false,
+    });
+    return cdn?.url ?? null;
+  } catch (err) {
+    logger.warn("avatar_video_mirror_failed", { error: err.message, resultUrl });
     return null;
   }
 }
@@ -264,6 +314,9 @@ async function pollDIDTalk(talkId, timeoutMs = 120_000, signal) {
  * @param {string} [opts.gender="female"] - "female" | "male"
  * @param {string} [opts.voiceId]         - ElevenLabs voice ID override
  * @param {string} [opts.avatarImageUrl]  - Override avatar image
+ * @param {string} [opts.traceId]         - Langfuse trace ID để log cache hit/miss + chi phí (Phase 0)
+ * @param {boolean} [opts.persistVideo=false] - Mirror D-ID result sang Cloudinary + cache vĩnh viễn
+ *   (tránh rủi ro D-ID xoá CDN file). Dùng cho video dùng chung toàn hệ thống (baseline questions).
  * @param {AbortSignal} [signal]          - Abort polling when client disconnects
  * @returns {Promise<{videoUrl: string, fromCache: boolean, talkId?: string}>}
  */
@@ -277,7 +330,7 @@ export async function generateVideoForQuestion(questionText, opts = {}, signal) 
     throw new Error("D-ID circuit open — service degraded, skipping to prevent credit waste");
   }
 
-  const { gender = "female", voiceId, avatarImageUrl } = opts;
+  const { gender = "female", voiceId, avatarImageUrl, traceId } = opts;
   const { avatarUrl, maleUrl } = cfg();
   const resolvedAvatarUrl = avatarImageUrl ?? (gender === "male" ? maleUrl : avatarUrl);
   // Derive Azure TTS voice from gender when no explicit voiceId provided
@@ -290,24 +343,63 @@ export async function generateVideoForQuestion(questionText, opts = {}, signal) 
   const cacheKey = buildCacheKey(questionText, resolvedAvatarUrl, resolvedVoiceId, elevenLabsVoiceId);
   const cached   = await cacheGet(cacheKey);
   if (cached) {
+    const cacheCost = calcAvatarVideoCost(true);
+    logEvent({
+      traceId,
+      name: "avatar_video_did",
+      input: { questionText: questionText.slice(0, 200) },
+      output: { videoUrl: cached },
+      metadata: {
+        fromCache:   true,
+        costUsd:     cacheCost.usd,
+        costVnd:     Math.round(cacheCost.vnd),
+        persistVideo: Boolean(opts.persistVideo),
+      },
+    });
     return { videoUrl: cached, fromCache: true };
   }
 
   // 2. ElevenLabs TTS audio (if configured). Pass gender so the correct voice is selected.
   //    resolvedVoiceId is the Azure voice name — only used as D-ID text-script fallback (step 3).
-  const audioUrl = await generateAndUploadAudio(questionText, { gender });
+  const audioUrl = await generateAndUploadAudio(questionText, { gender, traceId });
 
   // 3. Create D-ID talk — if audioUrl exists, D-ID lipsync with ElevenLabs audio;
   //    otherwise D-ID uses its own Azure TTS with resolvedVoiceId.
   const talkId = await createDIDTalk(resolvedAvatarUrl, audioUrl, questionText, { voiceId: resolvedVoiceId });
 
   // 4. Poll until done — pass signal so polling stops on client disconnect
-  const videoUrl = await pollDIDTalk(talkId, 120_000, signal);
+  let videoUrl = await pollDIDTalk(talkId, 120_000, signal);
+  let cacheTtl = VIDEO_CACHE_TTL;
 
-  // 5. Cache result
-  await cacheSet(cacheKey, videoUrl, VIDEO_CACHE_TTL);
+  // 5. Mirror sang Cloudinary nếu được yêu cầu (vd: baseline questions — cache dùng chung
+  //    toàn hệ thống, không phụ thuộc D-ID giữ file CDN lâu dài). Cache vĩnh viễn vì mình
+  //    kiểm soát file. Nếu mirror lỗi → giữ URL D-ID gốc + TTL như cũ (degrade gracefully).
+  if (opts.persistVideo) {
+    const mirrored = await mirrorVideoToCloudinary(videoUrl);
+    if (mirrored) {
+      videoUrl = mirrored;
+      cacheTtl = null;
+    }
+  }
+
+  // 6. Cache result
+  await cacheSet(cacheKey, videoUrl, cacheTtl);
 
   logger.info("avatar_video_generated", { talkId, fromCache: false, textLen: questionText.length });
+
+  const genCost = calcAvatarVideoCost(false);
+  logEvent({
+    traceId,
+    name: "avatar_video_did",
+    input: { questionText: questionText.slice(0, 200) },
+    output: { videoUrl, talkId },
+    metadata: {
+      fromCache:    false,
+      costUsd:      genCost.usd,
+      costVnd:      Math.round(genCost.vnd),
+      persistVideo: Boolean(opts.persistVideo),
+    },
+  });
 
   return { videoUrl, fromCache: false, talkId };
 }

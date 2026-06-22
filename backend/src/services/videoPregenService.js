@@ -16,6 +16,7 @@
 
 import { randomUUID } from "crypto";
 import { pregenerateVideos, isDIDEnabled } from "./avatarService.js";
+import { createTrace, finalizeTrace } from "./langfuseService.js";
 import { logger } from "../config/logger.js";
 
 // In-memory job store (tồn tại trong process — đủ cho 1 Render instance)
@@ -77,10 +78,19 @@ async function runPregeneration(jobId, questions, opts) {
 
   logger.info("pregen_start", { jobId, total: questions.length });
 
+  // Phase 0 cost tracking: 1 trace cho cả pregen job (gồm TTS + video gen events)
+  const traceId = createTrace({
+    name:     "avatar_pregen",
+    userId:   opts.userId,
+    metadata: { jobId, totalQuestions: questions.length },
+    tags:     ["avatar_pregen"],
+  });
+  const pregenOpts = { ...opts, traceId };
+
   try {
     const results = await pregenerateVideos(
       questions,
-      opts,
+      pregenOpts,
       // Progress callback
       (done, total) => {
         const j = jobStore.get(jobId);
@@ -109,6 +119,8 @@ async function runPregeneration(jobId, questions, opts) {
       durationMs,
       cacheHits:  results.filter(r => r.fromCache).length,
     });
+
+    finalizeTrace(traceId, j.status === "error" ? "error" : "success");
   } catch (err) {
     const j = jobStore.get(jobId);
     if (j) {
@@ -117,6 +129,7 @@ async function runPregeneration(jobId, questions, opts) {
       j.completedAt = Date.now();
     }
     logger.error("pregen_failed", { jobId, error: err.message });
+    finalizeTrace(traceId, "error", err.message);
   }
 }
 
@@ -155,13 +168,24 @@ export async function pregenerateSync(questions, opts = {}, signal) {
   }
 
   const startMs = Date.now();
-  const results = await pregenerateVideos(questions, opts, undefined, signal);
+
+  // Phase 0 cost tracking: 1 trace cho cả lượt sync pregen
+  const traceId = createTrace({
+    name:     "avatar_pregen",
+    userId:   opts.userId,
+    metadata: { totalQuestions: questions.length, sync: true },
+    tags:     ["avatar_pregen"],
+  });
+
+  const results = await pregenerateVideos(questions, { ...opts, traceId }, undefined, signal);
 
   const videoUrls = results.map(r => r.videoUrl ?? null);
   const errors    = results
     .map((r, i) => r.error ? { questionIndex: i, error: r.error } : null)
     .filter(Boolean);
   const cacheHits = results.filter(r => r.fromCache).length;
+
+  finalizeTrace(traceId, errors.length === questions.length ? "error" : "success");
 
   return {
     videoUrls,

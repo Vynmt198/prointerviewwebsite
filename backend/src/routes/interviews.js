@@ -10,6 +10,9 @@ const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 
 
 export const interviewsRouter = Router();
 
+// Public — 3 câu hỏi baseline cố định cho free trial (không cần đăng nhập)
+interviewsRouter.get("/baseline-questions", asyncHandler(InterviewsController.getBaselineQuestions));
+
 // Session lifecycle
 interviewsRouter.post("/sessions", authJwt, asyncHandler(InterviewsController.createSession));
 interviewsRouter.patch("/sessions/:id", authJwt, asyncHandler(InterviewsController.updateAnswer));

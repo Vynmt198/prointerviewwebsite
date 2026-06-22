@@ -2,6 +2,7 @@ import { Router } from "express";
 import multer from "multer";
 import { authJwt } from "../middleware/authJwt.js";
 import { asyncHandler } from "../middleware/asyncHandler.js";
+import { baselineTrialLimiter } from "../middleware/rateLimiters.js";
 import { AIProvidersController } from "../controllers/aiProvidersController.js";
 
 const upload = multer({
@@ -44,6 +45,13 @@ aiProvidersRouter.post(
   "/interview/pregenerate",
   authJwt,
   asyncHandler(AIProvidersController.pregenerateSync),
+);
+
+// Public — free trial: pregen 3 câu hỏi baseline cố định (cache dùng chung toàn hệ thống)
+aiProvidersRouter.post(
+  "/interview/pregen-baseline",
+  baselineTrialLimiter,
+  asyncHandler(AIProvidersController.pregenerateBaseline),
 );
 
 // Async (trả jobId ngay, poll để theo dõi): dùng khi cần progress updates chi tiết

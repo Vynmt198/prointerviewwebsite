@@ -34,6 +34,7 @@ import {
   startPregenerationJob,
   getPregenerationStatus,
 } from "../services/videoPregenService.js";
+import { getBaselineQuestionTexts } from "../config/baselineQuestions.js";
 
 export const AIProvidersController = {
 
@@ -254,7 +255,7 @@ export const AIProvidersController = {
     });
 
     try {
-      const result = await pregenerateSync(questions, { gender, voiceId }, ac.signal);
+      const result = await pregenerateSync(questions, { gender, voiceId, userId: req.userId }, ac.signal);
 
       logger.info("pregen_sync_ok", {
         userId:    req.userId,
@@ -273,6 +274,57 @@ export const AIProvidersController = {
       });
     } catch (err) {
       logger.error("pregen_sync_failed", { userId: req.userId, error: err.message });
+      res.status(500).json({ success: false, error: err.message });
+    }
+  },
+
+  /**
+   * POST /api/ai/interview/pregen-baseline — PUBLIC (free trial, không cần đăng nhập)
+   * Body JSON: { gender?: "female"|"male" }
+   *
+   * Pre-gen video cho 3 câu hỏi baseline CỐ ĐỊNH (baselineQuestions.js). Vì text + gender
+   * cố định → cache key (avatarService.buildCacheKey) giống nhau cho mọi user — lần gọi
+   * đầu tiên (per gender) tốn D-ID credit, mọi lần sau (toàn hệ thống) cache-hit ($0).
+   */
+  pregenerateBaseline: async (req, res) => {
+    if (!isDIDEnabled()) {
+      return res.status(503).json({
+        success: false,
+        error:   "D_ID_API_KEY chưa được cấu hình.",
+        hint:    "Đăng ký tại studio.d-id.com → API keys → set D_ID_API_KEY trong .env",
+      });
+    }
+
+    const { gender = "male" } = req.body ?? {};
+    const resolvedGender = gender === "female" ? "female" : "male";
+    const questions = getBaselineQuestionTexts();
+
+    logger.info("pregen_baseline_start", { gender: resolvedGender, count: questions.length });
+
+    const ac = new AbortController();
+    req.on("close", () => {
+      if (!res.headersSent) ac.abort();
+    });
+
+    try {
+      const result = await pregenerateSync(questions, { gender: resolvedGender, persistVideo: true }, ac.signal);
+
+      logger.info("pregen_baseline_ok", {
+        gender:     resolvedGender,
+        errors:     result.errors.length,
+        durationMs: result.durationMs,
+        cacheHits:  result.cacheHits,
+      });
+
+      res.json({
+        success:    true,
+        videoUrls:  result.videoUrls,
+        errors:     result.errors,
+        durationMs: result.durationMs,
+        cacheHits:  result.cacheHits,
+      });
+    } catch (err) {
+      logger.error("pregen_baseline_failed", { gender: resolvedGender, error: err.message });
       res.status(500).json({ success: false, error: err.message });
     }
   },
@@ -300,7 +352,7 @@ export const AIProvidersController = {
       return res.status(400).json({ success: false, error: "Tối đa 15 câu hỏi mỗi request." });
     }
 
-    const jobId = startPregenerationJob(questions, { gender, voiceId });
+    const jobId = startPregenerationJob(questions, { gender, voiceId, userId: req.userId });
     logger.info("pregen_job_started", { userId: req.userId, jobId, count: questions.length });
 
     res.json({ success: true, jobId, total: questions.length, status: "running" });

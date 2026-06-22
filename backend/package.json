@@ -30,8 +30,9 @@
     "db:migrate-cv-analysis": "node src/scripts/migrate-cv-analysis.js",
     "db:migrate-cv-analysis:dry": "node src/scripts/migrate-cv-analysis.js --dry-run",
     "db:audit-past-bookings": "node src/scripts/auditPastBookings.js",
+    "warmup:baseline-videos": "node src/scripts/warmupBaselineVideos.js",
     "test": "npm run test:node && npm run test:dto && npm run test:python-cv",
-    "test:node": "node --test src/utils/apiErrors.test.js src/utils/planKeys.test.js src/utils/bookingSchedule.test.js src/utils/orderRef.test.js src/utils/transferPaymentExpiry.test.js src/utils/securityGuards.test.js src/services/reviewsService.integration.test.js src/integration/cv.integration.test.js src/integration/cvMatch.integration.test.js src/integration/payments-transfer.integration.test.js src/integration/security.integration.test.js",
+    "test:node": "node --test src/utils/apiErrors.test.js src/utils/planKeys.test.js src/utils/bookingSchedule.test.js src/utils/orderRef.test.js src/utils/transferPaymentExpiry.test.js src/utils/securityGuards.test.js src/services/reviewsService.integration.test.js src/services/cacheService.test.js src/services/alertService.test.js src/integration/cv.integration.test.js src/integration/cvMatch.integration.test.js src/integration/payments-transfer.integration.test.js src/integration/security.integration.test.js src/integration/costDashboard.integration.test.js",
     "test:payments": "node --test src/integration/payments-transfer.integration.test.js",
     "test:python-cv": "cd ../cv_jd_matching && python -m unittest discover -s tests -p test_*.py -v",
     "test:dto": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --testPathPatterns=__tests__"
@@ -46,6 +47,7 @@
     }
   },
   "dependencies": {
+    "@sentry/node": "^8.55.2",
     "bcrypt": "^6.0.0",
     "cloudinary": "^2.10.0",
     "cors": "^2.8.6",

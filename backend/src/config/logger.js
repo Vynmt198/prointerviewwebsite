@@ -24,3 +24,4 @@ export const logger = {
   warn:  (event, data = {}) => log("warn",  event, data),
   error: (event, data = {}) => log("error", event, data),
 };
+

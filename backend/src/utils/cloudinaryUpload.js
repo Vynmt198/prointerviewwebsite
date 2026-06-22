@@ -54,4 +54,46 @@ export function deleteLocalFile(filepath) {
   try { fs.unlinkSync(filepath); } catch (_) {}
 }
 
+/**
+ * Liệt kê toàn bộ resource trong 1 folder Cloudinary (tự động phân trang qua next_cursor).
+ * @param {string} folder - vd: "prointerview/tts-audio"
+ * @param {string} [resourceType="video"] - "image" | "video" | "raw" (audio upload dùng "video")
+ * @returns {Promise<Array<{public_id: string, created_at: string}>>}
+ */
+export async function listResourcesInFolder(folder, resourceType = "video") {
+  if (!isConfigured()) return [];
+  ensureConfig();
+
+  const all = [];
+  let nextCursor;
+  do {
+    const result = await cloudinary.api.resources({
+      type:          "upload",
+      resource_type: resourceType,
+      prefix:        folder,
+      max_results:   500,
+      next_cursor:   nextCursor,
+    });
+    all.push(...(result.resources ?? []));
+    nextCursor = result.next_cursor;
+  } while (nextCursor);
+
+  return all;
+}
+
+/**
+ * Xóa nhiều resource Cloudinary theo public_id (batch tối đa 100/lần — tự chia batch).
+ * @param {string[]} publicIds
+ * @param {string} [resourceType="video"]
+ */
+export async function deleteCloudinaryResources(publicIds, resourceType = "video") {
+  if (!isConfigured() || publicIds.length === 0) return;
+  ensureConfig();
+
+  for (let i = 0; i < publicIds.length; i += 100) {
+    const batch = publicIds.slice(i, i + 100);
+    await cloudinary.api.delete_resources(batch, { resource_type: resourceType });
+  }
+}
+
 export { isConfigured as isCloudinaryConfigured };

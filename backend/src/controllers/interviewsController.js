@@ -7,6 +7,7 @@ import {
   extractPDFText,
   evaluateTranscripts,
 } from "../services/interviewQuestionService.js";
+import { BASELINE_QUESTIONS } from "../config/baselineQuestions.js";
 import { logger } from "../config/logger.js";
 
 // ── Accumulation helper ───────────────────────────────────────────────────────
@@ -93,6 +94,15 @@ async function getFewShotExamples(roleCategory, competencyIds, limit = 3) {
 
 // ── Controller ────────────────────────────────────────────────────────────────
 export const InterviewsController = {
+
+  /**
+   * GET /api/interviews/baseline-questions — PUBLIC (không cần đăng nhập)
+   * 3 câu hỏi cố định dùng cho free trial (stage 1). Text không đổi → video avatar
+   * được cache + dùng lại cho mọi user (xem baselineQuestions.js).
+   */
+  getBaselineQuestions: async (req, res) => {
+    res.json({ success: true, questions: BASELINE_QUESTIONS });
+  },
 
   /** POST /api/interviews/sessions — Tạo buổi phỏng vấn mới */
   createSession: async (req, res) => {
