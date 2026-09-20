@@ -124,11 +124,17 @@ const bookingSchema = new Schema(
     reviewId: { type: Schema.Types.ObjectId, ref: "Review" },
     completedAt: { type: Date },
     /** Đã ghi có thu nhập vào ví mentor (tránh cộng trùng). */
+    earningsClearAt: { type: Date },
+    earningsClearedAt: { type: Date },
+    earningsClearFailedAt: { type: Date },
+    earningsNetAmount: { type: Number },
     mentorEarningsCreditedAt: { type: Date },
     /** Ảnh check-in webcam mentor trước khi vào phòng họp. */
     mentorCheckInImageUrl: { type: String, default: "" },
     mentorCheckInAt: { type: Date },
     mentorCheckInUserId: { type: Schema.Types.ObjectId, ref: "User" },
+    /** Lần đầu job phát hiện buổi đã trả tiền quá giờ nhưng chưa ghi nhận kết quả. */
+    staleFlaggedAt: { type: Date },
     /** Ghi chú live mentor trong buổi (STT / tag nhanh) — promote sang MentorKnowledge khi complete. */
     mentorSessionCapture: {
       transcript: { type: String, default: "" },

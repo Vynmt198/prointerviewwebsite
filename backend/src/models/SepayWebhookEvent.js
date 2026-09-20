@@ -8,7 +8,7 @@ const sepayWebhookEventSchema = new mongoose.Schema(
     orderRef: { type: String, default: "" },
     status: {
       type: String,
-      enum: ["received", "processed", "ignored", "unmatched", "failed"],
+      enum: ["received", "processed", "ignored", "unmatched", "failed", "held_inactive_account"],
       default: "received",
     },
     entityType: { type: String, default: "" },

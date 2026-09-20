@@ -245,6 +245,9 @@ export async function recordAdminTransferSuccess({
     .lean();
 
   if (existing && existing.status === "success") return { ok: true, idempotent: true };
+  if (existing && ["held_inactive_account", "refund_pending", "refunded", "partial_refund"].includes(existing.status)) {
+    return { ok: false, error: "Giao dịch đang đối soát hoặc đã hoàn tiền; không được xác nhận thanh toán lại." };
+  }
 
   const note = String(forceNote || "").trim().slice(0, 500);
   const confirmMeta = {
@@ -689,6 +692,7 @@ export async function confirmEnrollmentTransferByAdmin(enrollmentId, options = {
     await runInTransaction(async (session) => {
       const row = await Enrollment.findById(enrollmentId).session(session);
       if (!row) throw new Error("ERR_404");
+      if (row.cartOrderId && String(options._cartOrderId || "") !== String(row.cartOrderId)) throw new Error("ERR_CART_ORDER");
       if (row.paymentMethod !== "transfer") throw new Error("ERR_METHOD");
       if (row.paymentStatus !== "pending") throw new Error("ERR_STATUS");
       if (!force && !row.transferSubmittedAt) throw new Error("ERR_NO_SUBMIT");
@@ -737,6 +741,7 @@ export async function confirmEnrollmentTransferByAdmin(enrollmentId, options = {
   } catch (error) {
     const msg = String(error?.message || "");
     if (msg === "ERR_404") return { ok: false, status: 404, error: "Không tìm thấy ghi danh." };
+    if (msg === "ERR_CART_ORDER") return { ok: false, status: 409, error: "Cần đối soát và xác nhận toàn bộ đơn giỏ hàng." };
     if (msg === "ERR_METHOD") {
       return { ok: false, status: 400, error: "Ghi danh này không dùng chuyển khoản." };
     }
@@ -811,16 +816,26 @@ export async function recordTransferSubmitted({ userId, type, referenceId, payme
   return { ok: true };
 }
 
-export async function listPaymentHistory(userId, limit = 50) {
+export async function listPaymentHistory(userId, limit = 50, options = {}) {
   if (!isMongoReady()) return { ok: false, status: 503, error: MONGO_ERR };
-  const lim = Math.min(100, Math.max(1, Number(limit) || 50));
-  const rows = await Payment.find({ userId })
-    .sort({ createdAt: -1 })
-    .limit(lim)
-    .lean();
+  const lim = Math.min(100, Math.max(1, parseInt(limit) || 50));
+  const page = Math.max(1, parseInt(options.page) || 1);
+  const filter = { userId };
+  if (["booking", "course", "subscription"].includes(options.type)) filter.type = options.type;
+  const statuses = Payment.schema.path("status").enumValues;
+  if (statuses.includes(options.status)) filter.status = options.status;
+  const [rows, total] = await Promise.all([
+    Payment.find(filter).sort({ createdAt: -1, _id: -1 }).skip((page - 1) * lim).limit(lim).lean(),
+    Payment.countDocuments(filter),
+  ]);
+  const refs = rows.filter((p) => p.type === "course").map((p) => p.referenceId);
+  const enrollments = await Enrollment.find({ _id: { $in: refs } }).select("cartOrderId").lean();
+  const orders = new Map(enrollments.map((e) => [String(e._id), e.cartOrderId]));
   return {
     ok: true,
+    pagination: { page, limit: lim, total, totalPages: Math.max(1, Math.ceil(total / lim)) },
     payments: rows.map((p) => ({
+      cartOrderId: orders.get(String(p.referenceId)) || null,
       id: String(p._id),
       type: p.type,
       referenceModel: p.referenceModel,

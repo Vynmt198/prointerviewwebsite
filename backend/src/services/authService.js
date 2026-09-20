@@ -199,18 +199,8 @@ export async function deleteMeUser(userId) {
     return { ok: false, status: 401, error: "Phiên đăng nhập không hợp lệ." };
   }
 
-  const deleted = await User.findByIdAndDelete(uid);
-  if (!deleted) {
-    return { ok: false, status: 404, error: "Tài khoản không tồn tại." };
-  }
-
-  // Dọn hồ sơ mentor nếu user từng là mentor.
-  const Mentor = mongoose.models.Mentor;
-  if (Mentor) {
-    await Mentor.deleteOne({ userId: uid });
-  }
-
-  return { ok: true };
+  const { closeAccount } = await import("./accountClosureService.js");
+  return closeAccount(uid, { closedBy: uid });
 }
 
 export async function refreshAccessToken(rawRefresh, req, options = {}) {

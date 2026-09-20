@@ -6,6 +6,7 @@ const enrollmentSchema = new Schema(
   {
     userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
     courseId: { type: Schema.Types.ObjectId, ref: "Course", required: true },
+    cartOrderId: { type: Schema.Types.ObjectId, ref: "CartOrder" },
 
     completedLessons: [{ type: Schema.Types.ObjectId }],
     lastLessonId: { type: Schema.Types.ObjectId },
@@ -52,6 +53,10 @@ const enrollmentSchema = new Schema(
     transferForceNote: { type: String, default: "" },
     paidAt: { type: Date },
     /** Đã ghi có thu nhập mentor + stats khóa (tránh cộng trùng). */
+    earningsClearAt: { type: Date },
+    earningsClearedAt: { type: Date },
+    earningsClearFailedAt: { type: Date },
+    earningsNetAmount: { type: Number },
     mentorEarningsCreditedAt: { type: Date },
   },
   { collection: "enrollments", timestamps: true }

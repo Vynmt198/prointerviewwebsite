@@ -41,8 +41,11 @@ export const EnrollmentController = {
 
       const price = Number(course.price || 0);
       const courseMentor = course?.mentorId
-        ? await Mentor.findById(course.mentorId).select("pricing userId").lean()
+        ? await Mentor.findById(course.mentorId).select("pricing userId isActive status").lean()
         : null;
+      if (courseMentor?.isActive === false || courseMentor?.status === "closed") {
+        return res.status(409).json({ success: false, error: "Mentor đã ngừng nhận học viên mới." });
+      }
       if (courseMentor?.userId && String(courseMentor.userId) === String(userId)) {
         return res.status(400).json({ success: false, error: "Không thể tự mua khóa học của chính mình." });
       }
@@ -81,6 +84,15 @@ export const EnrollmentController = {
       const coursePlatformFeeAfterCoupon = Math.max(0, coursePlatformFeeAfterDiscount - couponDiscountAmount);
 
       const existing = await Enrollment.findOne({ userId, courseId });
+
+      if (existing?.cartOrderId && existing.paymentStatus !== "paid") {
+        const expiry = await expireEnrollmentTransferIfNeeded(existing);
+        if (!expiry.expired) {
+          return res.status(409).json({ success: false,
+            error: "Khóa học nằm trong đơn giỏ hàng đang chờ thanh toán. Vui lòng mở giỏ hàng để tiếp tục.",
+            redirectTo: `/cart?order=${existing.cartOrderId}` });
+        }
+      }
 
       if (existing) {
         if (enrollmentAccessGranted(existing)) {

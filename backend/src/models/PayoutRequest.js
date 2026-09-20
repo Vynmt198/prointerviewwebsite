@@ -5,7 +5,7 @@ const { Schema } = mongoose;
 const payoutRequestSchema = new Schema(
   {
     mentorId: { type: Schema.Types.ObjectId, ref: "Mentor", required: true, index: true },
-    amount: { type: Number, required: true, min: 1000 },
+    amount: { type: Number, required: true, min: 1 },
     status: {
       type: String,
       enum: ["pending", "approved", "rejected", "processing", "paid"],
@@ -20,6 +20,8 @@ const payoutRequestSchema = new Schema(
     requestedAt: { type: Date, default: Date.now, index: true },
     reviewedAt: { type: Date, default: null },
     reviewedBy: { type: Schema.Types.ObjectId, ref: "User", default: null },
+    createdByAdmin: { type: Schema.Types.ObjectId, ref: "User" },
+    adminReason: { type: String, default: "" },
     rejectReason: { type: String, default: "" },
     paidAt: { type: Date, default: null },
     transferRef: { type: String, default: "" },

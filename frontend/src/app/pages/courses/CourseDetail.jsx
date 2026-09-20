@@ -212,7 +212,7 @@ export function CourseDetail() {
       onEnroll={handleEnroll}
       onContinueLearn={() => navigate(`/courses/${course.id}/learn`)}
       onContinuePayment={() =>
-        navigate(`/checkout?type=course&courseId=${course.id}&price=${course.price}`)
+        navigate(enrollmentRow?.cartOrderId ? `/cart?order=${enrollmentRow.cartOrderId}` : `/checkout?type=course&courseId=${course.id}&price=${course.price}`)
       }
     />
   );

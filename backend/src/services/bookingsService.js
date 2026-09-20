@@ -1116,6 +1116,7 @@ export function toPublicBooking(doc, mentorLean) {
     date: b.date,
     timeSlot: b.timeSlot,
     durationMinutes: b.durationMinutes,
+    staleFlaggedAt: b.staleFlaggedAt || null,
     timezone: b.timezone,
     sessionType: b.sessionType,
     notes: b.notes,
@@ -2610,6 +2611,7 @@ export async function resolveMentorCancelBooking(userId, rawId, body) {
   };
   booking.rescheduleHistory = [...(booking.rescheduleHistory || []), entry];
   booking.date = newDateNorm;
+  booking.staleFlaggedAt = undefined;
   booking.timeSlot = newSlot;
   booking.status = "confirmed";
   booking.cancelledBy = "";
@@ -2723,6 +2725,7 @@ export async function rescheduleMentorBooking(mentorUserId, rawId, body) {
     { oldDate: booking.date, oldTimeSlot: booking.timeSlot, newDate: newDateNorm, newTimeSlot: newSlot, reason, changedBy: "mentor", changedAt: new Date() },
   ];
   booking.date = newDateNorm;
+  booking.staleFlaggedAt = undefined;
   booking.timeSlot = newSlot;
   if (booking.status !== "pending") booking.status = "confirmed";
   await booking.save();

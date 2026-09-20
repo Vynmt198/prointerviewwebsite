@@ -1,3 +1,4 @@
+import { AccountClosurePanel } from "../../components/admin/AccountClosurePanel.jsx";
 import React from "react";
 import { useParams, Link } from "react-router";
 import { AdminPanel } from "./AdminPanel.jsx";
@@ -202,6 +203,7 @@ export function AdminUserDetail() {
           />
         </motion.div>
       )}
+    <AccountClosurePanel userId={id} />
     </AdminPanel>
   );
 }
@@ -1351,7 +1353,7 @@ export function AdminPayouts() {
               <h4 className="text-lg font-bold text-slate-900">Ghi nhận đã chuyển khoản</h4>
               <p className="mt-2 text-sm text-slate-600">Chỉ xác nhận sau khi đã chuyển tiền cho cố vấn.</p>
               <label className="mt-4 block text-[10px] font-black uppercase tracking-widest text-slate-500">
-                Mã / nội dung tham chiếu (tùy chọn)
+                Mã giao dịch ngân hàng (bắt buộc)
               </label>
               <input
                 type="text"
@@ -1382,7 +1384,7 @@ export function AdminPayouts() {
                 <button
                   type="button"
                   onClick={() => void confirmMarkPaid()}
-                  disabled={busyId === markPaidModal.payoutId}
+                  disabled={busyId === markPaidModal.payoutId || markPaidModal.transferRef.trim().length < 3}
                   className="rounded-2xl border border-emerald-200 bg-emerald-50 py-3 text-[10px] font-black uppercase tracking-wider text-emerald-800 disabled:opacity-50"
                 >
                   {busyId === markPaidModal.payoutId ? "Đang xử lý…" : "Xác nhận đã chi"}

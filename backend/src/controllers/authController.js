@@ -223,9 +223,9 @@ export class AuthController {
     try {
       const result = await authService.deleteMeUser(req.userId);
       if (!result.ok) {
-        return res.status(result.status).json({ success: false, error: result.error });
+        return res.status(result.status).json({ success: false, error: result.error, blockers: result.blockers });
       }
-      res.json({ success: true, message: "Đã xóa tài khoản." });
+      res.json({ success: true, message: "Đã đóng tài khoản. Lịch sử tài chính được lưu để đối soát." });
     } catch (err) {
       next(err);
     }

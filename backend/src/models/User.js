@@ -82,6 +82,7 @@ const userSchema = new Schema(
 
     isEmailVerified: { type: Boolean, default: false },
     isActive: { type: Boolean, default: true },
+    accountClosedAt: Date,
     lastLoginAt: { type: Date },
     /** Lần cuối có request/presence từ client — admin dùng để hiển thị online. */
     lastSeenAt: { type: Date, default: null },

@@ -40,6 +40,7 @@ import { MentorReviews } from "./pages/mentor/MentorReviews";
 import { MeetingRoom } from "./pages/mentor/MeetingRoom";
 import { MentorFinance } from "./pages/mentor/MentorFinance";
 import { Courses } from "./pages/courses/Courses";
+import { Cart } from "./pages/courses/Cart.jsx";
 import { CourseDetail } from "./pages/courses/CourseDetail";
 import { CourseLearning } from "./pages/courses/CourseLearning";
 import { MyCourses } from "./pages/courses/MyCourses";
@@ -59,6 +60,9 @@ import { AdminLayout } from "./pages/admin/AdminLayout.jsx";
 import { adminLoader } from "./pages/admin/adminLoader.js";
 import { AdminDashboard } from "./pages/admin/AdminDashboard.jsx";
 import { AdminMentors } from "./pages/admin/AdminMentors.jsx";
+import { PaymentHistory } from "./pages/account/PaymentHistory.jsx";
+import { AdminAuditLog } from "./pages/admin/AdminAuditLog.jsx";
+import { AdminFinanceOperations } from "./pages/admin/AdminFinanceOperations.jsx";
 import { AdminUsers } from "./pages/admin/AdminUsers.jsx";
 import { AdminImportUsers } from "./pages/admin/AdminImportUsers.jsx";
 import { AdminBookings } from "./pages/admin/AdminBookings.jsx";
@@ -141,6 +145,8 @@ export const router = createBrowserRouter([
           },
           { path: "my-bookings", Component: MyBookings },
           { path: "my-courses", Component: MyCourses },
+          { path: "payment-history", loader: requireAuthLoader, Component: PaymentHistory },
+      { path: "cart", loader: requireCustomerAuthLoader, Component: Cart },
           { path: "booking/:id", Component: Booking },
           { path: "booking", Component: Booking },
           { path: "session/:id", Component: SessionDetail },
@@ -195,6 +201,8 @@ export const router = createBrowserRouter([
       { path: "mentors", Component: AdminMentors },
       { path: "finance", Component: AdminFinance },
       { path: "transactions", Component: AdminTransactions },
+      { path: "finance/operations", Component: AdminFinanceOperations },
+      { path: "audit-log", Component: AdminAuditLog },
       { path: "payouts", Component: AdminPayouts },
       { path: "bookings", Component: AdminBookings },
       { path: "bookings/check-ins", Component: AdminBookingCheckIns },

@@ -217,6 +217,9 @@ export const AdminController = {
         return res.status(400).json({ success: false, error: "isActive phải là boolean." });
       }
 
+      const currentMentor = await Mentor.findById(id).select("status").lean();
+      if (currentMentor?.status === "closed") return res.status(409).json({ success: false, error: "Hồ sơ đã đóng, không thể mở lại." });
+
       const update = isActive
         ? {
             isActive: true,
@@ -230,7 +233,7 @@ export const AdminController = {
           }
         : { isActive: false, available: false };
 
-      const mentor = await Mentor.findByIdAndUpdate(id, update, { new: true });
+      const mentor = await Mentor.findOneAndUpdate({ _id: id, status: { $ne: "closed" } }, { ...update, status: isActive ? "active" : "suspended" }, { new: true });
 
       if (!mentor) return res.status(404).json({ success: false, error: "Không tìm thấy mentor" });
 
@@ -733,6 +736,8 @@ export const AdminController = {
     try {
       const { id } = req.params;
       const { isActive } = req.body;
+      const currentUser = await User.findById(id).select("accountClosedAt role").lean();
+      if (currentUser?.accountClosedAt) return res.status(409).json({ success: false, error: "Tài khoản đã đóng vĩnh viễn." });
       const shouldBeActive = isActive === true || isActive === "true";
       let user;
       if (!shouldBeActive) {
@@ -745,6 +750,8 @@ export const AdminController = {
         user = await User.findByIdAndUpdate(id, { $set: { isActive: shouldBeActive } }, { new: true });
       }
       if (!user) return res.status(404).json({ success: false, error: "Không tìm thấy người dùng" });
+      await Mentor.updateOne({ userId: id, status: { $ne: "closed" } },
+        { $set: { isActive: shouldBeActive, available: shouldBeActive, status: shouldBeActive ? "active" : "suspended" } });
       res.json({ success: true, user });
     } catch (error) {
       next(error);
@@ -917,6 +924,7 @@ export const AdminController = {
           select: "title price mentorId",
           populate: { path: "mentorId", select: "name" },
         })
+        .populate("cartOrderId", "orderRef totalAmount items status")
         .sort({ updatedAt: -1 })
         .limit(200)
         .lean();

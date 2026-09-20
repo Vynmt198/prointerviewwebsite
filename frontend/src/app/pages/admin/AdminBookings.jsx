@@ -52,6 +52,7 @@ function canApproveBooking(booking, paymentStatus) {
 
 const FILTER_TABS = [
   { id: "all", label: "Tất cả" },
+  { id: "stale", label: "Quá giờ cần rà soát" },
   { id: "pending", label: "Chờ đối soát" },
   { id: "paid", label: "Đã thanh toán" },
   { id: "refund_pending", label: "Chờ hoàn tiền" },
@@ -189,6 +190,7 @@ export function AdminBookings() {
     const q = searchTerm.trim().toLowerCase();
     return bookings.filter((b) => {
       const pst = paymentStatusOf(b);
+      if (filter === "stale" && !(b.staleFlaggedAt && ["pending", "confirmed", "in_progress"].includes(b.status))) return false;
       if (filter === "pending" && pst !== "pending") return false;
       if (filter === "paid" && pst !== "paid") return false;
       if (filter === "refund_pending" && pst !== "refund_pending") return false;
@@ -446,6 +448,9 @@ export function AdminBookings() {
                         paymentMethod={b.paymentMethod}
                         mentorCancelResolution={b.mentorCancelResolution}
                       />
+                      {b.staleFlaggedAt && ["pending", "confirmed", "in_progress"].includes(b.status) && (
+                        <p className="mt-2 text-xs font-semibold text-amber-700">Quá giờ · cần rà soát</p>
+                      )}
                     </td>
                     <td className={`${tdCell} whitespace-nowrap text-right font-black text-violet-700`}>
                       {(b.totalAmount ?? b.price ?? 0).toLocaleString("vi-VN")}{" "}

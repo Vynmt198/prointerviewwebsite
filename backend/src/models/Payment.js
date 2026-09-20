@@ -19,17 +19,20 @@ const paymentSchema = new Schema(
 
     status: {
       type: String,
-      enum: ["pending", "success", "failed", "refund_pending", "refunded", "partial_refund", "cancelled"],
+      enum: ["pending", "success", "failed", "refund_pending", "refunded", "partial_refund", "cancelled", "held_inactive_account"],
       default: "pending",
     },
     /** Hết hạn cửa sổ CK SePay (subscription / ledger transfer). */
     paymentExpiresAt: { type: Date },
     paidAt: { type: Date },
+    heldAt: Date,
+    heldReason: String,
     refundedAt: { type: Date },
     refundAmount: { type: Number, default: 0 },
     failureReason: { type: String, default: "" },
 
     invoiceEmail: { type: String, default: "" },
+    invoiceSnapshot: { type: Schema.Types.Mixed },
     invoiceName: { type: String, default: "" },
     invoiceAddress: { type: String, default: "" },
   },

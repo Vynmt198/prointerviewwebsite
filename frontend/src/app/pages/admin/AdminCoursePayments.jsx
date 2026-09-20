@@ -55,7 +55,9 @@ export function AdminCoursePayments() {
     if (!id) return;
     setBusyId(id);
     const res = await tryApi(
-      () => adminApi.confirmEnrollmentTransferPayment(String(id), confirmBody || { force: true }),
+      () => row.cartOrderId?._id
+        ? adminApi.confirmCartOrderPayment(row.cartOrderId._id, { ...confirmBody, amount: row.cartOrderId.totalAmount })
+        : adminApi.confirmEnrollmentTransferPayment(String(id), confirmBody || { force: true }),
       {
       fallback: "Không xác nhận được học phí khóa.",
       successMessage: "Đã ghi nhận xác nhận ngoại lệ (admin).",
@@ -273,13 +275,17 @@ export function AdminCoursePayments() {
                           className="mt-1.5 truncate font-mono text-sm font-bold text-violet-700"
                           title={r.paymentRef || ""}
                         >
-                          {r.paymentRef || "—"}
+                          {r.cartOrderId?.orderRef || r.paymentRef || "—"}
                         </p>
+                        {r.cartOrderId && <p className="mt-1 text-xs text-slate-500">Đơn {r.cartOrderId.items?.length} khóa · tổng {Number(r.cartOrderId.totalAmount).toLocaleString("vi-VN")}đ</p>}
                       </td>
                       <td className={`${adminTdCell} text-center`}>
                         <div className="inline-flex justify-center">
                           {st === "pending" ? (
                             <AdminSepayOverrideAction
+                              groupCount={r.cartOrderId?.items?.length || 1}
+                              groupTotalVnd={r.cartOrderId?.totalAmount || 0}
+                              groupUnit="khóa học"
                               busy={busyId === r._id}
                               onConfirm={(body) => confirmEnrollmentOverride(r, body)}
                             />

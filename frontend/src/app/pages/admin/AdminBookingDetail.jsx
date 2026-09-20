@@ -146,6 +146,11 @@ export function AdminBookingDetail() {
 
       {booking && !loading && (
         <>
+          {booking.staleFlaggedAt && ["pending", "confirmed", "in_progress"].includes(booking.status) && (
+            <div role="status" className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+              Buổi hẹn đã quá giờ kết thúc hơn 60 phút nhưng chưa có kết quả. Vui lòng kiểm tra với học viên và mentor trước khi xử lý.
+            </div>
+          )}
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}

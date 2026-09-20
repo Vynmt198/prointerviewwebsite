@@ -28,6 +28,7 @@ import {
 import { submitReview } from "../../api/courseApi.js";
 import { fetchMyReviewForTarget } from "../../api/reviewsApi.js";
 import { ReviewReplyBlock } from "../reviews/ReviewReplyBlock";
+import { AddCourseToCartButton } from "./AddCourseToCartButton.jsx";
 import { toastApiError, toastApiSuccess } from "../../utils/shared/apiToast.js";
 import { avatarSrc, mediaSrc } from "../../utils/shared/mediaUrl.js";
 import { getPlans } from "../../utils/auth/auth.js";
@@ -199,6 +200,9 @@ export function CoursePurchaseCard({
           </button>
         )}
 
+        {!hasPaidEnrollment && !hasPendingPayment && canTakeStudentActions && (
+          <AddCourseToCartButton courseId={course.id} />
+        )}
         <div className="rounded-xl bg-violet-50/60 p-3.5 lg:rounded-none lg:bg-transparent lg:p-0">
           <p className="mb-2.5 text-sm font-bold text-slate-900">Khóa học này bao gồm</p>
           <ul className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-1 lg:gap-2">

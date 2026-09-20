@@ -69,7 +69,8 @@ const MAIN_GROUPS = [
     title: "Tài chính",
     items: [
       { to: "/admin/payouts", label: "Rút tiền cố vấn", icon: Banknote },
-      { to: "/admin/finance", label: "Tổng quan tài chính", icon: Wallet },
+      { to: "/admin/finance", label: "Tổng quan tài chính", icon: Wallet, end: true },
+      { to: "/admin/finance/operations", label: "Giải ngân & đối soát", icon: Banknote },
       { to: "/admin/transactions", label: "Giao dịch", icon: ArrowLeftRight },
     ],
   },
@@ -94,6 +95,7 @@ const MAIN_GROUPS = [
     items: [
       { to: "/admin/reviews", label: "Đánh giá", icon: Star },
       { to: "/admin/analytics", label: "Phân tích", icon: LineChart },
+      { to: "/admin/audit-log", label: "Nhật ký admin", icon: BookOpen },
     ],
   },
 ];
