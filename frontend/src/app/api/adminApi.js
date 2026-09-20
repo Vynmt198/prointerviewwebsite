@@ -135,6 +135,9 @@ export const adminApi = {
       method: "PATCH",
       body: JSON.stringify(body ?? {}),
     }),
+  confirmCartOrderPayment: (id, body) => authedFetch(`/api/admin/cart-orders/${id}/confirm-transfer`, {
+    method: "POST", body: JSON.stringify(body),
+  }),
   normalizeTransferRefs: (body = {}) =>
     authedFetch("/api/admin/payments/normalize-transfer-refs", {
       method: "POST",

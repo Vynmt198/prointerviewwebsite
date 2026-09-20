@@ -52,7 +52,7 @@ export async function normalizeTransferRefs({ dryRun = false } = {}) {
     normalizeCollection({
       model: Enrollment,
       label: "enrollments",
-      query: { paymentMethod: "transfer", paymentRef: { $type: "string", $ne: "" } },
+      query: { paymentMethod: "transfer", cartOrderId: { $exists: false }, paymentRef: { $type: "string", $ne: "" } },
       pickRef: (doc) => String(doc.paymentRef || "").trim(),
       setRef: (next) => ({ $set: { paymentRef: next } }),
       dryRun,

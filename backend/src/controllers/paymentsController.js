@@ -65,11 +65,11 @@ export class PaymentsController {
   static async history(req, res, next) {
     try {
       const limit = req.query.limit;
-      const result = await paymentsService.listPaymentHistory(req.userId, limit);
+      const result = await paymentsService.listPaymentHistory(req.userId, limit, req.query);
       if (!result.ok) {
         return res.status(result.status).json({ success: false, error: result.error });
       }
-      res.json({ success: true, payments: result.payments });
+      res.json({ success: true, payments: result.payments, pagination: result.pagination });
     } catch (err) {
       next(err);
     }

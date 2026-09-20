@@ -54,6 +54,12 @@ export async function expireBookingTransferIfNeeded(booking, { session } = {}) {
 /** Xóa ghi danh CK pending quá hạn — cho phép ghi danh lại. */
 export async function expireEnrollmentTransferIfNeeded(enrollment, { session } = {}) {
   if (!enrollment) return { expired: false };
+  if (enrollment.cartOrderId) {
+    const { CartOrder } = await import("../models/CartOrder.js");
+    const { expireCartOrder } = await import("./cartService.js");
+    const order = await CartOrder.findById(enrollment.cartOrderId);
+    return { expired: await expireCartOrder(order) };
+  }
   if (enrollmentAccessGranted(enrollment)) return { expired: false };
   if (String(enrollment.paymentStatus || "").toLowerCase() !== "pending") return { expired: false };
   if (String(enrollment.paymentMethod || "").toLowerCase() !== "transfer") return { expired: false };

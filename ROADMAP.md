@@ -2,6 +2,15 @@
 
 **Base URL API:** `/api` · **Auth:** `Authorization: Bearer <jwt>` (JWT Express), trừ route ghi rõ public/webhook.
 
+## Tích hợp BookingMentorPlatform — giỏ hàng và rà soát booking
+
+- ✅ BE + FE: giỏ khóa học lưu MongoDB, thêm/xóa từ trang khóa học, huy hiệu trên navbar và trang `/cart`.
+- ✅ BE + FE: checkout nhiều khóa bằng một QR, áp dụng ưu đãi gói/coupon; khôi phục đơn sau reload, tự hết hạn, xác nhận SePay hoặc admin cho toàn đơn.
+- ✅ BE: `CartOrder` lưu tổng tiền và danh sách cố định, ledger từng khóa, chống tạo trùng/ghi có trùng; mở tiếp quyền học khi có gián đoạn sau nhận tiền.
+- ✅ BE + FE: job rà soát booking mỗi 20 phút, thời gian đệm 60 phút sau giờ kết thúc, thông báo một lần và bộ lọc/cảnh báo admin.
+- Contract: `GET /api/cart`, `POST /api/cart/items`, `DELETE /api/cart/items/:courseId`, `POST /api/cart/checkout`, `GET /api/cart/orders/:id`, `POST /api/admin/cart-orders/:id/confirm-transfer` — xem [`API_INDEX.md`](./API_INDEX.md).
+- Không áp dụng các thay đổi khác của repo nguồn (gói Student/Professional, bỏ AI interview, app mobile, giữ tiền mentor).
+
 Nguyên tắc: **đối chiếu từng màn** trong `frontend/src/app/pages/` *(nhóm theo thư mục: `auth/`, `booking/`, `mentor/`, …)* → implement endpoint dưới đây rồi nối `fetch` trong FE.
 
 ### Đồng bộ với `API_INDEX.md`
@@ -512,4 +521,13 @@ Chi tiết response lỗi / thành công: tham chiếu `API_INDEX.md` (phần đ
 
 ---
 
-*Cập nhật lần cuối: đồng bộ BE Phase 1–5 (presence, analytics, achievements, check-in) + trạng thái FE admin/analytics. Đánh dấu 📋 → ✅ khi đã có route Express; cập nhật cột FE khi nối xong màn.*
+## Bổ sung vận hành tài chính — 2026-09-18
+
+- ✅ Trang `/payment-history`: phân trang/lọc và PDF tiếng Việt từng giao dịch/toàn đơn giỏ.
+- ✅ Giữ thu nhập mới 3 ngày; job giải phóng, chặn report mở; phân biệt số dư khả dụng/đang giữ/chờ rút.
+- ✅ `/admin/finance/operations`: đối soát số dư, quét giải phóng và ghi nhận hoàn tiền đang giữ.
+- ✅ `/admin/audit-log`: nhật ký thao tác admin thành công/thất bại, che trường bí mật.
+- ✅ Chi tiết người dùng: xem tác động, giải ngân số dư còn tồn và đóng mềm qua cổng kiểm tra nghĩa vụ.
+- ✅ Tự đóng tài khoản dùng cùng cổng kiểm tra; giữ chứng từ và vô hiệu phiên.
+
+Chi tiết triển khai, tương thích dữ liệu cũ và cấu hình PDF: [FINANCE_OPERATIONS_PORT.md](docs/FINANCE_OPERATIONS_PORT.md).

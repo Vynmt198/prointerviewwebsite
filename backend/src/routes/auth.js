@@ -1,3 +1,4 @@
+import { getAccountImpact } from "../services/accountClosureService.js";
 import express from "express";
 import mongoose from "mongoose";
 import { AuthController } from "../controllers/authController.js";
@@ -24,6 +25,7 @@ router.post("/google", authWriteLimiter, asyncHandler(AuthController.google));
 router.post("/forgot-password", authWriteLimiter, asyncHandler(AuthController.forgotPassword));
 router.post("/reset-password", authWriteLimiter, asyncHandler(AuthController.resetPassword));
 router.post("/refresh", refreshLimiter, asyncHandler(AuthController.refresh));
+router.get("/me/closure-impact", authJwt, asyncHandler(async (req, res) => res.json({ success: true, impact: await getAccountImpact(req.userId) })));
 router.get("/me", authJwt, asyncHandler(AuthController.me));
 router.post("/presence", authJwt, asyncHandler(AuthController.presence));
 router.patch("/me", authJwt, asyncHandler(AuthController.patchMe));

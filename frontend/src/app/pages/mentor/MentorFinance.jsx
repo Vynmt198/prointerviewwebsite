@@ -558,6 +558,7 @@ export function MentorFinance() {
                 <MentorMoneyText amount={availableBalance} />
               </p>
               <p className="mt-2 text-sm text-violet-200/90">Số dư khả dụng — rút về tài khoản ngân hàng</p>
+              <p className="mt-3 rounded-xl bg-white/10 p-3 text-sm text-white">Đang giữ {finance?.holdDays || 3} ngày: <strong>{Number(finance?.clearingBalance || 0).toLocaleString("vi-VN")} ₫</strong><br />Buổi mentor tính từ lúc hoàn tất; khóa học tính từ lúc thanh toán. Khoản có khiếu nại sẽ được giữ tới khi xử lý xong.</p>
               {payoutAccountMasked ? (
                 <p className="mt-4 inline-flex max-w-full items-center gap-2 truncate rounded-xl bg-white/10 px-3 py-2 text-xs font-medium text-white/85 ring-1 ring-white/10">
                   <BadgeCheck size={14} className="shrink-0 text-[#93f72b]" />

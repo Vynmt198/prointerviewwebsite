@@ -5,6 +5,9 @@ import { Course } from "../models/Course.js";
 import { Enrollment } from "../models/Enrollment.js";
 import { Payment } from "../models/Payment.js";
 import { SepayWebhookEvent } from "../models/SepayWebhookEvent.js";
+import { holdIfPayerInactive } from "./heldPaymentService.js";
+import { CartOrder } from "../models/CartOrder.js";
+import { confirmCartOrderPayment, expireCartOrder } from "./cartService.js";
 import { enrollmentAccessGranted } from "../helpers/enrollmentAccess.js";
 import {
   extractOrderPart,
@@ -68,6 +71,11 @@ async function findPendingTargets(orderRef) {
   if (!norm) return [];
 
   const targets = [];
+  const cartOrder = await CartOrder.findOne({ orderRef: norm, status: { $in: ["pending", "paid"] } }).lean();
+  if (cartOrder && !cartOrder.fulfilledAt && !(await expireCartOrder(cartOrder))) {
+    targets.push({ entityType: "cart", entityId: String(cartOrder._id),
+      userId: String(cartOrder.userId), expectedAmount: cartOrder.totalAmount });
+  }
 
   // Only fetch bookings within 2× the payment timeout window — anything older is certainly expired.
   const activeSince = new Date(Date.now() - 2 * TRANSFER_PAYMENT_TIMEOUT_MS);
@@ -118,6 +126,7 @@ async function findPendingTargets(orderRef) {
   const enrollments = await Enrollment.find({
     paymentMethod: "transfer",
     paymentStatus: "pending",
+    cartOrderId: { $exists: false },
   })
     .select("_id userId paymentRef pricePaid transferSubmittedAt courseId paymentExpiresAt createdAt")
     .lean();
@@ -183,6 +192,11 @@ async function upsertSepayLog(sepayId, patch) {
 async function autoConfirmTarget(target, { sepayId, amount }) {
   const forceNote = `SePay webhook #${sepayId} amount=${amount}`;
   const opts = { force: true, forceNote, adminUserId: "" };
+  if (target.entityType === "cart") {
+    try {
+      return await confirmCartOrderPayment(target.entityId, { ...opts, amount });
+    } catch (error) { return { ok: false, error: error.message }; }
+  }
 
   if (target.entityType === "booking") {
     return confirmBankTransferPaymentByAdmin(target.entityId, opts);
@@ -230,7 +244,10 @@ export async function handleSepayWebhook(body, authHeader) {
   }
 
   const existing = await SepayWebhookEvent.findOne({ sepayId }).lean();
-  if (existing?.status === "processed" || existing?.status === "received") {
+  const resumeCartReceipt = existing?.status === "received" && (existing.entityType === "cart" || await CartOrder.exists({
+    orderRef: parsePiOrderFromText(payload.content, payload.code, payload.description, payload.referenceCode, payload.transactionContent),
+  }));
+  if (["processed", "held_inactive_account"].includes(existing?.status) || (existing?.status === "received" && !resumeCartReceipt)) {
     return { ok: true, idempotent: true, sepayId };
   }
 
@@ -294,6 +311,13 @@ export async function handleSepayWebhook(body, authHeader) {
   }
 
   const target = matched[0];
+  if (target.entityType === "cart") {
+    await upsertSepayLog(sepayId, { entityType: "cart", entityId: target.entityId });
+  }
+  if (await holdIfPayerInactive(target, { sepayId, amount })) {
+    await upsertSepayLog(sepayId, { status: "held_inactive_account", orderRef, entityType: target.entityType, entityId: target.entityId });
+    return { ok: true, held: true, sepayId };
+  }
   const confirm = await autoConfirmTarget(target, { sepayId, amount });
   if (!confirm.ok) {
     await upsertSepayLog(sepayId, {
@@ -388,6 +412,17 @@ export async function getTransferStatusForUser(userId, orderRefRaw) {
   }
 
   const uid = new mongoose.Types.ObjectId(userId);
+  const cartOrder = await CartOrder.findOne({ userId: uid, orderRef });
+  if (cartOrder) {
+    if (await expireCartOrder(cartOrder)) cartOrder.status = "expired";
+    const paid = cartOrder.status === "paid" && Boolean(cartOrder.fulfilledAt);
+    return { ok: true, orderRef, entityType: "cart", entityId: String(cartOrder._id),
+      status: paid ? "paid" : cartOrder.status === "paid" ? "pending" : cartOrder.status,
+      paymentExpiresAt: cartOrder.paymentExpiresAt,
+      expiresInMs: Math.max(0, new Date(cartOrder.paymentExpiresAt).getTime() - Date.now()),
+      timeoutMinutes: TRANSFER_PAYMENT_TIMEOUT_MINUTES,
+      redirectTo: paid ? "/my-courses" : null, sepayAuto: paid };
+  }
 
   const bookings = await Booking.find({
     userId: uid,

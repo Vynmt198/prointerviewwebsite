@@ -37,6 +37,7 @@ import { achievementsRouter } from "./routes/achievements.js";
 import { analyticsRouter } from "./routes/analytics.js";
 import { publicRouter } from "./routes/public.js";
 import { couponsRouter } from "./routes/coupons.js";
+import { cartRouter } from "./routes/cart.js";
 import { notFoundHandler, globalErrorHandler } from "./middleware/errorHandler.js";
 
 export function createApp() {
@@ -217,6 +218,7 @@ export function createApp() {
   app.use("/api/analytics", analyticsRouter);
   app.use("/api/public", publicRouter);
   app.use("/api/coupons", couponsRouter);
+  app.use("/api/cart", cartRouter);
 
   app.use(notFoundHandler);
   app.use(globalErrorHandler);

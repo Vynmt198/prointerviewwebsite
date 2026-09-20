@@ -1,4 +1,5 @@
 import { MentorPageShell } from "../../components/mentor/MentorPageShell";
+import { AddCourseToCartButton } from "../../components/courses/AddCourseToCartButton.jsx";
 import React, { useState, useMemo, useEffect, useRef } from "react";
 import { motion, AnimatePresence, useScroll, useTransform } from "motion/react";
 import { useNavigate, useSearchParams } from "react-router";
@@ -170,6 +171,7 @@ function CourseCard({ course, formatPrice, onOpen, index }) {
           <PlayCircle className="size-3.5" />
           Xem khóa học
         </motion.button>
+        <AddCourseToCartButton courseId={course.id} className="mt-2 text-xs" />
       </div>
     </motion.article>
   );

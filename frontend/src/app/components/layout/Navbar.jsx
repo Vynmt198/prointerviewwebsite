@@ -10,6 +10,7 @@ import {
   Menu,
   Settings,
   Shield,
+  ShoppingCart,
   User,
   UserPlus,
   X,
@@ -38,8 +39,10 @@ import {
   isMentorNavActive,
 } from "./mentorNav.js";
 import { NavUserAvatar } from "./NavUserAvatar.jsx";
+import { useCart } from "../../hooks/useCart.jsx";
 
 const PAGE_TITLES = {
+  "/cart": { label: "Giỏ hàng", sub: "Khóa học đã chọn và thanh toán" },
   "/my-bookings": {
     label: "Lịch hẹn của bạn",
     sub: "Buổi Mentor đã đặt, lịch sắp tới và trạng thái",
@@ -118,6 +121,7 @@ function ShellNavLinks({ items, pathname, isActive, onNavigate, className = "", 
 }
 
 function CustomerNavbar() {
+  const { cart } = useCart();
   const navigate = useNavigate();
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -228,6 +232,11 @@ function CustomerNavbar() {
         />
 
         <div className="flex shrink-0 items-center gap-2 sm:gap-3">
+          <Link to={loggedIn ? "/cart" : buildLoginPath("/cart")} aria-label={`Giỏ hàng, ${cart.items.length} khóa học`}
+            className="relative inline-flex size-9 items-center justify-center rounded-xl text-violet-700 hover:bg-violet-50">
+            <ShoppingCart className="size-5" />
+            {cart.items.length > 0 && <span className="absolute -right-1 -top-1 flex size-4 items-center justify-center rounded-full bg-[#93f72b] text-[10px] font-bold text-slate-900">{cart.items.length}</span>}
+          </Link>
           {loggedIn ? (
             <>
               <DropdownMenu open={notifOpen} onOpenChange={setNotifOpen}>
@@ -339,6 +348,9 @@ function CustomerNavbar() {
                   <DropdownMenuItem onClick={() => navigate("/settings")}>
                     <Settings className="mr-2 size-4" />
                     Cài đặt
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate("/payment-history")}>
+                    <ShoppingCart className="mr-2 size-4" /> Lịch sử thanh toán
                   </DropdownMenuItem>
                   {user?.role === "admin" ? (
                     <DropdownMenuItem onClick={() => navigate("/admin")}>
@@ -625,6 +637,9 @@ function MentorNavbar() {
                   <Settings className="size-4" />
                   Cài đặt
                 </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link to="/payment-history" className="flex cursor-pointer items-center gap-2"><ShoppingCart className="size-4" />Lịch sử thanh toán</Link>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem

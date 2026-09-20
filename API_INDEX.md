@@ -2,6 +2,29 @@
 
 File trong repo: `API_INDEX.md`. Cập nhật khi thêm route, đổi FE hoặc đổi provider (Supabase / thanh toán).
 
+## Giỏ hàng và thanh toán nhiều khóa học — đã tích hợp
+
+| Method | Path | Quyền | Contract |
+|:--|:--|:--|:--|
+| GET | `/api/cart` | AUTH | `{ success, cart: { items, totalAmount, pendingOrder } }`; giá hiện hành từ server |
+| POST | `/api/cart/items` | AUTH | Body `{ courseId }`; mỗi khóa tối đa một lần, tối đa 20 khóa |
+| DELETE | `/api/cart/items/:courseId` | AUTH | Xóa khỏi giỏ; đơn đã tạo giữ nguyên danh sách và tổng tiền |
+| POST | `/api/cart/checkout` | AUTH | Body `{ couponCode? }`; trả `{ success, order }`, tự dùng lại đơn đang chờ |
+| GET | `/api/cart/orders/:id` | AUTH, chủ đơn | Trả `{ success, order }`; trạng thái `preparing/pending/processing/paid/expired` |
+| POST | `/api/admin/cart-orders/:id/confirm-transfer` | ADMIN | Body `{ force: true, forceNote, amount }`; đối soát đúng **tổng đơn** |
+
+`order` có `id`, `orderRef`, `items`, `totalAmount`, `couponCode`, `status`, `paymentExpiresAt`.
+Webhook SePay hiện có và `/api/payments/transfer-status` hỗ trợ `entityType: "cart"`.
+Đơn giữ nguyên giá/ưu đãi sau khi tạo QR; server áp dụng Pro/Elite và coupon trên tổng tiền.
+`CartOrder` quản lý mã chuyển khoản chung; `Enrollment.cartOrderId` liên kết từng khóa, giữ nguyên index mã thanh toán riêng và ledger từng enrollment.
+Xác nhận từng enrollment thuộc giỏ qua endpoint cũ trả 409. Đơn quá hạn giải phóng toàn bộ ghi danh pending, giữ giỏ; tiền đã nhận được lưu trước khi mở quyền học để có thể tiếp tục khi gián đoạn.
+Trang `/cart` cho phép xem giỏ, tạo đơn và mở lại `/cart?order=<id>`; sau khi đủ quyền học, trạng thái là `paid`.
+
+Job `bookingStaleSweepJob` chạy ngay khi backend kết nối DB, rồi mỗi 20 phút:
+hủy booking `pending` chưa trả tiền đã quá giờ bắt đầu; với booking đã trả tiền quá giờ kết thúc + 60 phút, ghi `staleFlaggedAt` và gửi thông báo một lần cho học viên/mentor/admin.
+Job không tự phạt, hoàn tiền hoặc đổi trạng thái buổi đã trả tiền. Admin có bộ lọc **Quá giờ cần rà soát**.
+Chi tiết triển khai và kiểm thử: [`docs/CART_BOOKING_PORT.md`](./docs/CART_BOOKING_PORT.md).
+
 | Phần | Nội dung |
 |:-----|:---------|
 | **A** | Backend Express — entrypoint `backend/src/server.js` |
@@ -887,4 +910,24 @@ Field presence trên `User`: `lastSeenAt` (heartbeat `/api/auth/presence` + `aut
 
 ---
 
-*Tài liệu gồm: (1) API Express đang chạy (A.1–A.15), (2) Supabase & D-ID mà FE dùng, (3) roadmap endpoint Phần C (C.1–C.17). Cập nhật lần cuối: thêm module Coupons (mã giảm giá tại Checkout).*
+## Lịch sử, hóa đơn và vận hành tài chính (2026-09-18)
+
+| Method | Endpoint | Quyền / nội dung |
+|---|---|---|
+| GET | `/api/payments/history?page=&limit=&type=&status=` | Chủ tài khoản; trả `payments`, `pagination`; khóa trong giỏ có `cartOrderId` |
+| GET | `/api/payments/:id/invoice` | Chủ giao dịch hoặc admin; PDF của payment thành công |
+| GET | `/api/bookings/:id/invoice` | Chủ giao dịch hoặc admin; PDF booking đã thanh toán |
+| GET | `/api/enrollments/:id/invoice` | Chủ giao dịch hoặc admin; PDF học phí |
+| GET | `/api/cart/orders/:id/invoice` | Chủ đơn hoặc admin; PDF toàn đơn đã hoàn tất |
+| GET | `/api/admin/audit-log` | Admin; phân trang, lọc `adminId`, `method`, `success`, `from`, `to` |
+| GET | `/api/admin/finance/reconciliation` | Admin; `report.mismatches`, `payoutMismatches`, `alerts`; chỉ đọc |
+| POST | `/api/admin/finance/release-earnings` | Admin; giải phóng khoản đủ 3 ngày, không có report mở |
+| GET | `/api/admin/users/:id/impact` | Admin; số dư, nghĩa vụ, `canClose`, `blockers` |
+| GET | `/api/auth/me/closure-impact` | Chủ tài khoản; xem trước tác động đóng |
+| POST | `/api/admin/users/:id/close` | Admin; `{confirmUserId, reason}`; 409 nếu còn ràng buộc |
+| DELETE | `/api/auth/me` | Đổi sang đóng mềm qua cùng cổng kiểm tra; giữ chứng từ |
+| POST | `/api/admin/mentors/:id/payouts` | Admin; `{amount, reason}`, dùng tài khoản ngân hàng mentor đã lưu |
+| GET | `/api/admin/payments/held?page=` | Admin; tiền nhận lúc người trả bị khóa |
+| PATCH | `/api/admin/payments/:id/refund-held` | Admin; `{amount, transferRef, reason}`, ghi nhận đã hoàn đúng số tiền |
+
+Các route payout approve/reject/mark-paid giữ URL hiện tại; `mark-paid` bắt buộc `transferRef`, reject cần lý do. Giữ số dư bằng cập nhật có điều kiện và transaction khi DB hỗ trợ. `GET /api/mentor/finance` thêm `clearingBalance`, `holdDays: 3`. Job clearance chạy mỗi giờ. Xem [hướng dẫn vận hành](docs/FINANCE_OPERATIONS_PORT.md).

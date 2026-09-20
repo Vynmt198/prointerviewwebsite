@@ -1,3 +1,4 @@
+import { invoiceHandler } from "../controllers/invoiceController.js";
 import { Router } from "express";
 import { authJwt } from "../middleware/authJwt.js";
 import { asyncHandler } from "../middleware/asyncHandler.js";
@@ -19,3 +20,5 @@ paymentsRouter.post("/webhook/sepay", asyncHandler(PaymentsController.webhookSep
 paymentsRouter.get("/transfer-status", authJwt, asyncHandler(PaymentsController.transferStatus));
 paymentsRouter.get("/vnpay/ipn", asyncHandler(PaymentsController.vnpayIpn));
 paymentsRouter.get("/vnpay/vnpay-return", asyncHandler(PaymentsController.vnpayReturn));
+
+paymentsRouter.get("/:id/invoice", authJwt, asyncHandler(invoiceHandler("payment")));

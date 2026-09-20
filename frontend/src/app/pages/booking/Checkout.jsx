@@ -1,3 +1,4 @@
+import { BANK_TRANSFER, displayBankName, inferVietQrBankId, buildVietQrImageUrl } from "../../utils/shared/bankTransfer.js";
 import React, { useState, useEffect, useMemo, useRef } from "react";
 import { useSearchParams, useNavigate } from "react-router";
 import {
@@ -112,23 +113,6 @@ function mentorIdsMatch(a, b) {
 }
 
 /** Hiển thị trên checkout CK, Vite: .env / .env.local (dev) hoặc env trên host build (Vercel) + redeploy. */
-const BANK_TRANSFER = {
-  bankName: import.meta.env.VITE_BANK_TRANSFER_NAME || "",
-  accountNumber: import.meta.env.VITE_BANK_TRANSFER_ACCOUNT || "",
-  accountOwner: import.meta.env.VITE_BANK_TRANSFER_OWNER || "",
-};
-
-/** Tên ngân hàng đầy đủ, ưu tiên `VITE_BANK_TRANSFER_DISPLAY_NAME`, không viết tắt trên UI. */
-function displayBankName(raw) {
-  const explicit = String(import.meta.env.VITE_BANK_TRANSFER_DISPLAY_NAME || "").trim();
-  if (explicit) return explicit;
-  return String(raw || "")
-    .replace(/\bTMCP\b/gi, "Thương mại Cổ phần")
-    .replace(/\s*\(?\s*TPBank\s*\)?\s*/gi, " ")
-    .replace(/\s{2,}/g, " ")
-    .trim();
-}
-
 function TransferDetailRow({ label, children, large, labelClass, valueWrapClass, rowClass = "" }) {
   if (large) {
     return (
@@ -147,31 +131,6 @@ function TransferDetailRow({ label, children, large, labelClass, valueWrapClass,
 }
 
 /** Mã ngân hàng cho VietQR (img.vietqr.io). VD: TPB = TPBank, VCB = Vietcombank. */
-function inferVietQrBankId() {
-  const explicit = import.meta.env.VITE_VIETQR_BANK_ID;
-  if (explicit && String(explicit).trim()) return String(explicit).trim().toUpperCase();
-  const name = (BANK_TRANSFER.bankName || "").toLowerCase();
-  if (
-    name.includes("tiên phong") ||
-    name.includes("tien phong") ||
-    name.includes("tpbank") ||
-    name.includes("tp bank")
-  ) {
-    return "TPB";
-  }
-  return "";
-}
-
-/** Ảnh QR VietQR: quét trong app NH, thường điền sẵn STK, số tiền, nội dung. */
-function buildVietQrImageUrl(bankId, accountDigits, amountVnd, addInfo) {
-  const bid = String(bankId || "").trim().toUpperCase();
-  const acc = String(accountDigits || "").replace(/\D/g, "");
-  const amt = Math.round(Number(amountVnd) || 0);
-  if (!bid || !acc || amt <= 0) return null;
-  const add = encodeURIComponent(String(addInfo || "").slice(0, 50));
-  return `https://img.vietqr.io/image/${bid}-${acc}-compact2.png?amount=${amt}&addInfo=${add}`;
-}
-
 function extractOrderPart(value) {
   const s = String(value || "").trim();
   if (!s) return "";

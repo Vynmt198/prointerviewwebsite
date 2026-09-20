@@ -74,6 +74,7 @@ const mentorSchema = new Schema(
 
     finance: {
       availableBalance: { type: Number, default: 0 },
+      clearingBalance: { type: Number, default: 0 },
       pendingBalance: { type: Number, default: 0 },
       totalEarned: { type: Number, default: 0 },
       bankAccount: {
@@ -88,6 +89,9 @@ const mentorSchema = new Schema(
 
     isVerified: { type: Boolean, default: false },
     isActive: { type: Boolean, default: true },
+    status: { type: String, enum: ["active", "suspended", "closed"], default: "active" },
+    closedAt: Date,
+    closedBy: { type: Schema.Types.ObjectId, ref: "User" },
     verifiedAt: { type: Date },
     adminReview: {
       status: { type: String, enum: ["pending", "approved", "rejected"], default: "pending" },

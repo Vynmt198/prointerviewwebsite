@@ -196,6 +196,7 @@ export async function getMentorDashboard(userId) {
       avgRating: Math.round(avgRating * 10) / 10,
       finance: {
         availableBalance: Number(finance.availableBalance || 0),
+        clearingBalance: Number(finance.clearingBalance || 0),
         totalEarned: Number(finance.totalEarned || 0),
         pendingBalance: Number(finance.pendingBalance || 0),
       },
@@ -300,6 +301,8 @@ export async function getMentorFinance(userId) {
     ok: true,
     finance: {
       availableBalance: mentor.finance?.availableBalance ?? 0,
+      clearingBalance: mentor.finance?.clearingBalance ?? 0,
+      holdDays: 3,
       pendingBalance: mentor.finance?.pendingBalance ?? 0,
       totalEarned: (mentor.finance?.totalEarned > 0 ? mentor.finance.totalEarned : null) ?? computedTotalEarned,
       incomeBreakdown: {
@@ -984,23 +987,10 @@ export async function requestPayout(userId, body) {
     return { ok: false, status: 400, error: "Vui lòng cập nhật tài khoản nhận tiền trước khi rút." };
   }
 
-  // Atomic check-and-decrement: nếu balance thay đổi giữa hai request đồng thời, chỉ một request thành công
-  const updated = await Mentor.findOneAndUpdate(
-    { _id: mentor._id, "finance.availableBalance": { $gte: roundedAmount } },
-    { $inc: { "finance.availableBalance": -roundedAmount, "finance.pendingBalance": roundedAmount } },
-    { new: true },
-  );
-  if (!updated) {
-    return { ok: false, status: 400, error: "Số dư khả dụng không đủ để rút." };
-  }
-
-  const payout = await PayoutRequest.create({
-    mentorId: mentor._id,
-    amount: roundedAmount,
-    status: "pending",
-    payoutAccount,
-    requestedAt: new Date(),
-  });
+  const { createMentorPayout } = await import("./payoutService.js");
+  let payout;
+  try { payout = await createMentorPayout(mentor._id, roundedAmount); }
+  catch (error) { return { ok: false, status: error.statusCode || 500, error: error.message }; }
 
   await deliverNotification(userId, {
     mentorPrefKey: "payout_update",

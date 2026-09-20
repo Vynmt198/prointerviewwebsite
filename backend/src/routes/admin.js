@@ -1,4 +1,8 @@
+import { adminAuditLog } from "../middleware/adminAuditLog.js";
+import { AdminAuditController } from "../controllers/adminAuditController.js";
+import { AdminAccountController } from "../controllers/adminAccountController.js";
 import { Router } from "express";
+import { confirmCartOrderPayment } from "../services/cartService.js";
 import { authJwt } from "../middleware/authJwt.js";
 import { requireAdmin } from "../middleware/requireAdmin.js";
 import { asyncHandler } from "../middleware/asyncHandler.js";
@@ -8,7 +12,22 @@ import { upload } from "../middleware/upload.js";
 
 export const adminRouter = Router();
 
-adminRouter.use(authJwt, requireAdmin);
+adminRouter.use(authJwt, requireAdmin, adminAuditLog);
+adminRouter.get("/audit-log", asyncHandler(AdminAuditController.getAuditLog));
+adminRouter.get("/users/:id/impact", asyncHandler(AdminAccountController.impact));
+adminRouter.post("/users/:id/close", asyncHandler(AdminAccountController.close));
+adminRouter.post("/mentors/:id/payouts", asyncHandler(AdminAccountController.payout));
+adminRouter.get("/finance/reconciliation", asyncHandler(AdminAccountController.reconciliation));
+adminRouter.post("/finance/release-earnings", asyncHandler(AdminAccountController.release));
+adminRouter.get("/payments/held", asyncHandler(AdminAccountController.held));
+adminRouter.patch("/payments/:id/refund-held", asyncHandler(AdminAccountController.refundHeld));
+adminRouter.post("/cart-orders/:id/confirm-transfer", asyncHandler(async (req, res) => {
+  const result = await confirmCartOrderPayment(req.params.id, {
+    force: Boolean(req.body?.force), forceNote: req.body?.forceNote,
+    amount: req.body?.amount, adminUserId: req.userId,
+  });
+  res.json({ success: true, order: result.order });
+}));
 
 adminRouter.get("/stats", asyncHandler(AdminController.getStats));
 adminRouter.get("/cost-dashboard", asyncHandler(AdminCostDashboardController.getCostDashboard));
@@ -61,9 +80,9 @@ adminRouter.patch(
 );
 adminRouter.patch("/bookings/:id/status", asyncHandler(AdminController.updateBookingStatus));
 adminRouter.get("/payouts", asyncHandler(AdminController.getPayoutRequests));
-adminRouter.patch("/payouts/:id/approve", asyncHandler(AdminController.approvePayoutRequest));
-adminRouter.patch("/payouts/:id/mark-paid", asyncHandler(AdminController.markPayoutPaid));
-adminRouter.patch("/payouts/:id/reject", asyncHandler(AdminController.rejectPayoutRequest));
+adminRouter.patch("/payouts/:id/approve", asyncHandler(AdminAccountController.approve));
+adminRouter.patch("/payouts/:id/mark-paid", asyncHandler(AdminAccountController.paid));
+adminRouter.patch("/payouts/:id/reject", asyncHandler(AdminAccountController.reject));
 adminRouter.get("/courses/pending", asyncHandler(AdminController.getPendingCourses));
 adminRouter.get("/courses/published", asyncHandler(AdminController.getPublishedCourses));
 adminRouter.patch("/courses/:id/approve", asyncHandler(AdminController.approveCourse));

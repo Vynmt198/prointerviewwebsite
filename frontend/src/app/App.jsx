@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { RouterProvider } from "react-router";
 import { Toaster } from "./components/ui/sonner";
 import { router } from "./routes";
+import { CartProvider } from "./hooks/useCart.jsx";
 import {
   restoreSession,
   hasAuthCredentials,
@@ -91,9 +92,9 @@ export default function App() {
   }
 
   return (
-    <>
+    <CartProvider>
       <RouterProvider router={router} />
       <Toaster position="top-right" closeButton duration={4500} />
-    </>
+    </CartProvider>
   );
 }

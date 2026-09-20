@@ -1,3 +1,4 @@
+import { invoiceHandler } from "../controllers/invoiceController.js";
 import { Router } from "express";
 import { authJwt } from "../middleware/authJwt.js";
 import { requireMentor } from "../middleware/requireMentor.js";
@@ -30,3 +31,5 @@ bookingsRouter.post("/:id/mentor-knowledge", authJwt, requireMentor, asyncHandle
 bookingsRouter.get("/:id", authJwt, asyncHandler(BookingsController.getById));
 bookingsRouter.delete("/:id", authJwt, asyncHandler(BookingsController.cancel));
 bookingsRouter.get("/mentor/:id/booked-slots", asyncHandler(BookingsController.getBookedSlots));
+
+bookingsRouter.get("/:id/invoice", authJwt, asyncHandler(invoiceHandler("booking")));

@@ -16,6 +16,7 @@ export function AdminSepayOverrideAction({
   className = "",
   groupCount = 1,
   groupTotalVnd = 0,
+  groupUnit = "buổi",
 }) {
   const [open, setOpen] = useState(false);
   const [note, setNote] = useState("");
@@ -72,9 +73,9 @@ export function AdminSepayOverrideAction({
                 {groupCount > 1 && (
                   <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5 text-xs leading-relaxed text-amber-800">
                     <strong>Lưu ý:</strong> Đơn này gồm{" "}
-                    <strong>{groupCount} buổi</strong> — tổng cộng{" "}
+                    <strong>{groupCount} {groupUnit}</strong> — tổng cộng{" "}
                     <strong>{groupTotalVnd.toLocaleString("vi-VN")}₫</strong>.{" "}
-                    Xác nhận 1 buổi sẽ <em>tự động duyệt toàn bộ đơn</em>.{" "}
+                    Thao tác này sẽ <em>xác nhận thanh toán toàn bộ đơn</em>.{" "}
                     Hãy kiểm tra sao kê đúng tổng số tiền này trước khi xác nhận.
                   </div>
                 )}
@@ -105,7 +106,7 @@ export function AdminSepayOverrideAction({
                 onClick={() => void handleConfirm()}
                 className="rounded-xl bg-[#a3e635] py-3 text-sm font-semibold text-slate-900 hover:bg-[#84cc16] disabled:opacity-50"
               >
-                {busy ? "Đang xử lý…" : "Xác nhận & duyệt buổi"}
+                {busy ? "Đang xử lý…" : "Xác nhận thanh toán"}
               </button>
             </div>
           </motion.div>
